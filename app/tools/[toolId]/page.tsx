@@ -25,6 +25,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   "colour-converter": dynamic(() => import("@/components/tools/colour-converter").then(mod => mod.ColourConverterTool)),
   "tailwind-shades": dynamic(() => import("@/components/tools/tailwind-shades").then(mod => mod.TailwindShadesTool)),
   "harmony-genny": dynamic(() => import("@/components/tools/harmony-genny").then(mod => mod.HarmonyGennyTool)),
+  "palette-genny": dynamic(() => import("@/components/tools/palette-genny").then(mod => mod.PaletteGennyTool)),
   "tailwind-cheatsheet": dynamic(() => import("@/components/tools/tailwind-cheatsheet").then(mod => mod.TailwindCheatsheetTool)),
   "markdown-writer": dynamic(() => import("@/components/tools/markdown-writer").then(mod => mod.MarkdownWriterTool)),
   "social-cropper": dynamic(() => import("@/components/tools/social-cropper").then(mod => mod.SocialCropperTool)),

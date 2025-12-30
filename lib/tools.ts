@@ -98,6 +98,13 @@ export const toolCategories: ToolCategory[] = [
         icon: Rainbow,
         href: "/tools/harmony-genny",
       },
+      {
+        id: "palette-genny",
+        name: "Palette Generator",
+        description: "Generate beautiful colour palettes",
+        icon: PenLine,
+        href: "/tools/palette-genny",
+      },
     ],
   },
   {

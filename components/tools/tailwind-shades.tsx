@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -113,11 +114,22 @@ function generateShades(baseHex: string): Shade[] | null {
   });
 }
 
-export function TailwindShadesTool() {
-  const [baseColour, setBaseColour] = useState("#3b82f6");
+// Inner component that reads URL params
+function TailwindShadesInner() {
+  const searchParams = useSearchParams();
+  const colorFromUrl = searchParams.get("color");
+
+  const [baseColour, setBaseColour] = useState(colorFromUrl || "#3b82f6");
   const [colourName, setColourName] = useState("primary");
   const [shades, setShades] = useState<Shade[] | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+
+  // Update baseColour when URL parameter changes
+  useEffect(() => {
+    if (colorFromUrl) {
+      setBaseColour(colorFromUrl);
+    }
+  }, [colorFromUrl]);
 
   useEffect(() => {
     const result = generateShades(baseColour);
@@ -287,5 +299,14 @@ ${generateOklchVariables()}
         </div>
       )}
     </div>
+  );
+}
+
+// Exported component with Suspense boundary
+export function TailwindShadesTool() {
+  return (
+    <Suspense fallback={<div className="space-y-6 animate-pulse"><div className="h-10 bg-muted rounded" /><div className="h-24 bg-muted rounded" /></div>}>
+      <TailwindShadesInner />
+    </Suspense>
   );
 }
