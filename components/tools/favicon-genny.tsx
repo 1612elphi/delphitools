@@ -91,6 +91,81 @@ export function FaviconGennyTool() {
     });
   };
 
+  const downloadAsIco = async () => {
+    // Get the 16, 32, 48, 64 sized favicons
+    const icoSizes = [16, 32, 48, 64];
+    const icoFavicons = favicons.filter((f) => icoSizes.includes(f.size));
+
+    if (icoFavicons.length === 0) return;
+
+    // Convert data URLs to PNG buffers
+    const pngBuffers: { size: number; data: Uint8Array }[] = [];
+
+    for (const favicon of icoFavicons) {
+      const response = await fetch(favicon.dataUrl);
+      const blob = await response.blob();
+      const arrayBuffer = await blob.arrayBuffer();
+      pngBuffers.push({
+        size: favicon.size,
+        data: new Uint8Array(arrayBuffer),
+      });
+    }
+
+    // Sort by size ascending
+    pngBuffers.sort((a, b) => a.size - b.size);
+
+    // ICO file format:
+    // ICONDIR (6 bytes) + ICONDIRENTRY (16 bytes each) + image data
+    const numImages = pngBuffers.length;
+    const headerSize = 6 + numImages * 16;
+
+    // Calculate total size
+    let totalSize = headerSize;
+    for (const buf of pngBuffers) {
+      totalSize += buf.data.length;
+    }
+
+    const icoBuffer = new ArrayBuffer(totalSize);
+    const view = new DataView(icoBuffer);
+    const bytes = new Uint8Array(icoBuffer);
+
+    // ICONDIR header
+    view.setUint16(0, 0, true); // Reserved (0)
+    view.setUint16(2, 1, true); // Type (1 = ICO)
+    view.setUint16(4, numImages, true); // Number of images
+
+    // Write ICONDIRENTRY for each image and copy image data
+    let dataOffset = headerSize;
+
+    for (let i = 0; i < pngBuffers.length; i++) {
+      const entryOffset = 6 + i * 16;
+      const { size, data } = pngBuffers[i];
+
+      // ICONDIRENTRY (16 bytes)
+      view.setUint8(entryOffset + 0, size < 256 ? size : 0); // Width (0 means 256)
+      view.setUint8(entryOffset + 1, size < 256 ? size : 0); // Height
+      view.setUint8(entryOffset + 2, 0); // Color palette (0 for PNG)
+      view.setUint8(entryOffset + 3, 0); // Reserved
+      view.setUint16(entryOffset + 4, 1, true); // Color planes
+      view.setUint16(entryOffset + 6, 32, true); // Bits per pixel
+      view.setUint32(entryOffset + 8, data.length, true); // Image size
+      view.setUint32(entryOffset + 12, dataOffset, true); // Image offset
+
+      // Copy image data
+      bytes.set(data, dataOffset);
+      dataOffset += data.length;
+    }
+
+    // Download the ICO file
+    const blob = new Blob([icoBuffer], { type: "image/x-icon" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.download = "favicon.ico";
+    link.href = url;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const clear = () => {
     setSourceImage(null);
     setFileName("");
@@ -157,9 +232,14 @@ export function FaviconGennyTool() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <label className="font-bold">Generated Favicons</label>
-            <Button onClick={downloadAll}>
-              <Download className="size-4 mr-2" /> Download All
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={downloadAsIco}>
+                <Download className="size-4 mr-2" /> Download .ico
+              </Button>
+              <Button onClick={downloadAll}>
+                <Download className="size-4 mr-2" /> Download All
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

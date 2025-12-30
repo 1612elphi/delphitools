@@ -43,7 +43,7 @@ export function AppHeader() {
         </div>
       ) : (
         <div className="flex items-center gap-2">
-          <Image src="/delphi.png" alt="delphitools logo" className="size-5 text-muted-foreground" />
+          <Image src="/delphi.png" width={40} height={40} alt="delphitools logo" className="size-5 text-muted-foreground" />
           <h1 className="text-lg font-semibold">delphitools</h1>
         </div>
       )}
