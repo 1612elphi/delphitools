@@ -296,7 +296,7 @@ export function MatteGeneratorTool() {
             </div>
           </div>
 
-          {/* Color picker for solid color matte */}
+          {/* Colour picker for solid color matte */}
           {matteType === "color" && (
             <div className="space-y-2">
               <label className="font-bold text-sm">Matte Colour</label>

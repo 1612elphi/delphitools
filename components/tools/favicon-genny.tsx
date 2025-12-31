@@ -144,9 +144,9 @@ export function FaviconGennyTool() {
       // ICONDIRENTRY (16 bytes)
       view.setUint8(entryOffset + 0, size < 256 ? size : 0); // Width (0 means 256)
       view.setUint8(entryOffset + 1, size < 256 ? size : 0); // Height
-      view.setUint8(entryOffset + 2, 0); // Color palette (0 for PNG)
+      view.setUint8(entryOffset + 2, 0); // Colour palette (0 for PNG)
       view.setUint8(entryOffset + 3, 0); // Reserved
-      view.setUint16(entryOffset + 4, 1, true); // Color planes
+      view.setUint16(entryOffset + 4, 1, true); // Colour planes
       view.setUint16(entryOffset + 6, 32, true); // Bits per pixel
       view.setUint32(entryOffset + 8, data.length, true); // Image size
       view.setUint32(entryOffset + 12, dataOffset, true); // Image offset

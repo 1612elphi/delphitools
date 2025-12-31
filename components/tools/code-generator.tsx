@@ -686,7 +686,7 @@ export function CodeGeneratorTool() {
 
               {/* Colors */}
               <AccordionItem value="colors" className="border rounded-lg px-4">
-                <AccordionTrigger className="font-bold">Colors</AccordionTrigger>
+                <AccordionTrigger className="font-bold">Colours</AccordionTrigger>
                 <AccordionContent className="space-y-4 pb-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">

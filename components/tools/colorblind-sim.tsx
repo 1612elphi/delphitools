@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-// Color blindness simulation matrices
+// Colour blindness simulation matrices
 // Based on research by Machado, Oliveira and Fernandes (2009)
 type SimulationType =
   | "normal"

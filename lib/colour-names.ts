@@ -1,4 +1,4 @@
-// Colour naming utility using NTC (Name That Color) database
+// Colour naming utility using NTC (Name That Colour) database
 // Uses RGB Euclidean distance for nearest-color matching
 
 import ntcData from "./ntc";
