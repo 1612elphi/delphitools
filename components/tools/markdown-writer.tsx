@@ -138,6 +138,14 @@ export function MarkdownWriterTool() {
     setContent(lines.join("\n"));
   };
   const removeExtraSpaces = () => setContent(content.replace(/[^\S\n]+/g, " "));
+  const decodeUrlChars = () => {
+    try {
+      setContent(decodeURIComponent(content));
+    } catch {
+      alert("Unable to decode - text may contain invalid percent-encoded sequences");
+    }
+  };
+  const encodeUrlChars = () => setContent(encodeURIComponent(content));
 
   // === FIND & REPLACE ===
   const doReplace = (all: boolean) => {
@@ -190,13 +198,14 @@ export function MarkdownWriterTool() {
   };
 
   const ToolButton = ({ onClick, children, title }: { onClick: () => void; children: React.ReactNode; title?: string }) => (
-    <button
+    <Button
       onClick={onClick}
       title={title}
-      className="px-3 py-1.5 text-sm rounded-md hover:bg-muted transition-colors whitespace-nowrap"
+      variant="outline"
+      size="sm"
     >
       {children}
-    </button>
+    </Button>
   );
 
   const PanelHeader = ({ id, icon: Icon, label }: { id: string; icon: React.ElementType; label: string }) => (
@@ -259,6 +268,8 @@ export function MarkdownWriterTool() {
           <ToolButton onClick={removeLineBreaks}>Join Lines</ToolButton>
           <ToolButton onClick={() => addLineBreaks(80)}>Wrap at 80</ToolButton>
           <ToolButton onClick={() => addLineBreaks(120)}>Wrap at 120</ToolButton>
+          <ToolButton onClick={encodeUrlChars} title="Encode special characters (e.g. / → %2F)">Encode URL</ToolButton>
+          <ToolButton onClick={decodeUrlChars} title="Decode %XX characters (e.g. %2F → /)">Decode URL</ToolButton>
         </div>
       )}
 
