@@ -188,9 +188,41 @@ export function AppSidebar() {
                 </p>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground/60 pt-4 border-t">
-              Built with Next.js, Tailwind CSS, and shadcn/ui.
-            </p>
+            <div className="pt-4 border-t space-y-2">
+              <h3 className="font-medium text-foreground text-sm">Built with</h3>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { name: "Next.js", url: "https://nextjs.org" },
+                  { name: "React", url: "https://react.dev" },
+                  { name: "Tailwind CSS", url: "https://tailwindcss.com" },
+                  { name: "shadcn/ui", url: "https://ui.shadcn.com" },
+                  { name: "Radix UI", url: "https://radix-ui.com" },
+                  { name: "Lucide", url: "https://lucide.dev" },
+                ].map((lib) => (
+                  <a
+                    key={lib.name}
+                    href={lib.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs px-2 py-1 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {lib.name}
+                  </a>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground/60 pt-2">
+                Plus{" "}
+                <a
+                  href="https://github.com/1612elphi/delphitools/blob/main/ACKNOWLEDGEMENTS.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-muted-foreground transition-colors"
+                >
+                  many more open source libraries
+                </a>
+                .
+              </p>
+            </div>
           </DialogContent>
         </Dialog>
       </SidebarFooter>
