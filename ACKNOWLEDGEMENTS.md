@@ -16,7 +16,7 @@ delphitools is built on the shoulders of many excellent open source projects. Th
 
 ## Tool-Specific Libraries
 
-- **[qr-code-styling](https://github.com/nicekoder/qr-code-styling)** - QR code generation with styling options
+- **[qr-code-styling](https://github.com/kozakdenys/qr-code-styling)** - QR code generation with styling options
 - **[bwip-js](https://github.com/metafloor/bwip-js)** - Barcode generation (Data Matrix, Aztec, PDF417, Code 128, EAN-13, and more)
 - **[SVGO](https://github.com/svg/svgo)** - SVG optimization
 - **[JSZip](https://stuk.github.io/jszip/)** - Creating ZIP files in the browser
