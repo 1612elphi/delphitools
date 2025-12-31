@@ -137,6 +137,13 @@ export function SocialCropperTool() {
     setDragStart({ x: e.clientX - cropOffset.x, y: e.clientY - cropOffset.y });
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    setIsDragging(true);
+    setDragStart({ x: touch.clientX - cropOffset.x, y: touch.clientY - cropOffset.y });
+  };
+
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
       if (!isDragging || !previewRef.current) return;
@@ -154,7 +161,30 @@ export function SocialCropperTool() {
     [isDragging, dragStart, imageSize.width, constrainOffset]
   );
 
+  const handleTouchMove = useCallback(
+    (e: TouchEvent) => {
+      if (!isDragging || !previewRef.current) return;
+      e.preventDefault();
+
+      const touch = e.touches[0];
+      const rect = previewRef.current.getBoundingClientRect();
+      const scale = imageSize.width / rect.width;
+
+      const newOffset = {
+        x: (touch.clientX - dragStart.x) * scale,
+        y: (touch.clientY - dragStart.y) * scale,
+      };
+
+      setCropOffset(constrainOffset(newOffset));
+    },
+    [isDragging, dragStart, imageSize.width, constrainOffset]
+  );
+
   const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
     setIsDragging(false);
   }, []);
 
@@ -162,12 +192,16 @@ export function SocialCropperTool() {
     if (isDragging) {
       window.addEventListener("mousemove", handleMouseMove);
       window.addEventListener("mouseup", handleMouseUp);
+      window.addEventListener("touchmove", handleTouchMove, { passive: false });
+      window.addEventListener("touchend", handleTouchEnd);
       return () => {
         window.removeEventListener("mousemove", handleMouseMove);
         window.removeEventListener("mouseup", handleMouseUp);
+        window.removeEventListener("touchmove", handleTouchMove);
+        window.removeEventListener("touchend", handleTouchEnd);
       };
     }
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
   const cropImage = () => {
     if (!sourceImage) return;
@@ -307,8 +341,9 @@ export function SocialCropperTool() {
             </label>
             <div
               ref={previewRef}
-              className="relative inline-block cursor-move select-none overflow-hidden rounded"
+              className="relative inline-block cursor-move select-none overflow-hidden rounded touch-none"
               onMouseDown={handleMouseDown}
+              onTouchStart={handleTouchStart}
             >
               <img
                 src={sourceImage}

@@ -10,7 +10,9 @@ const toolComponents: Record<string, React.ComponentType> = {
   "px-to-rem": dynamic(() => import("@/components/tools/px-to-rem").then(mod => mod.PxToRemTool)),
   "word-counter": dynamic(() => import("@/components/tools/word-counter").then(mod => mod.WordCounterTool)),
   "qr-genny": dynamic(() => import("@/components/tools/qr-generator").then(mod => mod.QrGeneratorTool)),
+  "code-genny": dynamic(() => import("@/components/tools/code-generator").then(mod => mod.CodeGeneratorTool)),
   "image-converter": dynamic(() => import("@/components/tools/image-converter").then(mod => mod.ImageConverterTool)),
+  "artwork-enhancer": dynamic(() => import("@/components/tools/artwork-enhancer").then(mod => mod.ArtworkEnhancerTool)),
   "regex-tester": dynamic(() => import("@/components/tools/regex-tester").then(mod => mod.RegexTesterTool)),
   "line-height-calc": dynamic(() => import("@/components/tools/line-height-calc").then(mod => mod.LineHeightCalcTool)),
   "placeholder-genny": dynamic(() => import("@/components/tools/placeholder-genny").then(mod => mod.PlaceholderGennyTool)),
@@ -32,6 +34,8 @@ const toolComponents: Record<string, React.ComponentType> = {
   "matte-generator": dynamic(() => import("@/components/tools/matte-generator").then(mod => mod.MatteGeneratorTool)),
   "scroll-generator": dynamic(() => import("@/components/tools/scroll-generator").then(mod => mod.ScrollGeneratorTool)),
   "watermarker": dynamic(() => import("@/components/tools/watermarker").then(mod => mod.WatermarkerTool)),
+  "contrast-checker": dynamic(() => import("@/components/tools/contrast-checker").then(mod => mod.ContrastCheckerTool)),
+  "colorblind-sim": dynamic(() => import("@/components/tools/colorblind-sim").then(mod => mod.ColorblindSimTool)),
 };
 
 interface ToolPageProps {

@@ -106,11 +106,15 @@ export function ScrollGeneratorTool() {
       const totalTileWidth = tileWidth * slideCount;
 
       // Calculate the fill needed on edges only
-      const totalFill = totalTileWidth - imageSize.width;
+      const totalFill = needsFill ? totalTileWidth - imageSize.width : 0;
       const fillPerSide = totalFill / 2; // Left edge of first, right edge of last
 
-      // Each tile shows (imageWidth / slideCount) of the source
-      const sourceWidthPerTile = imageSize.width / slideCount;
+      // Virtual canvas layout:
+      // [0, fillPerSide): left fill
+      // [fillPerSide, fillPerSide + imageWidth): image
+      // [fillPerSide + imageWidth, totalTileWidth): right fill
+      const imageStartVirtual = fillPerSide;
+      const imageEndVirtual = fillPerSide + imageSize.width;
 
       const newTiles: Tile[] = [];
 
@@ -119,61 +123,66 @@ export function ScrollGeneratorTool() {
         canvas.height = tileHeight;
         ctx.clearRect(0, 0, tileWidth, tileHeight);
 
+        // This tile covers virtual positions [tileStartVirtual, tileEndVirtual)
+        const tileStartVirtual = col * tileWidth;
+        const tileEndVirtual = (col + 1) * tileWidth;
+
+        // Calculate overlap between this tile and the image region
+        const overlapStart = Math.max(tileStartVirtual, imageStartVirtual);
+        const overlapEnd = Math.min(tileEndVirtual, imageEndVirtual);
+        const hasImageContent = overlapEnd > overlapStart;
+
         const isFirst = col === 0;
         const isLast = col === slideCount - 1;
 
+        // Draw fill background on first/last tiles if needed
         if (needsFill && (isFirst || isLast)) {
-          // Only add fill background on first/last tiles
           if (fillMode === "color") {
             ctx.fillStyle = fillColor;
             ctx.fillRect(0, 0, tileWidth, tileHeight);
           } else if (fillMode === "blur") {
-            // Draw blurred background
+            // Draw blurred background using the portion of image visible in this tile
             ctx.filter = "blur(30px)";
-            const scale = Math.max(tileWidth / sourceWidthPerTile, tileHeight / img.height) * 1.2;
-            const blurWidth = sourceWidthPerTile * scale;
-            const blurHeight = img.height * scale;
-            ctx.drawImage(
-              img,
-              col * sourceWidthPerTile,
-              0,
-              sourceWidthPerTile,
-              img.height,
-              (tileWidth - blurWidth) / 2,
-              (tileHeight - blurHeight) / 2,
-              blurWidth,
-              blurHeight
-            );
+            if (hasImageContent) {
+              const sourceX = overlapStart - imageStartVirtual;
+              const sourceWidth = overlapEnd - overlapStart;
+              const scale = Math.max(tileWidth / sourceWidth, tileHeight / img.height) * 1.2;
+              const blurWidth = sourceWidth * scale;
+              const blurHeight = img.height * scale;
+              ctx.drawImage(
+                img,
+                sourceX,
+                0,
+                sourceWidth,
+                img.height,
+                (tileWidth - blurWidth) / 2,
+                (tileHeight - blurHeight) / 2,
+                blurWidth,
+                blurHeight
+              );
+            }
             ctx.filter = "none";
           }
         }
 
-        // Calculate where to draw the image slice
-        let drawX = 0;
-        let sourceX = col * sourceWidthPerTile;
+        // Draw the image slice
+        if (hasImageContent) {
+          const drawX = overlapStart - tileStartVirtual; // Where to draw on tile canvas
+          const sourceX = overlapStart - imageStartVirtual; // Where to read from source image
+          const drawWidth = overlapEnd - overlapStart;
 
-        if (needsFill) {
-          if (isFirst) {
-            // First tile: image starts after the left fill
-            drawX = fillPerSide;
-          } else if (isLast) {
-            // Last tile: image starts at 0, ends before right fill
-            drawX = 0;
-          }
-          // Middle tiles: no offset, seamless
+          ctx.drawImage(
+            img,
+            sourceX,
+            0,
+            drawWidth,
+            img.height,
+            drawX,
+            0,
+            drawWidth,
+            tileHeight
+          );
         }
-
-        ctx.drawImage(
-          img,
-          sourceX,
-          0,
-          sourceWidthPerTile,
-          img.height,
-          drawX,
-          0,
-          sourceWidthPerTile,
-          tileHeight
-        );
 
         newTiles.push({
           index: col,

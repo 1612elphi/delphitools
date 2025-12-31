@@ -3,9 +3,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Home, Info } from "lucide-react";
+import { Home, Info, Star } from "lucide-react";
 
-import { toolCategories } from "@/lib/tools";
+import { toolCategories, featuredTools } from "@/lib/tools";
 import {
   Sidebar,
   SidebarContent,
@@ -72,6 +72,36 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel className="flex items-center gap-1.5">
+            <Star className="size-3 text-amber-500 fill-amber-500" />
+            Greatest Hits
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {featuredTools.map((tool) => {
+                const Icon = tool.icon;
+                const isActive = pathname === tool.href;
+                return (
+                  <SidebarMenuItem key={tool.id}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={tool.name}
+                      className="text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300"
+                    >
+                      <Link href={tool.href}>
+                        <Icon className="size-4" />
+                        <span>{tool.name}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
         </SidebarGroup>
 
         {toolCategories.map((category) => (

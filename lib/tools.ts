@@ -11,6 +11,7 @@ import {
   BookOpen,
   FileType,
   QrCode,
+  Barcode,
   Tag,
   Regex,
   Palette,
@@ -22,6 +23,9 @@ import {
   Square,
   GalleryVertical,
   Stamp,
+  Sparkles,
+  Contrast,
+  Eye,
 } from "lucide-react";
 
 export interface Tool {
@@ -105,6 +109,20 @@ export const toolCategories: ToolCategory[] = [
         icon: PenLine,
         href: "/tools/palette-genny",
       },
+      {
+        id: "contrast-checker",
+        name: "Contrast Checker",
+        description: "Check WCAG colour contrast compliance",
+        icon: Contrast,
+        href: "/tools/contrast-checker",
+      },
+      {
+        id: "colorblind-sim",
+        name: "Colour Blindness Simulator",
+        description: "Simulate how colours appear to colour blind users",
+        icon: Eye,
+        href: "/tools/colorblind-sim",
+      },
     ],
   },
   {
@@ -145,6 +163,13 @@ export const toolCategories: ToolCategory[] = [
         description: "Convert between image formats",
         icon: RefreshCw,
         href: "/tools/image-converter",
+      },
+      {
+        id: "artwork-enhancer",
+        name: "Artwork Enhancer",
+        description: "Add colour noise overlay to artwork",
+        icon: Sparkles,
+        href: "/tools/artwork-enhancer",
       },
     ],
   },
@@ -224,9 +249,16 @@ export const toolCategories: ToolCategory[] = [
       {
         id: "qr-genny",
         name: "QR Generator",
-        description: "Generate QR codes",
+        description: "Generate styled QR codes with custom colors, shapes, and logos",
         icon: QrCode,
         href: "/tools/qr-genny",
+      },
+      {
+        id: "code-genny",
+        name: "Barcode Generator",
+        description: "Generate Data Matrix, Aztec, PDF417, Code 128, EAN-13, and more",
+        icon: Barcode,
+        href: "/tools/code-genny",
       },
       {
         id: "meta-tag-genny",
@@ -247,6 +279,12 @@ export const toolCategories: ToolCategory[] = [
 ];
 
 export const allTools = toolCategories.flatMap((category) => category.tools);
+
+// Featured tools for "Delphi's Greatest Hits" section
+export const featuredToolIds = ["qr-genny", "paper-sizes", "palette-genny"];
+export const featuredTools = featuredToolIds
+  .map((id) => allTools.find((tool) => tool.id === id))
+  .filter((tool): tool is Tool => tool !== undefined);
 
 export function getToolById(id: string): Tool | undefined {
   return allTools.find((tool) => tool.id === id);

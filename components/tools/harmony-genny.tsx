@@ -59,7 +59,7 @@ function oklchToRgb(L: number, c: number, h: number): [number, number, number] {
   return [linearToSrgb(lr), linearToSrgb(lg), linearToSrgb(lb)];
 }
 
-type HarmonyType = "complementary" | "analogous" | "triadic" | "split-complementary" | "tetradic" | "monochromatic";
+type HarmonyType = "complementary" | "analogous" | "triadic" | "split-complementary" | "tetradic" | "monochromatic" | "double-complementary" | "compound" | "pentadic" | "analogous-accent" | "golden" | "near-complementary";
 
 interface HarmonyInfo {
   name: string;
@@ -97,6 +97,36 @@ const HARMONIES: Record<HarmonyType, HarmonyInfo> = {
     name: "Monochromatic",
     description: "Single hue with varying lightness",
     angles: [0], // Special case - we vary lightness instead
+  },
+  "double-complementary": {
+    name: "Double Complementary",
+    description: "Two complementary pairs forming a rectangle",
+    angles: [0, 60, 180, 240],
+  },
+  compound: {
+    name: "Compound",
+    description: "Analogous colours plus their complements",
+    angles: [0, 30, 180, 210],
+  },
+  pentadic: {
+    name: "Pentadic",
+    description: "Five colours evenly spaced (72° apart)",
+    angles: [0, 72, 144, 216, 288],
+  },
+  "analogous-accent": {
+    name: "Analogous Accent",
+    description: "Analogous colours with a complementary accent",
+    angles: [-30, 0, 30, 180],
+  },
+  golden: {
+    name: "Golden Ratio",
+    description: "Colours spaced by the golden angle (137.5°)",
+    angles: [0, 137.5, 275],
+  },
+  "near-complementary": {
+    name: "Near Complementary",
+    description: "Slightly off-complement for softer contrast",
+    angles: [0, 165],
   },
 };
 

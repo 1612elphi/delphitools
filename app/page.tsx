@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Sparkles } from "lucide-react";
-import { toolCategories } from "@/lib/tools";
+import { ArrowRight, Star } from "lucide-react";
+import { toolCategories, featuredTools } from "@/lib/tools";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export default function Home() {
@@ -31,6 +31,41 @@ export default function Home() {
           </p>
         </div>
       </div>
+
+      {/* Greatest Hits */}
+      <section className="mb-12">
+        <div className="flex items-center gap-2 mb-4">
+          <Star className="size-5 text-amber-500 fill-amber-500" />
+          <h2 className="text-lg font-semibold text-foreground/80">
+            Delphi&apos;s Greatest Hits
+          </h2>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {featuredTools.map((tool) => {
+            const Icon = tool.icon;
+            return (
+              <Link key={tool.id} href={tool.href}>
+                <Card className="group h-full transition-all border-amber-500/20 bg-amber-500/5 hover:border-amber-500/40 hover:bg-amber-500/10 hover:shadow-md">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex size-10 items-center justify-center rounded-lg bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
+                        <Icon className="size-5 text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <ArrowRight className="size-4 text-amber-500/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <CardTitle className="text-base mt-3">
+                      {tool.name}
+                    </CardTitle>
+                    <CardDescription className="text-sm">
+                      {tool.description}
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Tool Categories */}
       <div className="space-y-10">
