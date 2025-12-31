@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
@@ -39,6 +40,7 @@ export default function RootLayout({
             <main className="flex-1 overflow-auto">{children}</main>
           </SidebarInset>
         </SidebarProvider>
+        <Analytics />
       </body>
     </html>
   );
