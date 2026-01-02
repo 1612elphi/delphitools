@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 
 type QualityMode = "fast" | "precise";
 
+// Set to true when briaai/RMBG-2.0 becomes publicly available
+const ENABLE_PRECISE_MODE = false;
+
 interface ProcessingState {
   status: "idle" | "downloading" | "processing" | "done" | "error";
   message?: string;
@@ -199,35 +202,37 @@ export function BackgroundRemoverTool() {
 
   return (
     <div className="space-y-6">
-      {/* Quality Selection */}
-      <div className="space-y-3">
-        <label className="font-bold block">Quality</label>
-        <div className="flex gap-2">
-          <Button
-            variant={qualityMode === "fast" ? "default" : "outline"}
-            onClick={() => setQualityMode("fast")}
-            className="flex-1 font-bold"
-            size="lg"
-            disabled={isProcessing}
-          >
-            Fast
-          </Button>
-          <Button
-            variant={qualityMode === "precise" ? "default" : "outline"}
-            onClick={() => setQualityMode("precise")}
-            className="flex-1 font-bold"
-            size="lg"
-            disabled={isProcessing}
-          >
-            Precise
-          </Button>
+      {/* Quality Selection - only show when precise mode is available */}
+      {ENABLE_PRECISE_MODE && (
+        <div className="space-y-3">
+          <label className="font-bold block">Quality</label>
+          <div className="flex gap-2">
+            <Button
+              variant={qualityMode === "fast" ? "default" : "outline"}
+              onClick={() => setQualityMode("fast")}
+              className="flex-1 font-bold"
+              size="lg"
+              disabled={isProcessing}
+            >
+              Fast
+            </Button>
+            <Button
+              variant={qualityMode === "precise" ? "default" : "outline"}
+              onClick={() => setQualityMode("precise")}
+              className="flex-1 font-bold"
+              size="lg"
+              disabled={isProcessing}
+            >
+              Precise
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {qualityMode === "precise"
+              ? "Better edge detection for hair, fur, and complex shapes. Slower."
+              : "Good for most images with clean edges. Faster processing."}
+          </p>
         </div>
-        <p className="text-sm text-muted-foreground">
-          {qualityMode === "precise"
-            ? "Better edge detection for hair, fur, and complex shapes. Slower."
-            : "Good for most images with clean edges. Faster processing."}
-        </p>
-      </div>
+      )}
 
       {/* Drop Zone or Image Preview */}
       {!sourceImage ? (
