@@ -94,6 +94,9 @@ export default async function ToolPage({ params }: ToolPageProps) {
                 {category && (
                   <Badge variant="secondary">{category.name}</Badge>
                 )}
+                {tool.beta && (
+                  <Badge variant="outline" className="border-amber-500/50 text-amber-600 dark:text-amber-400">Beta</Badge>
+                )}
               </div>
               <p className="text-muted-foreground mt-1">{tool.description}</p>
             </div>

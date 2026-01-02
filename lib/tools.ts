@@ -35,6 +35,7 @@ export interface Tool {
   description: string;
   icon: LucideIcon;
   href: string;
+  beta?: boolean;
 }
 
 export interface ToolCategory {
@@ -178,6 +179,7 @@ export const toolCategories: ToolCategory[] = [
         description: "Remove backgrounds from images automatically",
         icon: Eraser,
         href: "/tools/background-remover",
+        beta: true,
       },
     ],
   },
