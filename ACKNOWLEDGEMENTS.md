@@ -22,6 +22,11 @@ delphitools is built on the shoulders of many excellent open source projects. Th
 - **[JSZip](https://stuk.github.io/jszip/)** - Creating ZIP files in the browser
 - **[react-markdown](https://github.com/remarkjs/react-markdown)** - Markdown rendering
 - **[remark-gfm](https://github.com/remarkjs/remark-gfm)** - GitHub Flavored Markdown support
+- **[Transformers.js](https://huggingface.co/docs/transformers.js)** - Run machine learning models in the browser
+
+## Models
+
+- **[BRIA AI RMBG-1.4](https://huggingface.co/briaai/RMBG-1.4)** - Background removal model, licensed under [Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International](https://creativecommons.org/licenses/by-nc-nd/4.0/)
 
 ## Utilities
 
