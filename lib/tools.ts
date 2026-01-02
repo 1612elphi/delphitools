@@ -26,6 +26,7 @@ import {
   Sparkles,
   Contrast,
   Eye,
+  Eraser,
 } from "lucide-react";
 
 export interface Tool {
@@ -171,6 +172,13 @@ export const toolCategories: ToolCategory[] = [
         icon: Sparkles,
         href: "/tools/artwork-enhancer",
       },
+      {
+        id: "background-remover",
+        name: "Background Remover",
+        description: "Remove backgrounds from images automatically",
+        icon: Eraser,
+        href: "/tools/background-remover",
+      },
     ],
   },
   {
@@ -281,7 +289,7 @@ export const toolCategories: ToolCategory[] = [
 export const allTools = toolCategories.flatMap((category) => category.tools);
 
 // Featured tools for "Delphi's Greatest Hits" section
-export const featuredToolIds = ["qr-genny", "paper-sizes", "palette-genny"];
+export const featuredToolIds = ["qr-genny", "paper-sizes", "palette-genny", "background-remover"];
 export const featuredTools = featuredToolIds
   .map((id) => allTools.find((tool) => tool.id === id))
   .filter((tool): tool is Tool => tool !== undefined);

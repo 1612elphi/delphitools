@@ -36,6 +36,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   "watermarker": dynamic(() => import("@/components/tools/watermarker").then(mod => mod.WatermarkerTool)),
   "contrast-checker": dynamic(() => import("@/components/tools/contrast-checker").then(mod => mod.ContrastCheckerTool)),
   "colorblind-sim": dynamic(() => import("@/components/tools/colorblind-sim").then(mod => mod.ColorblindSimTool)),
+  "background-remover": dynamic(() => import("@/components/tools/background-remover").then(mod => mod.BackgroundRemoverTool)),
 };
 
 interface ToolPageProps {
