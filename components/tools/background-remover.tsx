@@ -62,7 +62,9 @@ export function BackgroundRemoverTool() {
         const { pipeline, env } = await import("@huggingface/transformers");
 
         env.allowLocalModels = false;
-        env.useBrowserCache = true;
+        // Disable Transformers.js Cache API - use browser's HTTP cache instead
+        // Cache API is unreliable on iOS Safari
+        env.useBrowserCache = false;
 
         const modelId = qualityMode === "precise" ? "briaai/RMBG-2.0" : "briaai/RMBG-1.4";
 
