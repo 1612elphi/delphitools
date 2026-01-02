@@ -3,6 +3,7 @@ import Image from "next/image";
 import { ArrowRight, Star } from "lucide-react";
 import { toolCategories, featuredTools } from "@/lib/tools";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default function Home() {
   return (
@@ -53,8 +54,11 @@ export default function Home() {
                       </div>
                       <ArrowRight className="size-4 text-amber-500/50 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
-                    <CardTitle className="text-base mt-3">
+                    <CardTitle className="text-base mt-3 flex items-center gap-2">
                       {tool.name}
+                      {tool.beta && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/50 text-amber-600 dark:text-amber-400">Beta</Badge>
+                      )}
                     </CardTitle>
                     <CardDescription className="text-sm">
                       {tool.description}
@@ -87,8 +91,11 @@ export default function Home() {
                           </div>
                           <ArrowRight className="size-4 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
-                        <CardTitle className="text-base mt-3">
+                        <CardTitle className="text-base mt-3 flex items-center gap-2">
                           {tool.name}
+                          {tool.beta && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/50 text-amber-600 dark:text-amber-400">Beta</Badge>
+                          )}
                         </CardTitle>
                         <CardDescription className="text-sm">
                           {tool.description}
