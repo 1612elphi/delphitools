@@ -284,6 +284,13 @@ export const toolCategories: ToolCategory[] = [
         icon: Regex,
         href: "/tools/regex-tester",
       },
+      {
+        id: "zine-imposer",
+        name: "Zine Imposer",
+        description: "Create 8-page mini-zine imposition layouts",
+        icon: BookOpen,
+        href: "/tools/zine-imposer",
+      },
     ],
   },
 ];

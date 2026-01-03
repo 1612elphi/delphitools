@@ -37,6 +37,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   "contrast-checker": dynamic(() => import("@/components/tools/contrast-checker").then(mod => mod.ContrastCheckerTool)),
   "colorblind-sim": dynamic(() => import("@/components/tools/colorblind-sim").then(mod => mod.ColorblindSimTool)),
   "background-remover": dynamic(() => import("@/components/tools/background-remover").then(mod => mod.BackgroundRemoverTool)),
+  "zine-imposer": dynamic(() => import("@/components/tools/zine-imposer").then(mod => mod.ZineImposerTool)),
 };
 
 interface ToolPageProps {
