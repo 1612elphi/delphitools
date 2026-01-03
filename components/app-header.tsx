@@ -6,7 +6,6 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { getToolById, getCategoryByToolId } from "@/lib/tools";
 import { Badge } from "@/components/ui/badge";
-import Image from "next/image";
 
 export function AppHeader() {
   const pathname = usePathname();
@@ -43,7 +42,7 @@ export function AppHeader() {
         </div>
       ) : (
         <div className="flex items-center gap-2">
-          <Image src="/delphi.png" width={40} height={40} alt="delphitools logo" className="size-5 text-muted-foreground" />
+          <img src="/delphi.png" width={40} height={40} alt="delphitools logo" className="size-5 text-muted-foreground" />
           <h1 className="text-lg font-semibold">delphitools</h1>
         </div>
       )}

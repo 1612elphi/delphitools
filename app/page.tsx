@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowRight, Star } from "lucide-react";
 import { toolCategories, featuredTools } from "@/lib/tools";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,12 +10,11 @@ export default function Home() {
       {/* Hero Section */}
       <div className="mb-12">
         <div className="flex items-center gap-3 mb-4">
-          <Image
+          <img
             src="/delphi-friday.png"
             alt="delphitools logo"
             width={1000}
             height={48}
-            className=""
           />
         </div>
         <div className="mt-6 max-w-2xl space-y-3 text-muted-foreground">
