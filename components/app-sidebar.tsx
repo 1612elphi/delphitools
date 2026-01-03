@@ -91,7 +91,7 @@ export function AppSidebar() {
                       tooltip={tool.name}
                       className="text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300"
                     >
-                      <Link href={tool.href}>
+                      <Link href={tool.href} prefetch={false}>
                         <Icon className="size-4" />
                         <span>{tool.name}</span>
                       </Link>
@@ -118,7 +118,7 @@ export function AppSidebar() {
                         isActive={isActive}
                         tooltip={tool.name}
                       >
-                        <Link href={tool.href}>
+                        <Link href={tool.href} prefetch={false}>
                           <Icon className="size-4" />
                           <span>{tool.name}</span>
                         </Link>
