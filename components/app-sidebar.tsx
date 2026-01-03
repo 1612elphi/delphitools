@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Home, Info, Star } from "lucide-react";
 
@@ -42,7 +41,7 @@ export function AppSidebar() {
             >
               <Link href="/">
                 <div className="flex aspect-square size-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <Image src="/delphi-lowlod.png" width={64} height={64} alt="delphitools logo" className="rounded-lg border-2 border-green-800" />
+                  <img src="/delphi-lowlod.png" width={64} height={64} alt="delphitools logo" className="rounded-lg border-2 border-green-800" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
                   <span className="font-semibold">delphitools</span>
