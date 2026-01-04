@@ -517,7 +517,7 @@ export function PaletteGennyTool() {
     ctx.fillStyle = "#999999";
     ctx.font = "16px system-ui, sans-serif";
     ctx.textAlign = "right";
-    ctx.fillText("delphitools.com", width - padding, height - padding + 5);
+    ctx.fillText("tools.rmv.fyi", width - padding, height - padding + 5);
 
     // Download
     const link = document.createElement("a");
