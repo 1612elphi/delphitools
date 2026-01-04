@@ -197,9 +197,8 @@ export function SvgOptimiserTool() {
           <div className="p-4 rounded-lg border bg-muted/30">
             <div className="text-sm text-muted-foreground mb-2">Preview</div>
             <div
-              className="flex items-center justify-center p-4 bg-white rounded"
+              className="flex items-center justify-center p-4 bg-white rounded overflow-hidden [&>svg]:max-w-full [&>svg]:max-h-[200px] [&>svg]:w-auto [&>svg]:h-auto"
               dangerouslySetInnerHTML={{ __html: output }}
-              style={{ maxHeight: 200 }}
             />
           </div>
 
