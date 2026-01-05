@@ -79,6 +79,17 @@ const TARGET_LIGHTNESS: Record<number, number> = {
   950: 0.20,
 };
 
+// Generation modes
+type GenerationMode = "classic" | "hue-shift" | "luminance-anchored" | "vivid" | "muted";
+
+const GENERATION_MODES: { value: GenerationMode; label: string; description: string }[] = [
+  { value: "classic", label: "Classic", description: "Standard Tailwind-style generation with uniform hue" },
+  { value: "hue-shift", label: "Hue Shift", description: "Warm tones for lighter shades, cool for darker" },
+  { value: "luminance-anchored", label: "Luminance Anchored", description: "Anchors to true white/black for better contrast" },
+  { value: "vivid", label: "Vivid", description: "Maximizes saturation across all shades" },
+  { value: "muted", label: "Muted", description: "Subtle, desaturated tones throughout" },
+];
+
 interface Shade {
   level: number;
   hex: string;
@@ -86,19 +97,82 @@ interface Shade {
   oklch: [number, number, number];
 }
 
-function generateShades(baseHex: string): Shade[] | null {
+interface ShadeParams {
+  targetL: number;
+  adjustedC: number;
+  adjustedH: number;
+}
+
+function getShadeParams(
+  level: number,
+  baseL: number,
+  baseC: number,
+  baseH: number,
+  mode: GenerationMode
+): ShadeParams {
+  const targetL = TARGET_LIGHTNESS[level];
+
+  switch (mode) {
+    case "classic": {
+      // Original approach - reduce chroma for extremes
+      const chromaScale = level <= 100 ? 0.3 : level >= 900 ? 0.6 : 1;
+      return { targetL, adjustedC: baseC * chromaScale, adjustedH: baseH };
+    }
+
+    case "hue-shift": {
+      // Shift hue towards warm (orange/yellow) for lighter, cool (blue) for darker
+      const chromaScale = level <= 100 ? 0.4 : level >= 900 ? 0.7 : 1;
+      const lightnessFactor = (targetL - 0.5) * 2; // -1 to 1
+      const hueShift = lightnessFactor * 15; // ±15 degrees
+      let adjustedH = baseH + hueShift;
+      if (adjustedH < 0) adjustedH += 360;
+      if (adjustedH >= 360) adjustedH -= 360;
+      return { targetL, adjustedC: baseC * chromaScale, adjustedH };
+    }
+
+    case "luminance-anchored": {
+      // Anchor extremes closer to true white/black
+      let adjustedL = targetL;
+      if (level <= 100) {
+        // Push lighter shades closer to white
+        adjustedL = targetL + (1 - targetL) * 0.3;
+      } else if (level >= 900) {
+        // Push darker shades closer to black
+        adjustedL = targetL * 0.8;
+      }
+      // Reduce chroma more aggressively at extremes for cleaner whites/blacks
+      const chromaScale = level <= 100 ? 0.15 : level >= 900 ? 0.4 : 1;
+      return { targetL: adjustedL, adjustedC: baseC * chromaScale, adjustedH: baseH };
+    }
+
+    case "vivid": {
+      // Maximize chroma - only slight reduction at extremes
+      const chromaScale = level <= 100 ? 0.6 : level >= 950 ? 0.8 : 1.1;
+      const boostedC = Math.min(baseC * chromaScale, 0.4); // Cap to stay in gamut
+      return { targetL, adjustedC: boostedC, adjustedH: baseH };
+    }
+
+    case "muted": {
+      // Desaturated throughout
+      const chromaScale = level <= 100 ? 0.15 : level >= 900 ? 0.3 : 0.5;
+      return { targetL, adjustedC: baseC * chromaScale, adjustedH: baseH };
+    }
+
+    default:
+      return { targetL, adjustedC: baseC, adjustedH: baseH };
+  }
+}
+
+function generateShades(baseHex: string, mode: GenerationMode = "classic"): Shade[] | null {
   const rgb = hexToRgb(baseHex);
   if (!rgb) return null;
 
-  const [, c, h] = rgbToOklch(...rgb);
+  const [baseL, baseC, baseH] = rgbToOklch(...rgb);
 
   return SHADE_LEVELS.map(level => {
-    const targetL = TARGET_LIGHTNESS[level];
-    // Adjust chroma - reduce for very light/dark shades
-    const chromaScale = level <= 100 ? 0.3 : level >= 900 ? 0.6 : 1;
-    const adjustedC = c * chromaScale;
+    const { targetL, adjustedC, adjustedH } = getShadeParams(level, baseL, baseC, baseH, mode);
 
-    const newRgb = oklchToRgb(targetL, adjustedC, h);
+    const newRgb = oklchToRgb(targetL, adjustedC, adjustedH);
     const clampedRgb: [number, number, number] = [
       Math.round(Math.max(0, Math.min(255, newRgb[0]))),
       Math.round(Math.max(0, Math.min(255, newRgb[1]))),
@@ -109,7 +183,7 @@ function generateShades(baseHex: string): Shade[] | null {
       level,
       hex: rgbToHex(...clampedRgb),
       rgb: clampedRgb,
-      oklch: [targetL, adjustedC, h],
+      oklch: [targetL, adjustedC, adjustedH],
     };
   });
 }
@@ -121,6 +195,7 @@ function TailwindShadesInner() {
 
   const [baseColour, setBaseColour] = useState(colorFromUrl || "#3b82f6");
   const [colourName, setColourName] = useState("primary");
+  const [mode, setMode] = useState<GenerationMode>("classic");
   const [shades, setShades] = useState<Shade[] | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -132,9 +207,9 @@ function TailwindShadesInner() {
   }, [colorFromUrl]);
 
   useEffect(() => {
-    const result = generateShades(baseColour);
+    const result = generateShades(baseColour, mode);
     setShades(result);
-  }, [baseColour]);
+  }, [baseColour, mode]);
 
   const copyValue = async (value: string, label: string) => {
     await navigator.clipboard.writeText(value);
@@ -163,7 +238,7 @@ function TailwindShadesInner() {
   return (
     <div className="space-y-6">
       {/* Input */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="space-y-2">
           <label className="font-bold">Base Colour</label>
           <div className="flex gap-2">
@@ -189,6 +264,23 @@ function TailwindShadesInner() {
             placeholder="primary"
             className="font-mono"
           />
+        </div>
+        <div className="space-y-2 sm:col-span-2 lg:col-span-1">
+          <label className="font-bold">Generation Mode</label>
+          <select
+            value={mode}
+            onChange={(e) => setMode(e.target.value as GenerationMode)}
+            className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+          >
+            {GENERATION_MODES.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">
+            {GENERATION_MODES.find((m) => m.value === mode)?.description}
+          </p>
         </div>
       </div>
 

@@ -28,6 +28,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   "tailwind-shades": dynamic(() => import("@/components/tools/tailwind-shades").then(mod => mod.TailwindShadesTool)),
   "harmony-genny": dynamic(() => import("@/components/tools/harmony-genny").then(mod => mod.HarmonyGennyTool)),
   "palette-genny": dynamic(() => import("@/components/tools/palette-genny").then(mod => mod.PaletteGennyTool)),
+  "palette-collection": dynamic(() => import("@/components/tools/palette-collection").then(mod => mod.PaletteCollectionTool)),
   "tailwind-cheatsheet": dynamic(() => import("@/components/tools/tailwind-cheatsheet").then(mod => mod.TailwindCheatsheetTool)),
   "markdown-writer": dynamic(() => import("@/components/tools/markdown-writer").then(mod => mod.MarkdownWriterTool)),
   "social-cropper": dynamic(() => import("@/components/tools/social-cropper").then(mod => mod.SocialCropperTool)),
@@ -38,7 +39,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   "colorblind-sim": dynamic(() => import("@/components/tools/colorblind-sim").then(mod => mod.ColorblindSimTool)),
   "background-remover": dynamic(() => import("@/components/tools/background-remover").then(mod => mod.BackgroundRemoverTool)),
   "zine-imposer": dynamic(() => import("@/components/tools/zine-imposer").then(mod => mod.ZineImposerTool)),
-};
+  };
 
 interface ToolPageProps {
   params: Promise<{

@@ -27,6 +27,7 @@ import {
   Contrast,
   Eye,
   Eraser,
+  Library,
 } from "lucide-react";
 
 export interface Tool {
@@ -110,6 +111,13 @@ export const toolCategories: ToolCategory[] = [
         description: "Generate beautiful colour palettes",
         icon: PenLine,
         href: "/tools/palette-genny",
+      },
+      {
+        id: "palette-collection",
+        name: "Palette Collection",
+        description: "Browse curated colour palettes",
+        icon: Library,
+        href: "/tools/palette-collection",
       },
       {
         id: "contrast-checker",

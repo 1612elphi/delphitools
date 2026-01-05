@@ -7,6 +7,12 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 type MatteType = "color" | "blur" | "gradient";
+type AspectRatio = "1:1" | "4:5";
+
+const ASPECT_RATIOS: { value: AspectRatio; label: string; description: string }[] = [
+  { value: "1:1", label: "1:1", description: "Square" },
+  { value: "4:5", label: "4:5", description: "Instagram Portrait" },
+];
 
 const presetColors = [
   "#ffffff",
@@ -24,10 +30,19 @@ export function MatteGeneratorTool() {
   const [matteType, setMatteType] = useState<MatteType>("blur");
   const [matteColor, setMatteColor] = useState("#ffffff");
   const [outputSize, setOutputSize] = useState(1080);
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>("1:1");
   const [padding, setPadding] = useState(40);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [dominantColor, setDominantColor] = useState<string>("#888888");
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Calculate output dimensions based on aspect ratio
+  const getOutputDimensions = () => {
+    if (aspectRatio === "4:5") {
+      return { width: outputSize, height: Math.round(outputSize * 5 / 4) };
+    }
+    return { width: outputSize, height: outputSize };
+  };
 
   // Extract dominant color for gradient preview
   useEffect(() => {
@@ -88,26 +103,27 @@ export function MatteGeneratorTool() {
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      canvas.width = outputSize;
-      canvas.height = outputSize;
+      const { width: canvasWidth, height: canvasHeight } = getOutputDimensions();
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
 
       // Draw matte background
       if (matteType === "color") {
         ctx.fillStyle = matteColor;
-        ctx.fillRect(0, 0, outputSize, outputSize);
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
       } else if (matteType === "blur") {
         // Draw blurred, scaled image as background
         ctx.filter = "blur(50px)";
         const scale = Math.max(
-          outputSize / img.width,
-          outputSize / img.height
+          canvasWidth / img.width,
+          canvasHeight / img.height
         );
         const scaledWidth = img.width * scale * 1.2;
         const scaledHeight = img.height * scale * 1.2;
         ctx.drawImage(
           img,
-          (outputSize - scaledWidth) / 2,
-          (outputSize - scaledHeight) / 2,
+          (canvasWidth - scaledWidth) / 2,
+          (canvasHeight - scaledHeight) / 2,
           scaledWidth,
           scaledHeight
         );
@@ -122,24 +138,25 @@ export function MatteGeneratorTool() {
           tempCtx.drawImage(img, 0, 0, 1, 1);
           const pixel = tempCtx.getImageData(0, 0, 1, 1).data;
           const baseColor = `rgb(${pixel[0]}, ${pixel[1]}, ${pixel[2]})`;
-          const gradient = ctx.createLinearGradient(0, 0, outputSize, outputSize);
+          const gradient = ctx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
           gradient.addColorStop(0, baseColor);
           gradient.addColorStop(1, adjustBrightness(baseColor, -30));
           ctx.fillStyle = gradient;
-          ctx.fillRect(0, 0, outputSize, outputSize);
+          ctx.fillRect(0, 0, canvasWidth, canvasHeight);
         }
       }
 
       // Calculate image placement with padding
-      const availableSize = outputSize - padding * 2;
+      const availableWidth = canvasWidth - padding * 2;
+      const availableHeight = canvasHeight - padding * 2;
       const scale = Math.min(
-        availableSize / img.width,
-        availableSize / img.height
+        availableWidth / img.width,
+        availableHeight / img.height
       );
       const scaledWidth = img.width * scale;
       const scaledHeight = img.height * scale;
-      const x = (outputSize - scaledWidth) / 2;
-      const y = (outputSize - scaledHeight) / 2;
+      const x = (canvasWidth - scaledWidth) / 2;
+      const y = (canvasHeight - scaledHeight) / 2;
 
       // Draw the image centered
       ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
@@ -160,8 +177,9 @@ export function MatteGeneratorTool() {
 
   const downloadResult = () => {
     if (!resultImage) return;
+    const { width, height } = getOutputDimensions();
     const link = document.createElement("a");
-    link.download = `${fileName}-matte-${outputSize}x${outputSize}.png`;
+    link.download = `${fileName}-matte-${width}x${height}.png`;
     link.href = resultImage;
     link.click();
   };
@@ -226,7 +244,7 @@ export function MatteGeneratorTool() {
               <div
                 className="relative rounded border overflow-hidden"
                 style={{
-                  width: "280px",
+                  width: aspectRatio === "4:5" ? "224px" : "280px",
                   height: "280px",
                   background:
                     matteType === "color"
@@ -248,7 +266,7 @@ export function MatteGeneratorTool() {
                 {/* Centered image with padding */}
                 <div
                   className="absolute inset-0 flex items-center justify-center"
-                  style={{ padding: `${(padding / outputSize) * 280}px` }}
+                  style={{ padding: `${(padding / outputSize) * (aspectRatio === "4:5" ? 224 : 280)}px` }}
                 >
                   <img
                     src={sourceImage}
@@ -340,9 +358,35 @@ export function MatteGeneratorTool() {
           )}
 
           {/* Output Settings */}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
-              <label className="font-bold text-sm">Output Size (px)</label>
+              <label className="font-bold text-sm">Aspect Ratio</label>
+              <div className="flex gap-2">
+                {ASPECT_RATIOS.map((ratio) => (
+                  <button
+                    key={ratio.value}
+                    onClick={() => {
+                      setAspectRatio(ratio.value);
+                      setResultImage(null);
+                    }}
+                    className={cn(
+                      "px-3 py-2 rounded-lg border text-sm transition-colors flex-1",
+                      aspectRatio === ratio.value
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "hover:border-primary/50"
+                    )}
+                    title={ratio.description}
+                  >
+                    {ratio.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {ASPECT_RATIOS.find((r) => r.value === aspectRatio)?.description}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <label className="font-bold text-sm">Output Width (px)</label>
               <div className="flex gap-2">
                 {[1080, 1200, 1440, 2048].map((size) => (
                   <button
@@ -404,7 +448,7 @@ export function MatteGeneratorTool() {
             />
           </div>
           <div className="text-sm text-muted-foreground text-center">
-            {outputSize} × {outputSize} px
+            {getOutputDimensions().width} × {getOutputDimensions().height} px
           </div>
         </div>
       )}
