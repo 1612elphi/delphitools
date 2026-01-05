@@ -1,6 +1,6 @@
-# Acknowledgements
+# Acknowledgments
 
-delphitools is built on the shoulders of many excellent open source projects. Thank you to all the maintainers and contributors who make these tools available.
+DelphiTools is built on the shoulders of many excellent open source projects. Thank you to all the maintainers and contributors who make these tools available.
 
 ## Core Framework
 
