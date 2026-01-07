@@ -708,7 +708,7 @@ export const CURATED_PALETTES: CuratedPalette[] = [
     category: "vintage",
   },
   {
-    id: "metropolis",
+    id: "maschinenmensch",
     name: "Maschinenmensch",
     colors: ["#000000", "#dd0100", "#fac901", "#225095", "#ffffff"],
     category: "vintage",
