@@ -28,6 +28,7 @@ import {
   Eye,
   Eraser,
   Library,
+  Blend,
 } from "lucide-react";
 
 export interface Tool {
@@ -37,6 +38,7 @@ export interface Tool {
   icon: LucideIcon;
   href: string;
   beta?: boolean;
+  new?: boolean;
 }
 
 export interface ToolCategory {
@@ -132,6 +134,14 @@ export const toolCategories: ToolCategory[] = [
         description: "Simulate how colours appear to colour blind users",
         icon: Eye,
         href: "/tools/colorblind-sim",
+      },
+      {
+        id: "gradient-generator",
+        name: "Gradient Generator",
+        description: "Create linear, corner, and mesh gradients",
+        icon: Blend,
+        href: "/tools/gradient-generator",
+        new: true,
       },
     ],
   },

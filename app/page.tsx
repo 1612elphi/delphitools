@@ -57,6 +57,9 @@ export default function Home() {
                       {tool.beta && (
                         <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/50 text-amber-600 dark:text-amber-400">Beta</Badge>
                       )}
+                      {tool.new && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/50 text-primary">New</Badge>
+                      )}
                     </CardTitle>
                     <CardDescription className="text-sm">
                       {tool.description}
@@ -93,6 +96,9 @@ export default function Home() {
                           {tool.name}
                           {tool.beta && (
                             <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/50 text-amber-600 dark:text-amber-400">Beta</Badge>
+                          )}
+                          {tool.new && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/50 text-primary">New</Badge>
                           )}
                         </CardTitle>
                         <CardDescription className="text-sm">

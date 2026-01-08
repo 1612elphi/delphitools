@@ -39,7 +39,8 @@ const toolComponents: Record<string, React.ComponentType> = {
   "colorblind-sim": dynamic(() => import("@/components/tools/colorblind-sim").then(mod => mod.ColorblindSimTool)),
   "background-remover": dynamic(() => import("@/components/tools/background-remover").then(mod => mod.BackgroundRemoverTool)),
   "zine-imposer": dynamic(() => import("@/components/tools/zine-imposer").then(mod => mod.ZineImposerTool)),
-  };
+  "gradient-generator": dynamic(() => import("@/components/tools/gradient-generator").then(mod => mod.GradientGeneratorTool)),
+};
 
 interface ToolPageProps {
   params: Promise<{
@@ -98,6 +99,9 @@ export default async function ToolPage({ params }: ToolPageProps) {
                 )}
                 {tool.beta && (
                   <Badge variant="outline" className="border-amber-500/50 text-amber-600 dark:text-amber-400">Beta</Badge>
+                )}
+                {tool.new && (
+                  <Badge variant="outline" className="border-primary/50 text-primary">New</Badge>
                 )}
               </div>
               <p className="text-muted-foreground mt-1">{tool.description}</p>
