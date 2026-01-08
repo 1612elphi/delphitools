@@ -578,7 +578,7 @@ function SortableMeshPoint({
   );
 }
 
-export function GradientGeneratorTool() {
+export function GradientGennyTool() {
   // State
   const [mode, setMode] = useState<GradientMode>("linear");
   const [angle, setAngle] = useState(90);

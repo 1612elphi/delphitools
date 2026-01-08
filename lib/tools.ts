@@ -136,11 +136,11 @@ export const toolCategories: ToolCategory[] = [
         href: "/tools/colorblind-sim",
       },
       {
-        id: "gradient-generator",
+        id: "gradient-genny",
         name: "Gradient Generator",
         description: "Create linear, corner, and mesh gradients",
         icon: Blend,
-        href: "/tools/gradient-generator",
+        href: "/tools/gradient-genny",
         new: true,
       },
     ],

@@ -39,7 +39,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   "colorblind-sim": dynamic(() => import("@/components/tools/colorblind-sim").then(mod => mod.ColorblindSimTool)),
   "background-remover": dynamic(() => import("@/components/tools/background-remover").then(mod => mod.BackgroundRemoverTool)),
   "zine-imposer": dynamic(() => import("@/components/tools/zine-imposer").then(mod => mod.ZineImposerTool)),
-  "gradient-generator": dynamic(() => import("@/components/tools/gradient-generator").then(mod => mod.GradientGeneratorTool)),
+  "gradient-genny": dynamic(() => import("@/components/tools/gradient-genny").then(mod => mod.GradientGennyTool)),
 };
 
 interface ToolPageProps {
