@@ -1,28 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layers, LayoutGrid, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { paperSizeGroups, type PaperSize } from "@/lib/paper-sizes";
+import { paperSizeGroups, formatDimensions, formatFraction, type PaperSize } from "@/lib/paper-sizes";
 
 const COLORS = {
   first: { bg: "bg-primary/20", border: "border-primary", text: "text-primary" },
   second: { bg: "bg-rose-900/20", border: "border-rose-900", text: "text-rose-900" },
 };
 
-const getPrimaryDimensions = (size: PaperSize): string => {
-  // US sizes use inches as primary
-  if (size.region === "North America") {
-    return `${size.widthIn.toFixed(1)} × ${size.heightIn.toFixed(1)}"`;
-  }
-  // Everything else uses mm
-  return `${Math.round(size.widthMm)} × ${Math.round(size.heightMm)} mm`;
-};
-
 export function PaperSizesTool() {
   const [selected, setSelected] = useState<[PaperSize | null, PaperSize | null]>([null, null]);
   const [nextSlot, setNextSlot] = useState<0 | 1>(0);
   const [overlayMode, setOverlayMode] = useState(false);
+  const [unit, setUnit] = useState<"mm" | "in">(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("paperSizeUnit") as "mm" | "in") || "mm";
+    }
+    return "mm";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("paperSizeUnit", unit);
+  }, [unit]);
 
   const handleSelect = (size: PaperSize) => {
     const newSelected: [PaperSize | null, PaperSize | null] = [...selected];
@@ -103,7 +104,7 @@ export function PaperSizesTool() {
           </div>
           <div>
             <div className="text-muted-foreground">Inches</div>
-            <div className="font-bold">{size.widthIn.toFixed(2)} × {size.heightIn.toFixed(2)}</div>
+            <div className="font-bold">{formatFraction(size.widthIn)} × {formatFraction(size.heightIn)}"</div>
           </div>
         </div>
       </div>
@@ -116,17 +117,37 @@ export function PaperSizesTool() {
     <div className="space-y-6">
       {/* Mode Toggle */}
       <div className="flex justify-end">
-        <Button
-          variant={overlayMode ? "default" : "outline"}
-          size="sm"
-          onClick={() => setOverlayMode(!overlayMode)}
-        >
-          {overlayMode ? (
-            <><Layers className="size-4 mr-2" /> Overlay</>
-          ) : (
-            <><LayoutGrid className="size-4 mr-2" /> Side by Side</>
-          )}
-        </Button>
+        <div className="flex gap-2">
+          <div className="flex rounded-lg border">
+            <Button
+              variant={unit === "mm" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setUnit("mm")}
+              className="rounded-r-none"
+            >
+              mm
+            </Button>
+            <Button
+              variant={unit === "in" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setUnit("in")}
+              className="rounded-l-none"
+            >
+              in
+            </Button>
+          </div>
+          <Button
+            variant={overlayMode ? "default" : "outline"}
+            size="sm"
+            onClick={() => setOverlayMode(!overlayMode)}
+          >
+            {overlayMode ? (
+              <><Layers className="size-4 mr-2" /> Overlay</>
+            ) : (
+              <><LayoutGrid className="size-4 mr-2" /> Side by Side</>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Comparison Boxes */}
@@ -228,7 +249,7 @@ export function PaperSizesTool() {
                   >
                     <div className="font-bold">{size.label}</div>
                     <div className="text-xs text-muted-foreground mt-1">
-                      {getPrimaryDimensions(size)}
+                      {formatDimensions(size, unit)}
                     </div>
                   </button>
                 );
