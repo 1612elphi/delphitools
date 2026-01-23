@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ChevronDown, Layers, LayoutGrid, Search, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ChevronDown, Layers, LayoutGrid, Search, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -32,11 +32,35 @@ export function PaperSizesTool() {
     return "mm";
   });
   const [searchQuery, setSearchQuery] = useState("");
+  const [uploadDpi, setUploadDpi] = useState(300);
+  const [uploadedDimensions, setUploadedDimensions] = useState<{width: number; height: number} | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const searchResult = parseSearchQuery(searchQuery);
 
   useEffect(() => {
     localStorage.setItem("paperSizeUnit", unit);
   }, [unit]);
+
+  useEffect(() => {
+    if (uploadedDimensions) {
+      setSearchQuery(`${uploadedDimensions.width}x${uploadedDimensions.height}@${uploadDpi}dpi`);
+    }
+  }, [uploadDpi, uploadedDimensions]);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type.startsWith("image/")) {
+      const img = new Image();
+      img.onload = () => {
+        setUploadedDimensions({ width: img.width, height: img.height });
+        setSearchQuery(`${img.width}x${img.height}@${uploadDpi}dpi`);
+      };
+      img.src = URL.createObjectURL(file);
+    }
+    // PDF handling in next task
+  };
 
   // Compute closest matches for dimension/pixel searches
   const closestMatches = (searchResult.type === "dimensions" || searchResult.type === "pixels")
@@ -257,23 +281,58 @@ export function PaperSizesTool() {
       </div>
 
       {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-        <Input
-          placeholder="Search: A4, 210x297mm, 8.5x11in, 1920x1080@300dpi..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
-        {searchQuery && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-1 top-1/2 -translate-y-1/2 size-7"
-            onClick={() => setSearchQuery("")}
-          >
-            <X className="size-4" />
+      <div className="space-y-3">
+        <div className="flex gap-2 items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Search: A4, 210x297mm, 8.5x11in, 1920x1080@300dpi..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 size-7"
+                onClick={() => {
+                  setSearchQuery("");
+                  setUploadedDimensions(null);
+                }}
+              >
+                <X className="size-4" />
+              </Button>
+            )}
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.pdf"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
+          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+            <Upload className="size-4 mr-2" />
+            Upload
           </Button>
+        </div>
+
+        {/* DPI selector - show when we have pixel dimensions */}
+        {(searchResult.type === "pixels" || uploadedDimensions) && (
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">DPI:</span>
+            {[72, 150, 300, 600].map(dpi => (
+              <Button
+                key={dpi}
+                variant={uploadDpi === dpi ? "default" : "outline"}
+                size="sm"
+                onClick={() => setUploadDpi(dpi)}
+              >
+                {dpi}
+              </Button>
+            ))}
+          </div>
         )}
       </div>
 
