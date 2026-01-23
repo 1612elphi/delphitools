@@ -1,9 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Layers, LayoutGrid, X } from "lucide-react";
+import { Layers, LayoutGrid, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { paperSizeGroups, formatDimensions, formatFraction, type PaperSize } from "@/lib/paper-sizes";
+import { Input } from "@/components/ui/input";
+import {
+  paperSizeGroups,
+  formatDimensions,
+  formatFraction,
+  parseSearchQuery,
+  matchesNameSearch,
+  findClosestSizes,
+  type PaperSize
+} from "@/lib/paper-sizes";
 
 const COLORS = {
   first: { bg: "bg-primary/20", border: "border-primary", text: "text-primary" },
@@ -20,10 +29,32 @@ export function PaperSizesTool() {
     }
     return "mm";
   });
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchResult = parseSearchQuery(searchQuery);
 
   useEffect(() => {
     localStorage.setItem("paperSizeUnit", unit);
   }, [unit]);
+
+  // Compute closest matches for dimension/pixel searches
+  const closestMatches = (searchResult.type === "dimensions" || searchResult.type === "pixels")
+    ? findClosestSizes(
+        paperSizeGroups,
+        searchResult.type === "pixels"
+          ? (searchResult.width / searchResult.dpi) * 25.4
+          : searchResult.widthMm,
+        searchResult.type === "pixels"
+          ? (searchResult.height / searchResult.dpi) * 25.4
+          : searchResult.heightMm
+      )
+    : [];
+
+  const isHighlighted = (size: PaperSize): boolean => {
+    if (searchResult.type === "none") return true;
+    if (searchResult.type === "name") return matchesNameSearch(size, searchResult.query);
+    // For dimensions/pixels, highlight top 5 closest
+    return closestMatches.some(m => m.size.id === size.id && m.size.series === size.series);
+  };
 
   const handleSelect = (size: PaperSize) => {
     const newSelected: [PaperSize | null, PaperSize | null] = [...selected];
@@ -223,6 +254,27 @@ export function PaperSizesTool() {
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+        <Input
+          placeholder="Search: A4, 210x297mm, 8.5x11in, 1920x1080@300dpi..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+        {searchQuery && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-1 top-1/2 -translate-y-1/2 size-7"
+            onClick={() => setSearchQuery("")}
+          >
+            <X className="size-4" />
+          </Button>
+        )}
+      </div>
+
       {/* Paper Size Grid */}
       <div className="space-y-8">
         {paperSizeGroups.map((group) => (
@@ -235,6 +287,7 @@ export function PaperSizesTool() {
               {group.sizes.map((size) => {
                 const isSelected0 = selected[0]?.id === size.id && selected[0]?.series === size.series;
                 const isSelected1 = selected[1]?.id === size.id && selected[1]?.series === size.series;
+                const highlighted = isHighlighted(size);
                 return (
                   <button
                     key={`${size.series}-${size.id}`}
@@ -245,6 +298,7 @@ export function PaperSizesTool() {
                       ${isSelected0 ? `${COLORS.first.bg} ${COLORS.first.border} border-2` : ""}
                       ${isSelected1 ? `${COLORS.second.bg} ${COLORS.second.border} border-2` : ""}
                       ${!isSelected0 && !isSelected1 ? "bg-card hover:border-foreground/30" : ""}
+                      ${!highlighted ? "opacity-30" : ""}
                     `}
                   >
                     <div className="font-bold">{size.label}</div>
