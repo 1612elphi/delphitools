@@ -314,7 +314,11 @@ export function PaperSizesTool() {
             <Input
               placeholder="Search: A4, 210x297mm, 8.5x11in, 1920x1080@300dpi..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                // Clear uploaded dimensions when user manually edits search
+                setUploadedDimensions(null);
+              }}
               className="pl-10"
             />
             {searchQuery && (
