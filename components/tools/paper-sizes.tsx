@@ -56,10 +56,17 @@ export function PaperSizesTool() {
       img.onload = () => {
         setUploadedDimensions({ width: img.width, height: img.height });
         setSearchQuery(`${img.width}x${img.height}@${uploadDpi}dpi`);
+        URL.revokeObjectURL(img.src);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(img.src);
       };
       img.src = URL.createObjectURL(file);
     }
     // PDF handling in next task
+
+    // Reset file input to allow re-uploading the same file
+    e.target.value = '';
   };
 
   // Compute closest matches for dimension/pixel searches
