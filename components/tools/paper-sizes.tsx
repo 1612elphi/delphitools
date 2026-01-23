@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Layers, LayoutGrid, Search, X } from "lucide-react";
+import { ChevronDown, Layers, LayoutGrid, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Badge } from "@/components/ui/badge";
 import {
   paperSizeGroups,
   formatDimensions,
@@ -274,6 +276,53 @@ export function PaperSizesTool() {
           </Button>
         )}
       </div>
+
+      {/* Closest Matches Banner */}
+      {closestMatches.length > 0 && (searchResult.type === "dimensions" || searchResult.type === "pixels") && (
+        <Collapsible defaultOpen className="rounded-lg border bg-muted/30 p-4">
+          <div className="flex items-center justify-between">
+            <div className="font-medium">
+              Closest matches for {searchResult.type === "pixels"
+                ? `${searchResult.width}×${searchResult.height}px @ ${searchResult.dpi}dpi`
+                : `${Math.round(searchResult.widthMm)}×${Math.round(searchResult.heightMm)}mm`
+              }
+            </div>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <ChevronDown className="size-4" />
+              </Button>
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent className="pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              {closestMatches.map(({ size, widthDiff, heightDiff }, i) => (
+                <button
+                  key={`match-${size.series}-${size.id}`}
+                  onClick={() => handleSelect(size)}
+                  className="p-3 rounded-lg border bg-card text-left hover:bg-accent"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold">{size.label}</span>
+                    {i === 0 && <Badge variant="secondary">Best</Badge>}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {formatDimensions(size, unit)}
+                  </div>
+                  <div className="text-xs mt-1">
+                    <span className={widthDiff >= 0 ? "text-green-600" : "text-red-600"}>
+                      {widthDiff >= 0 ? "+" : ""}{Math.round(widthDiff)}mm
+                    </span>
+                    {" / "}
+                    <span className={heightDiff >= 0 ? "text-green-600" : "text-red-600"}>
+                      {heightDiff >= 0 ? "+" : ""}{Math.round(heightDiff)}mm
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
 
       {/* Paper Size Grid */}
       <div className="space-y-8">
