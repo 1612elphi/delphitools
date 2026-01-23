@@ -345,3 +345,77 @@ export function formatDimensions(size: PaperSize, unit: "mm" | "in"): string {
   }
   return `${formatFraction(size.widthIn)} × ${formatFraction(size.heightIn)}"`;
 }
+
+// Search utilities
+
+export type SearchResult =
+  | { type: "name"; query: string }
+  | { type: "dimensions"; widthMm: number; heightMm: number }
+  | { type: "pixels"; width: number; height: number; dpi: number }
+  | { type: "none" };
+
+export function parseSearchQuery(query: string): SearchResult {
+  const trimmed = query.trim().toLowerCase();
+  if (!trimmed) return { type: "none" };
+
+  // Try pixels with DPI: "1920x1080 @ 300dpi" or "1920x1080 300dpi"
+  const pixelMatch = trimmed.match(/^(\d+)\s*[x×]\s*(\d+)\s*[@]?\s*(\d+)\s*dpi$/i);
+  if (pixelMatch) {
+    return {
+      type: "pixels",
+      width: parseInt(pixelMatch[1]),
+      height: parseInt(pixelMatch[2]),
+      dpi: parseInt(pixelMatch[3])
+    };
+  }
+
+  // Try dimensions with units: "210x297mm" or "8.5x11in" or "8.5 x 11""
+  const dimMatch = trimmed.match(/^([\d.]+)\s*[x×]\s*([\d.]+)\s*(mm|in|"|'')?$/);
+  if (dimMatch) {
+    const w = parseFloat(dimMatch[1]);
+    const h = parseFloat(dimMatch[2]);
+    const unitStr = dimMatch[3];
+    if (unitStr === "in" || unitStr === '"' || unitStr === "''") {
+      return { type: "dimensions", widthMm: w * 25.4, heightMm: h * 25.4 };
+    }
+    // Default to mm, or if numbers look like inches (both < 50), treat as inches
+    if (!unitStr && w < 50 && h < 50) {
+      return { type: "dimensions", widthMm: w * 25.4, heightMm: h * 25.4 };
+    }
+    return { type: "dimensions", widthMm: w, heightMm: h };
+  }
+
+  // Otherwise treat as name search
+  return { type: "name", query: trimmed };
+}
+
+export function matchesNameSearch(size: PaperSize, query: string): boolean {
+  const q = query.toLowerCase();
+  return size.label.toLowerCase().includes(q) ||
+         size.id.toLowerCase().includes(q) ||
+         size.series.toLowerCase().includes(q);
+}
+
+export function calculateSizeDistance(size: PaperSize, targetWidthMm: number, targetHeightMm: number): number {
+  // Euclidean distance in mm
+  const dw = size.widthMm - targetWidthMm;
+  const dh = size.heightMm - targetHeightMm;
+  return Math.sqrt(dw * dw + dh * dh);
+}
+
+export function findClosestSizes(
+  groups: PaperGroup[],
+  targetWidthMm: number,
+  targetHeightMm: number,
+  limit = 5
+): Array<{ size: PaperSize; distance: number; widthDiff: number; heightDiff: number }> {
+  const all = groups.flatMap(g => g.sizes);
+  const withDistance = all.map(size => ({
+    size,
+    distance: calculateSizeDistance(size, targetWidthMm, targetHeightMm),
+    widthDiff: size.widthMm - targetWidthMm,
+    heightDiff: size.heightMm - targetHeightMm
+  }));
+  withDistance.sort((a, b) => a.distance - b.distance);
+  return withDistance.slice(0, limit);
+}
