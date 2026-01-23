@@ -410,12 +410,25 @@ export function findClosestSizes(
   limit = 5
 ): Array<{ size: PaperSize; distance: number; widthDiff: number; heightDiff: number }> {
   const all = groups.flatMap(g => g.sizes);
-  const withDistance = all.map(size => ({
-    size,
-    distance: calculateSizeDistance(size, targetWidthMm, targetHeightMm),
-    widthDiff: size.widthMm - targetWidthMm,
-    heightDiff: size.heightMm - targetHeightMm
-  }));
+  const withDistance = all.map(size => {
+    const normalDistance = calculateSizeDistance(size, targetWidthMm, targetHeightMm);
+    const rotatedDistance = calculateSizeDistance(size, targetHeightMm, targetWidthMm);
+
+    // Use the better orientation
+    const useRotated = rotatedDistance < normalDistance;
+    const distance = Math.min(normalDistance, rotatedDistance);
+
+    return {
+      size,
+      distance,
+      widthDiff: useRotated
+        ? size.widthMm - targetHeightMm
+        : size.widthMm - targetWidthMm,
+      heightDiff: useRotated
+        ? size.heightMm - targetWidthMm
+        : size.heightMm - targetHeightMm
+    };
+  });
   withDistance.sort((a, b) => a.distance - b.distance);
   return withDistance.slice(0, limit);
 }
