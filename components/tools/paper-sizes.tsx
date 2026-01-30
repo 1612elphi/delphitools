@@ -1,341 +1,112 @@
 "use client";
 
-import { useState } from "react";
-import { Layers, LayoutGrid, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ChevronDown, Layers, LayoutGrid, Search, Upload, X } from "lucide-react";
+import { PDFDocument } from "pdf-lib";
 import { Button } from "@/components/ui/button";
-
-const INCH_TO_MM = 25.4;
-
-interface PaperSize {
-  id: string;
-  label: string;
-  series: string;
-  region: string;
-  widthMm: number;
-  heightMm: number;
-  widthIn: number;
-  heightIn: number;
-}
-
-interface PaperGroup {
-  id: string;
-  label: string;
-  description: string;
-  sizes: PaperSize[];
-}
-
-const withInches = ({
-  widthMm,
-  heightMm,
-  widthIn,
-  heightIn,
-  ...rest
-}: {
-  id: string;
-  label: string;
-  series: string;
-  region: string;
-  widthMm?: number;
-  heightMm?: number;
-  widthIn?: number;
-  heightIn?: number;
-}): PaperSize => {
-  const derivedWidthMm = widthMm ?? (widthIn != null ? widthIn * INCH_TO_MM : 0);
-  const derivedHeightMm = heightMm ?? (heightIn != null ? heightIn * INCH_TO_MM : 0);
-  const derivedWidthIn = widthIn ?? (widthMm != null ? widthMm / INCH_TO_MM : 0);
-  const derivedHeightIn = heightIn ?? (heightMm != null ? heightMm / INCH_TO_MM : 0);
-
-  return {
-    ...rest,
-    widthMm: derivedWidthMm,
-    heightMm: derivedHeightMm,
-    widthIn: derivedWidthIn,
-    heightIn: derivedHeightIn,
-  };
-};
-
-const isoASize = (label: string, widthMm: number, heightMm: number) =>
-  withInches({ id: label.toLowerCase(), label, series: "ISO A", region: "International", widthMm, heightMm });
-
-const isoBSize = (label: string, widthMm: number, heightMm: number) =>
-  withInches({ id: label.toLowerCase(), label, series: "ISO B", region: "International", widthMm, heightMm });
-
-const isoCSize = (label: string, widthMm: number, heightMm: number) =>
-  withInches({ id: label.toLowerCase(), label, series: "ISO C", region: "International", widthMm, heightMm });
-
-const raSize = (label: string, widthMm: number, heightMm: number) =>
-  withInches({ id: label.toLowerCase(), label, series: "Raw Format", region: "International", widthMm, heightMm });
-
-const sraSize = (label: string, widthMm: number, heightMm: number) =>
-  withInches({ id: label.toLowerCase(), label, series: "SRA", region: "International", widthMm, heightMm });
-
-const usSize = (id: string, label: string, widthIn: number, heightIn: number) =>
-  withInches({ id, label, series: "US Classic", region: "North America", widthIn, heightIn });
-
-const usAnsiSize = (id: string, label: string, widthMm: number, heightMm: number) =>
-  withInches({ id, label, series: "US ANSI", region: "North America", widthMm, heightMm });
-
-const usArchSize = (id: string, label: string, widthMm: number, heightMm: number) =>
-  withInches({ id, label, series: "US Arch", region: "North America", widthMm, heightMm });
-
-const japaneseSize = (id: string, label: string, widthMm: number, heightMm: number) =>
-  withInches({ id, label, series: "Japanese JIS", region: "Japan", widthMm, heightMm });
-
-const chineseSize = (id: string, label: string, widthMm: number, heightMm: number) =>
-  withInches({ id, label, series: "Chinese", region: "China", widthMm, heightMm });
-
-const swedishSize = (id: string, label: string, widthMm: number, heightMm: number) =>
-  withInches({ id, label, series: "Swedish SIS", region: "Sweden", widthMm, heightMm });
-
-const frenchSize = (id: string, label: string, widthMm: number, heightMm: number) =>
-  withInches({ id, label, series: "French Traditional", region: "France", widthMm, heightMm });
-
-const imperialSize = (id: string, label: string, widthMm: number, heightMm: number) =>
-  withInches({ id, label, series: "Imperial", region: "UK Traditional", widthMm, heightMm });
-
-const paperSizeGroups: PaperGroup[] = [
-  {
-    id: "common",
-    label: "Common",
-    description: "Common sizes for quick access.",
-    sizes: [
-      isoASize("A4", 210, 297),
-      isoASize("A3", 297, 420),
-      sraSize("SRA3", 320, 450),
-      usSize("letter", "Letter", 8.5, 11),
-    ],
-  },
-  {
-    id: "iso-a",
-    label: "ISO A Series",
-    description: "International standard sizes with 1:√2 aspect ratio.",
-    sizes: [
-      isoASize("4A0", 1682, 2378),
-      isoASize("2A0", 1189, 1682),
-      isoASize("A0", 841, 1189),
-      isoASize("A0+", 914, 1292),
-      isoASize("A1", 594, 841),
-      isoASize("A1+", 609, 914),
-      isoASize("A2", 420, 594),
-      isoASize("A3", 297, 420),
-      isoASize("A3+", 329, 483),
-      isoASize("A4", 210, 297),
-      isoASize("A5", 148, 210),
-      isoASize("A6", 105, 148),
-      isoASize("A7", 74, 105),
-      isoASize("A8", 52, 74),
-      isoASize("A9", 37, 52),
-      isoASize("A10", 26, 37),
-    ],
-  },
-  {
-    id: "iso-b",
-    label: "ISO B Series",
-    description: "Geometric mean between A series sizes.",
-    sizes: [
-      isoBSize("B0", 1000, 1414),
-      isoBSize("B1", 707, 1000),
-      isoBSize("B2", 500, 707),
-      isoBSize("B3", 353, 500),
-      isoBSize("B4", 250, 353),
-      isoBSize("B5", 176, 250),
-      isoBSize("B6", 125, 176),
-      isoBSize("B7", 88, 125),
-      isoBSize("B8", 62, 88),
-      isoBSize("B9", 44, 62),
-      isoBSize("B10", 31, 44),
-    ],
-  },
-  {
-    id: "iso-c",
-    label: "ISO C Series",
-    description: "Envelope sizes - geometric mean between A and B.",
-    sizes: [
-      isoCSize("C0", 917, 1297),
-      isoCSize("C1", 648, 917),
-      isoCSize("C2", 458, 648),
-      isoCSize("C3", 324, 458),
-      isoCSize("C4", 229, 324),
-      isoCSize("C5", 162, 229),
-      isoCSize("C6", 114, 162),
-      isoCSize("C7", 81, 114),
-      isoCSize("C8", 57, 81),
-    ],
-  },
-  {
-    id: "raw-format",
-    label: "RA Series",
-    description: "Raw format sizes for printing before trimming.",
-    sizes: [
-      raSize("RA0", 860, 1220),
-      raSize("RA1", 610, 860),
-      raSize("RA2", 430, 610),
-      raSize("RA3", 305, 430),
-      raSize("RA4", 215, 305),
-    ],
-  },
-  {
-    id: "sra-series",
-    label: "SRA Series",
-    description: "Supplementary Raw Format A - extra bleed area.",
-    sizes: [
-      sraSize("SRA0", 900, 1280),
-      sraSize("SRA1", 640, 900),
-      sraSize("SRA1+", 660, 920),
-      sraSize("SRA2", 450, 640),
-      sraSize("SRA2+", 480, 650),
-      sraSize("SRA3", 320, 450),
-      sraSize("SRA3+", 320, 460),
-      sraSize("SRA4", 225, 320),
-    ],
-  },
-  {
-    id: "us-classic",
-    label: "US Classic",
-    description: "North American office and press standards.",
-    sizes: [
-      usSize("letter", "Letter", 8.5, 11),
-      usSize("legal", "Legal", 8.5, 14),
-      usSize("tabloid", "Tabloid", 11, 17),
-      usSize("ledger", "Ledger", 17, 11),
-      usSize("junior-legal", "Junior Legal", 5, 8),
-      usSize("half-letter", "Half Letter", 5.5, 8.5),
-      usSize("government-letter", "Gov Letter", 8, 10.5),
-      usSize("government-legal", "Gov Legal", 8.5, 13),
-    ],
-  },
-  {
-    id: "us-ansi",
-    label: "US ANSI",
-    description: "American National Standards Institute sizes.",
-    sizes: [
-      usAnsiSize("ansi-a", "ANSI A", 216, 279),
-      usAnsiSize("ansi-b", "ANSI B", 279, 432),
-      usAnsiSize("ansi-c", "ANSI C", 432, 559),
-      usAnsiSize("ansi-d", "ANSI D", 559, 864),
-      usAnsiSize("ansi-e", "ANSI E", 864, 1118),
-    ],
-  },
-  {
-    id: "us-arch",
-    label: "US Architectural",
-    description: "American architectural drawing standards.",
-    sizes: [
-      usArchSize("arch-a", "Arch A", 229, 305),
-      usArchSize("arch-b", "Arch B", 305, 457),
-      usArchSize("arch-c", "Arch C", 457, 610),
-      usArchSize("arch-d", "Arch D", 610, 914),
-      usArchSize("arch-e", "Arch E", 914, 1219),
-      usArchSize("arch-e1", "Arch E1", 762, 1067),
-    ],
-  },
-  {
-    id: "japanese",
-    label: "Japanese JIS",
-    description: "Japanese Industrial Standard paper sizes.",
-    sizes: [
-      japaneseSize("jb0", "JB0", 1030, 1456),
-      japaneseSize("jb1", "JB1", 728, 1030),
-      japaneseSize("jb2", "JB2", 515, 728),
-      japaneseSize("jb3", "JB3", 364, 515),
-      japaneseSize("jb4", "JB4", 257, 364),
-      japaneseSize("jb5", "JB5", 182, 257),
-      japaneseSize("jb6", "JB6", 128, 182),
-      japaneseSize("shiroku-ban-4", "Shiroku ban 4", 264, 379),
-      japaneseSize("shiroku-ban-5", "Shiroku ban 5", 189, 262),
-      japaneseSize("kiku-4", "Kiku 4", 227, 306),
-      japaneseSize("kiku-5", "Kiku 5", 151, 227),
-    ],
-  },
-  {
-    id: "chinese",
-    label: "Chinese",
-    description: "Chinese national standard paper sizes.",
-    sizes: [
-      chineseSize("d0", "D0", 764, 1064),
-      chineseSize("d1", "D1", 532, 760),
-      chineseSize("d2", "D2", 380, 532),
-      chineseSize("d3", "D3", 266, 380),
-      chineseSize("d4", "D4", 190, 266),
-      chineseSize("d5", "D5", 133, 190),
-      chineseSize("d6", "D6", 95, 133),
-    ],
-  },
-  {
-    id: "swedish",
-    label: "Swedish SIS",
-    description: "Swedish standard paper sizes.",
-    sizes: [
-      swedishSize("sis-d0", "SIS D0", 1091, 1542),
-      swedishSize("sis-d1", "SIS D1", 771, 1091),
-      swedishSize("sis-d2", "SIS D2", 545, 771),
-      swedishSize("sis-d3", "SIS D3", 386, 545),
-      swedishSize("sis-d4", "SIS D4", 273, 386),
-      swedishSize("sis-e0", "SIS E0", 878, 1242),
-      swedishSize("sis-e1", "SIS E1", 621, 878),
-      swedishSize("sis-e2", "SIS E2", 439, 621),
-      swedishSize("sis-e3", "SIS E3", 310, 439),
-      swedishSize("sis-e4", "SIS E4", 220, 310),
-    ],
-  },
-  {
-    id: "french",
-    label: "French Traditional",
-    description: "Traditional French paper sizes.",
-    sizes: [
-      frenchSize("cloche", "Cloche", 300, 400),
-      frenchSize("pot-ecolier", "Pot, écolier", 310, 400),
-      frenchSize("telliere", "Tellière", 340, 440),
-      frenchSize("couronne-ecriture", "Couronne écriture", 360, 360),
-      frenchSize("couronne-edition", "Couronne édition", 370, 470),
-      frenchSize("raisin", "Raisin", 500, 650),
-      frenchSize("double-raisin", "Double Raisin", 650, 1000),
-      frenchSize("jesus", "Jésus", 560, 760),
-      frenchSize("soleil", "Soleil", 600, 800),
-      frenchSize("colombier-affiche", "Colombier affiche", 600, 800),
-      frenchSize("grand-aigle", "Grand Aigle", 750, 1050),
-      frenchSize("univers", "Univers", 1000, 1130),
-    ],
-  },
-  {
-    id: "imperial",
-    label: "Imperial",
-    description: "Traditional British Imperial paper sizes.",
-    sizes: [
-      imperialSize("antiquarian", "Antiquarian", 787, 1346),
-      imperialSize("atlas", "Atlas", 660, 864),
-      imperialSize("broadsheet", "Broadsheet", 457, 610),
-      imperialSize("crown", "Crown", 381, 508),
-      imperialSize("demy", "Demy", 445, 572),
-      imperialSize("double-demy", "Double Demy", 572, 902),
-      imperialSize("elephant", "Elephant", 584, 711),
-      imperialSize("emperor", "Emperor", 1219, 1829),
-      imperialSize("foolscap", "Foolscap", 343, 432),
-      imperialSize("imperial", "Imperial", 559, 762),
-      imperialSize("medium", "Medium", 470, 584),
-      imperialSize("royal", "Royal", 508, 635),
-    ],
-  },
-];
+import { Input } from "@/components/ui/input";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Badge } from "@/components/ui/badge";
+import {
+  paperSizeGroups,
+  formatDimensions,
+  formatFraction,
+  parseSearchQuery,
+  matchesNameSearch,
+  findClosestSizes,
+  type PaperSize
+} from "@/lib/paper-sizes";
 
 const COLORS = {
   first: { bg: "bg-primary/20", border: "border-primary", text: "text-primary" },
   second: { bg: "bg-rose-900/20", border: "border-rose-900", text: "text-rose-900" },
 };
 
-const getPrimaryDimensions = (size: PaperSize): string => {
-  // US sizes use inches as primary
-  if (size.region === "North America") {
-    return `${size.widthIn.toFixed(1)} × ${size.heightIn.toFixed(1)}"`;
-  }
-  // Everything else uses mm
-  return `${Math.round(size.widthMm)} × ${Math.round(size.heightMm)} mm`;
-};
-
 export function PaperSizesTool() {
   const [selected, setSelected] = useState<[PaperSize | null, PaperSize | null]>([null, null]);
   const [nextSlot, setNextSlot] = useState<0 | 1>(0);
   const [overlayMode, setOverlayMode] = useState(false);
+  const [unit, setUnit] = useState<"mm" | "in">(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("paperSizeUnit") as "mm" | "in") || "mm";
+    }
+    return "mm";
+  });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [uploadDpi, setUploadDpi] = useState(300);
+  const [uploadedDimensions, setUploadedDimensions] = useState<{width: number; height: number} | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const searchResult = parseSearchQuery(searchQuery);
+
+  useEffect(() => {
+    localStorage.setItem("paperSizeUnit", unit);
+  }, [unit]);
+
+  useEffect(() => {
+    if (uploadedDimensions) {
+      setSearchQuery(`${uploadedDimensions.width}x${uploadedDimensions.height}@${uploadDpi}dpi`);
+    }
+  }, [uploadDpi, uploadedDimensions]);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type.startsWith("image/")) {
+      const img = new Image();
+      img.onload = () => {
+        setUploadedDimensions({ width: img.width, height: img.height });
+        setSearchQuery(`${img.width}x${img.height}@${uploadDpi}dpi`);
+        URL.revokeObjectURL(img.src);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(img.src);
+      };
+      img.src = URL.createObjectURL(file);
+    } else if (file.type === "application/pdf") {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await PDFDocument.load(arrayBuffer);
+        const pageCount = pdf.getPageCount();
+        if (pageCount === 0) {
+          console.error("PDF has no pages");
+          return;
+        }
+        const firstPage = pdf.getPage(0);
+        const { width, height } = firstPage.getSize();
+        // PDF dimensions are in points (72 per inch)
+        const widthMm = (width / 72) * 25.4;
+        const heightMm = (height / 72) * 25.4;
+        setUploadedDimensions(null); // Clear pixel dimensions (PDF gives us mm directly)
+        setSearchQuery(`${Math.round(widthMm)}x${Math.round(heightMm)}mm`);
+      } catch (error) {
+        console.error("Failed to parse PDF:", error);
+      }
+    }
+
+    // Reset file input to allow re-uploading the same file
+    e.target.value = '';
+  };
+
+  // Compute closest matches for dimension/pixel searches
+  const closestMatches = (searchResult.type === "dimensions" || searchResult.type === "pixels")
+    ? findClosestSizes(
+        paperSizeGroups,
+        searchResult.type === "pixels"
+          ? (searchResult.width / searchResult.dpi) * 25.4
+          : searchResult.widthMm,
+        searchResult.type === "pixels"
+          ? (searchResult.height / searchResult.dpi) * 25.4
+          : searchResult.heightMm
+      )
+    : [];
+
+  const isHighlighted = (size: PaperSize): boolean => {
+    if (searchResult.type === "none") return true;
+    if (searchResult.type === "name") return matchesNameSearch(size, searchResult.query);
+    // For dimensions/pixels, highlight top 5 closest
+    return closestMatches.some(m => m.size.id === size.id && m.size.series === size.series);
+  };
 
   const handleSelect = (size: PaperSize) => {
     const newSelected: [PaperSize | null, PaperSize | null] = [...selected];
@@ -416,7 +187,7 @@ export function PaperSizesTool() {
           </div>
           <div>
             <div className="text-muted-foreground">Inches</div>
-            <div className="font-bold">{size.widthIn.toFixed(2)} × {size.heightIn.toFixed(2)}</div>
+            <div className="font-bold">{formatFraction(size.widthIn)} × {formatFraction(size.heightIn)}"</div>
           </div>
         </div>
       </div>
@@ -429,17 +200,37 @@ export function PaperSizesTool() {
     <div className="space-y-6">
       {/* Mode Toggle */}
       <div className="flex justify-end">
-        <Button
-          variant={overlayMode ? "default" : "outline"}
-          size="sm"
-          onClick={() => setOverlayMode(!overlayMode)}
-        >
-          {overlayMode ? (
-            <><Layers className="size-4 mr-2" /> Overlay</>
-          ) : (
-            <><LayoutGrid className="size-4 mr-2" /> Side by Side</>
-          )}
-        </Button>
+        <div className="flex gap-2">
+          <div className="flex rounded-lg border">
+            <Button
+              variant={unit === "mm" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setUnit("mm")}
+              className="rounded-r-none"
+            >
+              mm
+            </Button>
+            <Button
+              variant={unit === "in" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setUnit("in")}
+              className="rounded-l-none"
+            >
+              in
+            </Button>
+          </div>
+          <Button
+            variant={overlayMode ? "default" : "outline"}
+            size="sm"
+            onClick={() => setOverlayMode(!overlayMode)}
+          >
+            {overlayMode ? (
+              <><Layers className="size-4 mr-2" /> Overlay</>
+            ) : (
+              <><LayoutGrid className="size-4 mr-2" /> Side by Side</>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Comparison Boxes */}
@@ -515,6 +306,113 @@ export function PaperSizesTool() {
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div className="space-y-3">
+        <div className="flex gap-2 items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Search: A4, 210x297mm, 8.5x11in, 1920x1080@300dpi..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                // Clear uploaded dimensions when user manually edits search
+                setUploadedDimensions(null);
+              }}
+              className="pl-10"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 size-7"
+                onClick={() => {
+                  setSearchQuery("");
+                  setUploadedDimensions(null);
+                }}
+              >
+                <X className="size-4" />
+              </Button>
+            )}
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.pdf"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
+          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+            <Upload className="size-4 mr-2" />
+            Upload
+          </Button>
+        </div>
+
+        {/* DPI selector - show when we have pixel dimensions */}
+        {(searchResult.type === "pixels" || uploadedDimensions) && (
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">DPI:</span>
+            {[72, 150, 300, 600].map(dpi => (
+              <Button
+                key={dpi}
+                variant={uploadDpi === dpi ? "default" : "outline"}
+                size="sm"
+                onClick={() => setUploadDpi(dpi)}
+              >
+                {dpi}
+              </Button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Closest Matches Banner */}
+      {closestMatches.length > 0 && (searchResult.type === "dimensions" || searchResult.type === "pixels") && (
+        <Collapsible defaultOpen className="rounded-lg border bg-muted/30 p-4">
+          <div className="flex items-center justify-between">
+            <div className="font-medium">
+              Closest matches for {searchResult.type === "pixels"
+                ? `${searchResult.width}×${searchResult.height}px @ ${searchResult.dpi}dpi`
+                : `${Math.round(searchResult.widthMm)}×${Math.round(searchResult.heightMm)}mm`
+              }
+            </div>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <ChevronDown className="size-4" />
+              </Button>
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent className="pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              {closestMatches.map(({ size, widthDiff, heightDiff }, i) => (
+                <button
+                  key={`match-${size.series}-${size.id}`}
+                  onClick={() => handleSelect(size)}
+                  className="p-3 rounded-lg border bg-card text-left hover:bg-accent"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold">{size.label}</span>
+                    {i === 0 && <Badge variant="secondary">Best</Badge>}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {formatDimensions(size, unit)}
+                  </div>
+                  <div className="text-xs mt-1">
+                    <span className={widthDiff >= 0 ? "text-green-600" : "text-red-600"}>
+                      {widthDiff >= 0 ? "+" : ""}{Math.round(widthDiff)}mm
+                    </span>
+                    {" / "}
+                    <span className={heightDiff >= 0 ? "text-green-600" : "text-red-600"}>
+                      {heightDiff >= 0 ? "+" : ""}{Math.round(heightDiff)}mm
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
+
       {/* Paper Size Grid */}
       <div className="space-y-8">
         {paperSizeGroups.map((group) => (
@@ -527,6 +425,7 @@ export function PaperSizesTool() {
               {group.sizes.map((size) => {
                 const isSelected0 = selected[0]?.id === size.id && selected[0]?.series === size.series;
                 const isSelected1 = selected[1]?.id === size.id && selected[1]?.series === size.series;
+                const highlighted = isHighlighted(size);
                 return (
                   <button
                     key={`${size.series}-${size.id}`}
@@ -537,11 +436,12 @@ export function PaperSizesTool() {
                       ${isSelected0 ? `${COLORS.first.bg} ${COLORS.first.border} border-2` : ""}
                       ${isSelected1 ? `${COLORS.second.bg} ${COLORS.second.border} border-2` : ""}
                       ${!isSelected0 && !isSelected1 ? "bg-card hover:border-foreground/30" : ""}
+                      ${!highlighted ? "opacity-30" : ""}
                     `}
                   >
                     <div className="font-bold">{size.label}</div>
                     <div className="text-xs text-muted-foreground mt-1">
-                      {getPrimaryDimensions(size)}
+                      {formatDimensions(size, unit)}
                     </div>
                   </button>
                 );
