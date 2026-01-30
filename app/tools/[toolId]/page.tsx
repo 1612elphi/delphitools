@@ -40,6 +40,13 @@ const toolComponents: Record<string, React.ComponentType> = {
   "background-remover": dynamic(() => import("@/components/tools/background-remover").then(mod => mod.BackgroundRemoverTool)),
   "zine-imposer": dynamic(() => import("@/components/tools/zine-imposer").then(mod => mod.ZineImposerTool)),
   "gradient-genny": dynamic(() => import("@/components/tools/gradient-genny").then(mod => mod.GradientGennyTool)),
+  "sci-calc": dynamic(() => import("@/components/tools/sci-calc").then(mod => mod.SciCalcTool)),
+  "graph-calc": dynamic(() => import("@/components/tools/graph-calc").then(mod => mod.GraphCalcTool)),
+  "algebra-calc": dynamic(() => import("@/components/tools/algebra-calc").then(mod => mod.AlgebraCalcTool)),
+  "base-converter": dynamic(() => import("@/components/tools/base-converter").then(mod => mod.BaseConverterTool)),
+  "time-calc": dynamic(() => import("@/components/tools/time-calc").then(mod => mod.TimeCalcTool)),
+  "unit-converter": dynamic(() => import("@/components/tools/unit-converter").then(mod => mod.UnitConverterTool)),
+  "encoder": dynamic(() => import("@/components/tools/encoder").then(mod => mod.EncoderTool)),
 };
 
 interface ToolPageProps {
