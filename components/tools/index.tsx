@@ -5,6 +5,13 @@ import { WordCounterTool } from "./word-counter";
 import { QrGeneratorTool } from "./qr-generator";
 import { ImageConverterTool } from "./image-converter";
 import { RegexTesterTool } from "./regex-tester";
+import { SciCalcTool } from "./sci-calc";
+import { GraphCalcTool } from "./graph-calc";
+import { AlgebraCalcTool } from "./algebra-calc";
+import { BaseConverterTool } from "./base-converter";
+import { TimeCalcTool } from "./time-calc";
+import { UnitConverterTool } from "./unit-converter";
+import { EncoderTool } from "./encoder";
 
 export const toolComponents: Record<string, React.ComponentType> = {
   "px-to-rem": PxToRemTool,
@@ -12,4 +19,11 @@ export const toolComponents: Record<string, React.ComponentType> = {
   "qr-genny": QrGeneratorTool,
   "image-converter": ImageConverterTool,
   "regex-tester": RegexTesterTool,
+  "sci-calc": SciCalcTool,
+  "graph-calc": GraphCalcTool,
+  "algebra-calc": AlgebraCalcTool,
+  "base-converter": BaseConverterTool,
+  "time-calc": TimeCalcTool,
+  "unit-converter": UnitConverterTool,
+  "encoder": EncoderTool,
 };

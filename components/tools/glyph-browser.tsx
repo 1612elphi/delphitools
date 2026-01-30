@@ -4,6 +4,11 @@ import { useState, useMemo } from "react";
 import { Copy, Check, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface GlyphCategory {
   name: string;
@@ -29,8 +34,9 @@ const CATEGORIES: GlyphCategory[] = [
 export function GlyphBrowserTool() {
   const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0].name);
   const [search, setSearch] = useState("");
-  const [copied, setCopied] = useState<string | null>(null);
-  const [selectedGlyph, setSelectedGlyph] = useState<number | null>(null);
+  const [copiedFormat, setCopiedFormat] = useState<string | null>(null);
+  const [copiedChar, setCopiedChar] = useState<string | null>(null);
+  const [openPopover, setOpenPopover] = useState<number | null>(null);
 
   const glyphs = useMemo(() => {
     const category = CATEGORIES.find((c) => c.name === selectedCategory);
@@ -58,8 +64,12 @@ export function GlyphBrowserTool() {
   const copyGlyph = async (code: number) => {
     const char = String.fromCodePoint(code);
     await navigator.clipboard.writeText(char);
-    setCopied(char);
-    setTimeout(() => setCopied(null), 1500);
+    setCopiedChar(char);
+    setCopiedFormat("grid");
+    setTimeout(() => {
+      setCopiedChar(null);
+      setCopiedFormat(null);
+    }, 1500);
   };
 
   const copyCode = async (code: number, format: "char" | "html" | "css" | "js") => {
@@ -81,8 +91,12 @@ export function GlyphBrowserTool() {
         break;
     }
     await navigator.clipboard.writeText(text);
-    setCopied(text);
-    setTimeout(() => setCopied(null), 1500);
+    setCopiedChar(String.fromCodePoint(code));
+    setCopiedFormat(format);
+    setTimeout(() => {
+      setCopiedChar(null);
+      setCopiedFormat(null);
+    }, 1500);
   };
 
   return (
@@ -103,7 +117,7 @@ export function GlyphBrowserTool() {
           onChange={(e) => {
             setSelectedCategory(e.target.value);
             setSearch("");
-            setSelectedGlyph(null);
+            setOpenPopover(null);
           }}
           className="h-10 px-4 rounded-lg border bg-background min-w-[180px]"
         >
@@ -114,85 +128,6 @@ export function GlyphBrowserTool() {
           ))}
         </select>
       </div>
-
-      {/* Selected Glyph Detail */}
-      {selectedGlyph !== null && (
-        <div className="p-6 rounded-lg border bg-card">
-          <div className="flex items-start gap-6">
-            <div className="text-8xl leading-none p-4 bg-muted rounded-lg">
-              {String.fromCodePoint(selectedGlyph)}
-            </div>
-            <div className="flex-1 space-y-4">
-              <div>
-                <div className="text-sm text-muted-foreground">Unicode</div>
-                <div className="font-mono text-lg">
-                  U+{selectedGlyph.toString(16).toUpperCase().padStart(4, "0")}
-                </div>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => copyCode(selectedGlyph, "char")}
-                >
-                  {copied === String.fromCodePoint(selectedGlyph) ? (
-                    <Check className="size-3 mr-1" />
-                  ) : (
-                    <Copy className="size-3 mr-1" />
-                  )}
-                  Copy Char
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => copyCode(selectedGlyph, "html")}
-                >
-                  <Copy className="size-3 mr-1" />
-                  HTML
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => copyCode(selectedGlyph, "css")}
-                >
-                  <Copy className="size-3 mr-1" />
-                  CSS
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => copyCode(selectedGlyph, "js")}
-                >
-                  <Copy className="size-3 mr-1" />
-                  JS
-                </Button>
-              </div>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <div className="text-muted-foreground">HTML Entity</div>
-                  <code className="font-mono">&#x{selectedGlyph.toString(16)};</code>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">CSS</div>
-                  <code className="font-mono">\{selectedGlyph.toString(16)}</code>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">JavaScript</div>
-                  <code className="font-mono">
-                    {selectedGlyph <= 0xffff
-                      ? `\\u${selectedGlyph.toString(16).padStart(4, "0")}`
-                      : `\\u{${selectedGlyph.toString(16)}}`}
-                  </code>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">Decimal</div>
-                  <code className="font-mono">{selectedGlyph}</code>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Glyph Grid */}
       <div className="space-y-2">
@@ -205,25 +140,101 @@ export function GlyphBrowserTool() {
         <div className="grid grid-cols-8 sm:grid-cols-12 md:grid-cols-16 lg:grid-cols-20 gap-1">
           {filteredGlyphs.slice(0, 400).map((code) => {
             const char = String.fromCodePoint(code);
-            const isSelected = selectedGlyph === code;
-            const isCopied = copied === char;
+            const isOpen = openPopover === code;
+            const isCopied = copiedFormat === "grid" && copiedChar === char;
 
             return (
-              <button
+              <Popover
                 key={code}
-                onClick={() => setSelectedGlyph(code)}
-                onDoubleClick={() => copyGlyph(code)}
-                title={`U+${code.toString(16).toUpperCase().padStart(4, "0")}`}
-                className={`aspect-square flex items-center justify-center text-xl rounded border transition-colors ${
-                  isSelected
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : isCopied
-                    ? "bg-green-500/20 border-green-500"
-                    : "bg-card hover:border-primary/50"
-                }`}
+                open={isOpen}
+                onOpenChange={(open) => setOpenPopover(open ? code : null)}
               >
-                {char}
-              </button>
+                <PopoverTrigger asChild>
+                  <button
+                    onDoubleClick={(e) => {
+                      e.preventDefault();
+                      copyGlyph(code);
+                    }}
+                    title={`U+${code.toString(16).toUpperCase().padStart(4, "0")}`}
+                    className={`aspect-square flex items-center justify-center text-xl rounded border transition-colors ${
+                      isOpen
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : isCopied
+                        ? "bg-green-500/20 border-green-500"
+                        : "bg-card hover:border-primary/50"
+                    }`}
+                  >
+                    {char}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-0" side="top" align="center">
+                  <div className="p-3 border-b flex items-center gap-3">
+                    <span className="text-4xl">{char}</span>
+                    <div>
+                      <div className="font-mono font-medium">
+                        U+{code.toString(16).toUpperCase().padStart(4, "0")}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Decimal: {code}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-2 grid grid-cols-2 gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => copyCode(code, "char")}
+                      className={`justify-start ${copiedFormat === "char" ? "text-green-500" : ""}`}
+                    >
+                      {copiedFormat === "char" ? (
+                        <Check className="size-3 mr-2" />
+                      ) : (
+                        <Copy className="size-3 mr-2" />
+                      )}
+                      Char
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => copyCode(code, "html")}
+                      className={`justify-start ${copiedFormat === "html" ? "text-green-500" : ""}`}
+                    >
+                      {copiedFormat === "html" ? (
+                        <Check className="size-3 mr-2" />
+                      ) : (
+                        <Copy className="size-3 mr-2" />
+                      )}
+                      HTML
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => copyCode(code, "css")}
+                      className={`justify-start ${copiedFormat === "css" ? "text-green-500" : ""}`}
+                    >
+                      {copiedFormat === "css" ? (
+                        <Check className="size-3 mr-2" />
+                      ) : (
+                        <Copy className="size-3 mr-2" />
+                      )}
+                      CSS
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => copyCode(code, "js")}
+                      className={`justify-start ${copiedFormat === "js" ? "text-green-500" : ""}`}
+                    >
+                      {copiedFormat === "js" ? (
+                        <Check className="size-3 mr-2" />
+                      ) : (
+                        <Copy className="size-3 mr-2" />
+                      )}
+                      JS
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
             );
           })}
         </div>
@@ -236,8 +247,7 @@ export function GlyphBrowserTool() {
 
       {/* Instructions */}
       <div className="p-4 rounded-lg border bg-muted/30 text-sm text-muted-foreground">
-        <strong className="text-foreground">Tips:</strong> Click a glyph to see details.
-        Double-click to copy the character. Use the buttons to copy in different formats.
+        <strong className="text-foreground">Tip:</strong> Double-click any glyph to quickly copy the character.
       </div>
     </div>
   );
