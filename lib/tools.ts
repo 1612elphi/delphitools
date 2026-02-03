@@ -261,6 +261,14 @@ export const toolCategories: ToolCategory[] = [
         icon: FileType,
         href: "/tools/font-explorer",
       },
+      {
+        id: "pdf-to-markdown",
+        name: "PDF to Markdown",
+        description: "Convert PDF documents to Markdown",
+        icon: FileText,
+        href: "/tools/pdf-to-markdown",
+        new: true,
+      },
     ],
   },
   {

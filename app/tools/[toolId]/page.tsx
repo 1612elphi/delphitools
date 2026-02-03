@@ -47,6 +47,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   "time-calc": dynamic(() => import("@/components/tools/time-calc").then(mod => mod.TimeCalcTool)),
   "unit-converter": dynamic(() => import("@/components/tools/unit-converter").then(mod => mod.UnitConverterTool)),
   "encoder": dynamic(() => import("@/components/tools/encoder").then(mod => mod.EncoderTool)),
+  "pdf-to-markdown": dynamic(() => import("@/components/tools/pdf-to-markdown").then(mod => mod.PdfToMarkdownTool)),
 };
 
 interface ToolPageProps {
