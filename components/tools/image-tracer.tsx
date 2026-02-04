@@ -648,24 +648,21 @@ export function ImageTracerTool() {
                 <ChevronsUpDown className="size-4 text-muted-foreground" />
               </button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-80 p-2">
-              <div className="grid grid-cols-2 gap-1">
-                {PRESETS.map(({ id, label, icon: Icon, description }) => (
+            <PopoverContent align="start" className="w-[340px] p-2">
+              <div className="grid grid-cols-4 gap-1">
+                {PRESETS.map(({ id, label, icon: Icon }) => (
                   <button
                     key={id}
                     type="button"
                     onClick={() => { applyPreset(id); setPresetsOpen(false) }}
-                    className={`flex items-start gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors ${
+                    className={`flex flex-col items-center gap-1 rounded-md px-1 py-2.5 transition-colors ${
                       preset === id
                         ? "bg-primary/10 text-primary"
-                        : "hover:bg-accent text-foreground"
+                        : "hover:bg-accent text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    <Icon className="size-4 shrink-0 mt-0.5" />
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium leading-tight">{label}</div>
-                      <div className="text-[11px] leading-snug text-muted-foreground mt-0.5">{description}</div>
-                    </div>
+                    <Icon className="size-4" />
+                    <span className="text-[10px] leading-tight font-medium">{label}</span>
                   </button>
                 ))}
               </div>
