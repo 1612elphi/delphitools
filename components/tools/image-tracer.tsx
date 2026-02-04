@@ -363,11 +363,37 @@ function ColourCountCard({
 
 // ── Main component ───────────────────────────────────────────────────
 
+// Create an inline Web Worker that runs imagetracerjs off the main thread.
+// Fetches the library source from public/ and injects it into a Blob-based worker.
+async function createTracerWorker(): Promise<Worker | null> {
+  try {
+    const resp = await fetch("/lib/imagetracer_v1.2.6.js")
+    if (!resp.ok) return null
+    const libSource = await resp.text()
+    const workerCode = `
+      ${libSource}
+      self.onmessage = function(e) {
+        var imgd = new ImageData(
+          new Uint8ClampedArray(e.data.buffer),
+          e.data.width,
+          e.data.height
+        );
+        var svg = self.ImageTracer.imagedataToSVG(imgd, e.data.opts);
+        self.postMessage(svg);
+      };
+    `
+    const blob = new Blob([workerCode], { type: "application/javascript" })
+    return new Worker(URL.createObjectURL(blob))
+  } catch {
+    return null
+  }
+}
+
 export function ImageTracerTool() {
   const router = useRouter()
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imageSrc, setImageSrc] = useState<string | null>(null)
-  const [svgString, setSvgString] = useState<string | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [tracing, setTracing] = useState(false)
   const [copied, setCopied] = useState(false)
   const [options, setOptions] = useState<TracerOptions>({ ...DEFAULT_OPTIONS })
@@ -376,18 +402,33 @@ export function ImageTracerTool() {
   const [isDragOver, setIsDragOver] = useState(false)
   const [dirty, setDirty] = useState(false)
   const [presetsOpen, setPresetsOpen] = useState(false)
+  const [hasResult, setHasResult] = useState(false)
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const imageDataRef = useRef<ImageData | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const tracerRef = useRef<typeof import("imagetracerjs").default | null>(null)
   const rawSvgRef = useRef<string | null>(null)
+  const workerRef = useRef<Worker | null>(null)
+  const workerInitRef = useRef<Promise<Worker | null> | null>(null)
+  const prevPreviewUrlRef = useRef<string | null>(null)
 
-  const getTracer = useCallback(async () => {
-    if (tracerRef.current) return tracerRef.current
-    const mod = await import("imagetracerjs")
-    tracerRef.current = mod.default
-    return mod.default
+  // Lazily initialise the worker (async, cached after first call)
+  const getWorker = useCallback(async () => {
+    if (workerRef.current) return workerRef.current
+    if (!workerInitRef.current) {
+      workerInitRef.current = createTracerWorker()
+    }
+    const worker = await workerInitRef.current
+    workerRef.current = worker
+    return worker
+  }, [])
+
+  // Clean up worker on unmount
+  useEffect(() => {
+    return () => {
+      workerRef.current?.terminate()
+      if (prevPreviewUrlRef.current) URL.revokeObjectURL(prevPreviewUrlRef.current)
+    }
   }, [])
 
   const extractImageData = useCallback((file: File): Promise<ImageData> => {
@@ -408,44 +449,67 @@ export function ImageTracerTool() {
     })
   }, [])
 
-  // Make the SVG responsive by ensuring viewBox exists and removing fixed dimensions
+  // Make the SVG responsive for preview display
   const makeResponsive = (svg: string): string => {
     const widthMatch = svg.match(/<svg[^>]*\swidth="([^"]+)"/)
     const heightMatch = svg.match(/<svg[^>]*\sheight="([^"]+)"/)
     const hasViewBox = /<svg[^>]*\sviewBox="/.test(svg)
-
     let result = svg
-
-    // Add viewBox from width/height if missing
     if (!hasViewBox && widthMatch && heightMatch) {
-      result = result.replace(
-        /<svg/,
-        `<svg viewBox="0 0 ${widthMatch[1]} ${heightMatch[1]}"`
-      )
+      result = result.replace(/<svg/, `<svg viewBox="0 0 ${widthMatch[1]} ${heightMatch[1]}"`)
     }
-
-    // Replace fixed width/height with responsive values
     result = result
       .replace(/(<svg[^>]*)\swidth="[^"]*"/, '$1 width="100%"')
       .replace(/(<svg[^>]*)\sheight="[^"]*"/, '$1 height="auto"')
-
     return result
   }
 
+  // Convert SVG string to a blob URL for <img> rendering (avoids DOM thrashing)
+  const svgToBlobUrl = (svg: string): string => {
+    const blob = new Blob([svg], { type: "image/svg+xml" })
+    return URL.createObjectURL(blob)
+  }
+
+  const handleTraceResult = useCallback((rawSvg: string) => {
+    rawSvgRef.current = rawSvg
+    // Revoke previous preview blob URL
+    if (prevPreviewUrlRef.current) URL.revokeObjectURL(prevPreviewUrlRef.current)
+    const url = svgToBlobUrl(makeResponsive(rawSvg))
+    prevPreviewUrlRef.current = url
+    setPreviewUrl(url)
+    setHasResult(true)
+    setTracing(false)
+  }, [])
+
   const runTrace = useCallback(async (imgd: ImageData, opts: TracerOptions) => {
     setTracing(true)
-    try {
-      const ImageTracer = await getTracer()
-      await new Promise(resolve => setTimeout(resolve, 10))
-      const rawSvg = ImageTracer.imagedataToSVG(imgd, { ...opts })
-      rawSvgRef.current = rawSvg
-      setSvgString(makeResponsive(rawSvg))
-    } catch (err) {
-      console.error("Tracing failed:", err)
-    } finally {
-      setTracing(false)
+
+    const worker = await getWorker()
+    if (worker) {
+      // Transfer ImageData buffer to worker (off main thread)
+      const buffer = imgd.data.buffer.slice(0)
+      worker.onmessage = (e: MessageEvent<string>) => handleTraceResult(e.data)
+      worker.onerror = () => {
+        console.error("Worker tracing failed")
+        setTracing(false)
+      }
+      worker.postMessage(
+        { buffer, width: imgd.width, height: imgd.height, opts: { ...opts } },
+        [buffer]
+      )
+    } else {
+      // Fallback: run on main thread
+      try {
+        const mod = await import("imagetracerjs")
+        await new Promise(resolve => setTimeout(resolve, 10))
+        const rawSvg = mod.default.imagedataToSVG(imgd, { ...opts })
+        handleTraceResult(rawSvg)
+      } catch (err) {
+        console.error("Tracing failed:", err)
+        setTracing(false)
+      }
     }
-  }, [getTracer])
+  }, [getWorker, handleTraceResult])
 
   useEffect(() => {
     if (!imageFile) return
@@ -467,7 +531,9 @@ export function ImageTracerTool() {
 
   const handleFile = useCallback((file: File) => {
     if (!file.type.startsWith("image/")) return
-    setSvgString(null)
+    setPreviewUrl(null)
+    setHasResult(false)
+    rawSvgRef.current = null
     imageDataRef.current = null
     setImageFile(file)
     setImageSrc(URL.createObjectURL(file))
@@ -489,8 +555,8 @@ export function ImageTracerTool() {
     setPreset(name)
     setDirty(true)
     try {
-      const ImageTracer = await getTracer()
-      const presetOpts = ImageTracer.optionpresets[name]
+      const mod = await import("imagetracerjs")
+      const presetOpts = mod.default.optionpresets[name]
       if (presetOpts) {
         setOptions(prev => ({
           ...DEFAULT_OPTIONS,
@@ -501,7 +567,7 @@ export function ImageTracerTool() {
     } catch {
       setOptions({ ...DEFAULT_OPTIONS })
     }
-  }, [getTracer])
+  }, [])
 
   const updateOption = useCallback(<K extends keyof TracerOptions>(key: K, value: TracerOptions[K]) => {
     setPreset("custom")
@@ -536,8 +602,12 @@ export function ImageTracerTool() {
   const handleClear = useCallback(() => {
     setImageFile(null)
     setImageSrc(null)
-    setSvgString(null)
+    if (prevPreviewUrlRef.current) URL.revokeObjectURL(prevPreviewUrlRef.current)
+    prevPreviewUrlRef.current = null
+    setPreviewUrl(null)
+    setHasResult(false)
     setTracing(false)
+    setDirty(false)
     imageDataRef.current = null
     rawSvgRef.current = null
     setOptions({ ...DEFAULT_OPTIONS })
@@ -857,7 +927,7 @@ export function ImageTracerTool() {
             <div className="flex gap-2">
               <Button
                 onClick={handleDownload}
-                disabled={!svgString || tracing}
+                disabled={!hasResult || tracing}
                 className="flex-1"
               >
                 <Download className="size-4 mr-2" />
@@ -866,7 +936,7 @@ export function ImageTracerTool() {
               <Button
                 variant="outline"
                 onClick={handleCopy}
-                disabled={!svgString || tracing}
+                disabled={!hasResult || tracing}
                 className="flex-1"
               >
                 {copied ? (
@@ -879,7 +949,7 @@ export function ImageTracerTool() {
             <Button
               variant="outline"
               onClick={sendToOptimiser}
-              disabled={!svgString || tracing}
+              disabled={!hasResult || tracing}
               className="w-full"
             >
               <ArrowRight className="size-4 mr-2" />
@@ -895,7 +965,7 @@ export function ImageTracerTool() {
             </Button>
           </div>
 
-          {svgString && !tracing && (
+          {hasResult && !tracing && (
             <p className="text-xs text-muted-foreground text-center">
               SVG output: {formatSize(new Blob([rawSvgRef.current || ""]).size)}
             </p>
@@ -910,10 +980,11 @@ export function ImageTracerTool() {
                 <Loader2 className="size-8 animate-spin text-muted-foreground mb-3" />
                 <p className="text-sm text-muted-foreground">Tracing image&hellip;</p>
               </div>
-            ) : svgString ? (
-              <div
-                className="w-full"
-                dangerouslySetInnerHTML={{ __html: svgString }}
+            ) : previewUrl ? (
+              <img
+                src={previewUrl}
+                alt="Traced SVG preview"
+                className="max-w-full max-h-[70vh] object-contain block mx-auto"
               />
             ) : imageSrc ? (
               <img
