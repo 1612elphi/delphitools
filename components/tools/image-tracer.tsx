@@ -1,7 +1,14 @@
 "use client"
 
 import { useState, useRef, useCallback, useEffect } from "react"
-import { Upload, Download, Copy, Check, Trash2, Loader2, ChevronDown, RefreshCw, ArrowRight } from "lucide-react"
+import {
+  Upload, Download, Copy, Check, Trash2, Loader2, ChevronDown,
+  RefreshCw, ArrowRight, Info, Minus, Plus,
+  // Preset icons
+  Settings2, Layers, Spline, Triangle, Scan, Waves, Moon,
+  Grid3X3, Shuffle, Paintbrush, Palette, Sparkles, Brush,
+  LucideIcon,
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -18,6 +25,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+
+// ── Types ────────────────────────────────────────────────────────────
 
 interface TracerOptions {
   numberofcolors: number
@@ -59,46 +73,54 @@ const DEFAULT_OPTIONS: TracerOptions = {
   linefilter: false,
 }
 
-const PRESET_NAMES = [
-  "default",
-  "posterized1",
-  "posterized2",
-  "posterized3",
-  "curvy",
-  "sharp",
-  "detailed",
-  "smoothed",
-  "grayscale",
-  "fixedpalette",
-  "randomsampling1",
-  "randomsampling2",
-  "artistic1",
-  "artistic2",
-  "artistic3",
-  "artistic4",
-] as const
+// ── Preset config ────────────────────────────────────────────────────
 
-const PRESET_LABELS: Record<string, string> = {
-  default: "Default",
-  posterized1: "Posterised 1",
-  posterized2: "Posterised 2",
-  posterized3: "Posterised 3",
-  curvy: "Curvy",
-  sharp: "Sharp",
-  detailed: "Detailed",
-  smoothed: "Smoothed",
-  grayscale: "Greyscale",
-  fixedpalette: "Fixed Palette",
-  randomsampling1: "Random Sampling 1",
-  randomsampling2: "Random Sampling 2",
-  artistic1: "Artistic 1",
-  artistic2: "Artistic 2",
-  artistic3: "Artistic 3",
-  artistic4: "Artistic 4",
+interface PresetConfig {
+  id: string
+  label: string
+  icon: LucideIcon
+  description: string
+}
+
+const PRESETS: PresetConfig[] = [
+  { id: "default",        label: "Default",     icon: Settings2,   description: "Balanced tracing" },
+  { id: "posterized1",    label: "Poster 1",    icon: Layers,      description: "Light posterisation" },
+  { id: "posterized2",    label: "Poster 2",    icon: Layers,      description: "Medium posterisation" },
+  { id: "posterized3",    label: "Poster 3",    icon: Layers,      description: "Heavy posterisation" },
+  { id: "curvy",          label: "Curvy",        icon: Spline,      description: "Smooth organic curves" },
+  { id: "sharp",          label: "Sharp",        icon: Triangle,    description: "Precise angular lines" },
+  { id: "detailed",       label: "Detailed",     icon: Scan,        description: "High detail, many colours" },
+  { id: "smoothed",       label: "Smoothed",     icon: Waves,       description: "Gaussian blur pre-pass" },
+  { id: "grayscale",      label: "Greyscale",    icon: Moon,        description: "7-tone greyscale" },
+  { id: "fixedpalette",   label: "Fixed",        icon: Grid3X3,     description: "27-colour RGB cube" },
+  { id: "randomsampling1",label: "Random 1",     icon: Shuffle,     description: "Random palette sampling" },
+  { id: "randomsampling2",label: "Random 2",     icon: Shuffle,     description: "Random palette variant" },
+  { id: "artistic1",      label: "Art 1",        icon: Paintbrush,  description: "Stylised output" },
+  { id: "artistic2",      label: "Art 2",        icon: Brush,       description: "Stylised variant" },
+  { id: "artistic3",      label: "Art 3",        icon: Palette,     description: "Artistic colour mix" },
+  { id: "artistic4",      label: "Art 4",        icon: Sparkles,    description: "Abstract artistic" },
+]
+
+// ── Extracted sub-components ─────────────────────────────────────────
+
+function InfoTip({ text }: { text: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button type="button" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors">
+          <Info className="size-3.5" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-[200px]">
+        {text}
+      </TooltipContent>
+    </Tooltip>
+  )
 }
 
 function OptionSlider({
   label,
+  tip,
   value,
   onChange,
   min,
@@ -107,6 +129,7 @@ function OptionSlider({
   displayValue,
 }: {
   label: string
+  tip: string
   value: number
   onChange: (value: number) => void
   min: number
@@ -117,8 +140,11 @@ function OptionSlider({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <Label className="text-sm">{label}</Label>
-        <span className="text-sm font-mono text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <Label className="text-sm">{label}</Label>
+          <InfoTip text={tip} />
+        </span>
+        <span className="text-sm font-mono text-muted-foreground tabular-nums">
           {displayValue ?? value}
         </span>
       </div>
@@ -132,6 +158,205 @@ function OptionSlider({
     </div>
   )
 }
+
+function Stepper({
+  label,
+  tip,
+  value,
+  onChange,
+  min,
+  max,
+  step = 1,
+}: {
+  label: string
+  tip: string
+  value: number
+  onChange: (value: number) => void
+  min: number
+  max: number
+  step?: number
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="flex items-center gap-1.5">
+        <Label className="text-sm">{label}</Label>
+        <InfoTip text={tip} />
+      </span>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => onChange(Math.max(min, value - step))}
+          disabled={value <= min}
+          className="flex items-center justify-center size-7 rounded-md border bg-card hover:bg-accent disabled:opacity-30 disabled:pointer-events-none transition-colors"
+        >
+          <Minus className="size-3" />
+        </button>
+        <span className="w-8 text-center text-sm font-mono tabular-nums">{value}</span>
+        <button
+          type="button"
+          onClick={() => onChange(Math.min(max, value + step))}
+          disabled={value >= max}
+          className="flex items-center justify-center size-7 rounded-md border bg-card hover:bg-accent disabled:opacity-30 disabled:pointer-events-none transition-colors"
+        >
+          <Plus className="size-3" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 pt-1">
+      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">{children}</span>
+      <div className="flex-1 h-px bg-border" />
+    </div>
+  )
+}
+
+// ── Stroke width visual picker ───────────────────────────────────────
+
+const STROKE_OPTIONS = [0, 0.5, 1, 2, 3, 5]
+
+function StrokeWidthPicker({
+  value,
+  onChange,
+}: {
+  value: number
+  onChange: (v: number) => void
+}) {
+  // Find the closest preset, or null if custom
+  const activeIdx = STROKE_OPTIONS.indexOf(value)
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-1.5">
+          <Label className="text-sm">Stroke width</Label>
+          <InfoTip text="Width of the outline drawn around each traced shape. 0 means no stroke." />
+        </span>
+        <span className="text-sm font-mono text-muted-foreground tabular-nums">{value}</span>
+      </div>
+      <div className="flex gap-1.5">
+        {STROKE_OPTIONS.map((sw, i) => (
+          <button
+            key={sw}
+            type="button"
+            onClick={() => onChange(sw)}
+            className={`flex-1 h-9 rounded-md border flex items-center justify-center transition-colors ${
+              i === activeIdx
+                ? "border-primary bg-primary/10"
+                : "bg-card hover:bg-accent"
+            }`}
+          >
+            {sw === 0 ? (
+              <span className="text-[10px] text-muted-foreground">None</span>
+            ) : (
+              <div
+                className="rounded-full bg-foreground"
+                style={{ width: `${Math.min(sw * 6, 24)}px`, height: `${Math.max(sw, 1)}px` }}
+              />
+            )}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Scale quick-pick ─────────────────────────────────────────────────
+
+const SCALE_OPTIONS = [0.5, 1, 2, 3, 5]
+
+function ScalePicker({
+  value,
+  onChange,
+}: {
+  value: number
+  onChange: (v: number) => void
+}) {
+  const activeIdx = SCALE_OPTIONS.indexOf(value)
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-1.5">
+          <Label className="text-sm">Scale</Label>
+          <InfoTip text="Multiplier for the output SVG size relative to the source image." />
+        </span>
+        <span className="text-sm font-mono text-muted-foreground tabular-nums">{value}x</span>
+      </div>
+      <div className="flex gap-1.5">
+        {SCALE_OPTIONS.map((s, i) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => onChange(s)}
+            className={`flex-1 h-9 rounded-md border text-xs font-medium transition-colors ${
+              i === activeIdx
+                ? "border-primary bg-primary/10 text-primary"
+                : "bg-card hover:bg-accent text-muted-foreground"
+            }`}
+          >
+            {s}x
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Number of colours card ───────────────────────────────────────────
+
+function ColourCountCard({
+  value,
+  onChange,
+}: {
+  value: number
+  onChange: (v: number) => void
+}) {
+  return (
+    <div className="rounded-lg border bg-card p-3">
+      <div className="flex items-center justify-between mb-2">
+        <span className="flex items-center gap-1.5">
+          <Label className="text-sm font-medium">Colours</Label>
+          <InfoTip text="Number of colours used to quantise the image before tracing. Fewer colours = simpler, bolder result." />
+        </span>
+      </div>
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => onChange(Math.max(2, value - 1))}
+          disabled={value <= 2}
+          className="flex items-center justify-center size-9 rounded-lg border bg-background hover:bg-accent disabled:opacity-30 disabled:pointer-events-none transition-colors"
+        >
+          <Minus className="size-4" />
+        </button>
+        <div className="flex flex-col items-center">
+          <span className="text-3xl font-bold tabular-nums leading-none">{value}</span>
+        </div>
+        <button
+          type="button"
+          onClick={() => onChange(Math.min(64, value + 1))}
+          disabled={value >= 64}
+          className="flex items-center justify-center size-9 rounded-lg border bg-background hover:bg-accent disabled:opacity-30 disabled:pointer-events-none transition-colors"
+        >
+          <Plus className="size-4" />
+        </button>
+      </div>
+      <Slider
+        min={2}
+        max={64}
+        step={1}
+        value={[value]}
+        onValueChange={([v]) => onChange(v)}
+        className="mt-3"
+      />
+    </div>
+  )
+}
+
+// ── Main component ───────────────────────────────────────────────────
 
 export function ImageTracerTool() {
   const router = useRouter()
@@ -151,7 +376,6 @@ export function ImageTracerTool() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const tracerRef = useRef<typeof import("imagetracerjs").default | null>(null)
 
-  // Lazily load imagetracerjs (it uses `window` so must run client-side)
   const getTracer = useCallback(async () => {
     if (tracerRef.current) return tracerRef.current
     const mod = await import("imagetracerjs")
@@ -159,39 +383,28 @@ export function ImageTracerTool() {
     return mod.default
   }, [])
 
-  // Extract ImageData from a loaded image
   const extractImageData = useCallback((file: File): Promise<ImageData> => {
     return new Promise((resolve, reject) => {
       const img = new Image()
       img.onload = () => {
         const canvas = canvasRef.current
-        if (!canvas) {
-          reject(new Error("Canvas not available"))
-          return
-        }
+        if (!canvas) { reject(new Error("Canvas not available")); return }
         canvas.width = img.width
         canvas.height = img.height
         const ctx = canvas.getContext("2d")
-        if (!ctx) {
-          reject(new Error("Canvas 2D context unavailable"))
-          return
-        }
+        if (!ctx) { reject(new Error("Canvas 2D context unavailable")); return }
         ctx.drawImage(img, 0, 0)
-        const imgData = ctx.getImageData(0, 0, img.width, img.height)
-        resolve(imgData)
+        resolve(ctx.getImageData(0, 0, img.width, img.height))
       }
       img.onerror = () => reject(new Error("Failed to load image"))
       img.src = URL.createObjectURL(file)
     })
   }, [])
 
-  // Run the trace
   const runTrace = useCallback(async (imgd: ImageData, opts: TracerOptions) => {
     setTracing(true)
     try {
       const ImageTracer = await getTracer()
-      // imagedataToSVG is synchronous, but we wrap in a microtask
-      // to let React paint the spinner first
       await new Promise(resolve => setTimeout(resolve, 10))
       const svg = ImageTracer.imagedataToSVG(imgd, { ...opts })
       setSvgString(svg)
@@ -202,23 +415,18 @@ export function ImageTracerTool() {
     }
   }, [getTracer])
 
-  // When image loads, extract data and trace
   useEffect(() => {
     if (!imageFile) return
     let cancelled = false
-
     extractImageData(imageFile).then((imgd) => {
       if (cancelled) return
       imageDataRef.current = imgd
       runTrace(imgd, options)
     })
-
     return () => { cancelled = true }
-    // Only re-run when the image file changes, not when options change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [imageFile, extractImageData, runTrace])
 
-  // Manual retrace when user clicks the Retrace button
   const handleRetrace = useCallback(() => {
     if (!imageDataRef.current) return
     setDirty(false)
@@ -274,8 +482,7 @@ export function ImageTracerTool() {
     const blob = new Blob([svgString], { type: "image/svg+xml" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
-    const baseName = imageFile.name.replace(/\.[^.]+$/, "")
-    a.download = `${baseName}-traced.svg`
+    a.download = `${imageFile.name.replace(/\.[^.]+$/, "")}-traced.svg`
     a.href = url
     a.click()
     URL.revokeObjectURL(url)
@@ -301,9 +508,7 @@ export function ImageTracerTool() {
     setOptions({ ...DEFAULT_OPTIONS })
     setPreset("default")
     setCopied(false)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
-    }
+    if (fileInputRef.current) fileInputRef.current.value = ""
   }, [])
 
   const sendToOptimiser = () => {
@@ -318,7 +523,8 @@ export function ImageTracerTool() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
-  // No image loaded: show drop zone
+  // ── Drop zone (no image) ────────────────────────────────────────────
+
   if (!imageFile) {
     return (
       <div className="space-y-4">
@@ -328,9 +534,7 @@ export function ImageTracerTool() {
           onDragLeave={() => setIsDragOver(false)}
           onClick={() => fileInputRef.current?.click()}
           className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors cursor-pointer ${
-            isDragOver
-              ? "border-primary bg-primary/5"
-              : "hover:border-primary/50"
+            isDragOver ? "border-primary bg-primary/5" : "hover:border-primary/50"
           }`}
         >
           <input
@@ -351,10 +555,10 @@ export function ImageTracerTool() {
     )
   }
 
-  // Image loaded: show two-pane layout
+  // ── Main two-pane layout ────────────────────────────────────────────
+
   return (
     <div className="space-y-4">
-      {/* Hidden canvas for ImageData extraction */}
       <canvas ref={canvasRef} className="hidden" />
       <input
         ref={fileInputRef}
@@ -364,11 +568,11 @@ export function ImageTracerTool() {
         className="hidden"
       />
 
-      {/* Two-pane layout */}
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Controls panel — on mobile appears below preview via order */}
-        <div className="w-full lg:w-80 shrink-0 order-2 lg:order-1 space-y-6">
-          {/* Image info */}
+        {/* ── Controls panel ──────────────────────────────────────── */}
+        <div className="w-full lg:w-80 shrink-0 order-2 lg:order-1 space-y-5">
+
+          {/* File info */}
           <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
             {imageSrc && (
               <div className="size-10 rounded bg-muted overflow-hidden shrink-0">
@@ -377,33 +581,37 @@ export function ImageTracerTool() {
             )}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{imageFile.name}</p>
-              <p className="text-xs text-muted-foreground">
-                {formatSize(imageFile.size)}
-              </p>
+              <p className="text-xs text-muted-foreground">{formatSize(imageFile.size)}</p>
             </div>
           </div>
 
-          {/* Preset selector */}
+          {/* ── Presets grid ──────────────────────────────────────── */}
           <div className="space-y-2">
-            <Label>Preset</Label>
-            <Select value={preset} onValueChange={applyPreset}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a preset" />
-              </SelectTrigger>
-              <SelectContent>
-                {PRESET_NAMES.map((name) => (
-                  <SelectItem key={name} value={name}>
-                    {PRESET_LABELS[name]}
-                  </SelectItem>
-                ))}
-                {preset === "custom" && (
-                  <SelectItem value="custom">Custom</SelectItem>
-                )}
-              </SelectContent>
-            </Select>
+            <SectionHeader>Presets</SectionHeader>
+            <div className="grid grid-cols-4 gap-1.5">
+              {PRESETS.map(({ id, label, icon: Icon, description }) => (
+                <Tooltip key={id}>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={() => applyPreset(id)}
+                      className={`flex flex-col items-center gap-1 rounded-lg border p-2 transition-colors ${
+                        preset === id
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "bg-card hover:bg-accent text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Icon className="size-4" />
+                      <span className="text-[10px] leading-tight font-medium truncate w-full text-center">{label}</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">{description}</TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
           </div>
 
-          {/* Retrace button */}
+          {/* ── Retrace button ────────────────────────────────────── */}
           {imageDataRef.current && (
             <Button
               onClick={handleRetrace}
@@ -411,106 +619,97 @@ export function ImageTracerTool() {
               className="w-full"
             >
               {tracing ? (
-                <>
-                  <Loader2 className="size-4 mr-2 animate-spin" />
-                  Tracing&hellip;
-                </>
+                <><Loader2 className="size-4 mr-2 animate-spin" />Tracing&hellip;</>
               ) : (
-                <>
-                  <RefreshCw className="size-4 mr-2" />
-                  Retrace
-                </>
+                <><RefreshCw className="size-4 mr-2" />Retrace</>
               )}
             </Button>
           )}
 
-          {/* Core sliders */}
-          <div className="space-y-4">
-            <OptionSlider
-              label="Number of colours"
-              value={options.numberofcolors}
-              onChange={(v) => updateOption("numberofcolors", v)}
-              min={2}
-              max={64}
-              step={1}
-            />
-            <OptionSlider
-              label="Colour quantisation cycles"
-              value={options.colorquantcycles}
-              onChange={(v) => updateOption("colorquantcycles", v)}
-              min={1}
-              max={20}
-              step={1}
-            />
-            <OptionSlider
-              label="Path smoothing (ltres)"
-              value={options.ltres}
-              onChange={(v) => updateOption("ltres", v)}
-              min={0.1}
-              max={10}
-              step={0.1}
-              displayValue={options.ltres.toFixed(1)}
-            />
-            <OptionSlider
-              label="Curve smoothing (qtres)"
-              value={options.qtres}
-              onChange={(v) => updateOption("qtres", v)}
-              min={0.1}
-              max={10}
-              step={0.1}
-              displayValue={options.qtres.toFixed(1)}
-            />
-            <OptionSlider
-              label="Min path size (pathomit)"
-              value={options.pathomit}
-              onChange={(v) => updateOption("pathomit", v)}
-              min={0}
-              max={200}
-              step={1}
-            />
-            <OptionSlider
-              label="Stroke width"
-              value={options.strokewidth}
-              onChange={(v) => updateOption("strokewidth", v)}
-              min={0}
-              max={10}
-              step={0.1}
-              displayValue={options.strokewidth.toFixed(1)}
-            />
-            <OptionSlider
-              label="Scale"
-              value={options.scale}
-              onChange={(v) => updateOption("scale", v)}
-              min={0.5}
-              max={10}
-              step={0.1}
-              displayValue={options.scale.toFixed(1)}
-            />
-          </div>
+          {/* ── Colours ───────────────────────────────────────────── */}
+          <SectionHeader>Colours</SectionHeader>
+          <ColourCountCard
+            value={options.numberofcolors}
+            onChange={(v) => updateOption("numberofcolors", v)}
+          />
+          <Stepper
+            label="Quantisation cycles"
+            tip="Number of k-means iterations for colour clustering. More cycles = more accurate colours, slower trace."
+            value={options.colorquantcycles}
+            onChange={(v) => updateOption("colorquantcycles", v)}
+            min={1}
+            max={20}
+          />
 
-          {/* Advanced section */}
+          {/* ── Smoothing ─────────────────────────────────────────── */}
+          <SectionHeader>Smoothing</SectionHeader>
+          <OptionSlider
+            label="Path smoothing"
+            tip="Controls how aggressively straight lines replace curves. Higher = smoother with fewer curves."
+            value={options.ltres}
+            onChange={(v) => updateOption("ltres", v)}
+            min={0.1}
+            max={10}
+            step={0.1}
+            displayValue={options.ltres.toFixed(1)}
+          />
+          <OptionSlider
+            label="Curve smoothing"
+            tip="Controls quadratic spline fitting. Higher = smoother curves with less detail."
+            value={options.qtres}
+            onChange={(v) => updateOption("qtres", v)}
+            min={0.1}
+            max={10}
+            step={0.1}
+            displayValue={options.qtres.toFixed(1)}
+          />
+          <OptionSlider
+            label="Min path size"
+            tip="Paths with fewer than this many nodes are removed. Raise to filter out noise and small artifacts."
+            value={options.pathomit}
+            onChange={(v) => updateOption("pathomit", v)}
+            min={0}
+            max={200}
+            step={1}
+          />
+
+          {/* ── Output ────────────────────────────────────────────── */}
+          <SectionHeader>Output</SectionHeader>
+          <StrokeWidthPicker
+            value={options.strokewidth}
+            onChange={(v) => updateOption("strokewidth", v)}
+          />
+          <ScalePicker
+            value={options.scale}
+            onChange={(v) => updateOption("scale", v)}
+          />
+
+          {/* ── Advanced ──────────────────────────────────────────── */}
           <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="w-full justify-between px-0 hover:bg-transparent">
-                <span className="text-sm font-medium">Advanced options</span>
-                <ChevronDown
-                  className={`size-4 transition-transform ${
-                    advancedOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </Button>
+              <button
+                type="button"
+                className="flex items-center justify-between w-full pt-1 group"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">Advanced</span>
+                  <div className="flex-1 h-px bg-border" />
+                </span>
+                <ChevronDown className={`size-3.5 text-muted-foreground/70 transition-transform ${advancedOpen ? "rotate-180" : ""}`} />
+              </button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-4 pt-2">
-              <OptionSlider
+            <CollapsibleContent className="space-y-4 pt-3">
+              <Stepper
                 label="Blur radius"
+                tip="Gaussian blur pre-processing. Smooths the image before tracing to reduce noise."
                 value={options.blurradius}
                 onChange={(v) => updateOption("blurradius", v)}
                 min={0}
                 max={20}
-                step={1}
               />
               <OptionSlider
                 label="Blur delta"
+                tip="Threshold for the blur difference. Only relevant when blur radius > 0."
                 value={options.blurdelta}
                 onChange={(v) => updateOption("blurdelta", v)}
                 min={0}
@@ -518,7 +717,10 @@ export function ImageTracerTool() {
                 step={1}
               />
               <div className="space-y-2">
-                <Label className="text-sm">Colour sampling</Label>
+                <span className="flex items-center gap-1.5">
+                  <Label className="text-sm">Colour sampling</Label>
+                  <InfoTip text="How initial colours are sampled. Generated uses k-means, Random picks randomly, Deterministic uses a fixed grid." />
+                </span>
                 <Select
                   value={String(options.colorsampling)}
                   onValueChange={(v) => updateOption("colorsampling", Number(v))}
@@ -535,6 +737,7 @@ export function ImageTracerTool() {
               </div>
               <OptionSlider
                 label="Min colour ratio"
+                tip="Minimum proportion a colour must occupy to be kept. Raise to eliminate rare colours."
                 value={options.mincolorratio}
                 onChange={(v) => updateOption("mincolorratio", v)}
                 min={0}
@@ -542,16 +745,17 @@ export function ImageTracerTool() {
                 step={0.01}
                 displayValue={options.mincolorratio.toFixed(2)}
               />
-              <OptionSlider
+              <Stepper
                 label="Coordinate rounding"
+                tip="Decimal places for SVG path coordinates. Lower = smaller file, less precise."
                 value={options.roundcoords}
                 onChange={(v) => updateOption("roundcoords", v)}
                 min={0}
                 max={5}
-                step={1}
               />
               <OptionSlider
                 label="Line control point ratio"
+                tip="Adjusts control points on straight line segments. 0 = default placement."
                 value={options.lcpr}
                 onChange={(v) => updateOption("lcpr", v)}
                 min={0}
@@ -561,6 +765,7 @@ export function ImageTracerTool() {
               />
               <OptionSlider
                 label="Quad control point ratio"
+                tip="Adjusts control points on quadratic curves. 0 = default placement."
                 value={options.qcpr}
                 onChange={(v) => updateOption("qcpr", v)}
                 min={0}
@@ -569,7 +774,10 @@ export function ImageTracerTool() {
                 displayValue={options.qcpr.toFixed(2)}
               />
               <div className="space-y-2">
-                <Label className="text-sm">Layering mode</Label>
+                <span className="flex items-center gap-1.5">
+                  <Label className="text-sm">Layering mode</Label>
+                  <InfoTip text="Sequential stacks colour layers back-to-front. Parallel creates independent layers per colour." />
+                </span>
                 <Select
                   value={String(options.layering)}
                   onValueChange={(v) => updateOption("layering", Number(v))}
@@ -586,7 +794,7 @@ export function ImageTracerTool() {
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Action buttons */}
+          {/* ── Actions ───────────────────────────────────────────── */}
           <div className="space-y-2 pt-2">
             <div className="flex gap-2">
               <Button
@@ -604,15 +812,9 @@ export function ImageTracerTool() {
                 className="flex-1"
               >
                 {copied ? (
-                  <>
-                    <Check className="size-4 mr-2" />
-                    Copied!
-                  </>
+                  <><Check className="size-4 mr-2" />Copied!</>
                 ) : (
-                  <>
-                    <Copy className="size-4 mr-2" />
-                    Copy SVG
-                  </>
+                  <><Copy className="size-4 mr-2" />Copy SVG</>
                 )}
               </Button>
             </div>
@@ -635,7 +837,6 @@ export function ImageTracerTool() {
             </Button>
           </div>
 
-          {/* SVG size info */}
           {svgString && !tracing && (
             <p className="text-xs text-muted-foreground text-center">
               SVG output: {formatSize(new Blob([svgString]).size)}
@@ -643,7 +844,7 @@ export function ImageTracerTool() {
           )}
         </div>
 
-        {/* Preview pane */}
+        {/* ── Preview pane ──────────────────────────────────────── */}
         <div className="flex-1 order-1 lg:order-2 min-w-0">
           <div className="rounded-xl border bg-card overflow-hidden">
             {tracing ? (
