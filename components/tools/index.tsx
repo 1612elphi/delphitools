@@ -12,6 +12,7 @@ import { BaseConverterTool } from "./base-converter";
 import { TimeCalcTool } from "./time-calc";
 import { UnitConverterTool } from "./unit-converter";
 import { EncoderTool } from "./encoder";
+import { ImageTracerTool } from "./image-tracer";
 
 export const toolComponents: Record<string, React.ComponentType> = {
   "px-to-rem": PxToRemTool,
@@ -26,4 +27,5 @@ export const toolComponents: Record<string, React.ComponentType> = {
   "time-calc": TimeCalcTool,
   "unit-converter": UnitConverterTool,
   "encoder": EncoderTool,
+  "image-tracer": ImageTracerTool,
 };

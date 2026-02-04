@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Upload, Download, Copy, Check, Trash2 } from "lucide-react";
 import { optimize } from "svgo/browser";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,17 @@ export function SvgOptimiserTool() {
     saved: number;
     percent: number;
   } | null>(null);
+
+  useEffect(() => {
+    const incoming = sessionStorage.getItem("svg-optimiser-input")
+    if (incoming) {
+      sessionStorage.removeItem("svg-optimiser-input")
+      setInput(incoming)
+      setFileName("traced.svg")
+      optimizeSvg(incoming)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();

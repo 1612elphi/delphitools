@@ -36,6 +36,7 @@ import {
   Clock,
   Scale,
   FileCode,
+  ScanLine,
 } from "lucide-react";
 
 export interface Tool {
@@ -205,6 +206,14 @@ export const toolCategories: ToolCategory[] = [
         icon: Eraser,
         href: "/tools/background-remover",
         beta: true,
+      },
+      {
+        id: "image-tracer",
+        name: "Image Tracer",
+        description: "Trace raster images to SVG vectors",
+        icon: ScanLine,
+        href: "/tools/image-tracer",
+        new: true,
       },
     ],
   },
