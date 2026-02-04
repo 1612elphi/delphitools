@@ -696,58 +696,10 @@ export function ImageTracerTool() {
           </button>
         </div>
 
-        {/* Preset selector */}
-        <Popover open={presetsOpen} onOpenChange={setPresetsOpen}>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className="flex items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-sm hover:bg-accent transition-colors"
-            >
-              {(() => {
-                const active = PRESETS.find(p => p.id === preset)
-                if (active) {
-                  const Icon = active.icon
-                  return <><Icon className="size-4 text-primary" /><span className="font-medium">{active.label}</span></>
-                }
-                return <span className="font-medium">Custom</span>
-              })()}
-              <ChevronsUpDown className="size-3.5 text-muted-foreground" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-[340px] p-2">
-            <div className="grid grid-cols-4 gap-1">
-              {PRESETS.map(({ id, label, icon: Icon }) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => { applyPreset(id); setPresetsOpen(false) }}
-                  className={`flex flex-col items-center gap-1 rounded-md px-1 py-2.5 transition-colors ${
-                    preset === id
-                      ? "bg-primary/10 text-primary"
-                      : "hover:bg-accent text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Icon className="size-4" />
-                  <span className="text-[10px] leading-tight font-medium">{label}</span>
-                </button>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
-
-        {/* Retrace */}
-        {imageDataRef.current && (
-          <Button
-            size="sm"
-            onClick={handleRetrace}
-            disabled={!dirty || tracing}
-          >
-            {tracing ? (
-              <><Loader2 className="size-3.5 mr-1.5 animate-spin" />Tracing&hellip;</>
-            ) : (
-              <><RefreshCw className="size-3.5 mr-1.5" />Retrace</>
-            )}
-          </Button>
+        {hasResult && !tracing && (
+          <span className="text-xs text-muted-foreground">
+            SVG: {formatSize(new Blob([rawSvgRef.current || ""]).size)}
+          </span>
         )}
 
         {/* Spacer */}
@@ -809,11 +761,60 @@ export function ImageTracerTool() {
         ) : null}
       </div>
 
-      {hasResult && !tracing && (
-        <p className="text-xs text-muted-foreground text-center">
-          SVG output: {formatSize(new Blob([rawSvgRef.current || ""]).size)}
-        </p>
-      )}
+      {/* ── Preset + Retrace row ────────────────────────────────── */}
+      <div className="flex items-center gap-2">
+        <Popover open={presetsOpen} onOpenChange={setPresetsOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="flex items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+            >
+              {(() => {
+                const active = PRESETS.find(p => p.id === preset)
+                if (active) {
+                  const Icon = active.icon
+                  return <><Icon className="size-4 text-primary" /><span className="font-medium">{active.label}</span></>
+                }
+                return <span className="font-medium">Custom</span>
+              })()}
+              <ChevronsUpDown className="size-3.5 text-muted-foreground" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-[340px] p-2">
+            <div className="grid grid-cols-4 gap-1">
+              {PRESETS.map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => { applyPreset(id); setPresetsOpen(false) }}
+                  className={`flex flex-col items-center gap-1 rounded-md px-1 py-2.5 transition-colors ${
+                    preset === id
+                      ? "bg-primary/10 text-primary"
+                      : "hover:bg-accent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Icon className="size-4" />
+                  <span className="text-[10px] leading-tight font-medium">{label}</span>
+                </button>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {imageDataRef.current && (
+          <Button
+            size="sm"
+            onClick={handleRetrace}
+            disabled={!dirty || tracing}
+          >
+            {tracing ? (
+              <><Loader2 className="size-3.5 mr-1.5 animate-spin" />Tracing&hellip;</>
+            ) : (
+              <><RefreshCw className="size-3.5 mr-1.5" />Retrace</>
+            )}
+          </Button>
+        )}
+      </div>
 
       {/* ── Controls grid ────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
