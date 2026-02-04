@@ -89,7 +89,7 @@ interface PresetConfig {
 
 const PRESETS: PresetConfig[] = [
   { id: "default",        label: "Default",     icon: Settings2,   description: "Balanced tracing" },
-  { id: "posterized1",    label: "Poster 1",    icon: Layers,      description: "Light posterisation" },
+  { id: "posterized1",    label: "Monoposto",    icon: Layers,      description: "Light posterisation" },
   { id: "posterized2",    label: "Poster 2",    icon: Layers,      description: "Medium posterisation" },
   { id: "posterized3",    label: "Poster 3",    icon: Layers,      description: "Heavy posterisation" },
   { id: "curvy",          label: "Curvy",        icon: Spline,      description: "Smooth organic curves" },
@@ -767,8 +767,9 @@ export function ImageTracerTool() {
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="flex items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+              className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2 text-sm hover:bg-accent transition-colors"
             >
+              <span className="text-xs text-muted-foreground">Preset</span>
               {(() => {
                 const active = PRESETS.find(p => p.id === preset)
                 if (active) {
@@ -806,6 +807,7 @@ export function ImageTracerTool() {
             size="sm"
             onClick={handleRetrace}
             disabled={!dirty || tracing}
+            className="flex-1"
           >
             {tracing ? (
               <><Loader2 className="size-3.5 mr-1.5 animate-spin" />Tracing&hellip;</>
