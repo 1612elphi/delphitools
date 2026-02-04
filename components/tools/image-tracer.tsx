@@ -375,6 +375,7 @@ export function ImageTracerTool() {
   const imageDataRef = useRef<ImageData | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const tracerRef = useRef<typeof import("imagetracerjs").default | null>(null)
+  const rawSvgRef = useRef<string | null>(null)
 
   const getTracer = useCallback(async () => {
     if (tracerRef.current) return tracerRef.current
@@ -401,13 +402,38 @@ export function ImageTracerTool() {
     })
   }, [])
 
+  // Make the SVG responsive by ensuring viewBox exists and removing fixed dimensions
+  const makeResponsive = (svg: string): string => {
+    const widthMatch = svg.match(/<svg[^>]*\swidth="([^"]+)"/)
+    const heightMatch = svg.match(/<svg[^>]*\sheight="([^"]+)"/)
+    const hasViewBox = /<svg[^>]*\sviewBox="/.test(svg)
+
+    let result = svg
+
+    // Add viewBox from width/height if missing
+    if (!hasViewBox && widthMatch && heightMatch) {
+      result = result.replace(
+        /<svg/,
+        `<svg viewBox="0 0 ${widthMatch[1]} ${heightMatch[1]}"`
+      )
+    }
+
+    // Replace fixed width/height with responsive values
+    result = result
+      .replace(/(<svg[^>]*)\swidth="[^"]*"/, '$1 width="100%"')
+      .replace(/(<svg[^>]*)\sheight="[^"]*"/, '$1 height="auto"')
+
+    return result
+  }
+
   const runTrace = useCallback(async (imgd: ImageData, opts: TracerOptions) => {
     setTracing(true)
     try {
       const ImageTracer = await getTracer()
       await new Promise(resolve => setTimeout(resolve, 10))
-      const svg = ImageTracer.imagedataToSVG(imgd, { ...opts })
-      setSvgString(svg)
+      const rawSvg = ImageTracer.imagedataToSVG(imgd, { ...opts })
+      rawSvgRef.current = rawSvg
+      setSvgString(makeResponsive(rawSvg))
     } catch (err) {
       console.error("Tracing failed:", err)
     } finally {
@@ -478,26 +504,28 @@ export function ImageTracerTool() {
   }, [])
 
   const handleDownload = useCallback(() => {
-    if (!svgString || !imageFile) return
-    const blob = new Blob([svgString], { type: "image/svg+xml" })
+    const raw = rawSvgRef.current
+    if (!raw || !imageFile) return
+    const blob = new Blob([raw], { type: "image/svg+xml" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.download = `${imageFile.name.replace(/\.[^.]+$/, "")}-traced.svg`
     a.href = url
     a.click()
     URL.revokeObjectURL(url)
-  }, [svgString, imageFile])
+  }, [imageFile])
 
   const handleCopy = useCallback(async () => {
-    if (!svgString) return
+    const raw = rawSvgRef.current
+    if (!raw) return
     try {
-      await navigator.clipboard.writeText(svgString)
+      await navigator.clipboard.writeText(raw)
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
     } catch (err) {
       console.error("Copy failed:", err)
     }
-  }, [svgString])
+  }, [])
 
   const handleClear = useCallback(() => {
     setImageFile(null)
@@ -505,6 +533,7 @@ export function ImageTracerTool() {
     setSvgString(null)
     setTracing(false)
     imageDataRef.current = null
+    rawSvgRef.current = null
     setOptions({ ...DEFAULT_OPTIONS })
     setPreset("default")
     setCopied(false)
@@ -512,8 +541,9 @@ export function ImageTracerTool() {
   }, [])
 
   const sendToOptimiser = () => {
-    if (!svgString) return
-    sessionStorage.setItem("svg-optimiser-input", svgString)
+    const raw = rawSvgRef.current
+    if (!raw) return
+    sessionStorage.setItem("svg-optimiser-input", raw)
     router.push("/tools/svg-optimiser")
   }
 
@@ -592,27 +622,27 @@ export function ImageTracerTool() {
             </button>
           </div>
 
-          {/* ── Presets grid ──────────────────────────────────────── */}
+          {/* ── Presets ──────────────────────────────────────────── */}
           <div className="space-y-2">
             <SectionHeader>Presets</SectionHeader>
-            <div className="grid grid-cols-4 gap-1.5">
+            <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin">
               {PRESETS.map(({ id, label, icon: Icon, description }) => (
                 <Tooltip key={id}>
                   <TooltipTrigger asChild>
                     <button
                       type="button"
                       onClick={() => applyPreset(id)}
-                      className={`flex flex-col items-center gap-1 rounded-lg border p-2 transition-colors ${
+                      className={`flex flex-col items-center gap-0.5 rounded-lg border px-2.5 py-1.5 shrink-0 transition-colors ${
                         preset === id
                           ? "border-primary bg-primary/10 text-primary"
                           : "bg-card hover:bg-accent text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      <Icon className="size-4" />
-                      <span className="text-[10px] leading-tight font-medium truncate w-full text-center">{label}</span>
+                      <Icon className="size-3.5" />
+                      <span className="text-[9px] leading-tight font-medium whitespace-nowrap">{label}</span>
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent side="top">{description}</TooltipContent>
+                  <TooltipContent side="bottom">{description}</TooltipContent>
                 </Tooltip>
               ))}
             </div>
@@ -846,14 +876,14 @@ export function ImageTracerTool() {
 
           {svgString && !tracing && (
             <p className="text-xs text-muted-foreground text-center">
-              SVG output: {formatSize(new Blob([svgString]).size)}
+              SVG output: {formatSize(new Blob([rawSvgRef.current || ""]).size)}
             </p>
           )}
         </div>
 
         {/* ── Preview pane ──────────────────────────────────────── */}
-        <div className="flex-1 order-1 lg:order-2 min-w-0 overflow-hidden">
-          <div className="rounded-xl border bg-card p-4 min-h-[300px] flex items-center justify-center overflow-hidden">
+        <div className="flex-1 order-1 lg:order-2 min-w-0">
+          <div className="rounded-xl border bg-card p-4 min-h-[300px] flex items-center justify-center">
             {tracing ? (
               <div className="flex flex-col items-center justify-center p-8">
                 <Loader2 className="size-8 animate-spin text-muted-foreground mb-3" />
@@ -861,7 +891,7 @@ export function ImageTracerTool() {
               </div>
             ) : svgString ? (
               <div
-                className="w-full overflow-hidden [&>svg]:max-w-full [&>svg]:h-auto [&>svg]:block [&>svg]:max-h-[70vh]"
+                className="w-full"
                 dangerouslySetInnerHTML={{ __html: svgString }}
               />
             ) : imageSrc ? (
