@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react"
 import {
   Upload, Download, Copy, Check, Trash2, Loader2, ChevronDown,
-  RefreshCw, ArrowRight, Info, Minus, Plus,
+  RefreshCw, ArrowRight, Info, Minus, Plus, X,
   // Preset icons
   Settings2, Layers, Spline, Triangle, Scan, Waves, Moon,
   Grid3X3, Shuffle, Paintbrush, Palette, Sparkles, Brush,
@@ -583,6 +583,13 @@ export function ImageTracerTool() {
               <p className="text-sm font-medium truncate">{imageFile.name}</p>
               <p className="text-xs text-muted-foreground">{formatSize(imageFile.size)}</p>
             </div>
+            <button
+              type="button"
+              onClick={handleClear}
+              className="shrink-0 flex items-center justify-center size-7 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="size-4" />
+            </button>
           </div>
 
           {/* ── Presets grid ──────────────────────────────────────── */}
