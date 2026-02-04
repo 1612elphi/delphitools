@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react"
 import {
   Upload, Download, Copy, Check, Trash2, Loader2, ChevronDown,
-  RefreshCw, ArrowRight, Info, Minus, Plus, X,
+  RefreshCw, ArrowRight, Info, Minus, Plus, X, ChevronsUpDown,
   // Preset icons
   Settings2, Layers, Spline, Triangle, Scan, Waves, Moon,
   Grid3X3, Shuffle, Paintbrush, Palette, Sparkles, Brush,
@@ -30,6 +30,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -370,6 +375,7 @@ export function ImageTracerTool() {
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
   const [dirty, setDirty] = useState(false)
+  const [presetsOpen, setPresetsOpen] = useState(false)
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const imageDataRef = useRef<ImageData | null>(null)
@@ -623,30 +629,48 @@ export function ImageTracerTool() {
           </div>
 
           {/* ── Presets ──────────────────────────────────────────── */}
-          <div className="space-y-2">
-            <SectionHeader>Presets</SectionHeader>
-            <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin">
-              {PRESETS.map(({ id, label, icon: Icon, description }) => (
-                <Tooltip key={id}>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      onClick={() => applyPreset(id)}
-                      className={`flex flex-col items-center gap-0.5 rounded-lg border px-2.5 py-1.5 shrink-0 transition-colors ${
-                        preset === id
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "bg-card hover:bg-accent text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <Icon className="size-3.5" />
-                      <span className="text-[9px] leading-tight font-medium whitespace-nowrap">{label}</span>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">{description}</TooltipContent>
-                </Tooltip>
-              ))}
-            </div>
-          </div>
+          <Popover open={presetsOpen} onOpenChange={setPresetsOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center justify-between w-full rounded-lg border bg-card px-3 py-2.5 text-sm hover:bg-accent transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  {(() => {
+                    const active = PRESETS.find(p => p.id === preset)
+                    if (active) {
+                      const Icon = active.icon
+                      return <><Icon className="size-4 text-primary" /><span className="font-medium">{active.label}</span></>
+                    }
+                    return <span className="font-medium">Custom</span>
+                  })()}
+                </span>
+                <ChevronsUpDown className="size-4 text-muted-foreground" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-80 p-2">
+              <div className="grid grid-cols-2 gap-1">
+                {PRESETS.map(({ id, label, icon: Icon, description }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => { applyPreset(id); setPresetsOpen(false) }}
+                    className={`flex items-start gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors ${
+                      preset === id
+                        ? "bg-primary/10 text-primary"
+                        : "hover:bg-accent text-foreground"
+                    }`}
+                  >
+                    <Icon className="size-4 shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium leading-tight">{label}</div>
+                      <div className="text-[11px] leading-snug text-muted-foreground mt-0.5">{description}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
 
           {/* ── Retrace button ────────────────────────────────────── */}
           {imageDataRef.current && (
