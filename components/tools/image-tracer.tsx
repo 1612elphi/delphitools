@@ -661,7 +661,7 @@ export function ImageTracerTool() {
     )
   }
 
-  // ── Main two-pane layout ────────────────────────────────────────────
+  // ── Main layout: preview on top, controls underneath ────────────────
 
   return (
     <div className="space-y-4">
@@ -674,87 +674,151 @@ export function ImageTracerTool() {
         className="hidden"
       />
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* ── Controls panel ──────────────────────────────────────── */}
-        <div className="w-full lg:w-80 shrink-0 order-2 lg:order-1 space-y-5">
-
-          {/* File info */}
-          <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
-            {imageSrc && (
-              <div className="size-10 rounded bg-muted overflow-hidden shrink-0">
-                <img src={imageSrc} alt="" className="size-full object-cover" />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{imageFile.name}</p>
-              <p className="text-xs text-muted-foreground">{formatSize(imageFile.size)}</p>
+      {/* ── Toolbar ──────────────────────────────────────────────── */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {/* File info */}
+        <div className="flex items-center gap-2 rounded-lg border bg-card px-2.5 py-1.5">
+          {imageSrc && (
+            <div className="size-7 rounded bg-muted overflow-hidden shrink-0">
+              <img src={imageSrc} alt="" className="size-full object-cover" />
             </div>
+          )}
+          <div className="min-w-0">
+            <p className="text-sm font-medium truncate max-w-[140px]">{imageFile.name}</p>
+          </div>
+          <span className="text-xs text-muted-foreground">{formatSize(imageFile.size)}</span>
+          <button
+            type="button"
+            onClick={handleClear}
+            className="shrink-0 flex items-center justify-center size-6 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="size-3.5" />
+          </button>
+        </div>
+
+        {/* Preset selector */}
+        <Popover open={presetsOpen} onOpenChange={setPresetsOpen}>
+          <PopoverTrigger asChild>
             <button
               type="button"
-              onClick={handleClear}
-              className="shrink-0 flex items-center justify-center size-7 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-sm hover:bg-accent transition-colors"
             >
-              <X className="size-4" />
+              {(() => {
+                const active = PRESETS.find(p => p.id === preset)
+                if (active) {
+                  const Icon = active.icon
+                  return <><Icon className="size-4 text-primary" /><span className="font-medium">{active.label}</span></>
+                }
+                return <span className="font-medium">Custom</span>
+              })()}
+              <ChevronsUpDown className="size-3.5 text-muted-foreground" />
             </button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-[340px] p-2">
+            <div className="grid grid-cols-4 gap-1">
+              {PRESETS.map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => { applyPreset(id); setPresetsOpen(false) }}
+                  className={`flex flex-col items-center gap-1 rounded-md px-1 py-2.5 transition-colors ${
+                    preset === id
+                      ? "bg-primary/10 text-primary"
+                      : "hover:bg-accent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Icon className="size-4" />
+                  <span className="text-[10px] leading-tight font-medium">{label}</span>
+                </button>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {/* Retrace */}
+        {imageDataRef.current && (
+          <Button
+            size="sm"
+            onClick={handleRetrace}
+            disabled={!dirty || tracing}
+          >
+            {tracing ? (
+              <><Loader2 className="size-3.5 mr-1.5 animate-spin" />Tracing&hellip;</>
+            ) : (
+              <><RefreshCw className="size-3.5 mr-1.5" />Retrace</>
+            )}
+          </Button>
+        )}
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Inline actions */}
+        <div className="flex items-center gap-1.5">
+          <Button
+            size="sm"
+            onClick={handleDownload}
+            disabled={!hasResult || tracing}
+          >
+            <Download className="size-3.5 mr-1.5" />
+            Download
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleCopy}
+            disabled={!hasResult || tracing}
+          >
+            {copied ? (
+              <><Check className="size-3.5 mr-1.5" />Copied</>
+            ) : (
+              <><Copy className="size-3.5 mr-1.5" />Copy</>
+            )}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={sendToOptimiser}
+            disabled={!hasResult || tracing}
+          >
+            <ArrowRight className="size-3.5 mr-1.5" />
+            Optimise
+          </Button>
+        </div>
+      </div>
+
+      {/* ── Preview ──────────────────────────────────────────────── */}
+      <div className="rounded-xl border bg-card p-4 min-h-[280px] flex items-center justify-center">
+        {tracing ? (
+          <div className="flex flex-col items-center justify-center p-8">
+            <Loader2 className="size-8 animate-spin text-muted-foreground mb-3" />
+            <p className="text-sm text-muted-foreground">Tracing image&hellip;</p>
           </div>
+        ) : previewUrl ? (
+          <img
+            src={previewUrl}
+            alt="Traced SVG preview"
+            className="max-w-full max-h-[60vh] object-contain block mx-auto"
+          />
+        ) : imageSrc ? (
+          <img
+            src={imageSrc}
+            alt="Source"
+            className="max-w-full max-h-[60vh] object-contain block mx-auto"
+          />
+        ) : null}
+      </div>
 
-          {/* ── Presets ──────────────────────────────────────────── */}
-          <Popover open={presetsOpen} onOpenChange={setPresetsOpen}>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="flex items-center justify-between w-full rounded-lg border bg-card px-3 py-2.5 text-sm hover:bg-accent transition-colors"
-              >
-                <span className="flex items-center gap-2">
-                  {(() => {
-                    const active = PRESETS.find(p => p.id === preset)
-                    if (active) {
-                      const Icon = active.icon
-                      return <><Icon className="size-4 text-primary" /><span className="font-medium">{active.label}</span></>
-                    }
-                    return <span className="font-medium">Custom</span>
-                  })()}
-                </span>
-                <ChevronsUpDown className="size-4 text-muted-foreground" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="w-[340px] p-2">
-              <div className="grid grid-cols-4 gap-1">
-                {PRESETS.map(({ id, label, icon: Icon }) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => { applyPreset(id); setPresetsOpen(false) }}
-                    className={`flex flex-col items-center gap-1 rounded-md px-1 py-2.5 transition-colors ${
-                      preset === id
-                        ? "bg-primary/10 text-primary"
-                        : "hover:bg-accent text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <Icon className="size-4" />
-                    <span className="text-[10px] leading-tight font-medium">{label}</span>
-                  </button>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
+      {hasResult && !tracing && (
+        <p className="text-xs text-muted-foreground text-center">
+          SVG output: {formatSize(new Blob([rawSvgRef.current || ""]).size)}
+        </p>
+      )}
 
-          {/* ── Retrace button ────────────────────────────────────── */}
-          {imageDataRef.current && (
-            <Button
-              onClick={handleRetrace}
-              disabled={!dirty || tracing}
-              className="w-full"
-            >
-              {tracing ? (
-                <><Loader2 className="size-4 mr-2 animate-spin" />Tracing&hellip;</>
-              ) : (
-                <><RefreshCw className="size-4 mr-2" />Retrace</>
-              )}
-            </Button>
-          )}
-
-          {/* ── Colours ───────────────────────────────────────────── */}
+      {/* ── Controls grid ────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* ── Colours ──────────────────────────────────────────── */}
+        <div className="rounded-xl border bg-card p-4 space-y-4">
           <SectionHeader>Colours</SectionHeader>
           <ColourCountCard
             value={options.numberofcolors}
@@ -768,8 +832,10 @@ export function ImageTracerTool() {
             min={1}
             max={20}
           />
+        </div>
 
-          {/* ── Smoothing ─────────────────────────────────────────── */}
+        {/* ── Smoothing ────────────────────────────────────────── */}
+        <div className="rounded-xl border bg-card p-4 space-y-4">
           <SectionHeader>Smoothing</SectionHeader>
           <OptionSlider
             label="Path smoothing"
@@ -800,8 +866,10 @@ export function ImageTracerTool() {
             max={200}
             step={1}
           />
+        </div>
 
-          {/* ── Output ────────────────────────────────────────────── */}
+        {/* ── Output ───────────────────────────────────────────── */}
+        <div className="rounded-xl border bg-card p-4 space-y-4">
           <SectionHeader>Output</SectionHeader>
           <StrokeWidthPicker
             value={options.strokewidth}
@@ -811,22 +879,26 @@ export function ImageTracerTool() {
             value={options.scale}
             onChange={(v) => updateOption("scale", v)}
           />
+        </div>
+      </div>
 
-          {/* ── Advanced ──────────────────────────────────────────── */}
-          <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
-            <CollapsibleTrigger asChild>
-              <button
-                type="button"
-                className="flex items-center justify-between w-full pt-1 group"
-              >
-                <span className="flex items-center gap-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">Advanced</span>
-                  <div className="flex-1 h-px bg-border" />
-                </span>
-                <ChevronDown className={`size-3.5 text-muted-foreground/70 transition-transform ${advancedOpen ? "rotate-180" : ""}`} />
-              </button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-4 pt-3">
+      {/* ── Advanced ──────────────────────────────────────────────── */}
+      <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="flex items-center justify-between w-full pt-1 group"
+          >
+            <span className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">Advanced</span>
+              <div className="flex-1 h-px bg-border" />
+            </span>
+            <ChevronDown className={`size-3.5 text-muted-foreground/70 transition-transform ${advancedOpen ? "rotate-180" : ""}`} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="rounded-xl border bg-card p-4 space-y-4">
               <Stepper
                 label="Blur radius"
                 tip="Gaussian blur pre-processing. Smooths the image before tracing to reduce noise."
@@ -863,6 +935,8 @@ export function ImageTracerTool() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div className="rounded-xl border bg-card p-4 space-y-4">
               <OptionSlider
                 label="Min colour ratio"
                 tip="Minimum proportion a colour must occupy to be kept. Raise to eliminate rare colours."
@@ -881,6 +955,26 @@ export function ImageTracerTool() {
                 min={0}
                 max={5}
               />
+              <div className="space-y-2">
+                <span className="flex items-center gap-1.5">
+                  <Label className="text-sm">Layering mode</Label>
+                  <InfoTip text="Sequential stacks colour layers back-to-front. Parallel creates independent layers per colour." />
+                </span>
+                <Select
+                  value={String(options.layering)}
+                  onValueChange={(v) => updateOption("layering", Number(v))}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Sequential</SelectItem>
+                    <SelectItem value="1">Parallel</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="rounded-xl border bg-card p-4 space-y-4">
               <OptionSlider
                 label="Line control point ratio"
                 tip="Adjusts control points on straight line segments. 0 = default placement."
@@ -901,95 +995,10 @@ export function ImageTracerTool() {
                 step={0.01}
                 displayValue={options.qcpr.toFixed(2)}
               />
-              <div className="space-y-2">
-                <span className="flex items-center gap-1.5">
-                  <Label className="text-sm">Layering mode</Label>
-                  <InfoTip text="Sequential stacks colour layers back-to-front. Parallel creates independent layers per colour." />
-                </span>
-                <Select
-                  value={String(options.layering)}
-                  onValueChange={(v) => updateOption("layering", Number(v))}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">Sequential</SelectItem>
-                    <SelectItem value="1">Parallel</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-
-        </div>
-
-        {/* ── Preview pane ──────────────────────────────────────── */}
-        <div className="flex-1 order-1 lg:order-2 min-w-0 lg:sticky lg:top-6 lg:self-start space-y-3">
-          <div className="rounded-xl border bg-card p-4 min-h-[300px] flex items-center justify-center">
-            {tracing ? (
-              <div className="flex flex-col items-center justify-center p-8">
-                <Loader2 className="size-8 animate-spin text-muted-foreground mb-3" />
-                <p className="text-sm text-muted-foreground">Tracing image&hellip;</p>
-              </div>
-            ) : previewUrl ? (
-              <img
-                src={previewUrl}
-                alt="Traced SVG preview"
-                className="max-w-full max-h-[70vh] object-contain block mx-auto"
-              />
-            ) : imageSrc ? (
-              <img
-                src={imageSrc}
-                alt="Source"
-                className="max-w-full max-h-[70vh] object-contain block mx-auto"
-              />
-            ) : null}
+            </div>
           </div>
-
-          {/* ── Actions ───────────────────────────────────────────── */}
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={handleDownload}
-              disabled={!hasResult || tracing}
-              size="sm"
-              className="flex-1"
-            >
-              <Download className="size-4 mr-1.5" />
-              Download
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleCopy}
-              disabled={!hasResult || tracing}
-              size="sm"
-              className="flex-1"
-            >
-              {copied ? (
-                <><Check className="size-4 mr-1.5" />Copied!</>
-              ) : (
-                <><Copy className="size-4 mr-1.5" />Copy</>
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={sendToOptimiser}
-              disabled={!hasResult || tracing}
-              size="sm"
-              className="flex-1"
-            >
-              <ArrowRight className="size-4 mr-1.5" />
-              Optimiser
-            </Button>
-          </div>
-
-          {hasResult && !tracing && (
-            <p className="text-xs text-muted-foreground text-center">
-              SVG output: {formatSize(new Blob([rawSvgRef.current || ""]).size)}
-            </p>
-          )}
-        </div>
-      </div>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   )
 }
