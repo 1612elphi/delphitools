@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react"
 import {
-  Upload, Download, Copy, Check, Trash2, Loader2, ChevronDown,
+  Upload, Download, Copy, Check, Loader2, ChevronDown,
   RefreshCw, ArrowRight, Info, Minus, Plus, X, ChevronsUpDown,
   // Preset icons
   Settings2, Layers, Spline, Triangle, Scan, Waves, Moon,
@@ -754,245 +754,178 @@ export function ImageTracerTool() {
             </Button>
           )}
 
-          {/* ── Settings controls (overlaid when a preset is active) ── */}
-          <div className="relative">
-            {preset !== "custom" && (
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-lg border border-dashed bg-background/80 backdrop-blur-[2px]">
-                <p className="text-sm text-muted-foreground mb-3">Preset applied. To tweak settings, please override.</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPreset("custom")}
-                >
-                  <Settings2 className="size-3.5 mr-1.5" />
-                  Override
-                </Button>
-              </div>
-            )}
+          {/* ── Colours ───────────────────────────────────────────── */}
+          <SectionHeader>Colours</SectionHeader>
+          <ColourCountCard
+            value={options.numberofcolors}
+            onChange={(v) => updateOption("numberofcolors", v)}
+          />
+          <Stepper
+            label="Quantisation cycles"
+            tip="Number of k-means iterations for colour clustering. More cycles = more accurate colours, slower trace."
+            value={options.colorquantcycles}
+            onChange={(v) => updateOption("colorquantcycles", v)}
+            min={1}
+            max={20}
+          />
 
-            <div className="space-y-5">
-              {/* ── Colours ───────────────────────────────────────────── */}
-              <SectionHeader>Colours</SectionHeader>
-              <ColourCountCard
-                value={options.numberofcolors}
-                onChange={(v) => updateOption("numberofcolors", v)}
-              />
+          {/* ── Smoothing ─────────────────────────────────────────── */}
+          <SectionHeader>Smoothing</SectionHeader>
+          <OptionSlider
+            label="Path smoothing"
+            tip="Controls how aggressively straight lines replace curves. Higher = smoother with fewer curves."
+            value={options.ltres}
+            onChange={(v) => updateOption("ltres", v)}
+            min={0.1}
+            max={10}
+            step={0.1}
+            displayValue={options.ltres.toFixed(1)}
+          />
+          <OptionSlider
+            label="Curve smoothing"
+            tip="Controls quadratic spline fitting. Higher = smoother curves with less detail."
+            value={options.qtres}
+            onChange={(v) => updateOption("qtres", v)}
+            min={0.1}
+            max={10}
+            step={0.1}
+            displayValue={options.qtres.toFixed(1)}
+          />
+          <OptionSlider
+            label="Min path size"
+            tip="Paths with fewer than this many nodes are removed. Raise to filter out noise and small artifacts."
+            value={options.pathomit}
+            onChange={(v) => updateOption("pathomit", v)}
+            min={0}
+            max={200}
+            step={1}
+          />
+
+          {/* ── Output ────────────────────────────────────────────── */}
+          <SectionHeader>Output</SectionHeader>
+          <StrokeWidthPicker
+            value={options.strokewidth}
+            onChange={(v) => updateOption("strokewidth", v)}
+          />
+          <ScalePicker
+            value={options.scale}
+            onChange={(v) => updateOption("scale", v)}
+          />
+
+          {/* ── Advanced ──────────────────────────────────────────── */}
+          <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+            <CollapsibleTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center justify-between w-full pt-1 group"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">Advanced</span>
+                  <div className="flex-1 h-px bg-border" />
+                </span>
+                <ChevronDown className={`size-3.5 text-muted-foreground/70 transition-transform ${advancedOpen ? "rotate-180" : ""}`} />
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4 pt-3">
               <Stepper
-                label="Quantisation cycles"
-                tip="Number of k-means iterations for colour clustering. More cycles = more accurate colours, slower trace."
-                value={options.colorquantcycles}
-                onChange={(v) => updateOption("colorquantcycles", v)}
-                min={1}
+                label="Blur radius"
+                tip="Gaussian blur pre-processing. Smooths the image before tracing to reduce noise."
+                value={options.blurradius}
+                onChange={(v) => updateOption("blurradius", v)}
+                min={0}
                 max={20}
               />
-
-              {/* ── Smoothing ─────────────────────────────────────────── */}
-              <SectionHeader>Smoothing</SectionHeader>
               <OptionSlider
-                label="Path smoothing"
-                tip="Controls how aggressively straight lines replace curves. Higher = smoother with fewer curves."
-                value={options.ltres}
-                onChange={(v) => updateOption("ltres", v)}
-                min={0.1}
-                max={10}
-                step={0.1}
-                displayValue={options.ltres.toFixed(1)}
-              />
-              <OptionSlider
-                label="Curve smoothing"
-                tip="Controls quadratic spline fitting. Higher = smoother curves with less detail."
-                value={options.qtres}
-                onChange={(v) => updateOption("qtres", v)}
-                min={0.1}
-                max={10}
-                step={0.1}
-                displayValue={options.qtres.toFixed(1)}
-              />
-              <OptionSlider
-                label="Min path size"
-                tip="Paths with fewer than this many nodes are removed. Raise to filter out noise and small artifacts."
-                value={options.pathomit}
-                onChange={(v) => updateOption("pathomit", v)}
+                label="Blur delta"
+                tip="Threshold for the blur difference. Only relevant when blur radius > 0."
+                value={options.blurdelta}
+                onChange={(v) => updateOption("blurdelta", v)}
                 min={0}
-                max={200}
+                max={256}
                 step={1}
               />
-
-              {/* ── Output ────────────────────────────────────────────── */}
-              <SectionHeader>Output</SectionHeader>
-              <StrokeWidthPicker
-                value={options.strokewidth}
-                onChange={(v) => updateOption("strokewidth", v)}
+              <div className="space-y-2">
+                <span className="flex items-center gap-1.5">
+                  <Label className="text-sm">Colour sampling</Label>
+                  <InfoTip text="How initial colours are sampled. Generated uses k-means, Random picks randomly, Deterministic uses a fixed grid." />
+                </span>
+                <Select
+                  value={String(options.colorsampling)}
+                  onValueChange={(v) => updateOption("colorsampling", Number(v))}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Generated</SelectItem>
+                    <SelectItem value="1">Random</SelectItem>
+                    <SelectItem value="2">Deterministic</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <OptionSlider
+                label="Min colour ratio"
+                tip="Minimum proportion a colour must occupy to be kept. Raise to eliminate rare colours."
+                value={options.mincolorratio}
+                onChange={(v) => updateOption("mincolorratio", v)}
+                min={0}
+                max={1}
+                step={0.01}
+                displayValue={options.mincolorratio.toFixed(2)}
               />
-              <ScalePicker
-                value={options.scale}
-                onChange={(v) => updateOption("scale", v)}
+              <Stepper
+                label="Coordinate rounding"
+                tip="Decimal places for SVG path coordinates. Lower = smaller file, less precise."
+                value={options.roundcoords}
+                onChange={(v) => updateOption("roundcoords", v)}
+                min={0}
+                max={5}
               />
+              <OptionSlider
+                label="Line control point ratio"
+                tip="Adjusts control points on straight line segments. 0 = default placement."
+                value={options.lcpr}
+                onChange={(v) => updateOption("lcpr", v)}
+                min={0}
+                max={1}
+                step={0.01}
+                displayValue={options.lcpr.toFixed(2)}
+              />
+              <OptionSlider
+                label="Quad control point ratio"
+                tip="Adjusts control points on quadratic curves. 0 = default placement."
+                value={options.qcpr}
+                onChange={(v) => updateOption("qcpr", v)}
+                min={0}
+                max={1}
+                step={0.01}
+                displayValue={options.qcpr.toFixed(2)}
+              />
+              <div className="space-y-2">
+                <span className="flex items-center gap-1.5">
+                  <Label className="text-sm">Layering mode</Label>
+                  <InfoTip text="Sequential stacks colour layers back-to-front. Parallel creates independent layers per colour." />
+                </span>
+                <Select
+                  value={String(options.layering)}
+                  onValueChange={(v) => updateOption("layering", Number(v))}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Sequential</SelectItem>
+                    <SelectItem value="1">Parallel</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
-              {/* ── Advanced ──────────────────────────────────────────── */}
-              <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
-                <CollapsibleTrigger asChild>
-                  <button
-                    type="button"
-                    className="flex items-center justify-between w-full pt-1 group"
-                  >
-                    <span className="flex items-center gap-2">
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">Advanced</span>
-                      <div className="flex-1 h-px bg-border" />
-                    </span>
-                    <ChevronDown className={`size-3.5 text-muted-foreground/70 transition-transform ${advancedOpen ? "rotate-180" : ""}`} />
-                  </button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-4 pt-3">
-                  <Stepper
-                    label="Blur radius"
-                    tip="Gaussian blur pre-processing. Smooths the image before tracing to reduce noise."
-                    value={options.blurradius}
-                    onChange={(v) => updateOption("blurradius", v)}
-                    min={0}
-                    max={20}
-                  />
-                  <OptionSlider
-                    label="Blur delta"
-                    tip="Threshold for the blur difference. Only relevant when blur radius > 0."
-                    value={options.blurdelta}
-                    onChange={(v) => updateOption("blurdelta", v)}
-                    min={0}
-                    max={256}
-                    step={1}
-                  />
-                  <div className="space-y-2">
-                    <span className="flex items-center gap-1.5">
-                      <Label className="text-sm">Colour sampling</Label>
-                      <InfoTip text="How initial colours are sampled. Generated uses k-means, Random picks randomly, Deterministic uses a fixed grid." />
-                    </span>
-                    <Select
-                      value={String(options.colorsampling)}
-                      onValueChange={(v) => updateOption("colorsampling", Number(v))}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="0">Generated</SelectItem>
-                        <SelectItem value="1">Random</SelectItem>
-                        <SelectItem value="2">Deterministic</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <OptionSlider
-                    label="Min colour ratio"
-                    tip="Minimum proportion a colour must occupy to be kept. Raise to eliminate rare colours."
-                    value={options.mincolorratio}
-                    onChange={(v) => updateOption("mincolorratio", v)}
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    displayValue={options.mincolorratio.toFixed(2)}
-                  />
-                  <Stepper
-                    label="Coordinate rounding"
-                    tip="Decimal places for SVG path coordinates. Lower = smaller file, less precise."
-                    value={options.roundcoords}
-                    onChange={(v) => updateOption("roundcoords", v)}
-                    min={0}
-                    max={5}
-                  />
-                  <OptionSlider
-                    label="Line control point ratio"
-                    tip="Adjusts control points on straight line segments. 0 = default placement."
-                    value={options.lcpr}
-                    onChange={(v) => updateOption("lcpr", v)}
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    displayValue={options.lcpr.toFixed(2)}
-                  />
-                  <OptionSlider
-                    label="Quad control point ratio"
-                    tip="Adjusts control points on quadratic curves. 0 = default placement."
-                    value={options.qcpr}
-                    onChange={(v) => updateOption("qcpr", v)}
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    displayValue={options.qcpr.toFixed(2)}
-                  />
-                  <div className="space-y-2">
-                    <span className="flex items-center gap-1.5">
-                      <Label className="text-sm">Layering mode</Label>
-                      <InfoTip text="Sequential stacks colour layers back-to-front. Parallel creates independent layers per colour." />
-                    </span>
-                    <Select
-                      value={String(options.layering)}
-                      onValueChange={(v) => updateOption("layering", Number(v))}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="0">Sequential</SelectItem>
-                        <SelectItem value="1">Parallel</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            </div>
-          </div>
-
-          {/* ── Actions ───────────────────────────────────────────── */}
-          <div className="space-y-2 pt-2">
-            <div className="flex gap-2">
-              <Button
-                onClick={handleDownload}
-                disabled={!hasResult || tracing}
-                className="flex-1"
-              >
-                <Download className="size-4 mr-2" />
-                Download SVG
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleCopy}
-                disabled={!hasResult || tracing}
-                className="flex-1"
-              >
-                {copied ? (
-                  <><Check className="size-4 mr-2" />Copied!</>
-                ) : (
-                  <><Copy className="size-4 mr-2" />Copy SVG</>
-                )}
-              </Button>
-            </div>
-            <Button
-              variant="outline"
-              onClick={sendToOptimiser}
-              disabled={!hasResult || tracing}
-              className="w-full"
-            >
-              <ArrowRight className="size-4 mr-2" />
-              Send to SVG Optimiser
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={handleClear}
-              className="w-full text-muted-foreground"
-            >
-              <Trash2 className="size-4 mr-2" />
-              Clear
-            </Button>
-          </div>
-
-          {hasResult && !tracing && (
-            <p className="text-xs text-muted-foreground text-center">
-              SVG output: {formatSize(new Blob([rawSvgRef.current || ""]).size)}
-            </p>
-          )}
         </div>
 
         {/* ── Preview pane ──────────────────────────────────────── */}
-        <div className="flex-1 order-1 lg:order-2 min-w-0">
+        <div className="flex-1 order-1 lg:order-2 min-w-0 lg:sticky lg:top-6 lg:self-start space-y-3">
           <div className="rounded-xl border bg-card p-4 min-h-[300px] flex items-center justify-center">
             {tracing ? (
               <div className="flex flex-col items-center justify-center p-8">
@@ -1013,6 +946,48 @@ export function ImageTracerTool() {
               />
             ) : null}
           </div>
+
+          {/* ── Actions ───────────────────────────────────────────── */}
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleDownload}
+              disabled={!hasResult || tracing}
+              size="sm"
+              className="flex-1"
+            >
+              <Download className="size-4 mr-1.5" />
+              Download
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleCopy}
+              disabled={!hasResult || tracing}
+              size="sm"
+              className="flex-1"
+            >
+              {copied ? (
+                <><Check className="size-4 mr-1.5" />Copied!</>
+              ) : (
+                <><Copy className="size-4 mr-1.5" />Copy</>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={sendToOptimiser}
+              disabled={!hasResult || tracing}
+              size="sm"
+              className="flex-1"
+            >
+              <ArrowRight className="size-4 mr-1.5" />
+              Optimiser
+            </Button>
+          </div>
+
+          {hasResult && !tracing && (
+            <p className="text-xs text-muted-foreground text-center">
+              SVG output: {formatSize(new Blob([rawSvgRef.current || ""]).size)}
+            </p>
+          )}
         </div>
       </div>
     </div>
