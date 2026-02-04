@@ -853,22 +853,22 @@ export function ImageTracerTool() {
 
         {/* ── Preview pane ──────────────────────────────────────── */}
         <div className="flex-1 order-1 lg:order-2 min-w-0">
-          <div className="rounded-xl border bg-card overflow-hidden">
+          <div className="rounded-xl border bg-card p-4 min-h-[300px] flex items-center justify-center">
             {tracing ? (
-              <div className="flex flex-col items-center justify-center p-12 min-h-[300px]">
+              <div className="flex flex-col items-center justify-center p-8">
                 <Loader2 className="size-8 animate-spin text-muted-foreground mb-3" />
                 <p className="text-sm text-muted-foreground">Tracing image&hellip;</p>
               </div>
             ) : svgString ? (
               <div
-                className="w-full [&>svg]:max-w-full [&>svg]:h-auto [&>svg]:block [&>svg]:mx-auto"
+                className="w-full [&>svg]:w-full [&>svg]:h-auto [&>svg]:block [&>svg]:max-h-[70vh]"
                 dangerouslySetInnerHTML={{ __html: svgString }}
               />
             ) : imageSrc ? (
               <img
                 src={imageSrc}
                 alt="Source"
-                className="w-full h-auto block"
+                className="max-w-full max-h-[70vh] object-contain block mx-auto"
               />
             ) : null}
           </div>
