@@ -1,61 +1,83 @@
-"use client"
+"use client";
 
-import { useState, useRef, useCallback, useEffect } from "react"
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
-  Upload, Download, Copy, Check, Loader2, ChevronDown,
-  RefreshCw, ArrowRight, Info, Minus, Plus, X, ChevronsUpDown,
+  Upload,
+  Download,
+  Copy,
+  Check,
+  Loader2,
+  ChevronDown,
+  RefreshCw,
+  ArrowRight,
+  Info,
+  Minus,
+  Plus,
+  X,
+  ChevronsUpDown,
   // Preset icons
-  Settings2, Layers, Spline, Triangle, Scan, Waves, Moon,
-  Grid3X3, Shuffle, Paintbrush, Palette, Sparkles, Brush,
+  Settings2,
+  Layers,
+  Spline,
+  Triangle,
+  Scan,
+  Waves,
+  Moon,
+  Grid3X3,
+  Shuffle,
+  Paintbrush,
+  Palette,
+  Sparkles,
+  Brush,
   LucideIcon,
-} from "lucide-react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Slider } from "@/components/ui/slider"
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+} from "@/components/ui/collapsible";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from "@/components/ui/tooltip";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@/components/ui/popover";
 
 // ── Types ────────────────────────────────────────────────────────────
 
 interface TracerOptions {
-  numberofcolors: number
-  colorquantcycles: number
-  ltres: number
-  qtres: number
-  pathomit: number
-  strokewidth: number
-  scale: number
-  blurradius: number
-  blurdelta: number
-  colorsampling: number
-  mincolorratio: number
-  roundcoords: number
-  lcpr: number
-  qcpr: number
-  layering: number
-  rightangleenhance: boolean
-  linefilter: boolean
+  numberofcolors: number;
+  colorquantcycles: number;
+  ltres: number;
+  qtres: number;
+  pathomit: number;
+  strokewidth: number;
+  scale: number;
+  blurradius: number;
+  blurdelta: number;
+  colorsampling: number;
+  mincolorratio: number;
+  roundcoords: number;
+  lcpr: number;
+  qcpr: number;
+  layering: number;
+  rightangleenhance: boolean;
+  linefilter: boolean;
 }
 
 const DEFAULT_OPTIONS: TracerOptions = {
@@ -76,35 +98,115 @@ const DEFAULT_OPTIONS: TracerOptions = {
   layering: 0,
   rightangleenhance: true,
   linefilter: false,
-}
+};
 
 // ── Preset config ────────────────────────────────────────────────────
 
 interface PresetConfig {
-  id: string
-  label: string
-  icon: LucideIcon
-  description: string
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  description: string;
 }
 
 const PRESETS: PresetConfig[] = [
-  { id: "default",        label: "Default",     icon: Settings2,   description: "Balanced tracing" },
-  { id: "posterized1",    label: "Monoposto",    icon: Layers,      description: "Light posterisation" },
-  { id: "posterized2",    label: "Poster 2",    icon: Layers,      description: "Medium posterisation" },
-  { id: "posterized3",    label: "Poster 3",    icon: Layers,      description: "Heavy posterisation" },
-  { id: "curvy",          label: "Curvy",        icon: Spline,      description: "Smooth organic curves" },
-  { id: "sharp",          label: "Sharp",        icon: Triangle,    description: "Precise angular lines" },
-  { id: "detailed",       label: "Detailed",     icon: Scan,        description: "High detail, many colours" },
-  { id: "smoothed",       label: "Smoothed",     icon: Waves,       description: "Gaussian blur pre-pass" },
-  { id: "grayscale",      label: "Greyscale",    icon: Moon,        description: "7-tone greyscale" },
-  { id: "fixedpalette",   label: "Fixed",        icon: Grid3X3,     description: "27-colour RGB cube" },
-  { id: "randomsampling1",label: "Random 1",     icon: Shuffle,     description: "Random palette sampling" },
-  { id: "randomsampling2",label: "Random 2",     icon: Shuffle,     description: "Random palette variant" },
-  { id: "artistic1",      label: "Art 1",        icon: Paintbrush,  description: "Stylised output" },
-  { id: "artistic2",      label: "Art 2",        icon: Brush,       description: "Stylised variant" },
-  { id: "artistic3",      label: "Art 3",        icon: Palette,     description: "Artistic colour mix" },
-  { id: "artistic4",      label: "Art 4",        icon: Sparkles,    description: "Abstract artistic" },
-]
+  {
+    id: "default",
+    label: "Default",
+    icon: Settings2,
+    description: "Balanced tracing",
+  },
+  {
+    id: "posterized1",
+    label: "Monoposto",
+    icon: Layers,
+    description: "Light posterisation",
+  },
+  {
+    id: "posterized2",
+    label: "Saul's World",
+    icon: Layers,
+    description: "Medium posterisation",
+  },
+  {
+    id: "posterized3",
+    label: "Powders",
+    icon: Layers,
+    description: "Heavy posterisation",
+  },
+  {
+    id: "curvy",
+    label: "Bouba",
+    icon: Spline,
+    description: "Smooth organic curves",
+  },
+  {
+    id: "sharp",
+    label: "Kiki",
+    icon: Triangle,
+    description: "Precise angular lines",
+  },
+  {
+    id: "detailed",
+    label: "Intricate",
+    icon: Scan,
+    description: "High detail, many colours",
+  },
+  {
+    id: "smoothed",
+    label: "Papered",
+    icon: Waves,
+    description: "Gaussian blur pre-pass",
+  },
+  {
+    id: "grayscale",
+    label: "Mono",
+    icon: Moon,
+    description: "7-tone greyscale",
+  },
+  {
+    id: "fixedpalette",
+    label: "Genlock",
+    icon: Grid3X3,
+    description: "27-colour RGB cube",
+  },
+  {
+    id: "randomsampling1",
+    label: "Logan",
+    icon: Shuffle,
+    description: "Random palette sampling",
+  },
+  {
+    id: "randomsampling2",
+    label: "Clockwise",
+    icon: Shuffle,
+    description: "Random palette variant",
+  },
+  {
+    id: "artistic1",
+    label: "Theories",
+    icon: Paintbrush,
+    description: "Stylised output",
+  },
+  {
+    id: "artistic2",
+    label: "Dustbowl",
+    icon: Brush,
+    description: "Stylised variant",
+  },
+  {
+    id: "artistic3",
+    label: "Warrrant",
+    icon: Palette,
+    description: "Artistic colour mix",
+  },
+  {
+    id: "artistic4",
+    label: "Sparkle",
+    icon: Sparkles,
+    description: "Abstract artistic",
+  },
+];
 
 // ── Extracted sub-components ─────────────────────────────────────────
 
@@ -112,7 +214,10 @@ function InfoTip({ text }: { text: string }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <button type="button" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors">
+        <button
+          type="button"
+          className="text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+        >
           <Info className="size-3.5" />
         </button>
       </TooltipTrigger>
@@ -120,7 +225,7 @@ function InfoTip({ text }: { text: string }) {
         {text}
       </TooltipContent>
     </Tooltip>
-  )
+  );
 }
 
 function OptionSlider({
@@ -133,14 +238,14 @@ function OptionSlider({
   step,
   displayValue,
 }: {
-  label: string
-  tip: string
-  value: number
-  onChange: (value: number) => void
-  min: number
-  max: number
-  step: number
-  displayValue?: string
+  label: string;
+  tip: string;
+  value: number;
+  onChange: (value: number) => void;
+  min: number;
+  max: number;
+  step: number;
+  displayValue?: string;
 }) {
   return (
     <div className="space-y-2">
@@ -161,7 +266,7 @@ function OptionSlider({
         onValueChange={([v]) => onChange(v)}
       />
     </div>
-  )
+  );
 }
 
 function Stepper({
@@ -173,13 +278,13 @@ function Stepper({
   max,
   step = 1,
 }: {
-  label: string
-  tip: string
-  value: number
-  onChange: (value: number) => void
-  min: number
-  max: number
-  step?: number
+  label: string;
+  tip: string;
+  value: number;
+  onChange: (value: number) => void;
+  min: number;
+  max: number;
+  step?: number;
 }) {
   return (
     <div className="flex items-center justify-between">
@@ -196,7 +301,9 @@ function Stepper({
         >
           <Minus className="size-3" />
         </button>
-        <span className="w-8 text-center text-sm font-mono tabular-nums">{value}</span>
+        <span className="w-8 text-center text-sm font-mono tabular-nums">
+          {value}
+        </span>
         <button
           type="button"
           onClick={() => onChange(Math.min(max, value + step))}
@@ -207,31 +314,33 @@ function Stepper({
         </button>
       </div>
     </div>
-  )
+  );
 }
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2 pt-1">
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">{children}</span>
+      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+        {children}
+      </span>
       <div className="flex-1 h-px bg-border" />
     </div>
-  )
+  );
 }
 
 // ── Stroke width visual picker ───────────────────────────────────────
 
-const STROKE_OPTIONS = [0, 0.5, 1, 2, 3, 5]
+const STROKE_OPTIONS = [0, 0.5, 1, 2, 3, 5];
 
 function StrokeWidthPicker({
   value,
   onChange,
 }: {
-  value: number
-  onChange: (v: number) => void
+  value: number;
+  onChange: (v: number) => void;
 }) {
   // Find the closest preset, or null if custom
-  const activeIdx = STROKE_OPTIONS.indexOf(value)
+  const activeIdx = STROKE_OPTIONS.indexOf(value);
 
   return (
     <div className="space-y-2">
@@ -240,7 +349,9 @@ function StrokeWidthPicker({
           <Label className="text-sm">Stroke width</Label>
           <InfoTip text="Width of the outline drawn around each traced shape. 0 means no stroke." />
         </span>
-        <span className="text-sm font-mono text-muted-foreground tabular-nums">{value}</span>
+        <span className="text-sm font-mono text-muted-foreground tabular-nums">
+          {value}
+        </span>
       </div>
       <div className="flex gap-1.5">
         {STROKE_OPTIONS.map((sw, i) => (
@@ -259,28 +370,31 @@ function StrokeWidthPicker({
             ) : (
               <div
                 className="rounded-full bg-foreground"
-                style={{ width: `${Math.min(sw * 6, 24)}px`, height: `${Math.max(sw, 1)}px` }}
+                style={{
+                  width: `${Math.min(sw * 6, 24)}px`,
+                  height: `${Math.max(sw, 1)}px`,
+                }}
               />
             )}
           </button>
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 // ── Scale quick-pick ─────────────────────────────────────────────────
 
-const SCALE_OPTIONS = [0.5, 1, 2, 3, 5]
+const SCALE_OPTIONS = [0.5, 1, 2, 3, 5];
 
 function ScalePicker({
   value,
   onChange,
 }: {
-  value: number
-  onChange: (v: number) => void
+  value: number;
+  onChange: (v: number) => void;
 }) {
-  const activeIdx = SCALE_OPTIONS.indexOf(value)
+  const activeIdx = SCALE_OPTIONS.indexOf(value);
 
   return (
     <div className="space-y-2">
@@ -289,7 +403,9 @@ function ScalePicker({
           <Label className="text-sm">Scale</Label>
           <InfoTip text="Multiplier for the output SVG size relative to the source image." />
         </span>
-        <span className="text-sm font-mono text-muted-foreground tabular-nums">{value}x</span>
+        <span className="text-sm font-mono text-muted-foreground tabular-nums">
+          {value}x
+        </span>
       </div>
       <div className="flex gap-1.5">
         {SCALE_OPTIONS.map((s, i) => (
@@ -308,7 +424,7 @@ function ScalePicker({
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 // ── Number of colours card ───────────────────────────────────────────
@@ -317,8 +433,8 @@ function ColourCountCard({
   value,
   onChange,
 }: {
-  value: number
-  onChange: (v: number) => void
+  value: number;
+  onChange: (v: number) => void;
 }) {
   return (
     <div className="rounded-lg border bg-card p-3">
@@ -338,7 +454,9 @@ function ColourCountCard({
           <Minus className="size-4" />
         </button>
         <div className="flex flex-col items-center">
-          <span className="text-3xl font-bold tabular-nums leading-none">{value}</span>
+          <span className="text-3xl font-bold tabular-nums leading-none">
+            {value}
+          </span>
         </div>
         <button
           type="button"
@@ -358,7 +476,7 @@ function ColourCountCard({
         className="mt-3"
       />
     </div>
-  )
+  );
 }
 
 // ── Main component ───────────────────────────────────────────────────
@@ -367,9 +485,9 @@ function ColourCountCard({
 // Fetches the library source from public/ and injects it into a Blob-based worker.
 async function createTracerWorker(): Promise<Worker | null> {
   try {
-    const resp = await fetch("/lib/imagetracer_v1.2.6.js")
-    if (!resp.ok) return null
-    const libSource = await resp.text()
+    const resp = await fetch("/lib/imagetracer_v1.2.6.js");
+    if (!resp.ok) return null;
+    const libSource = await resp.text();
     const workerCode = `
       ${libSource}
       self.onmessage = function(e) {
@@ -381,253 +499,280 @@ async function createTracerWorker(): Promise<Worker | null> {
         var svg = self.ImageTracer.imagedataToSVG(imgd, e.data.opts);
         self.postMessage(svg);
       };
-    `
-    const blob = new Blob([workerCode], { type: "application/javascript" })
-    return new Worker(URL.createObjectURL(blob))
+    `;
+    const blob = new Blob([workerCode], { type: "application/javascript" });
+    return new Worker(URL.createObjectURL(blob));
   } catch {
-    return null
+    return null;
   }
 }
 
 export function ImageTracerTool() {
-  const router = useRouter()
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imageSrc, setImageSrc] = useState<string | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [tracing, setTracing] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const [options, setOptions] = useState<TracerOptions>({ ...DEFAULT_OPTIONS })
-  const [preset, setPreset] = useState<string>("default")
-  const [advancedOpen, setAdvancedOpen] = useState(false)
-  const [isDragOver, setIsDragOver] = useState(false)
-  const [dirty, setDirty] = useState(false)
-  const [presetsOpen, setPresetsOpen] = useState(false)
-  const [hasResult, setHasResult] = useState(false)
+  const router = useRouter();
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [tracing, setTracing] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [options, setOptions] = useState<TracerOptions>({ ...DEFAULT_OPTIONS });
+  const [preset, setPreset] = useState<string>("default");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [presetsOpen, setPresetsOpen] = useState(false);
+  const [hasResult, setHasResult] = useState(false);
 
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const imageDataRef = useRef<ImageData | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const rawSvgRef = useRef<string | null>(null)
-  const workerRef = useRef<Worker | null>(null)
-  const workerInitRef = useRef<Promise<Worker | null> | null>(null)
-  const prevPreviewUrlRef = useRef<string | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imageDataRef = useRef<ImageData | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const rawSvgRef = useRef<string | null>(null);
+  const workerRef = useRef<Worker | null>(null);
+  const workerInitRef = useRef<Promise<Worker | null> | null>(null);
+  const prevPreviewUrlRef = useRef<string | null>(null);
 
   // Lazily initialise the worker (async, cached after first call)
   const getWorker = useCallback(async () => {
-    if (workerRef.current) return workerRef.current
+    if (workerRef.current) return workerRef.current;
     if (!workerInitRef.current) {
-      workerInitRef.current = createTracerWorker()
+      workerInitRef.current = createTracerWorker();
     }
-    const worker = await workerInitRef.current
-    workerRef.current = worker
-    return worker
-  }, [])
+    const worker = await workerInitRef.current;
+    workerRef.current = worker;
+    return worker;
+  }, []);
 
   // Clean up worker on unmount
   useEffect(() => {
     return () => {
-      workerRef.current?.terminate()
-      if (prevPreviewUrlRef.current) URL.revokeObjectURL(prevPreviewUrlRef.current)
-    }
-  }, [])
+      workerRef.current?.terminate();
+      if (prevPreviewUrlRef.current)
+        URL.revokeObjectURL(prevPreviewUrlRef.current);
+    };
+  }, []);
 
   const extractImageData = useCallback((file: File): Promise<ImageData> => {
     return new Promise((resolve, reject) => {
-      const img = new Image()
+      const img = new Image();
       img.onload = () => {
-        const canvas = canvasRef.current
-        if (!canvas) { reject(new Error("Canvas not available")); return }
-        canvas.width = img.width
-        canvas.height = img.height
-        const ctx = canvas.getContext("2d")
-        if (!ctx) { reject(new Error("Canvas 2D context unavailable")); return }
-        ctx.drawImage(img, 0, 0)
-        resolve(ctx.getImageData(0, 0, img.width, img.height))
-      }
-      img.onerror = () => reject(new Error("Failed to load image"))
-      img.src = URL.createObjectURL(file)
-    })
-  }, [])
+        const canvas = canvasRef.current;
+        if (!canvas) {
+          reject(new Error("Canvas not available"));
+          return;
+        }
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Canvas 2D context unavailable"));
+          return;
+        }
+        ctx.drawImage(img, 0, 0);
+        resolve(ctx.getImageData(0, 0, img.width, img.height));
+      };
+      img.onerror = () => reject(new Error("Failed to load image"));
+      img.src = URL.createObjectURL(file);
+    });
+  }, []);
 
   // Make the SVG responsive for preview display
   const makeResponsive = (svg: string): string => {
-    const widthMatch = svg.match(/<svg[^>]*\swidth="([^"]+)"/)
-    const heightMatch = svg.match(/<svg[^>]*\sheight="([^"]+)"/)
-    const hasViewBox = /<svg[^>]*\sviewBox="/.test(svg)
-    let result = svg
+    const widthMatch = svg.match(/<svg[^>]*\swidth="([^"]+)"/);
+    const heightMatch = svg.match(/<svg[^>]*\sheight="([^"]+)"/);
+    const hasViewBox = /<svg[^>]*\sviewBox="/.test(svg);
+    let result = svg;
     if (!hasViewBox && widthMatch && heightMatch) {
-      result = result.replace(/<svg/, `<svg viewBox="0 0 ${widthMatch[1]} ${heightMatch[1]}"`)
+      result = result.replace(
+        /<svg/,
+        `<svg viewBox="0 0 ${widthMatch[1]} ${heightMatch[1]}"`,
+      );
     }
     result = result
       .replace(/(<svg[^>]*)\swidth="[^"]*"/, '$1 width="100%"')
-      .replace(/(<svg[^>]*)\sheight="[^"]*"/, '$1 height="auto"')
-    return result
-  }
+      .replace(/(<svg[^>]*)\sheight="[^"]*"/, '$1 height="auto"');
+    return result;
+  };
 
   // Convert SVG string to a blob URL for <img> rendering (avoids DOM thrashing)
   const svgToBlobUrl = (svg: string): string => {
-    const blob = new Blob([svg], { type: "image/svg+xml" })
-    return URL.createObjectURL(blob)
-  }
+    const blob = new Blob([svg], { type: "image/svg+xml" });
+    return URL.createObjectURL(blob);
+  };
 
   const handleTraceResult = useCallback((rawSvg: string) => {
-    rawSvgRef.current = rawSvg
+    rawSvgRef.current = rawSvg;
     // Revoke previous preview blob URL
-    if (prevPreviewUrlRef.current) URL.revokeObjectURL(prevPreviewUrlRef.current)
-    const url = svgToBlobUrl(makeResponsive(rawSvg))
-    prevPreviewUrlRef.current = url
-    setPreviewUrl(url)
-    setHasResult(true)
-    setTracing(false)
-  }, [])
+    if (prevPreviewUrlRef.current)
+      URL.revokeObjectURL(prevPreviewUrlRef.current);
+    const url = svgToBlobUrl(makeResponsive(rawSvg));
+    prevPreviewUrlRef.current = url;
+    setPreviewUrl(url);
+    setHasResult(true);
+    setTracing(false);
+  }, []);
 
-  const runTrace = useCallback(async (imgd: ImageData, opts: TracerOptions) => {
-    setTracing(true)
+  const runTrace = useCallback(
+    async (imgd: ImageData, opts: TracerOptions) => {
+      setTracing(true);
 
-    const worker = await getWorker()
-    if (worker) {
-      // Transfer ImageData buffer to worker (off main thread)
-      const buffer = imgd.data.buffer.slice(0)
-      worker.onmessage = (e: MessageEvent<string>) => handleTraceResult(e.data)
-      worker.onerror = () => {
-        console.error("Worker tracing failed")
-        setTracing(false)
+      const worker = await getWorker();
+      if (worker) {
+        // Transfer ImageData buffer to worker (off main thread)
+        const buffer = imgd.data.buffer.slice(0);
+        worker.onmessage = (e: MessageEvent<string>) =>
+          handleTraceResult(e.data);
+        worker.onerror = () => {
+          console.error("Worker tracing failed");
+          setTracing(false);
+        };
+        worker.postMessage(
+          { buffer, width: imgd.width, height: imgd.height, opts: { ...opts } },
+          [buffer],
+        );
+      } else {
+        // Fallback: run on main thread
+        try {
+          const mod = await import("imagetracerjs");
+          await new Promise((resolve) => setTimeout(resolve, 10));
+          const rawSvg = mod.default.imagedataToSVG(imgd, { ...opts });
+          handleTraceResult(rawSvg);
+        } catch (err) {
+          console.error("Tracing failed:", err);
+          setTracing(false);
+        }
       }
-      worker.postMessage(
-        { buffer, width: imgd.width, height: imgd.height, opts: { ...opts } },
-        [buffer]
-      )
-    } else {
-      // Fallback: run on main thread
-      try {
-        const mod = await import("imagetracerjs")
-        await new Promise(resolve => setTimeout(resolve, 10))
-        const rawSvg = mod.default.imagedataToSVG(imgd, { ...opts })
-        handleTraceResult(rawSvg)
-      } catch (err) {
-        console.error("Tracing failed:", err)
-        setTracing(false)
-      }
-    }
-  }, [getWorker, handleTraceResult])
+    },
+    [getWorker, handleTraceResult],
+  );
 
   useEffect(() => {
-    if (!imageFile) return
-    let cancelled = false
+    if (!imageFile) return;
+    let cancelled = false;
     extractImageData(imageFile).then((imgd) => {
-      if (cancelled) return
-      imageDataRef.current = imgd
-      runTrace(imgd, options)
-    })
-    return () => { cancelled = true }
+      if (cancelled) return;
+      imageDataRef.current = imgd;
+      runTrace(imgd, options);
+    });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [imageFile, extractImageData, runTrace])
+  }, [imageFile, extractImageData, runTrace]);
 
   const handleRetrace = useCallback(() => {
-    if (!imageDataRef.current) return
-    setDirty(false)
-    runTrace(imageDataRef.current, options)
-  }, [options, runTrace])
+    if (!imageDataRef.current) return;
+    setDirty(false);
+    runTrace(imageDataRef.current, options);
+  }, [options, runTrace]);
 
   const handleFile = useCallback((file: File) => {
-    if (!file.type.startsWith("image/")) return
-    setPreviewUrl(null)
-    setHasResult(false)
-    rawSvgRef.current = null
-    imageDataRef.current = null
-    setImageFile(file)
-    setImageSrc(URL.createObjectURL(file))
-  }, [])
+    if (!file.type.startsWith("image/")) return;
+    setPreviewUrl(null);
+    setHasResult(false);
+    rawSvgRef.current = null;
+    imageDataRef.current = null;
+    setImageFile(file);
+    setImageSrc(URL.createObjectURL(file));
+  }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(false)
-    const file = e.dataTransfer.files[0]
-    if (file) handleFile(file)
-  }, [handleFile])
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
+      const file = e.dataTransfer.files[0];
+      if (file) handleFile(file);
+    },
+    [handleFile],
+  );
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) handleFile(file)
-  }, [handleFile])
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) handleFile(file);
+    },
+    [handleFile],
+  );
 
   const applyPreset = useCallback(async (name: string) => {
-    setPreset(name)
-    setDirty(true)
+    setPreset(name);
+    setDirty(true);
     try {
-      const mod = await import("imagetracerjs")
-      const presetOpts = mod.default.optionpresets[name]
+      const mod = await import("imagetracerjs");
+      const presetOpts = mod.default.optionpresets[name];
       if (presetOpts) {
-        setOptions(prev => ({
+        setOptions((prev) => ({
           ...DEFAULT_OPTIONS,
           ...presetOpts,
           scale: presetOpts.scale ?? prev.scale,
-        }))
+        }));
       }
     } catch {
-      setOptions({ ...DEFAULT_OPTIONS })
+      setOptions({ ...DEFAULT_OPTIONS });
     }
-  }, [])
+  }, []);
 
-  const updateOption = useCallback(<K extends keyof TracerOptions>(key: K, value: TracerOptions[K]) => {
-    setPreset("custom")
-    setDirty(true)
-    setOptions(prev => ({ ...prev, [key]: value }))
-  }, [])
+  const updateOption = useCallback(
+    <K extends keyof TracerOptions>(key: K, value: TracerOptions[K]) => {
+      setPreset("custom");
+      setDirty(true);
+      setOptions((prev) => ({ ...prev, [key]: value }));
+    },
+    [],
+  );
 
   const handleDownload = useCallback(() => {
-    const raw = rawSvgRef.current
-    if (!raw || !imageFile) return
-    const blob = new Blob([raw], { type: "image/svg+xml" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.download = `${imageFile.name.replace(/\.[^.]+$/, "")}-traced.svg`
-    a.href = url
-    a.click()
-    URL.revokeObjectURL(url)
-  }, [imageFile])
+    const raw = rawSvgRef.current;
+    if (!raw || !imageFile) return;
+    const blob = new Blob([raw], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.download = `${imageFile.name.replace(/\.[^.]+$/, "")}-traced.svg`;
+    a.href = url;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [imageFile]);
 
   const handleCopy = useCallback(async () => {
-    const raw = rawSvgRef.current
-    if (!raw) return
+    const raw = rawSvgRef.current;
+    if (!raw) return;
     try {
-      await navigator.clipboard.writeText(raw)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
+      await navigator.clipboard.writeText(raw);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
     } catch (err) {
-      console.error("Copy failed:", err)
+      console.error("Copy failed:", err);
     }
-  }, [])
+  }, []);
 
   const handleClear = useCallback(() => {
-    setImageFile(null)
-    setImageSrc(null)
-    if (prevPreviewUrlRef.current) URL.revokeObjectURL(prevPreviewUrlRef.current)
-    prevPreviewUrlRef.current = null
-    setPreviewUrl(null)
-    setHasResult(false)
-    setTracing(false)
-    setDirty(false)
-    imageDataRef.current = null
-    rawSvgRef.current = null
-    setOptions({ ...DEFAULT_OPTIONS })
-    setPreset("default")
-    setCopied(false)
-    if (fileInputRef.current) fileInputRef.current.value = ""
-  }, [])
+    setImageFile(null);
+    setImageSrc(null);
+    if (prevPreviewUrlRef.current)
+      URL.revokeObjectURL(prevPreviewUrlRef.current);
+    prevPreviewUrlRef.current = null;
+    setPreviewUrl(null);
+    setHasResult(false);
+    setTracing(false);
+    setDirty(false);
+    imageDataRef.current = null;
+    rawSvgRef.current = null;
+    setOptions({ ...DEFAULT_OPTIONS });
+    setPreset("default");
+    setCopied(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }, []);
 
   const sendToOptimiser = () => {
-    const raw = rawSvgRef.current
-    if (!raw) return
-    sessionStorage.setItem("svg-optimiser-input", raw)
-    router.push("/tools/svg-optimiser")
-  }
+    const raw = rawSvgRef.current;
+    if (!raw) return;
+    sessionStorage.setItem("svg-optimiser-input", raw);
+    router.push("/tools/svg-optimiser");
+  };
 
   const formatSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  }
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   // ── Drop zone (no image) ────────────────────────────────────────────
 
@@ -636,11 +781,16 @@ export function ImageTracerTool() {
       <div className="space-y-4">
         <div
           onDrop={handleDrop}
-          onDragOver={(e) => { e.preventDefault(); setIsDragOver(true) }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragOver(true);
+          }}
           onDragLeave={() => setIsDragOver(false)}
           onClick={() => fileInputRef.current?.click()}
           className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors cursor-pointer ${
-            isDragOver ? "border-primary bg-primary/5" : "hover:border-primary/50"
+            isDragOver
+              ? "border-primary bg-primary/5"
+              : "hover:border-primary/50"
           }`}
         >
           <input
@@ -658,7 +808,7 @@ export function ImageTracerTool() {
         </div>
         <canvas ref={canvasRef} className="hidden" />
       </div>
-    )
+    );
   }
 
   // ── Main layout: preview on top, controls underneath ────────────────
@@ -684,9 +834,13 @@ export function ImageTracerTool() {
             </div>
           )}
           <div className="min-w-0">
-            <p className="text-sm font-medium truncate max-w-[140px]">{imageFile.name}</p>
+            <p className="text-sm font-medium truncate max-w-[140px]">
+              {imageFile.name}
+            </p>
           </div>
-          <span className="text-xs text-muted-foreground">{formatSize(imageFile.size)}</span>
+          <span className="text-xs text-muted-foreground">
+            {formatSize(imageFile.size)}
+          </span>
           <button
             type="button"
             onClick={handleClear}
@@ -722,9 +876,15 @@ export function ImageTracerTool() {
             disabled={!hasResult || tracing}
           >
             {copied ? (
-              <><Check className="size-3.5 mr-1.5" />Copied</>
+              <>
+                <Check className="size-3.5 mr-1.5" />
+                Copied
+              </>
             ) : (
-              <><Copy className="size-3.5 mr-1.5" />Copy</>
+              <>
+                <Copy className="size-3.5 mr-1.5" />
+                Copy
+              </>
             )}
           </Button>
           <Button
@@ -744,7 +904,9 @@ export function ImageTracerTool() {
         {tracing ? (
           <div className="flex flex-col items-center justify-center p-8">
             <Loader2 className="size-8 animate-spin text-muted-foreground mb-3" />
-            <p className="text-sm text-muted-foreground">Tracing image&hellip;</p>
+            <p className="text-sm text-muted-foreground">
+              Tracing image&hellip;
+            </p>
           </div>
         ) : previewUrl ? (
           <img
@@ -771,12 +933,17 @@ export function ImageTracerTool() {
             >
               <span className="text-xs text-muted-foreground">Preset</span>
               {(() => {
-                const active = PRESETS.find(p => p.id === preset)
+                const active = PRESETS.find((p) => p.id === preset);
                 if (active) {
-                  const Icon = active.icon
-                  return <><Icon className="size-4 text-primary" /><span className="font-medium">{active.label}</span></>
+                  const Icon = active.icon;
+                  return (
+                    <>
+                      <Icon className="size-4 text-primary" />
+                      <span className="font-medium">{active.label}</span>
+                    </>
+                  );
                 }
-                return <span className="font-medium">Custom</span>
+                return <span className="font-medium">Custom</span>;
               })()}
               <ChevronsUpDown className="size-3.5 text-muted-foreground" />
             </button>
@@ -787,7 +954,10 @@ export function ImageTracerTool() {
                 <button
                   key={id}
                   type="button"
-                  onClick={() => { applyPreset(id); setPresetsOpen(false) }}
+                  onClick={() => {
+                    applyPreset(id);
+                    setPresetsOpen(false);
+                  }}
                   className={`flex flex-col items-center gap-1 rounded-md px-1 py-2.5 transition-colors ${
                     preset === id
                       ? "bg-primary/10 text-primary"
@@ -795,7 +965,9 @@ export function ImageTracerTool() {
                   }`}
                 >
                   <Icon className="size-4" />
-                  <span className="text-[10px] leading-tight font-medium">{label}</span>
+                  <span className="text-[10px] leading-tight font-medium">
+                    {label}
+                  </span>
                 </button>
               ))}
             </div>
@@ -810,9 +982,15 @@ export function ImageTracerTool() {
             className="flex-1"
           >
             {tracing ? (
-              <><Loader2 className="size-3.5 mr-1.5 animate-spin" />Tracing&hellip;</>
+              <>
+                <Loader2 className="size-3.5 mr-1.5 animate-spin" />
+                Tracing&hellip;
+              </>
             ) : (
-              <><RefreshCw className="size-3.5 mr-1.5" />Retrace</>
+              <>
+                <RefreshCw className="size-3.5 mr-1.5" />
+                Retrace
+              </>
             )}
           </Button>
         )}
@@ -893,10 +1071,14 @@ export function ImageTracerTool() {
             className="flex items-center justify-between w-full pt-1 group"
           >
             <span className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">Advanced</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                Advanced
+              </span>
               <div className="flex-1 h-px bg-border" />
             </span>
-            <ChevronDown className={`size-3.5 text-muted-foreground/70 transition-transform ${advancedOpen ? "rotate-180" : ""}`} />
+            <ChevronDown
+              className={`size-3.5 text-muted-foreground/70 transition-transform ${advancedOpen ? "rotate-180" : ""}`}
+            />
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent className="pt-3">
@@ -926,7 +1108,9 @@ export function ImageTracerTool() {
                 </span>
                 <Select
                   value={String(options.colorsampling)}
-                  onValueChange={(v) => updateOption("colorsampling", Number(v))}
+                  onValueChange={(v) =>
+                    updateOption("colorsampling", Number(v))
+                  }
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue />
@@ -1003,5 +1187,5 @@ export function ImageTracerTool() {
         </CollapsibleContent>
       </Collapsible>
     </div>
-  )
+  );
 }
