@@ -1006,7 +1006,7 @@ export function ImageTracerTool() {
             onChange={(v) => updateOption("numberofcolors", v)}
           />
           <Stepper
-            label="Quantisation cycles"
+            label="Quantise"
             tip="Number of k-means iterations for colour clustering. More cycles = more accurate colours, slower trace."
             value={options.colorquantcycles}
             onChange={(v) => updateOption("colorquantcycles", v)}
@@ -1019,7 +1019,7 @@ export function ImageTracerTool() {
         <div className="rounded-xl border bg-card p-4 space-y-4">
           <SectionHeader>Smoothing</SectionHeader>
           <OptionSlider
-            label="Path smoothing"
+            label="Paths"
             tip="Controls how aggressively straight lines replace curves. Higher = smoother with fewer curves."
             value={options.ltres}
             onChange={(v) => updateOption("ltres", v)}
@@ -1029,7 +1029,7 @@ export function ImageTracerTool() {
             displayValue={options.ltres.toFixed(1)}
           />
           <OptionSlider
-            label="Curve smoothing"
+            label="Curves"
             tip="Controls quadratic spline fitting. Higher = smoother curves with less detail."
             value={options.qtres}
             onChange={(v) => updateOption("qtres", v)}
@@ -1039,7 +1039,7 @@ export function ImageTracerTool() {
             displayValue={options.qtres.toFixed(1)}
           />
           <OptionSlider
-            label="Min path size"
+            label="Threshold"
             tip="Paths with fewer than this many nodes are removed. Raise to filter out noise and small artifacts."
             value={options.pathomit}
             onChange={(v) => updateOption("pathomit", v)}
