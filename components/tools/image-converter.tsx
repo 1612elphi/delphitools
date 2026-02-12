@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { Upload, Download, X, ImageIcon, Link as LinkIcon, ChevronDown, Lock, Unlock, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +31,6 @@ interface PngOptions {
 
 interface JpegOptions {
   quality: number;
-  progressive: boolean;
   backgroundColour: string;
 }
 
@@ -53,9 +52,8 @@ interface BmpOptions {
   bitDepth: 24 | 32;
 }
 
-interface TiffOptions {
-  // uncompressed only
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface TiffOptions {}
 
 interface IcoOptions {
   sizes: number[];
@@ -123,11 +121,26 @@ function getTargetDimensions(
     };
   }
   if (resize.mode === "custom") {
-    return { width: resize.width || img.naturalWidth, height: resize.height || img.naturalHeight };
+    const w = resize.width || img.naturalWidth;
+    const h = resize.height || img.naturalHeight;
+    if (resize.lockAspectRatio) {
+      const aspect = img.naturalWidth / img.naturalHeight;
+      if (resize.width && !resize.height) {
+        return { width: w, height: Math.round(w / aspect) };
+      }
+      if (resize.height && !resize.width) {
+        return { width: Math.round(h * aspect), height: h };
+      }
+      if (resize.width && resize.height) {
+        return { width: w, height: Math.round(w / aspect) };
+      }
+    }
+    return { width: w, height: h };
   }
   return { width: img.naturalWidth, height: img.naturalHeight };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function encodePng(canvas: HTMLCanvasElement, _options: PngOptions): Promise<Blob> {
   return canvasToBlob(canvas, "image/png");
 }
@@ -198,33 +211,29 @@ async function encodeBmp(canvas: HTMLCanvasElement, options: BmpOptions): Promis
   view.setUint32(38, 2835, true); // ~72 DPI horizontal
   view.setUint32(42, 2835, true); // ~72 DPI vertical
 
-  let offset = headerSize;
   for (let y = 0; y < height; y++) {
+    const rowStart = headerSize + y * rowSize;
+    let off = rowStart;
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 4;
       if (bpp === 32) {
-        view.setUint8(offset, data[i + 2]);     // B
-        view.setUint8(offset + 1, data[i + 1]); // G
-        view.setUint8(offset + 2, data[i]);     // R
-        view.setUint8(offset + 3, data[i + 3]); // A
-        offset += 4;
+        view.setUint8(off++, data[i + 2]); // B
+        view.setUint8(off++, data[i + 1]); // G
+        view.setUint8(off++, data[i]);     // R
+        view.setUint8(off++, data[i + 3]); // A
       } else {
-        view.setUint8(offset, data[i + 2]);     // B
-        view.setUint8(offset + 1, data[i + 1]); // G
-        view.setUint8(offset + 2, data[i]);     // R
-        offset += 3;
+        view.setUint8(off++, data[i + 2]); // B
+        view.setUint8(off++, data[i + 1]); // G
+        view.setUint8(off++, data[i]);     // R
       }
     }
-    // Pad row to 4-byte boundary
-    while (offset % 4 !== 0) {
-      view.setUint8(offset, 0);
-      offset++;
-    }
+    // Remaining bytes up to rowSize are already zeroed by ArrayBuffer
   }
 
   return new Blob([buffer], { type: "image/bmp" });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function encodeTiff(canvas: HTMLCanvasElement, _options: TiffOptions): Promise<Blob> {
   const UTIF = await import("utif");
   const ctx = canvas.getContext("2d")!;
@@ -298,7 +307,7 @@ export function ImageConverterTool() {
 
   const [formatOptions, setFormatOptions] = useState<FormatOptionsMap>({
     png: { transparency: true, backgroundColour: "#ffffff" },
-    jpeg: { quality: 90, progressive: false, backgroundColour: "#ffffff" },
+    jpeg: { quality: 90, backgroundColour: "#ffffff" },
     webp: { quality: 90, lossless: false },
     avif: { quality: 80 },
     gif: { maxColours: 256, quantization: "rgb565" },
@@ -306,6 +315,16 @@ export function ImageConverterTool() {
     tiff: {},
     ico: { sizes: [32], multiSize: false },
   });
+
+  const previewUrls = useMemo(() => {
+    return images.map((file) => URL.createObjectURL(file));
+  }, [images]);
+
+  useEffect(() => {
+    return () => {
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [previewUrls]);
 
   useEffect(() => {
     const canvas = document.createElement("canvas");
@@ -346,6 +365,7 @@ export function ImageConverterTool() {
   };
 
   const clearAll = () => {
+    converted.forEach((img) => URL.revokeObjectURL(img.url));
     setImages([]);
     setConverted([]);
   };
@@ -361,6 +381,7 @@ export function ImageConverterTool() {
 
   const convertImages = async () => {
     setConverting(true);
+    converted.forEach((img) => URL.revokeObjectURL(img.url));
     const results: ConvertedImage[] = [];
 
     for (const file of images) {
@@ -569,13 +590,6 @@ export function ImageConverterTool() {
                     step={1}
                   />
                 </div>
-                <div className="flex items-center justify-between">
-                  <Label>Progressive</Label>
-                  <Switch
-                    checked={formatOptions.jpeg.progressive}
-                    onCheckedChange={(v) => updateFormatOption("jpeg", "progressive", v)}
-                  />
-                </div>
                 <div className="flex items-center gap-3">
                   <Label>Background for transparent images</Label>
                   <input
@@ -723,7 +737,7 @@ export function ImageConverterTool() {
                 </div>
                 {formatOptions.ico.multiSize && (
                   <p className="text-sm text-muted-foreground">
-                    Sizes: {formatOptions.ico.sizes.sort((a, b) => a - b).join(", ")}px
+                    Sizes: {[...formatOptions.ico.sizes].sort((a, b) => a - b).join(", ")}px
                   </p>
                 )}
               </>
@@ -839,7 +853,7 @@ export function ImageConverterTool() {
               >
                 <div className="size-12 rounded bg-muted flex items-center justify-center overflow-hidden">
                   <img
-                    src={URL.createObjectURL(file)}
+                    src={previewUrls[index]}
                     alt={file.name}
                     className="size-full object-cover"
                   />
