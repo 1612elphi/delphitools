@@ -1,7 +1,7 @@
-// Colour naming utility using NTC (Name That Colour) database
+// Colour naming utility using meodai/color-names database
 // Uses RGB Euclidean distance for nearest-color matching
 
-import ntcData from "./ntc";
+import { colornames } from "color-name-list/bestof";
 
 interface NamedColour {
   name: string;
@@ -11,13 +11,13 @@ interface NamedColour {
   b: number;
 }
 
-// Parse the NTC data into a more efficient format
-const COLOURS: NamedColour[] = ntcData.map((c) => {
+// Parse the colour data into a more efficient format
+const COLOURS: NamedColour[] = colornames.map((c) => {
   const hex = c.hex;
-  const r = parseInt(hex.slice(0, 2), 16);
-  const g = parseInt(hex.slice(2, 4), 16);
-  const b = parseInt(hex.slice(4, 6), 16);
-  return { name: c.name, hex: `#${hex}`, r, g, b };
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return { name: c.name, hex, r, g, b };
 });
 
 // Calculate Euclidean distance between two colours
