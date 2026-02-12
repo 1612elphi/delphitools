@@ -188,7 +188,7 @@ export const toolCategories: ToolCategory[] = [
       {
         id: "image-converter",
         name: "Image Converter",
-        description: "Convert between PNG, JPEG, WebP, AVIF, GIF, BMP, TIFF, ICO with resize and format options",
+        description: "Convert between PNG, JPEG, WebP, AVIF, GIF, BMP, TIFF, ICO, ICNS with resize and format options",
         icon: RefreshCw,
         href: "/tools/image-converter",
       },
