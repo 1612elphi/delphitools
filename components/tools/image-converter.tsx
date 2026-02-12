@@ -464,7 +464,7 @@ export function ImageConverterTool() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Drop Zone */}
       <div
         onDrop={handleDrop}
@@ -488,41 +488,335 @@ export function ImageConverterTool() {
       </div>
 
       {/* Format Selection */}
-      <div className="space-y-4">
-        <div className="space-y-3">
-          <label className="font-bold block">Convert to</label>
-          <div className="flex gap-2">
-            {(["png", "jpeg", "webp"] as ImageFormat[]).map((fmt) => (
-              <Button
-                key={fmt}
-                variant={targetFormat === fmt ? "default" : "outline"}
-                onClick={() => setTargetFormat(fmt)}
-                className="flex-1 uppercase font-bold"
-                size="lg"
-              >
-                {fmt}
-              </Button>
-            ))}
-          </div>
+      <div className="space-y-3">
+        <label className="font-bold block">Convert to</label>
+        <div className="flex flex-wrap gap-2">
+          {(["png", "jpeg", "webp", "avif", "gif", "bmp", "tiff", "ico"] as ImageFormat[]).map((fmt) => (
+            <Button
+              key={fmt}
+              variant={targetFormat === fmt ? "default" : "outline"}
+              onClick={() => setTargetFormat(fmt)}
+              className="uppercase font-bold"
+              size="lg"
+              disabled={fmt === "avif" && avifSupported === false}
+              title={fmt === "avif" && avifSupported === false ? "AVIF encoding not supported in your browser" : undefined}
+            >
+              {fmt}
+            </Button>
+          ))}
+          <Button
+            variant="outline"
+            className="uppercase font-bold"
+            size="lg"
+            asChild
+          >
+            <Link href="/tools/image-tracer">
+              <LinkIcon className="size-4 mr-1.5" />
+              SVG
+            </Link>
+          </Button>
         </div>
-
-        {targetFormat !== "png" && (
-          <div className="space-y-3">
-            <label className="font-bold block">
-              Quality: {Math.round(quality * 100)}%
-            </label>
-            <input
-              type="range"
-              min="0.1"
-              max="1"
-              step="0.1"
-              value={quality}
-              onChange={(e) => setQuality(parseFloat(e.target.value))}
-              className="w-full accent-primary"
-            />
-          </div>
+        {targetFormat === "avif" && avifSupported === false && (
+          <p className="text-sm text-destructive">
+            Your browser does not support AVIF encoding. Try Chrome or Edge.
+          </p>
         )}
       </div>
+
+      {/* Format Options */}
+      <Collapsible defaultOpen>
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" className="w-full justify-between font-bold">
+            Format Options
+            <ChevronDown className="size-4" />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="space-y-4 pt-2 pb-1">
+            {targetFormat === "png" && (
+              <>
+                <div className="flex items-center justify-between">
+                  <Label>Preserve transparency</Label>
+                  <Switch
+                    checked={formatOptions.png.transparency}
+                    onCheckedChange={(v) => updateFormatOption("png", "transparency", v)}
+                  />
+                </div>
+                {!formatOptions.png.transparency && (
+                  <div className="flex items-center gap-3">
+                    <Label>Background</Label>
+                    <input
+                      type="color"
+                      value={formatOptions.png.backgroundColour}
+                      onChange={(e) => updateFormatOption("png", "backgroundColour", e.target.value)}
+                      className="size-8 rounded border cursor-pointer"
+                    />
+                  </div>
+                )}
+              </>
+            )}
+
+            {targetFormat === "jpeg" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Quality: {formatOptions.jpeg.quality}%</Label>
+                  <Slider
+                    value={[formatOptions.jpeg.quality]}
+                    onValueChange={([v]) => updateFormatOption("jpeg", "quality", v)}
+                    min={1}
+                    max={100}
+                    step={1}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label>Progressive</Label>
+                  <Switch
+                    checked={formatOptions.jpeg.progressive}
+                    onCheckedChange={(v) => updateFormatOption("jpeg", "progressive", v)}
+                  />
+                </div>
+                <div className="flex items-center gap-3">
+                  <Label>Background for transparent images</Label>
+                  <input
+                    type="color"
+                    value={formatOptions.jpeg.backgroundColour}
+                    onChange={(e) => updateFormatOption("jpeg", "backgroundColour", e.target.value)}
+                    className="size-8 rounded border cursor-pointer"
+                  />
+                </div>
+              </>
+            )}
+
+            {targetFormat === "webp" && (
+              <>
+                <div className="flex items-center justify-between">
+                  <Label>Lossless</Label>
+                  <Switch
+                    checked={formatOptions.webp.lossless}
+                    onCheckedChange={(v) => updateFormatOption("webp", "lossless", v)}
+                  />
+                </div>
+                {!formatOptions.webp.lossless && (
+                  <div className="space-y-2">
+                    <Label>Quality: {formatOptions.webp.quality}%</Label>
+                    <Slider
+                      value={[formatOptions.webp.quality]}
+                      onValueChange={([v]) => updateFormatOption("webp", "quality", v)}
+                      min={1}
+                      max={100}
+                      step={1}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+
+            {targetFormat === "avif" && (
+              <div className="space-y-2">
+                <Label>Quality: {formatOptions.avif.quality}%</Label>
+                <Slider
+                  value={[formatOptions.avif.quality]}
+                  onValueChange={([v]) => updateFormatOption("avif", "quality", v)}
+                  min={1}
+                  max={100}
+                  step={1}
+                />
+              </div>
+            )}
+
+            {targetFormat === "gif" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Max colours: {formatOptions.gif.maxColours}</Label>
+                  <Slider
+                    value={[formatOptions.gif.maxColours]}
+                    onValueChange={([v]) => updateFormatOption("gif", "maxColours", v)}
+                    min={2}
+                    max={256}
+                    step={1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Quantization</Label>
+                  <Select
+                    value={formatOptions.gif.quantization}
+                    onValueChange={(v) => updateFormatOption("gif", "quantization", v as GifOptions["quantization"])}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="rgb565">RGB565 (best quality)</SelectItem>
+                      <SelectItem value="rgb444">RGB444 (smaller)</SelectItem>
+                      <SelectItem value="rgba4444">RGBA4444 (with transparency)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+
+            {targetFormat === "bmp" && (
+              <div className="space-y-2">
+                <Label>Bit depth</Label>
+                <RadioGroup
+                  value={String(formatOptions.bmp.bitDepth)}
+                  onValueChange={(v) => updateFormatOption("bmp", "bitDepth", Number(v) as 24 | 32)}
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="24" id="bmp-24" />
+                    <Label htmlFor="bmp-24">24-bit (no transparency)</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="32" id="bmp-32" />
+                    <Label htmlFor="bmp-32">32-bit (with alpha)</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
+
+            {targetFormat === "tiff" && (
+              <p className="text-sm text-muted-foreground">
+                TIFF output is uncompressed. Files may be large.
+              </p>
+            )}
+
+            {targetFormat === "ico" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Icon size</Label>
+                  <Select
+                    value={String(formatOptions.ico.sizes[0])}
+                    onValueChange={(v) =>
+                      updateFormatOption("ico", "sizes",
+                        formatOptions.ico.multiSize
+                          ? [...new Set([Number(v), ...formatOptions.ico.sizes])]
+                          : [Number(v)]
+                      )
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[16, 32, 48, 64, 128, 256].map((s) => (
+                        <SelectItem key={s} value={String(s)}>{s}x{s}px</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label>Multi-size ICO (embed all standard sizes)</Label>
+                  <Switch
+                    checked={formatOptions.ico.multiSize}
+                    onCheckedChange={(v) => {
+                      setFormatOptions((prev) => ({
+                        ...prev,
+                        ico: {
+                          ...prev.ico,
+                          multiSize: v,
+                          sizes: v ? [16, 32, 48, 64, 128, 256] : [prev.ico.sizes[0] || 32],
+                        },
+                      }));
+                    }}
+                  />
+                </div>
+                {formatOptions.ico.multiSize && (
+                  <p className="text-sm text-muted-foreground">
+                    Sizes: {formatOptions.ico.sizes.sort((a, b) => a - b).join(", ")}px
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Resize */}
+      <Collapsible>
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" className="w-full justify-between font-bold">
+            Resize
+            <ChevronDown className="size-4" />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="space-y-4 pt-2 pb-1">
+            <RadioGroup
+              value={resize.mode}
+              onValueChange={(v) => setResize((prev) => ({ ...prev, mode: v as ResizeMode }))}
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="original" id="resize-original" />
+                <Label htmlFor="resize-original">Original size</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="custom" id="resize-custom" />
+                <Label htmlFor="resize-custom">Custom dimensions</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="percentage" id="resize-percentage" />
+                <Label htmlFor="resize-percentage">Percentage</Label>
+              </div>
+            </RadioGroup>
+
+            {resize.mode === "custom" && (
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  placeholder="Width"
+                  value={resize.width || ""}
+                  onChange={(e) => setResize((prev) => ({ ...prev, width: Number(e.target.value) }))}
+                  className="w-28"
+                />
+                <span className="text-muted-foreground font-bold">&times;</span>
+                <Input
+                  type="number"
+                  placeholder="Height"
+                  value={resize.height || ""}
+                  onChange={(e) => setResize((prev) => ({ ...prev, height: Number(e.target.value) }))}
+                  className="w-28"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setResize((prev) => ({ ...prev, lockAspectRatio: !prev.lockAspectRatio }))}
+                  title={resize.lockAspectRatio ? "Unlock aspect ratio" : "Lock aspect ratio"}
+                >
+                  {resize.lockAspectRatio ? <Lock className="size-4" /> : <Unlock className="size-4" />}
+                </Button>
+              </div>
+            )}
+
+            {resize.mode === "percentage" && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={resize.percentage}
+                    onChange={(e) => setResize((prev) => ({ ...prev, percentage: Number(e.target.value) }))}
+                    className="w-24"
+                    min={1}
+                    max={1000}
+                  />
+                  <span className="text-muted-foreground font-bold">%</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {[25, 50, 75, 150, 200].map((p) => (
+                    <Button
+                      key={p}
+                      variant={resize.percentage === p ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setResize((prev) => ({ ...prev, percentage: p }))}
+                    >
+                      {p}%
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Image List */}
       {images.length > 0 && (
@@ -589,10 +883,12 @@ export function ImageConverterTool() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-lg">Converted</h3>
-            <Button onClick={downloadAll}>
-              <Download className="size-4 mr-2" />
-              Download All
-            </Button>
+            {converted.length >= 2 && (
+              <Button variant="outline" onClick={downloadAllAsZip}>
+                <Archive className="size-4 mr-2" />
+                Download All as ZIP
+              </Button>
+            )}
           </div>
 
           <div className="grid gap-3">
@@ -602,11 +898,15 @@ export function ImageConverterTool() {
                 className="flex items-center gap-4 p-4 rounded-lg border bg-card"
               >
                 <div className="size-12 rounded bg-muted flex items-center justify-center overflow-hidden">
-                  <img
-                    src={img.dataUrl}
-                    alt={img.name}
-                    className="size-full object-cover"
-                  />
+                  {img.targetFormat === "ico" || img.targetFormat === "bmp" || img.targetFormat === "tiff" ? (
+                    <ImageIcon className="size-6 text-muted-foreground" />
+                  ) : (
+                    <img
+                      src={img.url}
+                      alt={img.name}
+                      className="size-full object-cover"
+                    />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{img.name}</p>
