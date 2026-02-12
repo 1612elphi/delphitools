@@ -16,6 +16,7 @@ delphitools is built on the shoulders of many excellent open source projects. Th
 
 ## Tool-Specific Libraries
 
+- **[color-names](https://github.com/meodai/color-names)** by meodai - A handpicked list of colour names for nearest-colour matching
 - **[qr-code-styling](https://github.com/kozakdenys/qr-code-styling)** - QR code generation with styling options
 - **[bwip-js](https://github.com/metafloor/bwip-js)** - Barcode generation (Data Matrix, Aztec, PDF417, Code 128, EAN-13, and more)
 - **[SVGO](https://github.com/svg/svgo)** - SVG optimization
