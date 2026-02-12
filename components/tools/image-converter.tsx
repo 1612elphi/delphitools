@@ -161,7 +161,8 @@ async function encodeGif(canvas: HTMLCanvasElement, options: GifOptions): Promis
   gif.writeFrame(index, width, height, { palette });
   gif.finish();
 
-  return new Blob([gif.bytes()], { type: "image/gif" });
+  const bytes = gif.bytes();
+  return new Blob([new Uint8Array(bytes)], { type: "image/gif" });
 }
 
 async function encodeBmp(canvas: HTMLCanvasElement, options: BmpOptions): Promise<Blob> {
