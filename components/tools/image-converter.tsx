@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 
-type ImageFormat = "png" | "jpeg" | "webp" | "avif" | "gif" | "bmp" | "tiff" | "ico";
+type ImageFormat = "png" | "jpeg" | "webp" | "avif" | "gif" | "bmp" | "tiff" | "ico" | "icns";
 
 type ResizeMode = "original" | "custom" | "percentage";
 
@@ -59,6 +59,11 @@ interface IcoOptions {
   multiSize: boolean;
 }
 
+interface IcnsOptions {
+  sizes: number[];
+  multiSize: boolean;
+}
+
 interface FormatOptionsMap {
   png: PngOptions;
   jpeg: JpegOptions;
@@ -68,6 +73,7 @@ interface FormatOptionsMap {
   bmp: BmpOptions;
   tiff: TiffOptions;
   ico: IcoOptions;
+  icns: IcnsOptions;
 }
 
 interface ConvertedImage {
@@ -289,6 +295,63 @@ async function encodeIco(canvas: HTMLCanvasElement, options: IcoOptions): Promis
   return new Blob([buffer], { type: "image/x-icon" });
 }
 
+const ICNS_TYPE_MAP: Record<number, string> = {
+  16: "icp4",
+  32: "icp5",
+  64: "icp6",
+  128: "ic07",
+  256: "ic08",
+  512: "ic09",
+  1024: "ic10",
+};
+
+async function encodeIcns(canvas: HTMLCanvasElement, options: IcnsOptions): Promise<Blob> {
+  const sizes = options.multiSize ? options.sizes : [options.sizes[0] || 128];
+  const entries: { type: string; data: ArrayBuffer }[] = [];
+
+  for (const size of sizes) {
+    const type = ICNS_TYPE_MAP[size];
+    if (!type) continue;
+
+    const resized = document.createElement("canvas");
+    resized.width = size;
+    resized.height = size;
+    const ctx = resized.getContext("2d")!;
+    ctx.drawImage(canvas, 0, 0, size, size);
+    const blob = await canvasToBlob(resized, "image/png");
+    entries.push({ type, data: await blob.arrayBuffer() });
+  }
+
+  // ICNS: 4-byte magic + 4-byte file size + entries (each: 4-byte type + 4-byte size + data)
+  const totalDataSize = entries.reduce((sum, e) => sum + 8 + e.data.byteLength, 0);
+  const fileSize = 8 + totalDataSize;
+  const buffer = new ArrayBuffer(fileSize);
+  const view = new DataView(buffer);
+  const bytes = new Uint8Array(buffer);
+
+  // File header
+  bytes[0] = 0x69; // 'i'
+  bytes[1] = 0x63; // 'c'
+  bytes[2] = 0x6e; // 'n'
+  bytes[3] = 0x73; // 's'
+  view.setUint32(4, fileSize, false); // big-endian
+
+  let offset = 8;
+  for (const entry of entries) {
+    // Entry type (4 ASCII chars)
+    for (let i = 0; i < 4; i++) {
+      bytes[offset + i] = entry.type.charCodeAt(i);
+    }
+    // Entry size (big-endian, includes the 8-byte header)
+    view.setUint32(offset + 4, 8 + entry.data.byteLength, false);
+    // PNG data
+    new Uint8Array(buffer, offset + 8, entry.data.byteLength).set(new Uint8Array(entry.data));
+    offset += 8 + entry.data.byteLength;
+  }
+
+  return new Blob([buffer], { type: "image/x-icns" });
+}
+
 export function ImageConverterTool() {
   const [images, setImages] = useState<File[]>([]);
   const [targetFormat, setTargetFormat] = useState<ImageFormat>("webp");
@@ -313,6 +376,7 @@ export function ImageConverterTool() {
     bmp: { bitDepth: 32 },
     tiff: {},
     ico: { sizes: [32], multiSize: false },
+    icns: { sizes: [128], multiSize: false },
   });
 
   const previewUrls = useMemo(() => {
@@ -428,6 +492,9 @@ export function ImageConverterTool() {
           case "ico":
             blob = await encodeIco(canvas, formatOptions.ico);
             break;
+          case "icns":
+            blob = await encodeIcns(canvas, formatOptions.icns);
+            break;
         }
 
         const ext = targetFormat === "jpeg" ? "jpg" : targetFormat;
@@ -512,7 +579,7 @@ export function ImageConverterTool() {
       <div className="space-y-3">
         <label className="font-bold block">Convert to</label>
         <div className="flex flex-wrap gap-2">
-          {(["png", "jpeg", "webp", "avif", "gif", "bmp", "tiff", "ico"] as ImageFormat[]).map((fmt) => (
+          {(["png", "jpeg", "webp", "avif", "gif", "bmp", "tiff", "ico", "icns"] as ImageFormat[]).map((fmt) => (
             <Button
               key={fmt}
               variant={targetFormat === fmt ? "default" : "outline"}
@@ -765,6 +832,51 @@ export function ImageConverterTool() {
               )}
             </>
           )}
+
+          {targetFormat === "icns" && (
+            <>
+              <div className="flex items-center justify-between">
+                <Label className="text-sm">Multi-size</Label>
+                <Switch
+                  checked={formatOptions.icns.multiSize}
+                  onCheckedChange={(v) => {
+                    setFormatOptions((prev) => ({
+                      ...prev,
+                      icns: {
+                        ...prev.icns,
+                        multiSize: v,
+                        sizes: v ? [16, 32, 64, 128, 256, 512, 1024] : [prev.icns.sizes[0] || 128],
+                      },
+                    }));
+                  }}
+                />
+              </div>
+              {!formatOptions.icns.multiSize ? (
+                <div className="space-y-2">
+                  <Label className="text-sm">Icon size</Label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[16, 32, 64, 128, 256, 512, 1024].map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => updateFormatOption("icns", "sizes", [s])}
+                        className={`px-2 py-1.5 rounded-lg border text-sm font-mono transition-colors ${
+                          formatOptions.icns.sizes[0] === s
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "hover:border-primary/50"
+                        }`}
+                      >
+                        {s}px
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Embeds all sizes: {[...formatOptions.icns.sizes].sort((a, b) => a - b).join(", ")}px
+                </p>
+              )}
+            </>
+          )}
         </div>
 
         {/* Resize Card */}
@@ -958,7 +1070,7 @@ export function ImageConverterTool() {
                 className="flex items-center gap-4 p-4 rounded-lg border bg-card"
               >
                 <div className="size-12 rounded bg-muted flex items-center justify-center overflow-hidden">
-                  {img.targetFormat === "ico" || img.targetFormat === "bmp" || img.targetFormat === "tiff" ? (
+                  {img.targetFormat === "ico" || img.targetFormat === "icns" || img.targetFormat === "bmp" || img.targetFormat === "tiff" ? (
                     <ImageIcon className="size-6 text-muted-foreground" />
                   ) : (
                     <img
