@@ -1,25 +1,318 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Upload, Download, X, ImageIcon } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { Upload, Download, X, ImageIcon, Link as LinkIcon, ChevronDown, Lock, Unlock, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import Link from "next/link";
 
-type ImageFormat = "png" | "jpeg" | "webp";
+type ImageFormat = "png" | "jpeg" | "webp" | "avif" | "gif" | "bmp" | "tiff" | "ico";
+
+type ResizeMode = "original" | "custom" | "percentage";
+
+interface ResizeOptions {
+  mode: ResizeMode;
+  width: number;
+  height: number;
+  percentage: number;
+  lockAspectRatio: boolean;
+}
+
+interface PngOptions {
+  transparency: boolean;
+  backgroundColour: string;
+}
+
+interface JpegOptions {
+  quality: number;
+  progressive: boolean;
+  backgroundColour: string;
+}
+
+interface WebpOptions {
+  quality: number;
+  lossless: boolean;
+}
+
+interface AvifOptions {
+  quality: number;
+}
+
+interface GifOptions {
+  maxColours: number;
+  quantization: "rgb565" | "rgb444" | "rgba4444";
+}
+
+interface BmpOptions {
+  bitDepth: 24 | 32;
+}
+
+interface TiffOptions {
+  // uncompressed only
+}
+
+interface IcoOptions {
+  sizes: number[];
+  multiSize: boolean;
+}
+
+interface FormatOptionsMap {
+  png: PngOptions;
+  jpeg: JpegOptions;
+  webp: WebpOptions;
+  avif: AvifOptions;
+  gif: GifOptions;
+  bmp: BmpOptions;
+  tiff: TiffOptions;
+  ico: IcoOptions;
+}
 
 interface ConvertedImage {
   name: string;
   originalFormat: string;
   targetFormat: ImageFormat;
-  dataUrl: string;
+  blob: Blob;
   size: number;
+  url: string;
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement, mimeType: string, quality?: number): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("Canvas toBlob failed"))),
+      mimeType,
+      quality !== undefined ? quality / 100 : undefined
+    );
+  });
+}
+
+function prepareCanvas(
+  img: HTMLImageElement,
+  targetWidth: number,
+  targetHeight: number,
+  fillBackground: boolean,
+  backgroundColour: string
+): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+  const ctx = canvas.getContext("2d")!;
+  if (fillBackground) {
+    ctx.fillStyle = backgroundColour;
+    ctx.fillRect(0, 0, targetWidth, targetHeight);
+  }
+  ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+  return canvas;
+}
+
+function getTargetDimensions(
+  img: HTMLImageElement,
+  resize: ResizeOptions
+): { width: number; height: number } {
+  if (resize.mode === "percentage") {
+    const scale = resize.percentage / 100;
+    return {
+      width: Math.round(img.naturalWidth * scale),
+      height: Math.round(img.naturalHeight * scale),
+    };
+  }
+  if (resize.mode === "custom") {
+    return { width: resize.width || img.naturalWidth, height: resize.height || img.naturalHeight };
+  }
+  return { width: img.naturalWidth, height: img.naturalHeight };
+}
+
+async function encodePng(canvas: HTMLCanvasElement, _options: PngOptions): Promise<Blob> {
+  return canvasToBlob(canvas, "image/png");
+}
+
+async function encodeJpeg(canvas: HTMLCanvasElement, options: JpegOptions): Promise<Blob> {
+  return canvasToBlob(canvas, "image/jpeg", options.quality);
+}
+
+async function encodeWebp(canvas: HTMLCanvasElement, options: WebpOptions): Promise<Blob> {
+  if (options.lossless) {
+    return canvasToBlob(canvas, "image/webp", 100);
+  }
+  return canvasToBlob(canvas, "image/webp", options.quality);
+}
+
+async function encodeAvif(canvas: HTMLCanvasElement, options: AvifOptions): Promise<Blob> {
+  return canvasToBlob(canvas, "image/avif", options.quality);
+}
+
+async function encodeGif(canvas: HTMLCanvasElement, options: GifOptions): Promise<Blob> {
+  const { GIFEncoder, quantize, applyPalette } = await import("gifenc");
+  const ctx = canvas.getContext("2d")!;
+  const { width, height } = canvas;
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const { data } = imageData;
+
+  const palette = quantize(data, options.maxColours, { format: options.quantization });
+  const index = applyPalette(data, palette, options.quantization);
+
+  const gif = GIFEncoder();
+  gif.writeFrame(index, width, height, { palette });
+  gif.finish();
+
+  return new Blob([gif.bytes()], { type: "image/gif" });
+}
+
+async function encodeBmp(canvas: HTMLCanvasElement, options: BmpOptions): Promise<Blob> {
+  const ctx = canvas.getContext("2d")!;
+  const { width, height } = canvas;
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const { data } = imageData;
+
+  const bpp = options.bitDepth;
+  const bytesPerPixel = bpp / 8;
+  const rowSize = Math.ceil((width * bytesPerPixel) / 4) * 4;
+  const pixelDataSize = rowSize * height;
+  const headerSize = 14 + 40;
+  const fileSize = headerSize + pixelDataSize;
+
+  const buffer = new ArrayBuffer(fileSize);
+  const view = new DataView(buffer);
+
+  // BMP file header (14 bytes)
+  view.setUint8(0, 0x42); // 'B'
+  view.setUint8(1, 0x4d); // 'M'
+  view.setUint32(2, fileSize, true);
+  view.setUint32(10, headerSize, true);
+
+  // DIB header (BITMAPINFOHEADER, 40 bytes)
+  view.setUint32(14, 40, true);
+  view.setInt32(18, width, true);
+  view.setInt32(22, -height, true); // negative = top-down
+  view.setUint16(26, 1, true); // planes
+  view.setUint16(28, bpp, true);
+  view.setUint32(30, 0, true); // no compression
+  view.setUint32(34, pixelDataSize, true);
+  view.setUint32(38, 2835, true); // ~72 DPI horizontal
+  view.setUint32(42, 2835, true); // ~72 DPI vertical
+
+  let offset = headerSize;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      if (bpp === 32) {
+        view.setUint8(offset, data[i + 2]);     // B
+        view.setUint8(offset + 1, data[i + 1]); // G
+        view.setUint8(offset + 2, data[i]);     // R
+        view.setUint8(offset + 3, data[i + 3]); // A
+        offset += 4;
+      } else {
+        view.setUint8(offset, data[i + 2]);     // B
+        view.setUint8(offset + 1, data[i + 1]); // G
+        view.setUint8(offset + 2, data[i]);     // R
+        offset += 3;
+      }
+    }
+    // Pad row to 4-byte boundary
+    while (offset % 4 !== 0) {
+      view.setUint8(offset, 0);
+      offset++;
+    }
+  }
+
+  return new Blob([buffer], { type: "image/bmp" });
+}
+
+async function encodeTiff(canvas: HTMLCanvasElement, _options: TiffOptions): Promise<Blob> {
+  const UTIF = await import("utif");
+  const ctx = canvas.getContext("2d")!;
+  const { width, height } = canvas;
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const arrayBuffer = UTIF.encodeImage(imageData.data, width, height);
+  return new Blob([arrayBuffer], { type: "image/tiff" });
+}
+
+async function encodeIco(canvas: HTMLCanvasElement, options: IcoOptions): Promise<Blob> {
+  const sizes = options.multiSize ? options.sizes : [options.sizes[0] || 32];
+  const pngBlobs: ArrayBuffer[] = [];
+
+  for (const size of sizes) {
+    const resized = document.createElement("canvas");
+    resized.width = size;
+    resized.height = size;
+    const ctx = resized.getContext("2d")!;
+    ctx.drawImage(canvas, 0, 0, size, size);
+    const blob = await canvasToBlob(resized, "image/png");
+    pngBlobs.push(await blob.arrayBuffer());
+  }
+
+  // ICO header: 6 bytes + 16 bytes per image + PNG data
+  const headerSize = 6 + sizes.length * 16;
+  const totalDataSize = pngBlobs.reduce((sum, b) => sum + b.byteLength, 0);
+  const buffer = new ArrayBuffer(headerSize + totalDataSize);
+  const view = new DataView(buffer);
+
+  // ICO header
+  view.setUint16(0, 0, true);     // reserved
+  view.setUint16(2, 1, true);     // ICO type
+  view.setUint16(4, sizes.length, true); // image count
+
+  let dataOffset = headerSize;
+  for (let i = 0; i < sizes.length; i++) {
+    const dirOffset = 6 + i * 16;
+    const size = sizes[i];
+    const pngData = pngBlobs[i];
+
+    view.setUint8(dirOffset, size >= 256 ? 0 : size);     // width (0 = 256)
+    view.setUint8(dirOffset + 1, size >= 256 ? 0 : size); // height
+    view.setUint8(dirOffset + 2, 0);   // colour palette
+    view.setUint8(dirOffset + 3, 0);   // reserved
+    view.setUint16(dirOffset + 4, 1, true);  // colour planes
+    view.setUint16(dirOffset + 6, 32, true); // bits per pixel
+    view.setUint32(dirOffset + 8, pngData.byteLength, true); // data size
+    view.setUint32(dirOffset + 12, dataOffset, true);        // data offset
+
+    new Uint8Array(buffer, dataOffset, pngData.byteLength).set(new Uint8Array(pngData));
+    dataOffset += pngData.byteLength;
+  }
+
+  return new Blob([buffer], { type: "image/x-icon" });
 }
 
 export function ImageConverterTool() {
   const [images, setImages] = useState<File[]>([]);
   const [targetFormat, setTargetFormat] = useState<ImageFormat>("webp");
-  const [quality, setQuality] = useState(0.9);
   const [converted, setConverted] = useState<ConvertedImage[]>([]);
   const [converting, setConverting] = useState(false);
+  const [avifSupported, setAvifSupported] = useState<boolean | null>(null);
+
+  const [resize, setResize] = useState<ResizeOptions>({
+    mode: "original",
+    width: 0,
+    height: 0,
+    percentage: 100,
+    lockAspectRatio: true,
+  });
+
+  const [formatOptions, setFormatOptions] = useState<FormatOptionsMap>({
+    png: { transparency: true, backgroundColour: "#ffffff" },
+    jpeg: { quality: 90, progressive: false, backgroundColour: "#ffffff" },
+    webp: { quality: 90, lossless: false },
+    avif: { quality: 80 },
+    gif: { maxColours: 256, quantization: "rgb565" },
+    bmp: { bitDepth: 32 },
+    tiff: {},
+    ico: { sizes: [32], multiSize: false },
+  });
+
+  useEffect(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1;
+    canvas.height = 1;
+    const result = canvas.toDataURL("image/avif").startsWith("data:image/avif");
+    setAvifSupported(result);
+  }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -45,69 +338,6 @@ export function ImageConverterTool() {
     setConverted([]);
   };
 
-  const convertImages = async () => {
-    setConverting(true);
-    const results: ConvertedImage[] = [];
-
-    for (const file of images) {
-      try {
-        const dataUrl = await convertImage(file, targetFormat, quality);
-        const base64Length = dataUrl.split(",")[1]?.length || 0;
-        const size = Math.round((base64Length * 3) / 4);
-
-        results.push({
-          name: file.name.replace(/\.[^.]+$/, `.${targetFormat}`),
-          originalFormat: file.type.split("/")[1] || "unknown",
-          targetFormat,
-          dataUrl,
-          size,
-        });
-      } catch (err) {
-        console.error(`Failed to convert ${file.name}:`, err);
-      }
-    }
-
-    setConverted(results);
-    setConverting(false);
-  };
-
-  const convertImage = (
-    file: File,
-    format: ImageFormat,
-    quality: number
-  ): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          reject(new Error("Canvas context failed"));
-          return;
-        }
-        ctx.drawImage(img, 0, 0);
-        const mimeType = `image/${format}`;
-        const dataUrl = canvas.toDataURL(mimeType, quality);
-        resolve(dataUrl);
-      };
-      img.onerror = reject;
-      img.src = URL.createObjectURL(file);
-    });
-  };
-
-  const downloadImage = (img: ConvertedImage) => {
-    const link = document.createElement("a");
-    link.download = img.name;
-    link.href = img.dataUrl;
-    link.click();
-  };
-
-  const downloadAll = () => {
-    converted.forEach((img) => downloadImage(img));
-  };
-
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -117,6 +347,120 @@ export function ImageConverterTool() {
   const clearAll = () => {
     setImages([]);
     setConverted([]);
+  };
+
+  const loadImage = (file: File): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const convertImages = async () => {
+    setConverting(true);
+    const results: ConvertedImage[] = [];
+
+    for (const file of images) {
+      try {
+        const img = await loadImage(file);
+        const { width, height } = getTargetDimensions(img, resize);
+
+        const needsBackground =
+          targetFormat === "jpeg" ||
+          (targetFormat === "png" && !formatOptions.png.transparency) ||
+          (targetFormat === "bmp" && formatOptions.bmp.bitDepth === 24);
+
+        const bgColour =
+          targetFormat === "jpeg"
+            ? formatOptions.jpeg.backgroundColour
+            : targetFormat === "png"
+              ? formatOptions.png.backgroundColour
+              : "#ffffff";
+
+        const canvas = prepareCanvas(img, width, height, needsBackground, bgColour);
+
+        let blob: Blob;
+        switch (targetFormat) {
+          case "png":
+            blob = await encodePng(canvas, formatOptions.png);
+            break;
+          case "jpeg":
+            blob = await encodeJpeg(canvas, formatOptions.jpeg);
+            break;
+          case "webp":
+            blob = await encodeWebp(canvas, formatOptions.webp);
+            break;
+          case "avif":
+            blob = await encodeAvif(canvas, formatOptions.avif);
+            break;
+          case "gif":
+            blob = await encodeGif(canvas, formatOptions.gif);
+            break;
+          case "bmp":
+            blob = await encodeBmp(canvas, formatOptions.bmp);
+            break;
+          case "tiff":
+            blob = await encodeTiff(canvas, formatOptions.tiff);
+            break;
+          case "ico":
+            blob = await encodeIco(canvas, formatOptions.ico);
+            break;
+        }
+
+        const ext = targetFormat === "jpeg" ? "jpg" : targetFormat;
+        const url = URL.createObjectURL(blob);
+
+        results.push({
+          name: file.name.replace(/\.[^.]+$/, `.${ext}`),
+          originalFormat: file.type.split("/")[1] || "unknown",
+          targetFormat,
+          blob,
+          size: blob.size,
+          url,
+        });
+
+        URL.revokeObjectURL(img.src);
+      } catch (err) {
+        console.error(`Failed to convert ${file.name}:`, err);
+      }
+    }
+
+    setConverted(results);
+    setConverting(false);
+  };
+
+  const downloadImage = (img: ConvertedImage) => {
+    const link = document.createElement("a");
+    link.download = img.name;
+    link.href = img.url;
+    link.click();
+  };
+
+  const downloadAllAsZip = async () => {
+    const JSZip = (await import("jszip")).default;
+    const zip = new JSZip();
+    for (const img of converted) {
+      zip.file(img.name, img.blob);
+    }
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    const link = document.createElement("a");
+    link.download = "converted-images.zip";
+    link.href = URL.createObjectURL(zipBlob);
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
+  const updateFormatOption = <F extends ImageFormat>(
+    format: F,
+    key: keyof FormatOptionsMap[F],
+    value: FormatOptionsMap[F][keyof FormatOptionsMap[F]]
+  ) => {
+    setFormatOptions((prev) => ({
+      ...prev,
+      [format]: { ...prev[format], [key]: value },
+    }));
   };
 
   return (
