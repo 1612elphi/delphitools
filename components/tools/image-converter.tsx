@@ -1,15 +1,14 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { Upload, Download, X, ImageIcon, Link as LinkIcon, ChevronDown, Lock, Unlock, Archive, ArrowRight, Crosshair } from "lucide-react";
+import { Upload, Download, X, ImageIcon, Link as LinkIcon, Lock, Unlock, Archive, Scaling } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 
 type ImageFormat = "png" | "jpeg" | "webp" | "avif" | "gif" | "bmp" | "tiff" | "ico";
@@ -295,8 +294,6 @@ export function ImageConverterTool() {
   const [targetFormat, setTargetFormat] = useState<ImageFormat>("webp");
   const [converted, setConverted] = useState<ConvertedImage[]>([]);
   const [converting, setConverting] = useState(false);
-  const [convertProgress, setConvertProgress] = useState(0);
-  const [dragOver, setDragOver] = useState(false);
   const [avifSupported, setAvifSupported] = useState<boolean | null>(null);
 
   const [resize, setResize] = useState<ResizeOptions>({
@@ -383,12 +380,10 @@ export function ImageConverterTool() {
 
   const convertImages = async () => {
     setConverting(true);
-    setConvertProgress(0);
     converted.forEach((img) => URL.revokeObjectURL(img.url));
     const results: ConvertedImage[] = [];
 
-    for (let fi = 0; fi < images.length; fi++) {
-      const file = images[fi];
+    for (const file of images) {
       try {
         const img = await loadImage(file);
         const { width, height } = getTargetDimensions(img, resize);
@@ -448,10 +443,8 @@ export function ImageConverterTool() {
         });
 
         URL.revokeObjectURL(img.src);
-        setConvertProgress(Math.round(((fi + 1) / images.length) * 100));
       } catch (err) {
         console.error(`Failed to convert ${file.name}:`, err);
-        setConvertProgress(Math.round(((fi + 1) / images.length) * 100));
       }
     }
 
@@ -491,36 +484,14 @@ export function ImageConverterTool() {
     }));
   };
 
-  const formatDescriptions: Record<ImageFormat, string> = {
-    png: "Lossless, transparency",
-    jpeg: "Lossy, small files",
-    webp: "Modern, versatile",
-    avif: "Next-gen, smallest",
-    gif: "Palette-based, legacy",
-    bmp: "Uncompressed bitmap",
-    tiff: "Archival, large",
-    ico: "Icons & favicons",
-  };
-
-  const originalTotalSize = images.reduce((sum, f) => sum + f.size, 0);
-  const convertedTotalSize = converted.reduce((sum, f) => sum + f.size, 0);
-
   return (
-    <div className="space-y-8">
-      {/* Scanner Bed Drop Zone */}
+    <div className="space-y-6">
+      {/* Drop Zone */}
       <div
-        onDrop={(e) => { handleDrop(e); setDragOver(false); }}
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-        onDragLeave={() => setDragOver(false)}
+        onDrop={handleDrop}
+        onDragOver={(e) => e.preventDefault()}
+        className="border-2 border-dashed rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
         onClick={() => document.getElementById("file-input")?.click()}
-        className={`
-          relative overflow-hidden cursor-pointer
-          rounded-lg border-2 transition-all duration-300 ease-out
-          ${dragOver
-            ? "border-primary bg-primary/5 scale-[1.01]"
-            : "border-border/60 hover:border-primary/40 bg-muted/30"
-          }
-        `}
       >
         <input
           id="file-input"
@@ -530,437 +501,402 @@ export function ImageConverterTool() {
           onChange={handleFileSelect}
           className="hidden"
         />
-
-        {/* Corner marks */}
-        <div className="absolute top-3 left-3 w-5 h-5 border-t-2 border-l-2 border-primary/30" />
-        <div className="absolute top-3 right-3 w-5 h-5 border-t-2 border-r-2 border-primary/30" />
-        <div className="absolute bottom-3 left-3 w-5 h-5 border-b-2 border-l-2 border-primary/30" />
-        <div className="absolute bottom-3 right-3 w-5 h-5 border-b-2 border-r-2 border-primary/30" />
-
-        {/* Content */}
-        <div className="relative py-12 px-8 flex flex-col items-center gap-3">
-          <div className={`
-            p-3 rounded-full transition-all duration-300
-            ${dragOver ? "bg-primary/15 scale-110" : "bg-muted/60"}
-          `}>
-            <Crosshair className={`size-8 transition-colors duration-300 ${dragOver ? "text-primary" : "text-muted-foreground"}`} />
-          </div>
-          <div className="text-center">
-            <p className="font-semibold text-sm tracking-wide uppercase">
-              {dragOver ? "Release to scan" : "Load images"}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Drop files or click to browse
-            </p>
-          </div>
-        </div>
+        <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
+        <p className="text-lg font-medium">Drop images here</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          or click to select files
+        </p>
       </div>
 
-      {/* Format Selector */}
+      {/* Format Selection */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Output Format</span>
-          <span className="text-xs text-muted-foreground">{formatDescriptions[targetFormat]}</span>
-        </div>
-
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
-          {(["png", "jpeg", "webp", "avif", "gif", "bmp", "tiff", "ico"] as ImageFormat[]).map((fmt) => {
-            const isActive = targetFormat === fmt;
-            const isDisabled = fmt === "avif" && avifSupported === false;
-            return (
-              <button
-                key={fmt}
-                onClick={() => !isDisabled && setTargetFormat(fmt)}
-                disabled={isDisabled}
-                className={`
-                  relative py-2.5 px-2 rounded-md text-xs font-bold uppercase tracking-wider
-                  transition-all duration-200 ease-out
-                  ${isActive
-                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                    : isDisabled
-                      ? "bg-muted/40 text-muted-foreground/40 cursor-not-allowed"
-                      : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }
-                `}
-                title={isDisabled ? "AVIF not supported in your browser" : undefined}
-              >
-                {fmt}
-              </button>
-            );
-          })}
-          <Link
-            href="/tools/image-tracer"
-            className="
-              py-2.5 px-2 rounded-md text-xs font-bold uppercase tracking-wider text-center
-              bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground
-              transition-all duration-200 ease-out flex items-center justify-center gap-1
-            "
+        <label className="font-bold block">Convert to</label>
+        <div className="flex flex-wrap gap-2">
+          {(["png", "jpeg", "webp", "avif", "gif", "bmp", "tiff", "ico"] as ImageFormat[]).map((fmt) => (
+            <Button
+              key={fmt}
+              variant={targetFormat === fmt ? "default" : "outline"}
+              onClick={() => setTargetFormat(fmt)}
+              className="uppercase font-bold"
+              size="lg"
+              disabled={fmt === "avif" && avifSupported === false}
+              title={fmt === "avif" && avifSupported === false ? "AVIF encoding not supported in your browser" : undefined}
+            >
+              {fmt}
+            </Button>
+          ))}
+          <Button
+            variant="outline"
+            className="uppercase font-bold"
+            size="lg"
+            asChild
           >
-            <LinkIcon className="size-3" />
-            SVG
-          </Link>
+            <Link href="/tools/image-tracer">
+              <LinkIcon className="size-4 mr-1.5" />
+              SVG
+            </Link>
+          </Button>
         </div>
         {targetFormat === "avif" && avifSupported === false && (
-          <p className="text-xs text-destructive">
-            AVIF encoding requires Chrome or Edge.
+          <p className="text-sm text-destructive">
+            Your browser does not support AVIF encoding. Try Chrome or Edge.
           </p>
         )}
       </div>
 
-      {/* Settings Panels */}
-      <div className="space-y-2">
-        {/* Format Options */}
-        <Collapsible defaultOpen>
-          <CollapsibleTrigger asChild>
-            <button className="
-              w-full flex items-center justify-between py-2.5 px-3 rounded-md
-              text-xs font-semibold uppercase tracking-widest text-muted-foreground
-              hover:bg-muted/50 transition-colors duration-200
-            ">
-              <span className="flex items-center gap-2">
-                <span className="w-1 h-3 rounded-full bg-primary" />
-                {targetFormat.toUpperCase()} Settings
-              </span>
-              <ChevronDown className="size-3.5" />
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="ml-3 pl-3 border-l-2 border-primary/15 space-y-4 py-3">
-              {targetFormat === "png" && (
-                <>
-                  <div className="flex items-center justify-between">
-                    <Label className="text-sm">Transparency</Label>
-                    <Switch
-                      checked={formatOptions.png.transparency}
-                      onCheckedChange={(v) => updateFormatOption("png", "transparency", v)}
-                    />
-                  </div>
-                  {!formatOptions.png.transparency && (
-                    <div className="flex items-center gap-3">
-                      <Label className="text-sm">Fill colour</Label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={formatOptions.png.backgroundColour}
-                          onChange={(e) => updateFormatOption("png", "backgroundColour", e.target.value)}
-                          className="size-7 rounded cursor-pointer border border-border"
-                        />
-                        <span className="text-xs text-muted-foreground font-mono">{formatOptions.png.backgroundColour}</span>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
+      {/* Settings */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {/* Format Options Card */}
+        <div className="rounded-xl border bg-card p-4 space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {targetFormat.toUpperCase()} Options
+            </span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
 
-              {targetFormat === "jpeg" && (
-                <>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm">Quality</Label>
-                      <span className="text-xs font-bold tabular-nums bg-muted px-2 py-0.5 rounded">{formatOptions.jpeg.quality}%</span>
-                    </div>
-                    <Slider
-                      value={[formatOptions.jpeg.quality]}
-                      onValueChange={([v]) => updateFormatOption("jpeg", "quality", v)}
-                      min={1}
-                      max={100}
-                      step={1}
+          {targetFormat === "png" && (
+            <>
+              <div className="flex items-center justify-between">
+                <Label className="text-sm">Preserve transparency</Label>
+                <Switch
+                  checked={formatOptions.png.transparency}
+                  onCheckedChange={(v) => updateFormatOption("png", "transparency", v)}
+                />
+              </div>
+              {!formatOptions.png.transparency && (
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm">Background colour</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={formatOptions.png.backgroundColour}
+                      onChange={(e) => updateFormatOption("png", "backgroundColour", e.target.value)}
+                      className="size-8 rounded border cursor-pointer"
                     />
+                    <span className="text-xs font-mono text-muted-foreground">{formatOptions.png.backgroundColour}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Label className="text-sm">Background</Label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={formatOptions.jpeg.backgroundColour}
-                        onChange={(e) => updateFormatOption("jpeg", "backgroundColour", e.target.value)}
-                        className="size-7 rounded cursor-pointer border border-border"
-                      />
-                      <span className="text-xs text-muted-foreground font-mono">{formatOptions.jpeg.backgroundColour}</span>
-                    </div>
-                  </div>
-                </>
+                </div>
               )}
+            </>
+          )}
 
-              {targetFormat === "webp" && (
-                <>
-                  <div className="flex items-center justify-between">
-                    <Label className="text-sm">Lossless</Label>
-                    <Switch
-                      checked={formatOptions.webp.lossless}
-                      onCheckedChange={(v) => updateFormatOption("webp", "lossless", v)}
-                    />
-                  </div>
-                  {!formatOptions.webp.lossless && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-sm">Quality</Label>
-                        <span className="text-xs font-bold tabular-nums bg-muted px-2 py-0.5 rounded">{formatOptions.webp.quality}%</span>
-                      </div>
-                      <Slider
-                        value={[formatOptions.webp.quality]}
-                        onValueChange={([v]) => updateFormatOption("webp", "quality", v)}
-                        min={1}
-                        max={100}
-                        step={1}
-                      />
-                    </div>
-                  )}
-                </>
-              )}
+          {targetFormat === "jpeg" && (
+            <>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm">Quality</Label>
+                  <span className="text-sm font-mono text-muted-foreground tabular-nums">{formatOptions.jpeg.quality}%</span>
+                </div>
+                <Slider
+                  value={[formatOptions.jpeg.quality]}
+                  onValueChange={([v]) => updateFormatOption("jpeg", "quality", v)}
+                  min={1}
+                  max={100}
+                  step={1}
+                />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <Label className="text-sm">Background colour</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={formatOptions.jpeg.backgroundColour}
+                    onChange={(e) => updateFormatOption("jpeg", "backgroundColour", e.target.value)}
+                    className="size-8 rounded border cursor-pointer"
+                  />
+                  <span className="text-xs font-mono text-muted-foreground">{formatOptions.jpeg.backgroundColour}</span>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">Used when input has transparency</p>
+            </>
+          )}
 
-              {targetFormat === "avif" && (
-                <div className="space-y-2">
+          {targetFormat === "webp" && (
+            <>
+              <div className="flex items-center justify-between">
+                <Label className="text-sm">Lossless</Label>
+                <Switch
+                  checked={formatOptions.webp.lossless}
+                  onCheckedChange={(v) => updateFormatOption("webp", "lossless", v)}
+                />
+              </div>
+              {!formatOptions.webp.lossless && (
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <Label className="text-sm">Quality</Label>
-                    <span className="text-xs font-bold tabular-nums bg-muted px-2 py-0.5 rounded">{formatOptions.avif.quality}%</span>
+                    <span className="text-sm font-mono text-muted-foreground tabular-nums">{formatOptions.webp.quality}%</span>
                   </div>
                   <Slider
-                    value={[formatOptions.avif.quality]}
-                    onValueChange={([v]) => updateFormatOption("avif", "quality", v)}
+                    value={[formatOptions.webp.quality]}
+                    onValueChange={([v]) => updateFormatOption("webp", "quality", v)}
                     min={1}
                     max={100}
                     step={1}
                   />
                 </div>
               )}
+            </>
+          )}
 
-              {targetFormat === "gif" && (
-                <>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm">Palette</Label>
-                      <span className="text-xs font-bold tabular-nums bg-muted px-2 py-0.5 rounded">{formatOptions.gif.maxColours} colours</span>
-                    </div>
-                    <Slider
-                      value={[formatOptions.gif.maxColours]}
-                      onValueChange={([v]) => updateFormatOption("gif", "maxColours", v)}
-                      min={2}
-                      max={256}
-                      step={1}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-sm">Quantization</Label>
-                    <Select
-                      value={formatOptions.gif.quantization}
-                      onValueChange={(v) => updateFormatOption("gif", "quantization", v as GifOptions["quantization"])}
-                    >
-                      <SelectTrigger className="h-9 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="rgb565">RGB565 &mdash; best quality</SelectItem>
-                        <SelectItem value="rgb444">RGB444 &mdash; smaller</SelectItem>
-                        <SelectItem value="rgba4444">RGBA4444 &mdash; transparency</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </>
-              )}
-
-              {targetFormat === "bmp" && (
-                <div className="space-y-1.5">
-                  <Label className="text-sm">Bit depth</Label>
-                  <RadioGroup
-                    value={String(formatOptions.bmp.bitDepth)}
-                    onValueChange={(v) => updateFormatOption("bmp", "bitDepth", Number(v) as 24 | 32)}
-                    className="flex gap-3"
-                  >
-                    <div className="flex items-center space-x-1.5">
-                      <RadioGroupItem value="24" id="bmp-24" />
-                      <Label htmlFor="bmp-24" className="text-sm">24-bit</Label>
-                    </div>
-                    <div className="flex items-center space-x-1.5">
-                      <RadioGroupItem value="32" id="bmp-32" />
-                      <Label htmlFor="bmp-32" className="text-sm">32-bit (alpha)</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-              )}
-
-              {targetFormat === "tiff" && (
-                <p className="text-xs text-muted-foreground">
-                  Uncompressed output. Expect large file sizes.
-                </p>
-              )}
-
-              {targetFormat === "ico" && (
-                <>
-                  <div className="space-y-1.5">
-                    <Label className="text-sm">Size</Label>
-                    <Select
-                      value={String(formatOptions.ico.sizes[0])}
-                      onValueChange={(v) =>
-                        updateFormatOption("ico", "sizes",
-                          formatOptions.ico.multiSize
-                            ? [...new Set([Number(v), ...formatOptions.ico.sizes])]
-                            : [Number(v)]
-                        )
-                      }
-                    >
-                      <SelectTrigger className="h-9 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[16, 32, 48, 64, 128, 256].map((s) => (
-                          <SelectItem key={s} value={String(s)}>{s}&times;{s}px</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label className="text-sm">Multi-size bundle</Label>
-                    <Switch
-                      checked={formatOptions.ico.multiSize}
-                      onCheckedChange={(v) => {
-                        setFormatOptions((prev) => ({
-                          ...prev,
-                          ico: {
-                            ...prev.ico,
-                            multiSize: v,
-                            sizes: v ? [16, 32, 48, 64, 128, 256] : [prev.ico.sizes[0] || 32],
-                          },
-                        }));
-                      }}
-                    />
-                  </div>
-                  {formatOptions.ico.multiSize && (
-                    <p className="text-xs text-muted-foreground">
-                      Embedding {[...formatOptions.ico.sizes].sort((a, b) => a - b).join(", ")}px
-                    </p>
-                  )}
-                </>
-              )}
+          {targetFormat === "avif" && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm">Quality</Label>
+                <span className="text-sm font-mono text-muted-foreground tabular-nums">{formatOptions.avif.quality}%</span>
+              </div>
+              <Slider
+                value={[formatOptions.avif.quality]}
+                onValueChange={([v]) => updateFormatOption("avif", "quality", v)}
+                min={1}
+                max={100}
+                step={1}
+              />
             </div>
-          </CollapsibleContent>
-        </Collapsible>
+          )}
 
-        {/* Resize */}
-        <Collapsible>
-          <CollapsibleTrigger asChild>
-            <button className="
-              w-full flex items-center justify-between py-2.5 px-3 rounded-md
-              text-xs font-semibold uppercase tracking-widest text-muted-foreground
-              hover:bg-muted/50 transition-colors duration-200
-            ">
-              <span className="flex items-center gap-2">
-                <span className="w-1 h-3 rounded-full bg-muted-foreground/30" />
-                Resize
-                {resize.mode !== "original" && (
-                  <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded font-bold normal-case tracking-normal">
-                    {resize.mode === "percentage" ? `${resize.percentage}%` : `${resize.width || "?"}x${resize.height || "?"}`}
-                  </span>
-                )}
-              </span>
-              <ChevronDown className="size-3.5" />
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="ml-3 pl-3 border-l-2 border-muted space-y-4 py-3">
-              <RadioGroup
-                value={resize.mode}
-                onValueChange={(v) => setResize((prev) => ({ ...prev, mode: v as ResizeMode }))}
-                className="flex gap-3"
-              >
-                {([
-                  ["original", "Original"],
-                  ["custom", "Custom"],
-                  ["percentage", "Scale %"],
-                ] as const).map(([val, label]) => (
-                  <div key={val} className="flex items-center space-x-1.5">
-                    <RadioGroupItem value={val} id={`resize-${val}`} />
-                    <Label htmlFor={`resize-${val}`} className="text-sm">{label}</Label>
-                  </div>
-                ))}
-              </RadioGroup>
-
-              {resize.mode === "custom" && (
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    placeholder="W"
-                    value={resize.width || ""}
-                    onChange={(e) => setResize((prev) => ({ ...prev, width: Number(e.target.value) }))}
-                    className="w-24 h-9 text-xs tabular-nums"
-                  />
-                  <span className="text-muted-foreground text-xs">&times;</span>
-                  <Input
-                    type="number"
-                    placeholder="H"
-                    value={resize.height || ""}
-                    onChange={(e) => setResize((prev) => ({ ...prev, height: Number(e.target.value) }))}
-                    className="w-24 h-9 text-xs tabular-nums"
-                  />
-                  <button
-                    onClick={() => setResize((prev) => ({ ...prev, lockAspectRatio: !prev.lockAspectRatio }))}
-                    className={`p-1.5 rounded transition-colors ${resize.lockAspectRatio ? "text-primary" : "text-muted-foreground"}`}
-                    title={resize.lockAspectRatio ? "Unlock aspect ratio" : "Lock aspect ratio"}
-                  >
-                    {resize.lockAspectRatio ? <Lock className="size-3.5" /> : <Unlock className="size-3.5" />}
-                  </button>
+          {targetFormat === "gif" && (
+            <>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm">Max colours</Label>
+                  <span className="text-sm font-mono text-muted-foreground tabular-nums">{formatOptions.gif.maxColours}</span>
                 </div>
-              )}
+                <Slider
+                  value={[formatOptions.gif.maxColours]}
+                  onValueChange={([v]) => updateFormatOption("gif", "maxColours", v)}
+                  min={2}
+                  max={256}
+                  step={1}
+                />
+              </div>
+              <Separator />
+              <div className="space-y-2">
+                <Label className="text-sm">Quantization</Label>
+                <Select
+                  value={formatOptions.gif.quantization}
+                  onValueChange={(v) => updateFormatOption("gif", "quantization", v as GifOptions["quantization"])}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="rgb565">RGB565 (best quality)</SelectItem>
+                    <SelectItem value="rgb444">RGB444 (smaller)</SelectItem>
+                    <SelectItem value="rgba4444">RGBA4444 (with transparency)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
 
-              {resize.mode === "percentage" && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      value={resize.percentage}
-                      onChange={(e) => setResize((prev) => ({ ...prev, percentage: Number(e.target.value) }))}
-                      className="w-20 h-9 text-xs tabular-nums"
-                      min={1}
-                      max={1000}
-                    />
-                    <span className="text-muted-foreground text-xs">%</span>
-                  </div>
-                  <div className="flex gap-1.5">
-                    {[25, 50, 75, 150, 200].map((p) => (
+          {targetFormat === "bmp" && (
+            <div className="space-y-2">
+              <Label className="text-sm">Bit depth</Label>
+              <div className="flex gap-2">
+                {([24, 32] as const).map((depth) => (
+                  <button
+                    key={depth}
+                    onClick={() => updateFormatOption("bmp", "bitDepth", depth)}
+                    className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                      formatOptions.bmp.bitDepth === depth
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "hover:border-primary/50"
+                    }`}
+                  >
+                    {depth}-bit
+                    <span className="block text-xs font-normal opacity-70">
+                      {depth === 24 ? "No transparency" : "With alpha"}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {targetFormat === "tiff" && (
+            <p className="text-sm text-muted-foreground">
+              TIFF output is uncompressed. Output files will be large.
+            </p>
+          )}
+
+          {targetFormat === "ico" && (
+            <>
+              <div className="flex items-center justify-between">
+                <Label className="text-sm">Multi-size</Label>
+                <Switch
+                  checked={formatOptions.ico.multiSize}
+                  onCheckedChange={(v) => {
+                    setFormatOptions((prev) => ({
+                      ...prev,
+                      ico: {
+                        ...prev.ico,
+                        multiSize: v,
+                        sizes: v ? [16, 32, 48, 64, 128, 256] : [prev.ico.sizes[0] || 32],
+                      },
+                    }));
+                  }}
+                />
+              </div>
+              {!formatOptions.ico.multiSize ? (
+                <div className="space-y-2">
+                  <Label className="text-sm">Icon size</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[16, 32, 48, 64, 128, 256].map((s) => (
                       <button
-                        key={p}
-                        onClick={() => setResize((prev) => ({ ...prev, percentage: p }))}
-                        className={`
-                          px-2.5 py-1 rounded text-xs font-bold transition-all duration-200
-                          ${resize.percentage === p
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-                          }
-                        `}
+                        key={s}
+                        onClick={() => updateFormatOption("ico", "sizes", [s])}
+                        className={`px-2 py-1.5 rounded-lg border text-sm font-mono transition-colors ${
+                          formatOptions.ico.sizes[0] === s
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "hover:border-primary/50"
+                        }`}
                       >
-                        {p}%
+                        {s}px
                       </button>
                     ))}
                   </div>
                 </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Embeds all sizes: {[...formatOptions.ico.sizes].sort((a, b) => a - b).join(", ")}px
+                </p>
               )}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      </div>
+            </>
+          )}
+        </div>
 
-      {/* Image Queue */}
-      {images.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              {images.length} file{images.length !== 1 ? "s" : ""} queued
+        {/* Resize Card */}
+        <div className="rounded-xl border bg-card p-4 space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Resize
             </span>
-            <button
-              onClick={clearAll}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Clear all
-            </button>
+            <div className="flex-1 h-px bg-border" />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="flex rounded-lg border overflow-hidden">
+            {([
+              { value: "original", label: "Original" },
+              { value: "custom", label: "Dimensions" },
+              { value: "percentage", label: "Scale" },
+            ] as const).map(({ value, label }) => (
+              <button
+                key={value}
+                onClick={() => setResize((prev) => ({ ...prev, mode: value }))}
+                className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
+                  resize.mode === value
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-accent"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {resize.mode === "original" && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Scaling className="size-4" />
+              <span>Images will keep their original dimensions</span>
+            </div>
+          )}
+
+          {resize.mode === "custom" && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="flex-1 space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Width</Label>
+                  <Input
+                    type="number"
+                    placeholder="Auto"
+                    value={resize.width || ""}
+                    onChange={(e) => setResize((prev) => ({ ...prev, width: Number(e.target.value) }))}
+                  />
+                </div>
+                <button
+                  onClick={() => setResize((prev) => ({ ...prev, lockAspectRatio: !prev.lockAspectRatio }))}
+                  className={`mt-5 p-2 rounded-lg border transition-colors ${
+                    resize.lockAspectRatio
+                      ? "bg-primary/10 border-primary text-primary"
+                      : "text-muted-foreground hover:border-primary/50"
+                  }`}
+                  title={resize.lockAspectRatio ? "Unlock aspect ratio" : "Lock aspect ratio"}
+                >
+                  {resize.lockAspectRatio ? <Lock className="size-4" /> : <Unlock className="size-4" />}
+                </button>
+                <div className="flex-1 space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Height</Label>
+                  <Input
+                    type="number"
+                    placeholder="Auto"
+                    value={resize.height || ""}
+                    onChange={(e) => setResize((prev) => ({ ...prev, height: Number(e.target.value) }))}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {resize.lockAspectRatio
+                  ? "Aspect ratio locked — leave one field empty to auto-calculate"
+                  : "Aspect ratio unlocked — both dimensions are independent"}
+              </p>
+            </div>
+          )}
+
+          {resize.mode === "percentage" && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-5 gap-2">
+                {[25, 50, 75, 150, 200].map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setResize((prev) => ({ ...prev, percentage: p }))}
+                    className={`py-2 rounded-lg border text-sm font-medium transition-colors ${
+                      resize.percentage === p
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "hover:border-primary/50"
+                    }`}
+                  >
+                    {p}%
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Custom:</span>
+                <Input
+                  type="number"
+                  value={resize.percentage}
+                  onChange={(e) => setResize((prev) => ({ ...prev, percentage: Number(e.target.value) }))}
+                  className="w-20 h-8 text-sm"
+                  min={1}
+                  max={1000}
+                />
+                <span className="text-sm text-muted-foreground">%</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Image List */}
+      {images.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold">
+              {images.length} image{images.length !== 1 ? "s" : ""} selected
+            </h3>
+            <Button variant="ghost" size="sm" onClick={clearAll}>
+              Clear all
+            </Button>
+          </div>
+
+          <div className="grid gap-3">
             {images.map((file, index) => (
               <div
                 key={index}
-                className="group flex items-center gap-3 p-2 rounded-md hover:bg-muted/40 transition-colors duration-150"
+                className="flex items-center gap-4 p-4 rounded-lg border bg-card"
               >
-                <div className="size-10 rounded bg-muted/70 flex items-center justify-center overflow-hidden shrink-0">
+                <div className="size-12 rounded bg-muted flex items-center justify-center overflow-hidden">
                   <img
                     src={previewUrls[index]}
                     alt={file.name}
@@ -968,132 +904,82 @@ export function ImageConverterTool() {
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{file.name}</p>
+                  <p className="font-medium truncate">{file.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {formatSize(file.size)}
+                  </p>
                 </div>
-                <span className="text-[10px] tabular-nums text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded shrink-0">
-                  {formatSize(file.size)}
-                </span>
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => removeImage(index)}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-foreground transition-all duration-150"
                 >
-                  <X className="size-3.5" />
-                </button>
+                  <X className="size-4" />
+                </Button>
               </div>
             ))}
           </div>
 
-          {/* Convert Button */}
-          <button
+          <Button
+            size="lg"
+            className="w-full h-14 text-lg font-bold"
             onClick={convertImages}
             disabled={converting}
-            className={`
-              relative w-full overflow-hidden rounded-lg py-4 font-bold text-sm uppercase tracking-wider
-              transition-all duration-300 ease-out
-              ${converting
-                ? "bg-primary/80 text-primary-foreground cursor-wait"
-                : "bg-primary text-primary-foreground hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5 active:translate-y-0"
-              }
-            `}
           >
-            {/* Progress bar */}
-            {converting && (
-              <div
-                className="absolute inset-y-0 left-0 bg-primary-foreground/10 transition-all duration-300"
-                style={{ width: `${convertProgress}%` }}
-              />
+            {converting ? (
+              "Converting..."
+            ) : (
+              <>
+                <ImageIcon className="size-5 mr-2" />
+                Convert to {targetFormat.toUpperCase()}
+              </>
             )}
-            <span className="relative flex items-center justify-center gap-2">
-              {converting ? (
-                <>Processing {convertProgress}%</>
-              ) : (
-                <>
-                  Convert to {targetFormat.toUpperCase()}
-                  <ArrowRight className="size-4" />
-                </>
-              )}
-            </span>
-          </button>
+          </Button>
         </div>
       )}
 
-      {/* Results */}
+      {/* Converted Results */}
       {converted.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Output</span>
-              {originalTotalSize > 0 && (
-                <span className="text-[10px] tabular-nums text-muted-foreground">
-                  {formatSize(originalTotalSize)}
-                  <ArrowRight className="size-2.5 inline mx-1" />
-                  {formatSize(convertedTotalSize)}
-                  {convertedTotalSize < originalTotalSize && (
-                    <span className="text-primary ml-1">
-                      -{Math.round((1 - convertedTotalSize / originalTotalSize) * 100)}%
-                    </span>
-                  )}
-                  {convertedTotalSize > originalTotalSize && (
-                    <span className="text-destructive ml-1">
-                      +{Math.round((convertedTotalSize / originalTotalSize - 1) * 100)}%
-                    </span>
-                  )}
-                </span>
-              )}
-            </div>
+            <h3 className="font-bold text-lg">Converted</h3>
             {converted.length >= 2 && (
-              <button
-                onClick={downloadAllAsZip}
-                className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
-              >
-                <Archive className="size-3.5" />
-                Download ZIP
-              </button>
+              <Button variant="outline" onClick={downloadAllAsZip}>
+                <Archive className="size-4 mr-2" />
+                Download All as ZIP
+              </Button>
             )}
           </div>
 
-          <div className="space-y-1.5">
-            {converted.map((img, index) => {
-              const originalFile = images[index];
-              const sizeDelta = originalFile ? img.size - originalFile.size : 0;
-              return (
-                <div
-                  key={index}
-                  className="group flex items-center gap-3 p-2 rounded-md bg-card border border-border/50"
-                >
-                  <div className="size-10 rounded bg-muted/70 flex items-center justify-center overflow-hidden shrink-0">
-                    {img.targetFormat === "ico" || img.targetFormat === "bmp" || img.targetFormat === "tiff" ? (
-                      <ImageIcon className="size-5 text-muted-foreground" />
-                    ) : (
-                      <img
-                        src={img.url}
-                        alt={img.name}
-                        className="size-full object-cover"
-                      />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{img.name}</p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-[10px] tabular-nums text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded">
-                      {formatSize(img.size)}
-                      {originalFile && sizeDelta !== 0 && (
-                        <span className={sizeDelta < 0 ? "text-primary ml-1" : "text-destructive ml-1"}>
-                          {sizeDelta < 0 ? "" : "+"}{Math.round((sizeDelta / originalFile.size) * 100)}%
-                        </span>
-                      )}
-                    </span>
-                    <button
-                      onClick={() => downloadImage(img)}
-                      className="p-1.5 rounded-md text-primary hover:bg-primary/10 transition-colors"
-                    >
-                      <Download className="size-4" />
-                    </button>
-                  </div>
+          <div className="grid gap-3">
+            {converted.map((img, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-4 p-4 rounded-lg border bg-card"
+              >
+                <div className="size-12 rounded bg-muted flex items-center justify-center overflow-hidden">
+                  {img.targetFormat === "ico" || img.targetFormat === "bmp" || img.targetFormat === "tiff" ? (
+                    <ImageIcon className="size-6 text-muted-foreground" />
+                  ) : (
+                    <img
+                      src={img.url}
+                      alt={img.name}
+                      className="size-full object-cover"
+                    />
+                  )}
                 </div>
-              );
-            })}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">{img.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {formatSize(img.size)}
+                  </p>
+                </div>
+                <Button onClick={() => downloadImage(img)}>
+                  <Download className="size-4 mr-2" />
+                  Download
+                </Button>
+              </div>
+            ))}
           </div>
         </div>
       )}
