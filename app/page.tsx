@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Star } from "lucide-react";
+import { ArrowRight, Star, ExternalLink } from "lucide-react";
 import { toolCategories, featuredTools } from "@/lib/tools";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -69,6 +69,81 @@ export default function Home() {
               </Link>
             );
           })}
+        </div>
+      </section>
+
+      {/* Friends of Delphi */}
+      <section className="mb-12">
+        <h2 className="text-lg font-semibold mb-4 text-foreground/80">
+          Friends of Delphi
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <a
+            href="https://rmv.fyi/projects/cassini"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group block"
+          >
+            <div
+              className="relative h-full overflow-hidden rounded-xl border transition-all hover:shadow-lg hover:scale-[1.01]"
+              style={{
+                background: 'linear-gradient(145deg, #2d2d33 0%, #272730 100%)',
+                borderColor: '#42424c',
+              }}
+            >
+              <div
+                className="absolute inset-0 opacity-[0.04]"
+                style={{
+                  backgroundImage: 'repeating-linear-gradient(90deg, #e8e4dc 0px, #e8e4dc 1px, transparent 1px, transparent 60px)',
+                }}
+              />
+              <div className="relative p-6 flex flex-col gap-4">
+                <div className="flex items-start justify-between">
+                  <div
+                    className="text-[10px] tracking-[0.3em] uppercase"
+                    style={{ color: '#8a9a68', fontFamily: "'Geist Mono', monospace" }}
+                  >
+                    Drawing App
+                  </div>
+                  <ExternalLink
+                    className="size-3.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ color: '#e8e4dc' }}
+                  />
+                </div>
+                <div>
+                  <h3
+                    className="text-3xl leading-none"
+                    style={{
+                      fontFamily: "'Instrument Serif', Georgia, serif",
+                      color: '#e8e4dc',
+                    }}
+                  >
+                    Cassini
+                  </h3>
+                  <span
+                    className="text-[10px] tracking-[0.2em] uppercase mt-1 inline-block"
+                    style={{
+                      color: '#c4523a',
+                      fontFamily: "'Geist Mono', monospace",
+                    }}
+                  >
+                    ECS-1
+                  </span>
+                </div>
+                <p
+                  className="text-sm leading-relaxed"
+                  style={{
+                    color: '#e8e4dc',
+                    opacity: 0.5,
+                    fontFamily: "'Instrument Serif', Georgia, serif",
+                    fontStyle: 'italic',
+                  }}
+                >
+                  Create with limits.
+                </p>
+              </div>
+            </div>
+          </a>
         </div>
       </section>
 
