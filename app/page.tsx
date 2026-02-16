@@ -144,6 +144,76 @@ export default function Home() {
               </div>
             </div>
           </a>
+
+          <a
+            href="https://1337suite.is-hella.tech"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group block"
+          >
+            <div
+              className="relative h-full overflow-hidden rounded-xl border transition-all hover:shadow-lg hover:scale-[1.01]"
+              style={{
+                background: 'linear-gradient(145deg, #0d0d0d 0%, #1a1a2e 100%)',
+                borderColor: '#2a2a3e',
+              }}
+            >
+              <div
+                className="absolute inset-0 opacity-[0.03]"
+                style={{
+                  backgroundImage: 'repeating-linear-gradient(0deg, #00ff41 0px, #00ff41 1px, transparent 1px, transparent 40px)',
+                }}
+              />
+              <div className="relative p-6 flex flex-col gap-4">
+                <div className="flex items-start justify-between">
+                  <div
+                    className="text-[10px] tracking-[0.3em] uppercase"
+                    style={{ color: '#7b68ee', fontFamily: "'Geist Mono', monospace" }}
+                  >
+                    Unicode &amp; Text Tools
+                  </div>
+                  <ExternalLink
+                    className="size-3.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ color: '#00ff41' }}
+                  />
+                </div>
+                <div>
+                  <h3
+                    className="text-sm leading-none"
+                    style={{
+                      fontFamily: "'Geist Mono', monospace",
+                      color: '#e0e0e0',
+                      opacity: 0.7,
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    Eleonor Rose&apos;s
+                  </h3>
+                  <span
+                    className="text-2xl font-bold mt-1 inline-block"
+                    style={{
+                      color: '#00ff41',
+                      fontFamily: "'Geist Mono', monospace",
+                      letterSpacing: '0.1em',
+                      textShadow: '0 0 7px #00ff41, 0 0 20px rgba(0, 255, 65, 0.4)',
+                    }}
+                  >
+                    [1337 SUITE]
+                  </span>
+                </div>
+                <p
+                  className="text-sm leading-relaxed"
+                  style={{
+                    color: '#00ff41',
+                    opacity: 0.4,
+                    fontFamily: "'Geist Mono', monospace",
+                  }}
+                >
+                  7ext, transf0rmed.
+                </p>
+              </div>
+            </div>
+          </a>
         </div>
       </section>
 
