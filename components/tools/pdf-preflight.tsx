@@ -1228,6 +1228,45 @@ export function PdfPreflightTool() {
                 )}
               </div>
             )}
+
+            {/* Current page issues */}
+            {(() => {
+              const pageIssues = report.issues.filter(
+                (i) => i.page === currentPage
+              );
+              if (pageIssues.length === 0) return null;
+              return (
+                <div className="space-y-1.5">
+                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Page {currentPage} issues
+                  </h4>
+                  {pageIssues.map((issue, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-start gap-2 rounded-md border px-3 py-2"
+                    >
+                      {issue.severity === "error" && (
+                        <CircleX className="size-3.5 shrink-0 mt-0.5 text-red-500" />
+                      )}
+                      {issue.severity === "warning" && (
+                        <TriangleAlert className="size-3.5 shrink-0 mt-0.5 text-amber-500" />
+                      )}
+                      {issue.severity === "info" && (
+                        <Info className="size-3.5 shrink-0 mt-0.5 text-blue-500" />
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium">{issue.message}</p>
+                        {issue.details && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {issue.details}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Right panel: report */}
