@@ -246,12 +246,19 @@ export function GuillotineDirectorTool() {
     label: string,
     value: number,
     onChange: (v: number) => void,
-    opts?: { min?: number; step?: number }
+    opts?: { min?: number; step?: number; unit?: string }
   ) => {
     const id = label.toLowerCase().replace(/\s+/g, "-")
     return (
       <div className="space-y-1.5">
-        <Label htmlFor={id}>{label}</Label>
+        <Label htmlFor={id}>
+          {label}
+          {opts?.unit && (
+            <span className="text-muted-foreground font-normal ml-1">
+              ({opts.unit})
+            </span>
+          )}
+        </Label>
         <Input
           id={id}
           type="number"
@@ -459,14 +466,14 @@ export function GuillotineDirectorTool() {
     <div className="space-y-6">
       {/* Input grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {numField("Sheet W", sheetW, setSheetW)}
-        {numField("Sheet H", sheetH, setSheetH)}
-        {numField("Card W", cardW, setCardW)}
-        {numField("Card H", cardH, setCardH)}
+        {numField("Sheet W", sheetW, setSheetW, { unit: "mm" })}
+        {numField("Sheet H", sheetH, setSheetH, { unit: "mm" })}
+        {numField("Card W", cardW, setCardW, { unit: "mm" })}
+        {numField("Card H", cardH, setCardH, { unit: "mm" })}
       </div>
 
       <div className="grid grid-cols-1 gap-4">
-        {numField("Bleed", bleed, setBleed)}
+        {numField("Bleed", bleed, setBleed, { unit: "mm" })}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
