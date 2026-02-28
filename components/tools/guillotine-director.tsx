@@ -90,7 +90,7 @@ function generateCutSequence(inputs: Inputs, imp: Imposition): CutStep[] {
     phase: 1,
     phaseLabel: "Width Cuts",
     instruction:
-      "Trim far waste — measure from sheet edge to last vertical crop mark",
+      "Trim waste on long side — measure from sheet edge to last vertical crop mark",
     value: sheetW - marginW - bleed,
     measureContext: {
       totalDimension: sheetW,
@@ -104,7 +104,7 @@ function generateCutSequence(inputs: Inputs, imp: Imposition): CutStep[] {
     phase: 1,
     phaseLabel: "Width Cuts",
     instruction:
-      "Flip sheet. Trim near waste — measure from edge to first vertical crop mark",
+      "Flip sheet. Trim waste on short side — measure from edge to first vertical crop mark",
     value: marginW + bleed,
     measureContext: {
       totalDimension: sheetW,
@@ -130,7 +130,7 @@ function generateCutSequence(inputs: Inputs, imp: Imposition): CutStep[] {
     phase: 2,
     phaseLabel: "Height Cuts",
     instruction:
-      "Stack all strips. Trim far waste — measure from edge to last horizontal crop mark",
+      "Stack all strips. Trim waste on long side — measure from edge to last horizontal crop mark",
     value: sheetH - marginH - bleed,
     measureContext: {
       totalDimension: sheetH,
@@ -144,7 +144,7 @@ function generateCutSequence(inputs: Inputs, imp: Imposition): CutStep[] {
     phase: 2,
     phaseLabel: "Height Cuts",
     instruction:
-      "Flip stack. Trim near waste — measure from edge to first horizontal crop mark",
+      "Flip stack. Trim waste on short side — measure from edge to first horizontal crop mark",
     value: marginH + bleed,
     measureContext: {
       totalDimension: sheetH,
@@ -298,44 +298,56 @@ function SheetPreview({
 
 function MeasureDiagram({ ctx }: { ctx: MeasureContext }) {
   const { totalDimension, measureValue, wasteEnd } = ctx
-  const wasteDimension = totalDimension - measureValue
 
-  // Layout: horizontal bar, 280px wide, 64px tall
+  // Determine which side is "long" and which is "short"
+  const isLongSide = measureValue > totalDimension / 2
+  const sideLabel = isLongSide ? "long side" : "short side"
+
   const w = 280
-  const h = 64
-  const barY = 12
-  const barH = 28
+  const h = 72
+  const barY = 16
+  const barH = 26
   const arrowY = barY + barH + 14
 
-  const keepRatio = measureValue / totalDimension
-  const wasteRatio = wasteDimension / totalDimension
+  const measureRatio = measureValue / totalDimension
+  const measureW = Math.round(w * measureRatio)
+  const wasteW = w - measureW
 
-  // "near" waste = waste is on the left (operator's side, where the measurement starts)
-  // "far" waste = waste is on the right (far side, past the crop mark)
-  const keepW = Math.round(w * keepRatio)
-  const wasteW = w - keepW
-
-  const keepX = wasteEnd === "far" ? 0 : wasteW
-  const wasteX = wasteEnd === "far" ? keepW : 0
-  const cropX = wasteEnd === "far" ? keepW : wasteW
+  // Measure portion always on left (edge the operator measures from),
+  // waste on right (gets cut off)
+  const measureX = 0
+  const wasteX = measureW
+  const cropX = measureW
 
   return (
     <svg
       viewBox={`0 0 ${w} ${h}`}
       className="w-full max-w-xs mx-auto"
       role="img"
-      aria-label={`Measure ${measureValue} mm from edge to crop mark`}
+      aria-label={`Measure ${sideLabel}: ${measureValue} mm from edge to crop mark`}
     >
-      {/* Keep portion */}
+      {/* Measure portion (keep side) */}
       <rect
-        x={keepX}
+        x={measureX}
         y={barY}
-        width={keepW}
+        width={measureW}
         height={barH}
         rx={2}
         className="fill-primary/15 stroke-primary/40"
         strokeWidth={0.5}
       />
+      {measureW > 50 && (
+        <text
+          x={measureX + measureW / 2}
+          y={barY + barH / 2 + 1}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          className="fill-primary/70"
+          fontSize={8}
+        >
+          {sideLabel}
+        </text>
+      )}
 
       {/* Waste portion */}
       <rect
@@ -347,19 +359,29 @@ function MeasureDiagram({ ctx }: { ctx: MeasureContext }) {
         className="fill-destructive/10 stroke-destructive/30"
         strokeWidth={0.5}
       />
-      {/* Waste label */}
       {wasteW > 30 && (
         <text
           x={wasteX + wasteW / 2}
           y={barY + barH / 2 + 1}
           textAnchor="middle"
           dominantBaseline="middle"
-          className="fill-destructive/60"
+          className="fill-destructive/50"
           fontSize={8}
         >
           waste
         </text>
       )}
+
+      {/* Edge label */}
+      <text
+        x={1}
+        y={barY - 4}
+        textAnchor="start"
+        className="fill-muted-foreground"
+        fontSize={7}
+      >
+        edge
+      </text>
 
       {/* Crop mark — dashed vertical line */}
       <line
@@ -373,40 +395,40 @@ function MeasureDiagram({ ctx }: { ctx: MeasureContext }) {
       />
       <text
         x={cropX}
-        y={barY - 6}
+        y={barY - 4}
         textAnchor="middle"
         className="fill-muted-foreground"
         fontSize={7}
       >
-        crop
+        crop mark
       </text>
 
-      {/* Measurement arrow — always from left edge of keep to crop mark */}
+      {/* Measurement arrow */}
       <line
-        x1={keepX + 2}
+        x1={measureX + 2}
         y1={arrowY}
         x2={cropX - 2}
         y2={arrowY}
         className="stroke-primary"
         strokeWidth={1}
-        markerEnd="url(#arrowhead)"
-        markerStart="url(#arrowtail)"
+        markerEnd="url(#measure-arrow-end)"
+        markerStart="url(#measure-arrow-start)"
       />
       <text
-        x={(keepX + cropX) / 2}
-        y={arrowY + 10}
+        x={measureW / 2}
+        y={arrowY + 11}
         textAnchor="middle"
         className="fill-primary font-mono"
         fontSize={8}
         fontWeight="bold"
       >
-        measure here
+        ← measure {sideLabel} →
       </text>
 
       {/* Arrow markers */}
       <defs>
         <marker
-          id="arrowhead"
+          id="measure-arrow-end"
           markerWidth="6"
           markerHeight="4"
           refX="5"
@@ -416,7 +438,7 @@ function MeasureDiagram({ ctx }: { ctx: MeasureContext }) {
           <path d="M0,0 L6,2 L0,4" className="fill-primary" />
         </marker>
         <marker
-          id="arrowtail"
+          id="measure-arrow-start"
           markerWidth="6"
           markerHeight="4"
           refX="1"
