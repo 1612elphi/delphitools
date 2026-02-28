@@ -13,6 +13,7 @@ import { TimeCalcTool } from "./time-calc";
 import { UnitConverterTool } from "./unit-converter";
 import { EncoderTool } from "./encoder";
 import { ImageTracerTool } from "./image-tracer";
+import { GuillotineDirectorTool } from "./guillotine-director";
 
 export const toolComponents: Record<string, React.ComponentType> = {
   "px-to-rem": PxToRemTool,
@@ -28,4 +29,5 @@ export const toolComponents: Record<string, React.ComponentType> = {
   "unit-converter": UnitConverterTool,
   "encoder": EncoderTool,
   "image-tracer": ImageTracerTool,
+  "guillotine-director": GuillotineDirectorTool,
 };
