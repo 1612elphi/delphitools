@@ -1,10 +1,12 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ArrowRight } from "lucide-react"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Badge } from "@/components/ui/badge"
+import { ArrowLeft, ArrowRight, Check, RotateCcw } from "lucide-react"
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -225,6 +227,9 @@ export function GuillotineDirectorTool() {
   const [cols, setCols] = useState(3)
   const [rows, setRows] = useState(5)
   const [phase, setPhase] = useState<"input" | "guided">("input")
+  const [currentStep, setCurrentStep] = useState(0)
+  const [measuredValues, setMeasuredValues] = useState<Record<number, string>>({})
+  const [cutLog, setCutLog] = useState<Array<{ step: number; instruction: string; value: number; type: string }>>([])
 
   const inputs: Inputs = useMemo(
     () => ({ sheetW, sheetH, cardW, cardH, bleed, cols, rows }),
@@ -259,16 +264,191 @@ export function GuillotineDirectorTool() {
     )
   }
 
-  // ── Guided phase placeholder ───────────────────────────────────
+  // ── Guided phase handlers ─────────────────────────────────────
+
+  const resetGuidedState = useCallback(() => {
+    setCurrentStep(0)
+    setMeasuredValues({})
+    setCutLog([])
+  }, [])
+
+  const handleStartCutting = useCallback(() => {
+    resetGuidedState()
+    setPhase("guided")
+  }, [resetGuidedState])
+
+  const handleBackToSetup = useCallback(() => {
+    setPhase("input")
+    resetGuidedState()
+  }, [resetGuidedState])
+
+  const handleNextCut = useCallback(() => {
+    const step = cutSequence[currentStep]
+    if (!step) return
+
+    const value =
+      step.type === "computed"
+        ? step.value
+        : parseFloat(measuredValues[currentStep] ?? "0")
+
+    const entry = {
+      step: currentStep + 1,
+      instruction: step.instruction,
+      value,
+      type: step.type,
+    }
+
+    setCutLog((prev) => [...prev, entry])
+
+    if (currentStep < cutSequence.length - 1) {
+      setCurrentStep((prev) => prev + 1)
+    } else {
+      // Last step — return to input phase (cutLog persists until next start)
+      setPhase("input")
+    }
+  }, [currentStep, cutSequence, measuredValues])
+
+  const handleMeasuredKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        const step = cutSequence[currentStep]
+        if (!step) return
+        if (step.type === "measured" && !measuredValues[currentStep]) return
+        handleNextCut()
+      }
+    },
+    [currentStep, cutSequence, measuredValues, handleNextCut]
+  )
+
+  // ── Guided phase UI ─────────────────────────────────────────────
 
   if (phase === "guided") {
+    const step = cutSequence[currentStep]
+    const totalCuts = cutSequence.length
+    const isLast = currentStep === totalCuts - 1
+    const progressPct = ((currentStep + 1) / totalCuts) * 100
+
+    const canAdvance =
+      step.type === "computed" ||
+      (step.type === "measured" &&
+        measuredValues[currentStep] !== undefined &&
+        measuredValues[currentStep] !== "")
+
     return (
-      <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => setPhase("input")}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to inputs
-        </Button>
-        <p className="text-muted-foreground">Guided phase coming next.</p>
+      <div className="space-y-6">
+        {/* Top bar */}
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" size="sm" onClick={handleBackToSetup}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Setup
+          </Button>
+          <Button variant="ghost" size="sm" onClick={resetGuidedState}>
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Restart
+          </Button>
+        </div>
+
+        {/* Progress */}
+        <div className="space-y-2">
+          <p className="text-sm text-muted-foreground">
+            Cut {currentStep + 1} of {totalCuts} — Phase {step.phase}:{" "}
+            {step.phaseLabel}
+          </p>
+          <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full bg-primary rounded-full transition-all duration-300"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Current step card */}
+        <div className="rounded-lg border bg-card p-6 space-y-4">
+          <Badge variant="secondary">
+            Phase {step.phase}: {step.phaseLabel}
+          </Badge>
+
+          <p className="text-base leading-relaxed">{step.instruction}</p>
+
+          {/* Measurement display */}
+          {step.type === "computed" ? (
+            <div className="text-center py-4">
+              <span className="text-4xl font-mono font-bold">
+                {step.value}
+              </span>
+              <span className="text-xl text-muted-foreground ml-2">mm</span>
+            </div>
+          ) : (
+            <div className="space-y-2 py-4">
+              <div className="flex items-center gap-2 max-w-xs mx-auto">
+                <Input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  placeholder="0"
+                  value={measuredValues[currentStep] ?? ""}
+                  onChange={(e) =>
+                    setMeasuredValues((prev) => ({
+                      ...prev,
+                      [currentStep]: e.target.value,
+                    }))
+                  }
+                  onKeyDown={handleMeasuredKeyDown}
+                  className="text-center text-2xl font-mono h-14"
+                  autoFocus
+                />
+                <span className="text-lg text-muted-foreground font-mono">
+                  mm
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground text-center">
+                ~{step.value} mm computed
+              </p>
+            </div>
+          )}
+
+          {/* Next / Done button */}
+          <Button
+            className="w-full"
+            disabled={!canAdvance}
+            onClick={handleNextCut}
+          >
+            {isLast ? (
+              <>
+                All Done
+                <Check className="ml-2 h-4 w-4" />
+              </>
+            ) : (
+              <>
+                Next Cut
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </>
+            )}
+          </Button>
+        </div>
+
+        {/* Cut history log */}
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium">Cut Log</h3>
+          {cutLog.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No cuts recorded yet.
+            </p>
+          ) : (
+            <ScrollArea className="max-h-48 rounded-md border">
+              <div className="p-3 space-y-1">
+                {[...cutLog].reverse().map((entry, i) => (
+                  <p
+                    key={cutLog.length - 1 - i}
+                    className="text-sm font-mono text-muted-foreground"
+                  >
+                    #{entry.step} — {entry.instruction} — {entry.value} mm
+                  </p>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+        </div>
       </div>
     )
   }
@@ -313,7 +493,7 @@ export function GuillotineDirectorTool() {
       <Button
         className="w-full"
         disabled={!imposition.valid}
-        onClick={() => setPhase("guided")}
+        onClick={handleStartCutting}
       >
         Start Cutting
         <ArrowRight className="ml-2 h-4 w-4" />
