@@ -12,6 +12,7 @@ import {
   TriangleAlert,
   Info,
   Loader2,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -25,6 +26,9 @@ import {
   PDFRef,
   PDFHexString,
   PDFString,
+  PDFRawStream,
+  PDFStream,
+  decodePDFRawStream,
 } from "pdf-lib";
 // pdf.js must be imported dynamically to avoid DOMMatrix errors during SSG
 type PDFDocumentProxy = import("pdfjs-dist").PDFDocumentProxy;
@@ -82,6 +86,10 @@ interface FontInfo {
   name: string;
   embedded: boolean;
   type?: string;
+  /** Raw font file bytes (only for embedded fonts) */
+  data?: Uint8Array;
+  /** File extension for download (.ttf, .otf, .pfb) */
+  extension?: string;
 }
 
 interface PreflightReport {
@@ -151,6 +159,48 @@ const CATEGORY_LABELS: Record<CheckCategory, string> = {
   images: "Images",
   transparency: "Transparency",
 };
+
+/** Extract font file bytes from a FontDescriptor dict.
+ *  Returns { data, extension } or null if not embedded. */
+function extractFontData(
+  descriptor: PDFDict,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  context: any
+): { data: Uint8Array; extension: string } | null {
+  const entries: [string, string][] = [
+    ["FontFile", ".pfb"],   // Type 1
+    ["FontFile2", ".ttf"],  // TrueType
+    ["FontFile3", ".otf"],  // CFF / OpenType
+  ];
+
+  for (const [key, ext] of entries) {
+    let streamObj = descriptor.get(PDFName.of(key));
+    if (streamObj instanceof PDFRef) {
+      streamObj = context.lookup(streamObj);
+    }
+    if (streamObj instanceof PDFRawStream) {
+      try {
+        const decoded = decodePDFRawStream(streamObj);
+        return { data: decoded.decode() as Uint8Array, extension: ext };
+      } catch {
+        // Fallback to raw contents if decode fails
+        try {
+          return { data: streamObj.getContents(), extension: ext };
+        } catch {
+          return null;
+        }
+      }
+    }
+    if (streamObj instanceof PDFStream) {
+      try {
+        return { data: streamObj.getContents(), extension: ext };
+      } catch {
+        return null;
+      }
+    }
+  }
+  return null;
+}
 
 // ---------------------------------------------------------------------------
 // Structural analysis with pdf-lib
@@ -370,8 +420,9 @@ async function analyseWithPdfLib(
             fontType = subtypeRaw.decodeText();
           }
 
-          // Check embedding
+          // Check embedding and extract font data
           let embedded = false;
+          let fontData: { data: Uint8Array; extension: string } | null = null;
           const descriptorRaw = fontDict.get(PDFName.of("FontDescriptor"));
           let descriptor: PDFDict | undefined;
           if (descriptorRaw instanceof PDFDict) {
@@ -386,6 +437,9 @@ async function analyseWithPdfLib(
             const ff2 = descriptor.get(PDFName.of("FontFile2"));
             const ff3 = descriptor.get(PDFName.of("FontFile3"));
             embedded = !!(ff1 || ff2 || ff3);
+            if (embedded) {
+              fontData = extractFontData(descriptor, context);
+            }
           }
 
           // Type1 standard 14 fonts don't need embedding
@@ -417,7 +471,12 @@ async function analyseWithPdfLib(
                     const ff1 = cidDescriptor.get(PDFName.of("FontFile"));
                     const ff2 = cidDescriptor.get(PDFName.of("FontFile2"));
                     const ff3 = cidDescriptor.get(PDFName.of("FontFile3"));
-                    if (ff1 || ff2 || ff3) embedded = true;
+                    if (ff1 || ff2 || ff3) {
+                      embedded = true;
+                      if (!fontData) {
+                        fontData = extractFontData(cidDescriptor, context);
+                      }
+                    }
                   }
                 }
               }
@@ -426,7 +485,13 @@ async function analyseWithPdfLib(
 
           const key = `${fontName}:${fontType ?? ""}`;
           if (!fontsMap.has(key)) {
-            fontsMap.set(key, { name: fontName, embedded, type: fontType });
+            fontsMap.set(key, {
+              name: fontName,
+              embedded,
+              type: fontType,
+              data: fontData?.data,
+              extension: fontData?.extension,
+            });
           }
         }
       }
@@ -1357,9 +1422,9 @@ export function PdfPreflightTool() {
                     {report.fonts.map((font, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between text-sm"
+                        className="flex items-center justify-between text-sm gap-2"
                       >
-                        <span className="truncate mr-2">
+                        <span className="truncate">
                           {font.name}
                           {font.type && (
                             <span className="text-xs text-muted-foreground ml-1">
@@ -1367,16 +1432,43 @@ export function PdfPreflightTool() {
                             </span>
                           )}
                         </span>
-                        <span
-                          className={cn(
-                            "text-xs shrink-0",
-                            font.embedded
-                              ? "text-green-600 dark:text-green-400"
-                              : "text-red-600 dark:text-red-400"
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span
+                            className={cn(
+                              "text-xs",
+                              font.embedded
+                                ? "text-green-600 dark:text-green-400"
+                                : "text-red-600 dark:text-red-400"
+                            )}
+                          >
+                            {font.embedded ? "Embedded" : "Not embedded"}
+                          </span>
+                          {font.data && (
+                            <button
+                              type="button"
+                              title={`Download ${font.name}${font.extension}`}
+                              className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                              onClick={() => {
+                                const bytes = font.data!;
+                                const buf = bytes.buffer.slice(
+                                  bytes.byteOffset,
+                                  bytes.byteOffset + bytes.byteLength
+                                ) as ArrayBuffer;
+                                const blob = new Blob([buf], {
+                                  type: "application/octet-stream",
+                                });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement("a");
+                                a.href = url;
+                                a.download = `${font.name}${font.extension}`;
+                                a.click();
+                                URL.revokeObjectURL(url);
+                              }}
+                            >
+                              <Download className="size-3.5" />
+                            </button>
                           )}
-                        >
-                          {font.embedded ? "Embedded" : "Not embedded"}
-                        </span>
+                        </div>
                       </div>
                     ))}
                   </div>
