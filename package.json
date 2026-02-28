@@ -47,6 +47,7 @@
     "nerdamer": "^1.1.13",
     "next": "^16.1.6",
     "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^5.4.624",
     "qr-code-styling": "^1.9.2",
     "qrcode": "^1.5.4",
     "react": "19.2.3",
