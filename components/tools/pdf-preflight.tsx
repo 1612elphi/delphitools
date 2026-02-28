@@ -168,11 +168,11 @@ async function analyseWithPdfLib(
   const encrypted = !!trailer.Encrypt;
   if (encrypted) {
     issues.push({
-      severity: "warning",
+      severity: "error",
       category: "document",
       message: "PDF is encrypted or has security restrictions",
       details:
-        "Some features may be restricted. Ensure the printer can process this file.",
+        "Encrypted PDFs cannot be reliably processed by most print workflows. Remove encryption before sending to print.",
     });
   }
 
@@ -554,14 +554,44 @@ async function analyseWithPdfLib(
   }
 
   // Document-level info
-  if (parseFloat(pdfVersion) < 1.3) {
+  if (parseFloat(pdfVersion) < 1.4) {
+    issues.push({
+      severity: "warning",
+      category: "document",
+      message: `PDF version ${pdfVersion} is below 1.4`,
+      details:
+        "PDF 1.4+ is recommended for modern print workflows. Older versions lack support for transparency and other features.",
+    });
+  }
+
+  // Page orientation detection
+  for (const pageInfo of pages) {
+    const orientation =
+      pageInfo.width > pageInfo.height ? "Landscape" : "Portrait";
     issues.push({
       severity: "info",
-      category: "document",
-      message: `PDF version ${pdfVersion} is quite old`,
-      details:
-        "Modern print workflows typically use PDF 1.4+ or PDF/X standards.",
+      category: "geometry",
+      message: `${orientation} orientation`,
+      page: pageInfo.number,
+      details: `${pageInfo.width.toFixed(0)} x ${pageInfo.height.toFixed(0)}pt (${ptsToMm(pageInfo.width).toFixed(0)} x ${ptsToMm(pageInfo.height).toFixed(0)}mm)`,
     });
+  }
+
+  // Mixed orientation check
+  if (pages.length > 1) {
+    const orientations = pages.map((p) =>
+      p.width > p.height ? "landscape" : "portrait"
+    );
+    const hasMixed = new Set(orientations).size > 1;
+    if (hasMixed) {
+      issues.push({
+        severity: "warning",
+        category: "geometry",
+        message: "Mixed page orientations detected",
+        details:
+          "Some pages are portrait and others are landscape. This may cause issues with imposition and binding.",
+      });
+    }
   }
 
   return {
@@ -614,17 +644,21 @@ async function analyseWithPdfJs(
       }
     }
 
-    const hasRGB = Array.from(colourSpaces).some(
-      (cs) =>
-        cs.includes("RGB") ||
-        cs.includes("DeviceRGB") ||
-        cs === "rgb"
+    const csArray = Array.from(colourSpaces);
+    const hasRGB = csArray.some(
+      (cs) => cs.includes("RGB") || cs.includes("DeviceRGB") || cs === "rgb"
     );
-    const hasCMYK = Array.from(colourSpaces).some(
+    const hasCMYK = csArray.some(
       (cs) =>
-        cs.includes("CMYK") ||
-        cs.includes("DeviceCMYK") ||
-        cs === "cmyk"
+        cs.includes("CMYK") || cs.includes("DeviceCMYK") || cs === "cmyk"
+    );
+    const hasGray = csArray.some(
+      (cs) =>
+        cs.includes("Gray") || cs.includes("DeviceGray") || cs === "gray"
+    );
+    const hasSpot = csArray.some(
+      (cs) =>
+        cs.includes("Separation") || cs.includes("DeviceN") || cs === "spot"
     );
 
     if (hasRGB) {
@@ -638,17 +672,41 @@ async function analyseWithPdfJs(
       });
     }
 
-    if (hasRGB && hasCMYK) {
+    if (hasGray) {
       issues.push({
-        severity: "warning",
+        severity: "info",
         category: "colour",
-        message: "Mixed colour spaces (RGB and CMYK)",
+        message: "Grayscale colour space detected",
         page: i,
         details:
-          "This page uses both RGB and CMYK colour spaces. Mixed colour spaces can cause inconsistent colour output.",
+          "Grayscale content found. This is generally fine for print but ensure it meets your colour requirements.",
       });
     }
 
+    if (hasSpot) {
+      issues.push({
+        severity: "info",
+        category: "colour",
+        message: "Spot colour or DeviceN colour space detected",
+        page: i,
+        details:
+          "Spot colours were found. Verify your printer supports the spot colour inks used, or convert to CMYK process colours.",
+      });
+    }
+
+    const activeSpaces = [hasRGB && "RGB", hasCMYK && "CMYK", hasGray && "Gray", hasSpot && "Spot"].filter(Boolean);
+    if (activeSpaces.length > 1) {
+      issues.push({
+        severity: "warning",
+        category: "colour",
+        message: `Mixed colour spaces (${activeSpaces.join(", ")})`,
+        page: i,
+        details:
+          "Multiple colour spaces on this page can cause inconsistent colour output. Consider converting to a single colour space.",
+      });
+    }
+
+    // Image analysis - count and estimate DPI
     if (imageCount > 0) {
       issues.push({
         severity: "info",
@@ -658,6 +716,67 @@ async function analyseWithPdfJs(
         details:
           "Ensure images are at least 300 DPI for print. Low-resolution images may appear pixelated.",
       });
+    }
+
+    // Estimate image DPI using pdf.js page objects
+    const pageViewport = page.getViewport({ scale: 1 });
+    const pageWidthInches = pageViewport.width / 72;
+    const pageHeightInches = pageViewport.height / 72;
+
+    for (let j = 0; j < opList.fnArray.length; j++) {
+      const fn = opList.fnArray[j];
+      // paintImageXObject=82, paintJpegXObject=83
+      if (fn === 82 || fn === 83) {
+        const args = opList.argsArray[j];
+        if (args && args[0]) {
+          try {
+            const imgName = typeof args[0] === "string" ? args[0] : String(args[0]);
+            const imgObj = await new Promise<{ width: number; height: number } | null>((resolve) => {
+              try {
+                page.objs.get(imgName, (obj: unknown) => {
+                  if (obj && typeof obj === "object" && "width" in obj && "height" in obj) {
+                    resolve(obj as { width: number; height: number });
+                  } else {
+                    resolve(null);
+                  }
+                });
+                // Timeout for objects that never resolve
+                setTimeout(() => resolve(null), 500);
+              } catch {
+                resolve(null);
+              }
+            });
+
+            if (imgObj && imgObj.width > 0 && imgObj.height > 0) {
+              // Estimate DPI: image pixels / page size in inches
+              // This is approximate as we use full page dimensions
+              const dpiX = imgObj.width / pageWidthInches;
+              const dpiY = imgObj.height / pageHeightInches;
+              const effectiveDpi = Math.min(dpiX, dpiY);
+
+              if (effectiveDpi < 72) {
+                issues.push({
+                  severity: "error",
+                  category: "images",
+                  message: `Very low resolution image (~${Math.round(effectiveDpi)} DPI)`,
+                  page: i,
+                  details: `Image "${imgName}" is approximately ${Math.round(effectiveDpi)} DPI. This will appear pixelated in print. Minimum 150 DPI recommended, 300 DPI preferred.`,
+                });
+              } else if (effectiveDpi < 150) {
+                issues.push({
+                  severity: "warning",
+                  category: "images",
+                  message: `Low resolution image (~${Math.round(effectiveDpi)} DPI)`,
+                  page: i,
+                  details: `Image "${imgName}" is approximately ${Math.round(effectiveDpi)} DPI. For best print quality, use 300 DPI or higher.`,
+                });
+              }
+            }
+          } catch {
+            // Skip DPI estimation for this image
+          }
+        }
+      }
     }
 
     page.cleanup();
@@ -915,6 +1034,16 @@ export function PdfPreflightTool() {
         {} as Record<CheckCategory, PreflightIssue[]>
       )
     : {};
+
+  const issuesByPage = report
+    ? Array.from({ length: report.pageCount }, (_, i) => {
+        const pageNum = i + 1;
+        return {
+          page: pageNum,
+          issues: report.issues.filter((iss) => iss.page === pageNum),
+        };
+      }).filter((p) => p.issues.length > 0)
+    : [];
 
   // ---- Render ----
 
@@ -1196,7 +1325,7 @@ export function PdfPreflightTool() {
               <>
                 <Separator />
                 <div className="space-y-4">
-                  <h4 className="text-sm font-semibold">Issues</h4>
+                  <h4 className="text-sm font-semibold">Issues by Category</h4>
                   {(
                     Object.entries(issuesByCategory) as [
                       CheckCategory,
@@ -1248,6 +1377,48 @@ export function PdfPreflightTool() {
                                 )}
                               </div>
                             </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Per-page issue breakdown */}
+            {issuesByPage.length > 0 && (
+              <>
+                <Separator />
+                <div className="space-y-4">
+                  <h4 className="text-sm font-semibold">Issues by Page</h4>
+                  {issuesByPage.map(({ page, issues: pageIssues }) => (
+                    <div key={page}>
+                      <button
+                        type="button"
+                        className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 hover:text-foreground transition-colors cursor-pointer"
+                        onClick={() => setCurrentPage(page)}
+                      >
+                        Page {page}
+                      </button>
+                      <div className="space-y-1.5">
+                        {pageIssues.map((issue, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            className="w-full text-left flex items-start gap-2 rounded-md px-2 py-1.5 hover:bg-muted/50 cursor-pointer transition-colors"
+                            onClick={() => setCurrentPage(page)}
+                          >
+                            {issue.severity === "error" && (
+                              <CircleX className="size-3.5 shrink-0 mt-0.5 text-red-500" />
+                            )}
+                            {issue.severity === "warning" && (
+                              <TriangleAlert className="size-3.5 shrink-0 mt-0.5 text-amber-500" />
+                            )}
+                            {issue.severity === "info" && (
+                              <Info className="size-3.5 shrink-0 mt-0.5 text-blue-500" />
+                            )}
+                            <span className="text-xs">{issue.message}</span>
                           </button>
                         ))}
                       </div>
