@@ -26,10 +26,19 @@ import {
   PDFHexString,
   PDFString,
 } from "pdf-lib";
-import * as pdfjsLib from "pdfjs-dist";
-import type { PDFDocumentProxy } from "pdfjs-dist";
+// pdf.js must be imported dynamically to avoid DOMMatrix errors during SSG
+type PDFDocumentProxy = import("pdfjs-dist").PDFDocumentProxy;
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.624/pdf.worker.min.mjs`;
+let pdfjsPromise: Promise<typeof import("pdfjs-dist")> | null = null;
+function getPdfJs() {
+  if (!pdfjsPromise) {
+    pdfjsPromise = import("pdfjs-dist").then((mod) => {
+      mod.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${mod.version}/pdf.worker.min.mjs`;
+      return mod;
+    });
+  }
+  return pdfjsPromise;
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -126,6 +135,13 @@ function arrayToBox(arr: PDFArray): PageBox {
 function ptsToMm(pts: number): number {
   return pts * 0.352778;
 }
+
+const STANDARD_14_FONTS = new Set([
+  "Courier", "Courier-Bold", "Courier-BoldOblique", "Courier-Oblique",
+  "Helvetica", "Helvetica-Bold", "Helvetica-BoldOblique", "Helvetica-Oblique",
+  "Symbol", "Times-Bold", "Times-BoldItalic", "Times-Italic",
+  "Times-Roman", "ZapfDingbats",
+]);
 
 const CATEGORY_LABELS: Record<CheckCategory, string> = {
   document: "Document",
@@ -373,23 +389,7 @@ async function analyseWithPdfLib(
           }
 
           // Type1 standard 14 fonts don't need embedding
-          const standard14 = [
-            "Courier",
-            "Courier-Bold",
-            "Courier-BoldOblique",
-            "Courier-Oblique",
-            "Helvetica",
-            "Helvetica-Bold",
-            "Helvetica-BoldOblique",
-            "Helvetica-Oblique",
-            "Symbol",
-            "Times-Bold",
-            "Times-BoldItalic",
-            "Times-Italic",
-            "Times-Roman",
-            "ZapfDingbats",
-          ];
-          if (!embedded && standard14.includes(fontName)) {
+          if (!embedded && STANDARD_14_FONTS.has(fontName)) {
             embedded = true;
           }
 
@@ -613,6 +613,7 @@ async function analyseWithPdfLib(
 async function analyseWithPdfJs(
   buffer: ArrayBuffer
 ): Promise<{ pdfDoc: PDFDocumentProxy; issues: PreflightIssue[] }> {
+  const pdfjsLib = await getPdfJs();
   const issues: PreflightIssue[] = [];
 
   const loadingTask = pdfjsLib.getDocument({ data: buffer.slice(0) });
@@ -625,16 +626,15 @@ async function analyseWithPdfJs(
     let imageCount = 0;
     const colourSpaces = new Set<string>();
 
+    const OPS = pdfjsLib.OPS;
     for (let j = 0; j < opList.fnArray.length; j++) {
       const fn = opList.fnArray[j];
 
-      // paintImageXObject=82, paintJpegXObject=83, paintImageXObjectRepeat=85
-      if (fn === 82 || fn === 83 || fn === 85) {
+      if (fn === OPS.paintImageXObject || fn === OPS.paintXObject || fn === OPS.paintImageXObjectRepeat) {
         imageCount++;
       }
 
-      // setFillColorSpace=33, setStrokeColorSpace=34
-      if (fn === 33 || fn === 34) {
+      if (fn === OPS.setFillColorSpace || fn === OPS.setStrokeColorSpace) {
         const args = opList.argsArray[j];
         if (args && args[0]) {
           const csName =
@@ -719,37 +719,52 @@ async function analyseWithPdfJs(
     }
 
     // Estimate image DPI using pdf.js page objects
+    // We use the page viewport to estimate an upper bound on DPI.
+    // Without the content stream's transformation matrix, we assume
+    // images fill the full page (worst case). This means DPI estimates
+    // are conservative — an image flagged here is genuinely low-res
+    // even at full-page size. Images placed smaller would have higher
+    // effective DPI than reported.
     const pageViewport = page.getViewport({ scale: 1 });
     const pageWidthInches = pageViewport.width / 72;
     const pageHeightInches = pageViewport.height / 72;
 
+    const seenImages = new Set<string>();
     for (let j = 0; j < opList.fnArray.length; j++) {
       const fn = opList.fnArray[j];
-      // paintImageXObject=82, paintJpegXObject=83
-      if (fn === 82 || fn === 83) {
+      if (fn === OPS.paintImageXObject || fn === OPS.paintXObject) {
         const args = opList.argsArray[j];
         if (args && args[0]) {
           try {
             const imgName = typeof args[0] === "string" ? args[0] : String(args[0]);
+            if (seenImages.has(imgName)) continue;
+            seenImages.add(imgName);
+
             const imgObj = await new Promise<{ width: number; height: number } | null>((resolve) => {
+              let resolved = false;
+              const timer = setTimeout(() => {
+                if (!resolved) { resolved = true; resolve(null); }
+              }, 500);
               try {
                 page.objs.get(imgName, (obj: unknown) => {
+                  if (resolved) return;
+                  resolved = true;
+                  clearTimeout(timer);
                   if (obj && typeof obj === "object" && "width" in obj && "height" in obj) {
                     resolve(obj as { width: number; height: number });
                   } else {
                     resolve(null);
                   }
                 });
-                // Timeout for objects that never resolve
-                setTimeout(() => resolve(null), 500);
               } catch {
+                resolved = true;
+                clearTimeout(timer);
                 resolve(null);
               }
             });
 
             if (imgObj && imgObj.width > 0 && imgObj.height > 0) {
-              // Estimate DPI: image pixels / page size in inches
-              // This is approximate as we use full page dimensions
+              // Upper-bound DPI: assumes image fills full page
               const dpiX = imgObj.width / pageWidthInches;
               const dpiY = imgObj.height / pageHeightInches;
               const effectiveDpi = Math.min(dpiX, dpiY);
@@ -758,17 +773,17 @@ async function analyseWithPdfJs(
                 issues.push({
                   severity: "error",
                   category: "images",
-                  message: `Very low resolution image (~${Math.round(effectiveDpi)} DPI)`,
+                  message: `Very low resolution image (~${Math.round(effectiveDpi)} DPI at full page)`,
                   page: i,
-                  details: `Image "${imgName}" is approximately ${Math.round(effectiveDpi)} DPI. This will appear pixelated in print. Minimum 150 DPI recommended, 300 DPI preferred.`,
+                  details: `Image "${imgName}" is ${imgObj.width}x${imgObj.height}px (~${Math.round(effectiveDpi)} DPI if filling the page). This will appear pixelated in print.`,
                 });
               } else if (effectiveDpi < 150) {
                 issues.push({
                   severity: "warning",
                   category: "images",
-                  message: `Low resolution image (~${Math.round(effectiveDpi)} DPI)`,
+                  message: `Low resolution image (~${Math.round(effectiveDpi)} DPI at full page)`,
                   page: i,
-                  details: `Image "${imgName}" is approximately ${Math.round(effectiveDpi)} DPI. For best print quality, use 300 DPI or higher.`,
+                  details: `Image "${imgName}" is ${imgObj.width}x${imgObj.height}px (~${Math.round(effectiveDpi)} DPI if filling the page). For best quality, use 300 DPI or higher.`,
                 });
               }
             }
@@ -865,6 +880,7 @@ export function PdfPreflightTool() {
   );
 
   const handleClear = useCallback(() => {
+    if (pdfDoc) pdfDoc.destroy();
     setFile(null);
     setError(null);
     setReport(null);
@@ -872,6 +888,14 @@ export function PdfPreflightTool() {
     setPdfDoc(null);
     setCurrentPage(1);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  }, [pdfDoc]);
+
+  // Destroy pdf.js document on unmount
+  useEffect(() => {
+    return () => {
+      pdfDoc?.destroy();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ---- Analysis trigger ----
