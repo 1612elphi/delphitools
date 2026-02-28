@@ -31,12 +31,20 @@ interface Imposition {
   valid: boolean
 }
 
+interface MeasureContext {
+  totalDimension: number
+  measureValue: number
+  wasteEnd: "far" | "near"
+  axis: "width" | "height"
+}
+
 interface CutStep {
   type: "measured" | "computed"
   phase: 1 | 2 | 3
   phaseLabel: string
   instruction: string
   value: number
+  measureContext?: MeasureContext
 }
 
 // ── Presets ────────────────────────────────────────────────────────
@@ -84,6 +92,12 @@ function generateCutSequence(inputs: Inputs, imp: Imposition): CutStep[] {
     instruction:
       "Trim far waste — measure from sheet edge to last vertical crop mark",
     value: sheetW - marginW - bleed,
+    measureContext: {
+      totalDimension: sheetW,
+      measureValue: sheetW - marginW - bleed,
+      wasteEnd: "far",
+      axis: "width",
+    },
   })
   steps.push({
     type: "measured",
@@ -92,6 +106,12 @@ function generateCutSequence(inputs: Inputs, imp: Imposition): CutStep[] {
     instruction:
       "Flip sheet. Trim near waste — measure from edge to first vertical crop mark",
     value: marginW + bleed,
+    measureContext: {
+      totalDimension: sheetW,
+      measureValue: marginW + bleed,
+      wasteEnd: "near",
+      axis: "width",
+    },
   })
   // Descending fence: strips slide off toward operator
   for (let i = 0; i < cols - 1; i++) {
@@ -112,6 +132,12 @@ function generateCutSequence(inputs: Inputs, imp: Imposition): CutStep[] {
     instruction:
       "Stack all strips. Trim far waste — measure from edge to last horizontal crop mark",
     value: sheetH - marginH - bleed,
+    measureContext: {
+      totalDimension: sheetH,
+      measureValue: sheetH - marginH - bleed,
+      wasteEnd: "far",
+      axis: "height",
+    },
   })
   steps.push({
     type: "measured",
@@ -120,6 +146,12 @@ function generateCutSequence(inputs: Inputs, imp: Imposition): CutStep[] {
     instruction:
       "Flip stack. Trim near waste — measure from edge to first horizontal crop mark",
     value: marginH + bleed,
+    measureContext: {
+      totalDimension: sheetH,
+      measureValue: marginH + bleed,
+      wasteEnd: "near",
+      axis: "height",
+    },
   })
   // Descending fence: strips slide off toward operator
   for (let i = 0; i < rows - 1; i++) {
@@ -258,6 +290,142 @@ function SheetPreview({
       >
         {sheetH} mm
       </text>
+    </svg>
+  )
+}
+
+// ── Measure Diagram ────────────────────────────────────────────────
+
+function MeasureDiagram({ ctx }: { ctx: MeasureContext }) {
+  const { totalDimension, measureValue, wasteEnd } = ctx
+  const wasteDimension = totalDimension - measureValue
+
+  // Layout: horizontal bar, 280px wide, 64px tall
+  const w = 280
+  const h = 64
+  const barY = 12
+  const barH = 28
+  const arrowY = barY + barH + 14
+
+  const keepRatio = measureValue / totalDimension
+  const wasteRatio = wasteDimension / totalDimension
+
+  // "near" waste = waste is on the left (operator's side, where the measurement starts)
+  // "far" waste = waste is on the right (far side, past the crop mark)
+  const keepW = Math.round(w * keepRatio)
+  const wasteW = w - keepW
+
+  const keepX = wasteEnd === "far" ? 0 : wasteW
+  const wasteX = wasteEnd === "far" ? keepW : 0
+  const cropX = wasteEnd === "far" ? keepW : wasteW
+
+  return (
+    <svg
+      viewBox={`0 0 ${w} ${h}`}
+      className="w-full max-w-xs mx-auto"
+      role="img"
+      aria-label={`Measure ${measureValue} mm from edge to crop mark`}
+    >
+      {/* Keep portion */}
+      <rect
+        x={keepX}
+        y={barY}
+        width={keepW}
+        height={barH}
+        rx={2}
+        className="fill-primary/15 stroke-primary/40"
+        strokeWidth={0.5}
+      />
+
+      {/* Waste portion */}
+      <rect
+        x={wasteX}
+        y={barY}
+        width={wasteW}
+        height={barH}
+        rx={2}
+        className="fill-destructive/10 stroke-destructive/30"
+        strokeWidth={0.5}
+      />
+      {/* Waste label */}
+      {wasteW > 30 && (
+        <text
+          x={wasteX + wasteW / 2}
+          y={barY + barH / 2 + 1}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          className="fill-destructive/60"
+          fontSize={8}
+        >
+          waste
+        </text>
+      )}
+
+      {/* Crop mark — dashed vertical line */}
+      <line
+        x1={cropX}
+        y1={barY - 4}
+        x2={cropX}
+        y2={barY + barH + 4}
+        strokeDasharray="2 2"
+        className="stroke-foreground/60"
+        strokeWidth={1}
+      />
+      <text
+        x={cropX}
+        y={barY - 6}
+        textAnchor="middle"
+        className="fill-muted-foreground"
+        fontSize={7}
+      >
+        crop
+      </text>
+
+      {/* Measurement arrow — always from left edge of keep to crop mark */}
+      <line
+        x1={keepX + 2}
+        y1={arrowY}
+        x2={cropX - 2}
+        y2={arrowY}
+        className="stroke-primary"
+        strokeWidth={1}
+        markerEnd="url(#arrowhead)"
+        markerStart="url(#arrowtail)"
+      />
+      <text
+        x={(keepX + cropX) / 2}
+        y={arrowY + 10}
+        textAnchor="middle"
+        className="fill-primary font-mono"
+        fontSize={8}
+        fontWeight="bold"
+      >
+        measure here
+      </text>
+
+      {/* Arrow markers */}
+      <defs>
+        <marker
+          id="arrowhead"
+          markerWidth="6"
+          markerHeight="4"
+          refX="5"
+          refY="2"
+          orient="auto"
+        >
+          <path d="M0,0 L6,2 L0,4" className="fill-primary" />
+        </marker>
+        <marker
+          id="arrowtail"
+          markerWidth="6"
+          markerHeight="4"
+          refX="1"
+          refY="2"
+          orient="auto"
+        >
+          <path d="M6,0 L0,2 L6,4" className="fill-primary" />
+        </marker>
+      </defs>
     </svg>
   )
 }
@@ -467,6 +635,11 @@ export function GuillotineDirectorTool() {
             </div>
           ) : (
             <div className="space-y-3">
+              {/* Visual aid diagram */}
+              {step.measureContext && (
+                <MeasureDiagram ctx={step.measureContext} />
+              )}
+
               <div className="rounded-lg bg-muted/50 py-4 px-4">
                 <div className="flex items-center gap-3 max-w-sm mx-auto">
                   <Input
@@ -491,7 +664,7 @@ export function GuillotineDirectorTool() {
                 </div>
               </div>
               <p className="text-sm text-muted-foreground text-center">
-                Computed hint: ~{step.value} mm
+                Expect around ~{step.value} mm
               </p>
             </div>
           )}
