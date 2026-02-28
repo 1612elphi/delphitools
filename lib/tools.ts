@@ -38,6 +38,7 @@ import {
   FileCode,
   ScanLine,
   Slice,
+  FileSearch,
 } from "lucide-react";
 
 export interface Tool {
@@ -214,6 +215,14 @@ export const toolCategories: ToolCategory[] = [
         description: "Trace raster images to SVG vectors",
         icon: ScanLine,
         href: "/tools/image-tracer",
+        new: true,
+      },
+      {
+        id: "pdf-preflight",
+        name: "PDF Preflight",
+        description: "Analyse PDFs for print-readiness issues",
+        icon: FileSearch,
+        href: "/tools/pdf-preflight",
         new: true,
       },
     ],
