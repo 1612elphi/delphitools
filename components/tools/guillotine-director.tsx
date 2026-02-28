@@ -90,11 +90,11 @@ function generateCutSequence(inputs: Inputs, imp: Imposition): CutStep[] {
     phase: 1,
     phaseLabel: "Width Cuts",
     instruction:
-      "Trim waste on long side — measure from sheet edge to last vertical crop mark",
-    value: sheetW - marginW - bleed,
+      "Measure from near edge to far bleed mark — far margin slides off toward you",
+    value: sheetW - marginW,
     measureContext: {
       totalDimension: sheetW,
-      measureValue: sheetW - marginW - bleed,
+      measureValue: sheetW - marginW,
       wasteEnd: "far",
       axis: "width",
     },
@@ -104,11 +104,11 @@ function generateCutSequence(inputs: Inputs, imp: Imposition): CutStep[] {
     phase: 1,
     phaseLabel: "Width Cuts",
     instruction:
-      "Flip sheet. Trim waste on short side — measure from edge to first vertical crop mark",
-    value: marginW + bleed,
+      "Push trimmed edge to fence. Measure to near bleed mark — near margin slides off toward you",
+    value: cols * stripW,
     measureContext: {
-      totalDimension: sheetW,
-      measureValue: marginW + bleed,
+      totalDimension: sheetW - marginW,
+      measureValue: cols * stripW,
       wasteEnd: "near",
       axis: "width",
     },
@@ -130,11 +130,11 @@ function generateCutSequence(inputs: Inputs, imp: Imposition): CutStep[] {
     phase: 2,
     phaseLabel: "Height Cuts",
     instruction:
-      "Stack all strips. Trim waste on long side — measure from edge to last horizontal crop mark",
-    value: sheetH - marginH - bleed,
+      "Stack all strips. Measure from near edge to far bleed mark — far margin slides off toward you",
+    value: sheetH - marginH,
     measureContext: {
       totalDimension: sheetH,
-      measureValue: sheetH - marginH - bleed,
+      measureValue: sheetH - marginH,
       wasteEnd: "far",
       axis: "height",
     },
@@ -144,11 +144,11 @@ function generateCutSequence(inputs: Inputs, imp: Imposition): CutStep[] {
     phase: 2,
     phaseLabel: "Height Cuts",
     instruction:
-      "Flip stack. Trim waste on short side — measure from edge to first horizontal crop mark",
-    value: marginH + bleed,
+      "Push trimmed edge to fence. Measure to near bleed mark — near margin slides off toward you",
+    value: rows * stripH,
     measureContext: {
-      totalDimension: sheetH,
-      measureValue: marginH + bleed,
+      totalDimension: sheetH - marginH,
+      measureValue: rows * stripH,
       wasteEnd: "near",
       axis: "height",
     },
@@ -164,33 +164,34 @@ function generateCutSequence(inputs: Inputs, imp: Imposition): CutStep[] {
     })
   }
 
-  // Phase 3 — Trim bleed
+  // Phase 3 — Trim bleed (fence keeps product, bleed waste falls toward operator)
   steps.push({
     type: "computed",
     phase: 3,
     phaseLabel: "Trim Bleed",
-    instruction: "Stack all pieces. Trim bleed from first side",
-    value: bleed,
+    instruction:
+      "Stack all pieces. Set fence — bleed waste slides off toward you",
+    value: prodW + bleed,
   })
   steps.push({
     type: "computed",
     phase: 3,
     phaseLabel: "Trim Bleed",
-    instruction: "Flip stack. Trim to product width",
+    instruction: "Flip stack. Trim to product width — bleed slides off",
     value: prodW,
   })
   steps.push({
     type: "computed",
     phase: 3,
     phaseLabel: "Trim Bleed",
-    instruction: "Trim bleed from third side",
-    value: bleed,
+    instruction: "Set fence — bleed waste slides off toward you",
+    value: prodH + bleed,
   })
   steps.push({
     type: "computed",
     phase: 3,
     phaseLabel: "Trim Bleed",
-    instruction: "Flip stack. Trim to product height",
+    instruction: "Flip stack. Trim to product height — bleed slides off",
     value: prodH,
   })
 
@@ -297,11 +298,7 @@ function SheetPreview({
 // ── Measure Diagram ────────────────────────────────────────────────
 
 function MeasureDiagram({ ctx }: { ctx: MeasureContext }) {
-  const { totalDimension, measureValue, wasteEnd } = ctx
-
-  // Determine which side is "long" and which is "short"
-  const isLongSide = measureValue > totalDimension / 2
-  const sideLabel = isLongSide ? "long side" : "short side"
+  const { totalDimension, measureValue } = ctx
 
   const w = 280
   const h = 72
@@ -310,23 +307,22 @@ function MeasureDiagram({ ctx }: { ctx: MeasureContext }) {
   const arrowY = barY + barH + 14
 
   const measureRatio = measureValue / totalDimension
-  const measureW = Math.round(w * measureRatio)
+  const measureW = Math.max(20, Math.round(w * measureRatio))
   const wasteW = w - measureW
 
-  // Measure portion always on left (edge the operator measures from),
-  // waste on right (gets cut off)
+  // Keep portion on left (fence side), waste on right (slides toward operator)
   const measureX = 0
   const wasteX = measureW
-  const cropX = measureW
+  const cutX = measureW
 
   return (
     <svg
       viewBox={`0 0 ${w} ${h}`}
       className="w-full max-w-xs mx-auto"
       role="img"
-      aria-label={`Measure ${sideLabel}: ${measureValue} mm from edge to crop mark`}
+      aria-label={`Measure ${measureValue} mm from fence edge to bleed mark — waste slides off`}
     >
-      {/* Measure portion (keep side) */}
+      {/* Keep portion (fence side) */}
       <rect
         x={measureX}
         y={barY}
@@ -336,7 +332,7 @@ function MeasureDiagram({ ctx }: { ctx: MeasureContext }) {
         className="fill-primary/15 stroke-primary/40"
         strokeWidth={0.5}
       />
-      {measureW > 50 && (
+      {measureW > 40 && (
         <text
           x={measureX + measureW / 2}
           y={barY + barH / 2 + 1}
@@ -345,11 +341,11 @@ function MeasureDiagram({ ctx }: { ctx: MeasureContext }) {
           className="fill-primary/70"
           fontSize={8}
         >
-          {sideLabel}
+          keep
         </text>
       )}
 
-      {/* Waste portion */}
+      {/* Waste portion (operator side) */}
       <rect
         x={wasteX}
         y={barY}
@@ -372,7 +368,7 @@ function MeasureDiagram({ ctx }: { ctx: MeasureContext }) {
         </text>
       )}
 
-      {/* Edge label */}
+      {/* Fence edge label */}
       <text
         x={1}
         y={barY - 4}
@@ -380,34 +376,47 @@ function MeasureDiagram({ ctx }: { ctx: MeasureContext }) {
         className="fill-muted-foreground"
         fontSize={7}
       >
-        edge
+        fence
       </text>
 
-      {/* Crop mark — dashed vertical line */}
+      {/* Cut line — dashed vertical line */}
       <line
-        x1={cropX}
+        x1={cutX}
         y1={barY - 4}
-        x2={cropX}
+        x2={cutX}
         y2={barY + barH + 4}
         strokeDasharray="2 2"
         className="stroke-foreground/60"
         strokeWidth={1}
       />
       <text
-        x={cropX}
+        x={cutX}
         y={barY - 4}
         textAnchor="middle"
         className="fill-muted-foreground"
         fontSize={7}
       >
-        crop mark
+        bleed mark
       </text>
+
+      {/* Operator side label */}
+      {wasteW > 20 && (
+        <text
+          x={w - 1}
+          y={barY - 4}
+          textAnchor="end"
+          className="fill-muted-foreground"
+          fontSize={7}
+        >
+          ↓ you
+        </text>
+      )}
 
       {/* Measurement arrow */}
       <line
         x1={measureX + 2}
         y1={arrowY}
-        x2={cropX - 2}
+        x2={cutX - 2}
         y2={arrowY}
         className="stroke-primary"
         strokeWidth={1}
@@ -422,7 +431,7 @@ function MeasureDiagram({ ctx }: { ctx: MeasureContext }) {
         fontSize={8}
         fontWeight="bold"
       >
-        ← measure {sideLabel} →
+        ← measure →
       </text>
 
       {/* Arrow markers */}
