@@ -48,6 +48,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   "unit-converter": dynamic(() => import("@/components/tools/unit-converter").then(mod => mod.UnitConverterTool)),
   "encoder": dynamic(() => import("@/components/tools/encoder").then(mod => mod.EncoderTool)),
   "image-tracer": dynamic(() => import("@/components/tools/image-tracer").then(mod => mod.ImageTracerTool)),
+  "guillotine-director": dynamic(() => import("@/components/tools/guillotine-director").then(mod => mod.GuillotineDirectorTool)),
 };
 
 interface ToolPageProps {
