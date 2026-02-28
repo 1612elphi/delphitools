@@ -37,6 +37,7 @@ import {
   Scale,
   FileCode,
   ScanLine,
+  Slice,
 } from "lucide-react";
 
 export interface Tool {
@@ -273,6 +274,27 @@ export const toolCategories: ToolCategory[] = [
     ],
   },
   {
+    id: "print-production",
+    name: "Print & Production",
+    tools: [
+      {
+        id: "guillotine-director",
+        name: "Guillotine Director",
+        description: "Guided workflow for guillotine cutting imposed print sheets",
+        icon: Slice,
+        href: "/tools/guillotine-director",
+        new: true,
+      },
+      {
+        id: "zine-imposer",
+        name: "Zine Imposer",
+        description: "Create 8-page mini-zine imposition layouts",
+        icon: BookOpen,
+        href: "/tools/zine-imposer",
+      },
+    ],
+  },
+  {
     id: "other-tools",
     name: "Other Tools",
     tools: [
@@ -317,13 +339,6 @@ export const toolCategories: ToolCategory[] = [
         description: "Test regular expressions",
         icon: Regex,
         href: "/tools/regex-tester",
-      },
-      {
-        id: "zine-imposer",
-        name: "Zine Imposer",
-        description: "Create 8-page mini-zine imposition layouts",
-        icon: BookOpen,
-        href: "/tools/zine-imposer",
       },
     ],
   },
