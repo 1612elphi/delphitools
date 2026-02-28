@@ -84,13 +84,16 @@ function generateCutSequence(inputs: Inputs, imp: Imposition): CutStep[] {
   const { stripW, stripH, marginW, marginH } = imp
   const steps: CutStep[] = []
 
+  // Determine edge labels based on sheet orientation
+  const wEdge = sheetW <= sheetH ? "short edge" : "long edge"
+  const hEdge = sheetH >= sheetW ? "long edge" : "short edge"
+
   // Phase 1 — Width cuts
   steps.push({
     type: "measured",
     phase: 1,
     phaseLabel: "Width Cuts",
-    instruction:
-      "Measure from near edge to far bleed mark — far margin slides off toward you",
+    instruction: `${wEdge[0].toUpperCase() + wEdge.slice(1)} against fence. Measure to far bleed mark — far margin slides off toward you`,
     value: sheetW - marginW,
     measureContext: {
       totalDimension: sheetW,
@@ -103,8 +106,7 @@ function generateCutSequence(inputs: Inputs, imp: Imposition): CutStep[] {
     type: "measured",
     phase: 1,
     phaseLabel: "Width Cuts",
-    instruction:
-      "Push trimmed edge to fence. Measure to near bleed mark — near margin slides off toward you",
+    instruction: `Push trimmed ${wEdge} to fence. Measure to near bleed mark — near margin slides off toward you`,
     value: cols * stripW,
     measureContext: {
       totalDimension: sheetW - marginW,
@@ -129,8 +131,7 @@ function generateCutSequence(inputs: Inputs, imp: Imposition): CutStep[] {
     type: "measured",
     phase: 2,
     phaseLabel: "Height Cuts",
-    instruction:
-      "Stack all strips. Measure from near edge to far bleed mark — far margin slides off toward you",
+    instruction: `Stack all strips. ${hEdge[0].toUpperCase() + hEdge.slice(1)} against fence. Measure to far bleed mark — far margin slides off toward you`,
     value: sheetH - marginH,
     measureContext: {
       totalDimension: sheetH,
@@ -143,8 +144,7 @@ function generateCutSequence(inputs: Inputs, imp: Imposition): CutStep[] {
     type: "measured",
     phase: 2,
     phaseLabel: "Height Cuts",
-    instruction:
-      "Push trimmed edge to fence. Measure to near bleed mark — near margin slides off toward you",
+    instruction: `Push trimmed ${hEdge} to fence. Measure to near bleed mark — near margin slides off toward you`,
     value: rows * stripH,
     measureContext: {
       totalDimension: sheetH - marginH,
@@ -165,33 +165,35 @@ function generateCutSequence(inputs: Inputs, imp: Imposition): CutStep[] {
   }
 
   // Phase 3 — Trim bleed (fence keeps product, bleed waste falls toward operator)
+  const pWEdge = prodW <= prodH ? "short edge" : "long edge"
+  const pHEdge = prodH >= prodW ? "long edge" : "short edge"
+
   steps.push({
     type: "computed",
     phase: 3,
     phaseLabel: "Trim Bleed",
-    instruction:
-      "Stack all pieces. Set fence — bleed waste slides off toward you",
+    instruction: `Stack all pieces, ${pWEdge} facing fence. Set fence — bleed waste slides off toward you`,
     value: prodW + bleed,
   })
   steps.push({
     type: "computed",
     phase: 3,
     phaseLabel: "Trim Bleed",
-    instruction: "Flip stack. Trim to product width — bleed slides off",
+    instruction: `Flip stack. Trim ${pWEdge} to product width — bleed slides off`,
     value: prodW,
   })
   steps.push({
     type: "computed",
     phase: 3,
     phaseLabel: "Trim Bleed",
-    instruction: "Set fence — bleed waste slides off toward you",
+    instruction: `Rotate stack, ${pHEdge} facing fence. Set fence — bleed waste slides off toward you`,
     value: prodH + bleed,
   })
   steps.push({
     type: "computed",
     phase: 3,
     phaseLabel: "Trim Bleed",
-    instruction: "Flip stack. Trim to product height — bleed slides off",
+    instruction: `Flip stack. Trim ${pHEdge} to product height — bleed slides off`,
     value: prodH,
   })
 
