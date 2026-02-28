@@ -33,7 +33,7 @@ let pdfjsPromise: Promise<typeof import("pdfjs-dist")> | null = null;
 function getPdfJs() {
   if (!pdfjsPromise) {
     pdfjsPromise = import("pdfjs-dist").then((mod) => {
-      mod.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${mod.version}/pdf.worker.min.mjs`;
+      mod.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
       return mod;
     });
   }
@@ -932,7 +932,8 @@ export function PdfPreflightTool() {
           }
           structReport.issues.push(...pdjsIssues);
           setPdfDoc(doc);
-        } catch {
+        } catch (pdfJsErr) {
+          console.warn("pdf.js analysis failed:", pdfJsErr);
           structReport.issues.push({
             severity: "warning",
             category: "document",
