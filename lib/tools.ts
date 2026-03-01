@@ -217,14 +217,6 @@ export const toolCategories: ToolCategory[] = [
         href: "/tools/image-tracer",
         new: true,
       },
-      {
-        id: "pdf-preflight",
-        name: "PDF Preflight",
-        description: "Analyse PDFs for print-readiness issues",
-        icon: FileSearch,
-        href: "/tools/pdf-preflight",
-        new: true,
-      },
     ],
   },
   {
@@ -286,6 +278,14 @@ export const toolCategories: ToolCategory[] = [
     id: "print-production",
     name: "Print & Production",
     tools: [
+      {
+        id: "pdf-preflight",
+        name: "PDF Preflight",
+        description: "Analyse PDFs for print-readiness issues",
+        icon: FileSearch,
+        href: "/tools/pdf-preflight",
+        new: true,
+      },
       {
         id: "guillotine-director",
         name: "Guillotine Director",
