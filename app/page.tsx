@@ -79,6 +79,115 @@ export default function Home() {
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <a
+            href="https://github.com/1612elphi/Taxiway"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group block"
+          >
+            <div
+              className="relative h-full overflow-hidden rounded-xl border transition-all hover:shadow-lg hover:scale-[1.01]"
+              style={{
+                background: 'linear-gradient(145deg, #0d0c0a 0%, #14130f 100%)',
+                borderColor: '#2a2520',
+              }}
+            >
+              <div
+                className="absolute inset-0 opacity-[0.06]"
+                style={{
+                  backgroundImage: 'repeating-linear-gradient(90deg, #5b8fa8 0px, #5b8fa8 1px, transparent 1px, transparent 80px), repeating-linear-gradient(0deg, #5b8fa8 0px, #5b8fa8 1px, transparent 1px, transparent 80px)',
+                }}
+              />
+              <div className="relative p-6 flex flex-col gap-4">
+                <div className="flex items-start justify-between">
+                  <div
+                    className="text-[10px] tracking-[0.3em] uppercase"
+                    style={{ color: '#9e7322', fontFamily: "'Geist Mono', monospace" }}
+                  >
+                    PDF Preflight
+                  </div>
+                  <ExternalLink
+                    className="size-3.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ color: '#d4952a' }}
+                  />
+                </div>
+                <div
+                  className="inline-flex gap-[5px] p-[8px_10px] rounded-lg"
+                  style={{ background: '#161513' }}
+                >
+                  {'TAXIWAY'.split('').map((ch, i) => (
+                    <div
+                      key={i}
+                      className="relative flex flex-col gap-[1px] overflow-hidden"
+                      style={{ width: 34, height: 46 }}
+                    >
+                      <div
+                        className="relative flex-1 flex items-end justify-center overflow-hidden"
+                        style={{
+                          borderRadius: '4px 4px 1px 1px',
+                          background: 'linear-gradient(180deg, #2a2825 0%, #252420 100%)',
+                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontFamily: "'Geist Mono', monospace",
+                            fontWeight: 700,
+                            fontSize: 22,
+                            color: '#d4952a',
+                            textShadow: '0 0 10px rgba(212, 149, 42, 0.15)',
+                            lineHeight: 1,
+                            position: 'absolute',
+                            top: '100%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                          }}
+                        >
+                          {ch}
+                        </span>
+                      </div>
+                      <div
+                        className="relative flex-1 flex items-start justify-center overflow-hidden"
+                        style={{
+                          borderRadius: '1px 1px 4px 4px',
+                          background: 'linear-gradient(180deg, #222120 0%, #1f1e1b 100%)',
+                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.02)',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontFamily: "'Geist Mono', monospace",
+                            fontWeight: 700,
+                            fontSize: 22,
+                            color: '#d4952a',
+                            textShadow: '0 0 10px rgba(212, 149, 42, 0.15)',
+                            lineHeight: 1,
+                            position: 'absolute',
+                            top: '0%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                          }}
+                        >
+                          {ch}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p
+                  className="text-sm leading-relaxed"
+                  style={{
+                    color: '#e8dcc8',
+                    opacity: 0.4,
+                    fontFamily: "'Geist Mono', monospace",
+                  }}
+                >
+                  Your PDFs, cleared for takeoff.
+                </p>
+              </div>
+            </div>
+          </a>
+
+          <a
             href="https://rmv.fyi/projects/cassini"
             target="_blank"
             rel="noopener noreferrer"
