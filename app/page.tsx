@@ -79,7 +79,7 @@ export default function Home() {
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <a
-            href="https://github.com/1612elphi/Taxiway"
+            href="https://rmv.fyi/projects/taxiway"
             target="_blank"
             rel="noopener noreferrer"
             className="group block"

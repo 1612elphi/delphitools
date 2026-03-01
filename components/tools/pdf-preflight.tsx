@@ -13,6 +13,7 @@ import {
   Info,
   Loader2,
   Download,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -1584,6 +1585,19 @@ export function PdfPreflightTool() {
               </>
             )}
           </div>
+
+          {/* Taxiway CTA */}
+          <a
+            href="https://rmv.fyi/projects/taxiway"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="col-span-full mt-2 group flex items-center gap-3 rounded-lg border border-amber-500/10 bg-amber-500/[0.03] px-4 py-3 transition-all hover:border-amber-500/25 hover:bg-amber-500/[0.06]"
+          >
+            <span className="text-xs font-medium tracking-wide text-amber-700/70 dark:text-amber-400/70 group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors">
+              Need more? <span className="font-semibold">Taxiway</span> is a free native macOS app with 55 checks, automated fixes, and full PDF inspection.
+            </span>
+            <ExternalLink className="size-3.5 shrink-0 text-amber-500/40 group-hover:text-amber-500/70 transition-colors" />
+          </a>
         </div>
       )}
     </div>
