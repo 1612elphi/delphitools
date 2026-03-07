@@ -559,7 +559,7 @@ export function GraphCalcTool() {
       <div className="space-y-3">
         {functions.map((f, index) => (
           <div key={f.id} className="flex items-center gap-2">
-            {/* Colour indicator */}
+            {/* Color indicator */}
             <div className="border rounded-md p-1.5 shrink-0">
               <div
                 className="w-4 h-4 rounded-full"
@@ -598,12 +598,12 @@ export function GraphCalcTool() {
                 </span>
               )}
             </div>
-            {/* Change colour */}
+            {/* Change color */}
             <Button
               variant="outline"
               size="icon"
               onClick={() => cycleColor(f.id)}
-              title="Change colour"
+              title="Change color"
             >
               <Palette className="size-4" style={{ color: f.color }} />
             </Button>

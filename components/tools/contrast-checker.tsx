@@ -197,10 +197,10 @@ export function ContrastCheckerTool() {
 
   return (
     <div className="space-y-6">
-      {/* Colour Inputs */}
+      {/* Color Inputs */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <label className="font-bold">Background Colour</label>
+          <label className="font-bold">Background Color</label>
           <div className="flex gap-2">
             <input
               type="color"
@@ -217,7 +217,7 @@ export function ContrastCheckerTool() {
           </div>
         </div>
         <div className="space-y-2">
-          <label className="font-bold">Foreground Colour</label>
+          <label className="font-bold">Foreground Color</label>
           <div className="flex gap-2">
             <input
               type="color"
@@ -239,7 +239,7 @@ export function ContrastCheckerTool() {
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" onClick={flipColors}>
           <ArrowUpDown className="size-4 mr-2" />
-          Flip Colours
+          Flip Colors
         </Button>
         <Button variant="outline" onClick={fixColors} disabled={compliance?.aaNormal}>
           <Wand2 className="size-4 mr-2" />

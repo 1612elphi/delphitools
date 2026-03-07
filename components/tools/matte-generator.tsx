@@ -292,7 +292,7 @@ export function MatteGeneratorTool() {
             <div className="flex flex-wrap gap-2">
               {[
                 { type: "blur" as const, label: "Blurred Background" },
-                { type: "color" as const, label: "Solid Colour" },
+                { type: "color" as const, label: "Solid Color" },
                 { type: "gradient" as const, label: "Gradient" },
               ].map((option) => (
                 <button
@@ -314,10 +314,10 @@ export function MatteGeneratorTool() {
             </div>
           </div>
 
-          {/* Colour picker for solid color matte */}
+          {/* Color picker for solid color matte */}
           {matteType === "color" && (
             <div className="space-y-2">
-              <label className="font-bold text-sm">Matte Colour</label>
+              <label className="font-bold text-sm">Matte Color</label>
               <div className="flex flex-wrap gap-2 items-center">
                 {presetColors.map((color) => (
                   <button
@@ -348,7 +348,7 @@ export function MatteGeneratorTool() {
                   />
                   <div
                     className="size-10 rounded-lg border-2 border-dashed border-muted flex items-center justify-center text-muted-foreground hover:border-primary/50 transition-colors"
-                    title="Custom colour"
+                    title="Custom color"
                   >
                     +
                   </div>

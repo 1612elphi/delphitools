@@ -25,12 +25,12 @@ interface ResizeOptions {
 
 interface PngOptions {
   transparency: boolean;
-  backgroundColour: string;
+  backgroundColor: string;
 }
 
 interface JpegOptions {
   quality: number;
-  backgroundColour: string;
+  backgroundColor: string;
 }
 
 interface WebpOptions {
@@ -43,7 +43,7 @@ interface AvifOptions {
 }
 
 interface GifOptions {
-  maxColours: number;
+  maxColors: number;
   quantization: "rgb565" | "rgb444" | "rgba4444";
 }
 
@@ -100,14 +100,14 @@ function prepareCanvas(
   targetWidth: number,
   targetHeight: number,
   fillBackground: boolean,
-  backgroundColour: string
+  backgroundColor: string
 ): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = targetWidth;
   canvas.height = targetHeight;
   const ctx = canvas.getContext("2d")!;
   if (fillBackground) {
-    ctx.fillStyle = backgroundColour;
+    ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, targetWidth, targetHeight);
   }
   ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
@@ -172,7 +172,7 @@ async function encodeGif(canvas: HTMLCanvasElement, options: GifOptions): Promis
   const imageData = ctx.getImageData(0, 0, width, height);
   const { data } = imageData;
 
-  const palette = quantize(data, options.maxColours, { format: options.quantization });
+  const palette = quantize(data, options.maxColors, { format: options.quantization });
   const index = applyPalette(data, palette, options.quantization);
 
   const gif = GIFEncoder();
@@ -281,9 +281,9 @@ async function encodeIco(canvas: HTMLCanvasElement, options: IcoOptions): Promis
 
     view.setUint8(dirOffset, size >= 256 ? 0 : size);     // width (0 = 256)
     view.setUint8(dirOffset + 1, size >= 256 ? 0 : size); // height
-    view.setUint8(dirOffset + 2, 0);   // colour palette
+    view.setUint8(dirOffset + 2, 0);   // color palette
     view.setUint8(dirOffset + 3, 0);   // reserved
-    view.setUint16(dirOffset + 4, 1, true);  // colour planes
+    view.setUint16(dirOffset + 4, 1, true);  // color planes
     view.setUint16(dirOffset + 6, 32, true); // bits per pixel
     view.setUint32(dirOffset + 8, pngData.byteLength, true); // data size
     view.setUint32(dirOffset + 12, dataOffset, true);        // data offset
@@ -368,11 +368,11 @@ export function ImageConverterTool() {
   });
 
   const [formatOptions, setFormatOptions] = useState<FormatOptionsMap>({
-    png: { transparency: true, backgroundColour: "#ffffff" },
-    jpeg: { quality: 90, backgroundColour: "#ffffff" },
+    png: { transparency: true, backgroundColor: "#ffffff" },
+    jpeg: { quality: 90, backgroundColor: "#ffffff" },
     webp: { quality: 90, lossless: false },
     avif: { quality: 80 },
-    gif: { maxColours: 256, quantization: "rgb565" },
+    gif: { maxColors: 256, quantization: "rgb565" },
     bmp: { bitDepth: 32 },
     tiff: {},
     ico: { sizes: [32], multiSize: false },
@@ -457,14 +457,14 @@ export function ImageConverterTool() {
           (targetFormat === "png" && !formatOptions.png.transparency) ||
           (targetFormat === "bmp" && formatOptions.bmp.bitDepth === 24);
 
-        const bgColour =
+        const bgColor =
           targetFormat === "jpeg"
-            ? formatOptions.jpeg.backgroundColour
+            ? formatOptions.jpeg.backgroundColor
             : targetFormat === "png"
-              ? formatOptions.png.backgroundColour
+              ? formatOptions.png.backgroundColor
               : "#ffffff";
 
-        const canvas = prepareCanvas(img, width, height, needsBackground, bgColour);
+        const canvas = prepareCanvas(img, width, height, needsBackground, bgColor);
 
         let blob: Blob;
         switch (targetFormat) {
@@ -633,15 +633,15 @@ export function ImageConverterTool() {
               </div>
               {!formatOptions.png.transparency && (
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm">Background colour</Label>
+                  <Label className="text-sm">Background color</Label>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
-                      value={formatOptions.png.backgroundColour}
-                      onChange={(e) => updateFormatOption("png", "backgroundColour", e.target.value)}
+                      value={formatOptions.png.backgroundColor}
+                      onChange={(e) => updateFormatOption("png", "backgroundColor", e.target.value)}
                       className="size-8 rounded border cursor-pointer"
                     />
-                    <span className="text-xs font-mono text-muted-foreground">{formatOptions.png.backgroundColour}</span>
+                    <span className="text-xs font-mono text-muted-foreground">{formatOptions.png.backgroundColor}</span>
                   </div>
                 </div>
               )}
@@ -665,15 +665,15 @@ export function ImageConverterTool() {
               </div>
               <Separator />
               <div className="flex items-center justify-between">
-                <Label className="text-sm">Background colour</Label>
+                <Label className="text-sm">Background color</Label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
-                    value={formatOptions.jpeg.backgroundColour}
-                    onChange={(e) => updateFormatOption("jpeg", "backgroundColour", e.target.value)}
+                    value={formatOptions.jpeg.backgroundColor}
+                    onChange={(e) => updateFormatOption("jpeg", "backgroundColor", e.target.value)}
                     className="size-8 rounded border cursor-pointer"
                   />
-                  <span className="text-xs font-mono text-muted-foreground">{formatOptions.jpeg.backgroundColour}</span>
+                  <span className="text-xs font-mono text-muted-foreground">{formatOptions.jpeg.backgroundColor}</span>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">Used when input has transparency</p>
@@ -727,12 +727,12 @@ export function ImageConverterTool() {
             <>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm">Max colours</Label>
-                  <span className="text-sm font-mono text-muted-foreground tabular-nums">{formatOptions.gif.maxColours}</span>
+                  <Label className="text-sm">Max colors</Label>
+                  <span className="text-sm font-mono text-muted-foreground tabular-nums">{formatOptions.gif.maxColors}</span>
                 </div>
                 <Slider
-                  value={[formatOptions.gif.maxColours]}
-                  onValueChange={([v]) => updateFormatOption("gif", "maxColours", v)}
+                  value={[formatOptions.gif.maxColors]}
+                  onValueChange={([v]) => updateFormatOption("gif", "maxColors", v)}
                   min={2}
                   max={256}
                   step={1}

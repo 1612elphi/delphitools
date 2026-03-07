@@ -76,12 +76,12 @@ export function ArtworkEnhancerTool() {
       const noiseCtx = noiseCanvas.getContext("2d");
       if (!noiseCtx) return;
 
-      // Generate colour noise
+      // Generate color noise
       const imageData = noiseCtx.createImageData(img.width, img.height);
       const data = imageData.data;
 
       for (let i = 0; i < data.length; i += 4) {
-        // Random RGB values for colour noise
+        // Random RGB values for color noise
         data[i] = Math.floor(Math.random() * 256);     // R
         data[i + 1] = Math.floor(Math.random() * 256); // G
         data[i + 2] = Math.floor(Math.random() * 256); // B
@@ -254,8 +254,8 @@ export function ArtworkEnhancerTool() {
       <div className="p-4 rounded-lg border bg-muted/30 text-sm">
         <p className="font-bold mb-1">About this technique</p>
         <p className="text-muted-foreground">
-          Adding colour noise at low opacity with overlay blend mode is a classic
-          digital art trick. It adds subtle texture and colour variation that makes
+          Adding color noise at low opacity with overlay blend mode is a classic
+          digital art trick. It adds subtle texture and color variation that makes
           artwork feel more organic and cohesive, similar to the natural grain in
           traditional media.
         </p>

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-// Colour blindness simulation matrices
+// Color blindness simulation matrices
 // Based on research by Machado, Oliveira and Fernandes (2009)
 type SimulationType =
   | "normal"
@@ -29,7 +29,7 @@ interface SimulationInfo {
 const SIMULATIONS: Record<SimulationType, SimulationInfo> = {
   normal: {
     name: "Normal Vision",
-    description: "No colour vision deficiency",
+    description: "No color vision deficiency",
     severity: "none",
     prevalence: "~92% of population",
   },
@@ -71,13 +71,13 @@ const SIMULATIONS: Record<SimulationType, SimulationInfo> = {
   },
   achromatopsia: {
     name: "Achromatopsia",
-    description: "Total colour blindness, sees only grayscale",
+    description: "Total color blindness, sees only grayscale",
     severity: "full",
     prevalence: "~0.003% of population",
   },
   achromatomaly: {
     name: "Achromatomaly",
-    description: "Partial colour blindness, reduced colour perception",
+    description: "Partial color blindness, reduced color perception",
     severity: "partial",
     prevalence: "Very rare",
   },
@@ -158,11 +158,11 @@ function simulateHex(hex: string, type: SimulationType): string {
   return rgbToHex(...simulated);
 }
 
-type Mode = "colour" | "image";
+type Mode = "color" | "image";
 
 export function ColorblindSimTool() {
-  const [mode, setMode] = useState<Mode>("colour");
-  const [colour, setColour] = useState("#e63946");
+  const [mode, setMode] = useState<Mode>("color");
+  const [color, setColor] = useState("#e63946");
   const [selectedSim, setSelectedSim] = useState<SimulationType>("normal");
   const [sourceImage, setSourceImage] = useState<string | null>(null);
   const [simulatedImage, setSimulatedImage] = useState<string | null>(null);
@@ -244,11 +244,11 @@ export function ColorblindSimTool() {
       {/* Mode Toggle */}
       <div className="flex gap-2">
         <Button
-          variant={mode === "colour" ? "default" : "outline"}
-          onClick={() => setMode("colour")}
+          variant={mode === "color" ? "default" : "outline"}
+          onClick={() => setMode("color")}
         >
           <Palette className="size-4 mr-2" />
-          Colour Mode
+          Color Mode
         </Button>
         <Button
           variant={mode === "image" ? "default" : "outline"}
@@ -259,33 +259,33 @@ export function ColorblindSimTool() {
         </Button>
       </div>
 
-      {/* Colour Mode */}
-      {mode === "colour" && (
+      {/* Color Mode */}
+      {mode === "color" && (
         <div className="space-y-6">
           <div className="space-y-2">
-            <label className="font-bold">Select Colour</label>
+            <label className="font-bold">Select Color</label>
             <div className="flex gap-2">
               <input
                 type="color"
-                value={isValidHex(colour) ? colour : "#000000"}
-                onChange={(e) => setColour(e.target.value)}
+                value={isValidHex(color) ? color : "#000000"}
+                onChange={(e) => setColor(e.target.value)}
                 className="w-14 h-10 rounded border cursor-pointer"
               />
               <Input
-                value={colour}
-                onChange={(e) => setColour(e.target.value)}
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
                 placeholder="#e63946"
                 className="font-mono flex-1 max-w-xs"
               />
             </div>
           </div>
 
-          {/* Colour Simulation Grid */}
+          {/* Color Simulation Grid */}
           <div className="space-y-3">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {simulationTypes.map((type) => {
                 const info = SIMULATIONS[type];
-                const simHex = simulateHex(colour, type);
+                const simHex = simulateHex(color, type);
                 const isSelected = selectedSim === type;
 
                 return (
@@ -333,17 +333,17 @@ export function ColorblindSimTool() {
                 <div className="text-sm text-muted-foreground">Original</div>
                 <div
                   className="h-32 rounded-lg border"
-                  style={{ backgroundColor: colour }}
+                  style={{ backgroundColor: color }}
                 />
-                <div className="font-mono text-sm text-center">{colour}</div>
+                <div className="font-mono text-sm text-center">{color}</div>
               </div>
               <div className="space-y-2">
                 <div className="text-sm text-muted-foreground">{SIMULATIONS[selectedSim].name}</div>
                 <div
                   className="h-32 rounded-lg border"
-                  style={{ backgroundColor: simulateHex(colour, selectedSim) }}
+                  style={{ backgroundColor: simulateHex(color, selectedSim) }}
                 />
-                <div className="font-mono text-sm text-center">{simulateHex(colour, selectedSim)}</div>
+                <div className="font-mono text-sm text-center">{simulateHex(color, selectedSim)}</div>
               </div>
             </div>
           </div>
@@ -371,7 +371,7 @@ export function ColorblindSimTool() {
               <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-lg font-medium">Drop image here</p>
               <p className="text-sm text-muted-foreground mt-1">
-                See how your image appears to people with colour blindness
+                See how your image appears to people with color blindness
               </p>
             </div>
           )}
@@ -453,14 +453,14 @@ export function ColorblindSimTool() {
 
       {/* Info */}
       <div className="p-4 rounded-lg border bg-card">
-        <div className="font-bold mb-2">About Colour Blindness</div>
+        <div className="font-bold mb-2">About Color Blindness</div>
         <div className="text-sm text-muted-foreground space-y-2">
           <p>
-            Colour blindness affects approximately 8% of AMAB and 0.5% of AFAB people worldwide.
+            Color blindness affects approximately 8% of AMAB and 0.5% of AFAB people worldwide.
             The most common types are red-green deficiencies (protanopia/deuteranopia).
           </p>
           <p>
-            When designing, ensure sufficient contrast and don&apos;t rely solely on colour
+            When designing, ensure sufficient contrast and don&apos;t rely solely on color
             to convey information. Use patterns, labels, or icons as additional indicators.
           </p>
         </div>

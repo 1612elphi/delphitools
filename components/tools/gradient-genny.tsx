@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getColourName } from "@/lib/colour-names";
+import { getColorName } from "@/lib/color-names";
 import {
   DndContext,
   useDraggable,
@@ -37,13 +37,13 @@ import {
 // Types
 type GradientMode = "linear" | "corners" | "mesh";
 
-interface ColourStop {
+interface ColorStop {
   id: string;
-  colour: string;
+  color: string;
   position: number;
 }
 
-interface CornerColours {
+interface CornerColors {
   topLeft: string;
   topRight: string;
   bottomLeft: string;
@@ -54,7 +54,7 @@ interface MeshPoint {
   id: string;
   x: number;
   y: number;
-  colour: string;
+  color: string;
 }
 
 interface MeshConfig {
@@ -62,7 +62,7 @@ interface MeshConfig {
   points: MeshPoint[];
 }
 
-type CornerKey = keyof CornerColours;
+type CornerKey = keyof CornerColors;
 
 // Utility functions
 function generateId(): string {
@@ -106,8 +106,8 @@ function rgbToHex(r: number, g: number, b: number): string {
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
-// OKLab colour space conversions for perceptually uniform blending
-// This produces vibrant intermediate colours like real pigments
+// OKLab color space conversions for perceptually uniform blending
+// This produces vibrant intermediate colors like real pigments
 function srgbToLinear(c: number): number {
   const v = c / 255;
   return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
@@ -176,7 +176,7 @@ function lerpOklab(
 
 function generateInitialMeshPoints(gridSize: 2 | 3): MeshPoint[] {
   const points: MeshPoint[] = [];
-  const colours =
+  const colors =
     gridSize === 2
       ? ["#3b82f6", "#8b5cf6", "#10b981", "#f59e0b"]
       : [
@@ -198,7 +198,7 @@ function generateInitialMeshPoints(gridSize: 2 | 3): MeshPoint[] {
         id: generateId(),
         x: x / (gridSize - 1),
         y: y / (gridSize - 1),
-        colour: colours[idx % colours.length],
+        color: colors[idx % colors.length],
       });
       idx++;
     }
@@ -214,27 +214,27 @@ const CORNER_POSITIONS: { key: CornerKey; x: string; y: string }[] = [
   { key: "bottomRight", x: "88%", y: "85%" },
 ];
 
-// Interactive colour dot component (non-draggable, for corners)
-function ColourDot({
-  colour,
+// Interactive color dot component (non-draggable, for corners)
+function ColorDot({
+  color,
   x,
   y,
-  onColourChange,
+  onColorChange,
   isHovered,
   onHover,
   onLeave,
 }: {
-  colour: string;
+  color: string;
   x: string;
   y: string;
-  onColourChange: (colour: string) => void;
+  onColorChange: (color: string) => void;
   isHovered: boolean;
   onHover: () => void;
   onLeave: () => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const colourName = getColourName(colour);
-  const isLight = getLuminance(colour) > 0.5;
+  const colorName = getColorName(color);
+  const isLight = getLuminance(color) > 0.5;
 
   return (
     <div
@@ -253,13 +253,13 @@ function ColourDot({
           ${isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"}
         `}
         style={{
-          backgroundColor: colour,
+          backgroundColor: color,
           color: isLight ? "#000" : "#fff",
           boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
         }}
       >
-        <div className="font-medium">{colourName}</div>
-        <div className="font-mono opacity-80">{colour.toUpperCase()}</div>
+        <div className="font-medium">{colorName}</div>
+        <div className="font-mono opacity-80">{color.toUpperCase()}</div>
       </div>
 
       {/* Dot */}
@@ -273,19 +273,19 @@ function ColourDot({
           ${isHovered ? "scale-125 shadow-lg" : "shadow-md"}
         `}
         style={{
-          backgroundColor: colour,
+          backgroundColor: color,
           boxShadow: isHovered
-            ? `0 0 0 3px ${colour}40, 0 4px 12px rgba(0,0,0,0.3)`
+            ? `0 0 0 3px ${color}40, 0 4px 12px rgba(0,0,0,0.3)`
             : "0 2px 6px rgba(0,0,0,0.3)",
         }}
       />
 
-      {/* Hidden colour input */}
+      {/* Hidden color input */}
       <input
         ref={inputRef}
         type="color"
-        value={colour}
-        onChange={(e) => onColourChange(e.target.value)}
+        value={color}
+        onChange={(e) => onColorChange(e.target.value)}
         className="sr-only"
       />
     </div>
@@ -295,30 +295,30 @@ function ColourDot({
 // Draggable mesh dot component
 function DraggableMeshDot({
   id,
-  colour,
+  color,
   x,
   y,
   index,
-  onColourChange,
+  onColorChange,
   isHovered,
   onHover,
   onLeave,
   isDragging,
 }: {
   id: string;
-  colour: string;
+  color: string;
   x: string;
   y: string;
   index: number;
-  onColourChange: (colour: string) => void;
+  onColorChange: (color: string) => void;
   isHovered: boolean;
   onHover: () => void;
   onLeave: () => void;
   isDragging: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const colourName = getColourName(colour);
-  const isLight = getLuminance(colour) > 0.5;
+  const colorName = getColorName(color);
+  const isLight = getLuminance(color) > 0.5;
 
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id,
@@ -353,13 +353,13 @@ function DraggableMeshDot({
           ${isHovered && !isDragging ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"}
         `}
         style={{
-          backgroundColor: colour,
+          backgroundColor: color,
           color: isLight ? "#000" : "#fff",
           boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
         }}
       >
-        <div className="font-medium">{colourName}</div>
-        <div className="font-mono opacity-80">{colour.toUpperCase()}</div>
+        <div className="font-medium">{colorName}</div>
+        <div className="font-mono opacity-80">{color.toUpperCase()}</div>
       </div>
 
       {/* Draggable dot with number */}
@@ -378,11 +378,11 @@ function DraggableMeshDot({
           ${isHovered && !isDragging ? "scale-110 shadow-lg" : ""}
         `}
         style={{
-          backgroundColor: colour,
+          backgroundColor: color,
           boxShadow: isDragging
-            ? `0 0 0 4px ${colour}40, 0 8px 24px rgba(0,0,0,0.4)`
+            ? `0 0 0 4px ${color}40, 0 8px 24px rgba(0,0,0,0.4)`
             : isHovered
-              ? `0 0 0 3px ${colour}40, 0 4px 12px rgba(0,0,0,0.3)`
+              ? `0 0 0 3px ${color}40, 0 4px 12px rgba(0,0,0,0.3)`
               : "0 2px 6px rgba(0,0,0,0.3)",
         }}
       >
@@ -397,29 +397,29 @@ function DraggableMeshDot({
         </span>
       </button>
 
-      {/* Hidden colour input */}
+      {/* Hidden color input */}
       <input
         ref={inputRef}
         type="color"
-        value={colour}
-        onChange={(e) => onColourChange(e.target.value)}
+        value={color}
+        onChange={(e) => onColorChange(e.target.value)}
         className="sr-only"
       />
     </div>
   );
 }
 
-// Sortable colour stop item for linear gradient
-function SortableColourStop({
+// Sortable color stop item for linear gradient
+function SortableColorStop({
   stop,
   index,
   onUpdate,
   onRemove,
   canRemove,
 }: {
-  stop: ColourStop;
+  stop: ColorStop;
   index: number;
-  onUpdate: (updates: Partial<ColourStop>) => void;
+  onUpdate: (updates: Partial<ColorStop>) => void;
   onRemove: () => void;
   canRemove: boolean;
 }) {
@@ -454,13 +454,13 @@ function SortableColourStop({
       </button>
       <input
         type="color"
-        value={stop.colour}
-        onChange={(e) => onUpdate({ colour: e.target.value })}
+        value={stop.color}
+        onChange={(e) => onUpdate({ color: e.target.value })}
         className="w-10 h-10 rounded-lg cursor-pointer border-0"
       />
       <Input
-        value={stop.colour}
-        onChange={(e) => onUpdate({ colour: e.target.value })}
+        value={stop.color}
+        onChange={(e) => onUpdate({ color: e.target.value })}
         className="w-28 font-mono text-sm"
       />
       <div className="flex items-center gap-1">
@@ -495,14 +495,14 @@ function SortableColourStop({
 function SortableMeshPoint({
   point,
   index,
-  onColourChange,
+  onColorChange,
   isHovered,
   onHover,
   onLeave,
 }: {
   point: MeshPoint;
   index: number;
-  onColourChange: (colour: string) => void;
+  onColorChange: (color: string) => void;
   isHovered: boolean;
   onHover: () => void;
   onLeave: () => void;
@@ -545,28 +545,28 @@ function SortableMeshPoint({
       <div
         className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 border-white shrink-0"
         style={{
-          backgroundColor: point.colour,
-          color: getLuminance(point.colour) > 0.5 ? "#000" : "#fff",
+          backgroundColor: point.color,
+          color: getLuminance(point.color) > 0.5 ? "#000" : "#fff",
         }}
       >
         {index + 1}
       </div>
 
-      {/* Colour picker */}
+      {/* Color picker */}
       <input
         type="color"
-        value={point.colour}
-        onChange={(e) => onColourChange(e.target.value)}
+        value={point.color}
+        onChange={(e) => onColorChange(e.target.value)}
         className="w-10 h-10 rounded-lg cursor-pointer border-0 shrink-0"
       />
 
-      {/* Colour info */}
+      {/* Color info */}
       <div className="flex flex-col min-w-0 flex-1">
         <span className="text-sm font-medium truncate">
-          {getColourName(point.colour)}
+          {getColorName(point.color)}
         </span>
         <span className="text-xs font-mono text-muted-foreground">
-          {point.colour}
+          {point.color}
         </span>
       </div>
 
@@ -582,11 +582,11 @@ export function GradientGennyTool() {
   // State
   const [mode, setMode] = useState<GradientMode>("linear");
   const [angle, setAngle] = useState(90);
-  const [colourStops, setColourStops] = useState<ColourStop[]>([
-    { id: generateId(), colour: "#3b82f6", position: 0 },
-    { id: generateId(), colour: "#8b5cf6", position: 100 },
+  const [colorStops, setColorStops] = useState<ColorStop[]>([
+    { id: generateId(), color: "#3b82f6", position: 0 },
+    { id: generateId(), color: "#8b5cf6", position: 100 },
   ]);
-  const [corners, setCorners] = useState<CornerColours>({
+  const [corners, setCorners] = useState<CornerColors>({
     topLeft: "#3b82f6",
     topRight: "#8b5cf6",
     bottomLeft: "#10b981",
@@ -618,9 +618,9 @@ export function GradientGennyTool() {
     })
   );
 
-  // Colour stop management
-  const addColourStop = useCallback(() => {
-    const sortedStops = [...colourStops].sort((a, b) => a.position - b.position);
+  // Color stop management
+  const addColorStop = useCallback(() => {
+    const sortedStops = [...colorStops].sort((a, b) => a.position - b.position);
     let maxGap = 0;
     let insertPosition = 50;
 
@@ -632,41 +632,41 @@ export function GradientGennyTool() {
       }
     }
 
-    const randomColour = `#${Math.floor(Math.random() * 16777215)
+    const randomColor = `#${Math.floor(Math.random() * 16777215)
       .toString(16)
       .padStart(6, "0")}`;
 
-    setColourStops((prev) => [
+    setColorStops((prev) => [
       ...prev,
       {
         id: generateId(),
-        colour: randomColour,
+        color: randomColor,
         position: Math.round(insertPosition),
       },
     ]);
-  }, [colourStops]);
+  }, [colorStops]);
 
-  const removeColourStop = useCallback((id: string) => {
-    setColourStops((prev) => {
+  const removeColorStop = useCallback((id: string) => {
+    setColorStops((prev) => {
       if (prev.length <= 2) return prev;
       return prev.filter((stop) => stop.id !== id);
     });
   }, []);
 
-  const updateColourStop = useCallback(
-    (id: string, updates: Partial<ColourStop>) => {
-      setColourStops((prev) =>
+  const updateColorStop = useCallback(
+    (id: string, updates: Partial<ColorStop>) => {
+      setColorStops((prev) =>
         prev.map((stop) => (stop.id === id ? { ...stop, ...updates } : stop))
       );
     },
     []
   );
 
-  // Handle colour stop reordering via drag and drop
-  const handleColourStopDragEnd = useCallback((event: DragEndEvent) => {
+  // Handle color stop reordering via drag and drop
+  const handleColorStopDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      setColourStops((items) => {
+      setColorStops((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
         return arrayMove(items, oldIndex, newIndex);
@@ -676,8 +676,8 @@ export function GradientGennyTool() {
 
   // Pigment blend - insert intermediate stops using OKLab interpolation
   const pigmentBlend = useCallback((stepsPerGap: number = 3) => {
-    const sortedStops = [...colourStops].sort((a, b) => a.position - b.position);
-    const newStops: ColourStop[] = [];
+    const sortedStops = [...colorStops].sort((a, b) => a.position - b.position);
+    const newStops: ColorStop[] = [];
 
     for (let i = 0; i < sortedStops.length; i++) {
       newStops.push(sortedStops[i]);
@@ -689,20 +689,20 @@ export function GradientGennyTool() {
 
         for (let step = 1; step <= stepsPerGap; step++) {
           const t = step / (stepsPerGap + 1);
-          const blendedColour = lerpOklab(current.colour, next.colour, t);
+          const blendedColor = lerpOklab(current.color, next.color, t);
           const position = current.position + posGap * t;
 
           newStops.push({
             id: generateId(),
-            colour: blendedColour,
+            color: blendedColor,
             position: Math.round(position),
           });
         }
       }
     }
 
-    setColourStops(newStops);
-  }, [colourStops]);
+    setColorStops(newStops);
+  }, [colorStops]);
 
   // Mesh grid size change
   const setMeshGridSize = useCallback((size: 2 | 3) => {
@@ -712,10 +712,10 @@ export function GradientGennyTool() {
     });
   }, []);
 
-  const updateMeshPointColour = useCallback((id: string, colour: string) => {
+  const updateMeshPointColor = useCallback((id: string, color: string) => {
     setMeshConfig((prev) => ({
       ...prev,
-      points: prev.points.map((p) => (p.id === id ? { ...p, colour } : p)),
+      points: prev.points.map((p) => (p.id === id ? { ...p, color } : p)),
     }));
   }, []);
 
@@ -792,11 +792,11 @@ export function GradientGennyTool() {
   const generateCSS = useCallback((): string => {
     switch (mode) {
       case "linear": {
-        const sortedStops = [...colourStops].sort(
+        const sortedStops = [...colorStops].sort(
           (a, b) => a.position - b.position
         );
         const stopsStr = sortedStops
-          .map((stop) => `${stop.colour} ${stop.position}%`)
+          .map((stop) => `${stop.color} ${stop.position}%`)
           .join(", ");
         return `linear-gradient(${angle}deg, ${stopsStr})`;
       }
@@ -811,12 +811,12 @@ export function GradientGennyTool() {
         return `/* Mesh gradients cannot be perfectly replicated in CSS.
    Use image export for accurate results.
    Below is a rough approximation: */
-background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.round(p.x * 100)}% ${Math.round(p.y * 100)}%, ${p.colour}, transparent 60%)`).join(",\n  ")};`;
+background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.round(p.x * 100)}% ${Math.round(p.y * 100)}%, ${p.color}, transparent 60%)`).join(",\n  ")};`;
       }
       default:
         return "";
     }
-  }, [mode, colourStops, angle, corners, meshConfig]);
+  }, [mode, colorStops, angle, corners, meshConfig]);
 
   // Canvas rendering
   const renderLinearGradient = useCallback(
@@ -830,17 +830,17 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
       const y2 = height / 2 + (Math.sin(angleRad) * diagonal) / 2;
 
       const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-      const sortedStops = [...colourStops].sort(
+      const sortedStops = [...colorStops].sort(
         (a, b) => a.position - b.position
       );
       sortedStops.forEach((stop) => {
-        gradient.addColorStop(stop.position / 100, stop.colour);
+        gradient.addColorStop(stop.position / 100, stop.color);
       });
 
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, width, height);
     },
-    [angle, colourStops]
+    [angle, colorStops]
   );
 
   const renderCornersGradient = useCallback(
@@ -877,9 +877,9 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
   const renderMeshGradient = useCallback(
     (ctx: CanvasRenderingContext2D, width: number, height: number) => {
       const imageData = ctx.createImageData(width, height);
-      const colours = meshConfig.points.map((p) => ({
+      const colors = meshConfig.points.map((p) => ({
         ...p,
-        rgb: hexToRgb(p.colour),
+        rgb: hexToRgb(p.color),
       }));
 
       for (let y = 0; y < height; y++) {
@@ -892,7 +892,7 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
             g = 0,
             b = 0;
 
-          colours.forEach((point) => {
+          colors.forEach((point) => {
             if (!point.rgb) return;
             const dx = u - point.x;
             const dy = v - point.y;
@@ -1018,13 +1018,13 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
             <div className="absolute inset-3 pointer-events-none">
               <div className="relative w-full h-full pointer-events-auto">
                 {CORNER_POSITIONS.map(({ key, x, y }) => (
-                  <ColourDot
+                  <ColorDot
                     key={key}
-                    colour={corners[key]}
+                    color={corners[key]}
                     x={x}
                     y={y}
-                    onColourChange={(colour) =>
-                      setCorners((prev) => ({ ...prev, [key]: colour }))
+                    onColorChange={(color) =>
+                      setCorners((prev) => ({ ...prev, [key]: color }))
                     }
                     isHovered={hoveredCorner === key}
                     onHover={() => setHoveredCorner(key)}
@@ -1054,12 +1054,12 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
                       <DraggableMeshDot
                         key={point.id}
                         id={point.id}
-                        colour={point.colour}
+                        color={point.color}
                         x={`${displayX}%`}
                         y={`${displayY}%`}
                         index={index}
-                        onColourChange={(colour) =>
-                          updateMeshPointColour(point.id, colour)
+                        onColorChange={(color) =>
+                          updateMeshPointColor(point.id, color)
                         }
                         isHovered={hoveredMeshPoint === point.id}
                         onHover={() => setHoveredMeshPoint(point.id)}
@@ -1076,12 +1076,12 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
           {/* Hint text for corners/mesh modes */}
           {mode === "corners" && (
             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-white/70 bg-black/30 px-2 py-1 rounded-full backdrop-blur-sm">
-              Click dots to change colours
+              Click dots to change colors
             </div>
           )}
           {mode === "mesh" && (
             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-white/70 bg-black/30 px-2 py-1 rounded-full backdrop-blur-sm">
-              Drag dots to reposition, click to change colour
+              Drag dots to reposition, click to change color
             </div>
           )}
         </div>
@@ -1089,20 +1089,20 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
         {/* Linear Controls */}
         <TabsContent value="linear" className="space-y-6 mt-6">
           <div className="space-y-6">
-            {/* Colour Stops */}
+            {/* Color Stops */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Colour Stops</Label>
+                <Label>Color Stops</Label>
                 <div className="flex gap-2">
                   <Button
                     size="sm"
                     onClick={() => pigmentBlend(3)}
-                    title="Add intermediate colours using OKLab blending for vibrant, paint-like transitions"
+                    title="Add intermediate colors using OKLab blending for vibrant, paint-like transitions"
                   >
                     <Droplets className="size-4 mr-1" />
                     Pigment Blend
                   </Button>
-                  <Button size="sm" variant="outline" onClick={addColourStop}>
+                  <Button size="sm" variant="outline" onClick={addColorStop}>
                     <Plus className="size-4 mr-1" />
                     Add Stop
                   </Button>
@@ -1112,22 +1112,22 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
-                onDragEnd={handleColourStopDragEnd}
+                onDragEnd={handleColorStopDragEnd}
                 modifiers={[restrictToVerticalAxis]}
               >
                 <SortableContext
-                  items={colourStops.map((s) => s.id)}
+                  items={colorStops.map((s) => s.id)}
                   strategy={verticalListSortingStrategy}
                 >
                   <div className="space-y-2">
-                    {colourStops.map((stop, index) => (
-                      <SortableColourStop
+                    {colorStops.map((stop, index) => (
+                      <SortableColorStop
                         key={stop.id}
                         stop={stop}
                         index={index}
-                        onUpdate={(updates) => updateColourStop(stop.id, updates)}
-                        onRemove={() => removeColourStop(stop.id)}
-                        canRemove={colourStops.length > 2}
+                        onUpdate={(updates) => updateColorStop(stop.id, updates)}
+                        onRemove={() => removeColorStop(stop.id)}
+                        canRemove={colorStops.length > 2}
                       />
                     ))}
                   </div>
@@ -1240,7 +1240,7 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
                 <div className="flex items-center justify-between">
                   <Label>{label}</Label>
                   <span className="text-xs text-muted-foreground">
-                    {getColourName(corners[key])}
+                    {getColorName(corners[key])}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1322,8 +1322,8 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
                         key={point.id}
                         point={point}
                         index={index}
-                        onColourChange={(colour) =>
-                          updateMeshPointColour(point.id, colour)
+                        onColorChange={(color) =>
+                          updateMeshPointColor(point.id, color)
                         }
                         isHovered={hoveredMeshPoint === point.id}
                         onHover={() => setHoveredMeshPoint(point.id)}

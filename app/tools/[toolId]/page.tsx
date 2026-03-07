@@ -18,13 +18,13 @@ const toolComponents: Record<string, React.ComponentType> = {
   "placeholder-genny": dynamic(() => import("@/components/tools/placeholder-genny").then(mod => mod.PlaceholderGennyTool)),
   "meta-tag-genny": dynamic(() => import("@/components/tools/meta-tag-genny").then(mod => mod.MetaTagGennyTool)),
   "paper-sizes": dynamic(() => import("@/components/tools/paper-sizes").then(mod => mod.PaperSizesTool)),
-  "svg-optimiser": dynamic(() => import("@/components/tools/svg-optimiser").then(mod => mod.SvgOptimiserTool)),
+  "svg-optimizer": dynamic(() => import("@/components/tools/svg-optimizer").then(mod => mod.SvgOptimizerTool)),
   "favicon-genny": dynamic(() => import("@/components/tools/favicon-genny").then(mod => mod.FaviconGennyTool)),
   "image-splitter": dynamic(() => import("@/components/tools/image-splitter").then(mod => mod.ImageSplitterTool)),
   "typo-calc": dynamic(() => import("@/components/tools/typo-calc").then(mod => mod.TypoCalcTool)),
   "glyph-browser": dynamic(() => import("@/components/tools/glyph-browser").then(mod => mod.GlyphBrowserTool)),
   "font-explorer": dynamic(() => import("@/components/tools/font-explorer").then(mod => mod.FontExplorerTool)),
-  "colour-converter": dynamic(() => import("@/components/tools/colour-converter").then(mod => mod.ColourConverterTool)),
+  "color-converter": dynamic(() => import("@/components/tools/color-converter").then(mod => mod.ColorConverterTool)),
   "tailwind-shades": dynamic(() => import("@/components/tools/tailwind-shades").then(mod => mod.TailwindShadesTool)),
   "harmony-genny": dynamic(() => import("@/components/tools/harmony-genny").then(mod => mod.HarmonyGennyTool)),
   "palette-genny": dynamic(() => import("@/components/tools/palette-genny").then(mod => mod.PaletteGennyTool)),
@@ -75,7 +75,7 @@ export async function generateMetadata({ params }: ToolPageProps) {
   }
 
   return {
-    title: `${tool.name} - delphitools`,
+    title: `${tool.name} - Tools`,
     description: tool.description,
   };
 }

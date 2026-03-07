@@ -150,7 +150,7 @@ const PRESETS: PresetConfig[] = [
     id: "detailed",
     label: "Intricate",
     icon: Scan,
-    description: "High detail, many colours",
+    description: "High detail, many colors",
   },
   {
     id: "smoothed",
@@ -168,7 +168,7 @@ const PRESETS: PresetConfig[] = [
     id: "fixedpalette",
     label: "Genlock",
     icon: Grid3X3,
-    description: "27-colour RGB cube",
+    description: "27-color RGB cube",
   },
   {
     id: "randomsampling1",
@@ -198,7 +198,7 @@ const PRESETS: PresetConfig[] = [
     id: "artistic3",
     label: "Warrrant",
     icon: Palette,
-    description: "Artistic colour mix",
+    description: "Artistic color mix",
   },
   {
     id: "artistic4",
@@ -427,9 +427,9 @@ function ScalePicker({
   );
 }
 
-// ── Number of colours card ───────────────────────────────────────────
+// ── Number of colors card ───────────────────────────────────────────
 
-function ColourCountCard({
+function ColorCountCard({
   value,
   onChange,
 }: {
@@ -440,8 +440,8 @@ function ColourCountCard({
     <div className="rounded-lg border bg-card p-3">
       <div className="flex items-center justify-between mb-2">
         <span className="flex items-center gap-1.5">
-          <Label className="text-sm font-medium">Colours</Label>
-          <InfoTip text="Number of colours used to quantise the image before tracing. Fewer colours = simpler, bolder result." />
+          <Label className="text-sm font-medium">Colors</Label>
+          <InfoTip text="Number of colors used to quantise the image before tracing. Fewer colors = simpler, bolder result." />
         </span>
       </div>
       <div className="flex items-center justify-between">
@@ -761,11 +761,11 @@ export function ImageTracerTool() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }, []);
 
-  const sendToOptimiser = () => {
+  const sendToOptimizer = () => {
     const raw = rawSvgRef.current;
     if (!raw) return;
-    sessionStorage.setItem("svg-optimiser-input", raw);
-    router.push("/tools/svg-optimiser");
+    sessionStorage.setItem("svg-optimizer-input", raw);
+    router.push("/tools/svg-optimizer");
   };
 
   const formatSize = (bytes: number) => {
@@ -890,11 +890,11 @@ export function ImageTracerTool() {
           <Button
             size="sm"
             variant="outline"
-            onClick={sendToOptimiser}
+            onClick={sendToOptimizer}
             disabled={!hasResult || tracing}
           >
             <ArrowRight className="size-3.5 mr-1.5" />
-            Optimise
+            Optimize
           </Button>
         </div>
       </div>
@@ -998,16 +998,16 @@ export function ImageTracerTool() {
 
       {/* ── Controls grid ────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* ── Colours ──────────────────────────────────────────── */}
+        {/* ── Colors ──────────────────────────────────────────── */}
         <div className="rounded-xl border bg-card p-4 space-y-4">
-          <SectionHeader>Colours</SectionHeader>
-          <ColourCountCard
+          <SectionHeader>Colors</SectionHeader>
+          <ColorCountCard
             value={options.numberofcolors}
             onChange={(v) => updateOption("numberofcolors", v)}
           />
           <Stepper
             label="Quantise"
-            tip="Number of k-means iterations for colour clustering. More cycles = more accurate colours, slower trace."
+            tip="Number of k-means iterations for color clustering. More cycles = more accurate colors, slower trace."
             value={options.colorquantcycles}
             onChange={(v) => updateOption("colorquantcycles", v)}
             min={1}
@@ -1103,8 +1103,8 @@ export function ImageTracerTool() {
               />
               <div className="space-y-2">
                 <span className="flex items-center gap-1.5">
-                  <Label className="text-sm">Colour sampling</Label>
-                  <InfoTip text="How initial colours are sampled. Generated uses k-means, Random picks randomly, Deterministic uses a fixed grid." />
+                  <Label className="text-sm">Color sampling</Label>
+                  <InfoTip text="How initial colors are sampled. Generated uses k-means, Random picks randomly, Deterministic uses a fixed grid." />
                 </span>
                 <Select
                   value={String(options.colorsampling)}
@@ -1125,8 +1125,8 @@ export function ImageTracerTool() {
             </div>
             <div className="rounded-xl border bg-card p-4 space-y-4">
               <OptionSlider
-                label="Min colour ratio"
-                tip="Minimum proportion a colour must occupy to be kept. Raise to eliminate rare colours."
+                label="Min color ratio"
+                tip="Minimum proportion a color must occupy to be kept. Raise to eliminate rare colors."
                 value={options.mincolorratio}
                 onChange={(v) => updateOption("mincolorratio", v)}
                 min={0}
@@ -1145,7 +1145,7 @@ export function ImageTracerTool() {
               <div className="space-y-2">
                 <span className="flex items-center gap-1.5">
                   <Label className="text-sm">Layering mode</Label>
-                  <InfoTip text="Sequential stacks colour layers back-to-front. Parallel creates independent layers per colour." />
+                  <InfoTip text="Sequential stacks color layers back-to-front. Parallel creates independent layers per color." />
                 </span>
                 <Select
                   value={String(options.layering)}

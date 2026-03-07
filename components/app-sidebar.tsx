@@ -41,10 +41,10 @@ export function AppSidebar() {
             >
               <Link href="/">
                 <div className="flex aspect-square size-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <img src="/delphi-lowlod.png" width={64} height={64} alt="delphitools logo" className="rounded-lg border-2 border-green-800" />
+                  <img src="/delphi-lowlod.png" width={64} height={64} alt="Tools logo" className="rounded-lg border-2 border-green-800" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">delphitools</span>
+                  <span className="font-semibold">Tools</span>
                   <span className="text-xs text-muted-foreground">
                     handmade tools
                   </span>
@@ -147,11 +147,11 @@ export function AppSidebar() {
           </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>About delphitools</DialogTitle>
+              <DialogTitle>About Tools</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 text-sm text-muted-foreground">
               <p>
-                delphitools is a collection of small, focused utilities that respect your privacy
+                Tools is a collection of small, focused utilities that respect your privacy
                 and work entirely in your browser. No data leaves your machine, no accounts required,
                 no tracking. Just tools that do what they say.
               </p>
@@ -174,15 +174,15 @@ export function AppSidebar() {
                 </p>
               </div>
               <div className="space-y-1">
-                <h3 className="font-medium text-foreground">Source</h3>
+                <h3 className="font-medium text-foreground">Live Site</h3>
                 <p className="text-muted-foreground">
                   <a
-                    href="https://github.com/1612elphi/delphitools"
+                    href="https://tools.brodyberson.com"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-primary transition-colors"
                   >
-                    1612elphi/delphitools
+                    tools.brodyberson.com
                   </a>
                 </p>
               </div>
@@ -212,12 +212,24 @@ export function AppSidebar() {
               <p className="text-xs text-muted-foreground/60 pt-2">
                 Plus{" "}
                 <a
-                  href="https://github.com/1612elphi/delphitools/blob/main/ACKNOWLEDGEMENTS.md"
+                  href="https://github.com/mynamebrody/tools/blob/main/ACKNOWLEDGEMENTS.md"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline hover:text-muted-foreground transition-colors"
                 >
                   many more open source libraries
+                </a>
+                .
+              </p>
+              <p className="text-xs text-muted-foreground/60">
+                Forked from{" "}
+                <a
+                  href="https://github.com/1612elphi/delphitools"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-muted-foreground transition-colors"
+                >
+                  delphitools
                 </a>
                 .
               </p>

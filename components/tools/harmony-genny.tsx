@@ -5,7 +5,7 @@ import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-// Colour utilities
+// Color utilities
 function hexToRgb(hex: string): [number, number, number] | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) return null;
@@ -70,27 +70,27 @@ interface HarmonyInfo {
 const HARMONIES: Record<HarmonyType, HarmonyInfo> = {
   complementary: {
     name: "Complementary",
-    description: "Two colours opposite on the colour wheel",
+    description: "Two colors opposite on the color wheel",
     angles: [0, 180],
   },
   analogous: {
     name: "Analogous",
-    description: "Three colours adjacent on the wheel",
+    description: "Three colors adjacent on the wheel",
     angles: [-30, 0, 30],
   },
   triadic: {
     name: "Triadic",
-    description: "Three colours evenly spaced (120° apart)",
+    description: "Three colors evenly spaced (120° apart)",
     angles: [0, 120, 240],
   },
   "split-complementary": {
     name: "Split-Complementary",
-    description: "Base colour plus two adjacent to its complement",
+    description: "Base color plus two adjacent to its complement",
     angles: [0, 150, 210],
   },
   tetradic: {
     name: "Tetradic (Square)",
-    description: "Four colours evenly spaced (90° apart)",
+    description: "Four colors evenly spaced (90° apart)",
     angles: [0, 90, 180, 270],
   },
   monochromatic: {
@@ -105,22 +105,22 @@ const HARMONIES: Record<HarmonyType, HarmonyInfo> = {
   },
   compound: {
     name: "Compound",
-    description: "Analogous colours plus their complements",
+    description: "Analogous colors plus their complements",
     angles: [0, 30, 180, 210],
   },
   pentadic: {
     name: "Pentadic",
-    description: "Five colours evenly spaced (72° apart)",
+    description: "Five colors evenly spaced (72° apart)",
     angles: [0, 72, 144, 216, 288],
   },
   "analogous-accent": {
     name: "Analogous Accent",
-    description: "Analogous colours with a complementary accent",
+    description: "Analogous colors with a complementary accent",
     angles: [-30, 0, 30, 180],
   },
   golden: {
     name: "Golden Ratio",
-    description: "Colours spaced by the golden angle (137.5°)",
+    description: "Colors spaced by the golden angle (137.5°)",
     angles: [0, 137.5, 275],
   },
   "near-complementary": {
@@ -130,14 +130,14 @@ const HARMONIES: Record<HarmonyType, HarmonyInfo> = {
   },
 };
 
-interface ColourSwatch {
+interface ColorSwatch {
   hex: string;
   rgb: [number, number, number];
   oklch: [number, number, number];
   angle: number;
 }
 
-function generateHarmony(baseHex: string, type: HarmonyType): ColourSwatch[] | null {
+function generateHarmony(baseHex: string, type: HarmonyType): ColorSwatch[] | null {
   const rgb = hexToRgb(baseHex);
   if (!rgb) return null;
 
@@ -181,15 +181,15 @@ function generateHarmony(baseHex: string, type: HarmonyType): ColourSwatch[] | n
 }
 
 export function HarmonyGennyTool() {
-  const [baseColour, setBaseColour] = useState("#3b82f6");
+  const [baseColor, setBaseColor] = useState("#3b82f6");
   const [harmonyType, setHarmonyType] = useState<HarmonyType>("complementary");
-  const [colours, setColours] = useState<ColourSwatch[] | null>(null);
+  const [colors, setColors] = useState<ColorSwatch[] | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
-    const result = generateHarmony(baseColour, harmonyType);
-    setColours(result);
-  }, [baseColour, harmonyType]);
+    const result = generateHarmony(baseColor, harmonyType);
+    setColors(result);
+  }, [baseColor, harmonyType]);
 
   const copyValue = async (value: string, label: string) => {
     await navigator.clipboard.writeText(value);
@@ -198,14 +198,14 @@ export function HarmonyGennyTool() {
   };
 
   const copyAllHex = () => {
-    if (!colours) return;
-    const hexes = colours.map(c => c.hex).join(", ");
+    if (!colors) return;
+    const hexes = colors.map(c => c.hex).join(", ");
     copyValue(hexes, "all");
   };
 
   const copyAsCssVariables = () => {
-    if (!colours) return;
-    const vars = colours.map((c, i) => `  --harmony-${i + 1}: ${c.hex};`).join("\n");
+    if (!colors) return;
+    const vars = colors.map((c, i) => `  --harmony-${i + 1}: ${c.hex};`).join("\n");
     copyValue(`:root {\n${vars}\n}`, "css");
   };
 
@@ -214,17 +214,17 @@ export function HarmonyGennyTool() {
       {/* Input */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <label className="font-bold">Base Colour</label>
+          <label className="font-bold">Base Color</label>
           <div className="flex gap-2">
             <input
               type="color"
-              value={baseColour}
-              onChange={(e) => setBaseColour(e.target.value)}
+              value={baseColor}
+              onChange={(e) => setBaseColor(e.target.value)}
               className="w-14 h-10 rounded border cursor-pointer"
             />
             <Input
-              value={baseColour}
-              onChange={(e) => setBaseColour(e.target.value)}
+              value={baseColor}
+              onChange={(e) => setBaseColor(e.target.value)}
               placeholder="#3b82f6"
               className="font-mono flex-1"
             />
@@ -252,11 +252,11 @@ export function HarmonyGennyTool() {
         </div>
       </div>
 
-      {/* Colour Wheel Visualization */}
-      {colours && (
+      {/* Color Wheel Visualization */}
+      {colors && (
         <div className="flex justify-center">
           <div className="relative w-64 h-64">
-            {/* Colour wheel background */}
+            {/* Color wheel background */}
             <div
               className="absolute inset-0 rounded-full"
               style={{
@@ -266,9 +266,9 @@ export function HarmonyGennyTool() {
             />
             <div className="absolute inset-8 rounded-full bg-background" />
 
-            {/* Colour markers */}
-            {colours.map((colour, i) => {
-              const angle = (colour.oklch[2] - 90) * (Math.PI / 180);
+            {/* Color markers */}
+            {colors.map((color, i) => {
+              const angle = (color.oklch[2] - 90) * (Math.PI / 180);
               const radius = 100;
               const x = 128 + radius * Math.cos(angle);
               const y = 128 + radius * Math.sin(angle);
@@ -280,7 +280,7 @@ export function HarmonyGennyTool() {
                   style={{
                     left: x,
                     top: y,
-                    backgroundColor: colour.hex,
+                    backgroundColor: color.hex,
                   }}
                 />
               );
@@ -289,17 +289,17 @@ export function HarmonyGennyTool() {
             {/* Center swatch */}
             <div
               className="absolute inset-16 rounded-full border-4 border-white shadow-lg"
-              style={{ backgroundColor: baseColour }}
+              style={{ backgroundColor: baseColor }}
             />
           </div>
         </div>
       )}
 
-      {/* Colour Swatches */}
-      {colours && (
+      {/* Color Swatches */}
+      {colors && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <label className="font-bold">Harmony Colours</label>
+            <label className="font-bold">Harmony Colors</label>
             <div className="flex gap-2">
               <Button size="sm" variant="ghost" onClick={copyAllHex}>
                 {copied === "all" ? <Check className="size-4 mr-1" /> : <Copy className="size-4 mr-1" />}
@@ -312,22 +312,22 @@ export function HarmonyGennyTool() {
             </div>
           </div>
 
-          <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(colours.length, 5)}, 1fr)` }}>
-            {colours.map((colour, i) => (
+          <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(colors.length, 5)}, 1fr)` }}>
+            {colors.map((color, i) => (
               <button
                 key={i}
-                onClick={() => copyValue(colour.hex, colour.hex)}
+                onClick={() => copyValue(color.hex, color.hex)}
                 className="p-4 rounded-lg border bg-card hover:border-primary/50 transition-colors"
               >
                 <div
                   className="w-full aspect-square rounded-lg mb-3 border"
-                  style={{ backgroundColor: colour.hex }}
+                  style={{ backgroundColor: color.hex }}
                 />
                 <div className="text-center">
-                  <div className="font-mono text-sm font-bold">{colour.hex}</div>
+                  <div className="font-mono text-sm font-bold">{color.hex}</div>
                   {harmonyType !== "monochromatic" && (
                     <div className="text-xs text-muted-foreground mt-1">
-                      {colour.angle === 0 ? "Base" : `+${colour.angle}°`}
+                      {color.angle === 0 ? "Base" : `+${color.angle}°`}
                     </div>
                   )}
                 </div>
@@ -345,8 +345,8 @@ export function HarmonyGennyTool() {
         <label className="font-bold">All Harmonies</label>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {Object.entries(HARMONIES).map(([key, info]) => {
-            const harmonyColours = generateHarmony(baseColour, key as HarmonyType);
-            if (!harmonyColours) return null;
+            const harmonyColors = generateHarmony(baseColor, key as HarmonyType);
+            if (!harmonyColors) return null;
 
             const isActive = key === harmonyType;
 
@@ -359,7 +359,7 @@ export function HarmonyGennyTool() {
                 }`}
               >
                 <div className="flex gap-1 mb-2">
-                  {harmonyColours.map((c, i) => (
+                  {harmonyColors.map((c, i) => (
                     <div
                       key={i}
                       className="flex-1 h-8 first:rounded-l-md last:rounded-r-md"

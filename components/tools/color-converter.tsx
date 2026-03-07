@@ -5,7 +5,7 @@ import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-// Colour conversion utilities
+// Color conversion utilities
 function hexToRgb(hex: string): [number, number, number] | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) return null;
@@ -151,9 +151,9 @@ function oklchToOklab(l: number, c: number, h: number): [number, number, number]
   return [l, c * Math.cos(hRad), c * Math.sin(hRad)];
 }
 
-type ColourFormat = "hex" | "rgb" | "hsl" | "lab" | "lch" | "oklab" | "oklch";
+type ColorFormat = "hex" | "rgb" | "hsl" | "lab" | "lch" | "oklab" | "oklch";
 
-interface ColourValues {
+interface ColorValues {
   hex: string;
   rgb: [number, number, number];
   hsl: [number, number, number];
@@ -163,13 +163,13 @@ interface ColourValues {
   oklch: [number, number, number];
 }
 
-export function ColourConverterTool() {
-  const [inputFormat, setInputFormat] = useState<ColourFormat>("hex");
+export function ColorConverterTool() {
+  const [inputFormat, setInputFormat] = useState<ColorFormat>("hex");
   const [inputValue, setInputValue] = useState("#3b82f6");
-  const [colours, setColours] = useState<ColourValues | null>(null);
+  const [colors, setColors] = useState<ColorValues | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
-  const parseAndConvert = (format: ColourFormat, value: string): ColourValues | null => {
+  const parseAndConvert = (format: ColorFormat, value: string): ColorValues | null => {
     let rgb: [number, number, number];
 
     try {
@@ -243,7 +243,7 @@ export function ColourConverterTool() {
 
   useEffect(() => {
     const result = parseAndConvert(inputFormat, inputValue);
-    setColours(result);
+    setColors(result);
   }, [inputFormat, inputValue]);
 
   const copyValue = async (value: string) => {
@@ -252,7 +252,7 @@ export function ColourConverterTool() {
     setTimeout(() => setCopied(null), 1500);
   };
 
-  const formatOutput = (format: ColourFormat, values: ColourValues): string => {
+  const formatOutput = (format: ColorFormat, values: ColorValues): string => {
     switch (format) {
       case "hex": return values.hex;
       case "rgb": return `rgb(${values.rgb.join(", ")})`;
@@ -264,7 +264,7 @@ export function ColourConverterTool() {
     }
   };
 
-  const formats: { id: ColourFormat; name: string; placeholder: string }[] = [
+  const formats: { id: ColorFormat; name: string; placeholder: string }[] = [
     { id: "hex", name: "HEX", placeholder: "#3b82f6" },
     { id: "rgb", name: "RGB", placeholder: "59, 130, 246" },
     { id: "hsl", name: "HSL", placeholder: "217, 91%, 60%" },
@@ -276,11 +276,11 @@ export function ColourConverterTool() {
 
   return (
     <div className="space-y-6">
-      {/* Colour Preview */}
+      {/* Color Preview */}
       <div className="flex gap-4">
         <div
           className="w-32 h-32 rounded-xl border shadow-inner"
-          style={{ backgroundColor: colours?.hex || "#ffffff" }}
+          style={{ backgroundColor: colors?.hex || "#ffffff" }}
         />
         <div className="flex-1 space-y-3">
           <div>
@@ -288,9 +288,9 @@ export function ColourConverterTool() {
             <select
               value={inputFormat}
               onChange={(e) => {
-                const newFormat = e.target.value as ColourFormat;
-                if (colours) {
-                  setInputValue(formatOutput(newFormat, colours));
+                const newFormat = e.target.value as ColorFormat;
+                if (colors) {
+                  setInputValue(formatOutput(newFormat, colors));
                 }
                 setInputFormat(newFormat);
               }}
@@ -314,12 +314,12 @@ export function ColourConverterTool() {
       </div>
 
       {/* Conversions */}
-      {colours ? (
+      {colors ? (
         <div className="space-y-3">
           <label className="font-bold">All Formats</label>
           <div className="grid gap-2">
             {formats.map((format) => {
-              const output = formatOutput(format.id, colours);
+              const output = formatOutput(format.id, colors);
               const isCopied = copied === output;
 
               return (
@@ -343,7 +343,7 @@ export function ColourConverterTool() {
         </div>
       ) : (
         <div className="p-8 text-center text-muted-foreground border rounded-lg border-dashed">
-          Enter a valid colour value to see conversions
+          Enter a valid color value to see conversions
         </div>
       )}
 

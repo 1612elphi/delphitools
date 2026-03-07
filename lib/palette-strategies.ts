@@ -70,7 +70,7 @@ export const STRATEGY_INFO: Record<PaletteStrategy, StrategyInfo> = {
   "true-random": { name: "Chaos", description: "Completely random, no rules", category: "random" },
   "random-cohesive": { name: "Random", description: "Random cohesive palette", category: "random" },
   // Color Theory
-  analogous: { name: "Analogous", description: "Adjacent hues on the colour wheel", category: "color-theory" },
+  analogous: { name: "Analogous", description: "Adjacent hues on the color wheel", category: "color-theory" },
   complementary: { name: "Complementary", description: "Opposite hues for high contrast", category: "color-theory" },
   triadic: { name: "Triadic", description: "Three evenly spaced hues", category: "color-theory" },
   "split-complementary": { name: "Split-Comp", description: "Base + two adjacent to complement", category: "color-theory" },
@@ -224,24 +224,24 @@ function generateComplementaryPalette(count: number): string[] {
   const [baseL, baseC, baseH] = generateRandomBase();
   const complementH = (baseH + 180) % 360;
 
-  const colours: string[] = [];
+  const colors: string[] = [];
   const halfCount = Math.ceil(count / 2);
 
   for (let i = 0; i < halfCount; i++) {
     const hVariation = randomInRange(-15, 15);
     const L = baseL + randomInRange(-0.15, 0.15);
     const c = baseC + randomInRange(-0.05, 0.05);
-    colours.push(oklchToHex(L, c, baseH + hVariation));
+    colors.push(oklchToHex(L, c, baseH + hVariation));
   }
 
   for (let i = halfCount; i < count; i++) {
     const hVariation = randomInRange(-15, 15);
     const L = baseL + randomInRange(-0.15, 0.15);
     const c = baseC + randomInRange(-0.05, 0.05);
-    colours.push(oklchToHex(L, c, complementH + hVariation));
+    colors.push(oklchToHex(L, c, complementH + hVariation));
   }
 
-  return colours;
+  return colors;
 }
 
 function generateTriadicPalette(count: number): string[] {
@@ -381,13 +381,13 @@ function generate70sPalette(count: number): string[] {
 
 function generate80sPalette(count: number): string[] {
   // Neon: hot pink, electric blue, purple, with high-contrast darks
-  const colours: string[] = [];
+  const colors: string[] = [];
 
   for (let i = 0; i < count; i++) {
     // 20% chance of a dark/black
     if (Math.random() < 0.2) {
       const h = randomInRange(0, 360);
-      colours.push(oklchToHex(randomInRange(0.12, 0.22), randomInRange(0.02, 0.08), h));
+      colors.push(oklchToHex(randomInRange(0.12, 0.22), randomInRange(0.02, 0.08), h));
     } else {
       const ranges: HueRange[] = [
         { h: [320, 350], weight: 3 }, // neon pink / magenta
@@ -395,11 +395,11 @@ function generate80sPalette(count: number): string[] {
         { h: [280, 320], weight: 2 }, // hot purple / violet
         { h: [170, 200], weight: 1 }, // cyan / teal
       ];
-      colours.push(pickFromHueRanges(ranges, [0.55, 0.75], [0.18, 0.30]));
+      colors.push(pickFromHueRanges(ranges, [0.55, 0.75], [0.18, 0.30]));
     }
   }
 
-  return colours;
+  return colors;
 }
 
 function generate90sPalette(count: number): string[] {
@@ -418,13 +418,13 @@ function generate90sPalette(count: number): string[] {
 
 function generateY2KPalette(count: number): string[] {
   // Chrome, cyan, magenta, silver - mix of metallics and brights
-  const colours: string[] = [];
+  const colors: string[] = [];
 
   for (let i = 0; i < count; i++) {
     // 30% chance of metallic/silver (low chroma, high lightness)
     if (Math.random() < 0.3) {
       const h = randomInRange(200, 280);
-      colours.push(oklchToHex(randomInRange(0.7, 0.88), randomInRange(0.01, 0.04), h));
+      colors.push(oklchToHex(randomInRange(0.7, 0.88), randomInRange(0.01, 0.04), h));
     } else {
       const ranges: HueRange[] = [
         { h: [180, 200], weight: 2 }, // cyan
@@ -432,11 +432,11 @@ function generateY2KPalette(count: number): string[] {
         { h: [260, 290], weight: 1 }, // lavender / purple
         { h: [50, 70], weight: 1 },   // lime / yellow-green
       ];
-      colours.push(pickFromHueRanges(ranges, [0.55, 0.75], [0.15, 0.28]));
+      colors.push(pickFromHueRanges(ranges, [0.55, 0.75], [0.15, 0.28]));
     }
   }
 
-  return colours;
+  return colors;
 }
 
 // ============================================================================
@@ -459,13 +459,13 @@ function generateOceanSunsetPalette(count: number): string[] {
 
 function generateForestMorningPalette(count: number): string[] {
   // Fresh greens, lichen, golden light, bark brown, misty
-  const colours: string[] = [];
+  const colors: string[] = [];
 
   for (let i = 0; i < count; i++) {
     // 25% chance of misty/pale color
     if (Math.random() < 0.25) {
       const h = randomInRange(90, 150);
-      colours.push(oklchToHex(randomInRange(0.8, 0.92), randomInRange(0.02, 0.06), h));
+      colors.push(oklchToHex(randomInRange(0.8, 0.92), randomInRange(0.02, 0.06), h));
     } else {
       const ranges: HueRange[] = [
         { h: [100, 140], weight: 3 }, // fresh greens
@@ -473,11 +473,11 @@ function generateForestMorningPalette(count: number): string[] {
         { h: [45, 60], weight: 1 },   // golden morning light
         { h: [25, 40], weight: 1 },   // bark brown
       ];
-      colours.push(pickFromHueRanges(ranges, [0.4, 0.7], [0.08, 0.18]));
+      colors.push(pickFromHueRanges(ranges, [0.4, 0.7], [0.08, 0.18]));
     }
   }
 
-  return colours;
+  return colors;
 }
 
 function generateDesertDuskPalette(count: number): string[] {
@@ -496,38 +496,38 @@ function generateDesertDuskPalette(count: number): string[] {
 
 function generateArcticPalette(count: number): string[] {
   // Ice blue, white, grey, pale cyan - very desaturated, high lightness
-  const colours: string[] = [];
+  const colors: string[] = [];
 
   for (let i = 0; i < count; i++) {
     // 30% chance of near-white
     if (Math.random() < 0.3) {
       const h = randomInRange(200, 220);
-      colours.push(oklchToHex(randomInRange(0.92, 0.98), randomInRange(0.005, 0.02), h));
+      colors.push(oklchToHex(randomInRange(0.92, 0.98), randomInRange(0.005, 0.02), h));
     } else {
       const ranges: HueRange[] = [
         { h: [200, 220], weight: 3 }, // ice blue
         { h: [180, 200], weight: 2 }, // pale cyan
         { h: [220, 250], weight: 1 }, // steel blue
       ];
-      colours.push(pickFromHueRanges(ranges, [0.7, 0.9], [0.02, 0.08]));
+      colors.push(pickFromHueRanges(ranges, [0.7, 0.9], [0.02, 0.08]));
     }
   }
 
-  return colours;
+  return colors;
 }
 
 function generateVolcanicPalette(count: number): string[] {
   // Black, deep red, orange, ash grey - dramatic contrast
-  const colours: string[] = [];
+  const colors: string[] = [];
 
   for (let i = 0; i < count; i++) {
     const roll = Math.random();
     if (roll < 0.25) {
       // Black / charcoal
-      colours.push(oklchToHex(randomInRange(0.12, 0.22), randomInRange(0.01, 0.03), randomInRange(0, 360)));
+      colors.push(oklchToHex(randomInRange(0.12, 0.22), randomInRange(0.01, 0.03), randomInRange(0, 360)));
     } else if (roll < 0.4) {
       // Ash grey
-      colours.push(oklchToHex(randomInRange(0.5, 0.65), randomInRange(0.01, 0.03), randomInRange(20, 40)));
+      colors.push(oklchToHex(randomInRange(0.5, 0.65), randomInRange(0.01, 0.03), randomInRange(20, 40)));
     } else {
       // Hot colors: red, orange
       const ranges: HueRange[] = [
@@ -535,11 +535,11 @@ function generateVolcanicPalette(count: number): string[] {
         { h: [20, 45], weight: 2 },   // orange / lava
         { h: [45, 60], weight: 1 },   // yellow / fire
       ];
-      colours.push(pickFromHueRanges(ranges, [0.4, 0.65], [0.15, 0.25]));
+      colors.push(pickFromHueRanges(ranges, [0.4, 0.65], [0.15, 0.25]));
     }
   }
 
-  return colours;
+  return colors;
 }
 
 function generateMeadowPalette(count: number): string[] {
@@ -563,17 +563,17 @@ function generateMeadowPalette(count: number): string[] {
 function generateBauhausPalette(count: number): string[] {
   // Bauhaus: bold primary colors, strong neutrals, occasional secondary accents
   // The movement valued clarity, boldness, and geometric confidence
-  const colours: string[] = [];
+  const colors: string[] = [];
 
   for (let i = 0; i < count; i++) {
     const roll = Math.random();
 
     if (roll < 0.2) {
       // Strong black or near-black
-      colours.push(oklchToHex(randomInRange(0.08, 0.18), randomInRange(0.0, 0.02), randomInRange(0, 360)));
+      colors.push(oklchToHex(randomInRange(0.08, 0.18), randomInRange(0.0, 0.02), randomInRange(0, 360)));
     } else if (roll < 0.3) {
       // Cream / off-white
-      colours.push(oklchToHex(randomInRange(0.92, 0.97), randomInRange(0.01, 0.025), randomInRange(80, 100)));
+      colors.push(oklchToHex(randomInRange(0.92, 0.97), randomInRange(0.01, 0.025), randomInRange(80, 100)));
     } else {
       // Primary and secondary colors with Bauhaus boldness
       const ranges: HueRange[] = [
@@ -584,28 +584,28 @@ function generateBauhausPalette(count: number): string[] {
         { h: [140, 160], weight: 1, L: [0.45, 0.55], c: [0.1, 0.15] },  // Muted green
         { h: [0, 15], weight: 1, L: [0.45, 0.55], c: [0.2, 0.26] },     // Pure red
       ];
-      colours.push(pickFromHueRanges(ranges, [0.5, 0.7], [0.15, 0.22]));
+      colors.push(pickFromHueRanges(ranges, [0.5, 0.7], [0.15, 0.22]));
     }
   }
 
-  return colours;
+  return colors;
 }
 
 function generateArtDecoPalette(count: number): string[] {
   // Gold, black, cream, emerald - luxurious
-  const colours: string[] = [];
+  const colors: string[] = [];
 
   for (let i = 0; i < count; i++) {
     const roll = Math.random();
     if (roll < 0.25) {
       // Gold
-      colours.push(oklchToHex(randomInRange(0.7, 0.8), randomInRange(0.12, 0.18), randomInRange(85, 100)));
+      colors.push(oklchToHex(randomInRange(0.7, 0.8), randomInRange(0.12, 0.18), randomInRange(85, 100)));
     } else if (roll < 0.4) {
       // Black
-      colours.push(oklchToHex(randomInRange(0.12, 0.2), randomInRange(0.01, 0.03), randomInRange(0, 360)));
+      colors.push(oklchToHex(randomInRange(0.12, 0.2), randomInRange(0.01, 0.03), randomInRange(0, 360)));
     } else if (roll < 0.55) {
       // Cream
-      colours.push(oklchToHex(randomInRange(0.9, 0.96), randomInRange(0.015, 0.03), randomInRange(80, 100)));
+      colors.push(oklchToHex(randomInRange(0.9, 0.96), randomInRange(0.015, 0.03), randomInRange(80, 100)));
     } else {
       // Emerald / teal / deep jewel tones
       const ranges: HueRange[] = [
@@ -613,27 +613,27 @@ function generateArtDecoPalette(count: number): string[] {
         { h: [180, 200], weight: 1 }, // teal
         { h: [0, 15], weight: 1 },    // deep red / garnet
       ];
-      colours.push(pickFromHueRanges(ranges, [0.35, 0.55], [0.1, 0.18]));
+      colors.push(pickFromHueRanges(ranges, [0.35, 0.55], [0.1, 0.18]));
     }
   }
 
-  return colours;
+  return colors;
 }
 
 function generateJapanesePalette(count: number): string[] {
   // Traditional Japanese color vocabulary - refined, natural, subtle
   // Draws from the rich palette of kimono, ukiyo-e, and nature
-  const colours: string[] = [];
+  const colors: string[] = [];
 
   for (let i = 0; i < count; i++) {
     const roll = Math.random();
 
     if (roll < 0.15) {
       // Pale neutrals - unbleached cotton, paper, rice
-      colours.push(oklchToHex(randomInRange(0.88, 0.95), randomInRange(0.01, 0.03), randomInRange(70, 100)));
+      colors.push(oklchToHex(randomInRange(0.88, 0.95), randomInRange(0.01, 0.03), randomInRange(70, 100)));
     } else if (roll < 0.25) {
       // Earth tones - clay, wood, tea
-      colours.push(oklchToHex(randomInRange(0.4, 0.55), randomInRange(0.05, 0.1), randomInRange(35, 60)));
+      colors.push(oklchToHex(randomInRange(0.4, 0.55), randomInRange(0.05, 0.1), randomInRange(35, 60)));
     } else {
       // Traditional color families
       const ranges: HueRange[] = [
@@ -654,35 +654,35 @@ function generateJapanesePalette(count: number): string[] {
         // Persimmon/orange (kaki)
         { h: [35, 50], weight: 1, L: [0.55, 0.68], c: [0.12, 0.18] },
       ];
-      colours.push(pickFromHueRanges(ranges, [0.4, 0.6], [0.08, 0.15]));
+      colors.push(pickFromHueRanges(ranges, [0.4, 0.6], [0.08, 0.15]));
     }
   }
 
-  return colours;
+  return colors;
 }
 
 function generateScandinavianPalette(count: number): string[] {
   // White, pale grey, muted pastels, wood tones - minimal, natural
-  const colours: string[] = [];
+  const colors: string[] = [];
 
   for (let i = 0; i < count; i++) {
     const roll = Math.random();
     if (roll < 0.35) {
       // White / off-white
-      colours.push(oklchToHex(randomInRange(0.93, 0.98), randomInRange(0.005, 0.015), randomInRange(80, 110)));
+      colors.push(oklchToHex(randomInRange(0.93, 0.98), randomInRange(0.005, 0.015), randomInRange(80, 110)));
     } else if (roll < 0.55) {
       // Pale grey
-      colours.push(oklchToHex(randomInRange(0.8, 0.9), randomInRange(0.005, 0.015), randomInRange(200, 260)));
+      colors.push(oklchToHex(randomInRange(0.8, 0.9), randomInRange(0.005, 0.015), randomInRange(200, 260)));
     } else if (roll < 0.75) {
       // Muted pastel (any hue, very low chroma)
-      colours.push(oklchToHex(randomInRange(0.8, 0.9), randomInRange(0.02, 0.05), randomInRange(0, 360)));
+      colors.push(oklchToHex(randomInRange(0.8, 0.9), randomInRange(0.02, 0.05), randomInRange(0, 360)));
     } else {
       // Wood tone
-      colours.push(oklchToHex(randomInRange(0.55, 0.7), randomInRange(0.04, 0.08), randomInRange(50, 80)));
+      colors.push(oklchToHex(randomInRange(0.55, 0.7), randomInRange(0.04, 0.08), randomInRange(50, 80)));
     }
   }
 
-  return colours;
+  return colors;
 }
 
 function generateMexicanPalette(count: number): string[] {

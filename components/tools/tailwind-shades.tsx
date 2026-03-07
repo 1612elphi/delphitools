@@ -6,7 +6,7 @@ import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-// Colour utilities
+// Color utilities
 function hexToRgb(hex: string): [number, number, number] | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) return null;
@@ -193,23 +193,23 @@ function TailwindShadesInner() {
   const searchParams = useSearchParams();
   const colorFromUrl = searchParams.get("color");
 
-  const [baseColour, setBaseColour] = useState(colorFromUrl || "#3b82f6");
-  const [colourName, setColourName] = useState("primary");
+  const [baseColor, setBaseColor] = useState(colorFromUrl || "#3b82f6");
+  const [colorName, setColorName] = useState("primary");
   const [mode, setMode] = useState<GenerationMode>("classic");
   const [shades, setShades] = useState<Shade[] | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
-  // Update baseColour when URL parameter changes
+  // Update baseColor when URL parameter changes
   useEffect(() => {
     if (colorFromUrl) {
-      setBaseColour(colorFromUrl);
+      setBaseColor(colorFromUrl);
     }
   }, [colorFromUrl]);
 
   useEffect(() => {
-    const result = generateShades(baseColour, mode);
+    const result = generateShades(baseColor, mode);
     setShades(result);
-  }, [baseColour, mode]);
+  }, [baseColor, mode]);
 
   const copyValue = async (value: string, label: string) => {
     await navigator.clipboard.writeText(value);
@@ -219,19 +219,19 @@ function TailwindShadesInner() {
 
   const generateCssVariables = () => {
     if (!shades) return "";
-    return shades.map(s => `  --${colourName}-${s.level}: ${s.hex};`).join("\n");
+    return shades.map(s => `  --${colorName}-${s.level}: ${s.hex};`).join("\n");
   };
 
   const generateTailwindConfig = () => {
     if (!shades) return "";
     const entries = shades.map(s => `      ${s.level}: '${s.hex}',`).join("\n");
-    return `${colourName}: {\n${entries}\n    },`;
+    return `${colorName}: {\n${entries}\n    },`;
   };
 
   const generateOklchVariables = () => {
     if (!shades) return "";
     return shades.map(s =>
-      `  --${colourName}-${s.level}: oklch(${s.oklch[0].toFixed(3)} ${s.oklch[1].toFixed(3)} ${s.oklch[2].toFixed(1)});`
+      `  --${colorName}-${s.level}: oklch(${s.oklch[0].toFixed(3)} ${s.oklch[1].toFixed(3)} ${s.oklch[2].toFixed(1)});`
     ).join("\n");
   };
 
@@ -240,27 +240,27 @@ function TailwindShadesInner() {
       {/* Input */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="space-y-2">
-          <label className="font-bold">Base Colour</label>
+          <label className="font-bold">Base Color</label>
           <div className="flex gap-2">
             <input
               type="color"
-              value={baseColour}
-              onChange={(e) => setBaseColour(e.target.value)}
+              value={baseColor}
+              onChange={(e) => setBaseColor(e.target.value)}
               className="w-14 h-10 rounded border cursor-pointer"
             />
             <Input
-              value={baseColour}
-              onChange={(e) => setBaseColour(e.target.value)}
+              value={baseColor}
+              onChange={(e) => setBaseColor(e.target.value)}
               placeholder="#3b82f6"
               className="font-mono flex-1"
             />
           </div>
         </div>
         <div className="space-y-2">
-          <label className="font-bold">Colour Name</label>
+          <label className="font-bold">Color Name</label>
           <Input
-            value={colourName}
-            onChange={(e) => setColourName(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+            value={colorName}
+            onChange={(e) => setColorName(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
             placeholder="primary"
             className="font-mono"
           />

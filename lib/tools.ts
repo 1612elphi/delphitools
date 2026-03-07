@@ -93,55 +93,55 @@ export const toolCategories: ToolCategory[] = [
     ],
   },
   {
-    id: "colour",
-    name: "Colour",
+    id: "color",
+    name: "Color",
     tools: [
       {
-        id: "colour-converter",
-        name: "Colour Converter",
-        description: "Convert between colour formats",
+        id: "color-converter",
+        name: "Color Converter",
+        description: "Convert between color formats",
         icon: Pipette,
-        href: "/tools/colour-converter",
+        href: "/tools/color-converter",
       },
       {
         id: "tailwind-shades",
         name: "Tailwind Shade Generator",
-        description: "Generate Tailwind colour scales",
+        description: "Generate Tailwind color scales",
         icon: Palette,
         href: "/tools/tailwind-shades",
       },
       {
         id: "harmony-genny",
         name: "Harmony Generator",
-        description: "Generate colour harmonies",
+        description: "Generate color harmonies",
         icon: Rainbow,
         href: "/tools/harmony-genny",
       },
       {
         id: "palette-genny",
         name: "Palette Generator",
-        description: "Generate beautiful colour palettes",
+        description: "Generate beautiful color palettes",
         icon: PenLine,
         href: "/tools/palette-genny",
       },
       {
         id: "palette-collection",
         name: "Palette Collection",
-        description: "Browse curated colour palettes",
+        description: "Browse curated color palettes",
         icon: Library,
         href: "/tools/palette-collection",
       },
       {
         id: "contrast-checker",
         name: "Contrast Checker",
-        description: "Check WCAG colour contrast compliance",
+        description: "Check WCAG color contrast compliance",
         icon: Contrast,
         href: "/tools/contrast-checker",
       },
       {
         id: "colorblind-sim",
-        name: "Colour Blindness Simulator",
-        description: "Simulate how colours appear to colour blind users",
+        name: "Color Blindness Simulator",
+        description: "Simulate how colors appear to color blind users",
         icon: Eye,
         href: "/tools/colorblind-sim",
       },
@@ -167,11 +167,11 @@ export const toolCategories: ToolCategory[] = [
         href: "/tools/favicon-genny",
       },
       {
-        id: "svg-optimiser",
-        name: "SVG Optimiser",
-        description: "Optimise and minify SVG files",
+        id: "svg-optimizer",
+        name: "SVG Optimizer",
+        description: "Optimize and minify SVG files",
         icon: FileImage,
-        href: "/tools/svg-optimiser",
+        href: "/tools/svg-optimizer",
       },
       {
         id: "placeholder-genny",
@@ -197,7 +197,7 @@ export const toolCategories: ToolCategory[] = [
       {
         id: "artwork-enhancer",
         name: "Artwork Enhancer",
-        description: "Add colour noise overlay to artwork",
+        description: "Add color noise overlay to artwork",
         icon: Sparkles,
         href: "/tools/artwork-enhancer",
       },
@@ -410,7 +410,7 @@ export const toolCategories: ToolCategory[] = [
 
 export const allTools = toolCategories.flatMap((category) => category.tools);
 
-// Featured tools for "Delphi's Greatest Hits" section
+// Featured tools for "Tools Greatest Hits" section
 export const featuredToolIds = ["qr-genny", "palette-genny", "background-remover"];
 export const featuredTools = featuredToolIds
   .map((id) => allTools.find((tool) => tool.id === id))

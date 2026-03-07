@@ -343,7 +343,7 @@ export function ScrollGeneratorTool() {
                 <div className="flex flex-wrap gap-2">
                   {[
                     { mode: "blur" as const, label: "Blurred Background" },
-                    { mode: "color" as const, label: "Solid Colour" },
+                    { mode: "color" as const, label: "Solid Color" },
                   ].map((option) => (
                     <button
                       key={option.mode}
@@ -366,7 +366,7 @@ export function ScrollGeneratorTool() {
 
               {fillMode === "color" && (
                 <div className="space-y-2">
-                  <label className="font-bold text-sm">Fill Colour</label>
+                  <label className="font-bold text-sm">Fill Color</label>
                   <div className="flex flex-wrap gap-2 items-center">
                     {presetColors.map((color) => (
                       <button
@@ -397,7 +397,7 @@ export function ScrollGeneratorTool() {
                       />
                       <div
                         className="size-10 rounded-lg border-2 border-dashed border-muted flex items-center justify-center text-muted-foreground hover:border-primary/50 transition-colors"
-                        title="Custom colour"
+                        title="Custom color"
                       >
                         +
                       </div>

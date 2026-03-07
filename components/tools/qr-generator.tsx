@@ -1065,7 +1065,7 @@ export function QrGeneratorTool() {
                   className="border rounded-lg px-4"
                 >
                   <AccordionTrigger className="font-bold">
-                    Colours
+                    Colors
                   </AccordionTrigger>
                   <AccordionContent className="space-y-4 pb-4">
                     <div className="grid grid-cols-2 gap-4">

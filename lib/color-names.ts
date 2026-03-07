@@ -1,9 +1,9 @@
-// Colour naming utility using meodai/color-names database
+// Color naming utility using meodai/color-names database
 // Uses RGB Euclidean distance for nearest-color matching
 
 import { colornames } from "color-name-list/bestof";
 
-interface NamedColour {
+interface NamedColor {
   name: string;
   hex: string;
   r: number;
@@ -11,8 +11,8 @@ interface NamedColour {
   b: number;
 }
 
-// Parse the colour data into a more efficient format
-const COLOURS: NamedColour[] = colornames.map((c) => {
+// Parse the color data into a more efficient format
+const COLOURS: NamedColor[] = colornames.map((c) => {
   const hex = c.hex;
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -20,16 +20,16 @@ const COLOURS: NamedColour[] = colornames.map((c) => {
   return { name: c.name, hex, r, g, b };
 });
 
-// Calculate Euclidean distance between two colours
-function colourDistance(r1: number, g1: number, b1: number, r2: number, g2: number, b2: number): number {
+// Calculate Euclidean distance between two colors
+function colorDistance(r1: number, g1: number, b1: number, r2: number, g2: number, b2: number): number {
   const dr = r1 - r2;
   const dg = g1 - g2;
   const db = b1 - b2;
   return dr * dr + dg * dg + db * db; // Skip sqrt for performance (comparing relative distances)
 }
 
-// Find the closest named colour
-export function getColourName(hex: string): string {
+// Find the closest named color
+export function getColorName(hex: string): string {
   // Parse hex
   const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!match) return "Unknown";
@@ -41,11 +41,11 @@ export function getColourName(hex: string): string {
   let closestName = "Unknown";
   let minDistance = Infinity;
 
-  for (const colour of COLOURS) {
-    const distance = colourDistance(r, g, b, colour.r, colour.g, colour.b);
+  for (const color of COLOURS) {
+    const distance = colorDistance(r, g, b, color.r, color.g, color.b);
     if (distance < minDistance) {
       minDistance = distance;
-      closestName = colour.name;
+      closestName = color.name;
     }
     // Exact match
     if (distance === 0) break;

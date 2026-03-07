@@ -12,7 +12,7 @@ export default function Home() {
         <div className="flex items-center gap-3 mb-4">
           <img
             src="/delphi-friday.png"
-            alt="delphitools logo"
+            alt="Tools logo"
             width={1000}
             height={48}
           />
@@ -36,7 +36,7 @@ export default function Home() {
         <div className="flex items-center gap-2 mb-4">
           <Star className="size-5 text-amber-500 fill-amber-500" />
           <h2 className="text-lg font-semibold text-foreground/80">
-            Delphi&apos;s Greatest Hits
+            Greatest Hits
           </h2>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -72,10 +72,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Friends of Delphi */}
+      {/* Friends of Tools */}
       <section className="mb-12">
         <h2 className="text-lg font-semibold mb-4 text-foreground/80">
-          Friends of Delphi
+          Friends of Tools
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <a
@@ -375,7 +375,7 @@ export default function Home() {
 
           <div className="space-y-4 text-sm text-muted-foreground">
             <p>
-              delphitools is a collection of small, focused utilities that respect your privacy
+              Tools is a collection of small, focused utilities that respect your privacy
               and work entirely in your browser. No data leaves your machine, no accounts required,
               no tracking. Just tools that do what they say.
             </p>
@@ -399,15 +399,15 @@ export default function Home() {
               </p>
             </div>
             <div className="space-y-2">
-              <h3 className="font-medium text-foreground/80">Source</h3>
+              <h3 className="font-medium text-foreground/80">Live Site</h3>
               <p className="text-muted-foreground">
                 <a
-                  href="https://github.com/1612elphi/delphitools"
+                  href="https://tools.brodyberson.com"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-primary transition-colors"
                 >
-                  1612elphi/delphitools
+                  tools.brodyberson.com
                 </a>
               </p>
             </div>
@@ -416,6 +416,18 @@ export default function Home() {
           <div className="pt-4 border-t border-border/50">
             <p className="text-xs text-muted-foreground/60">
               Built with Next.js, Tailwind CSS, and shadcn/ui. All processing happens locally in your browser.
+            </p>
+            <p className="text-xs text-muted-foreground/60 mt-2">
+              Forked from{" "}
+              <a
+                href="https://github.com/1612elphi/delphitools"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-muted-foreground transition-colors"
+              >
+                delphitools
+              </a>
+              .
             </p>
           </div>
         </div>

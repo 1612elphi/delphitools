@@ -5,7 +5,7 @@ import { Upload, Download, Copy, Check, Trash2 } from "lucide-react";
 import { optimize } from "svgo/browser";
 import { Button } from "@/components/ui/button";
 
-export function SvgOptimiserTool() {
+export function SvgOptimizerTool() {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [fileName, setFileName] = useState("");
@@ -18,9 +18,9 @@ export function SvgOptimiserTool() {
   } | null>(null);
 
   useEffect(() => {
-    const incoming = sessionStorage.getItem("svg-optimiser-input")
+    const incoming = sessionStorage.getItem("svg-optimizer-input")
     if (incoming) {
-      sessionStorage.removeItem("svg-optimiser-input")
+      sessionStorage.removeItem("svg-optimizer-input")
       setInput(incoming)
       setFileName("traced.svg")
       optimizeSvg(incoming)

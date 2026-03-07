@@ -6,7 +6,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { AppHeader } from "@/components/app-header";
 
 export const metadata: Metadata = {
-  title: "delphitools",
+  title: "Tools",
   description:
     "A collection of small, low stakes and low effort tools. No logins, no registration, no data collection.",
   icons: {

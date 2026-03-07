@@ -54,7 +54,7 @@ type CheckCategory =
   | "document"
   | "geometry"
   | "fonts"
-  | "colour"
+  | "color"
   | "images"
   | "transparency";
 
@@ -156,7 +156,7 @@ const CATEGORY_LABELS: Record<CheckCategory, string> = {
   document: "Document",
   geometry: "Geometry",
   fonts: "Fonts",
-  colour: "Colour",
+  color: "Color",
   images: "Images",
   transparency: "Transparency",
 };
@@ -673,7 +673,7 @@ async function analyseWithPdfLib(
 }
 
 // ---------------------------------------------------------------------------
-// Image & colour-space analysis with pdf.js
+// Image & color-space analysis with pdf.js
 // ---------------------------------------------------------------------------
 
 async function analyseWithPdfJs(
@@ -690,7 +690,7 @@ async function analyseWithPdfJs(
     const opList = await page.getOperatorList();
 
     let imageCount = 0;
-    const colourSpaces = new Set<string>();
+    const colorSpaces = new Set<string>();
 
     const OPS = pdfjsLib.OPS;
     for (let j = 0; j < opList.fnArray.length; j++) {
@@ -705,12 +705,12 @@ async function analyseWithPdfJs(
         if (args && args[0]) {
           const csName =
             typeof args[0] === "string" ? args[0] : String(args[0]);
-          colourSpaces.add(csName);
+          colorSpaces.add(csName);
         }
       }
     }
 
-    const csArray = Array.from(colourSpaces);
+    const csArray = Array.from(colorSpaces);
     const hasRGB = csArray.some(
       (cs) => cs.includes("RGB") || cs.includes("DeviceRGB") || cs === "rgb"
     );
@@ -730,33 +730,33 @@ async function analyseWithPdfJs(
     if (hasRGB) {
       issues.push({
         severity: "warning",
-        category: "colour",
-        message: "RGB colour space detected",
+        category: "color",
+        message: "RGB color space detected",
         page: i,
         details:
-          "RGB colours may shift when converted to CMYK for print. Consider converting to CMYK before sending to a commercial printer.",
+          "RGB colors may shift when converted to CMYK for print. Consider converting to CMYK before sending to a commercial printer.",
       });
     }
 
     if (hasGray) {
       issues.push({
         severity: "info",
-        category: "colour",
-        message: "Grayscale colour space detected",
+        category: "color",
+        message: "Grayscale color space detected",
         page: i,
         details:
-          "Grayscale content found. This is generally fine for print but ensure it meets your colour requirements.",
+          "Grayscale content found. This is generally fine for print but ensure it meets your color requirements.",
       });
     }
 
     if (hasSpot) {
       issues.push({
         severity: "info",
-        category: "colour",
-        message: "Spot colour or DeviceN colour space detected",
+        category: "color",
+        message: "Spot color or DeviceN color space detected",
         page: i,
         details:
-          "Spot colours were found. Verify your printer supports the spot colour inks used, or convert to CMYK process colours.",
+          "Spot colors were found. Verify your printer supports the spot color inks used, or convert to CMYK process colors.",
       });
     }
 
@@ -764,11 +764,11 @@ async function analyseWithPdfJs(
     if (activeSpaces.length > 1) {
       issues.push({
         severity: "warning",
-        category: "colour",
-        message: `Mixed colour spaces (${activeSpaces.join(", ")})`,
+        category: "color",
+        message: `Mixed color spaces (${activeSpaces.join(", ")})`,
         page: i,
         details:
-          "Multiple colour spaces on this page can cause inconsistent colour output. Consider converting to a single colour space.",
+          "Multiple color spaces on this page can cause inconsistent color output. Consider converting to a single color space.",
       });
     }
 
@@ -987,7 +987,7 @@ export function PdfPreflightTool() {
         const structReport = await analyseWithPdfLib(f.buffer, f.name, f.size);
         if (cancelled) return;
 
-        // Phase 2: image/colour analysis with pdf.js
+        // Phase 2: image/color analysis with pdf.js
         try {
           const { pdfDoc: doc, issues: pdjsIssues } = await analyseWithPdfJs(
             f.buffer
@@ -1076,7 +1076,7 @@ export function PdfPreflightTool() {
 
       const mediaBox = pageInfo.mediaBox;
 
-      function drawBox(box: PageBox | undefined, colour: string) {
+      function drawBox(box: PageBox | undefined, color: string) {
         if (!box || !ctx || !canvas) return;
 
         // Transform PDF coordinates (bottom-left origin) to canvas (top-left origin)
@@ -1087,7 +1087,7 @@ export function PdfPreflightTool() {
         const h = box.height * scale;
 
         ctx.save();
-        ctx.strokeStyle = colour;
+        ctx.strokeStyle = color;
         ctx.lineWidth = 1.5;
         ctx.setLineDash([6, 4]);
         ctx.strokeRect(x1, y1, w, h);

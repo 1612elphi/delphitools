@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const STORAGE_KEY = "delphitools-scratchpad";
+const STORAGE_KEY = "Tools-scratchpad";
 
 export function MarkdownWriterTool() {
   const [content, setContent] = useState("");
