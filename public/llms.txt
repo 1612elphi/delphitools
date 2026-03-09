@@ -1,0 +1,62 @@
+Tools
+Site: https://tools.brodyberson.com
+
+Developer Tools
+- Regex Tester: https://tools.brodyberson.com/tools/regex-tester
+- Encoding Tools: https://tools.brodyberson.com/tools/encoder
+- JSON Formatter: https://tools.brodyberson.com/tools/json-formatter
+
+Calculators
+- Scientific Calculator: https://tools.brodyberson.com/tools/sci-calc
+- Graph Calculator: https://tools.brodyberson.com/tools/graph-calc
+- Algebra Calculator: https://tools.brodyberson.com/tools/algebra-calc
+- Base Converter: https://tools.brodyberson.com/tools/base-converter
+- Time Calculator: https://tools.brodyberson.com/tools/time-calc
+- Unit Converter: https://tools.brodyberson.com/tools/unit-converter
+
+Social Media
+- Social Media Cropper: https://tools.brodyberson.com/tools/social-cropper
+- Matte Generator: https://tools.brodyberson.com/tools/matte-generator
+- Seamless Scroll Generator: https://tools.brodyberson.com/tools/scroll-generator
+- Watermarker: https://tools.brodyberson.com/tools/watermarker
+
+Color
+- Color Converter: https://tools.brodyberson.com/tools/color-converter
+- Tailwind Shade Generator: https://tools.brodyberson.com/tools/tailwind-shades
+- Harmony Generator: https://tools.brodyberson.com/tools/harmony-genny
+- Palette Generator: https://tools.brodyberson.com/tools/palette-genny
+- Palette Collection: https://tools.brodyberson.com/tools/palette-collection
+- Contrast Checker: https://tools.brodyberson.com/tools/contrast-checker
+- Color Blindness Simulator: https://tools.brodyberson.com/tools/colorblind-sim
+- Gradient Generator: https://tools.brodyberson.com/tools/gradient-genny
+
+Images & Assets
+- Favicon Generator: https://tools.brodyberson.com/tools/favicon-genny
+- SVG Optimizer: https://tools.brodyberson.com/tools/svg-optimizer
+- Placeholder Generator: https://tools.brodyberson.com/tools/placeholder-genny
+- Image Splitter: https://tools.brodyberson.com/tools/image-splitter
+- Image Converter: https://tools.brodyberson.com/tools/image-converter
+- Artwork Enhancer: https://tools.brodyberson.com/tools/artwork-enhancer
+- Background Remover: https://tools.brodyberson.com/tools/background-remover
+- Image Tracer: https://tools.brodyberson.com/tools/image-tracer
+
+Typography & Text
+- PX to REM: https://tools.brodyberson.com/tools/px-to-rem
+- Line Height Calculator: https://tools.brodyberson.com/tools/line-height-calc
+- Typography Calculator: https://tools.brodyberson.com/tools/typo-calc
+- Paper Sizes: https://tools.brodyberson.com/tools/paper-sizes
+- Word Counter: https://tools.brodyberson.com/tools/word-counter
+- Glyph Browser: https://tools.brodyberson.com/tools/glyph-browser
+- Font File Explorer: https://tools.brodyberson.com/tools/font-explorer
+
+Print & Production
+- PDF Preflight: https://tools.brodyberson.com/tools/pdf-preflight
+- Guillotine Director: https://tools.brodyberson.com/tools/guillotine-director
+- Zine Imposer: https://tools.brodyberson.com/tools/zine-imposer
+
+Other Tools
+- Text Scratchpad: https://tools.brodyberson.com/tools/markdown-writer
+- Tailwind Cheat Sheet: https://tools.brodyberson.com/tools/tailwind-cheatsheet
+- QR Generator: https://tools.brodyberson.com/tools/qr-genny
+- Barcode Generator: https://tools.brodyberson.com/tools/code-genny
+- Meta Tag Generator: https://tools.brodyberson.com/tools/meta-tag-genny
