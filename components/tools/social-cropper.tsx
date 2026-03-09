@@ -88,6 +88,11 @@ export function SocialCropperTool() {
     }
   };
 
+  // Reset crop state when platform or ratio changes
+  useEffect(() => {
+    setCropOffset({ x: 0, y: 0 });
+    setCroppedImage(null);
+  }, [selectedPlatform, selectedRatio]);
 
   // Calculate crop dimensions based on image and aspect ratio
   const getCropDimensions = useCallback(() => {
