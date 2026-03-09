@@ -15,22 +15,7 @@ export function ArtworkEnhancerTool() {
   const [noiseSeed, setNoiseSeed] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith("image/")) {
-      readFile(file);
-    }
-  }, []);
-
-  const handleSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      readFile(file);
-    }
-  };
-
-  const readFile = (file: File) => {
+  function readFile(file: File) {
     setFileName(file.name.replace(/\.[^.]+$/, ""));
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -44,6 +29,21 @@ export function ArtworkEnhancerTool() {
       img.src = dataUrl;
     };
     reader.readAsDataURL(file);
+  }
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith("image/")) {
+      readFile(file);
+    }
+  }, []);
+
+  const handleSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      readFile(file);
+    }
   };
 
   const generateNoise = useCallback(() => {
