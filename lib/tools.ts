@@ -59,6 +59,74 @@ export interface ToolCategory {
 
 export const toolCategories: ToolCategory[] = [
   {
+    id: "developer-tools",
+    name: "Developer Tools",
+    tools: [
+      {
+        id: "regex-tester",
+        name: "Regex Tester",
+        description: "Test regular expressions",
+        icon: Regex,
+        href: "/tools/regex-tester",
+      },
+      {
+        id: "encoder",
+        name: "Encoding Tools",
+        description: "Base64, URL encoding, and hash generation",
+        icon: FileCode,
+        href: "/tools/encoder",
+      },
+    ],
+  },
+  {
+    id: "calculators",
+    name: "Calculators",
+    tools: [
+      {
+        id: "sci-calc",
+        name: "Scientific Calculator",
+        description: "Full-featured scientific calculator with history",
+        icon: Calculator,
+        href: "/tools/sci-calc",
+      },
+      {
+        id: "graph-calc",
+        name: "Graph Calculator",
+        description: "Plot and visualise mathematical functions",
+        icon: LineChart,
+        href: "/tools/graph-calc",
+      },
+      {
+        id: "algebra-calc",
+        name: "Algebra Calculator",
+        description: "Symbolic algebra: simplify, factor, solve, derivatives",
+        icon: Variable,
+        href: "/tools/algebra-calc",
+      },
+      {
+        id: "base-converter",
+        name: "Base Converter",
+        description: "Convert between decimal, hex, binary, and octal",
+        icon: Binary,
+        href: "/tools/base-converter",
+      },
+      {
+        id: "time-calc",
+        name: "Time Calculator",
+        description: "Unix timestamps, date arithmetic, timezone conversion",
+        icon: Clock,
+        href: "/tools/time-calc",
+      },
+      {
+        id: "unit-converter",
+        name: "Unit Converter",
+        description: "Convert between units of length, weight, data, and more",
+        icon: Scale,
+        href: "/tools/unit-converter",
+      },
+    ],
+  },
+  {
     id: "social-media",
     name: "Social Media",
     tools: [
@@ -341,68 +409,6 @@ export const toolCategories: ToolCategory[] = [
         description: "Generate HTML meta tags",
         icon: Tag,
         href: "/tools/meta-tag-genny",
-      },
-      {
-        id: "regex-tester",
-        name: "Regex Tester",
-        description: "Test regular expressions",
-        icon: Regex,
-        href: "/tools/regex-tester",
-      },
-    ],
-  },
-  {
-    id: "calculators",
-    name: "Calculators",
-    tools: [
-      {
-        id: "sci-calc",
-        name: "Scientific Calculator",
-        description: "Full-featured scientific calculator with history",
-        icon: Calculator,
-        href: "/tools/sci-calc",
-      },
-      {
-        id: "graph-calc",
-        name: "Graph Calculator",
-        description: "Plot and visualise mathematical functions",
-        icon: LineChart,
-        href: "/tools/graph-calc",
-      },
-      {
-        id: "algebra-calc",
-        name: "Algebra Calculator",
-        description: "Symbolic algebra: simplify, factor, solve, derivatives",
-        icon: Variable,
-        href: "/tools/algebra-calc",
-      },
-      {
-        id: "base-converter",
-        name: "Base Converter",
-        description: "Convert between decimal, hex, binary, and octal",
-        icon: Binary,
-        href: "/tools/base-converter",
-      },
-      {
-        id: "time-calc",
-        name: "Time Calculator",
-        description: "Unix timestamps, date arithmetic, timezone conversion",
-        icon: Clock,
-        href: "/tools/time-calc",
-      },
-      {
-        id: "unit-converter",
-        name: "Unit Converter",
-        description: "Convert between units of length, weight, data, and more",
-        icon: Scale,
-        href: "/tools/unit-converter",
-      },
-      {
-        id: "encoder",
-        name: "Encoding Tools",
-        description: "Base64, URL encoding, and hash generation",
-        icon: FileCode,
-        href: "/tools/encoder",
       },
     ],
   },

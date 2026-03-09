@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Upload, Download, Trash2, Move } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -88,11 +88,6 @@ export function SocialCropperTool() {
     }
   };
 
-  // Reset crop state when platform or ratio changes
-  useEffect(() => {
-    setCropOffset({ x: 0, y: 0 });
-    setCroppedImage(null);
-  }, [selectedPlatform, selectedRatio]);
 
   // Calculate crop dimensions based on image and aspect ratio
   const getCropDimensions = useCallback(() => {
@@ -300,6 +295,8 @@ export function SocialCropperTool() {
                   onClick={() => {
                     setSelectedPlatform(i);
                     setSelectedRatio(0);
+                    setCropOffset({ x: 0, y: 0 });
+                    setCroppedImage(null);
                   }}
                   className={cn(
                     "px-4 py-2 rounded-lg border transition-colors",
@@ -321,7 +318,11 @@ export function SocialCropperTool() {
               {platforms[selectedPlatform].ratios.map((ratio, i) => (
                 <button
                   key={ratio.name}
-                  onClick={() => setSelectedRatio(i)}
+                  onClick={() => {
+                    setSelectedRatio(i);
+                    setCropOffset({ x: 0, y: 0 });
+                    setCroppedImage(null);
+                  }}
                   className={cn(
                     "px-4 py-2 rounded-lg border transition-colors",
                     selectedRatio === i

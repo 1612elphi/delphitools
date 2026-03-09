@@ -137,7 +137,6 @@ export function AppSidebar() {
           <DialogTrigger asChild>
             <button className="w-full p-2 text-xs text-muted-foreground text-left hover:bg-sidebar-accent rounded-md transition-colors group-data-[collapsible=icon]:hidden">
               <p>No logins. No tracking.</p>
-              <p className="mt-1 opacity-70">Long live the handmade web.</p>
             </button>
           </DialogTrigger>
           <DialogTrigger asChild>
@@ -155,21 +154,18 @@ export function AppSidebar() {
                 and work entirely in your browser. No data leaves your machine, no accounts required,
                 no tracking. Just tools that do what they say.
               </p>
-              <p>
-                I love the web. The classic, real web full of weird things. And that web is out there. You just have to find it. And sometimes, you have to make it yourself.
-              </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 text-sm pt-4 border-t">
               <div className="space-y-1">
-                <h3 className="font-medium text-foreground">Made by</h3>
+                <h3 className="font-medium text-foreground">Curated by</h3>
                 <p className="text-muted-foreground">
                   <a
-                    href="https://rmv.fyi"
+                    href="https://brodyberson.com"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-primary transition-colors"
                   >
-                    delphi
+                    brody
                   </a>
                 </p>
               </div>
