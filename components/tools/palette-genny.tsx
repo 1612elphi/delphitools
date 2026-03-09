@@ -108,18 +108,20 @@ function getColorsFromUrl(): string | null {
 }
 
 export function PaletteGennyTool() {
-  const [colors, setColors] = useState<PaletteColor[]>(() =>
-    generatePalette(5, "random-cohesive").map(hex => ({
+  const [colors, setColors] = useState<PaletteColor[]>(() => {
+    const urlColors = parseColorsFromParam(getColorsFromUrl());
+    if (urlColors) {
+      return urlColors.map(hex => ({ id: generateId(), hex, locked: false }));
+    }
+    return generatePalette(5, "random-cohesive").map(hex => ({
       id: generateId(),
       hex,
       locked: false,
-    }))
-  );
+    }));
+  });
   const [strategy, setStrategy] = useState<PaletteStrategy>("random-cohesive");
   const [copied, setCopied] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [loadedFromUrl, setLoadedFromUrl] = useState(false);
-  const hasInitializedFromUrl = useRef(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const paletteRef = useRef<HTMLDivElement>(null);
 
@@ -132,20 +134,6 @@ export function PaletteGennyTool() {
   const breakpoint = useBreakpoint();
   const isTouchDevice = useIsTouchDevice();
 
-  // Load colors from URL on mount (client-side only)
-  useEffect(() => {
-    if (hasInitializedFromUrl.current) return;
-    const urlColors = parseColorsFromParam(getColorsFromUrl());
-    if (urlColors) {
-      setColors(urlColors.map(hex => ({
-        id: generateId(),
-        hex,
-        locked: false,
-      })));
-      setLoadedFromUrl(true);
-      hasInitializedFromUrl.current = true;
-    }
-  }, []);
 
   // Determine if we should use grid layout
   const shouldUseGrid =

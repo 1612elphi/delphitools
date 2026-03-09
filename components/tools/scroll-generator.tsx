@@ -61,6 +61,22 @@ export function ScrollGeneratorTool() {
     return { tileWidth, tileHeight, slideCount: Math.max(1, slideCount), needsFill, exactFit };
   }, [imageSize, currentRatio]);
 
+  function readFile(file: File) {
+    setFileName(file.name.replace(/\.[^.]+$/, ""));
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      const img = new Image();
+      img.onload = () => {
+        setImageSize({ width: img.width, height: img.height });
+        setSourceImage(dataUrl);
+        setTiles([]);
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  }
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
@@ -76,21 +92,6 @@ export function ScrollGeneratorTool() {
     }
   };
 
-  const readFile = (file: File) => {
-    setFileName(file.name.replace(/\.[^.]+$/, ""));
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      const img = new Image();
-      img.onload = () => {
-        setImageSize({ width: img.width, height: img.height });
-        setSourceImage(dataUrl);
-        setTiles([]);
-      };
-      img.src = dataUrl;
-    };
-    reader.readAsDataURL(file);
-  };
 
   const generateTiles = () => {
     if (!sourceImage) return;

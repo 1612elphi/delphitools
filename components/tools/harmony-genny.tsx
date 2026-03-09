@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -183,13 +183,9 @@ function generateHarmony(baseHex: string, type: HarmonyType): ColorSwatch[] | nu
 export function HarmonyGennyTool() {
   const [baseColor, setBaseColor] = useState("#3b82f6");
   const [harmonyType, setHarmonyType] = useState<HarmonyType>("complementary");
-  const [colors, setColors] = useState<ColorSwatch[] | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
-  useEffect(() => {
-    const result = generateHarmony(baseColor, harmonyType);
-    setColors(result);
-  }, [baseColor, harmonyType]);
+  const colors = generateHarmony(baseColor, harmonyType);
 
   const copyValue = async (value: string, label: string) => {
     await navigator.clipboard.writeText(value);

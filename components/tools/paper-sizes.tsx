@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { ChevronDown, Layers, LayoutGrid, Search, Upload, X } from "lucide-react";
 import { PDFDocument } from "pdf-lib";
 import { Button } from "@/components/ui/button";
@@ -38,15 +38,6 @@ export function PaperSizesTool() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const searchResult = parseSearchQuery(searchQuery);
 
-  useEffect(() => {
-    localStorage.setItem("paperSizeUnit", unit);
-  }, [unit]);
-
-  useEffect(() => {
-    if (uploadedDimensions) {
-      setSearchQuery(`${uploadedDimensions.width}x${uploadedDimensions.height}@${uploadDpi}dpi`);
-    }
-  }, [uploadDpi, uploadedDimensions]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -187,7 +178,7 @@ export function PaperSizesTool() {
           </div>
           <div>
             <div className="text-muted-foreground">Inches</div>
-            <div className="font-bold">{formatFraction(size.widthIn)} × {formatFraction(size.heightIn)}"</div>
+            <div className="font-bold">{formatFraction(size.widthIn)} × {formatFraction(size.heightIn)}&quot;</div>
           </div>
         </div>
       </div>
@@ -357,7 +348,12 @@ export function PaperSizesTool() {
                 key={dpi}
                 variant={uploadDpi === dpi ? "default" : "outline"}
                 size="sm"
-                onClick={() => setUploadDpi(dpi)}
+                onClick={() => {
+                  setUploadDpi(dpi);
+                  if (uploadedDimensions) {
+                    setSearchQuery(`${uploadedDimensions.width}x${uploadedDimensions.height}@${dpi}dpi`);
+                  }
+                }}
               >
                 {dpi}
               </Button>

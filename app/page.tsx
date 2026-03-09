@@ -26,7 +26,7 @@ export default function Home() {
             I have to say that. Long live the handmade web.
           </p>
           <p>
-            If you find these tools useful, I'm glad. You don't owe me anything. But if you're an artist, feel free to <Link className="underline" href="mailto:tools@rmv.fyi">email me your work</Link>. I'd love to see it.
+            If you find these tools useful, I’m glad. You don’t owe me anything. But if you’re an artist, feel free to <Link className="underline" href="mailto:tools@rmv.fyi">email me your work</Link>. I’d love to see it.
           </p>
         </div>
       </div>

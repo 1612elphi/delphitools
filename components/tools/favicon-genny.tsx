@@ -18,33 +18,7 @@ export function FaviconGennyTool() {
   const [generating, setGenerating] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith("image/")) {
-      readFile(file);
-    }
-  }, []);
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      readFile(file);
-    }
-  };
-
-  const readFile = (file: File) => {
-    setFileName(file.name.replace(/\.[^.]+$/, ""));
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      setSourceImage(dataUrl);
-      generateFavicons(dataUrl);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const generateFavicons = async (imageDataUrl: string) => {
+  async function generateFavicons(imageDataUrl: string) {
     setGenerating(true);
     const img = new Image();
     img.onload = () => {
@@ -76,7 +50,35 @@ export function FaviconGennyTool() {
       setGenerating(false);
     };
     img.src = imageDataUrl;
+  }
+
+  function readFile(file: File) {
+    setFileName(file.name.replace(/\.[^.]+$/, ""));
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      setSourceImage(dataUrl);
+      generateFavicons(dataUrl);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith("image/")) {
+      readFile(file);
+    }
+  }, []);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      readFile(file);
+    }
   };
+
+
 
   const downloadFavicon = (favicon: GeneratedFavicon) => {
     const link = document.createElement("a");

@@ -62,6 +62,22 @@ export function MatteGeneratorTool() {
     img.src = sourceImage;
   }, [sourceImage]);
 
+  function readFile(file: File) {
+    setFileName(file.name.replace(/\.[^.]+$/, ""));
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      const img = new Image();
+      img.onload = () => {
+        setImageSize({ width: img.width, height: img.height });
+        setSourceImage(dataUrl);
+        setResultImage(null);
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  }
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
@@ -77,21 +93,6 @@ export function MatteGeneratorTool() {
     }
   };
 
-  const readFile = (file: File) => {
-    setFileName(file.name.replace(/\.[^.]+$/, ""));
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      const img = new Image();
-      img.onload = () => {
-        setImageSize({ width: img.width, height: img.height });
-        setSourceImage(dataUrl);
-        setResultImage(null);
-      };
-      img.src = dataUrl;
-    };
-    reader.readAsDataURL(file);
-  };
 
   const generateMatte = () => {
     if (!sourceImage) return;

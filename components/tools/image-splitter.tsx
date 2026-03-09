@@ -20,6 +20,22 @@ export function ImageSplitterTool() {
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  function readFile(file: File) {
+    setFileName(file.name.replace(/\.[^.]+$/, ""));
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      const img = new Image();
+      img.onload = () => {
+        setImageSize({ width: img.width, height: img.height });
+        setSourceImage(dataUrl);
+        setTiles([]);
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  }
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
@@ -35,21 +51,6 @@ export function ImageSplitterTool() {
     }
   };
 
-  const readFile = (file: File) => {
-    setFileName(file.name.replace(/\.[^.]+$/, ""));
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      const img = new Image();
-      img.onload = () => {
-        setImageSize({ width: img.width, height: img.height });
-        setSourceImage(dataUrl);
-        setTiles([]);
-      };
-      img.src = dataUrl;
-    };
-    reader.readAsDataURL(file);
-  };
 
   const splitImage = () => {
     if (!sourceImage) return;

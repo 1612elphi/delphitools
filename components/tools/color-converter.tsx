@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -166,7 +166,6 @@ interface ColorValues {
 export function ColorConverterTool() {
   const [inputFormat, setInputFormat] = useState<ColorFormat>("hex");
   const [inputValue, setInputValue] = useState("#3b82f6");
-  const [colors, setColors] = useState<ColorValues | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
   const parseAndConvert = (format: ColorFormat, value: string): ColorValues | null => {
@@ -241,10 +240,7 @@ export function ColorConverterTool() {
     }
   };
 
-  useEffect(() => {
-    const result = parseAndConvert(inputFormat, inputValue);
-    setColors(result);
-  }, [inputFormat, inputValue]);
+  const colors = parseAndConvert(inputFormat, inputValue);
 
   const copyValue = async (value: string) => {
     await navigator.clipboard.writeText(value);

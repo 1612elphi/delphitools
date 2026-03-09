@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { ArrowUpDown, Wand2, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -166,32 +166,24 @@ function ComplianceBadge({ pass, label }: { pass: boolean; label: string }) {
 export function ContrastCheckerTool() {
   const [background, setBackground] = useState("#1a1a2e");
   const [foreground, setForeground] = useState("#eaeaea");
-  const [ratio, setRatio] = useState<number | null>(null);
-  const [compliance, setCompliance] = useState<ComplianceResult | null>(null);
+  const ratio = getContrastRatio(foreground, background);
+  const compliance = ratio ? checkCompliance(ratio) : null;
 
-  useEffect(() => {
-    const r = getContrastRatio(foreground, background);
-    setRatio(r);
-    if (r) {
-      setCompliance(checkCompliance(r));
-    }
-  }, [foreground, background]);
-
-  const flipColors = useCallback(() => {
+  const flipColors = () => {
     setBackground(foreground);
     setForeground(background);
-  }, [foreground, background]);
+  };
 
-  const fixColors = useCallback(() => {
+  const fixColors = () => {
     // Fix to meet AA Normal (4.5:1) by default
     const fixed = fixContrast(foreground, background, WCAG.AA_NORMAL);
     setForeground(fixed);
-  }, [foreground, background]);
+  };
 
-  const fixToAAA = useCallback(() => {
+  const fixToAAA = () => {
     const fixed = fixContrast(foreground, background, WCAG.AAA_NORMAL);
     setForeground(fixed);
-  }, [foreground, background]);
+  };
 
   const isValidHex = (hex: string) => /^#[0-9A-Fa-f]{6}$/.test(hex);
 

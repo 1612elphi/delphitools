@@ -534,7 +534,7 @@ export function TailwindCheatsheetTool() {
 
       {filteredCategories.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
-          No classes found matching "{search}"
+          No classes found matching &quot;{search}&quot;
         </div>
       )}
 

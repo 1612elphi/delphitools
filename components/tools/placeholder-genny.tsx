@@ -29,11 +29,7 @@ export function PlaceholderGennyTool() {
     { label: "Avatar", w: 400, h: 400 },
   ];
 
-  useEffect(() => {
-    generateImage();
-  }, [width, height, bgColor, textColor, text]);
-
-  const generateImage = () => {
+  function generateImage() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -55,7 +51,14 @@ export function PlaceholderGennyTool() {
     ctx.fillText(displayText, w / 2, h / 2);
 
     setDataUrl(canvas.toDataURL("image/png"));
-  };
+  }
+
+
+  useEffect(() => {
+    generateImage();
+  }, [width, height, bgColor, textColor, text]);
+
+
 
   const generateSvg = () => {
     const fontSize = Math.min(w, h) / 8;

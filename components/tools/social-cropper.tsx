@@ -56,6 +56,23 @@ export function SocialCropperTool() {
   const currentRatio = platforms[selectedPlatform].ratios[selectedRatio];
   const aspectRatio = currentRatio.width / currentRatio.height;
 
+  function readFile(file: File) {
+    setFileName(file.name.replace(/\.[^.]+$/, ""));
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      const img = new Image();
+      img.onload = () => {
+        setImageSize({ width: img.width, height: img.height });
+        setSourceImage(dataUrl);
+        setCropOffset({ x: 0, y: 0 });
+        setCroppedImage(null);
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  }
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
@@ -71,22 +88,11 @@ export function SocialCropperTool() {
     }
   };
 
-  const readFile = (file: File) => {
-    setFileName(file.name.replace(/\.[^.]+$/, ""));
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      const img = new Image();
-      img.onload = () => {
-        setImageSize({ width: img.width, height: img.height });
-        setSourceImage(dataUrl);
-        setCropOffset({ x: 0, y: 0 });
-        setCroppedImage(null);
-      };
-      img.src = dataUrl;
-    };
-    reader.readAsDataURL(file);
-  };
+  // Reset crop state when platform or ratio changes
+  useEffect(() => {
+    setCropOffset({ x: 0, y: 0 });
+    setCroppedImage(null);
+  }, [selectedPlatform, selectedRatio]);
 
   // Calculate crop dimensions based on image and aspect ratio
   const getCropDimensions = useCallback(() => {
@@ -110,11 +116,6 @@ export function SocialCropperTool() {
     return { width: cropWidth, height: cropHeight };
   }, [imageSize, aspectRatio]);
 
-  // Reset crop offset when ratio changes
-  useEffect(() => {
-    setCropOffset({ x: 0, y: 0 });
-    setCroppedImage(null);
-  }, [selectedPlatform, selectedRatio]);
 
   // Constrain crop offset to valid bounds
   const constrainOffset = useCallback(

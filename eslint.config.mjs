@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "public/lib/imagetracer_v1.2.6.js",
+    "public/pdf.worker.min.mjs",
   ]),
 ]);
 

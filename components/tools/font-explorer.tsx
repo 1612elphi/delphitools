@@ -28,23 +28,6 @@ export function FontExplorerTool() {
   const [error, setError] = useState<string | null>(null);
   const [fontLoaded, setFontLoaded] = useState(false);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file && (file.name.endsWith(".ttf") || file.name.endsWith(".otf") || file.name.endsWith(".woff") || file.name.endsWith(".woff2"))) {
-      readFile(file);
-    } else {
-      setError("Please upload a font file (.ttf, .otf, .woff, .woff2)");
-    }
-  }, []);
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      readFile(file);
-    }
-  };
-
   const readFile = async (file: File) => {
     setError(null);
     setFontLoaded(false);
@@ -84,6 +67,24 @@ export function FontExplorerTool() {
       console.error(err);
     }
   };
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file && (file.name.endsWith(".ttf") || file.name.endsWith(".otf") || file.name.endsWith(".woff") || file.name.endsWith(".woff2"))) {
+      readFile(file);
+    } else {
+      setError("Please upload a font file (.ttf, .otf, .woff, .woff2)");
+    }
+  }, []);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      readFile(file);
+    }
+  };
+
 
   const clear = () => {
     if (fontUrl) {
