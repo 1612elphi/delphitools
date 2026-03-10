@@ -40,6 +40,7 @@ import {
   Slice,
   FileSearch,
   Braces,
+  Fingerprint,
 } from "lucide-react";
 
 export interface Tool {
@@ -84,6 +85,13 @@ export const toolCategories: ToolCategory[] = [
         icon: Braces,
         href: "/tools/json-formatter",
         beta: true,
+      },
+      {
+        id: "id-generator",
+        name: "UUID / ULID / NanoID Generator",
+        description: "Generate UUID v4/v7, ULID, and NanoID values in bulk",
+        icon: Fingerprint,
+        href: "/tools/id-generator",
       },
     ],
   },
