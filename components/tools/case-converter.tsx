@@ -65,7 +65,7 @@ function slugifyFilename(value: string): string {
   const baseName = trimmed.slice(0, -extensionMatch[0].length);
   const slugBase = toSlug(baseName);
 
-  return slugBase ? `${slugBase}.${extension}` : extension;
+  return slugBase ? `${slugBase}.${extension}` : `.${extension}`;
 }
 
 function convertCase(
