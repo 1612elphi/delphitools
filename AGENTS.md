@@ -158,7 +158,7 @@ bun run build
 4. Ensure `href` matches `/tools/<tool-id>`.
 5. Verify rendering via `app/tools/[toolId]/page.tsx` path.
 6. Run lint/build checks.
-7. Update docs (`README.md`, `llms.txt`, and this file) with new tool/category details; keep all three files synchronized with `lib/tools.ts`.
+7. Update docs (`README.md`, `public/llms.txt`, and this file) with new tool/category details; keep all three files synchronized with `lib/tools.ts`.
 
 ## Privacy and product principles
 
