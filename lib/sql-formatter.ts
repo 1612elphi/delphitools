@@ -119,6 +119,46 @@ function matchPrefixedQuotedLiteral(sql: string, startIndex: number): { end: num
   return { end: findQuotedTokenEnd(sql, sql[cursor], cursor) };
 }
 
+
+function findLineCommentEnd(sql: string, startIndex: number): number {
+  let cursor = startIndex;
+  while (cursor < sql.length && sql[cursor] !== "\n") {
+    cursor += 1;
+  }
+
+  return cursor;
+}
+
+function findBlockCommentEnd(sql: string, startIndex: number): number {
+  let cursor = startIndex + 2;
+  let depth = 1;
+
+  while (cursor < sql.length - 1) {
+    if (sql[cursor] === "/" && sql[cursor + 1] === "*") {
+      depth += 1;
+      cursor += 2;
+      continue;
+    }
+
+    if (sql[cursor] === "*" && sql[cursor + 1] === "/") {
+      depth -= 1;
+      cursor += 2;
+      if (depth === 0) {
+        return cursor;
+      }
+      continue;
+    }
+
+    cursor += 1;
+  }
+
+  return sql.length;
+}
+
+function isLineCommentToken(token: Token): boolean {
+  return token.type === "comment" && (token.value.startsWith("--") || token.value.startsWith("#"));
+}
+
 function tokenizeSql(sql: string): Token[] {
   const tokens: Token[] = [];
   let i = 0;
@@ -132,19 +172,23 @@ function tokenizeSql(sql: string): Token[] {
     }
 
     if (ch === "-" && sql[i + 1] === "-") {
-      let j = i + 2;
-      while (j < sql.length && sql[j] !== "\n") j += 1;
-      tokens.push({ value: sql.slice(i, j), type: "comment" });
-      i = j;
+      const tokenEnd = findLineCommentEnd(sql, i + 2);
+      tokens.push({ value: sql.slice(i, tokenEnd), type: "comment" });
+      i = tokenEnd;
+      continue;
+    }
+
+    if (ch === "#") {
+      const tokenEnd = findLineCommentEnd(sql, i + 1);
+      tokens.push({ value: sql.slice(i, tokenEnd), type: "comment" });
+      i = tokenEnd;
       continue;
     }
 
     if (ch === "/" && sql[i + 1] === "*") {
-      let j = i + 2;
-      while (j < sql.length - 1 && !(sql[j] === "*" && sql[j + 1] === "/")) j += 1;
-      j = Math.min(j + 2, sql.length);
-      tokens.push({ value: sql.slice(i, j), type: "comment" });
-      i = j;
+      const tokenEnd = findBlockCommentEnd(sql, i);
+      tokens.push({ value: sql.slice(i, tokenEnd), type: "comment" });
+      i = tokenEnd;
       continue;
     }
 
@@ -181,6 +225,7 @@ function tokenizeSql(sql: string): Token[] {
     let j = i;
     while (j < sql.length && !/\s/.test(sql[j]) && !/[(),;]/.test(sql[j])) {
       if (sql[j] === "-" && sql[j + 1] === "-") break;
+      if (sql[j] === "#") break;
       if (sql[j] === "/" && sql[j + 1] === "*") break;
       j += 1;
     }
@@ -303,7 +348,7 @@ export function minifySql(sql: string, { dialect, keywordCase }: { dialect: SqlD
 
     if (!output) {
       output = value;
-      forceNewlineBeforeNextToken = token.type === "comment" && token.value.startsWith("--");
+      forceNewlineBeforeNextToken = isLineCommentToken(token);
       continue;
     }
 
@@ -321,7 +366,7 @@ export function minifySql(sql: string, { dialect, keywordCase }: { dialect: SqlD
     }
 
     output += `${forceNewlineBeforeNextToken ? "\n" : " "}${value}`;
-    forceNewlineBeforeNextToken = token.type === "comment" && token.value.startsWith("--");
+    forceNewlineBeforeNextToken = isLineCommentToken(token);
   }
 
   return output.trim();
