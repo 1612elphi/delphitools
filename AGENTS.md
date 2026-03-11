@@ -40,6 +40,7 @@ This file documents how to work safely and effectively in this repository.
 - `encoder` — Encoding Tools
 - `json-formatter` — JSON Formatter
 - `markdown-preview` — Markdown Preview / Markdown ↔ HTML *(new)*
+- `case-converter` — Case Converter / Slugify
 - `text-diff` — Text Diff / Compare *(new)*
 
 ### Calculators
