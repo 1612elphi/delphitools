@@ -159,7 +159,7 @@ function isLineCommentToken(token: Token): boolean {
   return token.type === "comment" && (token.value.startsWith("--") || token.value.startsWith("#"));
 }
 
-function tokenizeSql(sql: string): Token[] {
+function tokenizeSql(sql: string, dialect: SqlDialect): Token[] {
   const tokens: Token[] = [];
   let i = 0;
 
@@ -178,7 +178,7 @@ function tokenizeSql(sql: string): Token[] {
       continue;
     }
 
-    if (ch === "#") {
+    if (dialect === "mysql" && ch === "#") {
       const tokenEnd = findLineCommentEnd(sql, i + 1);
       tokens.push({ value: sql.slice(i, tokenEnd), type: "comment" });
       i = tokenEnd;
@@ -225,7 +225,7 @@ function tokenizeSql(sql: string): Token[] {
     let j = i;
     while (j < sql.length && !/\s/.test(sql[j]) && !/[(),;]/.test(sql[j])) {
       if (sql[j] === "-" && sql[j + 1] === "-") break;
-      if (sql[j] === "#") break;
+      if (dialect === "mysql" && sql[j] === "#") break;
       if (sql[j] === "/" && sql[j + 1] === "*") break;
       j += 1;
     }
@@ -251,7 +251,7 @@ export function formatSql(
   sql: string,
   { dialect, keywordCase, indentSize }: { dialect: SqlDialect; keywordCase: SqlKeywordCase; indentSize: number }
 ): string {
-  const tokens = tokenizeSql(sql);
+  const tokens = tokenizeSql(sql, dialect);
   const lines: string[] = [];
   let currentLine = "";
   let indentLevel = 0;
@@ -335,7 +335,7 @@ function needsSpace(currentLine: string, next: string): boolean {
 }
 
 export function minifySql(sql: string, { dialect, keywordCase }: { dialect: SqlDialect; keywordCase: SqlKeywordCase }): string {
-  const tokens = tokenizeSql(sql);
+  const tokens = tokenizeSql(sql, dialect);
   let output = "";
   let forceNewlineBeforeNextToken = false;
 
