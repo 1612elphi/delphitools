@@ -81,6 +81,8 @@ const ARPABET_TO_SHAVIAN: Record<string, string> = {
   OW: "𐑴", UW: "𐑵", OY: "𐑶",
   AW: "𐑬", AO: "𐑷",
   ER: "𐑼",
+  // Merged sequences
+  YUW: "𐑿",  // yew ligature (Y + UW)
 };
 
 // ARPABET to IPA mapping
@@ -97,6 +99,8 @@ const ARPABET_TO_IPA: Record<string, string> = {
   OW: "oʊ", UW: "uː", OY: "ɔɪ",
   AW: "aʊ", AO: "ɔː",
   ER: "ɚ",
+  // Merged sequences
+  YUW: "juː",  // yew ligature
 };
 
 // Strip stress markers from ARPABET vowels: "AH1" → "AH", "AH0" → "AH0" (special case for schwa)

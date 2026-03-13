@@ -55,10 +55,35 @@ function dictionaryLookup(word: string): { arpabets: string[]; source: "core" | 
 }
 
 /**
+ * Merge ARPABET sequences that map to single Shavian letters.
+ * e.g. Y + UW → 𐑿 (yew, /juː/)
+ */
+function mergeArpabetSequences(arpabets: string[]): string[] {
+  const result: string[] = [];
+  let i = 0;
+  while (i < arpabets.length) {
+    // Y + UW (any stress) → YUW (yew ligature)
+    if (
+      arpabets[i] === "Y" &&
+      i + 1 < arpabets.length &&
+      normalizeArpabet(arpabets[i + 1]) === "UW"
+    ) {
+      result.push("YUW");
+      i += 2;
+    } else {
+      result.push(arpabets[i]);
+      i++;
+    }
+  }
+  return result;
+}
+
+/**
  * Convert ARPABET array to Phoneme array.
  */
 function arpabetToPhonemes(arpabets: string[]): Phoneme[] {
-  return arpabets.map((code) => {
+  const merged = mergeArpabetSequences(arpabets);
+  return merged.map((code) => {
     const normalized = normalizeArpabet(code);
     const shavian = arpabetToShavian(code) ?? "?";
     const ipa = arpabetToIpa(code) ?? "?";
