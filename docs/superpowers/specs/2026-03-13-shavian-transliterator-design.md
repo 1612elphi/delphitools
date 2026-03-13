@@ -21,9 +21,9 @@ Three tiers of word resolution, loaded progressively:
 
 ### Tier 1: Core Dictionary (bundled)
 
-- ~5–10k most common English words
+- Top 7,500 most common English words by Brown corpus frequency
 - Bundled as a JSON module, available instantly on component mount via dynamic import
-- ~200–300KB estimated size
+- ~250KB estimated size
 - Each entry maps `word → { shavian: string, ipa: string, phonemes: Phoneme[] }`
 
 ### Tier 2: Full Dictionary (lazy-loaded)
@@ -32,12 +32,20 @@ Three tiers of word resolution, loaded progressively:
 - Loaded as a static JSON asset via `fetch()` in the background after mount
 - Read Lexicon entries take precedence over CMU where both cover the same word
 - Merges into the active lookup map when ready
-- UI shows loading progress in the status bar ("Loading full dictionary... 5,231 / 134,166 words")
+- Status bar shows a loading spinner with bytes-downloaded progress while fetching, then "Dictionary ready" once loaded and merged
 
 ### Tier 3: Heuristic Fallback
 
-- For words not found in either dictionary, apply letter-to-phoneme rules to produce a best-guess transliteration
+- For words not found in either dictionary, a rule-based grapheme-to-phoneme converter produces a best-guess transliteration
+- Strategy: a table of ~80–100 English grapheme patterns (e.g. "tion" → /ʃən/, "ph" → /f/, "ough" → /oʊ/) applied longest-match-first, with single-letter fallbacks for unmatched characters. Not intended to be perfect — just good enough to produce something editable.
 - Heuristic-resolved words are flagged visually (red dashed underline) so the user knows to verify them
+
+### Re-resolution on Tier 2 Load
+
+- When the full dictionary finishes loading, any words currently resolved via heuristic are automatically re-checked against the full dictionary
+- Words that now have dictionary matches are upgraded: red underline removed, phonemes replaced with dictionary values
+- Words where the user has manually swapped any phoneme are left untouched (user edits are preserved)
+- Words still not in the full dictionary remain flagged as heuristic
 
 ### Phoneme Data Model
 
@@ -86,7 +94,7 @@ A small mapping module handles conversions between ARPABET → IPA and ARPABET �
 When the user clicks a Shavian letter in the gloss, a popover shows alternative phonemes:
 
 - **Vowels:** All Shavian vowel characters shown as alternatives (vowel ambiguity is the primary source of transliteration errors)
-- **Consonants:** Phonetically similar consonants shown (e.g. voiced/unvoiced pairs like 𐑐/𐑚, 𐑑/𐑛)
+- **Consonants:** Grouped by similarity — voicing pairs (𐑐 peep / 𐑚 bib, 𐑑 tot / 𐑛 dead, 𐑒 kick / 𐑜 gag, 𐑓 fee / 𐑝 vow, 𐑔 thigh / 𐑞 they, 𐑕 so / 𐑟 zoo, 𐑖 sure / 𐑠 measure, 𐑗 church / 𐑡 judge) and place-of-articulation neighbours (nasals 𐑥/𐑯/𐑙, liquids 𐑤/𐑮)
 - Each alternative displays: Shavian character, keyword name (peep, bib, tot, etc.), and IPA value
 - Selecting an alternative swaps that letter and updates the IPA row below it
 
@@ -162,10 +170,12 @@ When the user clicks a Shavian letter in the gloss, a popover shows alternative 
 
 ### Export Gloss (PNG)
 
-- Renders the gloss to an HTML5 Canvas
+- Renders the gloss to an HTML5 Canvas at a fixed width of 1200px
+- Word-wrapping computed by measuring each word group's width (Latin text width as the reference) and breaking to a new line when cumulative width exceeds the canvas width minus padding
 - Background matches current theme (light/dark)
-- All three rows rendered per word, wrapping naturally
+- All three rows rendered per word group, maintaining the same left-aligned layout as the DOM version
 - delphi.tools branding in the bottom corner
+- Canvas height determined dynamically by number of wrapped lines
 - Downloads as PNG
 
 ## File Structure
@@ -184,20 +194,23 @@ public/data/
 
 ## Dictionary Build Process
 
-A build script (not part of the runtime app) processes:
+A standalone Node.js build script at `scripts/build-shavian-dict.ts` (not part of the runtime app, run manually when dictionary sources are updated). It processes:
 
-1. CMU Pronouncing Dictionary (ARPABET phonemes for ~134k words)
-2. Read Lexicon data (Shavian-specific, community-vetted)
+1. **CMU Pronouncing Dictionary** — downloaded as `cmudict.dict` (ARPABET phonemes, ~134k words)
+2. **Read Lexicon data** — Shavian-specific community-vetted entries (sourced as CSV or JSON)
+3. **Word frequency list** — Brown corpus word frequency data used to rank words for core dictionary inclusion
 
 And produces:
 
-- `dictionary-core.json` — top 5–10k words by frequency
-- `shavian-dictionary-full.json` — all ~134k words
+- `lib/shavian/dictionary-core.json` — top 7,500 words by Brown corpus frequency
+- `public/data/shavian-dictionary-full.json` — all ~134k words
 
 Read Lexicon entries override CMU entries where both exist. The script maps ARPABET phonemes to Shavian characters and IPA, and pre-computes the alternatives list for each phoneme position.
 
+Run with: `npx tsx scripts/build-shavian-dict.ts`
+
 ## Dependencies
 
-- No new external dependencies anticipated
-- Canvas rendering for PNG export uses browser-native APIs
-- Shavian Unicode rendering depends on the user's system having a Shavian-capable font; may need to bundle or link one (e.g. Noto Sans Shavian) as a web font
+- **Noto Sans Shavian** web font — bundled as a self-hosted WOFF2 file in `public/fonts/`. Shavian characters are not in most system fonts, so this is required for the tool to function. Noto Sans Shavian is ~15KB as WOFF2. Loaded via `@font-face` in the tool component, not globally.
+- Canvas rendering for PNG export uses browser-native APIs (no external dependency)
+- The canvas export must also load the Shavian font for correct rendering
