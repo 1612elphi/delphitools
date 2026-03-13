@@ -72,20 +72,10 @@ function arpabetToPhonemes(arpabets: string[]): Phoneme[] {
 }
 
 /**
- * Determine if a word should get a namer dot.
- * Capitalised words not at position 0 (sentence start) get namer dots.
- */
-function shouldNamerDot(word: string, isFirstWord: boolean): boolean {
-  if (word.length === 0) return false;
-  const firstChar = word[0];
-  if (firstChar !== firstChar.toUpperCase() || firstChar === firstChar.toLowerCase()) return false;
-  return !isFirstWord;
-}
-
-/**
  * Transliterate a single word.
+ * Namer dots are never auto-detected — they are toggled manually by the user.
  */
-export function transliterateWord(word: string, isFirstWord: boolean): GlossWord {
+export function transliterateWord(word: string): GlossWord {
   const lookup = dictionaryLookup(word);
   let phonemes: Phoneme[];
   let source: GlossWord["source"];
@@ -104,8 +94,8 @@ export function transliterateWord(word: string, isFirstWord: boolean): GlossWord
     source = "heuristic";
   }
 
-  const isNamer = shouldNamerDot(word, isFirstWord);
-  const namerPrefix = isNamer ? "·" : "";
+  const isNamer = false;
+  const namerPrefix = "";
 
   return {
     latin: word,
@@ -126,24 +116,15 @@ export function tokenise(text: string): GlossToken[] {
   // Match: words (letters/apostrophes), whitespace runs, or punctuation
   const regex = /([a-zA-Z']+)|(\s+)|([^\sa-zA-Z']+)/g;
   let match: RegExpExecArray | null;
-  let isFirstWord = true;
 
   while ((match = regex.exec(text)) !== null) {
     if (match[1]) {
-      // Word
-      const gloss = transliterateWord(match[1], isFirstWord);
+      const gloss = transliterateWord(match[1]);
       tokens.push({ type: "word", value: match[1], gloss });
-      isFirstWord = false;
     } else if (match[2]) {
-      // Whitespace
       tokens.push({ type: "whitespace", value: match[2] });
     } else if (match[3]) {
-      // Punctuation
       tokens.push({ type: "punctuation", value: match[3] });
-      // Reset sentence detection after sentence-ending punctuation
-      if (/[.!?]/.test(match[3])) {
-        isFirstWord = true;
-      }
     }
   }
 

@@ -91,6 +91,27 @@ export function ShavianTransliteratorTool() {
     setActivePopover(null);
   }, []);
 
+  // Toggle namer dot on a word
+  const toggleNamer = useCallback((wordIdx: number) => {
+    setTokens((prev) => {
+      const next = [...prev];
+      const wordTokens = next.filter((t) => t.type === "word");
+      const token = wordTokens[wordIdx];
+      if (!token?.gloss) return prev;
+
+      const newIsNamer = !token.gloss.isNamer;
+      const namerPrefix = newIsNamer ? "·" : "";
+
+      token.gloss = {
+        ...token.gloss,
+        isNamer: newIsNamer,
+        shavian: namerPrefix + token.gloss.phonemes.map((p) => p.shavian).join(""),
+      };
+
+      return next;
+    });
+  }, []);
+
   // Swap a phoneme for a word
   const swapPhoneme = useCallback(
     (wordIdx: number, phonemeIdx: number, alt: Alternative) => {
@@ -194,10 +215,16 @@ export function ShavianTransliteratorTool() {
 
               return (
                 <div key={tokenIdx} className="flex flex-col items-start gap-0.5">
-                  {/* Latin row */}
-                  <span className="text-sm text-muted-foreground px-1">
-                    {gloss.latin}
-                  </span>
+                  {/* Latin row — click to toggle namer dot */}
+                  <button
+                    onClick={() => toggleNamer(wordIdx)}
+                    className={`text-sm px-1 rounded transition-colors cursor-pointer hover:bg-accent ${
+                      gloss.isNamer ? "text-orange-400 font-medium" : "text-muted-foreground"
+                    }`}
+                    title={gloss.isNamer ? "Remove namer dot (proper noun)" : "Add namer dot (proper noun)"}
+                  >
+                    {gloss.isNamer ? "·" : ""}{gloss.latin}
+                  </button>
 
                   {/* Shavian row — per-letter clickable */}
                   <div className="flex gap-px">
