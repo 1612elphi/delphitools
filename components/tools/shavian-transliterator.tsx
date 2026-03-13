@@ -262,7 +262,7 @@ export function ShavianTransliteratorTool() {
                               transition-all cursor-pointer
                               hover:bg-accent hover:-translate-y-0.5
                               ${isActive ? "bg-accent ring-2 ring-primary -translate-y-0.5" : ""}
-                              ${gloss.marker !== "none" ? "text-orange-400" : gloss.source === "heuristic" && !gloss.userEdited ? "text-destructive" : "text-foreground"}
+                              ${gloss.marker !== "none" ? "text-orange-400" : "text-foreground"}
                             `}
                             style={{ fontFamily: "'Noto Sans Shavian', sans-serif" }}
                           >
@@ -324,7 +324,7 @@ export function ShavianTransliteratorTool() {
                     {gloss.phonemes.map((phoneme, pIdx) => (
                       <span
                         key={pIdx}
-                        className="text-[13px] text-green-500 px-1 min-w-[20px]"
+                        className={`text-[13px] px-1 min-w-[20px] ${gloss.source === "heuristic" && !gloss.userEdited ? "text-destructive" : "text-green-500"}`}
                       >
                         {phoneme.ipa}
                       </span>
