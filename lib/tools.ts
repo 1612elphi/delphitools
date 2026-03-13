@@ -40,6 +40,7 @@ import {
   Slice,
   FileSearch,
   Languages,
+  Layers,
 } from "lucide-react";
 
 export interface Tool {
@@ -301,6 +302,14 @@ export const toolCategories: ToolCategory[] = [
         description: "Create 8-page mini-zine imposition layouts",
         icon: BookOpen,
         href: "/tools/zine-imposer",
+      },
+      {
+        id: "imposer",
+        name: "Imposer",
+        description: "Impose PDF pages for booklet, saddle-stitch, and N-up printing",
+        icon: Layers,
+        href: "/tools/imposer",
+        new: true,
       },
     ],
   },
