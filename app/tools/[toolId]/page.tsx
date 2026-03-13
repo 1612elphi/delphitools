@@ -51,6 +51,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   "guillotine-director": dynamic(() => import("@/components/tools/guillotine-director").then(mod => mod.GuillotineDirectorTool)),
   "pdf-preflight": dynamic(() => import("@/components/tools/pdf-preflight").then(mod => mod.PdfPreflightTool)),
   "shavian-transliterator": dynamic(() => import("@/components/tools/shavian-transliterator").then(mod => mod.ShavianTransliteratorTool)),
+  "imposer": dynamic(() => import("@/components/tools/imposer").then(mod => mod.ImposerTool)),
 };
 
 interface ToolPageProps {

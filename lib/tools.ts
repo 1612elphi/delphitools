@@ -305,7 +305,7 @@ export const toolCategories: ToolCategory[] = [
       },
       {
         id: "imposer",
-        name: "Imposer",
+        name: "Print Imposer",
         description: "Impose PDF pages for booklet, saddle-stitch, and N-up printing",
         icon: Layers,
         href: "/tools/imposer",
