@@ -44,3 +44,7 @@ next-env.d.ts
 # claude
 CLAUDE.md
 /docs
+.superpowers/
+
+# build data (downloaded source files for dictionary builds)
+scripts/data/

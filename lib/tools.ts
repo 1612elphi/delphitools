@@ -39,6 +39,7 @@ import {
   ScanLine,
   Slice,
   FileSearch,
+  Languages,
 } from "lucide-react";
 
 export interface Tool {
@@ -403,6 +404,20 @@ export const toolCategories: ToolCategory[] = [
         description: "Base64, URL encoding, and hash generation",
         icon: FileCode,
         href: "/tools/encoder",
+      },
+    ],
+  },
+  {
+    id: "turbo-nerd",
+    name: "Turbo-nerd Shit",
+    tools: [
+      {
+        id: "shavian-transliterator",
+        name: "Shavian Transliterator",
+        description: "Transliterate English text to the Shavian alphabet",
+        icon: Languages,
+        href: "/tools/shavian-transliterator",
+        new: true,
       },
     ],
   },
