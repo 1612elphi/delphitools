@@ -262,8 +262,7 @@ export function ShavianTransliteratorTool() {
                               transition-all cursor-pointer
                               hover:bg-accent hover:-translate-y-0.5
                               ${isActive ? "bg-accent ring-2 ring-primary -translate-y-0.5" : ""}
-                              ${gloss.marker !== "none" ? "text-orange-400" : "text-foreground"}
-                              ${gloss.source === "heuristic" && !gloss.userEdited ? "border-b-2 border-dashed border-destructive" : ""}
+                              ${gloss.marker !== "none" ? "text-orange-400" : gloss.source === "heuristic" && !gloss.userEdited ? "text-destructive" : "text-foreground"}
                             `}
                             style={{ fontFamily: "'Noto Sans Shavian', sans-serif" }}
                           >
