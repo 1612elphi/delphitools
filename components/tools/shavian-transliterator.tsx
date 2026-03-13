@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Copy, Download, Check, Loader2 } from "lucide-react";
@@ -33,13 +33,13 @@ function parseDictJson(json: Record<string, string[]>): Dictionary {
 }
 
 export function ShavianTransliteratorTool() {
-  const DEFAULT_TEXT = "In honour of the truth, as an emblem of our goodwill";
+  const DEFAULT_TEXT = "Mankind, be vigilant; we loved you.";
 
   const [input, setInput] = useState(DEFAULT_TEXT);
   const [tokens, setTokens] = useState<GlossToken[]>([]);
   const [dictStatus, setDictStatus] = useState<"loading-core" | "loading-full" | "ready">("loading-core");
   const [copied, setCopied] = useState(false);
-  const [activePopover, setActivePopover] = useState<{ wordIdx: number; phonemeIdx: number } | null>(null);
+  const [activePopover, setActivePopover] = useState<{ tokenIdx: number; phonemeIdx: number } | null>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef(input);
   inputRef.current = input;
@@ -94,55 +94,54 @@ export function ShavianTransliteratorTool() {
   }, []);
 
   // Toggle namer dot on a word
-  const toggleNamer = useCallback((wordIdx: number) => {
-    setTokens((prev) => {
-      const next = [...prev];
-      const wordTokens = next.filter((t) => t.type === "word");
-      const token = wordTokens[wordIdx];
-      if (!token?.gloss) return prev;
+  const toggleNamer = useCallback((tokenIdx: number) => {
+    setTokens((prev) =>
+      prev.map((token, i) => {
+        if (i !== tokenIdx || token.type !== "word" || !token.gloss) return token;
 
-      const newIsNamer = !token.gloss.isNamer;
-      const namerPrefix = newIsNamer ? "·" : "";
+        const newIsNamer = !token.gloss.isNamer;
+        const namerPrefix = newIsNamer ? "·" : "";
 
-      token.gloss = {
-        ...token.gloss,
-        isNamer: newIsNamer,
-        shavian: namerPrefix + token.gloss.phonemes.map((p) => p.shavian).join(""),
-      };
-
-      return next;
-    });
+        return {
+          ...token,
+          gloss: {
+            ...token.gloss,
+            isNamer: newIsNamer,
+            shavian: namerPrefix + token.gloss.phonemes.map((p) => p.shavian).join(""),
+          },
+        };
+      })
+    );
   }, []);
 
   // Swap a phoneme for a word
   const swapPhoneme = useCallback(
-    (wordIdx: number, phonemeIdx: number, alt: Alternative) => {
-      setTokens((prev) => {
-        const next = [...prev];
-        const wordTokens = next.filter((t) => t.type === "word");
-        const token = wordTokens[wordIdx];
-        if (!token?.gloss) return prev;
+    (tokenIdx: number, phonemeIdx: number, alt: Alternative) => {
+      setTokens((prev) =>
+        prev.map((token, i) => {
+          if (i !== tokenIdx || token.type !== "word" || !token.gloss) return token;
 
-        const newPhonemes = [...token.gloss.phonemes];
-        newPhonemes[phonemeIdx] = {
-          shavian: alt.shavian,
-          ipa: alt.ipa,
-          alternatives: getAlternatives(alt.shavian),
-        };
+          const newPhonemes = [...token.gloss.phonemes];
+          newPhonemes[phonemeIdx] = {
+            shavian: alt.shavian,
+            ipa: alt.ipa,
+            alternatives: getAlternatives(alt.shavian),
+          };
 
-        const isNamer = token.gloss.isNamer;
-        const namerPrefix = isNamer ? "·" : "";
+          const namerPrefix = token.gloss.isNamer ? "·" : "";
 
-        token.gloss = {
-          ...token.gloss,
-          phonemes: newPhonemes,
-          shavian: namerPrefix + newPhonemes.map((p) => p.shavian).join(""),
-          ipa: newPhonemes.map((p) => p.ipa).join(""),
-          userEdited: true,
-        };
-
-        return next;
-      });
+          return {
+            ...token,
+            gloss: {
+              ...token.gloss,
+              phonemes: newPhonemes,
+              shavian: namerPrefix + newPhonemes.map((p) => p.shavian).join(""),
+              ipa: newPhonemes.map((p) => p.ipa).join(""),
+              userEdited: true,
+            },
+          };
+        })
+      );
       setActivePopover(null);
     },
     []
@@ -174,15 +173,6 @@ export function ShavianTransliteratorTool() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Count word tokens for indexing
-  const wordTokenIndices = useMemo(() => {
-    const indices: number[] = [];
-    tokens.forEach((t, i) => {
-      if (t.type === "word") indices.push(i);
-    });
-    return indices;
-  }, [tokens]);
-
   const hasContent = tokens.some((t) => t.type === "word");
 
   return (
@@ -208,41 +198,48 @@ export function ShavianTransliteratorTool() {
       {/* Gloss Grid */}
       {hasContent && (
         <div className="rounded-lg border bg-card p-4">
-          <div className="flex flex-wrap gap-x-5 gap-y-3 items-start">
+          <div className="flex flex-wrap gap-y-3 items-start">
             {tokens.map((token, tokenIdx) => {
               if (token.type === "whitespace") {
-                return <div key={tokenIdx} className="w-2" />;
+                return <div key={tokenIdx} className="w-4" />;
               }
               if (token.type === "punctuation") {
                 return (
-                  <span key={tokenIdx} className="text-muted-foreground text-lg self-center">
+                  <span key={tokenIdx} className="text-muted-foreground text-lg self-end pb-5 -ml-1">
                     {token.value}
                   </span>
                 );
               }
               if (!token.gloss) return null;
 
-              const wordIdx = wordTokenIndices.indexOf(tokenIdx);
               const gloss = token.gloss;
 
               return (
                 <div key={tokenIdx} className="flex flex-col items-start gap-0.5">
                   {/* Latin row — click to toggle namer dot */}
                   <button
-                    onClick={() => toggleNamer(wordIdx)}
+                    onClick={() => toggleNamer(tokenIdx)}
                     className={`text-sm px-1 rounded transition-colors cursor-pointer hover:bg-accent ${
                       gloss.isNamer ? "text-orange-400 font-medium" : "text-muted-foreground"
                     }`}
                     title={gloss.isNamer ? "Remove namer dot (proper noun)" : "Add namer dot (proper noun)"}
                   >
-                    {gloss.isNamer ? "·" : ""}{gloss.latin}
+                    {gloss.latin}
                   </button>
 
                   {/* Shavian row — per-letter clickable */}
-                  <div className="flex gap-px">
+                  <div className="flex gap-px items-center">
+                    {gloss.isNamer && (
+                      <span
+                        className="text-[22px] leading-tight text-orange-400 px-0.5"
+                        style={{ fontFamily: "'Noto Sans Shavian', sans-serif" }}
+                      >
+                        ·
+                      </span>
+                    )}
                     {gloss.phonemes.map((phoneme, pIdx) => {
                       const isActive =
-                        activePopover?.wordIdx === wordIdx &&
+                        activePopover?.tokenIdx === tokenIdx &&
                         activePopover?.phonemeIdx === pIdx;
 
                       return (
@@ -250,7 +247,7 @@ export function ShavianTransliteratorTool() {
                           <button
                             onClick={() =>
                               setActivePopover(
-                                isActive ? null : { wordIdx, phonemeIdx: pIdx }
+                                isActive ? null : { tokenIdx, phonemeIdx: pIdx }
                               )
                             }
                             className={`
@@ -292,7 +289,7 @@ export function ShavianTransliteratorTool() {
                               {phoneme.alternatives.map((alt, aIdx) => (
                                 <button
                                   key={aIdx}
-                                  onClick={() => swapPhoneme(wordIdx, pIdx, alt)}
+                                  onClick={() => swapPhoneme(tokenIdx, pIdx, alt)}
                                   className="flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded text-left hover:bg-accent transition-colors cursor-pointer"
                                 >
                                   <span
