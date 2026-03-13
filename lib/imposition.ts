@@ -77,6 +77,8 @@ export interface ImpositionConfig {
   nUp?: number;
   /** For custom N-up: explicit [rows, cols]. If provided, overrides nUp grid lookup. */
   customGrid?: [number, number];
+  /** Duplex flip direction. Long-edge is standard; short-edge adds 180° to back-side placements. */
+  duplexFlip?: "long-edge" | "short-edge";
 }
 
 export interface ImpositionResult {
@@ -105,11 +107,14 @@ export interface ImpositionLayout {
 // ---------------------------------------------------------------------------
 
 export const PAPER_SIZES: PaperSize[] = [
-  { id: "a4",      label: "A4 (210 × 297 mm)",   widthMm: 210,   heightMm: 297   },
-  { id: "a3",      label: "A3 (297 × 420 mm)",   widthMm: 297,   heightMm: 420   },
-  { id: "letter",  label: "Letter (8.5 × 11\")",  widthMm: 215.9, heightMm: 279.4 },
-  { id: "legal",   label: "Legal (8.5 × 14\")",   widthMm: 215.9, heightMm: 355.6 },
-  { id: "tabloid", label: "Tabloid (11 × 17\")",  widthMm: 279.4, heightMm: 431.8 },
+  { id: "a4",      label: "A4 (210 × 297 mm)",       widthMm: 210,   heightMm: 297   },
+  { id: "a3",      label: "A3 (297 × 420 mm)",       widthMm: 297,   heightMm: 420   },
+  { id: "sra4",    label: "SRA4 (225 × 320 mm)",     widthMm: 225,   heightMm: 320   },
+  { id: "sra3",    label: "SRA3 (320 × 450 mm)",     widthMm: 320,   heightMm: 450   },
+  { id: "letter",  label: "Letter (8.5 × 11\")",      widthMm: 215.9, heightMm: 279.4 },
+  { id: "legal",   label: "Legal (8.5 × 14\")",       widthMm: 215.9, heightMm: 355.6 },
+  { id: "tabloid", label: "Tabloid (11 × 17\")",      widthMm: 279.4, heightMm: 431.8 },
+  { id: "12x18",   label: "12 × 18\" (305 × 457 mm)", widthMm: 304.8, heightMm: 457.2 },
 ];
 
 // ---------------------------------------------------------------------------
@@ -224,9 +229,9 @@ function calculateSaddleStitch(
 
   for (let s = 0; s < numSheets; s++) {
     // Creep offset: outermost sheet (s=0) has largest creep, innermost has none.
-    // The inner pages need to shift outward (away from spine) to compensate for
-    // the extra paper bulk when nested.
-    const creepOffset = (numSheets - 1 - s) * creepMm;
+    // Clamped to the margin so pages can't be pushed off the sheet edge.
+    const rawCreep = (numSheets - 1 - s) * creepMm;
+    const creepOffset = Math.min(rawCreep, marginMm);
 
     // Saddle stitch page assignment:
     // Sheet index s (0-based, outermost = 0) contains:
@@ -246,9 +251,7 @@ function calculateSaddleStitch(
     const usableH = sheetH - marginMm * 2;
     const halfW    = (usableW - gutterMm) / 2;
 
-    // Front: left page is rotated 180° (upside down relative to right page)
-    // because when you fold the sheet, the left half becomes the back cover
-    // oriented correctly from the reader's perspective.
+    // No rotation needed — page ordering handles correct reading after fold.
     const frontPlacements: PagePlacement[] = [
       {
         pageNumber: pageOrBlank(frontLeft),
@@ -256,7 +259,7 @@ function calculateSaddleStitch(
         y: marginMm,
         width: halfW,
         height: usableH,
-        rotation: 180,
+        rotation: 0,
         side: "front",
       },
       {
@@ -270,7 +273,6 @@ function calculateSaddleStitch(
       },
     ];
 
-    // Back: mirror of front (left becomes right when sheet is flipped)
     const backPlacements: PagePlacement[] = [
       {
         pageNumber: pageOrBlank(backLeft),
@@ -287,7 +289,7 @@ function calculateSaddleStitch(
         y: marginMm,
         width: halfW,
         height: usableH,
-        rotation: 180,
+        rotation: 0,
         side: "back",
       },
     ];
@@ -308,19 +310,22 @@ function calculateSaddleStitch(
 
 /**
  * Sequential two-up layout for perfect-bound books (pages cut and glued at spine).
- * No page reordering is required — sheets stack in reading order.
  *
- *   Sheet 1 front: pages 1, 2
- *   Sheet 1 back:  pages 3, 4
- *   Sheet 2 front: pages 5, 6
+ * Each sheet carries two leaves side by side. After cutting down the centre,
+ * each leaf has its front and back page correctly backed up (long-edge flip).
+ *
+ *   Sheet 1 front: [1, 3]   — page 1 left, page 3 right
+ *   Sheet 1 back:  [2, 4]   — page 2 behind page 1, page 4 behind page 3
+ *   Sheet 2 front: [5, 7]
+ *   Sheet 2 back:  [6, 8]
  *   …
  */
 function calculatePerfectBind(
   totalSourcePages: number,
   config: ImpositionConfig
 ): ImpositionResult {
-  const totalPages = padToMultiple(Math.max(totalSourcePages, 2), 2);
-  const numSheets = Math.ceil(totalPages / 4);
+  const totalPages = padToMultiple(Math.max(totalSourcePages, 4), 4);
+  const numSheets = totalPages / 4;
 
   const { sheetW, sheetH } = sheetDimensions(config.paperSize, config.orientation);
 
@@ -329,8 +334,10 @@ function calculatePerfectBind(
 
   for (let s = 0; s < numSheets; s++) {
     const base = s * 4;
-    const frontPages = [pageOrBlank(base + 1), pageOrBlank(base + 2)];
-    const backPages  = [pageOrBlank(base + 3), pageOrBlank(base + 4)];
+    // Front: odd-numbered pages of each leaf side by side
+    const frontPages = [pageOrBlank(base + 1), pageOrBlank(base + 3)];
+    // Back: even-numbered pages behind their fronts (same position after long-edge flip)
+    const backPages  = [pageOrBlank(base + 2), pageOrBlank(base + 4)];
 
     sheets.push({
       sheetNumber: s + 1,
@@ -548,6 +555,43 @@ function calculateCustomNUp(
 }
 
 // ---------------------------------------------------------------------------
+// Duplex tumble post-processing
+// ---------------------------------------------------------------------------
+
+/**
+ * Apply tumble (short-edge) rotation to all back-side placements.
+ * Adds 180° (mod 360) to every back placement's rotation.
+ * This compensates for the sheet being flipped upside-down during tumble duplex.
+ */
+function applyTumbleRotation(result: ImpositionResult): ImpositionResult {
+  for (const sheet of result.sheets) {
+    for (const p of sheet.back) {
+      p.rotation = (p.rotation + 180) % 360;
+    }
+  }
+  return result;
+}
+
+/** Layouts that support duplex direction (have fold geometry). */
+export const DUPLEX_AWARE_LAYOUTS = new Set(["saddle-stitch", "perfect-bind", "four-up-booklet"]);
+
+/**
+ * Wrap a layout calculate function to apply tumble rotation when short-edge duplex is selected.
+ */
+function withDuplexPostProcess(
+  calculateFn: (totalSourcePages: number, config: ImpositionConfig) => ImpositionResult,
+  layoutId: string,
+): (totalSourcePages: number, config: ImpositionConfig) => ImpositionResult {
+  return (totalSourcePages, config) => {
+    const result = calculateFn(totalSourcePages, config);
+    if (config.duplexFlip === "short-edge" && DUPLEX_AWARE_LAYOUTS.has(layoutId)) {
+      return applyTumbleRotation(result);
+    }
+    return result;
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Layout registry
 // ---------------------------------------------------------------------------
 
@@ -560,7 +604,7 @@ export const IMPOSITION_LAYOUTS: ImpositionLayout[] = [
       "The outermost sheet carries the cover (page 1) and back cover (page N).",
     useCase: "Booklets, magazines, zines, programmes",
     pagesPerSheet: 4,
-    calculate: calculateSaddleStitch,
+    calculate: withDuplexPostProcess(calculateSaddleStitch, "saddle-stitch"),
   },
   {
     id: "perfect-bind",
@@ -570,7 +614,7 @@ export const IMPOSITION_LAYOUTS: ImpositionLayout[] = [
       "and glued at the spine. No page reordering is required.",
     useCase: "Paperback books, catalogues, perfect-bound booklets",
     pagesPerSheet: 4,
-    calculate: calculatePerfectBind,
+    calculate: withDuplexPostProcess(calculatePerfectBind, "perfect-bind"),
   },
   {
     id: "step-and-repeat",
@@ -590,7 +634,7 @@ export const IMPOSITION_LAYOUTS: ImpositionLayout[] = [
       "folded long-edge then short-edge to produce a small booklet.",
     useCase: "Pocket booklets, pamphlets, menus",
     pagesPerSheet: 8,
-    calculate: calculateFourUpBooklet,
+    calculate: withDuplexPostProcess(calculateFourUpBooklet, "four-up-booklet"),
   },
   {
     id: "gang-run",
@@ -620,4 +664,27 @@ export const IMPOSITION_LAYOUTS: ImpositionLayout[] = [
 
 export function getLayoutById(id: string): ImpositionLayout | undefined {
   return IMPOSITION_LAYOUTS.find((l) => l.id === id);
+}
+
+/**
+ * For each placement, determine which edges face the sheet margin (outer)
+ * vs an adjacent cell across a gutter (inner). Crop mark arms should only
+ * be drawn on outer edges to avoid confusing convergence in gutters.
+ */
+export function getOuterEdges(placements: PagePlacement[]): {
+  left: boolean; right: boolean; top: boolean; bottom: boolean;
+}[] {
+  if (placements.length === 0) return [];
+  const eps = 0.5;
+  const minX = Math.min(...placements.map((p) => p.x));
+  const maxX = Math.max(...placements.map((p) => p.x + p.width));
+  const minY = Math.min(...placements.map((p) => p.y));
+  const maxY = Math.max(...placements.map((p) => p.y + p.height));
+
+  return placements.map((p) => ({
+    left:   Math.abs(p.x - minX) < eps,
+    right:  Math.abs(p.x + p.width - maxX) < eps,
+    top:    Math.abs(p.y - minY) < eps,
+    bottom: Math.abs(p.y + p.height - maxY) < eps,
+  }));
 }
