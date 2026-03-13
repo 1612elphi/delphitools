@@ -77,7 +77,7 @@ const ARPABET_TO_SHAVIAN: Record<string, string> = {
   // Vowels
   AE: "𐑨", AH0: "𐑩", AH: "𐑳", AA: "𐑪", AA_PALM: "𐑭",
   UH: "𐑫", IH: "𐑦", EH: "𐑧",
-  EY: "𐑱", IY: "𐑰", AY: "𐑲",
+  EY: "𐑱", IY: "𐑰", IY0: "𐑦", AY: "𐑲",
   OW: "𐑴", UW: "𐑵", OY: "𐑶",
   AW: "𐑬", AO: "𐑷",
   ER: "𐑼",
@@ -95,7 +95,7 @@ const ARPABET_TO_IPA: Record<string, string> = {
   M: "m", N: "n", L: "l", R: "r",
   AE: "æ", AH0: "ə", AH: "ʌ", AA: "ɒ", AA_PALM: "ɑː",
   UH: "ʊ", IH: "ɪ", EH: "ɛ",
-  EY: "eɪ", IY: "iː", AY: "aɪ",
+  EY: "eɪ", IY: "iː", IY0: "i", AY: "aɪ",
   OW: "oʊ", UW: "uː", OY: "ɔɪ",
   AW: "aʊ", AO: "ɔː",
   ER: "ɚ",
@@ -108,6 +108,11 @@ export function normalizeArpabet(code: string): string {
   // AH with stress 0 is schwa (𐑩), AH with stress 1/2 is strut (𐑳)
   if (code.startsWith("AH")) {
     return code.endsWith("0") ? "AH0" : "AH";
+  }
+  // IY with stress 0 is kit (𐑦), IY with stress 1/2 is fleece (𐑰)
+  // Per Shavian spelling rule 11: final unstressed -y/-ie is 𐑦 not 𐑰
+  if (code.startsWith("IY")) {
+    return code.endsWith("0") ? "IY0" : "IY";
   }
   return code.replace(/[012]$/, "");
 }
