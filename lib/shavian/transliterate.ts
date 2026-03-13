@@ -74,6 +74,49 @@ const SHORTHANDS: Map<string, { shavian: string; ipa: string }> = new Map([
 ]);
 
 /**
+ * ARPABET overrides for words where CMU doesn't match Shavian spelling conventions.
+ *
+ * - PALM words: CMU uses AA (LOT vowel 𐑪) but Shavian uses 𐑭 (PALM vowel).
+ *   We remap their AA phoneme to synthetic AA_PALM.
+ * - THOUGHT bugs: CMU incorrectly uses AA instead of AO for some words.
+ *   We remap their AA phoneme to AO.
+ */
+const ARPABET_OVERRIDES: Map<string, { from: string; to: string }[]> = new Map();
+
+// PALM words: AA → AA_PALM (𐑭, IPA ɑː)
+for (const w of [
+  "father", "rather", "lather",
+  "calm", "palm", "psalm", "balm", "almond",
+  "drama", "banana", "llama", "mama", "papa",
+  "lava", "java", "guava",
+  "rajah", "hurrah", "aha", "bah",
+  "salami", "safari", "tsunami", "khaki",
+  "spa", "bra",
+  "pasta", "plaza", "taco",
+  "cantata", "sonata", "aria",
+]) {
+  ARPABET_OVERRIDES.set(w, [{ from: "AA", to: "AA_PALM" }]);
+}
+
+// THOUGHT bugs: AA → AO (𐑷, IPA ɔː) — CMU incorrectly uses AA for these
+for (const w of ["caught", "bought", "raw", "spawn", "cause"]) {
+  ARPABET_OVERRIDES.set(w, [{ from: "AA", to: "AO" }]);
+}
+
+/**
+ * Apply ARPABET overrides for a word, returning corrected phoneme array.
+ */
+function applyArpabetOverrides(word: string, arpabets: string[]): string[] {
+  const overrides = ARPABET_OVERRIDES.get(word.toLowerCase());
+  if (!overrides) return arpabets;
+  return arpabets.map((code) => {
+    const base = normalizeArpabet(code);
+    const override = overrides.find((o) => o.from === base);
+    return override ? override.to : code;
+  });
+}
+
+/**
  * Look up a word in the dictionary tiers.
  * Returns [phonemes, source] or null if not found.
  */
@@ -157,7 +200,8 @@ export function transliterateWord(word: string): GlossWord {
   let source: GlossWord["source"];
 
   if (lookup) {
-    phonemes = arpabetToPhonemes(lookup.arpabets);
+    const corrected = applyArpabetOverrides(word, lookup.arpabets);
+    phonemes = arpabetToPhonemes(corrected);
     source = lookup.source;
   } else {
     // Heuristic fallback
@@ -218,7 +262,8 @@ export function reResolveTokens(tokens: GlossToken[]): GlossToken[] {
     const lookup = dictionaryLookup(token.gloss.latin);
     if (!lookup) return token; // Still no match
 
-    const phonemes = arpabetToPhonemes(lookup.arpabets);
+    const corrected = applyArpabetOverrides(token.gloss.latin, lookup.arpabets);
+    const phonemes = arpabetToPhonemes(corrected);
     const prefix = markerPrefix(token.gloss.marker);
 
     return {

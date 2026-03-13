@@ -75,7 +75,7 @@ const ARPABET_TO_SHAVIAN: Record<string, string> = {
   Y: "𐑘", W: "𐑢", NG: "𐑙", HH: "𐑣",
   M: "𐑥", N: "𐑯", L: "𐑤", R: "𐑮",
   // Vowels
-  AE: "𐑨", AH0: "𐑩", AH: "𐑳", AA: "𐑪",
+  AE: "𐑨", AH0: "𐑩", AH: "𐑳", AA: "𐑪", AA_PALM: "𐑭",
   UH: "𐑫", IH: "𐑦", EH: "𐑧",
   EY: "𐑱", IY: "𐑰", AY: "𐑲",
   OW: "𐑴", UW: "𐑵", OY: "𐑶",
@@ -93,7 +93,7 @@ const ARPABET_TO_IPA: Record<string, string> = {
   DH: "ð", Z: "z", ZH: "ʒ", JH: "dʒ",
   Y: "j", W: "w", NG: "ŋ", HH: "h",
   M: "m", N: "n", L: "l", R: "r",
-  AE: "æ", AH0: "ə", AH: "ʌ", AA: "ɒ",
+  AE: "æ", AH0: "ə", AH: "ʌ", AA: "ɒ", AA_PALM: "ɑː",
   UH: "ʊ", IH: "ɪ", EH: "ɛ",
   EY: "eɪ", IY: "iː", AY: "aɪ",
   OW: "oʊ", UW: "uː", OY: "ɔɪ",
