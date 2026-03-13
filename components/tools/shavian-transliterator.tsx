@@ -33,7 +33,9 @@ function parseDictJson(json: Record<string, string[]>): Dictionary {
 }
 
 export function ShavianTransliteratorTool() {
-  const [input, setInput] = useState("");
+  const DEFAULT_TEXT = "In honour of the truth, as an emblem of our goodwill";
+
+  const [input, setInput] = useState(DEFAULT_TEXT);
   const [tokens, setTokens] = useState<GlossToken[]>([]);
   const [dictStatus, setDictStatus] = useState<"loading-core" | "loading-full" | "ready">("loading-core");
   const [copied, setCopied] = useState(false);
@@ -185,6 +187,16 @@ export function ShavianTransliteratorTool() {
 
   return (
     <div className="space-y-6">
+      {/* Explanation */}
+      <div className="text-sm text-muted-foreground space-y-1">
+        <p>
+          The <strong className="text-foreground">Shavian alphabet</strong> (𐑖𐑱𐑝𐑾𐑯) is a phonemic writing system designed for English by Kingsley Read, commissioned by the will of George Bernard Shaw. Each letter represents exactly one sound — no silent letters, no ambiguous spellings.
+        </p>
+        <p>
+          Type or paste English text below. Click individual Shavian letters to swap phonemes, and click a Latin word to mark it as a proper noun (adds the namer dot ·).
+        </p>
+      </div>
+
       {/* Input */}
       <Textarea
         placeholder="Type or paste English text here..."
