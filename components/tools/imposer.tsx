@@ -37,6 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PaperSizeCombobox, findPaperSize } from "@/components/ui/paper-size-combobox";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -123,6 +124,7 @@ export function ImposerTool() {
   const [duplexFlip, setDuplexFlip] = useState<"long-edge" | "short-edge">("long-edge");
   const [customPaperW, setCustomPaperW] = useState(320);
   const [customPaperH, setCustomPaperH] = useState(450);
+  const [inferredPaper, setInferredPaper] = useState<{ widthMm: number; heightMm: number; label: string } | null>(null);
 
   // --- UI state ---
   const [isDragging, setIsDragging] = useState(false);
@@ -135,13 +137,16 @@ export function ImposerTool() {
   const [activeSheet, setActiveSheet] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [blankMode, setBlankMode] = useState(!pdfBytes);
+  const [blankPageCount, setBlankPageCount] = useState(12);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // --- Derived ---
-  const paperSize = paperSizeId === "custom"
-    ? { id: "custom", label: "Custom", widthMm: customPaperW, heightMm: customPaperH }
-    : PAPER_SIZES.find((p) => p.id === paperSizeId) ?? PAPER_SIZES[0];
+  const paperSize = paperSizeId === "infer" && inferredPaper
+    ? { id: "infer", label: inferredPaper.label, widthMm: inferredPaper.widthMm, heightMm: inferredPaper.heightMm }
+    : paperSizeId === "custom"
+      ? { id: "custom", label: "Custom", widthMm: customPaperW, heightMm: customPaperH }
+      : findPaperSize(paperSizeId) ?? PAPER_SIZES[0];
   const layout = getLayoutById(layoutId);
   const showDuplexSelector = DUPLEX_AWARE_LAYOUTS.has(layoutId);
 
@@ -160,7 +165,7 @@ export function ImposerTool() {
     duplexFlip: showDuplexSelector ? duplexFlip : undefined,
   };
 
-  const sourcePages = pdfPageCount || 12; // default 12 for demo preview
+  const sourcePages = pdfPageCount || blankPageCount;
   const result: ImpositionResult | null = layout
     ? layout.calculate(sourcePages, config)
     : null;
@@ -205,6 +210,23 @@ export function ImposerTool() {
       const doc = await pdfjs.getDocument({ data: bytes.slice() }).promise;
       setPdfDoc(doc);
       setPdfPageCount(doc.numPages);
+
+      // Infer paper size from first page
+      const page = await doc.getPage(1);
+      const viewport = page.getViewport({ scale: 1 });
+      const wMm = (viewport.width / 72) * 25.4;
+      const hMm = (viewport.height / 72) * 25.4;
+      // Try to match a known size (within 2mm tolerance)
+      const match = PAPER_SIZES.find(
+        (s) =>
+          (Math.abs(s.widthMm - wMm) < 2 && Math.abs(s.heightMm - hMm) < 2) ||
+          (Math.abs(s.widthMm - hMm) < 2 && Math.abs(s.heightMm - wMm) < 2)
+      );
+      setInferredPaper({
+        widthMm: Math.round(wMm * 10) / 10,
+        heightMm: Math.round(hMm * 10) / 10,
+        label: match ? match.label : `${Math.round(wMm)} \u00d7 ${Math.round(hMm)} mm`,
+      });
     } catch (err) {
       console.error("Failed to load PDF:", err);
       setPdfPageCount(0);
@@ -233,6 +255,7 @@ export function ImposerTool() {
     setPdfFileName("");
     setPdfPageCount(0);
     setPdfDoc(null);
+    setInferredPaper(null);
     pageThumbnailsRef.current.clear();
   };
 
@@ -672,19 +695,14 @@ export function ImposerTool() {
                   label="Paper"
                   info="The physical sheet your printer will use. SRA sizes include extra bleed area for trimming."
                 />
-                <Select value={paperSizeId} onValueChange={setPaperSizeId}>
-                  <SelectTrigger className="h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PAPER_SIZES.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.label}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="custom">Custom&hellip;</SelectItem>
-                  </SelectContent>
-                </Select>
+                <PaperSizeCombobox
+                  value={paperSizeId}
+                  onValueChange={setPaperSizeId}
+                  showInfer
+                  showCustom
+                  hasInferred={!!inferredPaper}
+                  inferredLabel={inferredPaper?.label}
+                />
               </div>
 
               {/* Custom paper dimensions */}
@@ -908,6 +926,52 @@ export function ImposerTool() {
                     onCheckedChange={(checked) => setBlankHandling(checked ? "leave-empty" : "auto")}
                   />
                 </div>
+                <div className="flex items-center justify-between">
+                  <LabelWithInfo
+                    label="Blank mode"
+                    info="Preview the imposition layout without uploading a PDF. Useful for planning your print setup."
+                  />
+                  <div className="flex items-center gap-2">
+                    {blankMode && !pdfBytes && (
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => setBlankPageCount(Math.max(4, blankPageCount - 4))}
+                          disabled={blankPageCount <= 4}
+                        >
+                          <ChevronDown className="h-3 w-3" />
+                        </Button>
+                        <div className="flex items-center gap-0.5">
+                          <span className="text-xs font-medium w-6 text-center tabular-nums">{blankPageCount}</span>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button type="button" className="text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+                                <Info className="h-3 w-3" />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent side="top" className="max-w-[260px] text-xs leading-relaxed">
+                              Page count must be divisible by 4 — each physical sheet has a front and back, and each side holds two pages when folded.
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => setBlankPageCount(blankPageCount + 4)}
+                        >
+                          <ChevronUp className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
+                    <Switch
+                      checked={blankMode}
+                      onCheckedChange={setBlankMode}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -918,8 +982,8 @@ export function ImposerTool() {
       <div className="space-y-4">
         {result && (
           <>
-            {/* Summary bar with blank mode toggle */}
-            <div className="p-3 bg-muted/50 rounded-lg flex items-center justify-between gap-4">
+            {/* Summary bar */}
+            <div className="p-3 bg-muted/50 rounded-lg">
               <p className="text-sm font-medium">
                 {pdfPageCount || sourcePages} page
                 {(pdfPageCount || sourcePages) !== 1 ? "s" : ""}{" "}
@@ -933,16 +997,6 @@ export function ImposerTool() {
                   </span>
                 )}
               </p>
-              <div className="flex items-center gap-2 shrink-0">
-                <Switch
-                  id="blank-mode"
-                  checked={blankMode}
-                  onCheckedChange={setBlankMode}
-                />
-                <Label htmlFor="blank-mode" className="cursor-pointer text-xs whitespace-nowrap">
-                  Blank mode
-                </Label>
-              </div>
             </div>
 
             {/* Paginated stack preview */}
@@ -1274,53 +1328,64 @@ function PaginatedSheetStack({
       </div>
 
       {/* Navigation */}
-      <div className="flex items-center justify-center gap-3">
+      <div className="flex items-center justify-center gap-2">
         <Button
-          variant="ghost"
-          size="icon"
+          variant="outline"
+          size="sm"
           onClick={(e) => { e.stopPropagation(); onPrev(); }}
           disabled={sheetIndex === 0}
-          className="size-8"
+          className="h-8 px-2.5 gap-1 text-xs"
         >
-          <ChevronLeft className="size-4" />
+          <ChevronLeft className="size-3.5" />
+          Prev
         </Button>
 
-        {useDots ? (
-          <div className="flex items-center gap-1.5">
-            {Array.from({ length: totalSheets }, (_, i) => (
-              <button
-                key={i}
-                onClick={() => onGoTo(i)}
-                className={cn(
-                  "size-2 rounded-full transition-colors",
-                  i === sheetIndex
-                    ? "bg-primary"
-                    : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                )}
-              />
-            ))}
-          </div>
-        ) : (
-          <span className="text-sm text-muted-foreground font-medium">
-            Sheet {sheetIndex + 1} / {totalSheets}
-          </span>
-        )}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={(e) => { e.stopPropagation(); onFlip(); }}
+          className="h-8 px-3 text-xs"
+        >
+          Flip
+        </Button>
 
         <Button
-          variant="ghost"
-          size="icon"
+          variant="outline"
+          size="sm"
           onClick={(e) => { e.stopPropagation(); onNext(); }}
           disabled={sheetIndex === totalSheets - 1}
-          className="size-8"
+          className="h-8 px-2.5 gap-1 text-xs"
         >
-          <ChevronRight className="size-4" />
+          Next
+          <ChevronRight className="size-3.5" />
         </Button>
       </div>
 
-      {/* Keyboard hints */}
-      <p className="text-xs text-muted-foreground text-center">
-        Space or click to flip &middot; &larr; &rarr; to navigate
-      </p>
+      {/* Dot / counter navigation */}
+      {totalSheets > 1 && (
+        <div className="flex items-center justify-center">
+          {useDots ? (
+            <div className="flex items-center gap-1.5">
+              {Array.from({ length: totalSheets }, (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => onGoTo(i)}
+                  className={cn(
+                    "size-2 rounded-full transition-colors",
+                    i === sheetIndex
+                      ? "bg-primary"
+                      : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                  )}
+                />
+              ))}
+            </div>
+          ) : (
+            <span className="text-xs text-muted-foreground font-medium">
+              Sheet {sheetIndex + 1} / {totalSheets}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

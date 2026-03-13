@@ -12,8 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PaperSizeCombobox, findPaperSize } from "@/components/ui/paper-size-combobox";
 import { cn } from "@/lib/utils";
 import { PDFDocument, degrees } from "pdf-lib";
+import { PAPER_SIZES } from "@/lib/imposition";
 
 // Types
 interface ZineImage {
@@ -24,28 +26,12 @@ interface ZineImage {
   fitMode: "fit" | "fill";
 }
 
-interface PaperSize {
-  id: string;
-  label: string;
-  widthMm: number;
-  heightMm: number;
-}
-
 interface PagePlacement {
   pageNumber: number;
   col: number;
   row: number;
   rotation: number;
 }
-
-// Constants
-const PAPER_SIZES: PaperSize[] = [
-  { id: "a4", label: "A4 (210 × 297mm)", widthMm: 210, heightMm: 297 },
-  { id: "letter", label: "Letter (8.5 × 11\")", widthMm: 215.9, heightMm: 279.4 },
-  { id: "a3", label: "A3 (297 × 420mm)", widthMm: 297, heightMm: 420 },
-  { id: "tabloid", label: "Tabloid (11 × 17\")", widthMm: 279.4, heightMm: 431.8 },
-  { id: "legal", label: "Legal (8.5 × 14\")", widthMm: 215.9, heightMm: 355.6 },
-];
 
 // Classic 8-page mini-zine imposition layout
 // Single sheet in landscape, 4 columns x 2 rows
@@ -69,7 +55,8 @@ const DPI_OPTIONS = [72, 150, 300, 600];
 
 export function ZineImposerTool() {
   const [images, setImages] = useState<(ZineImage | null)[]>(Array(8).fill(null));
-  const [paperSize, setPaperSize] = useState<PaperSize>(PAPER_SIZES[0]);
+  const [paperSizeId, setPaperSizeId] = useState("a4");
+  const paperSize = findPaperSize(paperSizeId) ?? PAPER_SIZES[0];
   const [bleedEnabled, setBleedEnabled] = useState(false);
   const [selectedDpi, setSelectedDpi] = useState(300);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -619,23 +606,11 @@ export function ZineImposerTool() {
       <div className="flex flex-wrap gap-4 items-end">
         <div className="space-y-2">
           <Label className="font-bold">Paper Size</Label>
-          <Select
-            value={paperSize.id}
-            onValueChange={(id) =>
-              setPaperSize(PAPER_SIZES.find((p) => p.id === id)!)
-            }
-          >
-            <SelectTrigger className="w-56">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PAPER_SIZES.map((size) => (
-                <SelectItem key={size.id} value={size.id}>
-                  {size.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <PaperSizeCombobox
+            value={paperSizeId}
+            onValueChange={setPaperSizeId}
+            triggerClassName="w-56"
+          />
         </div>
 
         <div className="space-y-2">
