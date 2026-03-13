@@ -62,6 +62,18 @@ export function setFullDictionary(dict: Dictionary) {
 }
 
 /**
+ * Shavian shorthands: common words spelt as a single consonant letter.
+ * Per shavian.info spelling guide, rule 2.
+ */
+const SHORTHANDS: Map<string, { shavian: string; ipa: string }> = new Map([
+  ["the", { shavian: "𐑞", ipa: "ðə" }],
+  ["of", { shavian: "𐑝", ipa: "əv" }],
+  ["and", { shavian: "𐑯", ipa: "ənd" }],
+  ["to", { shavian: "𐑑", ipa: "tuː" }],
+  ["for", { shavian: "𐑓", ipa: "fɔːr" }],
+]);
+
+/**
  * Look up a word in the dictionary tiers.
  * Returns [phonemes, source] or null if not found.
  */
@@ -121,6 +133,25 @@ function arpabetToPhonemes(arpabets: string[]): Phoneme[] {
  * Namer dots are never auto-detected — they are toggled manually by the user.
  */
 export function transliterateWord(word: string): GlossWord {
+  // Check shorthands first (the, of, and, to, for)
+  const shorthand = SHORTHANDS.get(word.toLowerCase());
+  if (shorthand) {
+    const phoneme: Phoneme = {
+      shavian: shorthand.shavian,
+      ipa: shorthand.ipa,
+      alternatives: getAlternatives(shorthand.shavian),
+    };
+    return {
+      latin: word,
+      phonemes: [phoneme],
+      shavian: shorthand.shavian,
+      ipa: shorthand.ipa,
+      source: "core",
+      marker: "none",
+      userEdited: false,
+    };
+  }
+
   const lookup = dictionaryLookup(word);
   let phonemes: Phoneme[];
   let source: GlossWord["source"];
