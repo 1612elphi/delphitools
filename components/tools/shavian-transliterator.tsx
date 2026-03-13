@@ -10,6 +10,8 @@ import {
   setCoreDictionary,
   setFullDictionary,
   type GlossToken,
+  markerPrefix,
+  nextMarker,
   type Dictionary,
 } from "@/lib/shavian/transliterate";
 import { getAlternatives, type Alternative } from "@/lib/shavian/alternatives";
@@ -93,21 +95,21 @@ export function ShavianTransliteratorTool() {
     setActivePopover(null);
   }, []);
 
-  // Toggle namer dot on a word
-  const toggleNamer = useCallback((tokenIdx: number) => {
+  // Cycle word marker: none → namer · → acroring ⸰ → acroarc ꤮ → none
+  const cycleMarker = useCallback((tokenIdx: number) => {
     setTokens((prev) =>
       prev.map((token, i) => {
         if (i !== tokenIdx || token.type !== "word" || !token.gloss) return token;
 
-        const newIsNamer = !token.gloss.isNamer;
-        const namerPrefix = newIsNamer ? "·" : "";
+        const newMarker = nextMarker(token.gloss.marker);
+        const prefix = markerPrefix(newMarker);
 
         return {
           ...token,
           gloss: {
             ...token.gloss,
-            isNamer: newIsNamer,
-            shavian: namerPrefix + token.gloss.phonemes.map((p) => p.shavian).join(""),
+            marker: newMarker,
+            shavian: prefix + token.gloss.phonemes.map((p) => p.shavian).join(""),
           },
         };
       })
@@ -128,14 +130,14 @@ export function ShavianTransliteratorTool() {
             alternatives: getAlternatives(alt.shavian),
           };
 
-          const namerPrefix = token.gloss.isNamer ? "·" : "";
+          const prefix = markerPrefix(token.gloss.marker);
 
           return {
             ...token,
             gloss: {
               ...token.gloss,
               phonemes: newPhonemes,
-              shavian: namerPrefix + newPhonemes.map((p) => p.shavian).join(""),
+              shavian: prefix + newPhonemes.map((p) => p.shavian).join(""),
               ipa: newPhonemes.map((p) => p.ipa).join(""),
               userEdited: true,
             },
@@ -183,7 +185,7 @@ export function ShavianTransliteratorTool() {
           The <strong className="text-foreground">Shavian alphabet</strong> (𐑖𐑱𐑝𐑾𐑯) is a phonemic writing system designed for English by Kingsley Read, commissioned by the will of George Bernard Shaw. Each letter represents exactly one sound — no silent letters, no ambiguous spellings.
         </p>
         <p>
-          Type or paste English text below. Click individual Shavian letters to swap phonemes, and click a Latin word to mark it as a proper noun (adds the namer dot ·).
+          Type or paste English text below. Click individual Shavian letters to swap phonemes. Click a Latin word to cycle through markers: namer dot · (proper noun), acroring ⸰ (initialism), acroarc ꤮ (pronounceable acronym).
         </p>
       </div>
 
@@ -216,25 +218,30 @@ export function ShavianTransliteratorTool() {
 
               return (
                 <div key={tokenIdx} className="flex flex-col items-start gap-0.5">
-                  {/* Latin row — click to toggle namer dot */}
+                  {/* Latin row — click to cycle marker: none → namer · → acroring ⸰ → acroarc ꤮ */}
                   <button
-                    onClick={() => toggleNamer(tokenIdx)}
+                    onClick={() => cycleMarker(tokenIdx)}
                     className={`text-sm px-1 rounded transition-colors cursor-pointer hover:bg-accent ${
-                      gloss.isNamer ? "text-orange-400 font-medium" : "text-muted-foreground"
+                      gloss.marker !== "none" ? "text-orange-400 font-medium" : "text-muted-foreground"
                     }`}
-                    title={gloss.isNamer ? "Remove namer dot (proper noun)" : "Add namer dot (proper noun)"}
+                    title={
+                      gloss.marker === "none" ? "Add namer dot · (proper noun)" :
+                      gloss.marker === "namer" ? "Switch to acroring ⸰ (initialism)" :
+                      gloss.marker === "acroring" ? "Switch to acroarc ꤮ (acronym)" :
+                      "Remove marker"
+                    }
                   >
                     {gloss.latin}
                   </button>
 
                   {/* Shavian row — per-letter clickable */}
                   <div className="flex gap-px items-center">
-                    {gloss.isNamer && (
+                    {gloss.marker !== "none" && (
                       <span
                         className="text-[22px] leading-tight text-orange-400 px-0.5"
                         style={{ fontFamily: "'Noto Sans Shavian', sans-serif" }}
                       >
-                        ·
+                        {markerPrefix(gloss.marker)}
                       </span>
                     )}
                     {gloss.phonemes.map((phoneme, pIdx) => {
@@ -255,7 +262,7 @@ export function ShavianTransliteratorTool() {
                               transition-all cursor-pointer
                               hover:bg-accent hover:-translate-y-0.5
                               ${isActive ? "bg-accent ring-2 ring-primary -translate-y-0.5" : ""}
-                              ${gloss.isNamer ? "text-orange-400" : "text-foreground"}
+                              ${gloss.marker !== "none" ? "text-orange-400" : "text-foreground"}
                               ${gloss.source === "heuristic" && !gloss.userEdited ? "border-b-2 border-dashed border-destructive" : ""}
                             `}
                             style={{ fontFamily: "'Noto Sans Shavian', sans-serif" }}
@@ -341,7 +348,7 @@ export function ShavianTransliteratorTool() {
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-orange-400" />
-              Proper noun
+              Marked (· namer, ⸰ initialism, ꤮ acronym)
             </span>
             {dictStatus === "loading-core" && (
               <span className="flex items-center gap-1.5 ml-auto">
@@ -471,12 +478,12 @@ async function exportGloss(tokens: GlossToken[]) {
       ctx.textAlign = "left";
       ctx.fillText(gloss.latin, x, y + 14);
 
-      // Shavian row (render namer dot if present)
+      // Shavian row (render marker prefix if present)
       ctx.font = "22px 'Noto Sans Shavian', sans-serif";
-      ctx.fillStyle = gloss.isNamer ? "#ff9f43" : SHAVIAN_COLOR;
+      ctx.fillStyle = gloss.marker !== "none" ? "#ff9f43" : SHAVIAN_COLOR;
       const shavianText = gloss.phonemes.map((p) => p.shavian).join("");
-      const namerPrefix = gloss.isNamer ? "·" : "";
-      ctx.fillText(namerPrefix + shavianText, x, y + 42);
+      const prefix = markerPrefix(gloss.marker);
+      ctx.fillText(prefix + shavianText, x, y + 42);
 
       // IPA row
       ctx.font = "13px system-ui";
@@ -485,7 +492,7 @@ async function exportGloss(tokens: GlossToken[]) {
 
       const latinWidth = ctx.measureText(gloss.latin).width;
       ctx.font = "22px 'Noto Sans Shavian', sans-serif";
-      const shavianWidth = ctx.measureText(namerPrefix + shavianText).width;
+      const shavianWidth = ctx.measureText(prefix + shavianText).width;
       const width = Math.max(latinWidth, shavianWidth) + WORD_GAP;
       x += width;
     }

@@ -15,7 +15,7 @@ export interface GlossWord {
   shavian: string;         // Full Shavian rendering (concatenated)
   ipa: string;             // Full IPA rendering (concatenated)
   source: "core" | "full" | "heuristic";
-  isNamer: boolean;        // Whether to show namer dot
+  marker: "none" | "namer" | "acroring" | "acroarc"; // Word marker prefix
   userEdited: boolean;     // Whether user has manually changed any phoneme
 }
 
@@ -28,6 +28,26 @@ export interface GlossToken {
 // Dictionary type: word → ARPABET phoneme array
 // e.g. "hello" → ["HH", "AH0", "L", "OW1"]
 export type Dictionary = Map<string, string[]>;
+
+/** Map marker type to its prefix character */
+export function markerPrefix(marker: GlossWord["marker"]): string {
+  switch (marker) {
+    case "namer": return "·";
+    case "acroring": return "⸰";
+    case "acroarc": return "꤮";
+    default: return "";
+  }
+}
+
+/** Cycle to the next marker state */
+export function nextMarker(marker: GlossWord["marker"]): GlossWord["marker"] {
+  switch (marker) {
+    case "none": return "namer";
+    case "namer": return "acroring";
+    case "acroring": return "acroarc";
+    case "acroarc": return "none";
+  }
+}
 
 // Active dictionaries — mutated as tiers load
 let coreDictionary: Dictionary = new Map();
@@ -119,16 +139,13 @@ export function transliterateWord(word: string): GlossWord {
     source = "heuristic";
   }
 
-  const isNamer = false;
-  const namerPrefix = "";
-
   return {
     latin: word,
     phonemes,
-    shavian: namerPrefix + phonemes.map((p) => p.shavian).join(""),
+    shavian: phonemes.map((p) => p.shavian).join(""),
     ipa: phonemes.map((p) => p.ipa).join(""),
     source,
-    isNamer,
+    marker: "none" as const,
     userEdited: false,
   };
 }
@@ -171,15 +188,14 @@ export function reResolveTokens(tokens: GlossToken[]): GlossToken[] {
     if (!lookup) return token; // Still no match
 
     const phonemes = arpabetToPhonemes(lookup.arpabets);
-    const isNamer = token.gloss.isNamer;
-    const namerPrefix = isNamer ? "·" : "";
+    const prefix = markerPrefix(token.gloss.marker);
 
     return {
       ...token,
       gloss: {
         ...token.gloss,
         phonemes,
-        shavian: namerPrefix + phonemes.map((p) => p.shavian).join(""),
+        shavian: prefix + phonemes.map((p) => p.shavian).join(""),
         ipa: phonemes.map((p) => p.ipa).join(""),
         source: lookup.source,
       },
