@@ -46,7 +46,7 @@ export function AppSidebar() {
                 <div className="flex flex-col gap-0.5 leading-none">
                   <span className="font-semibold">delphitools</span>
                   <span className="text-xs text-muted-foreground">
-                    handmade tools
+                    indie tools
                   </span>
                 </div>
               </Link>
