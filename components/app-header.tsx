@@ -6,6 +6,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { getToolById, getCategoryByToolId } from "@/lib/tools";
 import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function AppHeader() {
   const pathname = usePathname();
@@ -46,6 +47,10 @@ export function AppHeader() {
           <h1 className="text-lg font-semibold">delphitools</h1>
         </div>
       )}
+
+      <div className="ml-auto">
+        <ThemeToggle />
+      </div>
     </header>
   );
 }
