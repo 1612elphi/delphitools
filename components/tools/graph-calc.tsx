@@ -365,50 +365,53 @@ export function GraphCalcTool() {
     panStart.current = null;
   }, []);
 
-  const handleWheel = useCallback(
-    (e: React.WheelEvent<HTMLDivElement>) => {
+  // Use a ref to always have current bounds in the native wheel listener
+  const boundsRef = useRef({ xMin, xMax, yMin, yMax });
+  boundsRef.current = { xMin, xMax, yMin, yMax };
+
+  // Attach a native (non-passive) wheel listener so preventDefault() works
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
 
-      if (!containerRef.current) return;
-
-      // Find the actual Mafs SVG element
-      const svgElement = containerRef.current.querySelector('.MafsView');
+      const svgElement = el.querySelector('.MafsView');
       if (!svgElement) return;
 
+      const { xMin, xMax, yMin, yMax } = boundsRef.current;
       const rect = svgElement.getBoundingClientRect();
       const relativeX = (e.clientX - rect.left) / rect.width;
       const relativeY = (e.clientY - rect.top) / rect.height;
 
-      // Clamp to graph area
       const clampedRelativeX = Math.max(0, Math.min(1, relativeX));
       const clampedRelativeY = Math.max(0, Math.min(1, relativeY));
 
-      // Calculate cursor position in graph coordinates
       const cursorGraphX = xMin + clampedRelativeX * (xMax - xMin);
-      const cursorGraphY = yMax - clampedRelativeY * (yMax - yMin); // Inverted Y
+      const cursorGraphY = yMax - clampedRelativeY * (yMax - yMin);
 
-      // Zoom factor (scroll up = zoom in, scroll down = zoom out)
       const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
 
-      // Calculate new ranges, keeping cursor position fixed
       const newXMin = cursorGraphX - (cursorGraphX - xMin) * zoomFactor;
       const newXMax = cursorGraphX + (xMax - cursorGraphX) * zoomFactor;
       const newYMin = cursorGraphY - (cursorGraphY - yMin) * zoomFactor;
       const newYMax = cursorGraphY + (yMax - cursorGraphY) * zoomFactor;
 
-      // Enforce zoom limits
       const newXRange = newXMax - newXMin;
       const newYRange = newYMax - newYMin;
-      if (newXRange < MIN_RANGE || newYRange < MIN_RANGE) return; // Too zoomed in
-      if (newXRange > MAX_RANGE || newYRange > MAX_RANGE) return; // Too zoomed out
+      if (newXRange < MIN_RANGE || newYRange < MIN_RANGE) return;
+      if (newXRange > MAX_RANGE || newYRange > MAX_RANGE) return;
 
       setXMin(newXMin);
       setXMax(newXMax);
       setYMin(newYMin);
       setYMax(newYMax);
-    },
-    [xMin, xMax, yMin, yMax]
-  );
+    };
+
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, []);
 
   // Trace function - calculate Y values for a given X
   const handleTrace = useCallback(() => {
@@ -691,7 +694,6 @@ export function GraphCalcTool() {
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
-        onWheel={handleWheel}
         className={`${mafsClasses} ${isPanning ? "cursor-grabbing" : "cursor-grab"}`}
       >
         <Mafs
