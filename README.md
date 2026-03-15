@@ -7,6 +7,24 @@ Long live the handmade web.
 
 ## Included tools
 
+### social media
+
+- social media cropper
+- matte genny
+- seamless scroll genny
+- watermarker
+
+### colour
+
+- colour converter (hex, rgb, hsl, oklch, lab, lch, oklab)
+- tailwind shade genny
+- harmony genny
+- palette genny
+- palette collection
+- contrast checker
+- colour blindness simulator
+- gradient genny
+
 ### img & assets
 
 - favicon genny
@@ -14,6 +32,9 @@ Long live the handmade web.
 - placeholder genny
 - image splitter
 - image converter
+- artwork enhancer
+- background remover
+- image tracer
 
 ### typo & text
 
@@ -25,16 +46,32 @@ Long live the handmade web.
 - glyph browser
 - font file explorer
 
-### colour
+### print & production
 
-- colour converter (hex, rgb, hsl, oklch, lab, lch, oklab)
-- tailwind shade genny
-- harmony genny
+- pdf preflight
+- guillotine director
+- zine imposer
+- print imposer
 
 ### other tools
 
 - text scratchpad
 - tailwind cheat sheet
 - qr genny
+- barcode genny
 - meta tag genny
 - regex tester
+
+### calculators
+
+- scientific calc
+- graph calc
+- algebra calc
+- base converter
+- time calc
+- unit converter
+- encoding tools
+
+### turbo-nerd shit
+
+- shavian transliterator
