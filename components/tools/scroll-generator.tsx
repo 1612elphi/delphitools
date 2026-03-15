@@ -199,13 +199,16 @@ export function ScrollGeneratorTool() {
     const link = document.createElement("a");
     link.download = `${fileName}-scroll-${tile.index + 1}.png`;
     link.href = tile.dataUrl;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
   };
 
-  const downloadAll = () => {
-    tiles.forEach((tile, i) => {
-      setTimeout(() => downloadTile(tile), i * 100);
-    });
+  const downloadAll = async () => {
+    for (const tile of tiles) {
+      downloadTile(tile);
+      await new Promise((r) => setTimeout(r, 300));
+    }
   };
 
   const clear = () => {
