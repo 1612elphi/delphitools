@@ -48,6 +48,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   "unit-converter": dynamic(() => import("@/components/tools/unit-converter").then(mod => mod.UnitConverterTool)),
   "encoder": dynamic(() => import("@/components/tools/encoder").then(mod => mod.EncoderTool)),
   "json-formatter": dynamic(() => import("@/components/tools/json-formatter").then(mod => mod.JsonFormatterTool)),
+  "id-generator": dynamic(() => import("@/components/tools/id-generator").then(mod => mod.IdGeneratorTool)),
   "sql-formatter": dynamic(() => import("@/components/tools/sql-formatter").then(mod => mod.SqlFormatterTool)),
   "jwt-decoder": dynamic(() => import("@/components/tools/jwt-decoder").then(mod => mod.JwtDecoderTool)),
   "markdown-preview": dynamic(() => import("@/components/tools/markdown-preview").then(mod => mod.MarkdownPreviewTool)),
