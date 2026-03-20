@@ -49,9 +49,14 @@ const toolComponents: Record<string, React.ComponentType> = {
   "encoder": dynamic(() => import("@/components/tools/encoder").then(mod => mod.EncoderTool)),
   "json-formatter": dynamic(() => import("@/components/tools/json-formatter").then(mod => mod.JsonFormatterTool)),
   "id-generator": dynamic(() => import("@/components/tools/id-generator").then(mod => mod.IdGeneratorTool)),
+  "sql-formatter": dynamic(() => import("@/components/tools/sql-formatter").then(mod => mod.SqlFormatterTool)),
+  "jwt-decoder": dynamic(() => import("@/components/tools/jwt-decoder").then(mod => mod.JwtDecoderTool)),
+  "markdown-preview": dynamic(() => import("@/components/tools/markdown-preview").then(mod => mod.MarkdownPreviewTool)),
   "image-tracer": dynamic(() => import("@/components/tools/image-tracer").then(mod => mod.ImageTracerTool)),
   "guillotine-director": dynamic(() => import("@/components/tools/guillotine-director").then(mod => mod.GuillotineDirectorTool)),
   "pdf-preflight": dynamic(() => import("@/components/tools/pdf-preflight").then(mod => mod.PdfPreflightTool)),
+  "case-converter": dynamic(() => import("@/components/tools/case-converter").then(mod => mod.CaseConverterTool)),
+  "text-diff": dynamic(() => import("@/components/tools/text-diff").then(mod => mod.TextDiffTool)),
 };
 
 interface ToolPageProps {
