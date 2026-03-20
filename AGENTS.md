@@ -39,6 +39,7 @@ This file documents how to work safely and effectively in this repository.
 - `regex-tester` — Regex Tester
 - `encoder` — Encoding Tools
 - `json-formatter` — JSON Formatter
+- `jwt-decoder` — JWT Decoder / Inspector
 - `markdown-preview` — Markdown Preview / Markdown ↔ HTML *(new)*
 - `case-converter` — Case Converter / Slugify
 - `text-diff` — Text Diff / Compare *(new)*
