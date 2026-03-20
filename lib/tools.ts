@@ -40,6 +40,7 @@ import {
   Slice,
   FileSearch,
   Braces,
+  Database,
   KeyRound,
   NotebookPen,
   GitCompareArrows,
@@ -87,6 +88,14 @@ export const toolCategories: ToolCategory[] = [
         icon: Braces,
         href: "/tools/json-formatter",
         beta: true,
+      },
+      {
+        id: "sql-formatter",
+        name: "SQL Formatter",
+        description: "Simple, fast, paste-and-go SQL prettify/minify with keyword casing and dialect support",
+        icon: Database,
+        href: "/tools/sql-formatter",
+        new: true,
       },
       {
         id: "jwt-decoder",
