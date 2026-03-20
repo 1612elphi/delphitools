@@ -40,6 +40,9 @@ This file documents how to work safely and effectively in this repository.
 - `encoder` — Encoding Tools
 - `json-formatter` — JSON Formatter
 - `jwt-decoder` — JWT Decoder / Inspector
+- `markdown-preview` — Markdown Preview / Markdown ↔ HTML *(new)*
+- `case-converter` — Case Converter / Slugify
+- `text-diff` — Text Diff / Compare *(new)*
 
 ### Calculators
 - `sci-calc` — Scientific Calculator
@@ -158,7 +161,7 @@ bun run build
 4. Ensure `href` matches `/tools/<tool-id>`.
 5. Verify rendering via `app/tools/[toolId]/page.tsx` path.
 6. Run lint/build checks.
-7. Update docs (`README.md` and this file) with new tool/category details.
+7. Update docs (`README.md`, `public/llms.txt`, and this file) with new tool/category details; keep all three files synchronized with `lib/tools.ts`.
 
 ## Privacy and product principles
 

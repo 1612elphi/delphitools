@@ -41,6 +41,8 @@ import {
   FileSearch,
   Braces,
   KeyRound,
+  NotebookPen,
+  GitCompareArrows,
 } from "lucide-react";
 
 export interface Tool {
@@ -92,6 +94,31 @@ export const toolCategories: ToolCategory[] = [
         description: "Decode JWT headers and payloads, inspect timing claims, and verify signatures locally",
         icon: KeyRound,
         href: "/tools/jwt-decoder",
+        new: true,
+      },
+      {
+        id: "markdown-preview",
+        name: "Markdown Preview / Markdown ↔ HTML",
+        description: "Live GFM preview with sanitized HTML output and HTML-to-markdown conversion",
+        icon: NotebookPen,
+        href: "/tools/markdown-preview",
+        new: true,
+      },
+      {
+        id: "case-converter",
+        name: "Case Converter / Slugify",
+        description: "Convert text between common naming cases and slugify titles or filenames",
+        icon: Type,
+        href: "/tools/case-converter",
+        new: true,
+      },
+      {
+        id: "text-diff",
+        name: "Text Diff / Compare",
+        description: "Compare two text blocks with inline and side-by-side views",
+        icon: GitCompareArrows,
+        href: "/tools/text-diff",
+        new: true,
       },
     ],
   },
