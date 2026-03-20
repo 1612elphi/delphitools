@@ -13,9 +13,13 @@ import { TimeCalcTool } from "./time-calc";
 import { UnitConverterTool } from "./unit-converter";
 import { EncoderTool } from "./encoder";
 import { JsonFormatterTool } from "./json-formatter";
+import { JwtDecoderTool } from "./jwt-decoder";
+import { MarkdownPreviewTool } from "./markdown-preview";
 import { ImageTracerTool } from "./image-tracer";
 import { GuillotineDirectorTool } from "./guillotine-director";
 import { PdfPreflightTool } from "./pdf-preflight";
+import { CaseConverterTool } from "./case-converter";
+import { TextDiffTool } from "./text-diff";
 
 export const toolComponents: Record<string, React.ComponentType> = {
   "px-to-rem": PxToRemTool,
@@ -31,7 +35,11 @@ export const toolComponents: Record<string, React.ComponentType> = {
   "unit-converter": UnitConverterTool,
   "encoder": EncoderTool,
   "json-formatter": JsonFormatterTool,
+  "jwt-decoder": JwtDecoderTool,
+  "markdown-preview": MarkdownPreviewTool,
   "image-tracer": ImageTracerTool,
   "guillotine-director": GuillotineDirectorTool,
   "pdf-preflight": PdfPreflightTool,
+  "case-converter": CaseConverterTool,
+  "text-diff": TextDiffTool,
 };
