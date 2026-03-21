@@ -365,7 +365,7 @@ export const toolCategories: ToolCategory[] = [
         name: "Paste Image",
         description: "Paste and Download image frm Clipboard",
         icon: ClipboardPaste,
-        href: "/tools/paste-images.tsx"
+        href: "/tools/paste-image"
       }
     ],
   },
