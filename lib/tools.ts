@@ -39,6 +39,7 @@ import {
   ScanLine,
   Slice,
   FileSearch,
+  ClipboardPaste
 } from "lucide-react";
 
 export interface Tool {
@@ -349,6 +350,13 @@ export const toolCategories: ToolCategory[] = [
         icon: Regex,
         href: "/tools/regex-tester",
       },
+      {
+      id: "paste-image",
+      name: "Paste Image",
+      description: "Paste and download image from Clipboard",
+      icon: ClipboardPaste,
+      href: "/tools/paste-image"
+      }
     ],
   },
   {
