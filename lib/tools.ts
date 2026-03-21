@@ -41,6 +41,7 @@ import {
   FileSearch,
   Languages,
   Layers,
+  ClipboardPaste,
 } from "lucide-react";
 
 export interface Tool {
@@ -359,6 +360,13 @@ export const toolCategories: ToolCategory[] = [
         icon: Regex,
         href: "/tools/regex-tester",
       },
+      {
+        id: "paste-image",
+        name: "Paste Image",
+        description: "Paste and Download image frm Clipboard",
+        icon: ClipboardPaste,
+        href: "/tools/paste-images.tsx"
+      }
     ],
   },
   {
