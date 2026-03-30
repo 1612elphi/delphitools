@@ -69,6 +69,12 @@ function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
 }
 
+function normalizeHex(hex: string): string {
+  // Strip all leading # characters, then add exactly one
+  const stripped = hex.replace(/^#+/, "");
+  return `#${stripped}`;
+}
+
 function hexToRgb(hex: string): [number, number, number] | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) return null;
@@ -655,6 +661,9 @@ export function GradientGennyTool() {
 
   const updateColourStop = useCallback(
     (id: string, updates: Partial<ColourStop>) => {
+      if (updates.colour !== undefined) {
+        updates = { ...updates, colour: normalizeHex(updates.colour) };
+      }
       setColourStops((prev) =>
         prev.map((stop) => (stop.id === id ? { ...stop, ...updates } : stop))
       );
@@ -713,9 +722,10 @@ export function GradientGennyTool() {
   }, []);
 
   const updateMeshPointColour = useCallback((id: string, colour: string) => {
+    const normalized = normalizeHex(colour);
     setMeshConfig((prev) => ({
       ...prev,
-      points: prev.points.map((p) => (p.id === id ? { ...p, colour } : p)),
+      points: prev.points.map((p) => (p.id === id ? { ...p, colour: normalized } : p)),
     }));
   }, []);
 
@@ -834,7 +844,7 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
         (a, b) => a.position - b.position
       );
       sortedStops.forEach((stop) => {
-        gradient.addColorStop(stop.position / 100, stop.colour);
+        gradient.addColorStop(stop.position / 100, normalizeHex(stop.colour));
       });
 
       ctx.fillStyle = gradient;
@@ -1024,7 +1034,7 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
                     x={x}
                     y={y}
                     onColourChange={(colour) =>
-                      setCorners((prev) => ({ ...prev, [key]: colour }))
+                      setCorners((prev) => ({ ...prev, [key]: normalizeHex(colour) }))
                     }
                     isHovered={hoveredCorner === key}
                     onHover={() => setHoveredCorner(key)}
@@ -1248,14 +1258,14 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
                     type="color"
                     value={corners[key]}
                     onChange={(e) =>
-                      setCorners((prev) => ({ ...prev, [key]: e.target.value }))
+                      setCorners((prev) => ({ ...prev, [key]: normalizeHex(e.target.value) }))
                     }
                     className="w-12 h-12 rounded-lg cursor-pointer border-0"
                   />
                   <Input
                     value={corners[key]}
                     onChange={(e) =>
-                      setCorners((prev) => ({ ...prev, [key]: e.target.value }))
+                      setCorners((prev) => ({ ...prev, [key]: normalizeHex(e.target.value) }))
                     }
                     className="font-mono text-sm"
                   />
