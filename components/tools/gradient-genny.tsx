@@ -258,6 +258,56 @@ function DeferredHexInput({
   );
 }
 
+// Position input that commits on Enter/blur and triggers re-sort
+function DeferredPositionInput({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  const [draft, setDraft] = useState(String(value));
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (document.activeElement !== inputRef.current) {
+      setDraft(String(value));
+    }
+  }, [value]);
+
+  const commit = () => {
+    const num = Math.max(0, Math.min(100, Number(draft)));
+    if (!isNaN(num)) {
+      onChange(num);
+    } else {
+      setDraft(String(value));
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      <Input
+        ref={inputRef}
+        type="number"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commit();
+            inputRef.current?.blur();
+          }
+        }}
+        className="w-20"
+        min={0}
+        max={100}
+      />
+      <span className="text-muted-foreground">%</span>
+    </div>
+  );
+}
+
 // Corner positions for overlay dots (inset for tooltip visibility)
 const CORNER_POSITIONS: { key: CornerKey; x: string; y: string }[] = [
   { key: "topLeft", x: "12%", y: "15%" },
@@ -515,21 +565,10 @@ function SortableColourStop({
         onChange={(colour) => onUpdate({ colour })}
         className="w-28 font-mono text-sm"
       />
-      <div className="flex items-center gap-1">
-        <Input
-          type="number"
-          value={stop.position}
-          onChange={(e) =>
-            onUpdate({
-              position: Math.max(0, Math.min(100, Number(e.target.value))),
-            })
-          }
-          className="w-20"
-          min={0}
-          max={100}
-        />
-        <span className="text-muted-foreground">%</span>
-      </div>
+      <DeferredPositionInput
+        value={stop.position}
+        onChange={(position) => onUpdate({ position })}
+      />
       <Button
         size="icon"
         variant="ghost"
@@ -710,9 +749,15 @@ export function GradientGennyTool() {
       if (updates.colour !== undefined) {
         updates = { ...updates, colour: normalizeHex(updates.colour) };
       }
-      setColourStops((prev) =>
-        prev.map((stop) => (stop.id === id ? { ...stop, ...updates } : stop))
-      );
+      setColourStops((prev) => {
+        const updated = prev.map((stop) =>
+          stop.id === id ? { ...stop, ...updates } : stop
+        );
+        if (updates.position !== undefined) {
+          return [...updated].sort((a, b) => a.position - b.position);
+        }
+        return updated;
+      });
     },
     []
   );
