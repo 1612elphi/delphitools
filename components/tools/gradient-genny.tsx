@@ -69,10 +69,11 @@ function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
 }
 
-function normalizeHex(hex: string): string {
-  // Strip all leading # characters, then add exactly one
+function normalizeHex(hex: string): string | null {
+  // Strip all leading # characters, then validate as 6-digit hex
   const stripped = hex.replace(/^#+/, "");
-  return `#${stripped}`;
+  if (/^[a-f\d]{6}$/i.test(stripped)) return `#${stripped}`;
+  return null;
 }
 
 function hexToRgb(hex: string): [number, number, number] | null {
@@ -212,16 +213,14 @@ function generateInitialMeshPoints(gridSize: 2 | 3): MeshPoint[] {
   return points;
 }
 
-// Hex input that only commits on Enter or blur to avoid invalid intermediate values
-function DeferredHexInput({
-  value,
-  onChange,
-  className,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  className?: string;
-}) {
+// Hook for inputs that defer updates until Enter/blur.
+// `parse` is pure: returns the normalized string value or null to reject.
+// `onCommit` is called with the parsed value on successful commit.
+function useDeferredInput(
+  value: string,
+  parse: (draft: string) => string | null,
+  onCommit: (parsed: string) => void
+) {
   const [draft, setDraft] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -232,33 +231,48 @@ function DeferredHexInput({
   }, [value]);
 
   const commit = () => {
-    const normalized = normalizeHex(draft);
-    if (/^#[a-f\d]{6}$/i.test(normalized)) {
-      onChange(normalized);
+    const result = parse(draft);
+    if (result !== null) {
+      onCommit(result);
+      setDraft(result);
     } else {
       setDraft(value);
     }
   };
 
-  return (
-    <Input
-      ref={inputRef}
-      value={draft}
-      onChange={(e) => setDraft(e.target.value)}
-      onBlur={commit}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          commit();
-          inputRef.current?.blur();
-        }
-      }}
-      className={className}
-    />
-  );
+  return {
+    ref: inputRef,
+    value: draft,
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => setDraft(e.target.value),
+    onBlur: commit,
+    onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        commit();
+        inputRef.current?.blur();
+      }
+    },
+  };
 }
 
-// Position input that commits on Enter/blur and triggers re-sort
+function DeferredHexInput({
+  value,
+  onChange,
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+}) {
+  const inputProps = useDeferredInput(
+    value,
+    (d) => normalizeHex(d),
+    onChange
+  );
+
+  return <Input {...inputProps} className={className} />;
+}
+
 function DeferredPositionInput({
   value,
   onChange,
@@ -266,43 +280,19 @@ function DeferredPositionInput({
   value: number;
   onChange: (value: number) => void;
 }) {
-  const [draft, setDraft] = useState(String(value));
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (document.activeElement !== inputRef.current) {
-      setDraft(String(value));
-    }
-  }, [value]);
-
-  const commit = () => {
-    const num = Math.max(0, Math.min(100, Number(draft)));
-    if (!isNaN(num)) {
-      onChange(num);
-    } else {
-      setDraft(String(value));
-    }
-  };
+  const inputProps = useDeferredInput(
+    String(value),
+    (d) => {
+      const raw = Number(d);
+      if (isNaN(raw) || d.trim() === "") return null;
+      return String(Math.max(0, Math.min(100, raw)));
+    },
+    (parsed) => onChange(Number(parsed))
+  );
 
   return (
     <div className="flex items-center gap-1">
-      <Input
-        ref={inputRef}
-        type="number"
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            commit();
-            inputRef.current?.blur();
-          }
-        }}
-        className="w-20"
-        min={0}
-        max={100}
-      />
+      <Input {...inputProps} type="number" className="w-20" min={0} max={100} />
       <span className="text-muted-foreground">%</span>
     </div>
   );
@@ -747,14 +737,16 @@ export function GradientGennyTool() {
   const updateColourStop = useCallback(
     (id: string, updates: Partial<ColourStop>) => {
       if (updates.colour !== undefined) {
-        updates = { ...updates, colour: normalizeHex(updates.colour) };
+        const normalized = normalizeHex(updates.colour);
+        if (!normalized) return;
+        updates = { ...updates, colour: normalized };
       }
       setColourStops((prev) => {
         const updated = prev.map((stop) =>
           stop.id === id ? { ...stop, ...updates } : stop
         );
         if (updates.position !== undefined) {
-          return [...updated].sort((a, b) => a.position - b.position);
+          return updated.sort((a, b) => a.position - b.position);
         }
         return updated;
       });
@@ -817,6 +809,7 @@ export function GradientGennyTool() {
 
   const updateMeshPointColour = useCallback((id: string, colour: string) => {
     const normalized = normalizeHex(colour);
+    if (!normalized) return;
     setMeshConfig((prev) => ({
       ...prev,
       points: prev.points.map((p) => (p.id === id ? { ...p, colour: normalized } : p)),
@@ -938,7 +931,7 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
         (a, b) => a.position - b.position
       );
       sortedStops.forEach((stop) => {
-        gradient.addColorStop(stop.position / 100, normalizeHex(stop.colour));
+        gradient.addColorStop(stop.position / 100, normalizeHex(stop.colour) ?? stop.colour);
       });
 
       ctx.fillStyle = gradient;
@@ -1128,7 +1121,7 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
                     x={x}
                     y={y}
                     onColourChange={(colour) =>
-                      setCorners((prev) => ({ ...prev, [key]: normalizeHex(colour) }))
+                      setCorners((prev) => ({ ...prev, [key]: normalizeHex(colour) ?? prev[key] }))
                     }
                     isHovered={hoveredCorner === key}
                     onHover={() => setHoveredCorner(key)}
@@ -1352,7 +1345,7 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
                     type="color"
                     value={corners[key]}
                     onChange={(e) =>
-                      setCorners((prev) => ({ ...prev, [key]: normalizeHex(e.target.value) }))
+                      setCorners((prev) => ({ ...prev, [key]: normalizeHex(e.target.value) ?? prev[key] }))
                     }
                     className="w-12 h-12 rounded-lg cursor-pointer border-0"
                   />
