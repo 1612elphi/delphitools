@@ -212,6 +212,52 @@ function generateInitialMeshPoints(gridSize: 2 | 3): MeshPoint[] {
   return points;
 }
 
+// Hex input that only commits on Enter or blur to avoid invalid intermediate values
+function DeferredHexInput({
+  value,
+  onChange,
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+}) {
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (document.activeElement !== inputRef.current) {
+      setDraft(value);
+    }
+  }, [value]);
+
+  const commit = () => {
+    const normalized = normalizeHex(draft);
+    if (/^#[a-f\d]{6}$/i.test(normalized)) {
+      onChange(normalized);
+    } else {
+      setDraft(value);
+    }
+  };
+
+  return (
+    <Input
+      ref={inputRef}
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          commit();
+          inputRef.current?.blur();
+        }
+      }}
+      className={className}
+    />
+  );
+}
+
 // Corner positions for overlay dots (inset for tooltip visibility)
 const CORNER_POSITIONS: { key: CornerKey; x: string; y: string }[] = [
   { key: "topLeft", x: "12%", y: "15%" },
@@ -464,9 +510,9 @@ function SortableColourStop({
         onChange={(e) => onUpdate({ colour: e.target.value })}
         className="w-10 h-10 rounded-lg cursor-pointer border-0"
       />
-      <Input
+      <DeferredHexInput
         value={stop.colour}
-        onChange={(e) => onUpdate({ colour: e.target.value })}
+        onChange={(colour) => onUpdate({ colour })}
         className="w-28 font-mono text-sm"
       />
       <div className="flex items-center gap-1">
@@ -1262,10 +1308,10 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
                     }
                     className="w-12 h-12 rounded-lg cursor-pointer border-0"
                   />
-                  <Input
+                  <DeferredHexInput
                     value={corners[key]}
-                    onChange={(e) =>
-                      setCorners((prev) => ({ ...prev, [key]: normalizeHex(e.target.value) }))
+                    onChange={(colour) =>
+                      setCorners((prev) => ({ ...prev, [key]: colour }))
                     }
                     className="font-mono text-sm"
                   />
