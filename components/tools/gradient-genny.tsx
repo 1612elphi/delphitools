@@ -718,13 +718,16 @@ export function GradientGennyTool() {
   );
 
   // Handle colour stop reordering via drag and drop
+  // Colours move to new slots but positions stay mapped to list order
   const handleColourStopDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
       setColourStops((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
+        const reordered = arrayMove(items, oldIndex, newIndex);
+        const positions = items.map((item) => item.position).sort((a, b) => a - b);
+        return reordered.map((item, i) => ({ ...item, position: positions[i] }));
       });
     }
   }, []);
