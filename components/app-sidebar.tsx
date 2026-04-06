@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Info, Star } from "lucide-react";
+import { Home, Info, Search, Star, X } from "lucide-react";
 
 import { toolCategories, featuredTools } from "@/lib/tools";
+import { Input } from "@/components/ui/input";
 import {
   Sidebar,
   SidebarContent,
@@ -28,6 +30,25 @@ import {
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const [search, setSearch] = useState("");
+  const query = search.toLowerCase();
+
+  const filteredFeatured = featuredTools.filter(
+    (t) =>
+      t.name.toLowerCase().includes(query) ||
+      t.description.toLowerCase().includes(query)
+  );
+
+  const filteredCategories = toolCategories
+    .map((cat) => ({
+      ...cat,
+      tools: cat.tools.filter(
+        (t) =>
+          t.name.toLowerCase().includes(query) ||
+          t.description.toLowerCase().includes(query)
+      ),
+    }))
+    .filter((cat) => cat.tools.length > 0);
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
@@ -55,7 +76,28 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
 
+      <div className="px-2 py-2 border-b border-sidebar-border group-data-[collapsible=icon]:hidden">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Search tools..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-8 pl-8 pr-8 text-sm"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+
       <SidebarContent>
+        {!query && (
         <SidebarGroup>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -72,7 +114,15 @@ export function AppSidebar() {
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
+        )}
 
+        {query && filteredFeatured.length === 0 && filteredCategories.length === 0 && (
+          <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+            No tools found
+          </div>
+        )}
+
+        {filteredFeatured.length > 0 && (
         <SidebarGroup>
           <SidebarGroupLabel className="flex items-center gap-1.5">
             <Star className="size-3 text-amber-500 fill-amber-500" />
@@ -80,7 +130,7 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {featuredTools.map((tool) => {
+              {filteredFeatured.map((tool) => {
                 const Icon = tool.icon;
                 const isActive = pathname === tool.href;
                 return (
@@ -102,8 +152,9 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        )}
 
-        {toolCategories.map((category) => (
+        {filteredCategories.map((category) => (
           <SidebarGroup key={category.id}>
             <SidebarGroupLabel>{category.name}</SidebarGroupLabel>
             <SidebarGroupContent>
