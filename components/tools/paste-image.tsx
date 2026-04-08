@@ -421,6 +421,13 @@ export function PasteImageTool() {
           </div>
         </div>
       )}
+
+      <p className="text-center text-sm text-muted-foreground">
+        Contributed by{" "}
+        <a href="https://github.com/himanshubalani" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
+          @himanshubalani
+        </a>
+      </p>
     </div>
   );
 }
