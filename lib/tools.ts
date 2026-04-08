@@ -220,6 +220,13 @@ export const toolCategories: ToolCategory[] = [
         href: "/tools/image-tracer",
         new: true,
       },
+      {
+        id: "paste-image",
+        name: "Paste Image",
+        description: "Paste and download an image from your clipboard",
+        icon: ClipboardPaste,
+        href: "/tools/paste-image",
+      },
     ],
   },
   {
@@ -360,13 +367,6 @@ export const toolCategories: ToolCategory[] = [
         icon: Regex,
         href: "/tools/regex-tester",
       },
-      {
-        id: "paste-image",
-        name: "Paste Image",
-        description: "Paste and Download image from Clipboard",
-        icon: ClipboardPaste,
-        href: "/tools/paste-image"
-      }
     ],
   },
   {

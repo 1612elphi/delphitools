@@ -5,14 +5,11 @@ import {
   Download,
   Scissors,
   RotateCcw,
-  Trash2,
+  X,
   ClipboardPaste,
   Check,
-  Printer,
-  MousePointerSquareDashed
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 
 interface CropArea {
   x: number;
@@ -32,7 +29,6 @@ export function PasteImageTool() {
   const [dragMode, setDragMode] = useState<DragMode>(null);
   const [dragStart, setDragStart] = useState<{ mouseX: number; mouseY: number; initialCrop: CropArea } | null>(null);
   
- // Stored in state (not read from ref) so the dimensions label re-renders correctly without layout reads
   const [imageScale, setImageScale] = useState({ x: 1, y: 1 });
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -44,8 +40,6 @@ export function PasteImageTool() {
 
   const objectUrls = useRef<Set<string>>(new Set());
 
-// All object URLs are tracked in a ref so we can bulk-revoke on unmount
-// without needing them in any dependency array
   const createSafeObjectURL = useCallback((blob: Blob | MediaSource) => {
     const url = URL.createObjectURL(blob);
     objectUrls.current.add(url);
@@ -82,17 +76,16 @@ export function PasteImageTool() {
           const blob = items[i].getAsFile();
           if (blob) {
             const url = createSafeObjectURL(blob);
-            
+
             setImage(prev => {
               if (prev) revokeSafeObjectURL(prev);
               return url;
             });
-            // Note: originalImage may equal image on first paste; avoid double-revoking the same URL
             setOriginalImage(prev => {
-              if (prev && prev !== image) revokeSafeObjectURL(prev);
+              if (prev && prev !== url) revokeSafeObjectURL(prev);
               return url;
             });
-            
+
             setIsCropping(false);
             setCropArea(null);
           }
@@ -102,7 +95,7 @@ export function PasteImageTool() {
 
     window.addEventListener("paste", handlePaste);
     return () => window.removeEventListener("paste", handlePaste);
-  }, [createSafeObjectURL, revokeSafeObjectURL, image]);
+  }, [createSafeObjectURL, revokeSafeObjectURL]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -122,7 +115,6 @@ export function PasteImageTool() {
     };
   }, [isCropping]);
 
-  // Start Cropping: Initialize crop area to full image bounds AND capture scaling
   const startCropping = () => {
     if (imageRef.current) {
       setCropArea({
@@ -131,7 +123,6 @@ export function PasteImageTool() {
         width: imageRef.current.width,
         height: imageRef.current.height,
       });
-      // Store scaling factor in state to avoid reading ref during render
       setImageScale({
         x: imageRef.current.naturalWidth / imageRef.current.width,
         y: imageRef.current.naturalHeight / imageRef.current.height,
@@ -140,10 +131,7 @@ export function PasteImageTool() {
     }
   };
 
-  // Handle Drag Start for Corners/Edges/Center
   const handleDragStart = (e: React.MouseEvent | React.TouchEvent, mode: DragMode) => {
-// Touch events are passive by default in React — calling preventDefault() throws a warning.
-// CSS touch-none on the container already blocks scroll, so we skip it for touch. There was an error here which fixed with this if statement. (FIXED Error: Unable to preventDefault inside passive event listener invocation.)
     if (e.type !== "touchstart") {
       e.preventDefault();
     }
@@ -161,7 +149,6 @@ export function PasteImageTool() {
     });
   };
 
-  // Handle Global Drag Move
   const handleDragMove = useCallback((e: MouseEvent | TouchEvent) => {
     if (!dragMode || !dragStart || !imageRef.current) return;
     if (e.cancelable) e.preventDefault();
@@ -225,7 +212,7 @@ export function PasteImageTool() {
         }
       }
     }
-// Skip if a frame is already queued — prevents setState from firing faster than the browser paints (by Claude AI)
+
     if (rafRef.current !== null) return;
     rafRef.current = requestAnimationFrame(() => {
       setCropArea({ x: newX, y: newY, width: newW, height: newH });
@@ -234,7 +221,6 @@ export function PasteImageTool() {
 
   }, [dragMode, dragStart]);
 
-  // Handle Global Drag End
   const handleDragEnd = useCallback(() => {
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
@@ -244,7 +230,6 @@ export function PasteImageTool() {
     setDragStart(null);
   }, []);
 
-  // Attach window event listeners dynamically
   useEffect(() => {
     if (dragMode) {
       window.addEventListener("mousemove", handleDragMove);
@@ -260,7 +245,6 @@ export function PasteImageTool() {
     }
   }, [dragMode, handleDragMove, handleDragEnd]);
 
-  // Apply crop using canvas blob conversion
   const applyCrop = () => {
     if (!cropArea || !imageRef.current || !canvasRef.current) return;
 
@@ -300,7 +284,6 @@ export function PasteImageTool() {
     }, "image/png");
   };
 
-  // Download image
   const downloadImage = () => {
     if (!image) return;
     const dateStamp = new Date().toLocaleDateString('en-CA');
@@ -312,39 +295,6 @@ export function PasteImageTool() {
     document.body.removeChild(link);
   };
 
-  // Print image
-  const printImage = () => {
-    if (!image) return;
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Print Image</title>
-          <style>
-            body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-            img { max-width: 100%; height: auto; }
-            @media print {
-              body { margin: 0; }
-              img { max-width: 100%; page-break-inside: avoid; }
-            }
-          </style>
-        </head>
-        <body>
-          <img src="${image}" alt="Print Image" />
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-    }, 250);
-  };
-
-  // Reset
   const resetImage = () => {
     if (image && image !== originalImage) revokeSafeObjectURL(image);
     setImage(originalImage);
@@ -352,7 +302,6 @@ export function PasteImageTool() {
     setCropArea(null);
   };
 
-  // Clear everything
   const clearImage = () => {
     if (image) revokeSafeObjectURL(image);
     if (originalImage && originalImage !== image) revokeSafeObjectURL(originalImage);
@@ -364,10 +313,9 @@ export function PasteImageTool() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* Empty State / Dropzone area */}
       {!image ? (
         <div className="border-2 border-dashed rounded-xl p-12 text-center hover:border-primary/50 transition-colors flex flex-col items-center justify-center min-h-[50vh] bg-muted/10">
           <ClipboardPaste className="size-16 mx-auto text-muted-foreground mb-4" />
@@ -379,63 +327,42 @@ export function PasteImageTool() {
           </p>
         </div>
       ) : (
-        <div className="grid lg:grid-cols-3 gap-6 items-start">
-          
-          {/* Controls - Left Column */}
-          <div className="lg:col-span-1 space-y-4">
-            <div className="rounded-xl border bg-card p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <Label className="text-base font-semibold">Actions</Label>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                {!isCropping ? (
-                  <Button onClick={startCropping} className="w-full justify-start" variant="secondary">
-                    <Scissors className="size-4 mr-2" /> Crop Image
-                  </Button>
-                ) : (
-                  <div className="flex gap-2">
-                    <Button onClick={applyCrop} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
-                      <Check className="size-4 mr-2" /> Apply Crop
-                    </Button>
-                    <Button onClick={() => { setIsCropping(false); setCropArea(null); }} variant="outline" className="flex-1">
-                      Cancel
-                    </Button>
-                  </div>
-                )}
-
-                {isCropping && (
-                  <div className="flex items-start gap-2 p-3 mt-2 rounded-lg bg-primary/10 text-primary border border-primary/20 text-sm">
-                    <MousePointerSquareDashed className="size-5 shrink-0 mt-0.5" />
-                    <p>Drag the corners or edges to adjust your crop, then apply.</p>
-                  </div>
-                )}
-
-                <hr className="my-2 border-border" />
-
-                <Button onClick={downloadImage} className="w-full justify-start">
-                  <Download className="size-4 mr-2" /> Download PNG
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            {!isCropping ? (
+              <Button onClick={startCropping} variant="secondary" size="sm">
+                <Scissors className="size-4 mr-2" /> Crop
+              </Button>
+            ) : (
+              <>
+                <Button onClick={applyCrop} size="sm">
+                  <Check className="size-4 mr-2" /> Apply Crop
                 </Button>
-                
-                <Button onClick={printImage} variant="outline" className="w-full justify-start">
-                  <Printer className="size-4 mr-2" /> Print Image
+                <Button onClick={() => { setIsCropping(false); setCropArea(null); }} variant="outline" size="sm">
+                  Cancel
                 </Button>
+              </>
+            )}
 
+            {!isCropping && (
+              <>
                 {image !== originalImage && (
-                  <Button onClick={resetImage} variant="outline" className="w-full justify-start">
+                  <Button onClick={resetImage} variant="outline" size="sm">
                     <RotateCcw className="size-4 mr-2" /> Reset
                   </Button>
                 )}
-
-                <Button onClick={clearImage} variant="destructive" className="w-full justify-start mt-2">
-                  <Trash2 className="size-4 mr-2" /> Clear & Paste New
+                <Button onClick={downloadImage} size="sm">
+                  <Download className="size-4 mr-2" /> Download PNG
                 </Button>
-              </div>
-            </div>
+                <div className="flex-1" />
+                <Button onClick={clearImage} variant="ghost" size="sm">
+                  <X className="size-4 mr-2" /> Clear
+                </Button>
+              </>
+            )}
           </div>
 
-          {/* Image Preview - Right Column */}
-          <div className="lg:col-span-2 flex justify-center bg-muted/30 rounded-xl border p-4 min-h-[50vh] overflow-hidden">
+          <div className="flex justify-center bg-muted/30 rounded-xl border p-4 min-h-[50vh] overflow-hidden">
             <div
               ref={containerRef}
               className="relative inline-block touch-none select-none"
@@ -448,7 +375,6 @@ export function PasteImageTool() {
                 draggable={false}
               />
 
-              {/* Crop Selection Overlay */}
               {isCropping && cropArea && (
                 <div
                   className="absolute pointer-events-none"
@@ -460,37 +386,32 @@ export function PasteImageTool() {
                     boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.65)",
                   }}
                 >
-                  {/* Grid lines inside crop area */}
                   <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 border border-white/50">
                     {Array.from({ length: 9 }).map((_, i) => (
                       <div key={i} className="border border-white/30" />
                     ))}
                   </div>
 
-                  {/* Move Area (Center) */}
-                  <div 
-                    className="absolute inset-0 pointer-events-auto cursor-move" 
-                    onMouseDown={(e) => handleDragStart(e, "move")} 
+                  <div
+                    className="absolute inset-0 pointer-events-auto cursor-move"
+                    onMouseDown={(e) => handleDragStart(e, "move")}
                     onTouchStart={(e) => handleDragStart(e, "move")}
                   />
 
-                  {/* Edges */}
                   <div className="absolute top-0 left-0 right-0 h-2 -translate-y-1/2 pointer-events-auto cursor-ns-resize" onMouseDown={(e) => handleDragStart(e, "n")} onTouchStart={(e) => handleDragStart(e, "n")} />
                   <div className="absolute bottom-0 left-0 right-0 h-2 translate-y-1/2 pointer-events-auto cursor-ns-resize" onMouseDown={(e) => handleDragStart(e, "s")} onTouchStart={(e) => handleDragStart(e, "s")} />
                   <div className="absolute top-0 bottom-0 left-0 w-2 -translate-x-1/2 pointer-events-auto cursor-ew-resize" onMouseDown={(e) => handleDragStart(e, "w")} onTouchStart={(e) => handleDragStart(e, "w")} />
                   <div className="absolute top-0 bottom-0 right-0 w-2 translate-x-1/2 pointer-events-auto cursor-ew-resize" onMouseDown={(e) => handleDragStart(e, "e")} onTouchStart={(e) => handleDragStart(e, "e")} />
 
-                  {/* Corner Handles */}
-                  <div className="absolute top-0 left-0 w-4 h-4 bg-white border border-gray-400 -translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-nwse-resize shadow-md" onMouseDown={(e) => handleDragStart(e, "nw")} onTouchStart={(e) => handleDragStart(e, "nw")} />
-                  <div className="absolute top-0 right-0 w-4 h-4 bg-white border border-gray-400 translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-nesw-resize shadow-md" onMouseDown={(e) => handleDragStart(e, "ne")} onTouchStart={(e) => handleDragStart(e, "ne")} />
-                  <div className="absolute bottom-0 left-0 w-4 h-4 bg-white border border-gray-400 -translate-x-1/2 translate-y-1/2 pointer-events-auto cursor-nesw-resize shadow-md" onMouseDown={(e) => handleDragStart(e, "sw")} onTouchStart={(e) => handleDragStart(e, "sw")} />
-                  <div className="absolute bottom-0 right-0 w-4 h-4 bg-white border border-gray-400 translate-x-1/2 translate-y-1/2 pointer-events-auto cursor-nwse-resize shadow-md" onMouseDown={(e) => handleDragStart(e, "se")} onTouchStart={(e) => handleDragStart(e, "se")} />
-                  
-                  {/* Dimensions Label (Using the safely stored state instead of Refs) */}
+                  <div className="absolute top-0 left-0 w-4 h-4 bg-white border border-border -translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-nwse-resize shadow-md" onMouseDown={(e) => handleDragStart(e, "nw")} onTouchStart={(e) => handleDragStart(e, "nw")} />
+                  <div className="absolute top-0 right-0 w-4 h-4 bg-white border border-border translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-nesw-resize shadow-md" onMouseDown={(e) => handleDragStart(e, "ne")} onTouchStart={(e) => handleDragStart(e, "ne")} />
+                  <div className="absolute bottom-0 left-0 w-4 h-4 bg-white border border-border -translate-x-1/2 translate-y-1/2 pointer-events-auto cursor-nesw-resize shadow-md" onMouseDown={(e) => handleDragStart(e, "sw")} onTouchStart={(e) => handleDragStart(e, "sw")} />
+                  <div className="absolute bottom-0 right-0 w-4 h-4 bg-white border border-border translate-x-1/2 translate-y-1/2 pointer-events-auto cursor-nwse-resize shadow-md" onMouseDown={(e) => handleDragStart(e, "se")} onTouchStart={(e) => handleDragStart(e, "se")} />
+
                   {cropArea.width > 50 && cropArea.height > 30 && (
                     <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground font-mono text-sm px-2 py-1 rounded shadow-sm whitespace-nowrap">
-                      {Math.round(cropArea.width * imageScale.x)} 
-                      {" × "} 
+                      {Math.round(cropArea.width * imageScale.x)}
+                      {" × "}
                       {Math.round(cropArea.height * imageScale.y)} px
                     </div>
                   )}
@@ -498,7 +419,6 @@ export function PasteImageTool() {
               )}
             </div>
           </div>
-
         </div>
       )}
     </div>
