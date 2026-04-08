@@ -32,7 +32,7 @@ export function PasteImageTool() {
   const [dragMode, setDragMode] = useState<DragMode>(null);
   const [dragStart, setDragStart] = useState<{ mouseX: number; mouseY: number; initialCrop: CropArea } | null>(null);
   
-  // State to hold scaling factors so we don't access refs during render
+ // Stored in state (not read from ref) so the dimensions label re-renders correctly without layout reads
   const [imageScale, setImageScale] = useState({ x: 1, y: 1 });
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -44,6 +44,8 @@ export function PasteImageTool() {
 
   const objectUrls = useRef<Set<string>>(new Set());
 
+// All object URLs are tracked in a ref so we can bulk-revoke on unmount
+// without needing them in any dependency array
   const createSafeObjectURL = useCallback((blob: Blob | MediaSource) => {
     const url = URL.createObjectURL(blob);
     objectUrls.current.add(url);
@@ -59,9 +61,10 @@ export function PasteImageTool() {
 
   // Cleanup all Object URLs and timers on unmount
   useEffect(() => {
+    const objurlcurr = objectUrls.current;
     return () => {
-      objectUrls.current.forEach(url => URL.revokeObjectURL(url));
-      objectUrls.current.clear();
+      objurlcurr.forEach(url => URL.revokeObjectURL(url));
+      objurlcurr.clear();
       
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       if (resizeTimeoutRef.current) clearTimeout(resizeTimeoutRef.current);
@@ -84,7 +87,7 @@ export function PasteImageTool() {
               if (prev) revokeSafeObjectURL(prev);
               return url;
             });
-            
+            // Note: originalImage may equal image on first paste; avoid double-revoking the same URL
             setOriginalImage(prev => {
               if (prev && prev !== image) revokeSafeObjectURL(prev);
               return url;
@@ -139,7 +142,11 @@ export function PasteImageTool() {
 
   // Handle Drag Start for Corners/Edges/Center
   const handleDragStart = (e: React.MouseEvent | React.TouchEvent, mode: DragMode) => {
-    e.preventDefault();
+// Touch events are passive by default in React — calling preventDefault() throws a warning.
+// CSS touch-none on the container already blocks scroll, so we skip it for touch. There was an error here which fixed with this if statement. (FIXED Error: Unable to preventDefault inside passive event listener invocation.)
+    if (e.type !== "touchstart") {
+      e.preventDefault();
+    }
     e.stopPropagation();
     if (!cropArea) return;
 
@@ -218,7 +225,7 @@ export function PasteImageTool() {
         }
       }
     }
-
+// Skip if a frame is already queued — prevents setState from firing faster than the browser paints (by Claude AI)
     if (rafRef.current !== null) return;
     rafRef.current = requestAnimationFrame(() => {
       setCropArea({ x: newX, y: newY, width: newW, height: newH });
