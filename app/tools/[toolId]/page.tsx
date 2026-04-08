@@ -52,6 +52,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   "pdf-preflight": dynamic(() => import("@/components/tools/pdf-preflight").then(mod => mod.PdfPreflightTool)),
   "shavian-transliterator": dynamic(() => import("@/components/tools/shavian-transliterator").then(mod => mod.ShavianTransliteratorTool)),
   "imposer": dynamic(() => import("@/components/tools/imposer").then(mod => mod.ImposerTool)),
+  "paste-image": dynamic(() => import("@/components/tools/paste-image").then(mod => mod.PasteImageTool)),
 };
 
 interface ToolPageProps {

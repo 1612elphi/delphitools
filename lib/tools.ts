@@ -41,6 +41,7 @@ import {
   FileSearch,
   Languages,
   Layers,
+  ClipboardPaste,
 } from "lucide-react";
 
 export interface Tool {
@@ -218,6 +219,13 @@ export const toolCategories: ToolCategory[] = [
         icon: ScanLine,
         href: "/tools/image-tracer",
         new: true,
+      },
+      {
+        id: "paste-image",
+        name: "Paste Image",
+        description: "Paste and download an image from your clipboard",
+        icon: ClipboardPaste,
+        href: "/tools/paste-image",
       },
     ],
   },
