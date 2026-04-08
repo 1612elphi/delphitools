@@ -440,10 +440,11 @@ export function ScrollGeneratorTool() {
                   alt={`Slide ${tile.index + 1}`}
                   className="h-64 w-auto"
                 />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
                   <span className="text-white text-sm font-medium">
                     Slide {tile.index + 1}
                   </span>
+                  <Download className="size-5 text-white" />
                 </div>
               </button>
             ))}

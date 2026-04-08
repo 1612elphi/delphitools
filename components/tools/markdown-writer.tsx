@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Download,
   Copy,
@@ -29,6 +29,22 @@ export function MarkdownWriterTool() {
   const [extractedItems, setExtractedItems] = useState<string[]>([]);
   const [activePanel, setActivePanel] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Apply a text transformation via the textarea's native input mechanism
+  // so the browser's undo stack (Ctrl+Z) tracks the change.
+  const applyTransform = useCallback((transform: (text: string) => string) => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const newValue = transform(ta.value);
+    if (newValue === ta.value) return;
+    ta.focus();
+    ta.select();
+    document.execCommand("insertText", false, newValue);
+    // Fallback if execCommand is a no-op (some browsers)
+    if (ta.value !== newValue) {
+      setContent(newValue);
+    }
+  }, []);
 
   // Load from localStorage
   useEffect(() => {
@@ -79,51 +95,51 @@ export function MarkdownWriterTool() {
   };
 
   // === CASE CONVERSIONS ===
-  const toUpperCase = () => setContent(content.toUpperCase());
-  const toLowerCase = () => setContent(content.toLowerCase());
-  const toTitleCase = () => setContent(
-    content.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase())
+  const toUpperCase = () => applyTransform(t => t.toUpperCase());
+  const toLowerCase = () => applyTransform(t => t.toLowerCase());
+  const toTitleCase = () => applyTransform(t =>
+    t.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase())
   );
-  const toSentenceCase = () => setContent(
-    content.toLowerCase().replace(/(^\s*\w|[.!?]\s*\w)/g, c => c.toUpperCase())
+  const toSentenceCase = () => applyTransform(t =>
+    t.toLowerCase().replace(/(^\s*\w|[.!?]\s*\w)/g, c => c.toUpperCase())
   );
-  const toCamelCase = () => setContent(
-    content.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (_, c) => c.toUpperCase())
+  const toCamelCase = () => applyTransform(t =>
+    t.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (_, c) => c.toUpperCase())
   );
-  const toSnakeCase = () => setContent(
-    content.replace(/\s+/g, "_").replace(/([a-z])([A-Z])/g, "$1_$2").toLowerCase().replace(/[^a-z0-9_]/g, "_").replace(/_+/g, "_")
+  const toSnakeCase = () => applyTransform(t =>
+    t.replace(/\s+/g, "_").replace(/([a-z])([A-Z])/g, "$1_$2").toLowerCase().replace(/[^a-z0-9_]/g, "_").replace(/_+/g, "_")
   );
-  const toKebabCase = () => setContent(
-    content.replace(/\s+/g, "-").replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-")
+  const toKebabCase = () => applyTransform(t =>
+    t.replace(/\s+/g, "-").replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-")
   );
 
   // === LINE OPERATIONS ===
-  const sortLines = () => setContent(content.split("\n").sort((a, b) => a.localeCompare(b)).join("\n"));
-  const sortLinesReverse = () => setContent(content.split("\n").sort((a, b) => b.localeCompare(a)).join("\n"));
-  const sortByLength = () => setContent(content.split("\n").sort((a, b) => a.length - b.length).join("\n"));
-  const reverseLines = () => setContent(content.split("\n").reverse().join("\n"));
-  const shuffleLines = () => {
-    const lines = content.split("\n");
+  const sortLines = () => applyTransform(t => t.split("\n").sort((a, b) => a.localeCompare(b)).join("\n"));
+  const sortLinesReverse = () => applyTransform(t => t.split("\n").sort((a, b) => b.localeCompare(a)).join("\n"));
+  const sortByLength = () => applyTransform(t => t.split("\n").sort((a, b) => a.length - b.length).join("\n"));
+  const reverseLines = () => applyTransform(t => t.split("\n").reverse().join("\n"));
+  const shuffleLines = () => applyTransform(t => {
+    const lines = t.split("\n");
     for (let i = lines.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [lines[i], lines[j]] = [lines[j], lines[i]];
     }
-    setContent(lines.join("\n"));
-  };
-  const removeDuplicates = () => setContent([...new Set(content.split("\n"))].join("\n"));
-  const addLineNumbers = () => setContent(
-    content.split("\n").map((line, i) => `${i + 1}. ${line}`).join("\n")
+    return lines.join("\n");
+  });
+  const removeDuplicates = () => applyTransform(t => [...new Set(t.split("\n"))].join("\n"));
+  const addLineNumbers = () => applyTransform(t =>
+    t.split("\n").map((line, i) => `${i + 1}. ${line}`).join("\n")
   );
-  const removeLineNumbers = () => setContent(
-    content.split("\n").map(line => line.replace(/^\d+[\.\):\-]\s*/, "")).join("\n")
+  const removeLineNumbers = () => applyTransform(t =>
+    t.split("\n").map(line => line.replace(/^\d+[\.\):\-]\s*/, "")).join("\n")
   );
 
   // === CLEAN UP ===
-  const trimWhitespace = () => setContent(content.split("\n").map(line => line.trim()).join("\n"));
-  const removeEmptyLines = () => setContent(content.split("\n").filter(line => line.trim()).join("\n"));
-  const removeLineBreaks = () => setContent(content.replace(/\n+/g, " ").replace(/\s+/g, " ").trim());
-  const addLineBreaks = (width: number = 80) => {
-    const words = content.split(/\s+/);
+  const trimWhitespace = () => applyTransform(t => t.split("\n").map(line => line.trim()).join("\n"));
+  const removeEmptyLines = () => applyTransform(t => t.split("\n").filter(line => line.trim()).join("\n"));
+  const removeLineBreaks = () => applyTransform(t => t.replace(/\n+/g, " ").replace(/\s+/g, " ").trim());
+  const addLineBreaks = (width: number = 80) => applyTransform(t => {
+    const words = t.split(/\s+/);
     const lines: string[] = [];
     let currentLine = "";
     for (const word of words) {
@@ -135,32 +151,34 @@ export function MarkdownWriterTool() {
       }
     }
     if (currentLine) lines.push(currentLine);
-    setContent(lines.join("\n"));
-  };
-  const removeExtraSpaces = () => setContent(content.replace(/[^\S\n]+/g, " "));
+    return lines.join("\n");
+  });
+  const removeExtraSpaces = () => applyTransform(t => t.replace(/[^\S\n]+/g, " "));
   const decodeUrlChars = () => {
     try {
-      setContent(decodeURIComponent(content));
+      applyTransform(t => decodeURIComponent(t));
     } catch {
       alert("Unable to decode - text may contain invalid percent-encoded sequences");
     }
   };
-  const encodeUrlChars = () => setContent(encodeURIComponent(content));
+  const encodeUrlChars = () => applyTransform(t => encodeURIComponent(t));
 
   // === FIND & REPLACE ===
   const doReplace = (all: boolean) => {
     if (!findText) return;
     try {
-      if (useRegex) {
-        const regex = new RegExp(findText, all ? "g" : "");
-        setContent(content.replace(regex, replaceText));
-      } else {
-        if (all) {
-          setContent(content.split(findText).join(replaceText));
+      applyTransform(t => {
+        if (useRegex) {
+          const regex = new RegExp(findText, all ? "g" : "");
+          return t.replace(regex, replaceText);
         } else {
-          setContent(content.replace(findText, replaceText));
+          if (all) {
+            return t.split(findText).join(replaceText);
+          } else {
+            return t.replace(findText, replaceText);
+          }
         }
-      }
+      });
     } catch (e) {
       alert("Invalid regex pattern");
     }

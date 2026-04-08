@@ -55,6 +55,7 @@ interface QROptions {
   padding: number;
   foregroundColor: string;
   backgroundColor: string;
+  transparentBg: boolean;
   dotType: DotType;
   cornerSquareType: CornerSquareType;
   cornerDotType: CornerDotType;
@@ -131,6 +132,7 @@ const defaultQROptions: QROptions = {
   padding: 2,
   foregroundColor: "#000000",
   backgroundColor: "#ffffff",
+  transparentBg: false,
   dotType: "square",
   cornerSquareType: "square",
   cornerDotType: "square",
@@ -278,9 +280,9 @@ export function QrGeneratorTool() {
           type: options.cornerDotType,
           color: options.foregroundColor,
         },
-        backgroundOptions: {
-          color: options.backgroundColor,
-        },
+        backgroundOptions: options.transparentBg
+          ? { color: "transparent" }
+          : { color: options.backgroundColor },
       };
 
       // Add logo if present
@@ -482,9 +484,9 @@ export function QrGeneratorTool() {
             type: options.cornerDotType,
             color: options.foregroundColor,
           },
-          backgroundOptions: {
-            color: options.backgroundColor,
-          },
+          backgroundOptions: options.transparentBg
+            ? { color: "transparent" }
+            : { color: options.backgroundColor },
           image: options.logo || undefined,
           imageOptions: options.logo
             ? {
@@ -797,8 +799,8 @@ export function QrGeneratorTool() {
             <div className="space-y-4">
               <Label className="font-bold text-lg">Preview</Label>
               <div
-                className="border-4 border-card rounded-xl p-4 flex items-center justify-center min-h-[320px]"
-                style={{ backgroundColor: options.backgroundColor }}
+                className={`border-4 border-card rounded-xl p-4 flex items-center justify-center min-h-[320px] ${options.transparentBg ? "bg-[repeating-conic-gradient(#e5e7eb_0%_25%,transparent_0%_50%)] bg-[length:16px_16px]" : ""}`}
+                style={options.transparentBg ? undefined : { backgroundColor: options.backgroundColor }}
               >
                 {generating ? (
                   <Loader2 className="size-8 animate-spin text-muted-foreground" />
@@ -1101,16 +1103,18 @@ export function QrGeneratorTool() {
                           <input
                             type="color"
                             value={options.backgroundColor}
+                            disabled={options.transparentBg}
                             onChange={(e) =>
                               setOptions((prev) => ({
                                 ...prev,
                                 backgroundColor: e.target.value,
                               }))
                             }
-                            className="w-12 h-10 rounded border cursor-pointer"
+                            className="w-12 h-10 rounded border cursor-pointer disabled:opacity-40"
                           />
                           <Input
-                            value={options.backgroundColor}
+                            value={options.transparentBg ? "transparent" : options.backgroundColor}
+                            disabled={options.transparentBg}
                             onChange={(e) =>
                               setOptions((prev) => ({
                                 ...prev,
@@ -1120,6 +1124,20 @@ export function QrGeneratorTool() {
                             className="font-mono flex-1"
                           />
                         </div>
+                        <label className="flex items-center gap-2 text-sm cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={options.transparentBg}
+                            onChange={(e) =>
+                              setOptions((prev) => ({
+                                ...prev,
+                                transparentBg: e.target.checked,
+                              }))
+                            }
+                            className="rounded"
+                          />
+                          Transparent background
+                        </label>
                       </div>
                     </div>
                   </AccordionContent>

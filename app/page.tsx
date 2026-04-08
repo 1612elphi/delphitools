@@ -28,6 +28,9 @@ export default function Home() {
           <p>
             If you find these tools useful, I'm glad. You don't owe me anything. But if you're an artist, feel free to <Link className="underline" href="mailto:tools@rmv.fyi">email me your work</Link>. I'd love to see it.
           </p>
+          <p>
+            If you would like to donate to delphitools, I ask that you don't. Make a donation to <a className="underline" href="https://donate.wikimedia.org" target="_blank" rel="noopener noreferrer">Wikipedia</a> or the <a className="underline" href="https://www.eff.org/donate" target="_blank" rel="noopener noreferrer">EFF</a> instead. Email me your proof of donation and I'll put you in the credits.
+          </p>
         </div>
       </div>
 
@@ -101,7 +104,7 @@ export default function Home() {
                 <div className="flex items-start justify-between">
                   <div
                     className="text-[10px] tracking-[0.3em] uppercase"
-                    style={{ color: '#9e7322', fontFamily: "'Geist Mono', monospace" }}
+                    style={{ color: '#9e7322', fontFamily: "var(--font-mono)" }}
                   >
                     PDF Preflight
                   </div>
@@ -130,7 +133,7 @@ export default function Home() {
                       >
                         <span
                           style={{
-                            fontFamily: "'Geist Mono', monospace",
+                            fontFamily: "var(--font-mono)",
                             fontWeight: 700,
                             fontSize: 22,
                             color: '#d4952a',
@@ -155,7 +158,7 @@ export default function Home() {
                       >
                         <span
                           style={{
-                            fontFamily: "'Geist Mono', monospace",
+                            fontFamily: "var(--font-mono)",
                             fontWeight: 700,
                             fontSize: 22,
                             color: '#d4952a',
@@ -178,7 +181,7 @@ export default function Home() {
                   style={{
                     color: '#e8dcc8',
                     opacity: 0.4,
-                    fontFamily: "'Geist Mono', monospace",
+                    fontFamily: "var(--font-mono)",
                   }}
                 >
                   Your PDFs, cleared for takeoff.
@@ -210,7 +213,7 @@ export default function Home() {
                 <div className="flex items-start justify-between">
                   <div
                     className="text-[10px] tracking-[0.3em] uppercase"
-                    style={{ color: '#8a9a68', fontFamily: "'Geist Mono', monospace" }}
+                    style={{ color: '#8a9a68', fontFamily: "var(--font-mono)" }}
                   >
                     Drawing App
                   </div>
@@ -233,7 +236,7 @@ export default function Home() {
                     className="text-[10px] tracking-[0.2em] uppercase mt-1 inline-block"
                     style={{
                       color: '#c4523a',
-                      fontFamily: "'Geist Mono', monospace",
+                      fontFamily: "var(--font-mono)",
                     }}
                   >
                     ECS-1
@@ -277,7 +280,7 @@ export default function Home() {
                 <div className="flex items-start justify-between">
                   <div
                     className="text-[10px] tracking-[0.3em] uppercase"
-                    style={{ color: '#7b68ee', fontFamily: "'Geist Mono', monospace" }}
+                    style={{ color: '#7b68ee', fontFamily: "var(--font-mono)" }}
                   >
                     Unicode &amp; Text Tools
                   </div>
@@ -290,7 +293,7 @@ export default function Home() {
                   <h3
                     className="text-sm leading-none"
                     style={{
-                      fontFamily: "'Geist Mono', monospace",
+                      fontFamily: "var(--font-mono)",
                       color: '#e0e0e0',
                       opacity: 0.7,
                       letterSpacing: '0.05em',
@@ -302,7 +305,7 @@ export default function Home() {
                     className="text-2xl font-bold mt-1 inline-block"
                     style={{
                       color: '#00ff41',
-                      fontFamily: "'Geist Mono', monospace",
+                      fontFamily: "var(--font-mono)",
                       letterSpacing: '0.1em',
                       textShadow: '0 0 7px #00ff41, 0 0 20px rgba(0, 255, 65, 0.4)',
                     }}
@@ -315,7 +318,7 @@ export default function Home() {
                   style={{
                     color: '#00ff41',
                     opacity: 0.4,
-                    fontFamily: "'Geist Mono', monospace",
+                    fontFamily: "var(--font-mono)",
                   }}
                 >
                   7ext, transf0rmed.

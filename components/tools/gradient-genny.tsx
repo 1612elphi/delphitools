@@ -69,6 +69,13 @@ function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
 }
 
+function normalizeHex(hex: string): string | null {
+  // Strip all leading # characters, then validate as 6-digit hex
+  const stripped = hex.replace(/^#+/, "");
+  if (/^[a-f\d]{6}$/i.test(stripped)) return `#${stripped}`;
+  return null;
+}
+
 function hexToRgb(hex: string): [number, number, number] | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) return null;
@@ -204,6 +211,91 @@ function generateInitialMeshPoints(gridSize: 2 | 3): MeshPoint[] {
     }
   }
   return points;
+}
+
+// Hook for inputs that defer updates until Enter/blur.
+// `parse` is pure: returns the normalized string value or null to reject.
+// `onCommit` is called with the parsed value on successful commit.
+function useDeferredInput(
+  value: string,
+  parse: (draft: string) => string | null,
+  onCommit: (parsed: string) => void
+) {
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (document.activeElement !== inputRef.current) {
+      setDraft(value);
+    }
+  }, [value]);
+
+  const commit = () => {
+    const result = parse(draft);
+    if (result !== null) {
+      onCommit(result);
+      setDraft(result);
+    } else {
+      setDraft(value);
+    }
+  };
+
+  return {
+    ref: inputRef,
+    value: draft,
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => setDraft(e.target.value),
+    onBlur: commit,
+    onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        commit();
+        inputRef.current?.blur();
+      }
+    },
+  };
+}
+
+function DeferredHexInput({
+  value,
+  onChange,
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+}) {
+  const inputProps = useDeferredInput(
+    value,
+    (d) => normalizeHex(d),
+    onChange
+  );
+
+  return <Input {...inputProps} className={className} />;
+}
+
+function DeferredPositionInput({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  const inputProps = useDeferredInput(
+    String(value),
+    (d) => {
+      const raw = Number(d);
+      if (isNaN(raw) || d.trim() === "") return null;
+      return String(Math.max(0, Math.min(100, raw)));
+    },
+    (parsed) => onChange(Number(parsed))
+  );
+
+  return (
+    <div className="flex items-center gap-1">
+      <Input {...inputProps} type="number" className="w-20" min={0} max={100} />
+      <span className="text-muted-foreground">%</span>
+    </div>
+  );
 }
 
 // Corner positions for overlay dots (inset for tooltip visibility)
@@ -458,26 +550,15 @@ function SortableColourStop({
         onChange={(e) => onUpdate({ colour: e.target.value })}
         className="w-10 h-10 rounded-lg cursor-pointer border-0"
       />
-      <Input
+      <DeferredHexInput
         value={stop.colour}
-        onChange={(e) => onUpdate({ colour: e.target.value })}
+        onChange={(colour) => onUpdate({ colour })}
         className="w-28 font-mono text-sm"
       />
-      <div className="flex items-center gap-1">
-        <Input
-          type="number"
-          value={stop.position}
-          onChange={(e) =>
-            onUpdate({
-              position: Math.max(0, Math.min(100, Number(e.target.value))),
-            })
-          }
-          className="w-20"
-          min={0}
-          max={100}
-        />
-        <span className="text-muted-foreground">%</span>
-      </div>
+      <DeferredPositionInput
+        value={stop.position}
+        onChange={(position) => onUpdate({ position })}
+      />
       <Button
         size="icon"
         variant="ghost"
@@ -655,21 +736,35 @@ export function GradientGennyTool() {
 
   const updateColourStop = useCallback(
     (id: string, updates: Partial<ColourStop>) => {
-      setColourStops((prev) =>
-        prev.map((stop) => (stop.id === id ? { ...stop, ...updates } : stop))
-      );
+      if (updates.colour !== undefined) {
+        const normalized = normalizeHex(updates.colour);
+        if (!normalized) return;
+        updates = { ...updates, colour: normalized };
+      }
+      setColourStops((prev) => {
+        const updated = prev.map((stop) =>
+          stop.id === id ? { ...stop, ...updates } : stop
+        );
+        if (updates.position !== undefined) {
+          return updated.sort((a, b) => a.position - b.position);
+        }
+        return updated;
+      });
     },
     []
   );
 
   // Handle colour stop reordering via drag and drop
+  // Colours move to new slots but positions stay mapped to list order
   const handleColourStopDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
       setColourStops((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
+        const reordered = arrayMove(items, oldIndex, newIndex);
+        const positions = items.map((item) => item.position).sort((a, b) => a - b);
+        return reordered.map((item, i) => ({ ...item, position: positions[i] }));
       });
     }
   }, []);
@@ -713,9 +808,11 @@ export function GradientGennyTool() {
   }, []);
 
   const updateMeshPointColour = useCallback((id: string, colour: string) => {
+    const normalized = normalizeHex(colour);
+    if (!normalized) return;
     setMeshConfig((prev) => ({
       ...prev,
-      points: prev.points.map((p) => (p.id === id ? { ...p, colour } : p)),
+      points: prev.points.map((p) => (p.id === id ? { ...p, colour: normalized } : p)),
     }));
   }, []);
 
@@ -834,7 +931,7 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
         (a, b) => a.position - b.position
       );
       sortedStops.forEach((stop) => {
-        gradient.addColorStop(stop.position / 100, stop.colour);
+        gradient.addColorStop(stop.position / 100, normalizeHex(stop.colour) ?? stop.colour);
       });
 
       ctx.fillStyle = gradient;
@@ -1024,7 +1121,7 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
                     x={x}
                     y={y}
                     onColourChange={(colour) =>
-                      setCorners((prev) => ({ ...prev, [key]: colour }))
+                      setCorners((prev) => ({ ...prev, [key]: normalizeHex(colour) ?? prev[key] }))
                     }
                     isHovered={hoveredCorner === key}
                     onHover={() => setHoveredCorner(key)}
@@ -1248,14 +1345,14 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
                     type="color"
                     value={corners[key]}
                     onChange={(e) =>
-                      setCorners((prev) => ({ ...prev, [key]: e.target.value }))
+                      setCorners((prev) => ({ ...prev, [key]: normalizeHex(e.target.value) ?? prev[key] }))
                     }
                     className="w-12 h-12 rounded-lg cursor-pointer border-0"
                   />
-                  <Input
+                  <DeferredHexInput
                     value={corners[key]}
-                    onChange={(e) =>
-                      setCorners((prev) => ({ ...prev, [key]: e.target.value }))
+                    onChange={(colour) =>
+                      setCorners((prev) => ({ ...prev, [key]: colour }))
                     }
                     className="font-mono text-sm"
                   />
