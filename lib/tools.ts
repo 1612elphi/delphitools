@@ -363,7 +363,7 @@ export const toolCategories: ToolCategory[] = [
       {
         id: "paste-image",
         name: "Paste Image",
-        description: "Paste and Download image frm Clipboard",
+        description: "Paste and Download image from Clipboard",
         icon: ClipboardPaste,
         href: "/tools/paste-image"
       }
