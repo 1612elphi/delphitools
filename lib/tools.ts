@@ -227,6 +227,14 @@ export const toolCategories: ToolCategory[] = [
         icon: ClipboardPaste,
         href: "/tools/paste-image",
       },
+      {
+        id: "image-clipper",
+        name: "Image Clipper",
+        description: "Trim transparent edges from PNGs to the smallest dimensions",
+        icon: Crop,
+        href: "/tools/image-clipper",
+        new: true,
+      },
     ],
   },
   {
