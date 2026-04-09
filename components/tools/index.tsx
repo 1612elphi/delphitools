@@ -17,6 +17,7 @@ import { GuillotineDirectorTool } from "./guillotine-director";
 import { PdfPreflightTool } from "./pdf-preflight";
 import { ShavianTransliteratorTool } from "./shavian-transliterator";
 import { ImposerTool } from "./imposer";
+import { ImageClipperTool } from "./image-clipper";
 
 export const toolComponents: Record<string, React.ComponentType> = {
   "px-to-rem": PxToRemTool,
@@ -36,4 +37,5 @@ export const toolComponents: Record<string, React.ComponentType> = {
   "pdf-preflight": PdfPreflightTool,
   "shavian-transliterator": ShavianTransliteratorTool,
   "imposer": ImposerTool,
+  "image-clipper": ImageClipperTool,
 };
