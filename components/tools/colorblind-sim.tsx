@@ -5,6 +5,8 @@ import { Upload, Trash2, Palette, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useColourNotation } from "@/hooks/use-colour-notation";
+import { formatColour } from "@/lib/colour-notation";
 
 // Colour blindness simulation matrices
 // Based on research by Machado, Oliveira and Fernandes (2009)
@@ -167,6 +169,7 @@ export function ColorblindSimTool() {
   const [sourceImage, setSourceImage] = useState<string | null>(null);
   const [simulatedImage, setSimulatedImage] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { notation } = useColourNotation();
 
   const isValidHex = (hex: string) => /^#[0-9A-Fa-f]{6}$/.test(hex);
 
@@ -304,7 +307,7 @@ export function ColorblindSimTool() {
                       />
                       <div className="flex-1 min-w-0">
                         <div className="font-bold text-sm truncate">{info.name}</div>
-                        <div className="font-mono text-xs text-muted-foreground">{simHex}</div>
+                        <div className="font-mono text-xs text-muted-foreground">{formatColour(simHex, notation)}</div>
                       </div>
                     </div>
                     <div className="text-xs text-muted-foreground">{info.description}</div>

@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { getToolById, getCategoryByToolId } from "@/lib/tools";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ColourNotationSelector } from "@/components/colour-notation-selector";
 
 export function AppHeader() {
   const pathname = usePathname();
@@ -48,7 +49,8 @@ export function AppHeader() {
         </div>
       )}
 
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-1">
+        {category?.name === "Colour" && toolId !== "colour-converter" && <ColourNotationSelector />}
         <ThemeToggle />
       </div>
     </header>

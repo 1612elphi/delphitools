@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useColourNotation } from "@/hooks/use-colour-notation";
+import { formatColour } from "@/lib/colour-notation";
 
 // Colour utilities
 function hexToRgb(hex: string): [number, number, number] | null {
@@ -185,6 +187,7 @@ export function HarmonyGennyTool() {
   const [harmonyType, setHarmonyType] = useState<HarmonyType>("complementary");
   const [colours, setColours] = useState<ColourSwatch[] | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const { notation } = useColourNotation();
 
   useEffect(() => {
     const result = generateHarmony(baseColour, harmonyType);
@@ -199,13 +202,13 @@ export function HarmonyGennyTool() {
 
   const copyAllHex = () => {
     if (!colours) return;
-    const hexes = colours.map(c => c.hex).join(", ");
-    copyValue(hexes, "all");
+    const values = colours.map(c => formatColour(c.hex, notation)).join(", ");
+    copyValue(values, "all");
   };
 
   const copyAsCssVariables = () => {
     if (!colours) return;
-    const vars = colours.map((c, i) => `  --harmony-${i + 1}: ${c.hex};`).join("\n");
+    const vars = colours.map((c, i) => `  --harmony-${i + 1}: ${formatColour(c.hex, notation)};`).join("\n");
     copyValue(`:root {\n${vars}\n}`, "css");
   };
 
@@ -316,7 +319,7 @@ export function HarmonyGennyTool() {
             {colours.map((colour, i) => (
               <button
                 key={i}
-                onClick={() => copyValue(colour.hex, colour.hex)}
+                onClick={() => copyValue(formatColour(colour.hex, notation), colour.hex)}
                 className="p-4 rounded-lg border bg-card hover:border-primary/50 transition-colors"
               >
                 <div
@@ -324,7 +327,7 @@ export function HarmonyGennyTool() {
                   style={{ backgroundColor: colour.hex }}
                 />
                 <div className="text-center">
-                  <div className="font-mono text-sm font-bold">{colour.hex}</div>
+                  <div className="font-mono text-sm font-bold">{formatColour(colour.hex, notation)}</div>
                   {harmonyType !== "monochromatic" && (
                     <div className="text-xs text-muted-foreground mt-1">
                       {colour.angle === 0 ? "Base" : `+${colour.angle}°`}

@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useColourNotation } from "@/hooks/use-colour-notation";
+import { formatColour } from "@/lib/colour-notation";
 
 // Colour utilities
 function hexToRgb(hex: string): [number, number, number] | null {
@@ -198,6 +200,7 @@ function TailwindShadesInner() {
   const [mode, setMode] = useState<GenerationMode>("classic");
   const [shades, setShades] = useState<Shade[] | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const { notation } = useColourNotation();
 
   // Update baseColour when URL parameter changes
   useEffect(() => {
@@ -219,12 +222,12 @@ function TailwindShadesInner() {
 
   const generateCssVariables = () => {
     if (!shades) return "";
-    return shades.map(s => `  --${colourName}-${s.level}: ${s.hex};`).join("\n");
+    return shades.map(s => `  --${colourName}-${s.level}: ${formatColour(s.hex, notation)};`).join("\n");
   };
 
   const generateTailwindConfig = () => {
     if (!shades) return "";
-    const entries = shades.map(s => `      ${s.level}: '${s.hex}',`).join("\n");
+    const entries = shades.map(s => `      ${s.level}: '${formatColour(s.hex, notation)}',`).join("\n");
     return `${colourName}: {\n${entries}\n    },`;
   };
 
@@ -292,10 +295,10 @@ function TailwindShadesInner() {
             {shades.map((shade) => (
               <button
                 key={shade.level}
-                onClick={() => copyValue(shade.hex, shade.hex)}
+                onClick={() => copyValue(formatColour(shade.hex, notation), shade.hex)}
                 className="relative group h-full"
                 style={{ backgroundColor: shade.hex }}
-                title={`${shade.level}: ${shade.hex}`}
+                title={`${shade.level}: ${formatColour(shade.hex, notation)}`}
               >
                 <div className="absolute inset-0 flex items-end justify-center pb-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <span className={`text-xs font-bold ${shade.level < 500 ? "text-gray-900" : "text-white"}`}>
@@ -311,7 +314,7 @@ function TailwindShadesInner() {
             {shades.map((shade) => (
               <button
                 key={shade.level}
-                onClick={() => copyValue(shade.hex, shade.hex)}
+                onClick={() => copyValue(formatColour(shade.hex, notation), shade.hex)}
                 className="p-3 rounded-lg border bg-card hover:border-primary/50 transition-colors text-left"
               >
                 <div
@@ -320,7 +323,7 @@ function TailwindShadesInner() {
                 />
                 <div className="font-bold text-sm">{shade.level}</div>
                 <div className="font-mono text-xs text-muted-foreground">
-                  {shade.hex}
+                  {formatColour(shade.hex, notation)}
                 </div>
               </button>
             ))}
