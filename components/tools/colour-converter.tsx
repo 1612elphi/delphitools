@@ -151,7 +151,7 @@ function oklchToOklab(l: number, c: number, h: number): [number, number, number]
   return [l, c * Math.cos(hRad), c * Math.sin(hRad)];
 }
 
-type ColourFormat = "hex" | "rgb" | "hsl" | "lab" | "lch" | "oklab" | "oklch";
+type ColourFormat = "hex" | "rgb" | "rgb-decimal" | "hsl" | "lab" | "lch" | "oklab" | "oklch";
 
 interface ColourValues {
   hex: string;
@@ -183,6 +183,16 @@ export function ColourConverterTool() {
           const match = value.match(/(\d+)\s*,?\s*(\d+)\s*,?\s*(\d+)/);
           if (!match) return null;
           rgb = [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])];
+          break;
+        }
+        case "rgb-decimal": {
+          const match = value.match(/([\d.]+)\s*,?\s*([\d.]+)\s*,?\s*([\d.]+)/);
+          if (!match) return null;
+          rgb = [
+            Math.round(parseFloat(match[1]) * 255),
+            Math.round(parseFloat(match[2]) * 255),
+            Math.round(parseFloat(match[3]) * 255),
+          ];
           break;
         }
         case "hsl": {
@@ -256,6 +266,7 @@ export function ColourConverterTool() {
     switch (format) {
       case "hex": return values.hex;
       case "rgb": return `rgb(${values.rgb.join(", ")})`;
+      case "rgb-decimal": return `rgb(${(values.rgb[0] / 255).toFixed(4)}, ${(values.rgb[1] / 255).toFixed(4)}, ${(values.rgb[2] / 255).toFixed(4)})`;
       case "hsl": return `hsl(${values.hsl[0].toFixed(1)}, ${values.hsl[1].toFixed(1)}%, ${values.hsl[2].toFixed(1)}%)`;
       case "lab": return `lab(${values.lab[0].toFixed(2)} ${values.lab[1].toFixed(2)} ${values.lab[2].toFixed(2)})`;
       case "lch": return `lch(${values.lch[0].toFixed(2)} ${values.lch[1].toFixed(2)} ${values.lch[2].toFixed(1)})`;
@@ -267,6 +278,7 @@ export function ColourConverterTool() {
   const formats: { id: ColourFormat; name: string; placeholder: string }[] = [
     { id: "hex", name: "HEX", placeholder: "#3b82f6" },
     { id: "rgb", name: "RGB", placeholder: "59, 130, 246" },
+    { id: "rgb-decimal", name: "Decimal RGB", placeholder: "0.2314, 0.5098, 0.9647" },
     { id: "hsl", name: "HSL", placeholder: "217, 91%, 60%" },
     { id: "lab", name: "LAB", placeholder: "54.5, 8.5, -65.5" },
     { id: "lch", name: "LCH", placeholder: "54.5, 66.0, 277.5" },
@@ -353,6 +365,7 @@ export function ColourConverterTool() {
         <div className="grid gap-2 sm:grid-cols-2 text-muted-foreground">
           <div><span className="font-mono">HEX:</span> #3b82f6</div>
           <div><span className="font-mono">RGB:</span> 59, 130, 246</div>
+          <div><span className="font-mono">Decimal RGB:</span> 0.2314, 0.5098, 0.9647</div>
           <div><span className="font-mono">HSL:</span> 217, 91%, 60%</div>
           <div><span className="font-mono">LAB:</span> 54.5 8.5 -65.5</div>
           <div><span className="font-mono">LCH:</span> 54.5 66.0 277.5</div>

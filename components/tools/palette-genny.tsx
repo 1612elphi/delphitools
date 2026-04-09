@@ -18,6 +18,8 @@ import {
   type PaletteCollectionCategory,
 } from "@/lib/palette-collection";
 import Link from "next/link";
+import { useColourNotation } from "@/hooks/use-colour-notation";
+import { formatColour } from "@/lib/colour-notation";
 
 // ============================================================================
 // COLOUR UTILITIES (kept for local use)
@@ -124,6 +126,7 @@ export function PaletteGennyTool() {
   const paletteRef = useRef<HTMLDivElement>(null);
 
   // Hidden export mode (press P to toggle)
+  const { notation } = useColourNotation();
   const [exportMode, setExportMode] = useState(false);
   const [exportName, setExportName] = useState("");
   const [exportCategory, setExportCategory] = useState<PaletteCollectionCategory>("classic");
@@ -268,23 +271,23 @@ export function PaletteGennyTool() {
     }
   }, [isTouchDevice]);
 
-  // Copy all as hex list
+  // Copy all colours
   const copyAllHex = useCallback(() => {
-    const hexes = colours.map(c => c.hex).join(", ");
-    copyToClipboard(hexes, "all-hex");
-  }, [colours, copyToClipboard]);
+    const values = colours.map(c => formatColour(c.hex, notation)).join(", ");
+    copyToClipboard(values, "all-hex");
+  }, [colours, copyToClipboard, notation]);
 
   // Copy as CSS variables
   const copyAsCss = useCallback(() => {
-    const vars = colours.map((c, i) => `  --palette-${i + 1}: ${c.hex};`).join("\n");
+    const vars = colours.map((c, i) => `  --palette-${i + 1}: ${formatColour(c.hex, notation)};`).join("\n");
     copyToClipboard(`:root {\n${vars}\n}`, "css");
-  }, [colours, copyToClipboard]);
+  }, [colours, copyToClipboard, notation]);
 
   // Copy as JSON
   const copyAsJson = useCallback(() => {
-    const json = JSON.stringify(colours.map(c => c.hex), null, 2);
+    const json = JSON.stringify(colours.map(c => formatColour(c.hex, notation)), null, 2);
     copyToClipboard(json, "json");
-  }, [colours, copyToClipboard]);
+  }, [colours, copyToClipboard, notation]);
 
   // Download as image
   const downloadImage = useCallback(() => {
@@ -498,9 +501,9 @@ export function PaletteGennyTool() {
                     />
                   </label>
 
-                  {/* Copy hex button */}
+                  {/* Copy colour button */}
                   <button
-                    onClick={(e) => { e.stopPropagation(); copyToClipboard(colour.hex, colour.id); }}
+                    onClick={(e) => { e.stopPropagation(); copyToClipboard(formatColour(colour.hex, notation), colour.id); }}
                     className={cn(
                       "mt-3 px-4 py-2 rounded-full transition-all",
                       "bg-white/20 hover:bg-white/40 backdrop-blur-sm",
@@ -519,7 +522,7 @@ export function PaletteGennyTool() {
                     ) : (
                       <>
                         <Copy className="size-4" />
-                        {colour.hex.toUpperCase()}
+                        {notation === "hex" ? colour.hex.toUpperCase() : formatColour(colour.hex, notation)}
                       </>
                     )}
                   </button>
@@ -532,7 +535,7 @@ export function PaletteGennyTool() {
                   </div>
                 )}
 
-                {/* Hex label at bottom (when controls not shown) */}
+                {/* Colour label at bottom (when controls not shown) */}
                 {!showControls && (
                   <div
                     className={cn(
@@ -542,7 +545,7 @@ export function PaletteGennyTool() {
                     )}
                     style={{ color: getContrastText(colour.hex) }}
                   >
-                    {colour.hex.toUpperCase()}
+                    {notation === "hex" ? colour.hex.toUpperCase() : formatColour(colour.hex, notation)}
                   </div>
                 )}
               </div>
@@ -722,7 +725,7 @@ export function PaletteGennyTool() {
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={copyAllHex} className="gap-2 transition-transform hover:scale-105 active:scale-95">
             {copied === "all-hex" ? <Check className="size-4" /> : <Copy className="size-4" />}
-            Copy HEX
+            Copy Colours
           </Button>
           <Button variant="outline" onClick={copyAsCss} className="gap-2 transition-transform hover:scale-105 active:scale-95">
             {copied === "css" ? <Check className="size-4" /> : <Copy className="size-4" />}
@@ -780,7 +783,9 @@ export function PaletteGennyTool() {
                 {/* Colour info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3">
-                    <span className="font-mono font-bold text-lg tracking-wide">{colour.hex.toUpperCase()}</span>
+                    <span className="font-mono font-bold text-lg tracking-wide">
+                      {notation === "hex" ? colour.hex.toUpperCase() : formatColour(colour.hex, notation)}
+                    </span>
                     <span className="text-sm text-muted-foreground capitalize">{colourName}</span>
                   </div>
                   <div className="text-xs text-muted-foreground font-mono mt-0.5">
@@ -811,8 +816,8 @@ export function PaletteGennyTool() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => copyToClipboard(colour.hex, `list-${colour.id}`)}
-                    title="Copy hex"
+                    onClick={() => copyToClipboard(formatColour(colour.hex, notation), `list-${colour.id}`)}
+                    title="Copy colour"
                     className="transition-transform hover:scale-110 active:scale-95"
                   >
                     {copied === `list-${colour.id}` ? <Check className="size-4" /> : <Copy className="size-4" />}

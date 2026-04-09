@@ -33,6 +33,8 @@ import {
   GripVertical,
   Droplets,
 } from "lucide-react";
+import { useColourNotation } from "@/hooks/use-colour-notation";
+import { formatColour } from "@/lib/colour-notation";
 
 // Types
 type GradientMode = "linear" | "corners" | "mesh";
@@ -327,6 +329,7 @@ function ColourDot({
   const inputRef = useRef<HTMLInputElement>(null);
   const colourName = getColourName(colour);
   const isLight = getLuminance(colour) > 0.5;
+  const { notation } = useColourNotation();
 
   return (
     <div
@@ -351,7 +354,7 @@ function ColourDot({
         }}
       >
         <div className="font-medium">{colourName}</div>
-        <div className="font-mono opacity-80">{colour.toUpperCase()}</div>
+        <div className="font-mono opacity-80">{formatColour(colour, notation)}</div>
       </div>
 
       {/* Dot */}
@@ -411,6 +414,7 @@ function DraggableMeshDot({
   const inputRef = useRef<HTMLInputElement>(null);
   const colourName = getColourName(colour);
   const isLight = getLuminance(colour) > 0.5;
+  const { notation } = useColourNotation();
 
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id,
@@ -451,7 +455,7 @@ function DraggableMeshDot({
         }}
       >
         <div className="font-medium">{colourName}</div>
-        <div className="font-mono opacity-80">{colour.toUpperCase()}</div>
+        <div className="font-mono opacity-80">{formatColour(colour, notation)}</div>
       </div>
 
       {/* Draggable dot with number */}
@@ -588,6 +592,7 @@ function SortableMeshPoint({
   onHover: () => void;
   onLeave: () => void;
 }) {
+  const { notation } = useColourNotation();
   const {
     attributes,
     listeners,
@@ -647,7 +652,7 @@ function SortableMeshPoint({
           {getColourName(point.colour)}
         </span>
         <span className="text-xs font-mono text-muted-foreground">
-          {point.colour}
+          {formatColour(point.colour, notation)}
         </span>
       </div>
 
@@ -682,6 +687,7 @@ export function GradientGennyTool() {
   const [exportHeight, setExportHeight] = useState(600);
   const [hoveredCorner, setHoveredCorner] = useState<CornerKey | null>(null);
   const [hoveredMeshPoint, setHoveredMeshPoint] = useState<string | null>(null);
+  const { notation } = useColourNotation();
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [noise, setNoise] = useState(0);
 
@@ -887,33 +893,34 @@ export function GradientGennyTool() {
 
   // CSS generation
   const generateCSS = useCallback((): string => {
+    const fmt = (hex: string) => formatColour(hex, notation);
     switch (mode) {
       case "linear": {
         const sortedStops = [...colourStops].sort(
           (a, b) => a.position - b.position
         );
         const stopsStr = sortedStops
-          .map((stop) => `${stop.colour} ${stop.position}%`)
+          .map((stop) => `${fmt(stop.colour)} ${stop.position}%`)
           .join(", ");
         return `linear-gradient(${angle}deg, ${stopsStr})`;
       }
       case "corners": {
         return `background:
-  radial-gradient(ellipse at top left, ${corners.topLeft}, transparent 70%),
-  radial-gradient(ellipse at top right, ${corners.topRight}, transparent 70%),
-  radial-gradient(ellipse at bottom left, ${corners.bottomLeft}, transparent 70%),
-  radial-gradient(ellipse at bottom right, ${corners.bottomRight}, transparent 70%);`;
+  radial-gradient(ellipse at top left, ${fmt(corners.topLeft)}, transparent 70%),
+  radial-gradient(ellipse at top right, ${fmt(corners.topRight)}, transparent 70%),
+  radial-gradient(ellipse at bottom left, ${fmt(corners.bottomLeft)}, transparent 70%),
+  radial-gradient(ellipse at bottom right, ${fmt(corners.bottomRight)}, transparent 70%);`;
       }
       case "mesh": {
         return `/* Mesh gradients cannot be perfectly replicated in CSS.
    Use image export for accurate results.
    Below is a rough approximation: */
-background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.round(p.x * 100)}% ${Math.round(p.y * 100)}%, ${p.colour}, transparent 60%)`).join(",\n  ")};`;
+background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.round(p.x * 100)}% ${Math.round(p.y * 100)}%, ${fmt(p.colour)}, transparent 60%)`).join(",\n  ")};`;
       }
       default:
         return "";
     }
-  }, [mode, colourStops, angle, corners, meshConfig]);
+  }, [mode, colourStops, angle, corners, meshConfig, notation]);
 
   // Canvas rendering
   const renderLinearGradient = useCallback(
