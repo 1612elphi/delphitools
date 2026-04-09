@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Star, ExternalLink } from "lucide-react";
 import { toolCategories, featuredTools } from "@/lib/tools";
+import { IosAppCard } from "@/components/ios-app-card";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -33,6 +34,8 @@ export default function Home() {
           </p>
         </div>
       </div>
+
+      <IosAppCard />
 
       {/* Greatest Hits */}
       <section className="mb-12">
@@ -75,8 +78,50 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Tool Categories */}
+      <div className="space-y-10">
+        {toolCategories.map((category) => (
+          <section key={category.id}>
+            <h2 className="text-lg font-semibold mb-4 text-foreground/80">
+              {category.name}
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {category.tools.map((tool) => {
+                const Icon = tool.icon;
+                return (
+                  <Link key={tool.id} href={tool.href}>
+                    <Card className="group h-full transition-all hover:border-foreground/20 hover:shadow-md">
+                      <CardHeader className="pb-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex size-10 items-center justify-center rounded-lg bg-muted group-hover:bg-primary/10 transition-colors">
+                            <Icon className="size-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                          </div>
+                          <ArrowRight className="size-4 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                        <CardTitle className="text-base mt-3 flex items-center gap-2">
+                          {tool.name}
+                          {tool.beta && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/50 text-amber-600 dark:text-amber-400">Beta</Badge>
+                          )}
+                          {tool.new && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/50 text-primary">New</Badge>
+                          )}
+                        </CardTitle>
+                        <CardDescription className="text-sm">
+                          {tool.description}
+                        </CardDescription>
+                      </CardHeader>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
+
       {/* Friends of Delphi */}
-      <section className="mb-12">
+      <section className="mt-16">
         <h2 className="text-lg font-semibold mb-4 text-foreground/80">
           Friends of Delphi
         </h2>
@@ -328,48 +373,6 @@ export default function Home() {
           </a>
         </div>
       </section>
-
-      {/* Tool Categories */}
-      <div className="space-y-10">
-        {toolCategories.map((category) => (
-          <section key={category.id}>
-            <h2 className="text-lg font-semibold mb-4 text-foreground/80">
-              {category.name}
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {category.tools.map((tool) => {
-                const Icon = tool.icon;
-                return (
-                  <Link key={tool.id} href={tool.href}>
-                    <Card className="group h-full transition-all hover:border-foreground/20 hover:shadow-md">
-                      <CardHeader className="pb-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex size-10 items-center justify-center rounded-lg bg-muted group-hover:bg-primary/10 transition-colors">
-                            <Icon className="size-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                          </div>
-                          <ArrowRight className="size-4 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                        <CardTitle className="text-base mt-3 flex items-center gap-2">
-                          {tool.name}
-                          {tool.beta && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/50 text-amber-600 dark:text-amber-400">Beta</Badge>
-                          )}
-                          {tool.new && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/50 text-primary">New</Badge>
-                          )}
-                        </CardTitle>
-                        <CardDescription className="text-sm">
-                          {tool.description}
-                        </CardDescription>
-                      </CardHeader>
-                    </Card>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        ))}
-      </div>
 
       {/* About Section */}
       <div className="mt-16 pt-8 border-t">
