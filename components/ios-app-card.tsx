@@ -36,7 +36,7 @@ export function IosAppCard() {
               />
               <div className="space-y-2">
                 <h3 className="text-xl font-semibold leading-tight text-foreground">
-                  The tools you love, coming to iPhone.
+                  The tools you love, coming to iPhone and iPad.
                 </h3>
                 <p className="text-sm leading-relaxed text-muted-foreground">
                   The same privacy-first tools you rely on, built natively for iOS.
