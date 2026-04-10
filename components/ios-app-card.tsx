@@ -59,7 +59,7 @@ export function IosAppCard() {
             <div className="relative hidden sm:block p-10 pr-48 md:pr-56 lg:pr-64">
               <div className="space-y-4 max-w-lg">
                 <h3 className="text-3xl font-semibold leading-tight text-foreground">
-                  The tools you love, coming to iPhone.
+                  The tools you love, coming to iPhone and iPad.
                 </h3>
                 <p className="text-sm leading-relaxed text-muted-foreground">
                   The same privacy-first tools you rely on, built natively for iOS. No accounts, no tracking, no compromises.
