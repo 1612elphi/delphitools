@@ -76,48 +76,55 @@ export function SciCalcTool() {
         .replace(/\|([^|]+)\|/g, "abs($1)");
 
       // Handle trig functions based on angle mode
+      // Use placeholder swap to avoid regex matching its own replacement
       if (angleMode === "deg") {
-        // Use iterative replacement to handle nested parentheses
-        const handleTrigFunction = (pattern: RegExp, replacement: string, str: string): string => {
-          let result = str;
-          let prevResult;
-          do {
-            prevResult = result;
-            result = result.replace(pattern, replacement);
-          } while (result !== prevResult);
-          return result;
-        };
+        const placeholders = new Map<string, string>();
+        let counter = 0;
 
-        prepared = handleTrigFunction(
-          /sin\(([^()]*)\)/g,
-          "sin($1 * pi / 180)",
-          prepared
-        );
-        prepared = handleTrigFunction(
-          /cos\(([^()]*)\)/g,
-          "cos($1 * pi / 180)",
-          prepared
-        );
-        prepared = handleTrigFunction(
-          /tan\(([^()]*)\)/g,
-          "tan($1 * pi / 180)",
-          prepared
-        );
-        prepared = handleTrigFunction(
-          /asin\(([^()]*)\)/g,
-          "(asin($1) * 180 / pi)",
-          prepared
-        );
-        prepared = handleTrigFunction(
-          /acos\(([^()]*)\)/g,
-          "(acos($1) * 180 / pi)",
-          prepared
-        );
-        prepared = handleTrigFunction(
-          /atan\(([^()]*)\)/g,
-          "(atan($1) * 180 / pi)",
-          prepared
-        );
+        // Extract all trig functions and replace with placeholders
+        prepared = prepared
+          .replace(/sin\(([^()]*)\)/g, (_match, inner) => {
+            const placeholder = `__TRIG_SIN_${counter++}__`;
+            placeholders.set(placeholder, `sin(${inner} * pi / 180)`);
+            return placeholder;
+          })
+          .replace(/cos\(([^()]*)\)/g, (_match, inner) => {
+            const placeholder = `__TRIG_COS_${counter++}__`;
+            placeholders.set(placeholder, `cos(${inner} * pi / 180)`);
+            return placeholder;
+          })
+          .replace(/tan\(([^()]*)\)/g, (_match, inner) => {
+            const placeholder = `__TRIG_TAN_${counter++}__`;
+            placeholders.set(placeholder, `tan(${inner} * pi / 180)`);
+            return placeholder;
+          })
+          .replace(/asin\(([^()]*)\)/g, (_match, inner) => {
+            const placeholder = `__TRIG_ASIN_${counter++}__`;
+            placeholders.set(placeholder, `(asin(${inner}) * 180 / pi)`);
+            return placeholder;
+          })
+          .replace(/acos\(([^()]*)\)/g, (_match, inner) => {
+            const placeholder = `__TRIG_ACOS_${counter++}__`;
+            placeholders.set(placeholder, `(acos(${inner}) * 180 / pi)`);
+            return placeholder;
+          })
+          .replace(/atan\(([^()]*)\)/g, (_match, inner) => {
+            const placeholder = `__TRIG_ATAN_${counter++}__`;
+            placeholders.set(placeholder, `(atan(${inner}) * 180 / pi)`);
+            return placeholder;
+          });
+
+        // Restore placeholders (handles nested trigs from outside-in)
+        let hasNested = true;
+        while (hasNested) {
+          hasNested = false;
+          for (const [placeholder, replacement] of placeholders) {
+            if (prepared.includes(placeholder)) {
+              prepared = prepared.replaceAll(placeholder, replacement);
+              hasNested = true;
+            }
+          }
+        }
       }
 
       return prepared;
