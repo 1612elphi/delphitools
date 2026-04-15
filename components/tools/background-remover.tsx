@@ -26,10 +26,11 @@ export function BackgroundRemoverTool() {
   const pipelineRef = useRef<any>(null);
   const loadedModeRef = useRef<QualityMode | null>(null);
 
-  // Cleanup ML pipeline on unmount to free memory
+  // Dispose ML pipeline on unmount to free model memory
   useEffect(() => {
     return () => {
-      if (pipelineRef.current) {
+      if (pipelineRef.current?.dispose) {
+        pipelineRef.current.dispose();
         pipelineRef.current = null;
       }
     };

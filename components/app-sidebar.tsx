@@ -221,7 +221,7 @@ export function AppSidebar() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-primary transition-colors"
-                    aria-label="delphi (opens in new tab)"
+                    aria-label="opens in new tab"
                   >
                     delphi
                   </a>
@@ -235,7 +235,7 @@ export function AppSidebar() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-primary transition-colors"
-                    aria-label="1612elphi/delphitools on GitHub (opens in new tab)"
+                    aria-label="opens in new tab"
                   >
                     1612elphi/delphitools
                   </a>
@@ -259,7 +259,7 @@ export function AppSidebar() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs px-2 py-1 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
-                    aria-label={`${lib.name} (opens in new tab)`}
+                    aria-label="opens in new tab"
                   >
                     {lib.name}
                   </a>
@@ -272,7 +272,7 @@ export function AppSidebar() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline hover:text-muted-foreground transition-colors"
-                  aria-label="acknowledgements (opens in new tab)"
+                  aria-label="opens in new tab"
                 >
                   many more open source libraries
                 </a>
