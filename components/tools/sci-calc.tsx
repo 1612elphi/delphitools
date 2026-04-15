@@ -67,20 +67,57 @@ export function SciCalcTool() {
         .replace(/÷/g, "/")
         .replace(/−/g, "-")
         .replace(/π/g, `(${pi})`)
-        .replace(/e(?![x])/g, `(${eulerE})`)
+        // Protect scientific notation (e.g., 5e10, 3.14e-5) before replacing standalone e
+        .replace(/(\d\.?\d*)[eE]([+-]?\d)/g, "$1e$2")
+        // Replace standalone e with Euler's number (not followed by x or digit, not preceded by digit)
+        .replace(/(^|[^0-9])e(?!x|[0-9])/g, `$1(${eulerE})`)
         .replace(/Ans/g, `(${lastAnswer})`)
         .replace(/(\d+)!/g, "factorial($1)")
         .replace(/\|([^|]+)\|/g, "abs($1)");
 
       // Handle trig functions based on angle mode
       if (angleMode === "deg") {
-        prepared = prepared
-          .replace(/sin\(([^)]+)\)/g, "sin($1 * pi / 180)")
-          .replace(/cos\(([^)]+)\)/g, "cos($1 * pi / 180)")
-          .replace(/tan\(([^)]+)\)/g, "tan($1 * pi / 180)")
-          .replace(/asin\(([^)]+)\)/g, "(asin($1) * 180 / pi)")
-          .replace(/acos\(([^)]+)\)/g, "(acos($1) * 180 / pi)")
-          .replace(/atan\(([^)]+)\)/g, "(atan($1) * 180 / pi)");
+        // Use iterative replacement to handle nested parentheses
+        const handleTrigFunction = (pattern: RegExp, replacement: string, str: string): string => {
+          let result = str;
+          let prevResult;
+          do {
+            prevResult = result;
+            result = result.replace(pattern, replacement);
+          } while (result !== prevResult);
+          return result;
+        };
+
+        prepared = handleTrigFunction(
+          /sin\(([^()]*)\)/g,
+          "sin($1 * pi / 180)",
+          prepared
+        );
+        prepared = handleTrigFunction(
+          /cos\(([^()]*)\)/g,
+          "cos($1 * pi / 180)",
+          prepared
+        );
+        prepared = handleTrigFunction(
+          /tan\(([^()]*)\)/g,
+          "tan($1 * pi / 180)",
+          prepared
+        );
+        prepared = handleTrigFunction(
+          /asin\(([^()]*)\)/g,
+          "(asin($1) * 180 / pi)",
+          prepared
+        );
+        prepared = handleTrigFunction(
+          /acos\(([^()]*)\)/g,
+          "(acos($1) * 180 / pi)",
+          prepared
+        );
+        prepared = handleTrigFunction(
+          /atan\(([^()]*)\)/g,
+          "(atan($1) * 180 / pi)",
+          prepared
+        );
       }
 
       return prepared;

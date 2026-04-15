@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Upload, Download, Trash2, Loader2, AlertCircle, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -25,6 +25,15 @@ export function BackgroundRemoverTool() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pipelineRef = useRef<any>(null);
   const loadedModeRef = useRef<QualityMode | null>(null);
+
+  // Cleanup ML pipeline on unmount to free memory
+  useEffect(() => {
+    return () => {
+      if (pipelineRef.current) {
+        pipelineRef.current = null;
+      }
+    };
+  }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -105,10 +114,12 @@ export function BackgroundRemoverTool() {
         const maskImage = result[0].mask;
 
         let maskDataUrl: string;
+        let isBlobUrl = false;
         if (typeof maskImage.toDataURL === "function") {
           maskDataUrl = maskImage.toDataURL();
         } else if (maskImage instanceof Blob) {
           maskDataUrl = URL.createObjectURL(maskImage);
+          isBlobUrl = true;
         } else if (typeof maskImage === "string") {
           maskDataUrl = maskImage;
         } else {
@@ -130,9 +141,15 @@ export function BackgroundRemoverTool() {
           maskDataUrl = tempCanvas.toDataURL();
         }
 
-        const finalImage = await applyMaskToImage(sourceImage, maskDataUrl);
-        setResultImage(finalImage);
-        setProcessing({ status: "done" });
+        try {
+          const finalImage = await applyMaskToImage(sourceImage, maskDataUrl);
+          setResultImage(finalImage);
+          setProcessing({ status: "done" });
+        } finally {
+          if (isBlobUrl) {
+            URL.revokeObjectURL(maskDataUrl);
+          }
+        }
       } else {
         throw new Error("Processing failed");
       }
@@ -242,10 +259,10 @@ export function BackgroundRemoverTool() {
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
           className="border-2 border-dashed rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
-          onClick={() => document.getElementById("bg-file-input")?.click()}
+          onClick={() => document.getElementById("bg-drop-input")?.click()}
         >
           <input
-            id="bg-file-input"
+            id="bg-drop-input"
             type="file"
             accept="image/*"
             onChange={handleFileSelect}
@@ -269,10 +286,10 @@ export function BackgroundRemoverTool() {
           </div>
           <div
             className="relative rounded-xl overflow-hidden bg-muted cursor-pointer"
-            onClick={() => !isProcessing && document.getElementById("bg-file-input")?.click()}
+            onClick={() => !isProcessing && document.getElementById("bg-source-input")?.click()}
           >
             <input
-              id="bg-file-input"
+              id="bg-source-input"
               type="file"
               accept="image/*"
               onChange={handleFileSelect}
