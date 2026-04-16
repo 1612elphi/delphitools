@@ -98,7 +98,7 @@ export function AppSidebar() {
         </div>
       </div>
 
-      <nav aria-label="Main Navigation">
+      <nav aria-label="Main" className="flex min-h-0 flex-1 flex-col">
         <SidebarContent>
           {!query && (
             <SidebarGroup>
@@ -249,6 +249,7 @@ export function AppSidebar() {
                 {[
                   { name: "Himanshu Balani", url: "https://github.com/himanshubalani" },
                   { name: "Mahmoud Ashraf", url: "https://github.com/SNO7E-G" },
+                  { name: "Moamal Alaa", url: "https://github.com/Moamal-2000" },
                 ].map((person) => (
                   <a
                     key={person.name}
