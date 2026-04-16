@@ -84,11 +84,13 @@ export function AppSidebar() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="h-8 pl-8 pr-8 text-sm"
+            aria-label="Search tools"
           />
           {search && (
             <button
               onClick={() => setSearch("")}
               className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Clear search"
             >
               <X className="size-3.5" />
             </button>
@@ -117,7 +119,7 @@ export function AppSidebar() {
         )}
 
         {query && filteredFeatured.length === 0 && filteredCategories.length === 0 && (
-          <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+          <div className="px-4 py-8 text-center text-sm text-muted-foreground" role="status" aria-live="polite">
             No tools found
           </div>
         )}
@@ -125,7 +127,7 @@ export function AppSidebar() {
         {filteredFeatured.length > 0 && (
         <SidebarGroup>
           <SidebarGroupLabel className="flex items-center gap-1.5">
-            <Star className="size-3 text-amber-500 fill-amber-500" />
+            <Star className="size-3 text-amber-500 fill-amber-500" aria-hidden="true" />
             Greatest Hits
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -220,7 +222,7 @@ export function AppSidebar() {
                     rel="noopener noreferrer"
                     className="hover:text-primary transition-colors"
                   >
-                    delphi
+                    delphi<span className="sr-only"> (opens in new tab)</span>
                   </a>
                 </p>
               </div>
@@ -233,7 +235,7 @@ export function AppSidebar() {
                     rel="noopener noreferrer"
                     className="hover:text-primary transition-colors"
                   >
-                    1612elphi/delphitools
+                    1612elphi/delphitools<span className="sr-only"> (opens in new tab)</span>
                   </a>
                 </p>
               </div>
@@ -256,7 +258,7 @@ export function AppSidebar() {
                     rel="noopener noreferrer"
                     className="text-xs px-2 py-1 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    {lib.name}
+                    {lib.name}<span className="sr-only"> (opens in new tab)</span>
                   </a>
                 ))}
               </div>
@@ -268,7 +270,7 @@ export function AppSidebar() {
                   rel="noopener noreferrer"
                   className="underline hover:text-muted-foreground transition-colors"
                 >
-                  many more open source libraries
+                  many more open source libraries<span className="sr-only"> (opens in new tab)</span>
                 </a>
                 .
               </p>
