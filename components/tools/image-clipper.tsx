@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Upload, Download, X, Scissors } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -50,6 +50,13 @@ export function ImageClipperTool() {
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const processImage = useCallback((file: File) => {
     setError(null);
@@ -58,6 +65,10 @@ export function ImageClipperTool() {
     const img = new Image();
     const fileUrl = URL.createObjectURL(file);
     img.onload = () => {
+      if (!isMountedRef.current) {
+        URL.revokeObjectURL(fileUrl);
+        return;
+      }
       const { naturalWidth: w, naturalHeight: h } = img;
 
       const canvas = document.createElement("canvas");
@@ -115,6 +126,10 @@ export function ImageClipperTool() {
       );
 
       outCanvas.toBlob((blob) => {
+        if (!isMountedRef.current) {
+          URL.revokeObjectURL(fileUrl);
+          return;
+        }
         if (!blob) {
           setError("Failed to encode clipped image.");
           setProcessing(false);
@@ -139,9 +154,10 @@ export function ImageClipperTool() {
       }, "image/png");
     };
     img.onerror = () => {
+      URL.revokeObjectURL(fileUrl);
+      if (!isMountedRef.current) return;
       setError("Failed to load image.");
       setProcessing(false);
-      URL.revokeObjectURL(fileUrl);
     };
     img.src = fileUrl;
   }, []);

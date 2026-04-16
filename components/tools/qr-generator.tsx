@@ -187,6 +187,12 @@ export function QrGeneratorTool() {
   const batchFileInputRef = useRef<HTMLInputElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const qrCodeInstance = useRef<any>(null);
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Generate vCard string
   const generateVCardString = useCallback((data: VCardData): string => {
@@ -450,10 +456,12 @@ export function QrGeneratorTool() {
     setBatchGenerating(true);
     const QRCodeStyling = (await import("qr-code-styling")).default;
     const JSZip = (await import("jszip")).default;
+    if (!isMountedRef.current) return;
 
     const zip = new JSZip();
 
     for (const item of batchItems) {
+      if (!isMountedRef.current) return;
       if (!item.content.trim()) continue;
 
       setBatchItems((prev) =>
@@ -498,6 +506,7 @@ export function QrGeneratorTool() {
         });
 
         const blob = await qrCode.getRawData("png");
+        if (!isMountedRef.current) return;
         if (blob && blob instanceof Blob) {
           const safeName = item.content
             .slice(0, 30)
@@ -509,6 +518,7 @@ export function QrGeneratorTool() {
             reader.onloadend = () => resolve(reader.result as string);
             reader.readAsDataURL(blob);
           });
+          if (!isMountedRef.current) return;
 
           setBatchItems((prev) =>
             prev.map((i) =>
@@ -517,6 +527,7 @@ export function QrGeneratorTool() {
           );
         }
       } catch {
+        if (!isMountedRef.current) return;
         setBatchItems((prev) =>
           prev.map((i) =>
             i.id === item.id ? { ...i, status: "error" } : i
@@ -527,6 +538,7 @@ export function QrGeneratorTool() {
 
     // Download ZIP
     const zipBlob = await zip.generateAsync({ type: "blob" });
+    if (!isMountedRef.current) return;
     const link = document.createElement("a");
     link.href = URL.createObjectURL(zipBlob);
     link.download = `qr-codes-batch-${Date.now()}.zip`;

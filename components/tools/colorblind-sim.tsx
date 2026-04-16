@@ -211,8 +211,10 @@ export function ColorblindSimTool() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    let cancelled = false;
     const img = new Image();
     img.onload = () => {
+      if (cancelled) return;
       canvas.width = img.width;
       canvas.height = img.height;
       ctx.drawImage(img, 0, 0);
@@ -236,6 +238,9 @@ export function ColorblindSimTool() {
       setSimulatedImage(canvas.toDataURL("image/png"));
     };
     img.src = sourceImage;
+    return () => {
+      cancelled = true;
+    };
   }, [sourceImage, selectedSim, mode]);
 
   const simulationTypes = Object.keys(SIMULATIONS) as SimulationType[];
