@@ -31,7 +31,7 @@ export default function Home() {
             If you find these tools useful, I'm glad. You don't owe me anything. But if you're an artist, feel free to <Link className="underline" href="mailto:tools@rmv.fyi">email me your work</Link>. I'd love to see it.
           </p>
           <p>
-            If you would like to donate to delphitools, I ask that you don't. Make a donation to <a className="underline" href="https://donate.wikimedia.org" target="_blank" rel="noopener noreferrer" aria-label="opens in new tab">Wikipedia</a> or the <a className="underline" href="https://www.eff.org/donate" target="_blank" rel="noopener noreferrer" aria-label="opens in new tab">EFF</a> instead. Email me your proof of donation and I'll put you in the credits.
+            If you would like to donate to delphitools, I ask that you don't. Make a donation to <a className="underline" href="https://donate.wikimedia.org" target="_blank" rel="noopener noreferrer">Wikipedia<span className="sr-only"> (opens in new tab)</span></a> or the <a className="underline" href="https://www.eff.org/donate" target="_blank" rel="noopener noreferrer">EFF<span className="sr-only"> (opens in new tab)</span></a> instead. Email me your proof of donation and I'll put you in the credits.
           </p>
         </div>
       </div>
@@ -132,7 +132,6 @@ export default function Home() {
             target="_blank"
             rel="noopener noreferrer"
             className="group block"
-            aria-label="opens in new tab"
           >
             <div
               className="relative h-full overflow-hidden rounded-xl border transition-all hover:shadow-lg hover:scale-[1.01]"
@@ -242,7 +241,6 @@ export default function Home() {
             target="_blank"
             rel="noopener noreferrer"
             className="group block"
-            aria-label="opens in new tab"
           >
             <div
               className="relative h-full overflow-hidden rounded-xl border transition-all hover:shadow-lg hover:scale-[1.01]"
@@ -310,7 +308,6 @@ export default function Home() {
             target="_blank"
             rel="noopener noreferrer"
             className="group block"
-            aria-label="opens in new tab"
           >
             <div
               className="relative h-full overflow-hidden rounded-xl border transition-all hover:shadow-lg hover:scale-[1.01]"
@@ -403,9 +400,8 @@ export default function Home() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-primary transition-colors"
-                  aria-label="opens in new tab"
                 >
-                  delphi
+                  delphi<span className="sr-only"> (opens in new tab)</span>
                 </a>
               </p>
             </div>
@@ -417,9 +413,8 @@ export default function Home() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-primary transition-colors"
-                  aria-label="opens in new tab"
                 >
-                  1612elphi/delphitools
+                  1612elphi/delphitools<span className="sr-only"> (opens in new tab)</span>
                 </a>
               </p>
             </div>
