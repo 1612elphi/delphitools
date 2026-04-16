@@ -188,14 +188,15 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border">
         <Dialog>
           <DialogTrigger asChild>
-            <button className="w-full p-2 text-xs text-muted-foreground text-left hover:bg-sidebar-accent rounded-md transition-colors group-data-[collapsible=icon]:hidden">
-              <p>No logins. No tracking.</p>
-              <p className="mt-1 opacity-70">Long live the handmade web.</p>
-            </button>
-          </DialogTrigger>
-          <DialogTrigger asChild>
-            <button className="hidden group-data-[collapsible=icon]:flex w-full p-2 items-center justify-center hover:bg-sidebar-accent rounded-md transition-colors">
-              <Info className="size-4 text-muted-foreground" />
+            <button className="w-full p-2 hover:bg-sidebar-accent rounded-md transition-colors">
+              <div className="text-xs text-muted-foreground text-left group-data-[collapsible=icon]:hidden">
+                <p>No logins. No tracking.</p>
+                <p className="mt-1 opacity-70">Long live the handmade web.</p>
+              </div>
+              <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center">
+                <Info className="size-4 text-muted-foreground" aria-hidden="true" />
+                <span className="sr-only">About delphitools</span>
+              </div>
             </button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
