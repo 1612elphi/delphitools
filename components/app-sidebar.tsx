@@ -96,7 +96,7 @@ export function AppSidebar() {
         </div>
       </div>
 
-      <nav>
+      <nav aria-label="Main Navigation">
         <SidebarContent>
           {!query && (
             <SidebarGroup>
