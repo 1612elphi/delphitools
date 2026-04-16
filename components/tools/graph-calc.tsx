@@ -27,6 +27,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Mafs, Coordinates, Plot, Line } from "mafs";
+import { compile } from "mathjs";
 import "mafs/core.css";
 
 type Operator = "=" | "<" | ">" | "≤" | "≥";
@@ -53,41 +54,26 @@ const COLORS = [
   "#f97316", // orange
 ];
 
-// Safe math evaluation using Function constructor
+// Override log/ln so users get the conventional meanings (log = base 10, ln = natural)
+// — mathjs's default `log` is natural log.
+const MATH_SCOPE = { log: Math.log10, ln: Math.log };
+
 function createEvaluator(expression: string): ((x: number) => number) | null {
   if (!expression.trim()) return null;
 
   try {
-    // Replace common math notation with JavaScript equivalents
-    const jsExpr = expression
-      .replace(/\^/g, "**")
-      .replace(/\bpi\b/gi, "Math.PI")
-      .replace(/\be\b/g, "Math.E")
-      .replace(/\bsin\b/g, "Math.sin")
-      .replace(/\bcos\b/g, "Math.cos")
-      .replace(/\btan\b/g, "Math.tan")
-      .replace(/\basin\b/g, "Math.asin")
-      .replace(/\bacos\b/g, "Math.acos")
-      .replace(/\batan\b/g, "Math.atan")
-      .replace(/\bsqrt\b/g, "Math.sqrt")
-      .replace(/\babs\b/g, "Math.abs")
-      .replace(/\blog\b/g, "Math.log10")
-      .replace(/\bln\b/g, "Math.log")
-      .replace(/\bexp\b/g, "Math.exp")
-      .replace(/\bfloor\b/g, "Math.floor")
-      .replace(/\bceil\b/g, "Math.ceil")
-      .replace(/\bround\b/g, "Math.round");
-
-    // Create function and test it
-    const fn = new Function("x", `"use strict"; return (${jsExpr});`) as (
-      x: number
-    ) => number;
-
-    // Test that it works with a sample value
-    const testResult = fn(1);
+    const compiled = compile(expression);
+    const testResult = compiled.evaluate({ x: 1, ...MATH_SCOPE });
     if (typeof testResult !== "number") return null;
 
-    return fn;
+    return (x: number) => {
+      try {
+        const result = compiled.evaluate({ x, ...MATH_SCOPE });
+        return typeof result === "number" ? result : NaN;
+      } catch {
+        return NaN;
+      }
+    };
   } catch {
     return null;
   }
