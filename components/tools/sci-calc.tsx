@@ -62,7 +62,7 @@ export function SciCalcTool() {
   // Convert expression for evaluation
   const prepareExpression = useCallback(
     (expr: string): string => {
-      let prepared = expr
+      return expr
         .replace(/×/g, "*")
         .replace(/÷/g, "/")
         .replace(/−/g, "-")
@@ -74,62 +74,8 @@ export function SciCalcTool() {
         .replace(/Ans/g, `(${lastAnswer})`)
         .replace(/(\d+)!/g, "factorial($1)")
         .replace(/\|([^|]+)\|/g, "abs($1)");
-
-      // Handle trig functions based on angle mode
-      // Use placeholder swap to avoid regex matching its own replacement
-      if (angleMode === "deg") {
-        const placeholders = new Map<string, string>();
-        let counter = 0;
-
-        // Extract all trig functions and replace with placeholders
-        prepared = prepared
-          .replace(/sin\(([^()]*)\)/g, (_match, inner) => {
-            const placeholder = `__TRIG_SIN_${counter++}__`;
-            placeholders.set(placeholder, `sin(${inner} * pi / 180)`);
-            return placeholder;
-          })
-          .replace(/cos\(([^()]*)\)/g, (_match, inner) => {
-            const placeholder = `__TRIG_COS_${counter++}__`;
-            placeholders.set(placeholder, `cos(${inner} * pi / 180)`);
-            return placeholder;
-          })
-          .replace(/tan\(([^()]*)\)/g, (_match, inner) => {
-            const placeholder = `__TRIG_TAN_${counter++}__`;
-            placeholders.set(placeholder, `tan(${inner} * pi / 180)`);
-            return placeholder;
-          })
-          .replace(/asin\(([^()]*)\)/g, (_match, inner) => {
-            const placeholder = `__TRIG_ASIN_${counter++}__`;
-            placeholders.set(placeholder, `(asin(${inner}) * 180 / pi)`);
-            return placeholder;
-          })
-          .replace(/acos\(([^()]*)\)/g, (_match, inner) => {
-            const placeholder = `__TRIG_ACOS_${counter++}__`;
-            placeholders.set(placeholder, `(acos(${inner}) * 180 / pi)`);
-            return placeholder;
-          })
-          .replace(/atan\(([^()]*)\)/g, (_match, inner) => {
-            const placeholder = `__TRIG_ATAN_${counter++}__`;
-            placeholders.set(placeholder, `(atan(${inner}) * 180 / pi)`);
-            return placeholder;
-          });
-
-        // Restore placeholders (handles nested trigs from outside-in)
-        let hasNested = true;
-        while (hasNested) {
-          hasNested = false;
-          for (const [placeholder, replacement] of placeholders) {
-            if (prepared.includes(placeholder)) {
-              prepared = prepared.replaceAll(placeholder, replacement);
-              hasNested = true;
-            }
-          }
-        }
-      }
-
-      return prepared;
     },
-    [angleMode, lastAnswer]
+    [lastAnswer]
   );
 
   // Calculate result
@@ -138,7 +84,20 @@ export function SciCalcTool() {
 
     try {
       const prepared = prepareExpression(expression);
-      const evalResult = evaluate(prepared);
+      // Override trig functions in scope for deg mode — handled at eval time,
+      // so nested calls compose correctly without string rewriting.
+      const scope =
+        angleMode === "deg"
+          ? {
+              sin: (x: number) => Math.sin((x * Math.PI) / 180),
+              cos: (x: number) => Math.cos((x * Math.PI) / 180),
+              tan: (x: number) => Math.tan((x * Math.PI) / 180),
+              asin: (x: number) => (Math.asin(x) * 180) / Math.PI,
+              acos: (x: number) => (Math.acos(x) * 180) / Math.PI,
+              atan: (x: number) => (Math.atan(x) * 180) / Math.PI,
+            }
+          : {};
+      const evalResult = evaluate(prepared, scope);
       const resultStr =
         typeof evalResult === "number"
           ? formatScientific(evalResult)
@@ -156,7 +115,7 @@ export function SciCalcTool() {
       setError("Error");
       setResult(null);
     }
-  }, [expression, prepareExpression]);
+  }, [expression, prepareExpression, angleMode]);
 
   // Handle button press
   const handleButton = useCallback(
