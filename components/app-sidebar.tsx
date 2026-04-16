@@ -98,25 +98,26 @@ export function AppSidebar() {
         </div>
       </div>
 
-      <SidebarContent>
-        {!query && (
-        <SidebarGroup>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === "/"}
-                tooltip="Home"
-              >
-                <Link href="/">
-                  <Home className="size-4" />
-                  <span>Home</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
-        )}
+      <nav aria-label="Main Navigation">
+        <SidebarContent>
+          {!query && (
+            <SidebarGroup>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === "/"}
+                    tooltip="Home"
+                  >
+                    <Link href="/">
+                      <Home className="size-4" />
+                      <span>Home</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroup>
+          )}
 
         {query && filteredFeatured.length === 0 && filteredCategories.length === 0 && (
           <div className="px-4 py-8 text-center text-sm text-muted-foreground" role="status" aria-live="polite">
@@ -156,34 +157,35 @@ export function AppSidebar() {
         </SidebarGroup>
         )}
 
-        {filteredCategories.map((category) => (
-          <SidebarGroup key={category.id}>
-            <SidebarGroupLabel>{category.name}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {category.tools.map((tool) => {
-                  const Icon = tool.icon;
-                  const isActive = pathname === tool.href;
-                  return (
-                    <SidebarMenuItem key={tool.id}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive}
-                        tooltip={tool.name}
-                      >
-                        <Link href={tool.href} prefetch={false}>
-                          <Icon className="size-4" />
-                          <span>{tool.name}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
-      </SidebarContent>
+          {filteredCategories.map((category) => (
+            <SidebarGroup key={category.id}>
+              <SidebarGroupLabel>{category.name}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {category.tools.map((tool) => {
+                    const Icon = tool.icon;
+                    const isActive = pathname === tool.href;
+                    return (
+                      <SidebarMenuItem key={tool.id}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive}
+                          tooltip={tool.name}
+                        >
+                          <Link href={tool.href} prefetch={false}>
+                            <Icon className="size-4" />
+                            <span>{tool.name}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
+        </SidebarContent>
+      </nav>
 
       <SidebarFooter className="border-t border-sidebar-border">
         <Dialog>
