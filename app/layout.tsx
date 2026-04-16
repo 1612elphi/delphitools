@@ -5,6 +5,7 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppHeader } from "@/components/app-header";
 import { ColourNotationProvider } from "@/components/colour-notation-provider";
+import SkipLink from "@/components/ui/skip-link";
 
 export const metadata: Metadata = {
   title: "delphitools",
@@ -34,10 +35,17 @@ export default function RootLayout({
       <body className="font-mono antialiased">
         <ColourNotationProvider>
           <SidebarProvider>
+            <SkipLink />
             <AppSidebar />
             <SidebarInset>
               <AppHeader />
-              <main className="flex-1 overflow-auto">{children}</main>
+              <main
+                className="flex-1 overflow-auto"
+                id="main-content"
+                tabIndex={-1}
+              >
+                {children}
+              </main>
             </SidebarInset>
           </SidebarProvider>
         </ColourNotationProvider>
