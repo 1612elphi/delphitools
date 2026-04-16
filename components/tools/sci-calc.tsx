@@ -62,30 +62,20 @@ export function SciCalcTool() {
   // Convert expression for evaluation
   const prepareExpression = useCallback(
     (expr: string): string => {
-      let prepared = expr
+      return expr
         .replace(/×/g, "*")
         .replace(/÷/g, "/")
         .replace(/−/g, "-")
         .replace(/π/g, `(${pi})`)
-        .replace(/e(?![x])/g, `(${eulerE})`)
+        // Protect scientific notation (e.g., 5e10, 3.14e-5) before replacing standalone e
+        .replace(/(\d\.?\d*)[eE]([+-]?\d)/g, "$1e$2")
+        // Replace standalone e with Euler's number (not followed by x or digit, not preceded by digit)
+        .replace(/(^|[^0-9])e(?!x|[0-9])/g, `$1(${eulerE})`)
         .replace(/Ans/g, `(${lastAnswer})`)
         .replace(/(\d+)!/g, "factorial($1)")
         .replace(/\|([^|]+)\|/g, "abs($1)");
-
-      // Handle trig functions based on angle mode
-      if (angleMode === "deg") {
-        prepared = prepared
-          .replace(/sin\(([^)]+)\)/g, "sin($1 * pi / 180)")
-          .replace(/cos\(([^)]+)\)/g, "cos($1 * pi / 180)")
-          .replace(/tan\(([^)]+)\)/g, "tan($1 * pi / 180)")
-          .replace(/asin\(([^)]+)\)/g, "(asin($1) * 180 / pi)")
-          .replace(/acos\(([^)]+)\)/g, "(acos($1) * 180 / pi)")
-          .replace(/atan\(([^)]+)\)/g, "(atan($1) * 180 / pi)");
-      }
-
-      return prepared;
     },
-    [angleMode, lastAnswer]
+    [lastAnswer]
   );
 
   // Calculate result
@@ -94,7 +84,20 @@ export function SciCalcTool() {
 
     try {
       const prepared = prepareExpression(expression);
-      const evalResult = evaluate(prepared);
+      // Override trig functions in scope for deg mode — handled at eval time,
+      // so nested calls compose correctly without string rewriting.
+      const scope =
+        angleMode === "deg"
+          ? {
+              sin: (x: number) => Math.sin((x * Math.PI) / 180),
+              cos: (x: number) => Math.cos((x * Math.PI) / 180),
+              tan: (x: number) => Math.tan((x * Math.PI) / 180),
+              asin: (x: number) => (Math.asin(x) * 180) / Math.PI,
+              acos: (x: number) => (Math.acos(x) * 180) / Math.PI,
+              atan: (x: number) => (Math.atan(x) * 180) / Math.PI,
+            }
+          : {};
+      const evalResult = evaluate(prepared, scope);
       const resultStr =
         typeof evalResult === "number"
           ? formatScientific(evalResult)
@@ -112,7 +115,7 @@ export function SciCalcTool() {
       setError("Error");
       setResult(null);
     }
-  }, [expression, prepareExpression]);
+  }, [expression, prepareExpression, angleMode]);
 
   // Handle button press
   const handleButton = useCallback(

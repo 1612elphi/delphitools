@@ -84,11 +84,13 @@ export function AppSidebar() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="h-8 pl-8 pr-8 text-sm"
+            aria-label="Search tools"
           />
           {search && (
             <button
               onClick={() => setSearch("")}
               className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Clear search"
             >
               <X className="size-3.5" />
             </button>
@@ -117,45 +119,43 @@ export function AppSidebar() {
             </SidebarGroup>
           )}
 
-          {query &&
-            filteredFeatured.length === 0 &&
-            filteredCategories.length === 0 && (
-              <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                No tools found
-              </div>
-            )}
+        {query && filteredFeatured.length === 0 && filteredCategories.length === 0 && (
+          <div className="px-4 py-8 text-center text-sm text-muted-foreground" role="status" aria-live="polite">
+            No tools found
+          </div>
+        )}
 
-          {filteredFeatured.length > 0 && (
-            <SidebarGroup>
-              <SidebarGroupLabel className="flex items-center gap-1.5">
-                <Star className="size-3 text-amber-500 fill-amber-500" />
-                Greatest Hits
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {filteredFeatured.map((tool) => {
-                    const Icon = tool.icon;
-                    const isActive = pathname === tool.href;
-                    return (
-                      <SidebarMenuItem key={tool.id}>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive}
-                          tooltip={tool.name}
-                          className="text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300"
-                        >
-                          <Link href={tool.href} prefetch={false}>
-                            <Icon className="size-4" />
-                            <span>{tool.name}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          )}
+        {filteredFeatured.length > 0 && (
+        <SidebarGroup>
+          <SidebarGroupLabel className="flex items-center gap-1.5">
+            <Star className="size-3 text-amber-500 fill-amber-500" aria-hidden="true" />
+            Greatest Hits
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {filteredFeatured.map((tool) => {
+                const Icon = tool.icon;
+                const isActive = pathname === tool.href;
+                return (
+                  <SidebarMenuItem key={tool.id}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={tool.name}
+                      className="text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300"
+                    >
+                      <Link href={tool.href} prefetch={false}>
+                        <Icon className="size-4" />
+                        <span>{tool.name}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        )}
 
           {filteredCategories.map((category) => (
             <SidebarGroup key={category.id}>
@@ -190,14 +190,15 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border">
         <Dialog>
           <DialogTrigger asChild>
-            <button className="w-full p-2 text-xs text-muted-foreground text-left hover:bg-sidebar-accent rounded-md transition-colors group-data-[collapsible=icon]:hidden">
-              <p>No logins. No tracking.</p>
-              <p className="mt-1 opacity-70">Long live the handmade web.</p>
-            </button>
-          </DialogTrigger>
-          <DialogTrigger asChild>
-            <button className="hidden group-data-[collapsible=icon]:flex w-full p-2 items-center justify-center hover:bg-sidebar-accent rounded-md transition-colors">
-              <Info className="size-4 text-muted-foreground" />
+            <button className="w-full p-2 hover:bg-sidebar-accent rounded-md transition-colors">
+              <div className="text-xs text-muted-foreground text-left group-data-[collapsible=icon]:hidden">
+                <p>No logins. No tracking.</p>
+                <p className="mt-1 opacity-70">Long live the handmade web.</p>
+              </div>
+              <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center">
+                <Info className="size-4 text-muted-foreground" aria-hidden="true" />
+                <span className="sr-only">About delphitools</span>
+              </div>
             </button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
@@ -224,7 +225,7 @@ export function AppSidebar() {
                     rel="noopener noreferrer"
                     className="hover:text-primary transition-colors"
                   >
-                    delphi
+                    delphi<span className="sr-only"> (opens in new tab)</span>
                   </a>
                 </p>
               </div>
@@ -237,9 +238,28 @@ export function AppSidebar() {
                     rel="noopener noreferrer"
                     className="hover:text-primary transition-colors"
                   >
-                    1612elphi/delphitools
+                    1612elphi/delphitools<span className="sr-only"> (opens in new tab)</span>
                   </a>
                 </p>
+              </div>
+            </div>
+            <div className="pt-4 border-t space-y-2">
+              <h3 className="font-medium text-foreground text-sm">Contributors</h3>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { name: "Himanshu Balani", url: "https://github.com/himanshubalani" },
+                  { name: "Mahmoud Ashraf", url: "https://github.com/SNO7E-G" },
+                ].map((person) => (
+                  <a
+                    key={person.name}
+                    href={person.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs px-2 py-1 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {person.name}<span className="sr-only"> (opens in new tab)</span>
+                  </a>
+                ))}
               </div>
             </div>
             <div className="pt-4 border-t space-y-2">
@@ -260,7 +280,7 @@ export function AppSidebar() {
                     rel="noopener noreferrer"
                     className="text-xs px-2 py-1 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    {lib.name}
+                    {lib.name}<span className="sr-only"> (opens in new tab)</span>
                   </a>
                 ))}
               </div>
@@ -272,7 +292,7 @@ export function AppSidebar() {
                   rel="noopener noreferrer"
                   className="underline hover:text-muted-foreground transition-colors"
                 >
-                  many more open source libraries
+                  many more open source libraries<span className="sr-only"> (opens in new tab)</span>
                 </a>
                 .
               </p>
