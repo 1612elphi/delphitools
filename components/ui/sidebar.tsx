@@ -370,7 +370,7 @@ function SidebarSeparator({
 
 function SidebarContent({ className, ...props }: React.ComponentProps<"div">) {
   return (
-    <div
+    <nav
       data-slot="sidebar-content"
       data-sidebar="content"
       className={cn(
