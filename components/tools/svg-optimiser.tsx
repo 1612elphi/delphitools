@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 export function SvgOptimiserTool() {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
+  const [previewUrl, setPreviewUrl] = useState("");
   const [fileName, setFileName] = useState("");
   const [copied, setCopied] = useState(false);
   const [stats, setStats] = useState<{
@@ -16,6 +17,19 @@ export function SvgOptimiserTool() {
     saved: number;
     percent: number;
   } | null>(null);
+
+  // Render preview via a blob URL + <img> so user-supplied SVG can't execute
+  // scripts or reach cross-origin in the main document.
+  useEffect(() => {
+    if (!output) {
+      setPreviewUrl("");
+      return;
+    }
+    const blob = new Blob([output], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [output]);
 
   useEffect(() => {
     const incoming = sessionStorage.getItem("svg-optimiser-input")
@@ -207,10 +221,15 @@ export function SvgOptimiserTool() {
           {/* Preview */}
           <div className="p-4 rounded-lg border bg-muted/30">
             <div className="text-sm text-muted-foreground mb-2">Preview</div>
-            <div
-              className="flex items-center justify-center p-4 bg-white rounded overflow-hidden [&>svg]:max-w-full [&>svg]:max-h-[200px] [&>svg]:w-auto [&>svg]:h-auto"
-              dangerouslySetInnerHTML={{ __html: output }}
-            />
+            <div className="flex items-center justify-center p-4 bg-white rounded overflow-hidden">
+              {previewUrl && (
+                <img
+                  src={previewUrl}
+                  alt="Optimised SVG preview"
+                  className="max-w-full max-h-[200px] w-auto h-auto"
+                />
+              )}
+            </div>
           </div>
 
           {/* Actions */}
