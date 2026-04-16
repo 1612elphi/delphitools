@@ -96,92 +96,96 @@ export function AppSidebar() {
         </div>
       </div>
 
-      <SidebarContent>
-        {!query && (
-        <SidebarGroup>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === "/"}
-                tooltip="Home"
-              >
-                <Link href="/">
-                  <Home className="size-4" />
-                  <span>Home</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
-        )}
-
-        {query && filteredFeatured.length === 0 && filteredCategories.length === 0 && (
-          <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-            No tools found
-          </div>
-        )}
-
-        {filteredFeatured.length > 0 && (
-        <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center gap-1.5">
-            <Star className="size-3 text-amber-500 fill-amber-500" />
-            Greatest Hits
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {filteredFeatured.map((tool) => {
-                const Icon = tool.icon;
-                const isActive = pathname === tool.href;
-                return (
-                  <SidebarMenuItem key={tool.id}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
-                      tooltip={tool.name}
-                      className="text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300"
-                    >
-                      <Link href={tool.href} prefetch={false}>
-                        <Icon className="size-4" />
-                        <span>{tool.name}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        )}
-
-        {filteredCategories.map((category) => (
-          <SidebarGroup key={category.id}>
-            <SidebarGroupLabel>{category.name}</SidebarGroupLabel>
-            <SidebarGroupContent>
+      <nav>
+        <SidebarContent>
+          {!query && (
+            <SidebarGroup>
               <SidebarMenu>
-                {category.tools.map((tool) => {
-                  const Icon = tool.icon;
-                  const isActive = pathname === tool.href;
-                  return (
-                    <SidebarMenuItem key={tool.id}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive}
-                        tooltip={tool.name}
-                      >
-                        <Link href={tool.href} prefetch={false}>
-                          <Icon className="size-4" />
-                          <span>{tool.name}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === "/"}
+                    tooltip="Home"
+                  >
+                    <Link href="/">
+                      <Home className="size-4" />
+                      <span>Home</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
-      </SidebarContent>
+            </SidebarGroup>
+          )}
+
+          {query &&
+            filteredFeatured.length === 0 &&
+            filteredCategories.length === 0 && (
+              <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+                No tools found
+              </div>
+            )}
+
+          {filteredFeatured.length > 0 && (
+            <SidebarGroup>
+              <SidebarGroupLabel className="flex items-center gap-1.5">
+                <Star className="size-3 text-amber-500 fill-amber-500" />
+                Greatest Hits
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {filteredFeatured.map((tool) => {
+                    const Icon = tool.icon;
+                    const isActive = pathname === tool.href;
+                    return (
+                      <SidebarMenuItem key={tool.id}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive}
+                          tooltip={tool.name}
+                          className="text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300"
+                        >
+                          <Link href={tool.href} prefetch={false}>
+                            <Icon className="size-4" />
+                            <span>{tool.name}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )}
+
+          {filteredCategories.map((category) => (
+            <SidebarGroup key={category.id}>
+              <SidebarGroupLabel>{category.name}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {category.tools.map((tool) => {
+                    const Icon = tool.icon;
+                    const isActive = pathname === tool.href;
+                    return (
+                      <SidebarMenuItem key={tool.id}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive}
+                          tooltip={tool.name}
+                        >
+                          <Link href={tool.href} prefetch={false}>
+                            <Icon className="size-4" />
+                            <span>{tool.name}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
+        </SidebarContent>
+      </nav>
 
       <SidebarFooter className="border-t border-sidebar-border">
         <Dialog>
