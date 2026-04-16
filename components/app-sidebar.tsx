@@ -241,6 +241,25 @@ export function AppSidebar() {
               </div>
             </div>
             <div className="pt-4 border-t space-y-2">
+              <h3 className="font-medium text-foreground text-sm">Contributors</h3>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { name: "Himanshu Balani", url: "https://github.com/himanshubalani" },
+                  { name: "Mahmoud Ashraf", url: "https://github.com/SNO7E-G" },
+                ].map((person) => (
+                  <a
+                    key={person.name}
+                    href={person.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs px-2 py-1 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {person.name}<span className="sr-only"> (opens in new tab)</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+            <div className="pt-4 border-t space-y-2">
               <h3 className="font-medium text-foreground text-sm">Built with</h3>
               <div className="flex flex-wrap gap-1.5">
                 {[
