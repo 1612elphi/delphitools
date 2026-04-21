@@ -42,6 +42,8 @@ import {
   Languages,
   Layers,
   ClipboardPaste,
+  Crosshair,
+  Wind,
 } from "lucide-react";
 
 export interface Tool {
@@ -110,7 +112,7 @@ export const toolCategories: ToolCategory[] = [
         id: "tailwind-shades",
         name: "Tailwind Shade Generator",
         description: "Generate Tailwind colour scales",
-        icon: Palette,
+        icon: Wind,
         href: "/tools/tailwind-shades",
       },
       {
@@ -154,6 +156,22 @@ export const toolCategories: ToolCategory[] = [
         description: "Create linear, corner, and mesh gradients",
         icon: Blend,
         href: "/tools/gradient-genny",
+        new: true,
+      },
+      {
+        id: "pixel-picker",
+        name: "Pixel Picker",
+        description: "Sample colours from any image with a zoom loupe",
+        icon: Crosshair,
+        href: "/tools/pixel-picker",
+        new: true,
+      },
+      {
+        id: "palette-extractor",
+        name: "Palette Extractor",
+        description: "Extract colour palettes from images",
+        icon: Palette,
+        href: "/tools/palette-extractor",
         new: true,
       },
     ],

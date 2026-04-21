@@ -54,6 +54,8 @@ const toolComponents: Record<string, React.ComponentType> = {
   "imposer": dynamic(() => import("@/components/tools/imposer").then(mod => mod.ImposerTool)),
   "paste-image": dynamic(() => import("@/components/tools/paste-image").then(mod => mod.PasteImageTool)),
   "image-clipper": dynamic(() => import("@/components/tools/image-clipper").then(mod => mod.ImageClipperTool)),
+  "pixel-picker": dynamic(() => import("@/components/tools/pixel-picker").then(mod => mod.PixelPickerTool)),
+  "palette-extractor": dynamic(() => import("@/components/tools/palette-extractor").then(mod => mod.PaletteExtractorTool)),
 };
 
 interface ToolPageProps {
