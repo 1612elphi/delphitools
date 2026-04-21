@@ -37,7 +37,6 @@ import {
   Scale,
   FileCode,
   ScanLine,
-  Slice,
   FileSearch,
   Languages,
   Layers,
@@ -314,15 +313,7 @@ export const toolCategories: ToolCategory[] = [
     id: "print-production",
     name: "Print & Production",
     tools: [
-      {
-        id: "guillotine-director",
-        name: "Guillotine Director",
-        description: "Guided workflow for guillotine cutting imposed print sheets",
-        icon: Slice,
-        href: "/tools/guillotine-director",
-        new: true,
-      },
-      {
+{
         id: "pdf-preflight",
         name: "PDF Preflight",
         description: "Analyse PDFs for print-readiness issues",
