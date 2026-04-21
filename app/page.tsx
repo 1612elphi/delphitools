@@ -36,8 +36,6 @@ export default function Home() {
         </div>
       </div>
 
-      <IosAppCard />
-
       {/* Greatest Hits */}
       <section className="mb-12">
         <div className="flex items-center gap-2 mb-4">
@@ -78,6 +76,8 @@ export default function Home() {
           })}
         </div>
       </section>
+
+      <IosAppCard />
 
       {/* Tool Categories */}
       <div className="space-y-10">
