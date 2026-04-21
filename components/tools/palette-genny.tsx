@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Copy, Check, Plus, Minus, Shuffle, Download, Lock, Unlock, Trash2, Sparkles, ChevronDown } from "lucide-react";
+import { Copy, Check, Plus, Minus, Shuffle, Download, Lock, Unlock, Trash2, Wind, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getColourName } from "@/lib/colour-names";
@@ -830,7 +830,7 @@ export function PaletteGennyTool() {
                     className="transition-transform hover:scale-110 active:scale-95"
                   >
                     <Link href={`/tools/tailwind-shades?color=${encodeURIComponent(colour.hex)}`}>
-                      <Sparkles className="size-4" />
+                      <Wind className="size-4" />
                     </Link>
                   </Button>
                   {colours.length > MIN_COLOURS && (
