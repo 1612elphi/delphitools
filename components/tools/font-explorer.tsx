@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { Upload, Trash2, Type, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useFilePaste } from "@/hooks/use-file-paste";
 
 interface FontMetadata {
   fontFamily: string;
@@ -26,6 +27,7 @@ export function FontExplorerTool() {
   const [previewText, setPreviewText] = useState("The quick brown fox jumps over the lazy dog");
   const [previewSize, setPreviewSize] = useState(48);
   const [error, setError] = useState<string | null>(null);
+
   const [fontLoaded, setFontLoaded] = useState(false);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -85,6 +87,8 @@ export function FontExplorerTool() {
     }
   };
 
+  useFilePaste(readFile, ".ttf,.otf,.woff,.woff2");
+
   const clear = () => {
     if (fontUrl) {
       URL.revokeObjectURL(fontUrl);
@@ -127,7 +131,7 @@ export function FontExplorerTool() {
           <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-lg font-medium">Drop font file here</p>
           <p className="text-sm text-muted-foreground mt-1">
-            TTF, OTF, WOFF, or WOFF2
+            TTF, OTF, WOFF, or WOFF2, or paste
           </p>
         </div>
       )}

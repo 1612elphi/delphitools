@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Upload, Download, Copy, Check, Trash2 } from "lucide-react";
 import { optimize } from "svgo/browser";
 import { Button } from "@/components/ui/button";
+import { useFilePaste } from "@/hooks/use-file-paste";
 
 export function SvgOptimiserTool() {
   const [input, setInput] = useState("");
@@ -67,6 +68,8 @@ export function SvgOptimiserTool() {
     };
     reader.readAsText(file);
   };
+
+  useFilePaste(readFile, ".svg,image/svg+xml");
 
   const optimizeSvg = (svg: string) => {
     try {

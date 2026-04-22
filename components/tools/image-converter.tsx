@@ -10,6 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
+import { useFilePaste } from "@/hooks/use-file-paste";
 
 type ImageFormat = "png" | "jpeg" | "webp" | "avif" | "gif" | "bmp" | "tiff" | "ico" | "icns";
 
@@ -357,6 +358,7 @@ export function ImageConverterTool() {
   const [targetFormat, setTargetFormat] = useState<ImageFormat>("webp");
   const [converted, setConverted] = useState<ConvertedImage[]>([]);
   const [converting, setConverting] = useState(false);
+
   const [avifSupported, setAvifSupported] = useState<boolean | null>(null);
 
   const [resize, setResize] = useState<ResizeOptions>({
@@ -415,6 +417,11 @@ export function ImageConverterTool() {
       setConverted([]);
     }
   };
+
+  useFilePaste((file: File) => {
+    setImages((prev) => [...prev, file]);
+    setConverted([]);
+  }, "image/*");
 
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
@@ -578,7 +585,7 @@ export function ImageConverterTool() {
         <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
         <p className="text-lg font-medium">Drop images here</p>
         <p className="text-sm text-muted-foreground mt-1">
-          or click to select files
+          or click to select files, or paste
         </p>
       </div>
 

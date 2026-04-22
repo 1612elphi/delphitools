@@ -55,6 +55,7 @@ import {
   type PagePlacement,
   type SheetDefinition,
 } from "@/lib/imposition";
+import { useFilePaste } from "@/hooks/use-file-paste";
 
 // ---------------------------------------------------------------------------
 // pdfjs-dist — dynamic import to avoid SSG DOMMatrix errors
@@ -103,6 +104,7 @@ export function ImposerTool() {
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
   const [pdfFileName, setPdfFileName] = useState<string>("");
   const [pdfPageCount, setPdfPageCount] = useState(0);
+
   const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
 
   // Cached page thumbnails (canvas image bitmaps keyed by 1-indexed page number)
@@ -232,6 +234,8 @@ export function ImposerTool() {
       setPdfPageCount(0);
     }
   }, []);
+
+  useFilePaste(loadPdf, "application/pdf");
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -606,7 +610,7 @@ export function ImposerTool() {
             <Upload className="size-10 mx-auto text-muted-foreground mb-3" />
             <p className="font-medium">Drop a PDF here, or click to browse</p>
             <p className="text-sm text-muted-foreground mt-1">
-              All processing happens locally in your browser
+              or paste from clipboard
             </p>
           </>
         )}

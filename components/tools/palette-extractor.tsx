@@ -20,6 +20,7 @@ import { formatColour } from "@/lib/colour-notation";
 import { getColourName } from "@/lib/colour-names";
 import { useBreakpoint, useIsTouchDevice } from "@/hooks/use-breakpoint";
 import Link from "next/link";
+import { useFilePaste } from "@/hooks/use-file-paste";
 
 type ExtractionStrategy =
   | "dominant"
@@ -354,6 +355,7 @@ export function PaletteExtractorTool() {
   const [count, setCount] = useState(5);
   const [copied, setCopied] = useState<string | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
   const [extracting, setExtracting] = useState(false);
 
   const { notation } = useColourNotation();
@@ -429,6 +431,8 @@ export function PaletteExtractorTool() {
     },
     [imageUrl, extract]
   );
+
+  useFilePaste(handleImage, "image/*");
 
   const reExtract = useCallback(() => {
     if (sampleCanvasRef.current) extract(sampleCanvasRef.current);
@@ -535,7 +539,7 @@ export function PaletteExtractorTool() {
           <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-lg font-medium">Drop an image here</p>
           <p className="text-sm text-muted-foreground mt-1">
-            or click to select a file
+            or click to select a file, or paste
           </p>
         </div>
       </div>

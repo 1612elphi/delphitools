@@ -10,6 +10,7 @@ import {
   Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useFilePaste } from "@/hooks/use-file-paste";
 
 interface CropArea {
   x: number;
@@ -65,37 +66,21 @@ export function PasteImageTool() {
     };
   }, []);
 
-  // Handle paste from clipboard
-  useEffect(() => {
-    const handlePaste = async (e: ClipboardEvent) => {
-      const items = e.clipboardData?.items;
-      if (!items) return;
+  useFilePaste((file: File) => {
+    const url = createSafeObjectURL(file);
 
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf("image") !== -1) {
-          const blob = items[i].getAsFile();
-          if (blob) {
-            const url = createSafeObjectURL(blob);
+    setImage(prev => {
+      if (prev) revokeSafeObjectURL(prev);
+      return url;
+    });
+    setOriginalImage(prev => {
+      if (prev && prev !== url) revokeSafeObjectURL(prev);
+      return url;
+    });
 
-            setImage(prev => {
-              if (prev) revokeSafeObjectURL(prev);
-              return url;
-            });
-            setOriginalImage(prev => {
-              if (prev && prev !== url) revokeSafeObjectURL(prev);
-              return url;
-            });
-
-            setIsCropping(false);
-            setCropArea(null);
-          }
-        }
-      }
-    };
-
-    window.addEventListener("paste", handlePaste);
-    return () => window.removeEventListener("paste", handlePaste);
-  }, [createSafeObjectURL, revokeSafeObjectURL]);
+    setIsCropping(false);
+    setCropArea(null);
+  }, "image/*");
 
   useEffect(() => {
     const handleResize = () => {

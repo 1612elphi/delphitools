@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from "react";
 import { Upload, Download, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useFilePaste } from "@/hooks/use-file-paste";
 
 const FAVICON_SIZES = [16, 32, 48, 64, 128, 180, 192, 512];
 
@@ -16,6 +17,7 @@ export function FaviconGennyTool() {
   const [fileName, setFileName] = useState("");
   const [favicons, setFavicons] = useState<GeneratedFavicon[]>([]);
   const [generating, setGenerating] = useState(false);
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -43,6 +45,8 @@ export function FaviconGennyTool() {
     };
     reader.readAsDataURL(file);
   };
+
+  useFilePaste(readFile, "image/*");
 
   const generateFavicons = async (imageDataUrl: string) => {
     setGenerating(true);
@@ -200,7 +204,7 @@ export function FaviconGennyTool() {
         <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
         <p className="text-lg font-medium">Drop image here</p>
         <p className="text-sm text-muted-foreground mt-1">
-          PNG, JPG, SVG or any image format
+          PNG, JPG, SVG or any image format, or paste
         </p>
       </div>
 
