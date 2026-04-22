@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { Upload, Download, Trash2, Move } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useFilePaste } from "@/hooks/use-file-paste";
 
 interface Platform {
   name: string;
@@ -51,6 +52,7 @@ export function SocialCropperTool() {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
   const previewRef = useRef<HTMLDivElement>(null);
 
   const currentRatio = platforms[selectedPlatform].ratios[selectedRatio];
@@ -87,6 +89,8 @@ export function SocialCropperTool() {
     };
     reader.readAsDataURL(file);
   };
+
+  useFilePaste(readFile, "image/*");
 
   // Calculate crop dimensions based on image and aspect ratio
   const getCropDimensions = useCallback(() => {
@@ -274,7 +278,7 @@ export function SocialCropperTool() {
           <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-lg font-medium">Drop image here</p>
           <p className="text-sm text-muted-foreground mt-1">
-            PNG, JPG, or any image format
+            PNG, JPG, or any image format, or paste
           </p>
         </div>
       )}

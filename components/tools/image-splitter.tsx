@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from "react";
 import { Upload, Download, Trash2, Grid3X3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useFilePaste } from "@/hooks/use-file-paste";
 
 interface Tile {
   row: number;
@@ -18,6 +19,7 @@ export function ImageSplitterTool() {
   const [cols, setCols] = useState(3);
   const [tiles, setTiles] = useState<Tile[]>([]);
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -50,6 +52,8 @@ export function ImageSplitterTool() {
     };
     reader.readAsDataURL(file);
   };
+
+  useFilePaste(readFile, "image/*");
 
   const splitImage = () => {
     if (!sourceImage) return;
@@ -139,7 +143,7 @@ export function ImageSplitterTool() {
           <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-lg font-medium">Drop image here</p>
           <p className="text-sm text-muted-foreground mt-1">
-            PNG, JPG, or any image format
+            PNG, JPG, or any image format, or paste
           </p>
         </div>
       )}

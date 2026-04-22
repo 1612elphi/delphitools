@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { useColourNotation } from "@/hooks/use-colour-notation";
 import { formatColour } from "@/lib/colour-notation";
 import { getColourName } from "@/lib/colour-names";
+import { useFilePaste } from "@/hooks/use-file-paste";
 
 interface Swatch {
   hex: string;
@@ -49,6 +50,7 @@ export function PixelPickerTool() {
     loupeTop: number;
   } | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+
   const [activeSwatch, setActiveSwatch] = useState<number | null>(null);
 
   const { notation } = useColourNotation();
@@ -124,6 +126,8 @@ export function PixelPickerTool() {
     const file = e.target.files?.[0];
     if (file?.type.startsWith("image/")) drawImage(file);
   };
+
+  useFilePaste(drawImage, "image/*");
 
   const canvasToPixel = (
     e: React.MouseEvent<HTMLCanvasElement>
@@ -314,7 +318,7 @@ export function PixelPickerTool() {
           <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-lg font-medium">Drop an image here</p>
           <p className="text-sm text-muted-foreground mt-1">
-            or click to select a file
+            or click to select a file, or paste
           </p>
         </div>
       ) : (

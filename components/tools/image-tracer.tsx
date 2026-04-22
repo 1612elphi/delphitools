@@ -57,6 +57,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useFilePaste } from "@/hooks/use-file-paste";
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -520,6 +521,7 @@ export function ImageTracerTool() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [presetsOpen, setPresetsOpen] = useState(false);
+
   const [hasResult, setHasResult] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -692,6 +694,8 @@ export function ImageTracerTool() {
     [handleFile],
   );
 
+  useFilePaste(handleFile, "image/png,image/jpeg,image/webp,image/gif");
+
   const applyPreset = useCallback(async (name: string) => {
     setPreset(name);
     setDirty(true);
@@ -803,7 +807,7 @@ export function ImageTracerTool() {
           <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-lg font-medium">Drop an image here</p>
           <p className="text-sm text-muted-foreground mt-1">
-            or click to select &mdash; PNG, JPG, WebP, GIF
+            or click to select, or paste &mdash; PNG, JPG, WebP, GIF
           </p>
         </div>
         <canvas ref={canvasRef} className="hidden" />

@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Upload, Download, Trash2, Loader2, AlertCircle, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useFilePaste } from "@/hooks/use-file-paste";
 
 type QualityMode = "fast" | "precise";
 
@@ -19,6 +20,7 @@ export function BackgroundRemoverTool() {
   const [sourceImage, setSourceImage] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [qualityMode, setQualityMode] = useState<QualityMode>("fast");
+
   const [processing, setProcessing] = useState<ProcessingState>({ status: "idle" });
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -61,6 +63,8 @@ export function BackgroundRemoverTool() {
     };
     reader.readAsDataURL(file);
   };
+
+  useFilePaste(readFile, "image/*");
 
   const removeBackground = async () => {
     if (!sourceImage) return;
@@ -272,7 +276,7 @@ export function BackgroundRemoverTool() {
           <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-lg font-medium">Drop an image here</p>
           <p className="text-sm text-muted-foreground mt-1">
-            or click to select a file
+            or click to select a file, or paste
           </p>
         </div>
       ) : !resultImage ? (

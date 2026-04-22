@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Upload, Download, X, Scissors } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useFilePaste } from "@/hooks/use-file-paste";
 
 interface ClipResult {
   originalWidth: number;
@@ -50,6 +51,7 @@ export function ImageClipperTool() {
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
   const isMountedRef = useRef(true);
 
   useEffect(() => {
@@ -180,6 +182,8 @@ export function ImageClipperTool() {
     [processImage]
   );
 
+  useFilePaste(processImage, "image/png");
+
   const handleDownload = useCallback(() => {
     if (!result) return;
     const a = document.createElement("a");
@@ -211,7 +215,7 @@ export function ImageClipperTool() {
           <div>
             <p className="font-medium">Drop a PNG here or click to upload</p>
             <p className="text-sm text-muted-foreground">
-              Transparent edges will be trimmed automatically
+              or paste from clipboard
             </p>
           </div>
           <input

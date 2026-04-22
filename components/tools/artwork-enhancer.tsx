@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { Upload, Download, Trash2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { useFilePaste } from "@/hooks/use-file-paste";
 
 export function ArtworkEnhancerTool() {
   const [image, setImage] = useState<string | null>(null);
@@ -45,6 +46,8 @@ export function ArtworkEnhancerTool() {
     };
     reader.readAsDataURL(file);
   };
+
+  useFilePaste(readFile, "image/*");
 
   const generateNoise = useCallback(() => {
     setNoiseSeed(Math.random());
@@ -174,7 +177,7 @@ export function ArtworkEnhancerTool() {
           <label htmlFor="image-upload" className="cursor-pointer">
             <Upload className="size-12 mx-auto mb-4 text-muted-foreground" />
             <p className="text-lg font-medium mb-1">Drop your artwork here</p>
-            <p className="text-sm text-muted-foreground">or click to browse</p>
+            <p className="text-sm text-muted-foreground">or click to browse, or paste</p>
           </label>
         </div>
       ) : (

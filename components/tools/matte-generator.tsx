@@ -5,6 +5,7 @@ import { Upload, Download, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useFilePaste } from "@/hooks/use-file-paste";
 
 type MatteType = "color" | "blur" | "gradient";
 type AspectRatio = "1:1" | "4:5";
@@ -34,6 +35,7 @@ export function MatteGeneratorTool() {
   const [padding, setPadding] = useState(40);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [dominantColor, setDominantColor] = useState<string>("#888888");
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Calculate output dimensions based on aspect ratio
@@ -92,6 +94,8 @@ export function MatteGeneratorTool() {
     };
     reader.readAsDataURL(file);
   };
+
+  useFilePaste(readFile, "image/*");
 
   const generateMatte = () => {
     if (!sourceImage) return;
@@ -215,7 +219,7 @@ export function MatteGeneratorTool() {
           <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-lg font-medium">Drop image here</p>
           <p className="text-sm text-muted-foreground mt-1">
-            Works best with non-square images
+            or click to select, or paste
           </p>
         </div>
       )}

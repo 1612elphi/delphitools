@@ -38,6 +38,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useFilePaste } from "@/hooks/use-file-paste";
 
 // Types
 type DotType =
@@ -163,6 +164,7 @@ export function QrGeneratorTool() {
   const [options, setOptions] = useState<QROptions>(defaultQROptions);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
   const [generating, setGenerating] = useState(false);
 
   // vCard state
@@ -349,6 +351,8 @@ export function QrGeneratorTool() {
     };
     reader.readAsDataURL(file);
   };
+
+  useFilePaste(processLogoFile, "image/*");
 
   const handleLogoDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -1324,7 +1328,7 @@ export function QrGeneratorTool() {
                       >
                         <Upload className={`size-6 ${logoDragging ? "text-primary" : "text-muted-foreground"}`} />
                         <p className="text-sm text-muted-foreground">
-                          {logoDragging ? "Drop image here" : "Drop image or click to upload"}
+                          {logoDragging ? "Drop image here" : "Drop, click, or paste"}
                         </p>
                       </div>
                     )}

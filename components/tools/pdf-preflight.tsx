@@ -31,6 +31,7 @@ import {
   PDFStream,
   decodePDFRawStream,
 } from "pdf-lib";
+import { useFilePaste } from "@/hooks/use-file-paste";
 // pdf.js must be imported dynamically to avoid DOMMatrix errors during SSG
 type PDFDocumentProxy = import("pdfjs-dist").PDFDocumentProxy;
 
@@ -874,6 +875,7 @@ export function PdfPreflightTool() {
   const [file, setFile] = useState<PdfFile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [report, setReport] = useState<PreflightReport | null>(null);
@@ -944,6 +946,8 @@ export function PdfPreflightTool() {
     },
     [validateAndLoadFile]
   );
+
+  useFilePaste(validateAndLoadFile, ".pdf,application/pdf");
 
   const handleClear = useCallback(() => {
     if (pdfDoc) pdfDoc.destroy();
@@ -1164,7 +1168,7 @@ export function PdfPreflightTool() {
           <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-lg font-medium">Drop a PDF here</p>
           <p className="text-sm text-muted-foreground mt-1">
-            or click to select a file
+            or click to select a file, or paste
           </p>
         </div>
       ) : (

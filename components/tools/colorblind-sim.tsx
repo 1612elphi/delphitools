@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useColourNotation } from "@/hooks/use-colour-notation";
 import { formatColour } from "@/lib/colour-notation";
+import { useFilePaste } from "@/hooks/use-file-paste";
 
 // Colour blindness simulation matrices
 // Based on research by Machado, Oliveira and Fernandes (2009)
@@ -169,6 +170,7 @@ export function ColorblindSimTool() {
   const [sourceImage, setSourceImage] = useState<string | null>(null);
   const [simulatedImage, setSimulatedImage] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
   const { notation } = useColourNotation();
 
   const isValidHex = (hex: string) => /^#[0-9A-Fa-f]{6}$/.test(hex);
@@ -196,6 +198,8 @@ export function ColorblindSimTool() {
     };
     reader.readAsDataURL(file);
   };
+
+  useFilePaste(readFile, "image/*");
 
   const clearImage = () => {
     setSourceImage(null);
@@ -379,7 +383,7 @@ export function ColorblindSimTool() {
               <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-lg font-medium">Drop image here</p>
               <p className="text-sm text-muted-foreground mt-1">
-                See how your image appears to people with colour blindness
+                or click to select, or paste
               </p>
             </div>
           )}

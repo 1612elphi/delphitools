@@ -5,6 +5,7 @@ import { Upload, Download, Trash2, Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import { useFilePaste } from "@/hooks/use-file-paste";
 
 type Position = "tl" | "tc" | "tr" | "ml" | "mc" | "mr" | "bl" | "bc" | "br" | "random";
 type BlendMode = "normal" | "multiply" | "screen" | "overlay";
@@ -41,6 +42,7 @@ export function WatermarkerTool() {
   const [scale, setScale] = useState(20); // Watermark scale as % of image width
   const [padding, setPadding] = useState(5); // Padding as % of image
   const [resultImage, setResultImage] = useState<string | null>(null);
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleBaseDrop = useCallback((e: React.DragEvent) => {
@@ -103,6 +105,11 @@ export function WatermarkerTool() {
     };
     reader.readAsDataURL(file);
   };
+
+  useFilePaste((file: File) => {
+    if (!baseImage) readBaseFile(file);
+    else readWatermarkFile(file);
+  }, "image/*");
 
   const generateRandomPosition = () => {
     setPosition("random");

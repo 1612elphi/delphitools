@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useMemo } from "react";
 import { Upload, Download, Trash2, GalleryHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useFilePaste } from "@/hooks/use-file-paste";
 
 interface Tile {
   index: number;
@@ -38,6 +39,7 @@ export function ScrollGeneratorTool() {
   const [fillMode, setFillMode] = useState<FillMode>("blur");
   const [fillColor, setFillColor] = useState("#000000");
   const [tiles, setTiles] = useState<Tile[]>([]);
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const currentRatio = aspectRatios[selectedRatio];
@@ -91,6 +93,8 @@ export function ScrollGeneratorTool() {
     };
     reader.readAsDataURL(file);
   };
+
+  useFilePaste(readFile, "image/*");
 
   const generateTiles = () => {
     if (!sourceImage) return;
@@ -240,7 +244,7 @@ export function ScrollGeneratorTool() {
           <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-lg font-medium">Drop panoramic image here</p>
           <p className="text-sm text-muted-foreground mt-1">
-            Wide images work best for seamless scrolls
+            or click to select, or paste
           </p>
         </div>
       )}

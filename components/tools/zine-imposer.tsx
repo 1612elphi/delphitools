@@ -16,6 +16,7 @@ import { PaperSizeCombobox, findPaperSize } from "@/components/ui/paper-size-com
 import { cn } from "@/lib/utils";
 import { PDFDocument, degrees } from "pdf-lib";
 import { PAPER_SIZES } from "@/lib/imposition";
+import { useFilePaste } from "@/hooks/use-file-paste";
 
 // Types
 interface ZineImage {
@@ -62,6 +63,7 @@ export function ZineImposerTool() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -141,6 +143,19 @@ export function ZineImposerTool() {
 
     setImages(newImages);
   };
+
+  useFilePaste(async (file: File) => {
+    try {
+      const zineImage = await loadImage(file);
+      setImages((prev) => {
+        const emptyIndex = prev.findIndex((img) => img === null);
+        if (emptyIndex === -1) return prev;
+        const newImages = [...prev];
+        newImages[emptyIndex] = zineImage;
+        return newImages;
+      });
+    } catch { /* ignore load failures */ }
+  }, "image/*");
 
   // Remove image from slot
   const removeImage = (index: number) => {
@@ -716,7 +731,7 @@ export function ZineImposerTool() {
         <Upload className="size-10 mx-auto text-muted-foreground mb-3" />
         <p className="font-medium">Drop images here to fill empty slots</p>
         <p className="text-sm text-muted-foreground mt-1">
-          or click to select multiple files
+          or click to select multiple files, or paste
         </p>
       </div>
 
