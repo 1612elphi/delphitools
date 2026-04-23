@@ -3,6 +3,12 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Check, ClipboardPaste, Copy, Delete, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type DiffLine =
   | { type: "same"; text: string; oldLine: number; newLine: number }
@@ -57,6 +63,7 @@ function TextPane({ label, value, onChange }: TextPaneProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const gutterRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [copied, setCopied] = useState(false);
 
   const lineCount = value ? value.split("\n").length : 1;
   const lineNumbers = useMemo(
@@ -80,6 +87,13 @@ function TextPane({ label, value, onChange }: TextPaneProps) {
     }
   };
 
+  const copyToClipboard = async () => {
+    if (!value) return;
+    await navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
   const syncScroll = () => {
     if (gutterRef.current && textareaRef.current) {
       gutterRef.current.scrollTop = textareaRef.current.scrollTop;
@@ -90,31 +104,62 @@ function TextPane({ label, value, onChange }: TextPaneProps) {
     <div className="flex flex-col min-w-0">
       <div className="flex items-center justify-between mb-2 gap-2">
         <h3 className="text-sm font-semibold">{label}</h3>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={openFile} className="h-8">
-            <FolderOpen className="size-4" />
-            <span className="hidden sm:inline">Open</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={pasteFromClipboard}
-            aria-label="Paste from clipboard"
-          >
-            <ClipboardPaste className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => onChange("")}
-            disabled={!value}
-            aria-label="Clear"
-          >
-            <Delete className="size-4" />
-          </Button>
-        </div>
+        <TooltipProvider delayDuration={200}>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={openFile} className="h-8">
+              <FolderOpen className="size-4" />
+              <span className="hidden sm:inline">Open</span>
+            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={pasteFromClipboard}
+                  aria-label="Paste from clipboard"
+                >
+                  <ClipboardPaste className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Paste from clipboard</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={copyToClipboard}
+                  disabled={!value}
+                  aria-label={`Copy ${label.toLowerCase()} to clipboard`}
+                >
+                  {copied ? (
+                    <Check className="size-4 text-emerald-600 dark:text-emerald-400" />
+                  ) : (
+                    <Copy className="size-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{copied ? "Copied" : "Copy to clipboard"}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => onChange("")}
+                  disabled={!value}
+                  aria-label="Clear"
+                >
+                  <Delete className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Clear</TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
       </div>
 
       <div className="flex rounded-lg border bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring">
