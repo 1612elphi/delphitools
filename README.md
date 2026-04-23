@@ -43,6 +43,7 @@ Long live the handmade web.
 - typo calc (agates, ciceros, picas, pt, inches, mm)
 - paper sizes
 - word counter
+- text diff
 - glyph browser
 - font file explorer
 

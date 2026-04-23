@@ -427,6 +427,7 @@ export default function Home() {
                 { name: "Himanshu Balani", url: "https://github.com/himanshubalani" },
                 { name: "Mahmoud Ashraf", url: "https://github.com/SNO7E-G" },
                 { name: "Moamal Alaa", url: "https://github.com/Moamal-2000" },
+                { name: "Pranav K", url: "https://github.com/Pranavk-official" },
               ].map((person) => (
                 <a
                   key={person.name}
