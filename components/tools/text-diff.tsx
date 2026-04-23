@@ -1,34 +1,34 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
-import { Check, ClipboardPaste, Copy, Delete, FolderOpen } from "lucide-react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { Check, ClipboardPaste, Copy, FolderOpen, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 type DiffLine =
   | { type: "same"; text: string; oldLine: number; newLine: number }
   | { type: "del"; text: string; oldLine: number }
   | { type: "add"; text: string; newLine: number };
 
-// Classic LCS-based line diff. Good enough for the sizes a browser tool sees.
 function diffLines(oldText: string, newText: string): DiffLine[] {
   const a = oldText.split("\n");
   const b = newText.split("\n");
   const n = a.length;
   const m = b.length;
 
-  // LCS length table
-  const lcs: number[][] = Array.from({ length: n + 1 }, () =>
-    new Array(m + 1).fill(0)
-  );
+  const lcs = new Int32Array((n + 1) * (m + 1));
+  const w = m + 1;
   for (let i = n - 1; i >= 0; i--) {
     for (let j = m - 1; j >= 0; j--) {
-      lcs[i][j] = a[i] === b[j] ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1]);
+      lcs[i * w + j] = a[i] === b[j] ? lcs[(i + 1) * w + j + 1] + 1 : Math.max(lcs[(i + 1) * w + j], lcs[i * w + j + 1]);
     }
   }
 
@@ -40,7 +40,7 @@ function diffLines(oldText: string, newText: string): DiffLine[] {
       out.push({ type: "same", text: a[i], oldLine: i + 1, newLine: j + 1 });
       i++;
       j++;
-    } else if (lcs[i + 1][j] >= lcs[i][j + 1]) {
+    } else if (lcs[(i + 1) * w + j] >= lcs[i * w + j + 1]) {
       out.push({ type: "del", text: a[i], oldLine: i + 1 });
       i++;
     } else {
@@ -57,23 +57,54 @@ interface TextPaneProps {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  wrap: boolean;
 }
 
-function TextPane({ label, value, onChange }: TextPaneProps) {
+function TextPane({ label, value, onChange, wrap }: TextPaneProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const gutterRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const mirrorRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
 
-  const lineCount = value ? value.split("\n").length : 1;
-  const lineNumbers = useMemo(
-    () => Array.from({ length: lineCount }, (_, i) => i + 1),
-    [lineCount]
-  );
+  const lines = useMemo(() => (value ? value.split("\n") : [""]), [value]);
+  const [lineHeights, setLineHeights] = useState<number[]>([]);
+
+  useEffect(() => {
+    if (!wrap) {
+      setLineHeights([]);
+      return;
+    }
+
+    const measure = () => {
+      const mirror = mirrorRef.current;
+      const textarea = textareaRef.current;
+      if (!mirror || !textarea) return;
+
+      mirror.style.width = `${textarea.clientWidth}px`;
+      mirror.innerHTML = "";
+
+      const divs = lines.map((line) => {
+        const div = document.createElement("div");
+        div.textContent = line || " ";
+        mirror.appendChild(div);
+        return div;
+      });
+
+      setLineHeights(divs.map((d) => d.offsetHeight));
+    };
+
+    measure();
+
+    const ro = new ResizeObserver(measure);
+    if (textareaRef.current) ro.observe(textareaRef.current);
+    return () => ro.disconnect();
+  }, [lines, wrap]);
 
   const openFile = () => fileInputRef.current?.click();
 
   const handleFile = async (file: File) => {
+    if (file.size > 5 * 1024 * 1024) return;
     const text = await file.text();
     onChange(text);
   };
@@ -108,7 +139,7 @@ function TextPane({ label, value, onChange }: TextPaneProps) {
           <div className="flex items-center gap-1">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={openFile} className="h-8">
+                <Button variant="ghost" size="sm" onClick={openFile} className="h-8" aria-label="Open file">
                   <FolderOpen className="size-4" />
                   <span className="hidden sm:inline">Open</span>
                 </Button>
@@ -158,7 +189,7 @@ function TextPane({ label, value, onChange }: TextPaneProps) {
                   disabled={!value}
                   aria-label="Clear"
                 >
-                  <Delete className="size-4" />
+                  <X className="size-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Clear</TooltipContent>
@@ -167,14 +198,26 @@ function TextPane({ label, value, onChange }: TextPaneProps) {
         </TooltipProvider>
       </div>
 
-      <div className="flex rounded-lg border bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring">
+      <div className="flex rounded-lg border bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring h-[300px]">
+        {wrap && (
+          <div
+            ref={mirrorRef}
+            className="absolute invisible overflow-hidden font-mono text-sm leading-6 whitespace-pre-wrap break-words"
+            aria-hidden="true"
+          />
+        )}
         <div
           ref={gutterRef}
           className="select-none overflow-hidden bg-muted/40 text-muted-foreground text-right font-mono text-sm py-3 px-3 leading-6"
           aria-hidden
         >
-          {lineNumbers.map((n) => (
-            <div key={n}>{n}</div>
+          {lines.map((_, i) => (
+            <div
+              key={i}
+              style={wrap && lineHeights[i] ? { height: lineHeights[i] } : undefined}
+            >
+              {i + 1}
+            </div>
           ))}
         </div>
         <textarea
@@ -182,9 +225,10 @@ function TextPane({ label, value, onChange }: TextPaneProps) {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onScroll={syncScroll}
+          wrap={wrap ? "soft" : "off"}
           spellCheck={false}
           placeholder={`Paste ${label.toLowerCase()} here...`}
-          className="flex-1 min-w-0 min-h-[300px] resize-none font-mono text-sm py-3 px-3 leading-6 bg-transparent focus:outline-none"
+          className="flex-1 min-w-0 h-full resize-none font-mono text-sm py-3 px-3 leading-6 bg-transparent focus:outline-none"
         />
       </div>
 
@@ -207,8 +251,11 @@ export function TextDiffTool() {
   const [oldText, setOldText] = useState("");
   const [newText, setNewText] = useState("");
   const [copied, setCopied] = useState(false);
+  const [wrap, setWrap] = useState(false);
 
-  const diff = useMemo(() => diffLines(oldText, newText), [oldText, newText]);
+  const deferredOld = useDeferredValue(oldText);
+  const deferredNew = useDeferredValue(newText);
+  const diff = useMemo(() => diffLines(deferredOld, deferredNew), [deferredOld, deferredNew]);
 
   const stats = useMemo(() => {
     let added = 0;
@@ -238,9 +285,14 @@ export function TextDiffTool() {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-end gap-2 mb-2">
+        <Label htmlFor="wrap-toggle" className="text-sm text-muted-foreground">Word wrap</Label>
+        <Switch id="wrap-toggle" checked={wrap} onCheckedChange={setWrap} />
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2">
-        <TextPane label="Old Text" value={oldText} onChange={setOldText} />
-        <TextPane label="New Text" value={newText} onChange={setNewText} />
+        <TextPane label="Old Text" value={oldText} onChange={setOldText} wrap={wrap} />
+        <TextPane label="New Text" value={newText} onChange={setNewText} wrap={wrap} />
       </div>
 
       <div>
@@ -291,43 +343,39 @@ export function TextDiffTool() {
           ) : (
             <div className="font-mono text-sm leading-6 overflow-x-auto">
               {diff.map((d, idx) => (
-                <DiffRow key={idx} line={d} />
+                <DiffRow key={idx} line={d} wrap={wrap} />
               ))}
             </div>
           )}
         </div>
       </div>
+
+      <p className="text-xs text-muted-foreground/60 pt-2">
+        contributed by{" "}
+        <a href="https://github.com/Pranavk-official" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition-colors">
+          Pranav K
+        </a>
+        {" "}with some tweaks: word wrap toggle with synced line numbers, flat typed array for the lcs table, deferred diff computation, file size cap, and a few accessibility fixes.
+      </p>
     </div>
   );
 }
 
-function DiffRow({ line }: { line: DiffLine }) {
-  const bg =
-    line.type === "add"
-      ? "bg-emerald-500/10"
-      : line.type === "del"
-      ? "bg-rose-500/10"
-      : "";
+function DiffRow({ line, wrap }: { line: DiffLine; wrap: boolean }) {
   const marker = line.type === "add" ? "+" : line.type === "del" ? "−" : " ";
-  const markerColor =
-    line.type === "add"
-      ? "text-emerald-600 dark:text-emerald-400"
-      : line.type === "del"
-      ? "text-rose-600 dark:text-rose-400"
-      : "text-muted-foreground";
   const oldNum = line.type === "add" ? "" : line.oldLine;
   const newNum = line.type === "del" ? "" : line.newLine;
 
   return (
-    <div className={`flex ${bg}`}>
+    <div className={cn("flex", line.type === "add" && "bg-emerald-500/10", line.type === "del" && "bg-rose-500/10")}>
       <div className="select-none px-2 w-10 text-right text-muted-foreground/70 shrink-0">
         {oldNum}
       </div>
       <div className="select-none px-2 w-10 text-right text-muted-foreground/70 shrink-0">
         {newNum}
       </div>
-      <div className={`select-none px-2 shrink-0 ${markerColor}`}>{marker}</div>
-      <div className="whitespace-pre flex-1 pr-3">{line.text || " "}</div>
+      <div className={cn("select-none px-2 shrink-0", line.type === "add" ? "text-emerald-600 dark:text-emerald-400" : line.type === "del" ? "text-rose-600 dark:text-rose-400" : "text-muted-foreground")}>{marker}</div>
+      <div className={cn("flex-1 pr-3", wrap ? "whitespace-pre-wrap break-words" : "whitespace-pre")}>{line.text || " "}</div>
     </div>
   );
 }
