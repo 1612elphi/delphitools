@@ -43,6 +43,7 @@ import {
   ClipboardPaste,
   Crosshair,
   Wind,
+  GitCompare,
 } from "lucide-react";
 
 export interface Tool {
@@ -292,6 +293,14 @@ export const toolCategories: ToolCategory[] = [
         description: "Convert pixels to rem units",
         icon: Ruler,
         href: "/tools/px-to-rem",
+      },
+      {
+        id: "text-diff",
+        name: "Text Diff",
+        description: "Compare two texts and highlight differences",
+        icon: GitCompare,
+        href: "/tools/text-diff",
+        new: true,
       },
       {
         id: "typo-calc",
