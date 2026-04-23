@@ -106,10 +106,15 @@ function TextPane({ label, value, onChange }: TextPaneProps) {
         <h3 className="text-sm font-semibold">{label}</h3>
         <TooltipProvider delayDuration={200}>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" onClick={openFile} className="h-8">
-              <FolderOpen className="size-4" />
-              <span className="hidden sm:inline">Open</span>
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" onClick={openFile} className="h-8">
+                  <FolderOpen className="size-4" />
+                  <span className="hidden sm:inline">Open</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Open file</TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
