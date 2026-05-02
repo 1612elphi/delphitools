@@ -250,6 +250,7 @@ export function AppSidebar() {
                   { name: "Himanshu Balani", url: "https://github.com/himanshubalani" },
                   { name: "Mahmoud Ashraf", url: "https://github.com/SNO7E-G" },
                   { name: "Moamal Alaa", url: "https://github.com/Moamal-2000" },
+                  { name: "Claude", url: "https://rmv.fyi/notes/i-hope-you-don-t-use-generative-ai" },
                 ].map((person) => (
                   <a
                     key={person.name}
@@ -262,6 +263,16 @@ export function AppSidebar() {
                   </a>
                 ))}
               </div>
+              <p className="text-xs text-muted-foreground/60 pt-1">
+                <a
+                  href="https://rmv.fyi/notes/i-hope-you-don-t-use-generative-ai"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-muted-foreground transition-colors"
+                >
+                  Behind the scenes of delphitools<span className="sr-only"> (opens in new tab)</span>
+                </a>
+              </p>
             </div>
             <div className="pt-4 border-t space-y-2">
               <h3 className="font-medium text-foreground text-sm">Built with</h3>
