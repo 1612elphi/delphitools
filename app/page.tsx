@@ -428,6 +428,7 @@ export default function Home() {
                 { name: "Mahmoud Ashraf", url: "https://github.com/SNO7E-G" },
                 { name: "Moamal Alaa", url: "https://github.com/Moamal-2000" },
                 { name: "Pranav K", url: "https://github.com/Pranavk-official" },
+                { name: "Claude", url: "https://rmv.fyi/notes/i-hope-you-don-t-use-generative-ai" },
               ].map((person) => (
                 <a
                   key={person.name}
@@ -440,6 +441,16 @@ export default function Home() {
                 </a>
               ))}
             </div>
+            <p className="text-xs text-muted-foreground/60 pt-1">
+              <a
+                href="https://rmv.fyi/notes/i-hope-you-don-t-use-generative-ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-muted-foreground transition-colors"
+              >
+                Behind the scenes of delphitools<span className="sr-only"> (opens in new tab)</span>
+              </a>
+            </p>
           </div>
 
           <div className="pt-4 border-t border-border/50">
