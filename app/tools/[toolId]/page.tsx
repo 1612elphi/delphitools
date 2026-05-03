@@ -56,6 +56,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   "pixel-picker": dynamic(() => import("@/components/tools/pixel-picker").then(mod => mod.PixelPickerTool)),
   "palette-extractor": dynamic(() => import("@/components/tools/palette-extractor").then(mod => mod.PaletteExtractorTool)),
   "text-diff": dynamic(() => import("@/components/tools/text-diff").then(mod => mod.TextDiffTool)),
+  "decoder": dynamic(() => import("@/components/tools/decoder").then(mod => mod.DecoderTool)),
 };
 
 interface ToolPageProps {

@@ -44,6 +44,7 @@ import {
   Crosshair,
   Wind,
   GitCompare,
+  KeyRound,
 } from "lucide-react";
 
 export interface Tool {
@@ -357,6 +358,14 @@ export const toolCategories: ToolCategory[] = [
         description: "Generate Data Matrix, Aztec, PDF417, Code 128, EAN-13, and more",
         icon: Barcode,
         href: "/tools/code-genny",
+      },
+      {
+        id: "decoder",
+        name: "Cipher Decoder",
+        description: "Decode classical ciphers manually or auto-detect the cipher",
+        icon: KeyRound,
+        href: "/tools/decoder",
+        new: true,
       },
       {
         id: "meta-tag-genny",
