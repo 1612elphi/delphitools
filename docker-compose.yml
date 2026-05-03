@@ -8,9 +8,6 @@ services:
       dockerfile: Dockerfile
       cache_from:
         - type=registry,ref=delphitools:latest
-      # Build arguments can be passed if needed
-      # args:
-      #   - NODE_ENV=production
     
     # Image identification
     image: delphitools:latest
@@ -33,8 +30,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'          # Bun is efficient, requires less CPU
-          memory: 1G         # Reduced from 2G due to Bun's optimization
+          cpus: '1'          
+          memory: 1G         
         reservations:
           cpus: '0.5'
           memory: 256M
