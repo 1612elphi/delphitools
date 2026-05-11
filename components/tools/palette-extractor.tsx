@@ -8,12 +8,12 @@ import {
   Shuffle,
   Plus,
   Minus,
-  ChevronDown,
   ExternalLink,
   Wind,
   Palette,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useColourNotation } from "@/hooks/use-colour-notation";
 import { formatColour } from "@/lib/colour-notation";
@@ -686,25 +686,18 @@ export function PaletteExtractorTool() {
         />
 
         {/* Strategy dropdown */}
-        <div className="relative">
-          <select
-            value={strategy}
-            onChange={(e) => setStrategy(e.target.value as ExtractionStrategy)}
-            className={cn(
-              "h-9 pl-3 pr-8 rounded-lg border bg-background appearance-none cursor-pointer",
-              "text-sm font-medium text-foreground",
-              "focus:ring-2 focus:ring-primary/20 focus:border-primary",
-              "transition-all hover:border-primary/50"
-            )}
-          >
+        <Select value={strategy} onValueChange={(v) => setStrategy(v as ExtractionStrategy)}>
+          <SelectTrigger size="sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
             {STRATEGY_ORDER.map((s) => (
-              <option key={s} value={s}>
+              <SelectItem key={s} value={s}>
                 {STRATEGIES[s].name}
-              </option>
+              </SelectItem>
             ))}
-          </select>
-          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 size-4 pointer-events-none text-muted-foreground" />
-        </div>
+          </SelectContent>
+        </Select>
 
         {/* Re-extract */}
         <Button

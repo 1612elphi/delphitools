@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Unit = "px" | "pt" | "pc" | "ag" | "cc" | "in" | "mm" | "cm" | "em" | "rem";
 
@@ -137,17 +138,18 @@ export function TypoCalcTool() {
             className="text-2xl h-14 font-mono flex-1"
             step="any"
           />
-          <select
-            value={inputUnit}
-            onChange={(e) => setInputUnit(e.target.value as Unit)}
-            className="h-14 px-4 rounded-lg border bg-background text-lg font-mono min-w-[100px]"
-          >
-            {UNIT_ORDER.map((unit) => (
-              <option key={unit} value={unit}>
-                {unit}
-              </option>
-            ))}
-          </select>
+          <Select value={inputUnit} onValueChange={(v) => setInputUnit(v as Unit)}>
+            <SelectTrigger className="h-14 text-lg font-mono min-w-[100px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {UNIT_ORDER.map((unit) => (
+                <SelectItem key={unit} value={unit}>
+                  {unit}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -168,7 +170,7 @@ export function TypoCalcTool() {
                   isActive
                     ? "bg-primary/10 border-primary"
                     : "bg-card hover:border-primary/50"
-                }`}
+                } group`}
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-bold">{UNITS[unit].name}</span>
