@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useColourNotation } from "@/hooks/use-colour-notation";
 import { formatColour } from "@/lib/colour-notation";
 
@@ -270,17 +271,18 @@ function TailwindShadesInner() {
         </div>
         <div className="space-y-2 sm:col-span-2 lg:col-span-1">
           <label className="font-bold">Generation Mode</label>
-          <select
-            value={mode}
-            onChange={(e) => setMode(e.target.value as GenerationMode)}
-            className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-          >
-            {GENERATION_MODES.map((m) => (
-              <option key={m.value} value={m.value}>
-                {m.label}
-              </option>
-            ))}
-          </select>
+          <Select value={mode} onValueChange={(v) => setMode(v as GenerationMode)}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {GENERATION_MODES.map((m) => (
+                <SelectItem key={m.value} value={m.value}>
+                  {m.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <p className="text-xs text-muted-foreground">
             {GENERATION_MODES.find((m) => m.value === mode)?.description}
           </p>

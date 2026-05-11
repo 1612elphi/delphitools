@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Copy, Check, Plus, Minus, Shuffle, Download, Lock, Unlock, Trash2, Wind, ChevronDown } from "lucide-react";
+import { Copy, Check, Plus, Minus, Shuffle, Download, Lock, Unlock, Trash2, Wind } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { getColourName } from "@/lib/colour-names";
 import { useBreakpoint, useIsTouchDevice } from "@/hooks/use-breakpoint";
@@ -589,18 +590,16 @@ export function PaletteGennyTool() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Category</label>
-              <select
-                value={exportCategory}
-                onChange={(e) => setExportCategory(e.target.value as PaletteCollectionCategory)}
-                className={cn(
-                  "w-full h-10 px-3 rounded-lg border bg-background",
-                  "focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                )}
-              >
-                {Object.entries(COLLECTION_CATEGORIES).map(([key, { label }]) => (
-                  <option key={key} value={key}>{label}</option>
-                ))}
-              </select>
+              <Select value={exportCategory} onValueChange={(v) => setExportCategory(v as PaletteCollectionCategory)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(COLLECTION_CATEGORIES).map(([key, { label }]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -665,27 +664,21 @@ export function PaletteGennyTool() {
         </Button>
 
         {/* Strategy selector with grouped options */}
-        <div className="relative">
-          <select
-            value={strategy}
-            onChange={(e) => setStrategy(e.target.value as PaletteStrategy)}
-            className={cn(
-              "h-11 pl-4 pr-10 rounded-xl border-2 bg-background appearance-none cursor-pointer",
-              "font-medium text-foreground",
-              "focus:ring-2 focus:ring-primary/20 focus:border-primary",
-              "transition-all hover:border-primary/50"
-            )}
-          >
+        <Select value={strategy} onValueChange={(v) => setStrategy(v as PaletteStrategy)}>
+          <SelectTrigger className="h-11 rounded-xl border-2 font-medium">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
             {Object.entries(STRATEGY_CATEGORIES).map(([category, label]) => (
-              <optgroup key={category} label={label}>
+              <SelectGroup key={category}>
+                <SelectLabel>{label}</SelectLabel>
                 {groupedStrategies[category as keyof typeof groupedStrategies]?.map(({ key, info }) => (
-                  <option key={key} value={key}>{info.name}</option>
+                  <SelectItem key={key} value={key}>{info.name}</SelectItem>
                 ))}
-              </optgroup>
+              </SelectGroup>
             ))}
-          </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-5 pointer-events-none text-muted-foreground" />
-        </div>
+          </SelectContent>
+        </Select>
 
         {/* Add/Remove buttons */}
         <div className="flex items-center gap-1 ml-auto">

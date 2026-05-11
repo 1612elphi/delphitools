@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { Copy, Check, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Popover,
   PopoverContent,
@@ -112,21 +113,25 @@ export function GlyphBrowserTool() {
             className="pl-10"
           />
         </div>
-        <select
+        <Select
           value={selectedCategory}
-          onChange={(e) => {
-            setSelectedCategory(e.target.value);
+          onValueChange={(v) => {
+            setSelectedCategory(v);
             setSearch("");
             setOpenPopover(null);
           }}
-          className="h-10 px-4 rounded-lg border bg-background min-w-[180px]"
         >
-          {CATEGORIES.map((cat) => (
-            <option key={cat.name} value={cat.name}>
-              {cat.name}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="min-w-[180px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {CATEGORIES.map((cat) => (
+              <SelectItem key={cat.name} value={cat.name}>
+                {cat.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Glyph Grid */}
@@ -160,7 +165,7 @@ export function GlyphBrowserTool() {
                       isOpen
                         ? "bg-primary text-primary-foreground border-primary"
                         : isCopied
-                        ? "bg-green-500/20 border-green-500"
+                        ? "bg-primary/20 border-primary"
                         : "bg-card hover:border-primary/50"
                     }`}
                   >
@@ -184,7 +189,7 @@ export function GlyphBrowserTool() {
                       size="sm"
                       variant="ghost"
                       onClick={() => copyCode(code, "char")}
-                      className={`justify-start ${copiedFormat === "char" ? "text-green-500" : ""}`}
+                      className={`justify-start ${copiedFormat === "char" ? "text-primary" : ""}`}
                     >
                       {copiedFormat === "char" ? (
                         <Check className="size-3 mr-2" />
@@ -197,7 +202,7 @@ export function GlyphBrowserTool() {
                       size="sm"
                       variant="ghost"
                       onClick={() => copyCode(code, "html")}
-                      className={`justify-start ${copiedFormat === "html" ? "text-green-500" : ""}`}
+                      className={`justify-start ${copiedFormat === "html" ? "text-primary" : ""}`}
                     >
                       {copiedFormat === "html" ? (
                         <Check className="size-3 mr-2" />
@@ -210,7 +215,7 @@ export function GlyphBrowserTool() {
                       size="sm"
                       variant="ghost"
                       onClick={() => copyCode(code, "css")}
-                      className={`justify-start ${copiedFormat === "css" ? "text-green-500" : ""}`}
+                      className={`justify-start ${copiedFormat === "css" ? "text-primary" : ""}`}
                     >
                       {copiedFormat === "css" ? (
                         <Check className="size-3 mr-2" />
@@ -223,7 +228,7 @@ export function GlyphBrowserTool() {
                       size="sm"
                       variant="ghost"
                       onClick={() => copyCode(code, "js")}
-                      className={`justify-start ${copiedFormat === "js" ? "text-green-500" : ""}`}
+                      className={`justify-start ${copiedFormat === "js" ? "text-primary" : ""}`}
                     >
                       {copiedFormat === "js" ? (
                         <Check className="size-3 mr-2" />

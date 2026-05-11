@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useColourNotation } from "@/hooks/use-colour-notation";
 import { formatColour } from "@/lib/colour-notation";
 
@@ -235,15 +236,16 @@ export function HarmonyGennyTool() {
         </div>
         <div className="space-y-2">
           <label className="font-bold">Harmony Type</label>
-          <select
-            value={harmonyType}
-            onChange={(e) => setHarmonyType(e.target.value as HarmonyType)}
-            className="w-full h-10 px-3 rounded-lg border bg-background"
-          >
-            {Object.entries(HARMONIES).map(([key, info]) => (
-              <option key={key} value={key}>{info.name}</option>
-            ))}
-          </select>
+          <Select value={harmonyType} onValueChange={(v) => setHarmonyType(v as HarmonyType)}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(HARMONIES).map(([key, info]) => (
+                <SelectItem key={key} value={key}>{info.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

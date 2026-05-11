@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { Upload, Trash2, Type, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFilePaste } from "@/hooks/use-file-paste";
 
 interface FontMetadata {
@@ -159,17 +160,18 @@ export function FontExplorerTool() {
           <div className="space-y-4">
             <div className="flex items-center gap-4">
               <label className="font-bold">Preview</label>
-              <select
-                value={previewSize}
-                onChange={(e) => setPreviewSize(parseInt(e.target.value))}
-                className="h-8 px-3 rounded border bg-background text-sm"
-              >
-                {PREVIEW_SIZES.map((size) => (
-                  <option key={size} value={size}>
-                    {size}px
-                  </option>
-                ))}
-              </select>
+              <Select value={String(previewSize)} onValueChange={(v) => setPreviewSize(parseInt(v))}>
+                <SelectTrigger size="sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PREVIEW_SIZES.map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}px
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <Input
               value={previewText}

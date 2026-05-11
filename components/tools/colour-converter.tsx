@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Colour conversion utilities
 function hexToRgb(hex: string): [number, number, number] | null {
@@ -297,21 +298,25 @@ export function ColourConverterTool() {
         <div className="flex-1 space-y-3">
           <div>
             <label className="font-bold text-sm">Input Format</label>
-            <select
+            <Select
               value={inputFormat}
-              onChange={(e) => {
-                const newFormat = e.target.value as ColourFormat;
+              onValueChange={(v) => {
+                const newFormat = v as ColourFormat;
                 if (colours) {
                   setInputValue(formatOutput(newFormat, colours));
                 }
                 setInputFormat(newFormat);
               }}
-              className="w-full h-10 px-3 mt-1 rounded-lg border bg-background"
             >
-              {formats.map((f) => (
-                <option key={f.id} value={f.id}>{f.name}</option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {formats.map((f) => (
+                  <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <label className="font-bold text-sm">Value</label>
