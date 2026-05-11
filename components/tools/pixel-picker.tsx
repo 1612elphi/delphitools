@@ -90,7 +90,8 @@ export function PixelPickerTool() {
 
         canvas.width = w;
         canvas.height = h;
-        const ctx = canvas.getContext("2d", { colorSpace: "srgb" })!;
+        const ctx = canvas.getContext("2d", { colorSpace: "srgb" });
+        if (!ctx) return;
         ctx.drawImage(img, 0, 0, w, h);
 
         if (p3Supported) {
@@ -149,7 +150,8 @@ export function PixelPickerTool() {
     const canvas = canvasRef.current;
     if (!canvas) return null;
 
-    const ctx = canvas.getContext("2d", { colorSpace: "srgb" })!;
+    const ctx = canvas.getContext("2d", { colorSpace: "srgb" });
+    if (!ctx) return null;
     const data = ctx.getImageData(x, y, 1, 1).data;
     const hex = rgbToHex(data[0], data[1], data[2]);
 
@@ -183,8 +185,9 @@ export function PixelPickerTool() {
     const loupe = loupeCanvasRef.current;
     if (!canvas || !loupe) return;
 
-    const ctx = canvas.getContext("2d", { colorSpace: "srgb" })!;
-    const lctx = loupe.getContext("2d")!;
+    const ctx = canvas.getContext("2d", { colorSpace: "srgb" });
+    const lctx = loupe.getContext("2d");
+    if (!ctx || !lctx) return;
 
     lctx.imageSmoothingEnabled = false;
     lctx.fillStyle = "#1a1a1a";
