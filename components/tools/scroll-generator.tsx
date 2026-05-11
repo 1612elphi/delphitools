@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useCallback, useRef, useMemo } from "react";
-import { Upload, Download, Trash2, GalleryHorizontal } from "lucide-react";
+import { Upload, Download, Trash2, GalleryHorizontal, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { useFilePaste } from "@/hooks/use-file-paste";
 
@@ -16,12 +17,12 @@ type FillMode = "color" | "blur";
 interface AspectRatio {
   name: string;
   label: string;
-  value: number; // width / height
+  value: number;
 }
 
 const aspectRatios: AspectRatio[] = [
-  { name: "portrait", label: "Portrait (4:5)", value: 4 / 5 },
-  { name: "square", label: "Square (1:1)", value: 1 },
+  { name: "portrait", label: "4:5 Portrait", value: 4 / 5 },
+  { name: "square", label: "1:1 Square", value: 1 },
 ];
 
 const presetColors = [
@@ -44,7 +45,6 @@ export function ScrollGeneratorTool() {
 
   const currentRatio = aspectRatios[selectedRatio];
 
-  // Calculate number of slides and if fill is needed
   const tileInfo = useMemo(() => {
     if (!imageSize.width || !imageSize.height) {
       return { tileWidth: 0, tileHeight: 0, slideCount: 0, needsFill: false, exactFit: 0 };
@@ -53,30 +53,13 @@ export function ScrollGeneratorTool() {
     const tileHeight = imageSize.height;
     const tileWidth = Math.round(tileHeight * currentRatio.value);
 
-    // How many tiles fit exactly?
     const exactFit = imageSize.width / tileWidth;
     const slideCount = Math.round(exactFit);
 
-    // Does it fit perfectly? (within 1% tolerance)
     const needsFill = Math.abs(exactFit - slideCount) > 0.01;
 
     return { tileWidth, tileHeight, slideCount: Math.max(1, slideCount), needsFill, exactFit };
   }, [imageSize, currentRatio]);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith("image/")) {
-      readFile(file);
-    }
-  }, []);
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      readFile(file);
-    }
-  };
 
   const readFile = (file: File) => {
     setFileName(file.name.replace(/\.[^.]+$/, ""));
@@ -94,6 +77,21 @@ export function ScrollGeneratorTool() {
     reader.readAsDataURL(file);
   };
 
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith("image/")) {
+      readFile(file);
+    }
+  }, []);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      readFile(file);
+    }
+  };
+
   useFilePaste(readFile, "image/*");
 
   const generateTiles = () => {
@@ -109,14 +107,9 @@ export function ScrollGeneratorTool() {
       const { tileWidth, tileHeight, slideCount, needsFill } = tileInfo;
       const totalTileWidth = tileWidth * slideCount;
 
-      // Calculate the fill needed on edges only
       const totalFill = needsFill ? totalTileWidth - imageSize.width : 0;
-      const fillPerSide = totalFill / 2; // Left edge of first, right edge of last
+      const fillPerSide = totalFill / 2;
 
-      // Virtual canvas layout:
-      // [0, fillPerSide): left fill
-      // [fillPerSide, fillPerSide + imageWidth): image
-      // [fillPerSide + imageWidth, totalTileWidth): right fill
       const imageStartVirtual = fillPerSide;
       const imageEndVirtual = fillPerSide + imageSize.width;
 
@@ -127,11 +120,9 @@ export function ScrollGeneratorTool() {
         canvas.height = tileHeight;
         ctx.clearRect(0, 0, tileWidth, tileHeight);
 
-        // This tile covers virtual positions [tileStartVirtual, tileEndVirtual)
         const tileStartVirtual = col * tileWidth;
         const tileEndVirtual = (col + 1) * tileWidth;
 
-        // Calculate overlap between this tile and the image region
         const overlapStart = Math.max(tileStartVirtual, imageStartVirtual);
         const overlapEnd = Math.min(tileEndVirtual, imageEndVirtual);
         const hasImageContent = overlapEnd > overlapStart;
@@ -139,13 +130,11 @@ export function ScrollGeneratorTool() {
         const isFirst = col === 0;
         const isLast = col === slideCount - 1;
 
-        // Draw fill background on first/last tiles if needed
         if (needsFill && (isFirst || isLast)) {
           if (fillMode === "color") {
             ctx.fillStyle = fillColor;
             ctx.fillRect(0, 0, tileWidth, tileHeight);
           } else if (fillMode === "blur") {
-            // Draw blurred background using the portion of image visible in this tile
             ctx.filter = "blur(30px)";
             if (hasImageContent) {
               const sourceX = overlapStart - imageStartVirtual;
@@ -169,10 +158,9 @@ export function ScrollGeneratorTool() {
           }
         }
 
-        // Draw the image slice
         if (hasImageContent) {
-          const drawX = overlapStart - tileStartVirtual; // Where to draw on tile canvas
-          const sourceX = overlapStart - imageStartVirtual; // Where to read from source image
+          const drawX = overlapStart - tileStartVirtual;
+          const sourceX = overlapStart - imageStartVirtual;
           const drawWidth = overlapEnd - overlapStart;
 
           ctx.drawImage(
@@ -231,7 +219,7 @@ export function ScrollGeneratorTool() {
         <div
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
-          className="border-2 border-dashed rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+          className="border-2 border-dashed rounded-xl p-12 text-center hover:border-primary/50 transition-colors cursor-pointer"
           onClick={() => document.getElementById("scroll-input")?.click()}
         >
           <input
@@ -249,143 +237,60 @@ export function ScrollGeneratorTool() {
         </div>
       )}
 
-      {/* Source Preview & Settings */}
+      {/* Main workspace */}
       {sourceImage && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <label className="font-bold">Source Image</label>
-            <Button variant="ghost" size="sm" onClick={clear}>
-              <Trash2 className="size-4 mr-2" /> Clear
+        <div className="space-y-5">
+          {/* Source info bar */}
+          <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+            <ImageIcon className="size-4 text-muted-foreground shrink-0" />
+            <span className="text-sm truncate">{fileName}</span>
+            <span className="text-xs text-muted-foreground shrink-0">
+              {imageSize.width} × {imageSize.height}
+            </span>
+            <Button variant="ghost" size="sm" onClick={clear} className="ml-auto shrink-0">
+              <Trash2 className="size-4" />
             </Button>
           </div>
 
-          {/* Preview with grid overlay */}
-          <div className="relative inline-block">
-            <img
-              src={sourceImage}
-              alt="Source"
-              className="max-w-full max-h-80 rounded border"
-            />
-            {tileInfo.slideCount > 0 && (
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: `repeat(${tileInfo.slideCount}, 1fr)`,
-                }}
-              >
-                {Array.from({ length: tileInfo.slideCount }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="border-x border-primary/50 border-dashed first:border-l-0 last:border-r-0 relative"
-                  >
-                    <span className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded">
-                      {i + 1}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="text-sm text-muted-foreground">
-            {imageSize.width} × {imageSize.height} px
-          </div>
-
-          {/* Aspect Ratio Selection */}
-          <div className="space-y-2">
-            <label className="font-bold text-sm">Tile Aspect Ratio</label>
-            <div className="flex flex-wrap gap-2">
-              {aspectRatios.map((ratio, i) => (
-                <button
-                  key={ratio.name}
-                  onClick={() => {
-                    setSelectedRatio(i);
-                    setTiles([]);
-                  }}
-                  className={cn(
-                    "px-4 py-2 rounded-lg border transition-colors",
-                    selectedRatio === i
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "hover:border-primary/50"
-                  )}
-                >
-                  {ratio.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Calculated Result */}
-          <div className="p-4 rounded-lg border bg-muted/30">
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="space-y-1">
-                <label className="font-bold text-sm">Slides</label>
-                <div className="text-2xl font-bold">{tileInfo.slideCount}</div>
-              </div>
-              <div className="space-y-1">
-                <label className="font-bold text-sm">Tile Size</label>
-                <div className="text-muted-foreground">
-                  {tileInfo.tileWidth} × {tileInfo.tileHeight} px
-                </div>
-              </div>
-              <div className="space-y-1">
-                <label className="font-bold text-sm">Fit</label>
-                <div className="text-muted-foreground">
-                  {tileInfo.needsFill ? (
-                    <span className="text-amber-500">Needs fill</span>
-                  ) : (
-                    <span className="text-green-500">Perfect fit</span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Fill Settings - only show if needed */}
-          {tileInfo.needsFill && (
-            <div className="space-y-4 p-4 rounded-lg border border-dashed">
+          {/* Controls + Preview side-by-side */}
+          <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+            {/* Controls */}
+            <div className="space-y-5">
+              {/* Tile Shape */}
               <div className="space-y-2">
-                <label className="font-bold text-sm">Fill Style</label>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { mode: "blur" as const, label: "Blurred Background" },
-                    { mode: "color" as const, label: "Solid Colour" },
-                  ].map((option) => (
-                    <button
-                      key={option.mode}
-                      onClick={() => {
-                        setFillMode(option.mode);
-                        setTiles([]);
-                      }}
-                      className={cn(
-                        "px-4 py-2 rounded-lg border transition-colors",
-                        fillMode === option.mode
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "hover:border-primary/50"
-                      )}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
+                <label className="text-sm font-medium text-muted-foreground">Tile Shape</label>
+                <Tabs value={String(selectedRatio)} onValueChange={(v) => { setSelectedRatio(Number(v)); setTiles([]); }}>
+                  <TabsList className="w-full">
+                    {aspectRatios.map((ratio, i) => (
+                      <TabsTrigger key={ratio.name} value={String(i)}>{ratio.label}</TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
               </div>
 
-              {fillMode === "color" && (
-                <div className="space-y-2">
-                  <label className="font-bold text-sm">Fill Colour</label>
+              {/* Edge Fill — always visible so it doesn't cause layout shift */}
+              <div className={cn("space-y-3 transition-opacity", tileInfo.needsFill ? "opacity-100" : "opacity-40 pointer-events-none")}>
+                <label className="text-sm font-medium text-muted-foreground">
+                  Edge Fill
+                  {!tileInfo.needsFill && <span className="ml-1.5 text-xs font-normal">(not needed)</span>}
+                </label>
+                <Tabs value={fillMode} onValueChange={(v) => { setFillMode(v as FillMode); setTiles([]); }}>
+                  <TabsList className="w-full">
+                    <TabsTrigger value="blur">Blurred</TabsTrigger>
+                    <TabsTrigger value="color">Solid Colour</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+
+                {fillMode === "color" && (
                   <div className="flex flex-wrap gap-2 items-center">
                     {presetColors.map((color) => (
                       <button
                         key={color}
-                        onClick={() => {
-                          setFillColor(color);
-                          setTiles([]);
-                        }}
+                        onClick={() => { setFillColor(color); setTiles([]); }}
                         className={cn(
-                          "size-10 rounded-lg border-2 transition-all",
+                          "size-8 rounded-lg border-2 transition-all",
                           fillColor === color
-                            ? "border-primary ring-2 ring-primary ring-offset-2"
+                            ? "border-primary ring-2 ring-primary/30 scale-110"
                             : "border-muted hover:border-primary/50"
                         )}
                         style={{ backgroundColor: color }}
@@ -396,29 +301,70 @@ export function ScrollGeneratorTool() {
                       <input
                         type="color"
                         value={fillColor}
-                        onChange={(e) => {
-                          setFillColor(e.target.value);
-                          setTiles([]);
-                        }}
+                        onChange={(e) => { setFillColor(e.target.value); setTiles([]); }}
                         className="absolute inset-0 opacity-0 cursor-pointer"
                       />
-                      <div
-                        className="size-10 rounded-lg border-2 border-dashed border-muted flex items-center justify-center text-muted-foreground hover:border-primary/50 transition-colors"
-                        title="Custom colour"
-                      >
+                      <div className="size-8 rounded-lg border-2 border-dashed border-muted flex items-center justify-center text-muted-foreground hover:border-primary/50 transition-colors text-xs">
                         +
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
 
-          <Button size="lg" className="w-full h-14" onClick={generateTiles}>
-            <GalleryHorizontal className="size-5 mr-2" />
-            Generate {tileInfo.slideCount} Carousel Slides
-          </Button>
+              {/* Stats + Generate */}
+              <div className="space-y-3">
+                <div className="flex items-baseline gap-4 text-sm">
+                  <span className="font-bold text-2xl tabular-nums">{tileInfo.slideCount}</span>
+                  <span className="text-muted-foreground">
+                    slides at {tileInfo.tileWidth} × {tileInfo.tileHeight}
+                  </span>
+                  {tileInfo.needsFill ? (
+                    <span className="text-xs text-amber-500">+ edge fill</span>
+                  ) : (
+                    <span className="text-xs text-primary">perfect fit</span>
+                  )}
+                </div>
+
+                <Button size="lg" className="w-full" onClick={generateTiles}>
+                  <GalleryHorizontal className="size-4 mr-2" />
+                  Generate Slides
+                </Button>
+              </div>
+            </div>
+
+            {/* Source preview with grid overlay */}
+            <div className="space-y-2 min-w-0">
+              <label className="text-sm font-medium text-muted-foreground">Slice Preview</label>
+              <div className="relative rounded-lg overflow-hidden shadow-lg ring-1 ring-border">
+                <img
+                  src={sourceImage}
+                  alt="Source"
+                  className="w-full max-h-80 object-contain bg-muted/20"
+                />
+                {tileInfo.slideCount > 0 && (
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: `repeat(${tileInfo.slideCount}, 1fr)`,
+                    }}
+                  >
+                    {Array.from({ length: tileInfo.slideCount }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="border-x border-white/40 border-dashed first:border-l-0 last:border-r-0 relative"
+                      >
+                        <span className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs px-2.5 py-0.5 rounded-full font-medium shadow-sm">
+                          {i + 1}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -426,18 +372,20 @@ export function ScrollGeneratorTool() {
       {tiles.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <label className="font-bold">Generated Slides</label>
-            <Button onClick={downloadAll}>
+            <label className="text-sm font-medium text-muted-foreground">
+              {tiles.length} slides ready
+            </label>
+            <Button variant="outline" onClick={downloadAll}>
               <Download className="size-4 mr-2" /> Download All
             </Button>
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-4">
+          <div className="flex gap-3 overflow-x-auto pb-4">
             {tiles.map((tile) => (
               <button
                 key={tile.index}
                 onClick={() => downloadTile(tile)}
-                className="flex-shrink-0 rounded border bg-card hover:border-primary/50 transition-colors overflow-hidden group relative"
+                className="flex-shrink-0 rounded-lg overflow-hidden group relative ring-1 ring-border hover:ring-primary transition-all shadow-sm hover:shadow-md"
               >
                 <img
                   src={tile.dataUrl}
