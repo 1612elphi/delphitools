@@ -1,42 +1,43 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Upload, Download, Trash2, Move } from "lucide-react";
+import { Upload, Download, Trash2, Move, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { useFilePaste } from "@/hooks/use-file-paste";
 
 interface Platform {
   name: string;
-  ratios: { name: string; width: number; height: number }[];
+  ratios: { name: string; label: string; width: number; height: number }[];
 }
 
 const platforms: Platform[] = [
   {
     name: "Instagram",
     ratios: [
-      { name: "Square (1:1)", width: 1, height: 1 },
-      { name: "Portrait (4:5)", width: 4, height: 5 },
-      { name: "Landscape (1.91:1)", width: 1.91, height: 1 },
-      { name: "Stories/Reels (9:16)", width: 9, height: 16 },
+      { name: "Square", label: "1:1", width: 1, height: 1 },
+      { name: "Portrait", label: "4:5", width: 4, height: 5 },
+      { name: "Landscape", label: "1.91:1", width: 1.91, height: 1 },
+      { name: "Reels", label: "9:16", width: 9, height: 16 },
     ],
   },
   {
     name: "Bluesky",
     ratios: [
-      { name: "Square (1:1)", width: 1, height: 1 },
-      { name: "Landscape (16:9)", width: 16, height: 9 },
-      { name: "Portrait (3:4)", width: 3, height: 4 },
-      { name: "Wide (2:1)", width: 2, height: 1 },
+      { name: "Square", label: "1:1", width: 1, height: 1 },
+      { name: "Landscape", label: "16:9", width: 16, height: 9 },
+      { name: "Portrait", label: "3:4", width: 3, height: 4 },
+      { name: "Wide", label: "2:1", width: 2, height: 1 },
     ],
   },
   {
     name: "Threads",
     ratios: [
-      { name: "Square (1:1)", width: 1, height: 1 },
-      { name: "Portrait (4:5)", width: 4, height: 5 },
-      { name: "Landscape (1.91:1)", width: 1.91, height: 1 },
-      { name: "Stories (9:16)", width: 9, height: 16 },
+      { name: "Square", label: "1:1", width: 1, height: 1 },
+      { name: "Portrait", label: "4:5", width: 4, height: 5 },
+      { name: "Landscape", label: "1.91:1", width: 1.91, height: 1 },
+      { name: "Stories", label: "9:16", width: 9, height: 16 },
     ],
   },
 ];
@@ -52,26 +53,10 @@ export function SocialCropperTool() {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
   const previewRef = useRef<HTMLDivElement>(null);
 
   const currentRatio = platforms[selectedPlatform].ratios[selectedRatio];
   const aspectRatio = currentRatio.width / currentRatio.height;
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith("image/")) {
-      readFile(file);
-    }
-  }, []);
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      readFile(file);
-    }
-  };
 
   const readFile = (file: File) => {
     setFileName(file.name.replace(/\.[^.]+$/, ""));
@@ -90,37 +75,39 @@ export function SocialCropperTool() {
     reader.readAsDataURL(file);
   };
 
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith("image/")) {
+      readFile(file);
+    }
+  }, []);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      readFile(file);
+    }
+  };
+
   useFilePaste(readFile, "image/*");
 
-  // Calculate crop dimensions based on image and aspect ratio
   const getCropDimensions = useCallback(() => {
     if (!imageSize.width || !imageSize.height) return { width: 0, height: 0 };
 
     const imgAspect = imageSize.width / imageSize.height;
 
-    let cropWidth: number;
-    let cropHeight: number;
-
     if (aspectRatio > imgAspect) {
-      // Crop is wider than image - fit to width
-      cropWidth = imageSize.width;
-      cropHeight = imageSize.width / aspectRatio;
-    } else {
-      // Crop is taller than image - fit to height
-      cropHeight = imageSize.height;
-      cropWidth = imageSize.height * aspectRatio;
+      return { width: imageSize.width, height: imageSize.width / aspectRatio };
     }
-
-    return { width: cropWidth, height: cropHeight };
+    return { width: imageSize.height * aspectRatio, height: imageSize.height };
   }, [imageSize, aspectRatio]);
 
-  // Reset crop offset when ratio changes
   useEffect(() => {
     setCropOffset({ x: 0, y: 0 });
     setCroppedImage(null);
   }, [selectedPlatform, selectedRatio]);
 
-  // Constrain crop offset to valid bounds
   const constrainOffset = useCallback(
     (offset: { x: number; y: number }) => {
       const crop = getCropDimensions();
@@ -207,7 +194,7 @@ export function SocialCropperTool() {
     }
   }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
-  const cropImage = () => {
+  const cropImage = useCallback(() => {
     if (!sourceImage) return;
 
     const img = new Image();
@@ -236,12 +223,18 @@ export function SocialCropperTool() {
       setCroppedImage(canvas.toDataURL("image/png"));
     };
     img.src = sourceImage;
-  };
+  }, [sourceImage, getCropDimensions, cropOffset]);
+
+  useEffect(() => {
+    if (sourceImage) {
+      cropImage();
+    }
+  }, [sourceImage, cropImage]);
 
   const downloadCropped = () => {
     if (!croppedImage) return;
     const link = document.createElement("a");
-    link.download = `${fileName}-${platforms[selectedPlatform].name.toLowerCase()}-${currentRatio.name.split(" ")[0].toLowerCase()}.png`;
+    link.download = `${fileName}-${platforms[selectedPlatform].name.toLowerCase()}-${currentRatio.label}.png`;
     link.href = croppedImage;
     link.click();
   };
@@ -265,7 +258,7 @@ export function SocialCropperTool() {
         <div
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
-          className="border-2 border-dashed rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+          className="border-2 border-dashed rounded-xl p-12 text-center hover:border-primary/50 transition-colors cursor-pointer"
           onClick={() => document.getElementById("cropper-input")?.click()}
         >
           <input
@@ -283,143 +276,119 @@ export function SocialCropperTool() {
         </div>
       )}
 
-      {/* Source Preview & Settings */}
+      {/* Main workspace */}
       {sourceImage && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <label className="font-bold">Source Image</label>
-            <Button variant="ghost" size="sm" onClick={clear}>
-              <Trash2 className="size-4 mr-2" /> Clear
-            </Button>
-          </div>
-
-          {/* Platform Selection */}
-          <div className="space-y-2">
-            <label className="font-bold text-sm">Platform</label>
-            <div className="flex flex-wrap gap-2">
-              {platforms.map((platform, i) => (
-                <button
-                  key={platform.name}
-                  onClick={() => {
-                    setSelectedPlatform(i);
-                    setSelectedRatio(0);
-                  }}
-                  className={cn(
-                    "px-4 py-2 rounded-lg border transition-colors",
-                    selectedPlatform === i
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "hover:border-primary/50"
-                  )}
-                >
-                  {platform.name}
-                </button>
-              ))}
+        <div className="grid gap-6 lg:grid-cols-[1fr_auto]">
+          {/* Controls */}
+          <div className="space-y-5 min-w-0">
+            {/* Source info bar */}
+            <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+              <ImageIcon className="size-4 text-muted-foreground shrink-0" />
+              <span className="text-sm truncate">{fileName}</span>
+              <span className="text-xs text-muted-foreground shrink-0">
+                {imageSize.width} × {imageSize.height}
+              </span>
+              <Button variant="ghost" size="sm" onClick={clear} className="ml-auto shrink-0">
+                <Trash2 className="size-4" />
+              </Button>
             </div>
-          </div>
 
-          {/* Aspect Ratio Selection */}
-          <div className="space-y-2">
-            <label className="font-bold text-sm">Aspect Ratio</label>
-            <div className="flex flex-wrap gap-2">
-              {platforms[selectedPlatform].ratios.map((ratio, i) => (
-                <button
-                  key={ratio.name}
-                  onClick={() => setSelectedRatio(i)}
-                  className={cn(
-                    "px-4 py-2 rounded-lg border transition-colors",
-                    selectedRatio === i
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "hover:border-primary/50"
-                  )}
-                >
-                  {ratio.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Preview with crop overlay */}
-          <div className="space-y-2">
-            <label className="font-bold text-sm flex items-center gap-2">
-              <Move className="size-4" /> Drag to reposition crop
-            </label>
-            <div
-              ref={previewRef}
-              className="relative inline-block cursor-move select-none overflow-hidden rounded touch-none"
-              onMouseDown={handleMouseDown}
-              onTouchStart={handleTouchStart}
-            >
-              <img
-                src={sourceImage}
-                alt="Source"
-                className="max-w-full max-h-96 pointer-events-none"
-                draggable={false}
-              />
-              {/* Crop window - box-shadow creates the darkened overlay outside */}
-              <div
-                className="absolute border-2 border-white pointer-events-none"
-                style={{
-                  left: `${(cropOffset.x / imageSize.width) * 100}%`,
-                  top: `${(cropOffset.y / imageSize.height) * 100}%`,
-                  width: `${(crop.width / imageSize.width) * 100}%`,
-                  height: `${(crop.height / imageSize.height) * 100}%`,
-                  boxShadow: "0 0 0 9999px rgba(0,0,0,0.5)",
-                }}
-              >
-                {/* Grid lines */}
-                <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none">
-                  {Array.from({ length: 9 }).map((_, i) => (
-                    <div key={i} className="border border-white/30" />
+            {/* Platform */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">Platform</label>
+              <Tabs value={String(selectedPlatform)} onValueChange={(v) => { setSelectedPlatform(Number(v)); setSelectedRatio(0); }}>
+                <TabsList>
+                  {platforms.map((p, i) => (
+                    <TabsTrigger key={p.name} value={String(i)}>{p.name}</TabsTrigger>
                   ))}
+                </TabsList>
+              </Tabs>
+            </div>
+
+            {/* Aspect Ratio */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">Ratio</label>
+              <Tabs value={String(selectedRatio)} onValueChange={(v) => setSelectedRatio(Number(v))}>
+                <TabsList className="flex-wrap h-auto gap-1">
+                  {platforms[selectedPlatform].ratios.map((ratio, i) => (
+                    <TabsTrigger key={ratio.name} value={String(i)} className="text-xs">
+                      {ratio.label} {ratio.name}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            </div>
+
+            {/* Crop preview */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Move className="size-3.5" /> Drag to reposition
+              </label>
+              <div
+                ref={previewRef}
+                className={cn(
+                  "relative inline-block cursor-move select-none overflow-hidden rounded-lg touch-none ring-1 ring-border",
+                  isDragging && "cursor-grabbing"
+                )}
+                onMouseDown={handleMouseDown}
+                onTouchStart={handleTouchStart}
+              >
+                <img
+                  src={sourceImage}
+                  alt="Source"
+                  className="max-w-full max-h-96 pointer-events-none"
+                  draggable={false}
+                />
+                <div
+                  className="absolute border-2 border-white pointer-events-none"
+                  style={{
+                    left: `${(cropOffset.x / imageSize.width) * 100}%`,
+                    top: `${(cropOffset.y / imageSize.height) * 100}%`,
+                    width: `${(crop.width / imageSize.width) * 100}%`,
+                    height: `${(crop.height / imageSize.height) * 100}%`,
+                    boxShadow: "0 0 0 9999px rgba(0,0,0,0.5)",
+                  }}
+                >
+                  <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none">
+                    {Array.from({ length: 9 }).map((_, i) => (
+                      <div key={i} className="border border-white/20" />
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
+
+            {/* Crop stats */}
+            <div className="flex gap-6 text-sm text-muted-foreground">
+              <span>Crop: {Math.round(crop.width)} × {Math.round(crop.height)} px</span>
+              <span>Offset: {Math.round(cropOffset.x)}, {Math.round(cropOffset.y)}</span>
+            </div>
+
+            {/* Download */}
+            {croppedImage && (
+              <Button size="lg" className="w-full" onClick={downloadCropped}>
+                <Download className="size-4 mr-2" />
+                Download for {platforms[selectedPlatform].name}
+              </Button>
+            )}
           </div>
 
-          {/* Crop Info */}
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-1">
-              <label className="font-bold text-sm">Original Size</label>
-              <div className="text-muted-foreground">
-                {imageSize.width} × {imageSize.height} px
+          {/* Result preview */}
+          {croppedImage && (
+            <div className="flex flex-col items-center gap-3">
+              <label className="text-sm font-medium text-muted-foreground self-start">Result</label>
+              <div className="rounded-lg overflow-hidden shadow-lg ring-1 ring-border">
+                <img
+                  src={croppedImage}
+                  alt="Cropped"
+                  className="max-h-[280px] w-auto"
+                />
               </div>
-            </div>
-            <div className="space-y-1">
-              <label className="font-bold text-sm">Crop Size</label>
-              <div className="text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 {Math.round(crop.width)} × {Math.round(crop.height)} px
-              </div>
+              </span>
             </div>
-            <div className="space-y-1">
-              <label className="font-bold text-sm">Position</label>
-              <div className="text-muted-foreground">
-                {Math.round(cropOffset.x)}, {Math.round(cropOffset.y)}
-              </div>
-            </div>
-          </div>
-
-          <Button size="lg" className="w-full h-14" onClick={cropImage}>
-            Crop for {platforms[selectedPlatform].name}
-          </Button>
-        </div>
-      )}
-
-      {/* Cropped Result */}
-      {croppedImage && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <label className="font-bold">Cropped Image</label>
-            <Button onClick={downloadCropped}>
-              <Download className="size-4 mr-2" /> Download
-            </Button>
-          </div>
-          <div className="rounded border bg-card p-4 flex justify-center">
-            <img
-              src={croppedImage}
-              alt="Cropped"
-              className="max-w-full max-h-80 rounded"
-            />
-          </div>
+          )}
         </div>
       )}
     </div>
