@@ -45,6 +45,7 @@ import {
   Wind,
   GitCompare,
   KeyRound,
+  ClipboardCopy,
 } from "lucide-react";
 
 export interface Tool {
@@ -239,6 +240,13 @@ export const toolCategories: ToolCategory[] = [
         description: "Paste and download an image from your clipboard",
         icon: ClipboardPaste,
         href: "/tools/paste-image",
+      },
+      {
+        id: "media-url-to-clipboard",
+        name: "Media url to clipboard",
+        description: "Copy media from a URL to your clipboard",
+        icon: ClipboardCopy,
+        href: "/tools/media-url-to-clipboard",
       },
       {
         id: "placeholder-genny",
