@@ -1,0 +1,70 @@
+version: '3.9'
+
+services:
+  app:
+    # Delphitools Next.js Application - Powered by Bun
+    build:
+      context: .
+      dockerfile: Dockerfile
+      cache_from:
+        - type=registry,ref=delphitools:latest
+    
+    # Image identification
+    image: delphitools:latest
+    container_name: delphitools-app
+    
+    # Port mappings
+    ports:
+      - "3000:3000"
+    
+    # Environment variables
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+    
+    # Automatic restart on failure
+    restart: unless-stopped
+    
+    # Resource limits (optimized for Bun's efficiency)
+    deploy:
+      resources:
+        limits:
+          cpus: '1'          
+          memory: 1G         
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    
+    # Health check using Bun
+    healthcheck:
+      test: ["CMD", "bun", "-e", "fetch('http://127.0.0.1:3000/').then((res) => process.exit(res.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    
+    # Logging configuration
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    
+    # Run as non-root user (bun user from oven/bun image)
+    user: "1000:1000"
+
+# Networks
+networks:
+  default:
+    name: delphitools-network
+    driver: bridge
+
+# Named volumes
+volumes:
+  node_modules:
+    driver: local
