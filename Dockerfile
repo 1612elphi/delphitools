@@ -3,7 +3,7 @@ FROM oven/bun:latest AS deps
 WORKDIR /app
 
 # Copy package files
-COPY package.json bun.lock* bun.lockb* package-lock.json* yarn.lock* ./
+COPY package.json bun.lock* bun.lockb* ./
 
 # Install dependencies using Bun
 RUN bun install --frozen-lockfile || bun install
