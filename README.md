@@ -78,7 +78,7 @@ Long live the handmade web.
 - shavian transliterator
 
 
-**Self-Host Guide with Docker**
+## **Self-Host Guide with Docker**
 
 - **Build locally:**  
 ```powershell
