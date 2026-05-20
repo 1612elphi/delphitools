@@ -81,18 +81,18 @@ Long live the handmade web.
 **Self-Host Guide with Docker**
 
 - **Build locally:**  
-```sh
+```powershell
 docker build -t delphitools:latest .
 ```
 
 - **Run locally:**  
-```yml
+```powershell
 # serve on http://localhost:3000 
 docker run --rm -p 3000:80 delphitools:latest
 ```
 
 - **With docker-compose:**  
-```yml
+```powershell
 ## to start the container
 docker-compose up -d --build
 ## to stop the container
