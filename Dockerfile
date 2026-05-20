@@ -15,9 +15,9 @@ WORKDIR /app
 # Copy source code
 COPY . .
 
-# Build the Next.js application and export static files
-# `next export` will output the static site into `/app/out`
-RUN bun run build && ./node_modules/.bin/next export
+# Build the Next.js application (with `output: "export"` Next will write
+# the static export into `/app/out` as part of `next build`)
+RUN bun run build
 
 # Stage 3: Production Runtime - serve static files with nginx
 FROM nginx:alpine AS runner
