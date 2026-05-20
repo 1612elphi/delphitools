@@ -76,3 +76,25 @@ Long live the handmade web.
 ### turbo-nerd shit
 
 - shavian transliterator
+
+
+**Self-Host Guide with Docker**
+
+- **Build locally:**  
+```sh
+docker build -t delphitools:latest .
+```
+
+- **Run locally:**  
+```yml
+# serve on http://localhost:3000 
+docker run --rm -p 3000:80 delphitools:latest
+```
+
+- **With docker-compose:**  
+```yml
+## to start the container
+docker-compose up -d --build
+## to stop the container
+docker-compose down
+```
