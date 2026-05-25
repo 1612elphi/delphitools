@@ -1,0 +1,61 @@
+version: '3.9'
+
+services:
+  app:
+    # Delphitools Next.js Application - Powered by Bun
+    build:
+      context: .
+      dockerfile: Dockerfile
+      cache_from:
+        - type=registry,ref=delphitools:latest
+    
+    # Image identification
+    image: delphitools:latest
+    container_name: delphitools-app
+    
+    # Port mappings (host:container) - serve static site via nginx (container port 80)
+    ports:
+      - "3000:80"
+    
+    # Automatic restart on failure
+    restart: unless-stopped
+    
+    # Resource limits (optimized for Bun's efficiency)
+    deploy:
+      resources:
+        limits:
+          cpus: '1'          
+          memory: 1G         
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    
+    # Health check using wget inside the nginx container
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    
+    # Logging configuration
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+
+# Networks
+networks:
+  default:
+    name: delphitools-network
+    driver: bridge
+
+# Named volumes
+volumes:
+  node_modules:
+    driver: local
