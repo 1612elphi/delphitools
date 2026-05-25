@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Star, ExternalLink } from "lucide-react";
 import { toolCategories, featuredTools } from "@/lib/tools";
-import { IosAppCard } from "@/components/ios-app-card";
+import { DownloadCard } from "@/components/download-card";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -77,7 +77,7 @@ export default function Home() {
         </div>
       </section>
 
-      <IosAppCard />
+      <DownloadCard />
 
       {/* Tool Categories */}
       <div className="space-y-10">
@@ -427,6 +427,7 @@ export default function Home() {
                 { name: "Himanshu Balani", url: "https://github.com/himanshubalani" },
                 { name: "Mahmoud Ashraf", url: "https://github.com/SNO7E-G" },
                 { name: "Moamal Alaa", url: "https://github.com/Moamal-2000" },
+                { name: "Mouaz Aldakkak", url: "https://github.com/movoid12" },
                 { name: "Pranav K", url: "https://github.com/Pranavk-official" },
                 { name: "Claude", url: "https://rmv.fyi/notes/i-hope-you-don-t-use-generative-ai" },
               ].map((person) => (
