@@ -1,21 +1,22 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { Upload, Download, X, Maximize, Minimize, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { PaperSizeCombobox, findPaperSize } from "@/components/ui/paper-size-combobox";
 import { cn } from "@/lib/utils";
 import { PDFDocument, degrees } from "pdf-lib";
-import { PAPER_SIZES } from "@/lib/imposition";
+import { PAPER_SIZES, MM_TO_POINTS } from "@/lib/imposition";
+import {
+  ZINE_FOLDS,
+  buildFoldLayout,
+  getFoldOption,
+  type ZineFoldId,
+  type ZineFoldLayout,
+  type ZineSide,
+} from "@/lib/zine-folds";
 import { useFilePaste } from "@/hooks/use-file-paste";
 
 // Types
@@ -27,47 +28,131 @@ interface ZineImage {
   fitMode: "fit" | "fill";
 }
 
-interface PagePlacement {
-  pageNumber: number;
-  col: number;
-  row: number;
-  rotation: number;
-}
-
-// Classic 8-page mini-zine imposition layout
-// Single sheet in landscape, 4 columns x 2 rows
-// When folded and cut, pages read in order 1-8
-const ZINE_LAYOUT: PagePlacement[] = [
-  // Top row (left to right): pages 5, 4, 3, 2 - all rotated 180°
-  { pageNumber: 5, col: 0, row: 0, rotation: 180 },
-  { pageNumber: 4, col: 1, row: 0, rotation: 180 },
-  { pageNumber: 3, col: 2, row: 0, rotation: 180 },
-  { pageNumber: 2, col: 3, row: 0, rotation: 180 },
-  // Bottom row (left to right): pages 6, 7, 8, 1 - not rotated
-  { pageNumber: 6, col: 0, row: 1, rotation: 0 },
-  { pageNumber: 7, col: 1, row: 1, rotation: 0 },
-  { pageNumber: 8, col: 2, row: 1, rotation: 0 },
-  { pageNumber: 1, col: 3, row: 1, rotation: 0 },
-];
-
-const MM_TO_POINTS = 72 / 25.4;
-
 const DPI_OPTIONS = [72, 150, 300, 600];
 
+// Small schematic of each fold, used in the fold-type picker.
+function FoldGlyph({ id, className }: { id: ZineFoldId; className?: string }) {
+  if (id === "accordion") {
+    return (
+      <svg
+        viewBox="0 0 44 28"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.6}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        className={className}
+        aria-hidden="true"
+      >
+        <polyline points="3,23 11,5 19,23 27,5 35,23 42,9" />
+      </svg>
+    );
+  }
+  if (id === "mini-8") {
+    // 4×2 grid with the central fold-and-cut slit highlighted.
+    return (
+      <svg
+        viewBox="0 0 44 28"
+        fill="none"
+        stroke="currentColor"
+        className={className}
+        aria-hidden="true"
+      >
+        <rect x="2" y="2" width="40" height="24" rx="2.5" strokeWidth={1.6} />
+        <path d="M12 2v24M22 2v24M32 2v24M2 14h40" strokeWidth={1} opacity={0.55} />
+        <path d="M12 14h20" strokeWidth={2.6} strokeLinecap="round" />
+      </svg>
+    );
+  }
+  return null;
+}
+
+// Compact segmented button group (house style shared by the Panels + DPI pickers).
+function SegmentedControl<T extends string | number>({
+  options,
+  value,
+  onChange,
+  ariaLabel,
+}: {
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (value: T) => void;
+  ariaLabel?: string;
+}) {
+  return (
+    <div
+      role="radiogroup"
+      aria-label={ariaLabel}
+      className="grid h-9 rounded-md border border-input overflow-hidden"
+      style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
+    >
+      {options.map((opt, i) => (
+        <button
+          key={String(opt.value)}
+          type="button"
+          role="radio"
+          aria-checked={value === opt.value}
+          onClick={() => onChange(opt.value)}
+          className={cn(
+            "text-sm font-medium transition-colors",
+            i > 0 && "border-l border-input",
+            value === opt.value ? "bg-primary text-primary-foreground" : "hover:bg-muted",
+          )}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function ZineImposerTool() {
-  const [images, setImages] = useState<(ZineImage | null)[]>(Array(8).fill(null));
+  // --- Fold configuration ---
+  const [foldId, setFoldId] = useState<ZineFoldId>("mini-8");
+  const [panels, setPanels] = useState(8);
+  const [doubleSided, setDoubleSided] = useState(false);
+
+  // Memoise so the layout object is referentially stable across renders —
+  // generatePreview depends on it, and an unstable ref would loop the effect.
+  const layout: ZineFoldLayout = useMemo(
+    () => buildFoldLayout(foldId, { panels, doubleSided }),
+    [foldId, panels, doubleSided]
+  );
+  const foldOption = getFoldOption(foldId);
+  const pageCount = layout.pageCount;
+  const duplexLabel = layout.duplexFlip === "long-edge" ? "long edge" : "short edge";
+
+  const [images, setImages] = useState<(ZineImage | null)[]>(() =>
+    Array(pageCount).fill(null)
+  );
   const [paperSizeId, setPaperSizeId] = useState("a4");
   const paperSize = findPaperSize(paperSizeId) ?? PAPER_SIZES[0];
   const [bleedEnabled, setBleedEnabled] = useState(false);
   const [selectedDpi, setSelectedDpi] = useState(300);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [previews, setPreviews] = useState<string[]>([]);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const loadedImagesRef = useRef<Map<string, HTMLImageElement>>(new Map());
+
+  // Resize the slot array whenever the page count changes, preserving existing
+  // images where the index still exists.
+  useEffect(() => {
+    setImages((prev) => {
+      if (prev.length === pageCount) return prev;
+      // Release cached HTMLImageElements for slots that no longer exist.
+      for (let i = pageCount; i < prev.length; i++) {
+        if (prev[i]) loadedImagesRef.current.delete(prev[i]!.id);
+      }
+      const next = Array<ZineImage | null>(pageCount).fill(null);
+      for (let i = 0; i < Math.min(prev.length, pageCount); i++) {
+        next[i] = prev[i];
+      }
+      return next;
+    });
+  }, [pageCount]);
 
   // Generate unique ID
   const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -117,7 +202,7 @@ export function ZineImposerTool() {
     }
   };
 
-  // Handle bulk upload
+  // Handle bulk upload — fills empty slots in order
   const handleBulkUpload = async (files: FileList | null) => {
     if (!files) return;
 
@@ -127,10 +212,10 @@ export function ZineImposerTool() {
     let slotIndex = 0;
     for (const file of imageFiles) {
       // Find next empty slot
-      while (slotIndex < 8 && newImages[slotIndex] !== null) {
+      while (slotIndex < newImages.length && newImages[slotIndex] !== null) {
         slotIndex++;
       }
-      if (slotIndex >= 8) break;
+      if (slotIndex >= newImages.length) break;
 
       try {
         const zineImage = await loadImage(file);
@@ -193,7 +278,6 @@ export function ZineImposerTool() {
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
-    // Allow drop for both internal reorder and external file drops
     if (draggedIndex !== null && draggedIndex === index) return;
     setDragOverIndex(index);
     e.dataTransfer.dropEffect = draggedIndex !== null ? "move" : "copy";
@@ -250,7 +334,7 @@ export function ZineImposerTool() {
     setDragOverIndex(null);
   };
 
-  // Draw image on canvas with fit/fill mode
+  // Draw image on canvas with fit/fill mode + rotation
   const drawImageOnCanvas = (
     ctx: CanvasRenderingContext2D,
     img: HTMLImageElement,
@@ -263,7 +347,6 @@ export function ZineImposerTool() {
   ) => {
     ctx.save();
 
-    // Move to center of target area
     const centerX = targetX + targetWidth / 2;
     const centerY = targetY + targetHeight / 2;
     ctx.translate(centerX, centerY);
@@ -276,7 +359,6 @@ export function ZineImposerTool() {
     let sourceX = 0, sourceY = 0, sourceWidth = img.width, sourceHeight = img.height;
 
     if (fitMode === "fit") {
-      // Scale to fit inside target (may have empty space)
       if (imgAspect > targetAspect) {
         drawWidth = targetWidth;
         drawHeight = targetWidth / imgAspect;
@@ -285,16 +367,13 @@ export function ZineImposerTool() {
         drawWidth = targetHeight * imgAspect;
       }
     } else {
-      // Scale to fill target (may crop)
       drawWidth = targetWidth;
       drawHeight = targetHeight;
 
       if (imgAspect > targetAspect) {
-        // Image is wider - crop sides
         sourceWidth = img.height * targetAspect;
         sourceX = (img.width - sourceWidth) / 2;
       } else {
-        // Image is taller - crop top/bottom
         sourceHeight = img.width / targetAspect;
         sourceY = (img.height - sourceHeight) / 2;
       }
@@ -309,11 +388,91 @@ export function ZineImposerTool() {
     ctx.restore();
   };
 
-  // Generate preview image
+  // Draw fold creases (dashed grey) and cut lines (solid red) for one side.
+  const drawGuides = (
+    ctx: CanvasRenderingContext2D,
+    side: ZineSide,
+    width: number,
+    height: number
+  ) => {
+    // Fold lines are drawn on every side. Cut lines only matter where they exist.
+    ctx.strokeStyle = "#888888";
+    ctx.lineWidth = 1;
+    ctx.setLineDash([8, 4]);
+
+    for (const fold of layout.foldLines) {
+      ctx.beginPath();
+      if (fold.axis === "v") {
+        const x = fold.pos * width;
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+      } else {
+        const y = fold.pos * height;
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+      }
+      ctx.stroke();
+    }
+
+    ctx.setLineDash([]);
+
+    // Cut lines (only on the front; cuts are a single-sided concept here)
+    if (side.side === "front" && layout.cutLines.length > 0) {
+      ctx.strokeStyle = "#cc0000";
+      ctx.lineWidth = 2;
+      for (const cut of layout.cutLines) {
+        ctx.beginPath();
+        ctx.moveTo(cut.x1 * width, cut.y1 * height);
+        ctx.lineTo(cut.x2 * width, cut.y2 * height);
+        ctx.stroke();
+
+        // Label at the midpoint
+        const mx = ((cut.x1 + cut.x2) / 2) * width;
+        const my = ((cut.y1 + cut.y2) / 2) * height;
+        ctx.fillStyle = "#cc0000";
+        ctx.font = "bold 10px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("✂ CUT", mx, my - 6);
+      }
+    }
+  };
+
+  // Draw page-number badges for one side.
+  const drawPageNumbers = (
+    ctx: CanvasRenderingContext2D,
+    side: ZineSide,
+    cellWidth: number,
+    cellHeight: number
+  ) => {
+    ctx.font = "bold 24px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    for (const placement of side.placements) {
+      const x = placement.col * cellWidth + cellWidth / 2;
+      const y = placement.row * cellHeight + cellHeight / 2;
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate((placement.rotation * Math.PI) / 180);
+
+      ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+      ctx.beginPath();
+      ctx.arc(0, 0, 20, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(placement.page.toString(), 0, 0);
+
+      ctx.restore();
+    }
+  };
+
+  // Generate one preview image per side.
   const generatePreview = useCallback(async () => {
     const hasImages = images.some((img) => img !== null);
     if (!hasImages) {
-      setPreview(null);
+      setPreviews([]);
       return;
     }
 
@@ -333,135 +492,54 @@ export function ZineImposerTool() {
     });
     await Promise.all(loadPromises);
 
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d")!;
-
-    // Scale for preview (2px per mm)
-    const scale = 2;
-
-    // Sheet in landscape orientation (4 columns x 2 rows)
-    const sheetWidthMm = paperSize.heightMm;
-    const sheetHeightMm = paperSize.widthMm;
+    const scale = 2; // px per mm
+    const sheetWidthMm = Math.max(paperSize.widthMm, paperSize.heightMm); // landscape
+    const sheetHeightMm = Math.min(paperSize.widthMm, paperSize.heightMm);
     const sheetWidthPx = sheetWidthMm * scale;
     const sheetHeightPx = sheetHeightMm * scale;
-    const cellWidthPx = sheetWidthPx / 4;  // 4 columns
-    const cellHeightPx = sheetHeightPx / 2; // 2 rows
+    const cellWidthPx = sheetWidthPx / layout.cols;
+    const cellHeightPx = sheetHeightPx / layout.rows;
 
-    canvas.width = sheetWidthPx;
-    canvas.height = sheetHeightPx;
+    const result: string[] = [];
 
-    // Draw white background
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, sheetWidthPx, sheetHeightPx);
+    for (const side of layout.sides) {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d")!;
+      canvas.width = sheetWidthPx;
+      canvas.height = sheetHeightPx;
 
-    // Draw all 8 pages
-    for (const placement of ZINE_LAYOUT) {
-      const imageIndex = placement.pageNumber - 1;
-      const zineImage = images[imageIndex];
-      if (!zineImage) continue;
-
-      const htmlImg = loadedImagesRef.current.get(zineImage.id);
-      if (!htmlImg) continue;
-
-      const x = placement.col * cellWidthPx;
-      const y = placement.row * cellHeightPx;
-
-      drawImageOnCanvas(
-        ctx,
-        htmlImg,
-        x,
-        y,
-        cellWidthPx,
-        cellHeightPx,
-        zineImage.fitMode,
-        placement.rotation
-      );
-    }
-
-    // Draw fold/cut lines
-    drawGridLines(ctx, sheetWidthPx, sheetHeightPx, cellWidthPx);
-    // Draw page numbers
-    drawPageNumbers(ctx, ZINE_LAYOUT, cellWidthPx, cellHeightPx);
-
-    setPreview(canvas.toDataURL());
-  }, [images, paperSize, bleedEnabled]);
-
-  // Draw fold/cut lines for 4x2 grid
-  const drawGridLines = (
-    ctx: CanvasRenderingContext2D,
-    width: number,
-    height: number,
-    cellWidth: number
-  ) => {
-    ctx.strokeStyle = "#888888";
-    ctx.lineWidth = 1;
-    ctx.setLineDash([8, 4]);
-
-    // Vertical fold lines (at 1/4, 1/2, 3/4)
-    for (let i = 1; i <= 3; i++) {
-      ctx.beginPath();
-      ctx.moveTo(cellWidth * i, 0);
-      ctx.lineTo(cellWidth * i, height);
-      ctx.stroke();
-    }
-
-    // Horizontal fold line (full width)
-    ctx.beginPath();
-    ctx.moveTo(0, height / 2);
-    ctx.lineTo(width, height / 2);
-    ctx.stroke();
-
-    ctx.setLineDash([]);
-
-    // Draw the CUT line (solid, thicker, only middle section)
-    ctx.strokeStyle = "#cc0000";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(cellWidth, height / 2);
-    ctx.lineTo(cellWidth * 3, height / 2);
-    ctx.stroke();
-
-    // Add "CUT" label
-    ctx.fillStyle = "#cc0000";
-    ctx.font = "bold 10px monospace";
-    ctx.textAlign = "center";
-    ctx.fillText("✂ CUT", width / 2, height / 2 - 6);
-  };
-
-  // Draw page numbers on preview
-  const drawPageNumbers = (
-    ctx: CanvasRenderingContext2D,
-    layout: PagePlacement[],
-    cellWidth: number,
-    cellHeight: number
-  ) => {
-    ctx.font = "bold 24px monospace";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-
-    for (const placement of layout) {
-      const x = placement.col * cellWidth + cellWidth / 2;
-      const y = placement.row * cellHeight + cellHeight / 2;
-
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate((placement.rotation * Math.PI) / 180);
-
-      // Draw background circle
-      ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-      ctx.beginPath();
-      ctx.arc(0, 0, 20, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Draw number
       ctx.fillStyle = "#ffffff";
-      ctx.fillText(placement.pageNumber.toString(), 0, 0);
+      ctx.fillRect(0, 0, sheetWidthPx, sheetHeightPx);
 
-      ctx.restore();
+      for (const placement of side.placements) {
+        const zineImage = images[placement.page - 1];
+        if (!zineImage) continue;
+        const htmlImg = loadedImagesRef.current.get(zineImage.id);
+        if (!htmlImg) continue;
+
+        drawImageOnCanvas(
+          ctx,
+          htmlImg,
+          placement.col * cellWidthPx,
+          placement.row * cellHeightPx,
+          cellWidthPx,
+          cellHeightPx,
+          zineImage.fitMode,
+          placement.rotation
+        );
+      }
+
+      drawGuides(ctx, side, sheetWidthPx, sheetHeightPx);
+      drawPageNumbers(ctx, side, cellWidthPx, cellHeightPx);
+
+      result.push(canvas.toDataURL());
     }
-  };
 
-  // Generate previews when images or settings change
+    setPreviews(result);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images, paperSize, layout]);
+
+  // Regenerate previews when images or settings change
   useEffect(() => {
     generatePreview();
   }, [generatePreview]);
@@ -479,11 +557,9 @@ export function ZineImposerTool() {
       let sourceX = 0, sourceY = 0, sourceWidth = img.width, sourceHeight = img.height;
 
       if (imgAspect > targetAspect) {
-        // Image is wider - crop sides
         sourceWidth = img.height * targetAspect;
         sourceX = (img.width - sourceWidth) / 2;
       } else {
-        // Image is taller - crop top/bottom
         sourceHeight = img.width / targetAspect;
         sourceY = (img.height - sourceHeight) / 2;
       }
@@ -496,108 +572,101 @@ export function ZineImposerTool() {
     });
   };
 
-  // Generate PDF
+  // Generate PDF — one page per side.
   const generatePdf = async () => {
     setIsGenerating(true);
 
     try {
       const pdfDoc = await PDFDocument.create();
 
-      // Sheet in landscape orientation (4 columns x 2 rows)
-      const sheetWidthPt = paperSize.heightMm * MM_TO_POINTS;
-      const sheetHeightPt = paperSize.widthMm * MM_TO_POINTS;
-      const cellWidthPt = sheetWidthPt / 4;  // 4 columns
-      const cellHeightPt = sheetHeightPt / 2; // 2 rows
+      const sheetWidthMm = Math.max(paperSize.widthMm, paperSize.heightMm); // landscape
+      const sheetHeightMm = Math.min(paperSize.widthMm, paperSize.heightMm);
+      const sheetWidthPt = sheetWidthMm * MM_TO_POINTS;
+      const sheetHeightPt = sheetHeightMm * MM_TO_POINTS;
+      const cellWidthPt = sheetWidthPt / layout.cols;
+      const cellHeightPt = sheetHeightPt / layout.rows;
       const targetAspect = cellWidthPt / cellHeightPt;
 
-      // Create single page
-      const page = pdfDoc.addPage([sheetWidthPt, sheetHeightPt]);
+      for (const side of layout.sides) {
+        const page = pdfDoc.addPage([sheetWidthPt, sheetHeightPt]);
 
-      // Draw all 8 page images
-      for (const placement of ZINE_LAYOUT) {
-        const imageIndex = placement.pageNumber - 1;
-        const zineImage = images[imageIndex];
-        if (!zineImage) continue;
+        for (const placement of side.placements) {
+          const zineImage = images[placement.page - 1];
+          if (!zineImage) continue;
 
-        const htmlImg = loadedImagesRef.current.get(zineImage.id);
-        let imageDataUrl = zineImage.dataUrl;
+          const htmlImg = loadedImagesRef.current.get(zineImage.id);
+          let imageDataUrl = zineImage.dataUrl;
 
-        // For fill mode, pre-crop to target aspect ratio
-        if (zineImage.fitMode === "fill" && htmlImg) {
-          imageDataUrl = await cropImageToAspect(htmlImg, targetAspect);
-        }
-
-        // Embed the image
-        const imageBytes = await fetch(imageDataUrl).then((r) => r.arrayBuffer());
-        let embeddedImage;
-        try {
-          if (imageDataUrl.includes("image/png")) {
-            embeddedImage = await pdfDoc.embedPng(imageBytes);
-          } else {
-            embeddedImage = await pdfDoc.embedJpg(imageBytes);
+          // For fill mode, pre-crop to target aspect ratio
+          if (zineImage.fitMode === "fill" && htmlImg) {
+            imageDataUrl = await cropImageToAspect(htmlImg, targetAspect);
           }
-        } catch {
-          // Try the other format if first fails
+
+          const imageBytes = await fetch(imageDataUrl).then((r) => r.arrayBuffer());
+          let embeddedImage;
           try {
-            embeddedImage = await pdfDoc.embedJpg(imageBytes);
+            if (imageDataUrl.includes("image/png")) {
+              embeddedImage = await pdfDoc.embedPng(imageBytes);
+            } else {
+              embeddedImage = await pdfDoc.embedJpg(imageBytes);
+            }
           } catch {
-            embeddedImage = await pdfDoc.embedPng(imageBytes);
+            try {
+              embeddedImage = await pdfDoc.embedJpg(imageBytes);
+            } catch {
+              embeddedImage = await pdfDoc.embedPng(imageBytes);
+            }
           }
-        }
 
-        let drawWidth: number, drawHeight: number;
-
-        if (zineImage.fitMode === "fit") {
-          const imgAspect = embeddedImage.width / embeddedImage.height;
-          if (imgAspect > targetAspect) {
-            drawWidth = cellWidthPt;
-            drawHeight = cellWidthPt / imgAspect;
+          let drawWidth: number, drawHeight: number;
+          if (zineImage.fitMode === "fit") {
+            const imgAspect = embeddedImage.width / embeddedImage.height;
+            if (imgAspect > targetAspect) {
+              drawWidth = cellWidthPt;
+              drawHeight = cellWidthPt / imgAspect;
+            } else {
+              drawHeight = cellHeightPt;
+              drawWidth = cellHeightPt * imgAspect;
+            }
           } else {
+            drawWidth = cellWidthPt;
             drawHeight = cellHeightPt;
-            drawWidth = cellHeightPt * imgAspect;
           }
-        } else {
-          // Fill mode - image already cropped to correct aspect, fill the cell
-          drawWidth = cellWidthPt;
-          drawHeight = cellHeightPt;
-        }
 
-        // Calculate position (PDF origin is bottom-left)
-        // row 0 is top, row 1 is bottom
-        const cellX = placement.col * cellWidthPt;
-        const cellY = placement.row === 0 ? cellHeightPt : 0;
+          // PDF origin is bottom-left; row 0 is the top row.
+          const cellX = placement.col * cellWidthPt;
+          const cellY = (layout.rows - 1 - placement.row) * cellHeightPt;
 
-        // Center the image in the cell
-        const offsetX = (cellWidthPt - drawWidth) / 2;
-        const offsetY = (cellHeightPt - drawHeight) / 2;
+          const offsetX = (cellWidthPt - drawWidth) / 2;
+          const offsetY = (cellHeightPt - drawHeight) / 2;
 
-        if (placement.rotation === 180) {
-          // For 180 degree rotation, draw from the opposite corner
-          page.drawImage(embeddedImage, {
-            x: cellX + cellWidthPt - offsetX,
-            y: cellY + cellHeightPt - offsetY,
-            width: drawWidth,
-            height: drawHeight,
-            rotate: degrees(180),
-          });
-        } else {
-          page.drawImage(embeddedImage, {
-            x: cellX + offsetX,
-            y: cellY + offsetY,
-            width: drawWidth,
-            height: drawHeight,
-          });
+          if (placement.rotation === 180) {
+            page.drawImage(embeddedImage, {
+              x: cellX + cellWidthPt - offsetX,
+              y: cellY + cellHeightPt - offsetY,
+              width: drawWidth,
+              height: drawHeight,
+              rotate: degrees(180),
+            });
+          } else {
+            page.drawImage(embeddedImage, {
+              x: cellX + offsetX,
+              y: cellY + offsetY,
+              width: drawWidth,
+              height: drawHeight,
+            });
+          }
         }
       }
 
       const pdfBytes = await pdfDoc.save();
 
-      // Download the PDF
       const blob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `zine-${paperSize.id}${bleedEnabled ? "-bleed" : ""}.pdf`;
+      const sidesTag = layout.sides.length > 1 ? "-duplex" : "";
+      link.download = `zine-${foldId}-${paperSize.id}${sidesTag}${bleedEnabled ? "-bleed" : ""}.pdf`;
       link.click();
       URL.revokeObjectURL(url);
     } catch (err) {
@@ -610,103 +679,167 @@ export function ZineImposerTool() {
   // Clear all images
   const clearAll = () => {
     loadedImagesRef.current.clear();
-    setImages(Array(8).fill(null));
+    setImages(Array(pageCount).fill(null));
   };
 
   const imageCount = images.filter((img) => img !== null).length;
 
+  // Page dimensions for the digital-artist guide
+  const sheetWidthMm = Math.max(paperSize.widthMm, paperSize.heightMm);
+  const sheetHeightMm = Math.min(paperSize.widthMm, paperSize.heightMm);
+  const pageWidthMm = sheetWidthMm / layout.cols;
+  const pageHeightMm = sheetHeightMm / layout.rows;
+  const pageWidthPx = Math.round((pageWidthMm / 25.4) * selectedDpi);
+  const pageHeightPx = Math.round((pageHeightMm / 25.4) * selectedDpi);
+
   return (
     <div className="space-y-8">
-      {/* Settings Row */}
-      <div className="flex flex-wrap gap-4 items-end">
+      {/* Configuration */}
+      <div className="space-y-5">
+        {/* Fold type — segmented tab picker with mini diagrams */}
         <div className="space-y-2">
-          <Label className="font-bold">Paper Size</Label>
-          <PaperSizeCombobox
-            value={paperSizeId}
-            onValueChange={setPaperSizeId}
-            triggerClassName="w-56"
-          />
+          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Fold type
+          </span>
+          <div className="grid grid-cols-2 gap-3" role="tablist" aria-label="Fold type">
+            {ZINE_FOLDS.map((f) => {
+              const selected = f.id === foldId;
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  onClick={() => setFoldId(f.id)}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg border p-3 text-left transition-colors",
+                    selected
+                      ? "border-primary bg-primary/10 ring-1 ring-primary"
+                      : "border-input bg-card/60 hover:bg-muted",
+                  )}
+                >
+                  <FoldGlyph
+                    id={f.id}
+                    className={cn(
+                      "h-7 w-11 shrink-0",
+                      selected ? "text-primary" : "text-muted-foreground",
+                    )}
+                  />
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium leading-tight">{f.name}</div>
+                    <div className="text-xs text-muted-foreground">{f.tagline}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <Label className="font-bold">Reference DPI</Label>
-          <Select
-            value={selectedDpi.toString()}
-            onValueChange={(v) => setSelectedDpi(parseInt(v))}
-          >
-            <SelectTrigger className="w-28">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {DPI_OPTIONS.map((dpi) => (
-                <SelectItem key={dpi} value={dpi.toString()}>
-                  {dpi} DPI
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Options + sheet setup */}
+        <div className="grid gap-4 lg:grid-cols-2">
+          {/* Fold options */}
+          <div className="rounded-lg border bg-card/60 p-4 space-y-4">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground block">
+              Options
+            </span>
+            <p className="text-sm text-muted-foreground">{foldOption.description}</p>
 
-        <div className="flex items-center gap-3 h-10">
-          <Switch
-            id="bleed"
-            checked={bleedEnabled}
-            onCheckedChange={setBleedEnabled}
-          />
-          <Label htmlFor="bleed" className="cursor-pointer">
-            Add 3mm bleed
-          </Label>
-        </div>
+            {foldOption.configurablePanels || foldOption.supportsDoubleSided ? (
+              <div className="space-y-4">
+                {foldOption.configurablePanels && (
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      Panels
+                    </span>
+                    <SegmentedControl
+                      ariaLabel="Panels"
+                      options={(foldOption.panelOptions ?? []).map((p) => ({ value: p, label: String(p) }))}
+                      value={panels}
+                      onChange={setPanels}
+                    />
+                  </div>
+                )}
 
-        {imageCount > 0 && (
-          <Button variant="ghost" onClick={clearAll} className="ml-auto">
-            Clear all
-          </Button>
-        )}
-      </div>
+                {foldOption.supportsDoubleSided && (
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="double-sided" className="text-sm font-medium cursor-pointer">
+                        Double-sided
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        {doubleSided
+                          ? `Front + back · print flip on ${duplexLabel}`
+                          : "Single side · fold-out strip"}
+                      </p>
+                    </div>
+                    <Switch id="double-sided" checked={doubleSided} onCheckedChange={setDoubleSided} />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Fixed {pageCount}-page layout — no options to set.
+              </p>
+            )}
+          </div>
 
-      {/* Page Dimensions Guide */}
-      {(() => {
-        // Calculate page dimensions in landscape (4 cols x 2 rows)
-        const sheetWidthMm = paperSize.heightMm; // Landscape
-        const sheetHeightMm = paperSize.widthMm;
-        const pageWidthMm = sheetWidthMm / 4;
-        const pageHeightMm = sheetHeightMm / 2;
-        const pageWidthPx = Math.round((pageWidthMm / 25.4) * selectedDpi);
-        const pageHeightPx = Math.round((pageHeightMm / 25.4) * selectedDpi);
+          {/* Sheet & output */}
+          <div className="rounded-lg border bg-card/60 p-4 space-y-3">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground block">
+              Sheet &amp; output
+            </span>
 
-        return (
-          <div className="p-4 bg-muted/50 rounded-lg">
-            <p className="font-bold text-sm mb-2">Page Dimensions for Digital Artists</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-              <div>
-                <span className="text-muted-foreground">Each page:</span>
-                <p className="font-mono font-medium">
-                  {pageWidthMm.toFixed(1)} × {pageHeightMm.toFixed(1)} mm
-                </p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">At {selectedDpi} DPI:</span>
-                <p className="font-mono font-medium">
-                  {pageWidthPx} × {pageHeightPx} px
-                </p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Aspect ratio:</span>
-                <p className="font-mono font-medium">
-                  {(pageWidthMm / pageHeightMm).toFixed(3)}:1
-                </p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Orientation:</span>
-                <p className="font-mono font-medium">
-                  {pageWidthMm < pageHeightMm ? "Portrait" : "Landscape"}
-                </p>
-              </div>
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Paper size
+              </span>
+              <PaperSizeCombobox
+                value={paperSizeId}
+                onValueChange={setPaperSizeId}
+                triggerClassName="w-full"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Reference DPI
+              </span>
+              <SegmentedControl
+                ariaLabel="Reference DPI"
+                options={DPI_OPTIONS.map((dpi) => ({ value: dpi, label: String(dpi) }))}
+                value={selectedDpi}
+                onChange={setSelectedDpi}
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-3 pt-0.5">
+              <Label htmlFor="bleed" className="text-sm font-medium cursor-pointer">
+                Add 3mm bleed
+              </Label>
+              <Switch id="bleed" checked={bleedEnabled} onCheckedChange={setBleedEnabled} />
             </div>
           </div>
-        );
-      })()}
+        </div>
+
+        {/* Page dimensions — compact stats strip */}
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-lg border border-dashed px-4 py-2.5 text-sm">
+          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Each page
+          </span>
+          <span className="font-mono font-medium">
+            {pageWidthMm.toFixed(1)} × {pageHeightMm.toFixed(1)} mm
+          </span>
+          <span className="font-mono text-muted-foreground">
+            {pageWidthPx} × {pageHeightPx} px @ {selectedDpi} dpi
+          </span>
+          <span className="font-mono text-muted-foreground">
+            {(pageWidthMm / pageHeightMm).toFixed(3)}:1
+          </span>
+          <span className="font-mono text-muted-foreground">
+            {pageWidthMm < pageHeightMm ? "Portrait" : "Landscape"}
+          </span>
+        </div>
+      </div>
 
       {/* Bulk Upload Zone */}
       <div
@@ -735,13 +868,30 @@ export function ZineImposerTool() {
         </p>
       </div>
 
-      {/* 8-Slot Image Grid */}
+      {/* Image Grid */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label className="font-bold">Zine Pages (drag to reorder)</Label>
-          <span className="text-sm text-muted-foreground">
-            {imageCount}/8 pages filled
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Zine pages · drag to reorder
           </span>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">
+              {imageCount}/{pageCount} filled
+              {layout.sides.length > 1 &&
+                " · " +
+                  layout.sides
+                    .map((s) => {
+                      const pages = s.placements.map((p) => p.page);
+                      return `${s.side} ${Math.min(...pages)}–${Math.max(...pages)}`;
+                    })
+                    .join(", ")}
+            </span>
+            {imageCount > 0 && (
+              <Button variant="ghost" size="sm" onClick={clearAll} className="h-7">
+                Clear all
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-4 gap-3">
@@ -778,7 +928,6 @@ export function ZineImposerTool() {
 
               {image ? (
                 <>
-                  {/* Image preview */}
                   <img
                     src={image.dataUrl}
                     alt={`Page ${index + 1}`}
@@ -788,21 +937,17 @@ export function ZineImposerTool() {
                     )}
                   />
 
-                  {/* Overlay controls */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity">
-                    {/* Drag handle */}
                     <div className="absolute top-2 left-2">
                       <GripVertical className="size-5 text-white/80" />
                     </div>
 
-                    {/* Page number */}
                     <div className="absolute top-2 right-2 size-6 rounded-full bg-black/50 flex items-center justify-center">
                       <span className="text-xs font-bold text-white">
                         {index + 1}
                       </span>
                     </div>
 
-                    {/* Bottom controls */}
                     <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center">
                       <Button
                         size="sm"
@@ -846,17 +991,35 @@ export function ZineImposerTool() {
       </div>
 
       {/* Preview Section */}
-      {preview && (
+      {previews.length > 0 && (
         <div className="space-y-3">
           <Label className="font-bold">Imposition Preview</Label>
           <p className="text-sm text-muted-foreground">
-            Single-sided print. The red line shows where to cut.
+            {layout.sides.length > 1
+              ? `Double-sided print. Print both pages, flip on the ${duplexLabel}.`
+              : "Single-sided print."}
+            {layout.cutLines.length > 0 && " The red line shows where to cut."}
           </p>
-          <img
-            src={preview}
-            alt="Zine imposition preview"
-            className="w-full border rounded-lg"
-          />
+          <div className={cn("grid gap-4", layout.sides.length > 1 && "sm:grid-cols-2")}>
+            {/* Drive the map off the current layout (not the async `previews`
+                array) so a shrinking side count can't index a missing side. */}
+            {layout.sides.map((side, i) =>
+              previews[i] ? (
+                <div key={i} className="space-y-1">
+                  {layout.sides.length > 1 && (
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      {side.side}
+                    </span>
+                  )}
+                  <img
+                    src={previews[i]}
+                    alt={`Zine imposition preview ${side.side}`}
+                    className="w-full border rounded-lg"
+                  />
+                </div>
+              ) : null,
+            )}
+          </div>
         </div>
       )}
 
@@ -881,13 +1044,9 @@ export function ZineImposerTool() {
       <div className="text-sm text-muted-foreground space-y-2 p-4 bg-muted/50 rounded-lg">
         <p className="font-medium text-foreground">How to fold your zine:</p>
         <ol className="list-decimal list-inside space-y-1">
-          <li>Print the single page (single-sided, landscape)</li>
-          <li>Fold in half lengthwise (top edge to bottom edge)</li>
-          <li>Unfold, then fold in half widthwise (right edge to left)</li>
-          <li>Fold in half widthwise again</li>
-          <li>Unfold completely — you&apos;ll see 8 panels</li>
-          <li>Cut along the red line (center horizontal, middle two columns only)</li>
-          <li>Fold lengthwise again, push ends together to form booklet</li>
+          {layout.instructions.map((step, i) => (
+            <li key={i}>{step}</li>
+          ))}
         </ol>
       </div>
     </div>

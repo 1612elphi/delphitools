@@ -342,7 +342,7 @@ export const toolCategories: ToolCategory[] = [
       {
         id: "zine-imposer",
         name: "Zine Imposer",
-        description: "Create 8-page mini-zine imposition layouts",
+        description: "Impose single-sheet zines: 8-page mini-zine and accordion folds",
         icon: BookOpen,
         href: "/tools/zine-imposer",
       },
