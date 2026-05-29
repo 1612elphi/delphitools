@@ -81,20 +81,25 @@ Long live the handmade web.
 ## **Self-Host Guide with Docker**
 
 - **Build locally:**  
-```powershell
+```bash
 docker build -t delphitools:latest .
+# Optional: stamp the in-app version label (shown when hovering the logo).
+# .git is not in the build context, so pass the SHA explicitly:
+docker build --build-arg COMMIT_SHA=$(git rev-parse --short HEAD) -t delphitools:latest .
 ```
 
 - **Run locally:**  
-```powershell
+```bash
 # serve on http://localhost:3000 
 docker run --rm -p 3000:80 delphitools:latest
 ```
 
 - **With docker-compose:**  
-```powershell
+```bash
 ## to start the container
 docker-compose up -d --build
+## stamp the version label too (otherwise it shows "dev"):
+COMMIT_SHA=$(git rev-parse --short HEAD) docker-compose up -d --build
 ## to stop the container
 docker-compose down
 ```
