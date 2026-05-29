@@ -15,6 +15,13 @@ WORKDIR /app
 # Copy source code
 COPY . .
 
+# Build-time commit SHA for the in-app version label. `.git` is excluded from
+# the build context (see .dockerignore), so it can't be read here — pass it in:
+#   docker build --build-arg COMMIT_SHA=$(git rev-parse --short HEAD) .
+# Defaults to "dev" when not supplied. next.config.ts reads NEXT_PUBLIC_COMMIT_SHA.
+ARG COMMIT_SHA=dev
+ENV NEXT_PUBLIC_COMMIT_SHA=$COMMIT_SHA
+
 # Build the Next.js application (with `output: "export"` Next will write
 # the static export into `/app/out` as part of `next build`)
 RUN bun run build

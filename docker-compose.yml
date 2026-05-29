@@ -6,6 +6,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      # Stamp the in-app version label. Set COMMIT_SHA in the environment before
+      # building, e.g.  COMMIT_SHA=$(git rev-parse --short HEAD) docker compose build
+      # Falls back to "dev" when unset.
+      args:
+        COMMIT_SHA: ${COMMIT_SHA:-dev}
       cache_from:
         - type=registry,ref=delphitools:latest
     
