@@ -284,6 +284,28 @@ export function AppSidebar() {
               </p>
             </div>
             <div className="pt-4 border-t space-y-2">
+              <h3 className="font-medium text-foreground text-sm">With thanks to</h3>
+              <p className="text-xs text-muted-foreground">
+                Folks who, instead of donating to delphitools, gave to Wikipedia or the EFF
+                on its behalf.
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { name: "Joe Herby", org: "EFF", orgUrl: "https://www.eff.org" },
+                ].map((donor) => (
+                  <a
+                    key={donor.name}
+                    href={donor.orgUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs px-2 py-1 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {donor.name} · {donor.org}<span className="sr-only"> (opens in new tab)</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+            <div className="pt-4 border-t space-y-2">
               <h3 className="font-medium text-foreground text-sm">Built with</h3>
               <div className="flex flex-wrap gap-1.5">
                 {[
