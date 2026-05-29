@@ -136,7 +136,13 @@ booklet imposition lives in **Print Imposer**). Fold types are tracked per surfa
 | Fold type | W | C | I | Pages | Sides | Cut |
 | --------- | :-: | :-: | :-: | ----- | ----- | --- |
 | 8-page mini-zine (slit & fold) | ✅ | ✅ | ✅ | 8 | single | 1 central slit |
-| Accordion / concertina | ✅ | ✅ | ✅ | 4/6/8 (×2 if double-sided) | single or double | none |
+| Accordion / concertina | ✅ | ✅ | ✅ | 4/6/8 (×2 if double-sided) | single or double | none, or 1 horizontal if split |
+
+Accordion sub-options (all three surfaces): panel count **4/6/8**, **double-sided**
+(continuous booklet, short-edge flip), and **split / two-up** (two identical
+half-height copies stacked, cut apart — better panel aspect ratio; slot count
+unchanged). On the CLI: `--panels`, `--double`, `--split` (the CLI imposes images
+only and draws no guide lines, so the split cut is documented, not rendered).
 
 Candidate future folds (single-sheet only — keep multi-sheet in Print Imposer):
 4-page folio · quarter-fold card · tri-fold / gate leaflet · 16-page mini-zine.
