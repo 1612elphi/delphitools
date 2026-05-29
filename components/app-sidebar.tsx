@@ -28,6 +28,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+// Inlined at build time from next.config.ts (git HEAD, env override, or "dev").
+const COMMIT_SHA = process.env.NEXT_PUBLIC_COMMIT_SHA ?? "dev";
+
 export function AppSidebar() {
   const pathname = usePathname();
   const [search, setSearch] = useState("");
@@ -60,14 +63,20 @@ export function AppSidebar() {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Link href="/">
+              <Link href="/" className="group/brand">
                 <div className="flex aspect-square size-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <img src="/delphi-lowlod.png" width={64} height={64} alt="delphitools logo" className="rounded-lg border-2 border-green-800" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
                   <span className="font-semibold">delphitools</span>
                   <span className="text-xs text-muted-foreground">
-                    indie tools
+                    <span className="group-hover/brand:hidden">indie tools</span>
+                    <span
+                      className="hidden font-mono group-hover/brand:inline"
+                      title="Build commit"
+                    >
+                      version: {COMMIT_SHA}
+                    </span>
                   </span>
                 </div>
               </Link>
