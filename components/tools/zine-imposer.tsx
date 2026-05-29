@@ -111,12 +111,13 @@ export function ZineImposerTool() {
   const [foldId, setFoldId] = useState<ZineFoldId>("mini-8");
   const [panels, setPanels] = useState(8);
   const [doubleSided, setDoubleSided] = useState(false);
+  const [split, setSplit] = useState(false);
 
   // Memoise so the layout object is referentially stable across renders —
   // generatePreview depends on it, and an unstable ref would loop the effect.
   const layout: ZineFoldLayout = useMemo(
-    () => buildFoldLayout(foldId, { panels, doubleSided }),
-    [foldId, panels, doubleSided]
+    () => buildFoldLayout(foldId, { panels, doubleSided, split }),
+    [foldId, panels, doubleSided, split]
   );
   const foldOption = getFoldOption(foldId);
   const pageCount = layout.pageCount;
@@ -744,7 +745,7 @@ export function ZineImposerTool() {
             </span>
             <p className="text-sm text-muted-foreground">{foldOption.description}</p>
 
-            {foldOption.configurablePanels || foldOption.supportsDoubleSided ? (
+            {foldOption.configurablePanels || foldOption.supportsDoubleSided || foldOption.supportsSplit ? (
               <div className="space-y-4">
                 {foldOption.configurablePanels && (
                   <div className="space-y-1.5">
@@ -773,6 +774,22 @@ export function ZineImposerTool() {
                       </p>
                     </div>
                     <Switch id="double-sided" checked={doubleSided} onCheckedChange={setDoubleSided} />
+                  </div>
+                )}
+
+                {foldOption.supportsSplit && (
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="split" className="text-sm font-medium cursor-pointer">
+                        Split in half (two-up)
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        {split
+                          ? "Two copies stacked · cut in half · shorter panels"
+                          : "One full-height strip"}
+                      </p>
+                    </div>
+                    <Switch id="split" checked={split} onCheckedChange={setSplit} />
                   </div>
                 )}
               </div>

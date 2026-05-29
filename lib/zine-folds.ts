@@ -88,6 +88,8 @@ export interface ZineFoldOption {
   panelOptions?: number[];
   /** Whether a double-sided variant exists. */
   supportsDoubleSided: boolean;
+  /** Whether a split (two-up) variant exists. */
+  supportsSplit: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -104,6 +106,7 @@ export const ZINE_FOLDS: ZineFoldOption[] = [
       "sheet into an 8-page booklet. Printed single-sided.",
     configurablePanels: false,
     supportsDoubleSided: false,
+    supportsSplit: false,
   },
   {
     id: "accordion",
@@ -116,6 +119,7 @@ export const ZINE_FOLDS: ZineFoldOption[] = [
     configurablePanels: true,
     panelOptions: [4, 6, 8],
     supportsDoubleSided: true,
+    supportsSplit: true,
   },
 ];
 
@@ -191,57 +195,85 @@ export function buildMini8(): ZineFoldLayout {
  * lands at back-view column (N-1-c). Setting back column c' = page (N+1+c')
  * gives back-of-front-panel-(N-1) = page N+1 (first back page), …,
  * back-of-front-panel-0 = page 2N (last). Upright throughout (no rotation).
+ *
+ * Split (two-up): the panels are duplicated into two stacked lanes (rows = 2)
+ * with a single horizontal cut between them. Cutting the sheet apart yields two
+ * identical strips with half-height panels — a better aspect ratio than one tall
+ * strip. The slot count is unchanged because the lanes are copies.
  */
-export function buildAccordion(panels: number, doubleSided: boolean): ZineFoldLayout {
+export function buildAccordion(
+  panels: number,
+  doubleSided: boolean,
+  split: boolean,
+): ZineFoldLayout {
   const n = Math.max(2, Math.round(panels));
+  const rows = split ? 2 : 1;
 
-  const front: ZinePlacement[] = [];
-  for (let c = 0; c < n; c++) {
-    front.push({ page: c + 1, col: c, row: 0, rotation: 0 });
-  }
-  const sides: ZineSide[] = [{ side: "front", placements: front }];
-
-  if (doubleSided) {
-    const back: ZinePlacement[] = [];
-    for (let c = 0; c < n; c++) {
-      back.push({ page: n + 1 + c, col: c, row: 0, rotation: 0 });
+  // Build one printed side. When split, the same panels are duplicated into
+  // every lane (row) so cutting the sheet apart yields identical copies.
+  const buildSide = (side: "front" | "back"): ZineSide => {
+    const placements: ZinePlacement[] = [];
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < n; c++) {
+        const page = side === "front" ? c + 1 : n + 1 + c;
+        placements.push({ page, col: c, row: r, rotation: 0 });
+      }
     }
-    sides.push({ side: "back", placements: back });
-  }
+    return { side, placements };
+  };
 
-  // Vertical creases between panels, alternating valley/mountain.
+  const sides: ZineSide[] = [buildSide("front")];
+  if (doubleSided) sides.push(buildSide("back"));
+
+  // Vertical creases between panels, alternating valley/mountain (full height,
+  // shared by both lanes when split).
   const foldLines: FoldLine[] = [];
   for (let i = 1; i < n; i++) {
     foldLines.push({ axis: "v", pos: i / n, kind: i % 2 === 1 ? "valley" : "mountain" });
   }
 
+  // When split, a single horizontal cut across the full width separates the
+  // two identical strips.
+  const cutLines: CutLine[] = split ? [{ x1: 0, y1: 0.5, x2: 1, y2: 0.5 }] : [];
+
+  const foldStep =
+    `Fold ${split ? "each strip" : "the sheet"} into ${n} equal vertical panels ` +
+    "with an alternating zig-zag (concertina) fold — first crease toward you, " +
+    "next away, and so on.";
+  const cutStep =
+    "Cut the sheet in half along the horizontal red line — two identical strips.";
+
   const instructions = doubleSided
     ? [
         "Print both pages double-sided. In the print dialog choose Two-Sided and " +
           "“Flip on short edge” so the back lines up correctly.",
-        `Fold the sheet into ${n} equal vertical panels with an alternating ` +
-          "zig-zag (concertina) fold — first crease toward you, next away, and so on.",
+        ...(split ? [cutStep] : []),
+        foldStep,
         "Crease each fold firmly.",
-        `Read the front panels left to right (pages 1–${n}), then flip the whole ` +
-          `strip over its right edge and continue on the back (pages ${n + 1}–${n * 2}).`,
+        `Read the front panels left to right (pages 1–${n}), then flip the strip ` +
+          `over its right edge and continue on the back (pages ${n + 1}–${n * 2}).` +
+          (split ? " You now have two identical copies." : ""),
       ]
     : [
         "Print the single page (single-sided, landscape).",
-        `Fold the sheet into ${n} equal vertical panels with an alternating ` +
-          "zig-zag (concertina) fold — first crease toward you, next away, and so on.",
+        ...(split ? [cutStep] : []),
+        foldStep,
         "Crease each fold firmly.",
-        `The panels read left to right (page 1 is the leftmost panel). Unfold ` +
-          "completely to view it as a fold-out panorama.",
+        "The panels read left to right (page 1 is the leftmost panel). Unfold " +
+          (split
+            ? "to view as a fold-out — you now have two identical copies."
+            : "completely to view it as a fold-out panorama."),
       ];
 
   return {
     foldId: "accordion",
     cols: n,
-    rows: 1,
+    rows,
+    // The two split lanes are identical copies, so the slot count is unchanged.
     pageCount: doubleSided ? n * 2 : n,
     sides,
     foldLines,
-    cutLines: [],
+    cutLines,
     duplexFlip: doubleSided ? "short-edge" : undefined,
     instructions,
   };
@@ -250,13 +282,14 @@ export function buildAccordion(panels: number, doubleSided: boolean): ZineFoldLa
 export interface FoldParams {
   panels?: number;
   doubleSided?: boolean;
+  split?: boolean;
 }
 
 /** Resolve a fold id + params into a concrete layout. */
 export function buildFoldLayout(id: ZineFoldId, params: FoldParams = {}): ZineFoldLayout {
   switch (id) {
     case "accordion":
-      return buildAccordion(params.panels ?? 8, params.doubleSided ?? false);
+      return buildAccordion(params.panels ?? 8, params.doubleSided ?? false, params.split ?? false);
     case "mini-8":
     default:
       return buildMini8();
