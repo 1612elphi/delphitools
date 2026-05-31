@@ -342,8 +342,12 @@ export function TextDiffTool() {
             </div>
           ) : (
             <div className="font-mono text-sm leading-6 overflow-x-auto">
-              {diff.map((d, idx) => (
-                <DiffRow key={idx} line={d} wrap={wrap} />
+              {diff.map((d) => (
+                <DiffRow
+                  key={`${d.type}-${"oldLine" in d ? d.oldLine : ""}-${"newLine" in d ? d.newLine : ""}`}
+                  line={d}
+                  wrap={wrap}
+                />
               ))}
             </div>
           )}

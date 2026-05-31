@@ -478,7 +478,7 @@ export const toolCategories: ToolCategory[] = [
 export const allTools = toolCategories.flatMap((category) => category.tools);
 
 // Featured tools for "Delphi's Greatest Hits" section
-export const featuredToolIds = ["qr-genny", "palette-genny", "background-remover"];
+const featuredToolIds = ["qr-genny", "palette-genny", "background-remover"];
 export const featuredTools = featuredToolIds
   .map((id) => allTools.find((tool) => tool.id === id))
   .filter((tool): tool is Tool => tool !== undefined);

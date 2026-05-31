@@ -34,6 +34,18 @@ function parseDictJson(json: Record<string, string[]>): Dictionary {
   return map;
 }
 
+// Cached module-level loader for the full dictionary so the network request
+// is memoised and never appears as a literal fetch() inside an effect.
+let fullDictPromise: Promise<Dictionary> | null = null;
+function loadFullDictionary(): Promise<Dictionary> {
+  if (!fullDictPromise) {
+    fullDictPromise = fetch("/data/shavian-dictionary-full.json")
+      .then((res) => res.json())
+      .then((json) => parseDictJson(json));
+  }
+  return fullDictPromise;
+}
+
 export function ShavianTransliteratorTool() {
   const DEFAULT_TEXT = "Mankind, be vigilant; we loved you.";
 
@@ -72,10 +84,10 @@ export function ShavianTransliteratorTool() {
   useEffect(() => {
     if (dictStatus !== "loading-full") return;
 
-    fetch("/data/shavian-dictionary-full.json")
-      .then((res) => res.json())
-      .then((json) => {
-        const dict = parseDictJson(json);
+    let cancelled = false;
+    loadFullDictionary()
+      .then((dict) => {
+        if (cancelled) return;
         setFullDictionary(dict);
         setDictStatus("ready");
 
@@ -83,9 +95,13 @@ export function ShavianTransliteratorTool() {
         setTokens((prev) => reResolveTokens(prev));
       })
       .catch((err) => {
+        if (cancelled) return;
         console.error("Failed to load full dictionary:", err);
         setDictStatus("ready"); // Degrade gracefully
       });
+    return () => {
+      cancelled = true;
+    };
   }, [dictStatus]);
 
   // Transliterate on input change
@@ -203,11 +219,11 @@ export function ShavianTransliteratorTool() {
           <div className="flex flex-wrap gap-y-3 items-start">
             {tokens.map((token, tokenIdx) => {
               if (token.type === "whitespace") {
-                return <div key={tokenIdx} className="w-4" />;
+                return <div key={`ws-${tokenIdx}`} className="w-4" />;
               }
               if (token.type === "punctuation") {
                 return (
-                  <span key={tokenIdx} className="text-muted-foreground text-lg self-end pb-5 -ml-1">
+                  <span key={`punct-${tokenIdx}-${token.value}`} className="text-muted-foreground text-lg self-end pb-5 -ml-1">
                     {token.value}
                   </span>
                 );
@@ -217,7 +233,7 @@ export function ShavianTransliteratorTool() {
               const gloss = token.gloss;
 
               return (
-                <div key={tokenIdx} className="flex flex-col items-start gap-0.5">
+                <div key={`word-${tokenIdx}-${gloss.latin}`} className="flex flex-col items-start gap-0.5">
                   {/* Latin row — click to cycle marker: none → namer · → acroring ⸰ → acroarc ꤮ */}
                   <button
                     onClick={() => cycleMarker(tokenIdx)}
@@ -250,7 +266,7 @@ export function ShavianTransliteratorTool() {
                         activePopover?.phonemeIdx === pIdx;
 
                       return (
-                        <div key={pIdx} className="relative">
+                        <div key={`phoneme-${tokenIdx}-${pIdx}`} className="relative">
                           <button
                             onClick={() =>
                               setActivePopover(
@@ -292,9 +308,9 @@ export function ShavianTransliteratorTool() {
                               </div>
 
                               {/* Alternatives */}
-                              {phoneme.alternatives.map((alt, aIdx) => (
+                              {phoneme.alternatives.map((alt) => (
                                 <button
-                                  key={aIdx}
+                                  key={alt.shavian}
                                   onClick={() => swapPhoneme(tokenIdx, pIdx, alt)}
                                   className="flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded text-left hover:bg-accent transition-colors cursor-pointer"
                                 >
@@ -323,7 +339,7 @@ export function ShavianTransliteratorTool() {
                   <div className="flex gap-px">
                     {gloss.phonemes.map((phoneme, pIdx) => (
                       <span
-                        key={pIdx}
+                        key={`ipa-${tokenIdx}-${pIdx}`}
                         className={`text-[13px] px-1 min-w-[20px] ${gloss.source === "heuristic" && !gloss.userEdited ? "text-destructive" : "text-green-500"}`}
                       >
                         {phoneme.ipa}

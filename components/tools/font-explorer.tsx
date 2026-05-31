@@ -197,7 +197,7 @@ export function FontExplorerTool() {
             <div className="grid gap-3">
               {SAMPLE_TEXTS.map((text, i) => (
                 <div
-                  key={i}
+                  key={text}
                   className="p-4 rounded-lg border bg-card"
                   style={{
                     fontFamily: fontLoaded ? metadata.fontFamily : "inherit",

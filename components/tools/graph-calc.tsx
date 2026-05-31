@@ -128,9 +128,9 @@ function DiscontinuousPlot({
 
   return (
     <>
-      {segments.map((segment, idx) => (
+      {segments.map((segment) => (
         <Plot.Parametric
-          key={idx}
+          key={`${color}-${segment[0][0]}-${segment[segment.length - 1][0]}`}
           t={[0, segment.length - 1]}
           xy={(t) => {
             const index = Math.min(Math.floor(t), segment.length - 1);
@@ -245,7 +245,7 @@ export function GraphCalcTool() {
 
   // Trace functionality
   const [traceInput, setTraceInput] = useState("");
-  const [traceResults, setTraceResults] = useState<Array<{ x: number; results: Array<{ expression: string; y: number; color: string }> }>>([]);
+  const [traceResults, setTraceResults] = useState<Array<{ x: number; results: Array<{ id: string; expression: string; y: number; color: string }> }>>([]);
 
   // Display toggles
   const [showGrid, setShowGrid] = useState(true);
@@ -404,7 +404,7 @@ export function GraphCalcTool() {
     const x = parseFloat(traceInput);
     if (!Number.isFinite(x)) return;
 
-    const results: Array<{ expression: string; y: number; color: string }> = [];
+    const results: Array<{ id: string; expression: string; y: number; color: string }> = [];
 
     for (const f of functions) {
       if (!f.visible || !f.expression.trim()) continue;
@@ -413,7 +413,7 @@ export function GraphCalcTool() {
 
       const y = evaluator(x);
       if (Number.isFinite(y)) {
-        results.push({ expression: f.expression, y, color: f.color });
+        results.push({ id: f.id, expression: f.expression, y, color: f.color });
       }
     }
 
@@ -866,10 +866,10 @@ export function GraphCalcTool() {
           </div>
           <div className="space-y-2 max-h-40 overflow-y-auto">
             {traceResults.map((trace, traceIdx) => (
-              <div key={traceIdx} className="text-sm font-mono bg-muted/50 rounded px-2 py-1">
+              <div key={`${trace.x}-${traceIdx}`} className="text-sm font-mono bg-muted/50 rounded px-2 py-1">
                 <span className="text-muted-foreground">x = {formatNumber(trace.x)}</span>
-                {trace.results.map((result, resultIdx) => (
-                  <div key={resultIdx} className="flex items-center gap-2 ml-2">
+                {trace.results.map((result) => (
+                  <div key={result.id} className="flex items-center gap-2 ml-2">
                     <div
                       className="w-2 h-2 rounded-full shrink-0"
                       style={{ backgroundColor: result.color }}

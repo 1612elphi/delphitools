@@ -495,8 +495,8 @@ export function TailwindCheatsheetTool() {
                       </tr>
                     </thead>
                     <tbody>
-                      {category.items.map((item, i) => (
-                        <tr key={i} className="border-t hover:bg-muted/20">
+                      {category.items.map((item) => (
+                        <tr key={item.class} className="border-t hover:bg-muted/20">
                           <td className="px-4 py-2">
                             <code className="font-mono text-primary">{item.class}</code>
                             {item.example && (

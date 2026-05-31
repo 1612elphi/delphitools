@@ -175,7 +175,7 @@ function arpabetToPhonemes(arpabets: string[]): Phoneme[] {
  * Transliterate a single word.
  * Namer dots are never auto-detected — they are toggled manually by the user.
  */
-export function transliterateWord(word: string): GlossWord {
+function transliterateWord(word: string): GlossWord {
   // Check shorthands first (the, of, and, to, for)
   const shorthand = SHORTHANDS.get(word.toLowerCase());
   if (shorthand) {

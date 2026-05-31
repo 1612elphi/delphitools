@@ -266,6 +266,8 @@ export function PaletteGennyTool() {
 
   // Handle swatch click/tap
   const handleSwatchClick = useCallback((id: string, e: React.MouseEvent) => {
+    // Ignore clicks that originate inside an opted-out control (e.g. the colour picker).
+    if ((e.target as HTMLElement).closest("[data-no-select]")) return;
     if (isTouchDevice) {
       e.stopPropagation();
       setSelectedId(prev => prev === id ? null : id);
@@ -483,12 +485,12 @@ export function PaletteGennyTool() {
 
                   {/* Center: Colour picker */}
                   <label
+                    data-no-select
                     className={cn(
                       "cursor-pointer p-3 rounded-full transition-all",
                       "bg-white/20 hover:bg-white/40 backdrop-blur-sm",
                       "hover:scale-110 active:scale-95"
                     )}
-                    onClick={(e) => e.stopPropagation()}
                   >
                     <input
                       type="color"

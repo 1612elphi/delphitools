@@ -125,15 +125,6 @@ export function arpabetToIpa(code: string): string | undefined {
   return ARPABET_TO_IPA[normalizeArpabet(code)];
 }
 
-// Shavian character → IPA (for the pronunciation row, derived from Shavian source of truth)
-const SHAVIAN_TO_IPA = new Map<string, string>(
-  SHAVIAN_LETTERS.map((l) => [l.shavian, l.ipa])
-);
-
-export function shavianToIpa(char: string): string {
-  return SHAVIAN_TO_IPA.get(char) ?? char;
-}
-
 // Voicing pairs for consonant alternatives
 export const CONSONANT_GROUPS: string[][] = [
   ["𐑐", "𐑚"],  // peep / bib

@@ -396,7 +396,7 @@ export function matchesNameSearch(size: PaperSize, query: string): boolean {
          size.series.toLowerCase().includes(q);
 }
 
-export function calculateSizeDistance(size: PaperSize, targetWidthMm: number, targetHeightMm: number): number {
+function calculateSizeDistance(size: PaperSize, targetWidthMm: number, targetHeightMm: number): number {
   // Euclidean distance in mm
   const dw = size.widthMm - targetWidthMm;
   const dh = size.heightMm - targetHeightMm;
@@ -431,4 +431,24 @@ export function findClosestSizes(
   });
   withDistance.sort((a, b) => a.distance - b.distance);
   return withDistance.slice(0, limit);
+}
+
+/** Flat array of every paper size from all groups (deduplicated by id, first occurrence wins). */
+const ALL_SIZES: PaperSize[] = (() => {
+  const seen = new Set<string>();
+  const result: PaperSize[] = [];
+  for (const group of paperSizeGroups) {
+    for (const size of group.sizes) {
+      if (!seen.has(size.id)) {
+        seen.add(size.id);
+        result.push(size);
+      }
+    }
+  }
+  return result;
+})();
+
+/** Look up a paper size by id across all groups. */
+export function findPaperSize(id: string): PaperSize | undefined {
+  return ALL_SIZES.find((s) => s.id === id);
 }

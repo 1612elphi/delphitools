@@ -1,0 +1,16 @@
+{
+  "$schema": "https://www.react.doctor/schema/config.json",
+  "ignore": {
+    "files": ["public/**"],
+    "rules": ["react-doctor/nextjs-no-img-element"],
+    "overrides": [
+      {
+        "files": ["app/layout.tsx"],
+        "rules": [
+          "react-doctor/nextjs-no-native-script",
+          "react-doctor/no-danger"
+        ]
+      }
+    ]
+  }
+}

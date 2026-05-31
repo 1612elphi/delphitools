@@ -164,3 +164,17 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Glyph styling for the decorative TAXIWAY split-flap wordmark on the home page.
+   Shared across the top/bottom flap halves; only `top` varies inline. */
+.taxiway-glyph {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1;
+  color: #d4952a;
+  text-shadow: 0 0 10px rgba(212, 149, 42, 0.15);
+}

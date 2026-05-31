@@ -396,28 +396,28 @@ export function PixelPickerTool() {
           {swatches.length > 0 && (
             <div className="flex items-center gap-2 flex-wrap">
               {swatches.map((swatch, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveSwatch(i)}
-                  className={`group relative w-8 h-8 rounded-md border-2 shadow-sm transition-all ${
-                    activeSwatch === i
-                      ? "border-primary ring-2 ring-primary/20 scale-110"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                  style={{ backgroundColor: swatch.hex }}
-                  title={swatch.hex}
-                >
+                <div key={`${i}-${swatch.hex}`} className="group relative">
                   <button
+                    type="button"
+                    onClick={() => setActiveSwatch(i)}
+                    aria-label={`Select swatch ${swatch.hex}`}
+                    className={`block w-8 h-8 rounded-md border-2 shadow-sm transition-all cursor-pointer ${
+                      activeSwatch === i
+                        ? "border-primary ring-2 ring-primary/20 scale-110"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                    style={{ backgroundColor: swatch.hex }}
+                    title={swatch.hex}
+                  />
+                  <button
+                    type="button"
                     aria-label="Remove swatch"
                     className="absolute -top-1 -right-1 size-3.5 rounded-full bg-muted border flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeSwatch(i);
-                    }}
+                    onClick={() => removeSwatch(i)}
                   >
                     <X className="size-2" />
                   </button>
-                </button>
+                </div>
               ))}
               <Button
                 variant="ghost"

@@ -35,6 +35,7 @@ export function ColourNotationSelector() {
         {COLOUR_NOTATIONS.map((n) => (
           <button
             key={n.id}
+            type="button"
             onClick={() => setNotation(n.id)}
             className={`w-full flex flex-col items-start px-2 py-1.5 rounded-md text-left transition-colors ${
               notation === n.id

@@ -5,7 +5,8 @@ import { Upload, Download, X, Maximize, Minimize, GripVertical } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { PaperSizeCombobox, findPaperSize } from "@/components/ui/paper-size-combobox";
+import { PaperSizeCombobox } from "@/components/ui/paper-size-combobox";
+import { findPaperSize } from "@/lib/paper-sizes";
 import { cn } from "@/lib/utils";
 import { PDFDocument, degrees } from "pdf-lib";
 import { PAPER_SIZES, MM_TO_POINTS } from "@/lib/imposition";
@@ -914,7 +915,7 @@ export function ZineImposerTool() {
         <div className="grid grid-cols-4 gap-3">
           {images.map((image, index) => (
             <div
-              key={index}
+              key={image ? image.id : `empty-${index}`}
               draggable={!!image}
               onDragStart={(e) => handleDragStart(e, index)}
               onDragOver={(e) => handleDragOver(e, index)}
@@ -1022,7 +1023,7 @@ export function ZineImposerTool() {
                 array) so a shrinking side count can't index a missing side. */}
             {layout.sides.map((side, i) =>
               previews[i] ? (
-                <div key={i} className="space-y-1">
+                <div key={side.side} className="space-y-1">
                   {layout.sides.length > 1 && (
                     <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                       {side.side}
@@ -1062,7 +1063,7 @@ export function ZineImposerTool() {
         <p className="font-medium text-foreground">How to fold your zine:</p>
         <ol className="list-decimal list-inside space-y-1">
           {layout.instructions.map((step, i) => (
-            <li key={i}>{step}</li>
+            <li key={`${i}-${step}`}>{step}</li>
           ))}
         </ol>
       </div>

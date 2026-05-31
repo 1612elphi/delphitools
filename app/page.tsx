@@ -1,9 +1,19 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Star, ExternalLink } from "lucide-react";
 import { toolCategories, featuredTools } from "@/lib/tools";
 import { DownloadCard } from "@/components/download-card";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+
+export const metadata: Metadata = {
+  title: "delphitools — privacy-first browser tools",
+  description:
+    "A collection of small, low stakes and low effort tools. No logins, no registration, no data collection. Everything runs locally in your browser.",
+};
+
+/** Letters of the TAXIWAY wordmark, pre-keyed so duplicate letters keep stable identities. */
+const TAXIWAY_TILES = "TAXIWAY".split("").map((ch, i) => ({ ch, id: `tile-${i}` }));
 
 export default function Home() {
   return (
@@ -163,9 +173,9 @@ export default function Home() {
                   className="inline-flex gap-[5px] p-[8px_10px] rounded-lg"
                   style={{ background: '#161513' }}
                 >
-                  {'TAXIWAY'.split('').map((ch, i) => (
+                  {TAXIWAY_TILES.map((tile) => (
                     <div
-                      key={i}
+                      key={tile.id}
                       className="relative flex flex-col gap-[1px] overflow-hidden"
                       style={{ width: 34, height: 46 }}
                     >
@@ -177,21 +187,8 @@ export default function Home() {
                           boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
                         }}
                       >
-                        <span
-                          style={{
-                            fontFamily: "var(--font-mono)",
-                            fontWeight: 700,
-                            fontSize: 22,
-                            color: '#d4952a',
-                            textShadow: '0 0 10px rgba(212, 149, 42, 0.15)',
-                            lineHeight: 1,
-                            position: 'absolute',
-                            top: '100%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                          }}
-                        >
-                          {ch}
+                        <span className="taxiway-glyph" style={{ top: '100%' }}>
+                          {tile.ch}
                         </span>
                       </div>
                       <div
@@ -202,21 +199,8 @@ export default function Home() {
                           boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.02)',
                         }}
                       >
-                        <span
-                          style={{
-                            fontFamily: "var(--font-mono)",
-                            fontWeight: 700,
-                            fontSize: 22,
-                            color: '#d4952a',
-                            textShadow: '0 0 10px rgba(212, 149, 42, 0.15)',
-                            lineHeight: 1,
-                            position: 'absolute',
-                            top: '0%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                          }}
-                        >
-                          {ch}
+                        <span className="taxiway-glyph" style={{ top: '0%' }}>
+                          {tile.ch}
                         </span>
                       </div>
                     </div>
@@ -352,7 +336,7 @@ export default function Home() {
                     style={{
                       color: '#00ff41',
                       fontFamily: "var(--font-mono)",
-                      letterSpacing: '0.1em',
+                      letterSpacing: '0.05em',
                       textShadow: '0 0 7px #00ff41, 0 0 20px rgba(0, 255, 65, 0.4)',
                     }}
                   >

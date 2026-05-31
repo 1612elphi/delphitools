@@ -195,6 +195,10 @@ export function HarmonyGennyTool() {
     setColours(result);
   }, [baseColour, harmonyType]);
 
+  // Pair each swatch with its position so render keys stay unique even when a
+  // monochromatic harmony clamps two lightness levels to the same hex (angle is 0 for all).
+  const swatches = colours?.map((colour, position) => ({ colour, position })) ?? [];
+
   const copyValue = async (value: string, label: string) => {
     await navigator.clipboard.writeText(value);
     setCopied(label);
@@ -318,9 +322,9 @@ export function HarmonyGennyTool() {
           </div>
 
           <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(colours.length, 5)}, 1fr)` }}>
-            {colours.map((colour, i) => (
+            {swatches.map(({ colour, position }) => (
               <button
-                key={i}
+                key={`${colour.hex}-${position}`}
                 onClick={() => copyValue(formatColour(colour.hex, notation), colour.hex)}
                 className="p-4 rounded-lg border bg-card hover:border-primary/50 transition-colors"
               >

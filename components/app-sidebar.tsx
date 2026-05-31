@@ -42,16 +42,14 @@ export function AppSidebar() {
       t.description.toLowerCase().includes(query)
   );
 
-  const filteredCategories = toolCategories
-    .map((cat) => ({
-      ...cat,
-      tools: cat.tools.filter(
-        (t) =>
-          t.name.toLowerCase().includes(query) ||
-          t.description.toLowerCase().includes(query)
-      ),
-    }))
-    .filter((cat) => cat.tools.length > 0);
+  const filteredCategories = toolCategories.flatMap((cat) => {
+    const tools = cat.tools.filter(
+      (t) =>
+        t.name.toLowerCase().includes(query) ||
+        t.description.toLowerCase().includes(query)
+    );
+    return tools.length > 0 ? [{ ...cat, tools }] : [];
+  });
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
@@ -85,7 +83,7 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
 
-      <div className="px-2 py-2 border-b border-sidebar-border group-data-[collapsible=icon]:hidden">
+      <div className="p-2 border-b border-sidebar-border group-data-[collapsible=icon]:hidden">
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
           <Input
@@ -97,6 +95,7 @@ export function AppSidebar() {
           />
           {search && (
             <button
+              type="button"
               onClick={() => setSearch("")}
               className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               aria-label="Clear search"
@@ -129,9 +128,9 @@ export function AppSidebar() {
           )}
 
         {query && filteredFeatured.length === 0 && filteredCategories.length === 0 && (
-          <div className="px-4 py-8 text-center text-sm text-muted-foreground" role="status" aria-live="polite">
+          <output className="block px-4 py-8 text-center text-sm text-muted-foreground" aria-live="polite">
             No tools found
-          </div>
+          </output>
         )}
 
         {filteredFeatured.length > 0 && (
@@ -199,7 +198,7 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border">
         <Dialog>
           <DialogTrigger asChild>
-            <button className="w-full p-2 hover:bg-sidebar-accent rounded-md transition-colors">
+            <button type="button" className="w-full p-2 hover:bg-sidebar-accent rounded-md transition-colors">
               <div className="text-xs text-muted-foreground text-left group-data-[collapsible=icon]:hidden">
                 <p>No logins. No tracking.</p>
                 <p className="mt-1 opacity-70">Long live the handmade web.</p>

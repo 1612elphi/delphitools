@@ -210,13 +210,15 @@ export function RegexTesterTool() {
               highlightedText.map((part, i) =>
                 part.isMatch ? (
                   <mark
-                    key={i}
+                    key={`m-${i}-${part.text}`}
                     className="bg-primary/30 text-foreground rounded px-0.5"
                   >
                     {part.text}
                   </mark>
                 ) : (
-                  <span key={i}>{part.text}</span>
+                  <span key={`t-${i}-${part.text}`}>
+                    {part.text}
+                  </span>
                 )
               )
             )}
@@ -246,7 +248,7 @@ export function RegexTesterTool() {
           <div className="grid gap-2">
             {result.matches.map((match, index) => (
               <div
-                key={index}
+                key={`${match.index}-${match.match}`}
                 className="p-3 rounded-lg border bg-card font-mono text-sm"
               >
                 <div className="flex items-center gap-4">
@@ -260,7 +262,7 @@ export function RegexTesterTool() {
                   <div className="mt-2 pt-2 border-t text-xs">
                     <span className="text-muted-foreground">Groups: </span>
                     {match.groups.map((g, i) => (
-                      <span key={i} className="mr-2">
+                      <span key={`${match.index}-g${i}-${g}`} className="mr-2">
                         ${i + 1}: <strong>{g}</strong>
                       </span>
                     ))}

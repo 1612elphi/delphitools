@@ -173,6 +173,10 @@ export function BaseConverterTool() {
   const hasValue = values.dec !== "";
   const decimalValue = parseInt(values.dec, 10);
 
+  // Pair each bit with its fixed position so the rendered key is data-derived
+  // (the position is stable identity for the never-reordered 16-bit row).
+  const bitCells = getBits(values.dec).map((on, position) => ({ on, position }));
+
   return (
     <div className="space-y-6">
       <Tabs defaultValue="converter">
@@ -231,17 +235,18 @@ export function BaseConverterTool() {
             <div className="space-y-3">
               <Label>Bit Toggle (16-bit)</Label>
               <div className="flex gap-1 flex-wrap">
-                {getBits(values.dec).map((bit, idx) => (
+                {bitCells.map((cell) => (
                   <button
-                    key={idx}
-                    onClick={() => toggleBit(idx)}
+                    key={`bit-${cell.position}`}
+                    type="button"
+                    onClick={() => toggleBit(cell.position)}
                     className={`w-8 h-10 text-sm font-mono rounded border transition-colors ${
-                      bit
+                      cell.on
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted hover:bg-accent"
                     }`}
                   >
-                    {bit ? "1" : "0"}
+                    {cell.on ? "1" : "0"}
                   </button>
                 ))}
               </div>

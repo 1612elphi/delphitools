@@ -430,7 +430,7 @@ export function SciCalcTool() {
               <div className="space-y-2">
                 {history.map((item, idx) => (
                   <button
-                    key={idx}
+                    key={`${item.expression}=${item.result}-${idx}`}
                     onClick={() => loadFromHistory(item)}
                     className="w-full text-right p-2 rounded hover:bg-accent transition-colors"
                   >
@@ -449,8 +449,8 @@ export function SciCalcTool() {
       {/* Button Grid */}
       <div className="grid gap-2">
         {/* Main rows */}
-        {BUTTON_ROWS.map((row, rowIdx) => (
-          <div key={rowIdx} className="grid grid-cols-5 gap-2">
+        {BUTTON_ROWS.map((row) => (
+          <div key={row.join("-")} className="grid grid-cols-5 gap-2">
             {row.map((btn) => renderButton(btn))}
           </div>
         ))}

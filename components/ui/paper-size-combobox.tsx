@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useId, useState, useMemo } from "react";
 import { Check, ChevronsUpDown, ScanSearch } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -18,27 +18,7 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { paperSizeGroups, type PaperSize } from "@/lib/paper-sizes";
-
-/** Flat array of every paper size from all groups (deduplicated by id, first occurrence wins). */
-const ALL_SIZES: PaperSize[] = (() => {
-  const seen = new Set<string>();
-  const result: PaperSize[] = [];
-  for (const group of paperSizeGroups) {
-    for (const size of group.sizes) {
-      if (!seen.has(size.id)) {
-        seen.add(size.id);
-        result.push(size);
-      }
-    }
-  }
-  return result;
-})();
-
-/** Look up a paper size by id across all groups. */
-export function findPaperSize(id: string): PaperSize | undefined {
-  return ALL_SIZES.find((s) => s.id === id);
-}
+import { paperSizeGroups, findPaperSize } from "@/lib/paper-sizes";
 
 interface PaperSizeComboboxProps {
   value: string;
@@ -66,6 +46,7 @@ export function PaperSizeCombobox({
   triggerClassName,
 }: PaperSizeComboboxProps) {
   const [open, setOpen] = useState(false);
+  const listId = useId();
 
   const selectedSize = useMemo(() => findPaperSize(value), [value]);
   const displayLabel =
@@ -87,13 +68,15 @@ export function PaperSizeCombobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-controls={listId}
+          aria-haspopup="dialog"
           className={cn("h-9 justify-between font-normal", triggerClassName)}
         >
           <span className="truncate">{displayLabel}</span>
-          <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+          <ChevronsUpDown className="ml-2 size-3.5 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className={cn("p-0 w-[280px]", className)} align="start">
+      <PopoverContent id={listId} className={cn("p-0 w-[280px]", className)} align="start">
         <Command>
           <CommandInput placeholder="Search paper sizes…" />
           <CommandList>

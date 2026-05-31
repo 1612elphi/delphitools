@@ -1310,9 +1310,9 @@ export function PdfPreflightTool() {
                   <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     Page {currentPage} issues
                   </h4>
-                  {pageIssues.map((issue, idx) => (
+                  {pageIssues.map((issue) => (
                     <div
-                      key={idx}
+                      key={`${issue.category}-${issue.severity}-${issue.message}`}
                       className="flex items-start gap-2 rounded-md border px-3 py-2"
                     >
                       {issue.severity === "error" && (
@@ -1424,9 +1424,9 @@ export function PdfPreflightTool() {
                 <div>
                   <h4 className="text-sm font-semibold mb-2">Fonts</h4>
                   <div className="space-y-1">
-                    {report.fonts.map((font, idx) => (
+                    {report.fonts.map((font) => (
                       <div
-                        key={idx}
+                        key={`${font.name}-${font.type ?? ""}-${font.embedded}`}
                         className="flex items-center justify-between text-sm gap-2"
                       >
                         <span className="truncate">
@@ -1498,9 +1498,9 @@ export function PdfPreflightTool() {
                         {CATEGORY_LABELS[category]}
                       </h5>
                       <div className="space-y-2">
-                        {catIssues.map((issue, idx) => (
+                        {catIssues.map((issue) => (
                           <button
-                            key={idx}
+                            key={`${issue.page ?? "x"}-${issue.severity}-${issue.message}`}
                             type="button"
                             className={cn(
                               "w-full text-left rounded-lg border p-3 transition-colors",
@@ -1563,9 +1563,9 @@ export function PdfPreflightTool() {
                         Page {page}
                       </button>
                       <div className="space-y-1.5">
-                        {pageIssues.map((issue, idx) => (
+                        {pageIssues.map((issue) => (
                           <button
-                            key={idx}
+                            key={`${issue.severity}-${issue.category}-${issue.message}`}
                             type="button"
                             className="w-full text-left flex items-start gap-2 rounded-md px-2 py-1.5 hover:bg-muted/50 cursor-pointer transition-colors"
                             onClick={() => setCurrentPage(page)}

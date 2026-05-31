@@ -18,6 +18,46 @@ import { Input } from "@/components/ui/input";
 
 const STORAGE_KEY = "delphitools-scratchpad";
 
+function ToolButton({ onClick, children, title }: { onClick: () => void; children: React.ReactNode; title?: string }) {
+  return (
+    <Button
+      onClick={onClick}
+      title={title}
+      variant="outline"
+      size="sm"
+    >
+      {children}
+    </Button>
+  );
+}
+
+function PanelHeader({
+  id,
+  icon: Icon,
+  label,
+  activePanel,
+  setActivePanel,
+}: {
+  id: string;
+  icon: React.ElementType;
+  label: string;
+  activePanel: string | null;
+  setActivePanel: React.Dispatch<React.SetStateAction<string | null>>;
+}) {
+  return (
+    <button
+      onClick={() => setActivePanel(activePanel === id ? null : id)}
+      className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+        activePanel === id ? "bg-primary/10 text-primary" : "hover:bg-muted"
+      }`}
+    >
+      <Icon className="size-4" />
+      <span className="font-medium text-sm">{label}</span>
+      <ChevronDown className={`size-3 ml-1 transition-transform ${activePanel === id ? "rotate-180" : ""}`} />
+    </button>
+  );
+}
+
 export function MarkdownWriterTool() {
   const [content, setContent] = useState("");
   const [copied, setCopied] = useState(false);
@@ -215,39 +255,15 @@ export function MarkdownWriterTool() {
     await navigator.clipboard.writeText(extractedItems.join("\n"));
   };
 
-  const ToolButton = ({ onClick, children, title }: { onClick: () => void; children: React.ReactNode; title?: string }) => (
-    <Button
-      onClick={onClick}
-      title={title}
-      variant="outline"
-      size="sm"
-    >
-      {children}
-    </Button>
-  );
-
-  const PanelHeader = ({ id, icon: Icon, label }: { id: string; icon: React.ElementType; label: string }) => (
-    <button
-      onClick={() => setActivePanel(activePanel === id ? null : id)}
-      className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-        activePanel === id ? "bg-primary/10 text-primary" : "hover:bg-muted"
-      }`}
-    >
-      <Icon className="size-4" />
-      <span className="font-medium text-sm">{label}</span>
-      <ChevronDown className={`size-3 ml-1 transition-transform ${activePanel === id ? "rotate-180" : ""}`} />
-    </button>
-  );
-
   return (
     <div className="space-y-4">
       {/* Tool Panels */}
       <div className="flex flex-wrap gap-2">
-        <PanelHeader id="case" icon={CaseSensitive} label="Case" />
-        <PanelHeader id="lines" icon={ArrowUpDown} label="Lines" />
-        <PanelHeader id="cleanup" icon={Sparkles} label="Clean Up" />
-        <PanelHeader id="find" icon={Search} label="Find & Replace" />
-        <PanelHeader id="extract" icon={FileText} label="Extract" />
+        <PanelHeader id="case" icon={CaseSensitive} label="Case" activePanel={activePanel} setActivePanel={setActivePanel} />
+        <PanelHeader id="lines" icon={ArrowUpDown} label="Lines" activePanel={activePanel} setActivePanel={setActivePanel} />
+        <PanelHeader id="cleanup" icon={Sparkles} label="Clean Up" activePanel={activePanel} setActivePanel={setActivePanel} />
+        <PanelHeader id="find" icon={Search} label="Find & Replace" activePanel={activePanel} setActivePanel={setActivePanel} />
+        <PanelHeader id="extract" icon={FileText} label="Extract" activePanel={activePanel} setActivePanel={setActivePanel} />
       </div>
 
       {/* Case Panel */}
@@ -354,8 +370,8 @@ export function MarkdownWriterTool() {
                 </Button>
               </div>
               <div className="max-h-32 overflow-auto p-2 rounded bg-muted text-sm font-mono">
-                {extractedItems.map((item, i) => (
-                  <div key={i} className="truncate">{item}</div>
+                {extractedItems.map((item) => (
+                  <div key={item} className="truncate">{item}</div>
                 ))}
               </div>
             </div>

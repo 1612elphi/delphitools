@@ -1019,7 +1019,7 @@ export function ImageConverterTool() {
           <div className="grid gap-3">
             {images.map((file, index) => (
               <div
-                key={index}
+                key={`${file.name}-${file.size}-${file.lastModified}`}
                 className="flex items-center gap-4 p-4 rounded-lg border bg-card"
               >
                 <div className="size-12 rounded bg-muted flex items-center justify-center overflow-hidden">
@@ -1078,9 +1078,9 @@ export function ImageConverterTool() {
           </div>
 
           <div className="grid gap-3">
-            {converted.map((img, index) => (
+            {converted.map((img) => (
               <div
-                key={index}
+                key={img.url}
                 className="flex items-center gap-4 p-4 rounded-lg border bg-card"
               >
                 <div className="size-12 rounded bg-muted flex items-center justify-center overflow-hidden">

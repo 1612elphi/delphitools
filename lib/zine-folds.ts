@@ -140,7 +140,7 @@ export function getFoldOption(id: ZineFoldId): ZineFoldOption {
  * Folded along the creases and cut along the central horizontal slit (middle
  * two columns only), it reads pages 1..8 in order. Preserved verbatim.
  */
-export function buildMini8(): ZineFoldLayout {
+function buildMini8(): ZineFoldLayout {
   const placements: ZinePlacement[] = [
     // Top row (rotated 180°): pages 5, 4, 3, 2
     { page: 5, col: 0, row: 0, rotation: 180 },
@@ -201,7 +201,7 @@ export function buildMini8(): ZineFoldLayout {
  * identical strips with half-height panels — a better aspect ratio than one tall
  * strip. The slot count is unchanged because the lanes are copies.
  */
-export function buildAccordion(
+function buildAccordion(
   panels: number,
   doubleSided: boolean,
   split: boolean,

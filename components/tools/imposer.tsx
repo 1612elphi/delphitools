@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useId, useRef } from "react";
 import {
   Upload,
   Download,
@@ -37,7 +37,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PaperSizeCombobox, findPaperSize } from "@/components/ui/paper-size-combobox";
+import { PaperSizeCombobox } from "@/components/ui/paper-size-combobox";
+import { findPaperSize } from "@/lib/paper-sizes";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -134,6 +135,7 @@ export function ImposerTool() {
   const [generateProgress, setGenerateProgress] = useState("");
   const [printGuideOpen, setPrintGuideOpen] = useState(false);
   const [layoutOpen, setLayoutOpen] = useState(false);
+  const layoutListId = useId();
 
   // --- Paginated stack state ---
   const [activeSheet, setActiveSheet] = useState(0);
@@ -627,6 +629,8 @@ export function ImposerTool() {
                 type="button"
                 role="combobox"
                 aria-expanded={layoutOpen}
+                aria-controls={layoutListId}
+                aria-haspopup="listbox"
                 className="flex items-center gap-3 w-full h-auto px-3 py-2.5 rounded-md border border-input bg-background text-left hover:bg-muted transition-colors"
               >
                 {(() => {
@@ -653,7 +657,8 @@ export function ImposerTool() {
               className="p-1 w-[var(--radix-popover-trigger-width)]"
               align="start"
             >
-              <div role="listbox">
+              {/* react-doctor-disable-next-line react-doctor/prefer-tag-over-role -- custom ARIA listbox; <datalist> cannot hold rich options (icon + name + description) */}
+              <div id={layoutListId} role="listbox">
                 {IMPOSITION_LAYOUTS.map((l) => {
                   const IconComp = LAYOUT_ICONS[l.id];
                   const isSelected = l.id === layoutId;
@@ -1507,7 +1512,7 @@ function BlankModeSheet({
       )}
 
       {/* Page cells */}
-      {placements.map((p, i) => {
+      {placements.map((p) => {
         const left = (p.x / sheetW) * 100;
         const top = (p.y / sheetH) * 100;
         const width = (p.width / sheetW) * 100;
@@ -1515,7 +1520,7 @@ function BlankModeSheet({
 
         return (
           <div
-            key={i}
+            key={`${p.x}-${p.y}`}
             className="absolute flex flex-col items-center justify-center"
             style={{
               left: `${left}%`,
