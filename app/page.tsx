@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Star, ExternalLink } from "lucide-react";
 import { toolCategories, featuredTools } from "@/lib/tools";
 import { DownloadCard } from "@/components/download-card";
+import { StickerWall } from "@/components/sticker-wall";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -358,6 +359,9 @@ export default function Home() {
           </a>
         </div>
       </section>
+
+      {/* Stickers */}
+      <StickerWall />
 
       {/* About Section */}
       <div className="mt-16 pt-8 border-t">

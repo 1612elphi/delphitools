@@ -256,6 +256,246 @@
   border-top: 1px solid var(--border);
   margin: 1.2em 0;
 }
+.dt-editor s {
+  text-decoration-color: var(--muted-foreground);
+}
+.dt-editor .task-list-item {
+  list-style: none;
+  display: flex;
+  gap: 0.45em;
+}
+.dt-editor .task-checkbox {
+  flex-shrink: 0;
+  cursor: pointer;
+  user-select: none;
+}
+.dt-editor .task-content {
+  flex: 1;
+  min-width: 0;
+}
+.dt-editor .task-content > * {
+  margin: 0;
+}
+
+/* ── Pride Month styling (sidebar brand mark) ───────────────────────────
+   Enabled at build time via NEXT_PUBLIC_PRIDE (auto-on during June). */
+
+/* "delphitools" wordmark → flowing rainbow gradient text. Solid colour by
+   default; the gradient + text-clip only apply where background-clip:text is
+   supported, so the brand never vanishes if clipping fails. A theme-coloured
+   stroke keeps the letters legible across the low-contrast bands (yellow on the
+   cream theme, blue/purple on dark). */
+.pride-wordmark {
+  color: var(--foreground);
+}
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .pride-wordmark {
+    background: linear-gradient(
+      90deg,
+      #e40303,
+      #ff8c00,
+      #ffed00,
+      #008026,
+      #004dff,
+      #750787,
+      #e40303
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    paint-order: stroke fill;
+    -webkit-text-stroke: 0.5px color-mix(in srgb, var(--foreground) 60%, transparent);
+    animation: pride-flow 6s linear infinite;
+  }
+}
+
+/* "trans rights" tagline → trans-flag blue/pink. The light-theme stops are
+   deepened so the small text clears WCAG AA on the cream background; the bright
+   flag colours are kept for dark mode (where they already exceed it). */
+.pride-tagline {
+  font-weight: 600;
+  color: var(--foreground);
+}
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .pride-tagline {
+    background: linear-gradient(90deg, #1c6e93, #a8325a, #1c6e93);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    animation: pride-flow 6s linear infinite;
+  }
+  /* background-image (not the `background` shorthand) so it doesn't reset
+     background-clip back to border-box and paint a solid bar. */
+  .dark .pride-tagline {
+    background-image: linear-gradient(90deg, #5bcefa, #f5a9b8, #5bcefa);
+  }
+}
+
+/* Logo ring cycles through the flag colours. */
+.pride-ring {
+  border-color: #e40303;
+  animation: pride-ring-cycle 6s linear infinite;
+}
+
+@keyframes pride-flow {
+  to {
+    background-position: 200% center;
+  }
+}
+
+@keyframes pride-ring-cycle {
+  0% { border-color: #e40303; box-shadow: 0 0 7px #e4030366; }
+  16% { border-color: #ff8c00; box-shadow: 0 0 7px #ff8c0066; }
+  33% { border-color: #ffed00; box-shadow: 0 0 7px #ffed0066; }
+  50% { border-color: #008026; box-shadow: 0 0 7px #00802666; }
+  66% { border-color: #004dff; box-shadow: 0 0 7px #004dff66; }
+  83% { border-color: #750787; box-shadow: 0 0 7px #75078766; }
+  100% { border-color: #e40303; box-shadow: 0 0 7px #e4030366; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pride-wordmark,
+  .pride-tagline,
+  .pride-ring {
+    animation: none;
+  }
+}
+
+/* Forced-colors / high-contrast: drop the gradient-text trick so the brand
+   stays visible in the system palette. */
+@media (forced-colors: active) {
+  .pride-wordmark,
+  .pride-tagline {
+    background: none;
+    color: CanvasText;
+    -webkit-text-fill-color: CanvasText;
+    -webkit-text-stroke: 0;
+    animation: none;
+  }
+}
+
+/* ── Sticker wall (home page + QR tool) ──────────────────────────────────
+   A single die-cut PNG, rendered twice: the stuck "face" (clipped from the
+   fold line down) and a vertically-mirrored "flap" whose grey underside is
+   synthesised from the PNG's own alpha (#sticker-back). One --peel variable,
+   animated by GSAP, drives the face clip, the flap clip and the welded flap
+   offset together so it folds back on itself like a real sticker.
+   Technique adapted from React Bits "Sticker Peel". */
+.sticker-btn {
+  /* clip padding so the die-cut edges aren't shaved; --peel = fold position */
+  --p: 10px;
+  --peel-start: calc(-1 * var(--p));
+  --peel-end: calc(100% + var(--p));
+  --peel: 0%;
+  display: block;
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+/* the actively touched sticker rises above its neighbours */
+.sticker-btn:hover,
+.sticker-btn:focus-visible {
+  z-index: 5;
+}
+.sticker-btn.is-peeling {
+  z-index: 30;
+  cursor: default;
+}
+.sticker-btn:focus-visible {
+  outline: none;
+}
+.sticker-btn:focus-visible .sticker-fold {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+/* GSAP animates this layer's transform (lift toward viewer); the drop-shadow
+   follows the die-cut alpha and grows with the lift's scale. */
+.peel-lift {
+  display: block;
+  transition: transform 0.25s ease;
+  will-change: transform;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.28));
+}
+.dark .peel-lift {
+  filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.5));
+}
+.sticker-btn:not(.is-peeling):hover .peel-lift {
+  transform: translateY(-5px) scale(1.03);
+}
+.sticker-btn.is-peeling .peel-lift {
+  transition: none;
+}
+
+/* The resting tilt also sets the axis the sticker peels along. */
+.sticker-fold {
+  position: relative;
+  display: block;
+  transform: rotate(var(--rot));
+  transform-origin: center;
+}
+
+/* Face: the part still stuck down — visible from the fold line to the bottom. */
+.sticker-face {
+  display: block;
+  clip-path: polygon(
+    var(--peel-start) var(--peel),
+    var(--peel-end) var(--peel),
+    var(--peel-end) var(--peel-end),
+    var(--peel-start) var(--peel-end)
+  );
+}
+
+/* Flap: the mirrored grey underside that curls back, welded to the fold line. */
+.sticker-flap {
+  position: absolute;
+  left: 0;
+  top: calc(-100% + 2 * var(--peel) - 1px);
+  width: 100%;
+  height: 100%;
+  transform: scaleY(-1);
+  clip-path: polygon(
+    var(--peel-start) var(--peel-start),
+    var(--peel-end) var(--peel-start),
+    var(--peel-end) var(--peel),
+    var(--peel-start) var(--peel)
+  );
+}
+.sticker-flap .sticker-img {
+  filter: url(#sticker-back);
+}
+
+.sticker-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peel-lift {
+    transition: none;
+  }
+  .sticker-btn:not(.is-peeling):hover .peel-lift {
+    transform: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .sticker-btn:focus-visible .sticker-fold {
+    outline-color: Highlight;
+  }
+}
 
 /* Focus-mode decorations */
 .pm-para-active {

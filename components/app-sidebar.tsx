@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Home, Info, Search, Star, X } from "lucide-react";
 
 import { toolCategories, featuredTools } from "@/lib/tools";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import {
   Sidebar,
@@ -30,6 +31,9 @@ import {
 
 // Inlined at build time from next.config.ts (git HEAD, env override, or "dev").
 const COMMIT_SHA = process.env.NEXT_PUBLIC_COMMIT_SHA ?? "dev";
+
+// Pride Month styling, baked in at build time (auto-on in June). See next.config.ts.
+const PRIDE = process.env.NEXT_PUBLIC_PRIDE === "1";
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -63,12 +67,30 @@ export function AppSidebar() {
             >
               <Link href="/" className="group/brand">
                 <div className="flex aspect-square size-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <img src="/delphi-lowlod.png" width={64} height={64} alt="delphitools logo" className="rounded-lg border-2 border-green-800" />
+                  <img
+                    src="/delphi-lowlod.png"
+                    width={64}
+                    height={64}
+                    alt="delphitools logo"
+                    className={cn(
+                      "rounded-lg border-2",
+                      PRIDE ? "pride-ring" : "border-green-800"
+                    )}
+                  />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">delphitools</span>
+                  <span className={cn("font-semibold", PRIDE && "pride-wordmark")}>
+                    delphitools
+                  </span>
                   <span className="text-xs text-muted-foreground">
-                    <span className="group-hover/brand:hidden">indie tools</span>
+                    <span
+                      className={cn(
+                        "group-hover/brand:hidden",
+                        PRIDE && "pride-tagline"
+                      )}
+                    >
+                      {PRIDE ? "trans rights" : "indie tools"}
+                    </span>
                     <span
                       className="hidden font-mono group-hover/brand:inline"
                       title="Build commit"
