@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored third-party code (MIT pandoc-wasm wrapper) — not ours to lint.
+    "lib/pandoc/pandoc-core.js",
   ]),
 ]);
 

@@ -10,6 +10,7 @@ import {
   Hash,
   BookOpen,
   FileType,
+  FileType2,
   QrCode,
   Barcode,
   Tag,
@@ -260,6 +261,22 @@ export const toolCategories: ToolCategory[] = [
     id: "typo-text",
     name: "Typography & Text",
     tools: [
+      {
+        id: "doc-converter",
+        name: "Document Converter",
+        description: "Convert documents between Markdown, HTML, Word, LaTeX, EPUB and more",
+        icon: FileType2,
+        href: "/tools/doc-converter",
+        new: true,
+      },
+      {
+        id: "text-editor",
+        name: "Text Editor",
+        description: "Distraction-free Markdown writer",
+        icon: PenLine,
+        href: "/tools/text-editor",
+        new: true,
+      },
       {
         id: "font-explorer",
         name: "Font File Explorer",

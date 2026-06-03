@@ -57,6 +57,8 @@ const toolComponents: Record<string, React.ComponentType> = {
   "palette-extractor": dynamic(() => import("@/components/tools/palette-extractor").then(mod => mod.PaletteExtractorTool)),
   "text-diff": dynamic(() => import("@/components/tools/text-diff").then(mod => mod.TextDiffTool)),
   "decoder": dynamic(() => import("@/components/tools/decoder").then(mod => mod.DecoderTool)),
+  "doc-converter": dynamic(() => import("@/components/tools/doc-converter").then(mod => mod.DocConverterTool)),
+  "text-editor": dynamic(() => import("@/components/tools/text-editor").then(mod => mod.TextEditorTool)),
 };
 
 interface ToolPageProps {

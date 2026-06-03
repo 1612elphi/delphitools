@@ -23,11 +23,11 @@ applicable on this surface (hardware/native or format constraint).
 
 ## Summary
 
-- **Tools tracked:** 53
+- **Tools tracked:** 55
 - **On all three surfaces:** 33
-- **Web:** 50 · **CLI:** 38 · **iOS:** 51
+- **Web:** 52 · **CLI:** 38 · **iOS:** 51
 - iOS-exclusive (native/hardware): Colour Camera, Document Scanner, Font Installer, NFC Reader/Writer
-- Web-exclusive: Palette Extractor, Pixel Picker, Cipher Decoder
+- Web-exclusive: Palette Extractor, Pixel Picker, Cipher Decoder, Document Converter (pandoc.wasm is GPL — incompatible with the App Store, and won't run on-device on iOS)
 - CLI-only sub-feature: `hash` (text hashing, folded into Encoding Tools elsewhere)
 
 ---
@@ -77,6 +77,7 @@ applicable on this surface (hardware/native or format constraint).
 
 | Tool (web ID) | W | C | I | Notes |
 | ------------- | :-: | :-: | :-: | ----- |
+| Document Converter (`doc-converter`) | ✅ | 🚧 | 🚧 | Web: pandoc 3.9 wasm, any-to-any (md/html/docx/odt/epub/latex/rst/org/…). CLI (planned): comrak core + optional system `pandoc` for the long tail (stays 0BSD). iOS (planned): native subset only — GPL ✗ App Store (VLC precedent) + no on-device wasm runtime |
 | Font File Explorer (`font-explorer`) | ✅ | ✅ `font-info` | ✅ | |
 | Glyph Browser (`glyph-browser`) | ✅ | ✅ `glyph` | ✅ | |
 | Line Height Calculator (`line-height-calc`) | ✅ | ✅ `line-height` | ✅ | |
@@ -104,7 +105,8 @@ applicable on this surface (hardware/native or format constraint).
 | Meta Tag Generator (`meta-tag-genny`) | ✅ | ✅ `meta` | ✅ | |
 | Regex Tester (`regex-tester`) | ✅ | ✅ `regex` | ✅ | |
 | Tailwind Cheat Sheet (`tailwind-cheatsheet`) | ✅ | ❌ | ✅ | |
-| Text Scratchpad (`markdown-writer`) | ✅ | ❌ | ✅ | |
+| Text Scratchpad (`markdown-writer`) | ✅ | ❌ | ✅ | plain textarea + text-manipulation utilities |
+| Text Editor (`text-editor`) | ✅ | ❌ | ❌ | distraction-free live-preview Markdown writer (raw ProseMirror); per-block gutter, focus modes, exports (md/html/clipboard/pdf). v1 = CommonMark + lists |
 | Cipher Decoder (`decoder`) | ✅ | ❌ | ❌ | classical ciphers (distinct from base64/url decode) |
 | NFC Reader/Writer (`nfc-reader-writer`) | ➖ | ➖ | ✅ | iOS-only (NFC hardware) |
 

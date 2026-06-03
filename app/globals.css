@@ -178,3 +178,96 @@
   color: #d4952a;
   text-shadow: 0 0 10px rgba(212, 149, 42, 0.15);
 }
+
+/* ── Text Editor (ProseMirror surface) — v1 ─────────────────────────── */
+.dt-editor {
+  outline: none;
+  min-height: 60vh;
+  line-height: 1.7;
+  color: var(--foreground);
+}
+.dt-editor :first-child {
+  margin-top: 0;
+}
+.dt-editor > * + * {
+  margin-top: 2em;
+}
+.dt-editor > :is(h1, h2, h3, h4, h5, h6) + * {
+  margin-top: 3.5em;
+}
+.dt-editor h1 {
+  font-size: 1.7em;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.dt-editor h2 {
+  font-size: 1.4em;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.dt-editor h3 {
+  font-size: 1.2em;
+  font-weight: 700;
+}
+.dt-editor h4,
+.dt-editor h5,
+.dt-editor h6 {
+  font-weight: 700;
+}
+.dt-editor ul {
+  list-style: disc;
+  padding-left: 1.5em;
+}
+.dt-editor ol {
+  list-style: decimal;
+  padding-left: 1.5em;
+}
+.dt-editor li {
+  margin: 0.1em 0;
+}
+.dt-editor li > p {
+  margin: 0;
+}
+.dt-editor blockquote {
+  padding-left: 1em;
+  border-left: 2px solid var(--border);
+  color: var(--muted-foreground);
+}
+.dt-editor pre {
+  background: var(--muted);
+  padding: 0.75em 1em;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  font-size: 0.9em;
+}
+.dt-editor :not(pre) > code {
+  background: var(--muted);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  font-size: 0.92em;
+}
+.dt-editor a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.dt-editor hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.2em 0;
+}
+
+/* Focus-mode decorations */
+.pm-para-active {
+  background: color-mix(in oklch, var(--primary) 8%, transparent);
+  border-radius: 4px;
+  box-shadow: 0 0 0 5px color-mix(in oklch, var(--primary) 8%, transparent);
+}
+.pm-sentence-active {
+  background: color-mix(in oklch, var(--primary) 16%, transparent);
+  border-radius: 2px;
+}
+.pm-dim {
+  opacity: 0.3;
+  transition: opacity 0.2s ease;
+}
