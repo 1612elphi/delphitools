@@ -276,6 +276,77 @@
 .dt-editor .task-content > * {
   margin: 0;
 }
+.dt-editor {
+  counter-reset: dt-footnote;
+}
+.dt-editor footnote {
+  position: relative;
+  cursor: pointer;
+  counter-increment: dt-footnote;
+}
+.dt-editor footnote::after {
+  content: counter(dt-footnote);
+  vertical-align: super;
+  font-size: 0.7em;
+  color: var(--primary);
+  padding: 0 0.1em;
+}
+.dt-editor footnote.ProseMirror-selectednode::after {
+  font-weight: 700;
+  outline: 2px solid var(--primary);
+  border-radius: 3px;
+}
+.footnote-tooltip {
+  position: absolute;
+  z-index: 30;
+  top: calc(1.4em);
+  left: -1em;
+  width: 22rem;
+  max-width: 80vw;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6em 0.8em;
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.35);
+  font-size: 0.92em;
+  line-height: 1.5;
+}
+.footnote-tooltip .ProseMirror {
+  outline: none;
+  min-height: 1.5em;
+}
+.footnote-tooltip .ProseMirror > * + * {
+  margin-top: 0.5em;
+}
+/* GFM tables (overrides prosemirror-tables' light defaults; no margin on
+   `table` so the block-gap rule still spaces it) */
+.dt-editor table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+}
+.dt-editor table th,
+.dt-editor table td {
+  border: 1px solid var(--border);
+  padding: 0.4em 0.6em;
+  vertical-align: top;
+  text-align: left;
+  position: relative;
+}
+.dt-editor table th {
+  background: var(--muted);
+  font-weight: 700;
+}
+.dt-editor table th > *,
+.dt-editor table td > * {
+  margin: 0;
+}
+.dt-editor table .selectedCell::after {
+  background: color-mix(in oklch, var(--primary) 20%, transparent);
+}
+.dt-editor .column-resize-handle {
+  background: var(--primary);
+}
 
 /* ── Pride Month styling (sidebar brand mark) ───────────────────────────
    Enabled at build time via NEXT_PUBLIC_PRIDE (auto-on during June). */

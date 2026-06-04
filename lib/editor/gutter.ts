@@ -34,6 +34,8 @@ export function blockType(node: PMNode): string {
       return "QUOTE";
     case "code_block":
       return "CODE";
+    case "table":
+      return "TABLE";
     case "horizontal_rule":
       return "RULE";
     case "image":

@@ -7,7 +7,18 @@ import {
   textblockTypeInputRule,
   wrappingInputRule,
 } from "prosemirror-inputrules";
-import type { MarkType, Schema } from "prosemirror-model";
+import type { MarkType, Node as PMNode, Schema } from "prosemirror-model";
+import { NodeSelection } from "prosemirror-state";
+
+function createTable(schema: Schema, rows = 3, cols = 3): PMNode | null {
+  const { table, table_row, table_cell, table_header } = schema.nodes;
+  if (!table || !table_row || !table_cell || !table_header) return null;
+  const cellsOf = (type: typeof table_cell) =>
+    Array.from({ length: cols }, () => type.createAndFill()).filter(Boolean) as PMNode[];
+  const headerRow = table_row.create(null, cellsOf(table_header));
+  const bodyRows = Array.from({ length: rows - 1 }, () => table_row.create(null, cellsOf(table_cell)));
+  return table.create(null, [headerRow, ...bodyRows]);
+}
 
 /** Wrap the captured inner text (match[1]) in a mark, removing the delimiters. */
 function markInputRule(regexp: RegExp, markType: MarkType): InputRule {
@@ -57,6 +68,42 @@ export function buildInputRules(schema: Schema): ReturnType<typeof inputRules> {
     rules.push(markInputRule(/(?<![_\w])_([^_\s][^_]*)_$/, m.em));
   }
   if (m.code) rules.push(markInputRule(/(?<!`)`([^`]+)`$/, m.code));
+  if (m.strikethrough) rules.push(markInputRule(/~~([^~]+)~~$/, m.strikethrough));
+
+  // Task list: typing "[ ] " / "[x] " at the start of a list item toggles it.
+  if (n.list_item)
+    rules.push(
+      new InputRule(/^\[( |x|X)\]\s$/, (state, match, start, end) => {
+        const $from = state.selection.$from;
+        const li = $from.node(-1);
+        if (!li || li.type !== n.list_item) return null;
+        const liPos = $from.before(-1);
+        return state.tr
+          .delete(start, end)
+          .setNodeMarkup(liPos, undefined, { ...li.attrs, checked: match[1] !== " " });
+      }),
+    );
+
+  // Footnote: typing "[^]" drops an empty footnote and selects it (opens the editor).
+  if (n.footnote)
+    rules.push(
+      new InputRule(/\[\^\]$/, (state, _match, start, end) => {
+        const footnote = n.footnote.createAndFill();
+        if (!footnote) return null;
+        const tr = state.tr.replaceRangeWith(start, end, footnote);
+        return tr.setSelection(NodeSelection.create(tr.doc, start));
+      }),
+    );
+
+  // Table: typing "||| " at the start of a block drops a 3×3 table.
+  if (n.table)
+    rules.push(
+      new InputRule(/^\|\|\|\s$/, (state, _match, start, end) => {
+        const table = createTable(schema);
+        if (!table) return null;
+        return state.tr.delete(start, end).replaceSelectionWith(table);
+      }),
+    );
 
   return inputRules({ rules });
 }

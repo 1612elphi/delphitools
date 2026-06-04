@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import "prosemirror-view/style/prosemirror.css";
 import "prosemirror-gapcursor/style/gapcursor.css";
+import "prosemirror-tables/style/tables.css";
 import { EditorState } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
+import { fixTables } from "prosemirror-tables";
 import { Code2, Copy, Check, Download, FileText, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -15,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { schema } from "@/lib/editor/schema";
 import { parseMarkdown, serializeDoc } from "@/lib/editor/markdown";
 import { buildPlugins } from "@/lib/editor/plugins";
+import { buildNodeViews } from "@/lib/editor/node-views";
 import { focusKey } from "@/lib/editor/focus-plugin";
 import { GUTTER_FIELDS, measureGutter, type GutterRow } from "@/lib/editor/gutter";
 import {
@@ -90,9 +93,17 @@ export function TextEditorTool() {
       /* ignore */
     }
 
+    let initialState = EditorState.create({
+      doc: parseMarkdown(stored ?? SEED),
+      plugins: buildPlugins(schema, initial),
+    });
+    const fix = fixTables(initialState);
+    if (fix) initialState = initialState.apply(fix);
+
     const view = new EditorView(hostRef.current, {
-      state: EditorState.create({ doc: parseMarkdown(stored ?? SEED), plugins: buildPlugins(schema, initial) }),
+      state: initialState,
       attributes: { class: "dt-editor", spellcheck: "true" },
+      nodeViews: buildNodeViews(),
       dispatchTransaction(tr) {
         const next = view.state.apply(tr);
         view.updateState(next);
