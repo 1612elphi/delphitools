@@ -21,6 +21,8 @@ Long live the handmade web.
 - harmony genny
 - palette genny
 - palette collection
+- palette extractor
+- pixel picker
 - contrast checker
 - colour blindness simulator
 - gradient genny
@@ -32,9 +34,11 @@ Long live the handmade web.
 - placeholder genny
 - image splitter
 - image converter
+- image clipper
 - artwork enhancer
 - background remover
 - image tracer
+- paste image
 
 ### typo & text
 
@@ -46,11 +50,12 @@ Long live the handmade web.
 - text diff
 - glyph browser
 - font file explorer
+- text editor (distraction-free, live-preview markdown writer)
+- document converter (pandoc in your browser — markdown ⇄ html, word, odt, epub, latex, rst & more)
 
 ### print & production
 
 - pdf preflight
-- guillotine director
 - zine imposer
 - print imposer
 
@@ -62,6 +67,7 @@ Long live the handmade web.
 - barcode genny
 - meta tag genny
 - regex tester
+- cipher decoder
 
 ### calculators
 
