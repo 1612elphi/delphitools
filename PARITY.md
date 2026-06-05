@@ -106,7 +106,7 @@ applicable on this surface (hardware/native or format constraint).
 | Regex Tester (`regex-tester`) | ✅ | ✅ `regex` | ✅ | |
 | Tailwind Cheat Sheet (`tailwind-cheatsheet`) | ✅ | ❌ | ✅ | |
 | Text Scratchpad (`markdown-writer`) | ✅ | ❌ | ✅ | plain textarea + text-manipulation utilities |
-| Text Editor (`text-editor`) | ✅ | ❌ | ❌ | distraction-free live-preview Markdown writer (raw ProseMirror); per-block gutter, focus modes, exports (md/html/clipboard/pdf). CommonMark + GFM (tables, strikethrough, task lists, footnotes) |
+| Text Editor (`text-editor`) | ✅ | ❌ | ❌ | distraction-free live-preview Markdown writer (raw ProseMirror). CommonMark + GFM (tables, strikethrough, task lists, footnotes); click-to-convert block-type gutter menu; full-screen focus mode; Markdown paste; focus highlights + typewriter; exports md/html/clipboard/pdf |
 | Cipher Decoder (`decoder`) | ✅ | ❌ | ❌ | classical ciphers (distinct from base64/url decode) |
 | NFC Reader/Writer (`nfc-reader-writer`) | ➖ | ➖ | ✅ | iOS-only (NFC hardware) |
 

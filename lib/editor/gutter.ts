@@ -28,8 +28,9 @@ export function blockType(node: PMNode): string {
     case "paragraph":
       return "PARAGRAPH";
     case "bullet_list":
+      return "BULLET LIST";
     case "ordered_list":
-      return "LIST";
+      return "NUMBERED LIST";
     case "blockquote":
       return "QUOTE";
     case "code_block":
@@ -47,6 +48,8 @@ export function blockType(node: PMNode): string {
 
 export interface GutterRow {
   key: string;
+  /** document position just before this top-level block */
+  pos: number;
   top: number;
   type: string;
   fields: { id: string; label: string; value: string }[];
@@ -63,6 +66,7 @@ export function measureGutter(view: EditorView, enabledFields: string[]): Gutter
     if (!(dom instanceof HTMLElement)) return;
     rows.push({
       key: `${index}-${node.type.name}`,
+      pos: offset,
       top: dom.offsetTop,
       type: blockType(node),
       fields: active.map((f) => ({ id: f.id, label: f.label, value: f.render(node) })),

@@ -1,13 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "prosemirror-view/style/prosemirror.css";
 import "prosemirror-gapcursor/style/gapcursor.css";
 import "prosemirror-tables/style/tables.css";
-import { EditorState } from "prosemirror-state";
+import { EditorState, TextSelection } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
+import { setBlockType } from "prosemirror-commands";
 import { fixTables } from "prosemirror-tables";
-import { Code2, Copy, Check, Download, FileText, Settings } from "lucide-react";
+import { Slice, type Node as PMNode } from "prosemirror-model";
+import { Code2, Copy, Check, Download, FileText, Maximize2, Minimize2, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -20,6 +22,7 @@ import { buildPlugins } from "@/lib/editor/plugins";
 import { buildNodeViews } from "@/lib/editor/node-views";
 import { focusKey } from "@/lib/editor/focus-plugin";
 import { GUTTER_FIELDS, measureGutter, type GutterRow } from "@/lib/editor/gutter";
+import { blockChoices, type BlockChoice } from "@/lib/editor/block-types";
 import {
   DEFAULT_SETTINGS,
   loadSettings,
@@ -56,6 +59,10 @@ export function TextEditorTool() {
   const [settings, setSettings] = useState<EditorSettings>(DEFAULT_SETTINGS);
   const [source, setSource] = useState("");
   const [copied, setCopied] = useState(false);
+  const [zen, setZen] = useState(false);
+  const [blockMenu, setBlockMenu] = useState<{ pos: number; top: number; node: PMNode | null } | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const choices = useMemo(() => blockChoices(schema), []);
 
   const scheduleMeasure = useCallback(() => {
     cancelAnimationFrame(frameRef.current);
@@ -104,6 +111,18 @@ export function TextEditorTool() {
       state: initialState,
       attributes: { class: "dt-editor", spellcheck: "true" },
       nodeViews: buildNodeViews(),
+      // Pasting plain text parses it as Markdown (ProseMirror only calls this when
+      // there's no rich HTML on the clipboard, so web copy-paste still works).
+      clipboardTextParser(text) {
+        const doc = parseMarkdown(text);
+        const first = doc.firstChild;
+        // A single paragraph pastes inline (merges into the current line);
+        // anything richer pastes as blocks.
+        if (doc.childCount === 1 && first && first.type.name === "paragraph") {
+          return new Slice(first.content, 0, 0);
+        }
+        return doc.slice(0, doc.content.size);
+      },
       dispatchTransaction(tr) {
         const next = view.state.apply(tr);
         view.updateState(next);
@@ -206,12 +225,92 @@ export function TextEditorTool() {
 
   const menuItemClass =
     "flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-accent";
+  // Convert the block at `pos` (the one whose gutter label was clicked).
+  const runBlockCommand = useCallback((pos: number, choice: BlockChoice) => {
+    const view = viewRef.current;
+    if (!view) return;
+    const { bullet_list, ordered_list } = view.state.schema.nodes;
+    const block = view.state.doc.nodeAt(pos);
+
+    // Block is already a list and a list type was picked → swap the list's type
+    // in place (bullet ↔ numbered), keeping the items.
+    if (choice.listType && block && (block.type === bullet_list || block.type === ordered_list)) {
+      if (block.type !== choice.listType) {
+        view.dispatch(view.state.tr.setNodeMarkup(pos, choice.listType));
+      }
+      view.focus();
+      setBlockMenu(null);
+      return;
+    }
+
+    const inside = Math.min(pos + 1, view.state.doc.content.size - 1);
+    view.dispatch(view.state.tr.setSelection(TextSelection.near(view.state.doc.resolve(inside))));
+    // For wrapping choices (list/quote), demote a styled block (heading/code) to
+    // a plain paragraph first, so the result isn't a heading-sized list item.
+    if (choice.wrap) {
+      const para = view.state.schema.nodes.paragraph;
+      const block = view.state.selection.$from.parent;
+      if (para && block.isTextblock && block.type !== para) {
+        setBlockType(para)(view.state, view.dispatch);
+      }
+    }
+    choice.command(view.state, view.dispatch);
+    view.focus();
+    setBlockMenu(null);
+  }, []);
+
+  // Close the block menu on Escape or an outside click (but not on a gutter
+  // label, whose own click handler toggles the menu).
+  useEffect(() => {
+    if (!blockMenu) return;
+    const onDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (menuRef.current?.contains(target) || target.closest?.(".dt-block-trigger")) return;
+      setBlockMenu(null);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setBlockMenu(null);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [blockMenu]);
+
+  // Escape exits Focus mode — unless a footnote sub-editor or the block menu
+  // should handle it first.
+  useEffect(() => {
+    if (!zen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || blockMenu) return;
+      if ((document.activeElement as HTMLElement | null)?.closest?.(".footnote-tooltip")) return;
+      setZen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [zen, blockMenu]);
+
+  const activeBlockNode = blockMenu?.node ?? null;
+
   const padLeft = settings.showGutter || settings.showMarginLine ? GUTTER_W + 24 : 0;
 
   return (
-    <div className="space-y-4">
+    <div className={cn(zen && "fixed inset-0 z-50 overflow-y-auto bg-background")}>
+      <div className={cn("space-y-4", zen && "mx-auto min-h-full max-w-3xl px-6 py-10")}>
       {/* Toolbar */}
       <div className="flex items-center justify-end gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setZen((z) => !z)}
+          title={zen ? "Exit focus mode" : "Distraction-free focus mode"}
+          className="mr-auto"
+        >
+          {zen ? <Minimize2 className="size-4 mr-1.5" /> : <Maximize2 className="size-4 mr-1.5" />}
+          {zen ? "Exit" : "Focus"}
+        </Button>
         <Button variant="outline" size="sm" onClick={toggleCodeMode} title="Toggle raw Markdown source">
           {settings.codeMode ? (
             <>
@@ -316,10 +415,20 @@ export function TextEditorTool() {
 
         <div className={cn("relative", settings.codeMode && "hidden")}>
           {settings.showGutter && (
-            <div className="pointer-events-none absolute left-0 top-0 select-none" style={{ width: GUTTER_W }} aria-hidden>
+            <div className="pointer-events-none absolute left-0 top-0 select-none" style={{ width: GUTTER_W }}>
               {rows.map((r) => (
                 <div key={r.key} className="absolute right-3 text-right leading-tight" style={{ top: r.top }}>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70">{r.type}</div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const node = viewRef.current?.state.doc.nodeAt(r.pos) ?? null;
+                      setBlockMenu((cur) => (cur?.pos === r.pos ? null : { pos: r.pos, top: r.top, node }));
+                    }}
+                    className="dt-block-trigger pointer-events-auto block w-full cursor-pointer text-right text-[10px] uppercase tracking-wider text-muted-foreground/70 transition-colors hover:text-foreground"
+                    title="Change block type"
+                  >
+                    {r.type}
+                  </button>
                   {r.fields.map((f) => (
                     <div key={f.id} className="text-[10px] text-muted-foreground/40">
                       {f.value} {f.label}
@@ -329,11 +438,37 @@ export function TextEditorTool() {
               ))}
             </div>
           )}
+          {blockMenu && (
+            <div
+              ref={menuRef}
+              className="absolute z-40 w-44 rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+              style={{ top: blockMenu.top, left: 0 }}
+            >
+              {choices.map((c) => {
+                const active = activeBlockNode ? c.isActive(activeBlockNode) : false;
+                return (
+                  <button
+                    key={c.label}
+                    type="button"
+                    onClick={() => runBlockCommand(blockMenu.pos, c)}
+                    className={cn(
+                      "flex w-full items-center justify-between rounded px-2 py-1 text-left text-sm hover:bg-accent",
+                      active && "text-primary",
+                    )}
+                  >
+                    {c.label}
+                    {active && <Check className="size-3.5" />}
+                  </button>
+                );
+              })}
+            </div>
+          )}
           {settings.showMarginLine && (
             <div className="absolute top-0 bottom-0 w-px bg-border/60" style={{ left: GUTTER_W }} aria-hidden />
           )}
           <div ref={hostRef} suppressHydrationWarning style={{ paddingLeft: padLeft }} />
         </div>
+      </div>
       </div>
     </div>
   );
