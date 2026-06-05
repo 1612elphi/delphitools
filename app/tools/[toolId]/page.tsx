@@ -4,6 +4,7 @@ import { Construction } from "lucide-react";
 import { getToolById, getCategoryByToolId, allTools } from "@/lib/tools";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PeelSticker } from "@/components/sticker-wall";
 
 // Dynamic imports for tool components
 const toolComponents: Record<string, React.ComponentType> = {
@@ -185,6 +186,18 @@ export default async function ToolPage({ params }: ToolPageProps) {
             </div>
           </>
         )}
+
+        {/* "...and all I got was this lousy sticker." One under every tool,
+            sitting well below the content. Peel it off to download. */}
+        <div className="mt-24 flex flex-col items-center gap-3 md:mt-32">
+          <PeelSticker
+            tool={toolId}
+            label={`${tool.name} — and all I got was this lousy sticker`}
+          />
+          <p className="text-sm text-muted-foreground">
+            Have a sticker! Peel it off to download.
+          </p>
+        </div>
       </div>
     </div>
   );
