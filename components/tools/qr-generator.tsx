@@ -39,7 +39,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useFilePaste } from "@/hooks/use-file-paste";
-import { PeelSticker } from "@/components/sticker-wall";
 
 // Types
 type DotType =
@@ -1358,11 +1357,6 @@ export function QrGeneratorTool() {
             </p>
             <p className="text-muted-foreground mt-2">{QR_INFO.description}</p>
           </div>
-        </div>
-
-        {/* "...and all I got was this lousy sticker." Peel it off, print it. */}
-        <div className="flex justify-center pt-2">
-          <PeelSticker file="lousy" />
         </div>
       </div>
     </TooltipProvider>

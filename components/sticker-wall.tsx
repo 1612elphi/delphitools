@@ -35,7 +35,6 @@ const STICKERS: Sticker[] = [
   { file: "marker", label: "delphi, sketched", rot: 6, width: "clamp(120px, 30vw, 158px)", align: "flex-end" },
   { file: "policy", label: "privacy policy: no data collected", rot: -4, width: "clamp(170px, 40vw, 240px)", align: "flex-start" },
   { file: "saas-h8r", label: "certified SaaS h8r", rot: 5, width: "clamp(120px, 30vw, 158px)", align: "flex-end" },
-  { file: "lousy", label: "all I got was this lousy sticker", rot: -2.5, width: "clamp(220px, 60vw, 360px)", align: "center" },
 ];
 
 type Phase = "stuck" | "peeling";
@@ -67,9 +66,12 @@ function StickerButton({ sticker }: { sticker: Sticker }) {
   const tlRef = useRef<gsap.core.Timeline | null>(null);
 
   function download() {
+    // Per-tool stickers live in a subdir (file = "lousy/<id>"); flatten the
+    // slash so the saved file is e.g. delphitools-qr-genny-sticker.png.
+    const base = sticker.file.split("/").pop() ?? sticker.file;
     const a = document.createElement("a");
     a.href = `/stickers/${sticker.file}@2x.png`;
-    a.download = `delphitools-${sticker.file}-sticker.png`;
+    a.download = `delphitools-${base}-sticker.png`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -181,12 +183,23 @@ function StickerButton({ sticker }: { sticker: Sticker }) {
 }
 
 /**
- * A single peelable sticker for dropping into a specific tool page (e.g. the
- * "lousy" sticker at the bottom of the QR generator). Looks the config up by
- * file name so it shares the wall's peel/download behaviour.
+ * A single peelable sticker for dropping into a tool page. Two modes:
+ *  - `file`: pick a named sticker from the wall (e.g. the flat "lousy").
+ *  - `tool`: the per-tool "lousy" series in /public/stickers/lousy/<id>.png —
+ *    one under every tool. They all share the wide "lousy" geometry; pass
+ *    `label` for the screen-reader/download name (the tool's name is baked
+ *    into the artwork itself).
  */
-export function PeelSticker({ file }: { file: string }) {
-  const sticker = STICKERS.find((s) => s.file === file);
+export function PeelSticker({ file, tool, label }: { file?: string; tool?: string; label?: string }) {
+  const sticker: Sticker | undefined = tool
+    ? {
+        file: `lousy/${tool}`,
+        label: label ?? "all I got was this lousy sticker",
+        rot: -2.5,
+        width: "clamp(220px, 60vw, 360px)",
+        align: "center",
+      }
+    : STICKERS.find((s) => s.file === file);
   if (!sticker) return null;
   return (
     <>
