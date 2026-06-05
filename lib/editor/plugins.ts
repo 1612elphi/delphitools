@@ -11,9 +11,10 @@ import type { Command, Plugin } from "prosemirror-state";
 import type { Schema } from "prosemirror-model";
 import { buildInputRules } from "./input-rules";
 import { focusPlugin } from "./focus-plugin";
+import { placeholderPlugin } from "./placeholder";
 import type { EditorSettings } from "./settings";
 
-export function buildPlugins(schema: Schema, settings: EditorSettings): Plugin[] {
+export function buildPlugins(schema: Schema, settings: EditorSettings, placeholder = ""): Plugin[] {
   // History, undo-the-autoformat, and toggle marks on the selection (so you can
   // format existing/selected text — input rules only fire as you type forward).
   const keys: Record<string, Command> = {
@@ -59,6 +60,7 @@ export function buildPlugins(schema: Schema, settings: EditorSettings): Plugin[]
     dropCursor({ class: "pm-dropcursor" }),
     focusPlugin(settings),
   ];
+  if (placeholder) plugins.push(placeholderPlugin(placeholder));
   // tableEditing must come last — it broadly captures mouse/arrow/copy events.
   if (hasTable) plugins.push(columnResizing(), tableEditing());
   return plugins;

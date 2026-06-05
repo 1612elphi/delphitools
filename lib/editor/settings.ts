@@ -1,4 +1,4 @@
-// Editor settings — persisted separately from the document.
+// Editor settings — session-only; never persisted to the device.
 export interface EditorSettings {
   highlightSentence: boolean;
   highlightParagraph: boolean;
@@ -22,23 +22,11 @@ export const DEFAULT_SETTINGS: EditorSettings = {
   enabledFields: ["words"],
 };
 
-const KEY = "delphitools-editor-settings";
-
-export function loadSettings(): EditorSettings {
-  if (typeof window === "undefined") return DEFAULT_SETTINGS;
+// Clean up any settings a previous build persisted (we store nothing now).
+export function clearStoredSettings(): void {
   try {
-    const raw = localStorage.getItem(KEY);
-    return raw ? { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<EditorSettings>) } : DEFAULT_SETTINGS;
+    localStorage.removeItem("delphitools-editor-settings");
   } catch {
-    return DEFAULT_SETTINGS;
-  }
-}
-
-export function saveSettings(settings: EditorSettings): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(KEY, JSON.stringify(settings));
-  } catch {
-    /* ignore quota / privacy-mode errors */
+    /* ignore */
   }
 }
