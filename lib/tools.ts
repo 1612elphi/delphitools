@@ -130,7 +130,6 @@ export const toolCategories: ToolCategory[] = [
         description: "Create linear, corner, and mesh gradients",
         icon: Blend,
         href: "/tools/gradient-genny",
-        new: true,
       },
       {
         id: "harmony-genny",
@@ -152,7 +151,6 @@ export const toolCategories: ToolCategory[] = [
         description: "Extract colour palettes from images",
         icon: Palette,
         href: "/tools/palette-extractor",
-        new: true,
       },
       {
         id: "palette-genny",
@@ -167,7 +165,6 @@ export const toolCategories: ToolCategory[] = [
         description: "Sample colours from any image with a zoom loupe",
         icon: Crosshair,
         href: "/tools/pixel-picker",
-        new: true,
       },
       {
         id: "tailwind-shades",
@@ -210,7 +207,6 @@ export const toolCategories: ToolCategory[] = [
         description: "Trim transparent edges from PNGs to the smallest dimensions",
         icon: Crop,
         href: "/tools/image-clipper",
-        new: true,
       },
       {
         id: "image-converter",
@@ -232,7 +228,6 @@ export const toolCategories: ToolCategory[] = [
         description: "Trace raster images to SVG vectors",
         icon: ScanLine,
         href: "/tools/image-tracer",
-        new: true,
       },
       {
         id: "paste-image",
@@ -318,7 +313,6 @@ export const toolCategories: ToolCategory[] = [
         description: "Compare two texts and highlight differences",
         icon: GitCompare,
         href: "/tools/text-diff",
-        new: true,
       },
       {
         id: "typo-calc",
@@ -346,7 +340,6 @@ export const toolCategories: ToolCategory[] = [
         description: "Analyse PDFs for print-readiness issues",
         icon: FileSearch,
         href: "/tools/pdf-preflight",
-        new: true,
       },
       {
         id: "imposer",
@@ -354,7 +347,6 @@ export const toolCategories: ToolCategory[] = [
         description: "Impose PDF pages for booklet, saddle-stitch, and N-up printing",
         icon: Layers,
         href: "/tools/imposer",
-        new: true,
       },
       {
         id: "zine-imposer",
@@ -486,7 +478,6 @@ export const toolCategories: ToolCategory[] = [
         description: "Transliterate English text to the Shavian alphabet",
         icon: Languages,
         href: "/tools/shavian-transliterator",
-        new: true,
       },
     ],
   },
