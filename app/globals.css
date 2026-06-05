@@ -347,6 +347,33 @@
 .dt-editor .column-resize-handle {
   background: var(--primary);
 }
+/* Empty-document ghost placeholder (may wrap to several lines) */
+.dt-editor .dt-empty {
+  position: relative;
+}
+.dt-editor .dt-empty::before {
+  content: attr(data-placeholder);
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  color: var(--muted-foreground);
+  opacity: 0.4;
+  pointer-events: none;
+}
+/* Typography refinements */
+.dt-editor a:hover {
+  text-decoration-thickness: 2px;
+}
+.dt-editor blockquote {
+  font-style: italic;
+  border-left-color: var(--primary);
+}
+.dt-editor pre {
+  border: 1px solid var(--border);
+}
+.dt-editor li::marker {
+  color: var(--muted-foreground);
+}
 
 /* ── Pride Month styling (sidebar brand mark) ───────────────────────────
    Enabled at build time via NEXT_PUBLIC_PRIDE (auto-on during June). */
