@@ -28,25 +28,27 @@ export function ColourNotationSelector() {
           <span className="hidden sm:inline">{current?.label}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-2 max-h-[70vh] overflow-y-auto" align="end">
-        <div className="text-xs font-medium text-muted-foreground px-2 py-1.5">
+      <PopoverContent className="w-64 p-2" align="end">
+        <div className="px-1 pb-2 text-xs font-medium text-muted-foreground">
           Colour Notation
         </div>
-        {COLOUR_NOTATIONS.map((n) => (
-          <button
-            key={n.id}
-            type="button"
-            onClick={() => setNotation(n.id)}
-            className={`w-full flex flex-col items-start px-2 py-1.5 rounded-md text-left transition-colors ${
-              notation === n.id
-                ? "bg-primary/10 text-primary"
-                : "hover:bg-muted"
-            }`}
-          >
-            <span className="text-sm font-medium">{n.label}</span>
-            <span className="text-xs font-mono text-muted-foreground">{n.example}</span>
-          </button>
-        ))}
+        <div className="grid grid-cols-3 gap-1.5">
+          {COLOUR_NOTATIONS.map((n) => (
+            <button
+              key={n.id}
+              type="button"
+              onClick={() => setNotation(n.id)}
+              title={n.example}
+              className={`flex min-h-[3.25rem] items-center justify-center rounded-md border px-2 py-2 text-center text-xs font-medium leading-tight transition-colors ${
+                notation === n.id
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border hover:border-primary/40 hover:bg-muted"
+              }`}
+            >
+              {n.label}
+            </button>
+          ))}
+        </div>
       </PopoverContent>
     </Popover>
   )

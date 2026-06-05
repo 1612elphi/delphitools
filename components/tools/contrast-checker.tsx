@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { ArrowUpDown, Wand2, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useColourNotation } from "@/hooks/use-colour-notation";
+import { formatColour } from "@/lib/colour-notation";
 
 function hexToRgb(hex: string): [number, number, number] | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -168,6 +170,7 @@ export function ContrastCheckerTool() {
   const [foreground, setForeground] = useState("#eaeaea");
   const [ratio, setRatio] = useState<number | null>(null);
   const [compliance, setCompliance] = useState<ComplianceResult | null>(null);
+  const { notation } = useColourNotation();
 
   useEffect(() => {
     const r = getContrastRatio(foreground, background);
@@ -215,6 +218,11 @@ export function ContrastCheckerTool() {
               className="font-mono flex-1"
             />
           </div>
+          {notation !== "hex" && isValidHex(background) && (
+            <div className="font-mono text-xs text-muted-foreground">
+              {formatColour(background, notation)}
+            </div>
+          )}
         </div>
         <div className="space-y-2">
           <label className="font-bold">Foreground Colour</label>
@@ -232,6 +240,11 @@ export function ContrastCheckerTool() {
               className="font-mono flex-1"
             />
           </div>
+          {notation !== "hex" && isValidHex(foreground) && (
+            <div className="font-mono text-xs text-muted-foreground">
+              {formatColour(foreground, notation)}
+            </div>
+          )}
         </div>
       </div>
 
