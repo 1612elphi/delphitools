@@ -107,6 +107,8 @@ export function ImposerTool() {
   const [pdfPageCount, setPdfPageCount] = useState(0);
 
   const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
+  // Mirror of pdfDoc so unmount cleanup always sees the latest live instance
+  const pdfDocRef = useRef<PDFDocumentProxy | null>(null);
 
   // Cached page thumbnails (canvas image bitmaps keyed by 1-indexed page number)
   const pageThumbnailsRef = useRef<Map<number, HTMLCanvasElement>>(new Map());
@@ -199,6 +201,18 @@ export function ImposerTool() {
     setBlankMode(!pdfBytes);
   }, [pdfBytes]);
 
+  // Keep the ref in sync so cleanup never closes over a stale instance
+  useEffect(() => {
+    pdfDocRef.current = pdfDoc;
+  }, [pdfDoc]);
+
+  // Tear down the pdf.js worker/document on unmount
+  useEffect(() => {
+    return () => {
+      pdfDocRef.current?.destroy();
+    };
+  }, []);
+
   // ---------------------------------------------------------------------------
   // PDF loading
   // ---------------------------------------------------------------------------
@@ -212,6 +226,8 @@ export function ImposerTool() {
     try {
       const pdfjs = await getPdfJs();
       const doc = await pdfjs.getDocument({ data: bytes.slice() }).promise;
+      // Destroy the previous document's worker transport before replacing it
+      void pdfDocRef.current?.destroy();
       setPdfDoc(doc);
       setPdfPageCount(doc.numPages);
 
@@ -260,6 +276,7 @@ export function ImposerTool() {
     setPdfBytes(null);
     setPdfFileName("");
     setPdfPageCount(0);
+    void pdfDoc?.destroy();
     setPdfDoc(null);
     setInferredPaper(null);
     pageThumbnailsRef.current.clear();

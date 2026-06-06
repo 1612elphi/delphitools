@@ -196,6 +196,10 @@ export function ZineImposerTool() {
       const zineImage = await loadImage(file);
       setImages((prev) => {
         const newImages = [...prev];
+        // Release the outgoing slot's cached bitmap before replacing it.
+        if (newImages[index]) {
+          loadedImagesRef.current.delete(newImages[index]!.id);
+        }
         newImages[index] = zineImage;
         return newImages;
       });
@@ -209,26 +213,33 @@ export function ZineImposerTool() {
     if (!files) return;
 
     const imageFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
-    const newImages = [...images];
+    if (imageFiles.length === 0) return;
 
-    let slotIndex = 0;
-    for (const file of imageFiles) {
-      // Find next empty slot
-      while (slotIndex < newImages.length && newImages[slotIndex] !== null) {
-        slotIndex++;
+    // Decode everything first, then commit in one go. Settling per-file lets a
+    // failed decode drop out without aborting the rest.
+    const settled = await Promise.all(
+      imageFiles.map((file) =>
+        loadImage(file).catch((err) => {
+          console.error("Failed to load image:", err);
+          return null;
+        })
+      )
+    );
+    const loaded = settled.filter((img): img is ZineImage => img !== null);
+    if (loaded.length === 0) return;
+
+    // One functional updater recomputes empty slots from the latest state, so
+    // concurrent updates during the awaits above aren't clobbered.
+    setImages((prev) => {
+      const next = [...prev];
+      let slotIndex = 0;
+      for (const img of loaded) {
+        while (slotIndex < next.length && next[slotIndex] !== null) slotIndex++;
+        if (slotIndex >= next.length) break;
+        next[slotIndex++] = img;
       }
-      if (slotIndex >= newImages.length) break;
-
-      try {
-        const zineImage = await loadImage(file);
-        newImages[slotIndex] = zineImage;
-        slotIndex++;
-      } catch (err) {
-        console.error("Failed to load image:", err);
-      }
-    }
-
-    setImages(newImages);
+      return next;
+    });
   };
 
   useFilePaste(async (file: File) => {
@@ -302,6 +313,10 @@ export function ZineImposerTool() {
           const zineImage = await loadImage(file);
           setImages((prev) => {
             const newImages = [...prev];
+            // Release the outgoing slot's cached bitmap before replacing it.
+            if (newImages[targetIndex]) {
+              loadedImagesRef.current.delete(newImages[targetIndex]!.id);
+            }
             newImages[targetIndex] = zineImage;
             return newImages;
           });

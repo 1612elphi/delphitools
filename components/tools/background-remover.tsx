@@ -27,10 +27,12 @@ export function BackgroundRemoverTool() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pipelineRef = useRef<any>(null);
   const loadedModeRef = useRef<QualityMode | null>(null);
+  const mountedRef = useRef(true);
 
   // Dispose ML pipeline on unmount to free model memory
   useEffect(() => {
     return () => {
+      mountedRef.current = false;
       if (pipelineRef.current?.dispose) {
         pipelineRef.current.dispose();
         pipelineRef.current = null;
@@ -108,12 +110,22 @@ export function BackgroundRemoverTool() {
           });
         }
 
+        // If the component unmounted while the model was downloading/building,
+        // free the pipeline that was just built and bail out.
+        if (!mountedRef.current) {
+          pipelineRef.current?.dispose?.();
+          pipelineRef.current = null;
+          return;
+        }
+
         loadedModeRef.current = qualityMode;
       }
 
       setProcessing({ status: "processing", message: "Removing background..." });
 
       const result = await pipelineRef.current(sourceImage);
+
+      if (!mountedRef.current) return;
 
       if (result && result.length > 0 && result[0].mask) {
         const maskImage = result[0].mask;
@@ -148,6 +160,7 @@ export function BackgroundRemoverTool() {
 
         try {
           const finalImage = await applyMaskToImage(sourceImage, maskDataUrl);
+          if (!mountedRef.current) return;
           setResultImage(finalImage);
           setProcessing({ status: "done" });
         } finally {
@@ -161,6 +174,7 @@ export function BackgroundRemoverTool() {
 
     } catch (error) {
       console.error("Background removal failed:", error);
+      if (!mountedRef.current) return;
       setProcessing({
         status: "error",
         message: error instanceof Error ? error.message : "Failed to process image",

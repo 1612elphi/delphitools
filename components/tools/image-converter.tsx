@@ -392,6 +392,12 @@ export function ImageConverterTool() {
   }, [previewUrls]);
 
   useEffect(() => {
+    return () => {
+      converted.forEach((img) => URL.revokeObjectURL(img.url));
+    };
+  }, [converted]);
+
+  useEffect(() => {
     const canvas = document.createElement("canvas");
     canvas.width = 1;
     canvas.height = 1;

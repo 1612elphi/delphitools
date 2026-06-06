@@ -6,6 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// Bundle KaTeX's stylesheet locally (was fetched from cdn.jsdelivr.net, which
+// leaked usage off-device and pinned a mismatched version). The bundler also
+// inlines KaTeX's font files, so everything stays same-origin.
+import "katex/dist/katex.min.css";
 
 type Operation =
   | "simplify"
@@ -52,18 +56,6 @@ export function AlgebraCalcTool() {
       }
     };
     loadNerdamer();
-  }, []);
-
-  // Load KaTeX CSS
-  useEffect(() => {
-    const linkId = "katex-css";
-    if (!document.getElementById(linkId)) {
-      const link = document.createElement("link");
-      link.id = linkId;
-      link.rel = "stylesheet";
-      link.href = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css";
-      document.head.appendChild(link);
-    }
   }, []);
 
   // Render KaTeX when result changes

@@ -881,8 +881,15 @@ export function PdfPreflightTool() {
   const [report, setReport] = useState<PreflightReport | null>(null);
   const [analysing, setAnalysing] = useState(false);
   const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
+  const pdfDocRef = useRef<PDFDocumentProxy | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Keep a ref to the live pdf.js document so cleanup callbacks don't capture
+  // a stale value from an earlier render.
+  useEffect(() => {
+    pdfDocRef.current = pdfDoc;
+  }, [pdfDoc]);
 
   // ---- File handling ----
 
@@ -960,12 +967,13 @@ export function PdfPreflightTool() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }, [pdfDoc]);
 
-  // Destroy pdf.js document on unmount
+  // Destroy pdf.js document on unmount. Read from the ref so we always tear
+  // down the document that is actually loaded, not the (null) value captured
+  // on first render.
   useEffect(() => {
     return () => {
-      pdfDoc?.destroy();
+      pdfDocRef.current?.destroy();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ---- Analysis trigger ----
@@ -979,12 +987,25 @@ export function PdfPreflightTool() {
 
     let cancelled = false;
 
+    // Capture the document from the previous analysis so we can tear down its
+    // worker once this run takes over. Reading from the ref (rather than the
+    // pdfDoc closure) keeps this correct across rapid re-loads.
+    const prevDoc = pdfDocRef.current;
+
     async function runAnalysis(f: PdfFile) {
       setAnalysing(true);
       setError(null);
       setReport(null);
       setPdfDoc(null);
       setCurrentPage(1);
+
+      // Tear down the predecessor document's worker before loading the new one.
+      // The new run creates its own document via analyseWithPdfJs, so this is
+      // safe — we never destroy the document this run is about to use.
+      if (prevDoc) {
+        if (pdfDocRef.current === prevDoc) pdfDocRef.current = null;
+        prevDoc.destroy();
+      }
 
       try {
         // Phase 1: structural analysis with pdf-lib
@@ -1051,56 +1072,61 @@ export function PdfPreflightTool() {
       if (!pdfDoc || !canvasRef.current || !report) return;
 
       const page = await pdfDoc.getPage(currentPage);
-      const viewport = page.getViewport({ scale: 1 });
+      try {
+        const viewport = page.getViewport({ scale: 1 });
 
-      const desiredWidth = 600;
-      const scale = desiredWidth / viewport.width;
-      const scaledViewport = page.getViewport({ scale });
+        const desiredWidth = 600;
+        const scale = desiredWidth / viewport.width;
+        const scaledViewport = page.getViewport({ scale });
 
-      const canvas = canvasRef.current;
-      if (!canvas) return;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
 
-      canvas.width = scaledViewport.width;
-      canvas.height = scaledViewport.height;
+        canvas.width = scaledViewport.width;
+        canvas.height = scaledViewport.height;
 
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
 
-      // Render page content (pdf.js v5 requires the canvas property)
-      await page.render({
-        canvas,
-        viewport: scaledViewport,
-      }).promise;
+        // Render page content (pdf.js v5 requires the canvas property)
+        await page.render({
+          canvas,
+          viewport: scaledViewport,
+        }).promise;
 
-      if (cancelled) return;
+        if (cancelled) return;
 
-      // Draw box overlays
-      const pageInfo = report.pages[currentPage - 1];
-      if (!pageInfo) return;
+        // Draw box overlays
+        const pageInfo = report.pages[currentPage - 1];
+        if (!pageInfo) return;
 
-      const mediaBox = pageInfo.mediaBox;
+        const mediaBox = pageInfo.mediaBox;
 
-      function drawBox(box: PageBox | undefined, colour: string) {
-        if (!box || !ctx || !canvas) return;
+        function drawBox(box: PageBox | undefined, colour: string) {
+          if (!box || !ctx || !canvas) return;
 
-        // Transform PDF coordinates (bottom-left origin) to canvas (top-left origin)
-        const x1 = (box.x - mediaBox.x) * scale;
-        const y1 =
-          canvas.height - (box.y + box.height - mediaBox.y) * scale;
-        const w = box.width * scale;
-        const h = box.height * scale;
+          // Transform PDF coordinates (bottom-left origin) to canvas (top-left origin)
+          const x1 = (box.x - mediaBox.x) * scale;
+          const y1 =
+            canvas.height - (box.y + box.height - mediaBox.y) * scale;
+          const w = box.width * scale;
+          const h = box.height * scale;
 
-        ctx.save();
-        ctx.strokeStyle = colour;
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([6, 4]);
-        ctx.strokeRect(x1, y1, w, h);
-        ctx.restore();
+          ctx.save();
+          ctx.strokeStyle = colour;
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([6, 4]);
+          ctx.strokeRect(x1, y1, w, h);
+          ctx.restore();
+        }
+
+        drawBox(pageInfo.trimBox, "#3b82f6");
+        drawBox(pageInfo.bleedBox, "#ef4444");
+        drawBox(pageInfo.cropBox, "#22c55e");
+      } finally {
+        // Release the page's resources (matches analyseWithPdfJs).
+        page.cleanup();
       }
-
-      drawBox(pageInfo.trimBox, "#3b82f6");
-      drawBox(pageInfo.bleedBox, "#ef4444");
-      drawBox(pageInfo.cropBox, "#22c55e");
     }
 
     renderPage();

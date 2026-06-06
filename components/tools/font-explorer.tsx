@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Upload, Trash2, Type, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,11 @@ export function FontExplorerTool() {
 
   const [fontLoaded, setFontLoaded] = useState(false);
 
+  // Refs holding the current object URL and FontFace so we can revoke/delete
+  // the previous ones when a new font loads, when clearing, or on unmount.
+  const fontUrlRef = useRef<string | null>(null);
+  const fontFaceRef = useRef<FontFace | null>(null);
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
@@ -53,7 +58,17 @@ export function FontExplorerTool() {
     setFontLoaded(false);
     setFileName(file.name);
 
+    // Revoke/delete the previously loaded font before replacing it.
+    if (fontUrlRef.current) {
+      URL.revokeObjectURL(fontUrlRef.current);
+    }
+    if (fontFaceRef.current) {
+      document.fonts.delete(fontFaceRef.current);
+      fontFaceRef.current = null;
+    }
+
     const url = URL.createObjectURL(file);
+    fontUrlRef.current = url;
     setFontUrl(url);
 
     // Create a unique font family name
@@ -64,6 +79,7 @@ export function FontExplorerTool() {
       const fontFace = new FontFace(fontFamilyName, `url(${url})`);
       await fontFace.load();
       document.fonts.add(fontFace);
+      fontFaceRef.current = fontFace;
       setFontLoaded(true);
 
       // Try to extract metadata from the font
@@ -91,8 +107,13 @@ export function FontExplorerTool() {
   useFilePaste(readFile, ".ttf,.otf,.woff,.woff2");
 
   const clear = () => {
-    if (fontUrl) {
-      URL.revokeObjectURL(fontUrl);
+    if (fontUrlRef.current) {
+      URL.revokeObjectURL(fontUrlRef.current);
+      fontUrlRef.current = null;
+    }
+    if (fontFaceRef.current) {
+      document.fonts.delete(fontFaceRef.current);
+      fontFaceRef.current = null;
     }
     setFontUrl(null);
     setFileName("");
@@ -100,6 +121,18 @@ export function FontExplorerTool() {
     setError(null);
     setFontLoaded(false);
   };
+
+  // Clean up the current object URL and FontFace on unmount (e.g. navigating away).
+  useEffect(() => {
+    return () => {
+      if (fontUrlRef.current) {
+        URL.revokeObjectURL(fontUrlRef.current);
+      }
+      if (fontFaceRef.current) {
+        document.fonts.delete(fontFaceRef.current);
+      }
+    };
+  }, []);
 
   const PREVIEW_SIZES = [12, 14, 16, 18, 24, 32, 48, 64, 72, 96];
   const SAMPLE_TEXTS = [

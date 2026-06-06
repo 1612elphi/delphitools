@@ -32,6 +32,11 @@ export function injectPrintStyles(html: string): string {
 export function printHtmlInIframe(html: string): void {
   const iframe = document.createElement("iframe");
   iframe.setAttribute("aria-hidden", "true");
+  // Sandbox the print frame: allow-same-origin lets us drive win.print() and
+  // allow-modals permits the print dialog, but the absence of allow-scripts
+  // means any <script>/onerror/onload smuggled in via converted documents
+  // (e.g. pandoc raw HTML) cannot execute in our origin. See security audit.
+  iframe.setAttribute("sandbox", "allow-same-origin allow-modals");
   iframe.style.cssText = "position:fixed; left:-9999px; top:0; width:794px; height:0; border:0;";
   iframe.srcdoc = html;
   iframe.onload = () => {

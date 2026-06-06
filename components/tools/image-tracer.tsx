@@ -531,6 +531,7 @@ export function ImageTracerTool() {
   const workerRef = useRef<Worker | null>(null);
   const workerInitRef = useRef<Promise<Worker | null> | null>(null);
   const prevPreviewUrlRef = useRef<string | null>(null);
+  const prevImageSrcRef = useRef<string | null>(null);
 
   // Lazily initialise the worker (async, cached after first call)
   const getWorker = useCallback(async () => {
@@ -549,15 +550,19 @@ export function ImageTracerTool() {
       workerRef.current?.terminate();
       if (prevPreviewUrlRef.current)
         URL.revokeObjectURL(prevPreviewUrlRef.current);
+      if (prevImageSrcRef.current)
+        URL.revokeObjectURL(prevImageSrcRef.current);
     };
   }, []);
 
   const extractImageData = useCallback((file: File): Promise<ImageData> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
+      const url = URL.createObjectURL(file);
       img.onload = () => {
         const canvas = canvasRef.current;
         if (!canvas) {
+          URL.revokeObjectURL(url);
           reject(new Error("Canvas not available"));
           return;
         }
@@ -565,14 +570,20 @@ export function ImageTracerTool() {
         canvas.height = img.height;
         const ctx = canvas.getContext("2d");
         if (!ctx) {
+          URL.revokeObjectURL(url);
           reject(new Error("Canvas 2D context unavailable"));
           return;
         }
         ctx.drawImage(img, 0, 0);
-        resolve(ctx.getImageData(0, 0, img.width, img.height));
+        const data = ctx.getImageData(0, 0, img.width, img.height);
+        URL.revokeObjectURL(url);
+        resolve(data);
       };
-      img.onerror = () => reject(new Error("Failed to load image"));
-      img.src = URL.createObjectURL(file);
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error("Failed to load image"));
+      };
+      img.src = url;
     });
   }, []);
 
@@ -673,7 +684,11 @@ export function ImageTracerTool() {
     rawSvgRef.current = null;
     imageDataRef.current = null;
     setImageFile(file);
-    setImageSrc(URL.createObjectURL(file));
+    // Revoke previous source object URL before creating a new one
+    if (prevImageSrcRef.current) URL.revokeObjectURL(prevImageSrcRef.current);
+    const src = URL.createObjectURL(file);
+    prevImageSrcRef.current = src;
+    setImageSrc(src);
   }, []);
 
   const handleDrop = useCallback(
@@ -753,6 +768,8 @@ export function ImageTracerTool() {
     if (prevPreviewUrlRef.current)
       URL.revokeObjectURL(prevPreviewUrlRef.current);
     prevPreviewUrlRef.current = null;
+    if (prevImageSrcRef.current) URL.revokeObjectURL(prevImageSrcRef.current);
+    prevImageSrcRef.current = null;
     setPreviewUrl(null);
     setHasResult(false);
     setTracing(false);
