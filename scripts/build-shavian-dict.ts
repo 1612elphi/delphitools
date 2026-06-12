@@ -37,7 +37,7 @@ function main() {
   for (const line of lines) {
     const parts = line.split(/\s+/);
     if (parts.length < 2) continue;
-    let word = parts[0].toLowerCase();
+    const word = parts[0].toLowerCase();
     // Skip variant markers like "read(2)"
     if (word.includes("(")) continue;
     // Skip words with non-alpha characters (abbreviations, etc.)
