@@ -39,6 +39,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useFilePaste } from "@/hooks/use-file-paste";
+import { WiFiForm, type WiFiFormData } from "./wifi-form";
 
 // Types
 type DotType =
@@ -156,7 +157,7 @@ const defaultVCard: VCardData = {
 
 export function QrGeneratorTool() {
   // Main state
-  const [activeTab, setActiveTab] = useState<"single" | "batch" | "vcard">(
+  const [activeTab, setActiveTab] = useState<"single" | "batch" | "vcard" | "wifi">(
     "single"
   );
   const [content, setContent] = useState("");
@@ -169,6 +170,14 @@ export function QrGeneratorTool() {
 
   // vCard state
   const [vCardData, setVCardData] = useState<VCardData>(defaultVCard);
+
+  // WiFi form state
+  const [wifiData, setWifiData] = useState<WiFiFormData>({
+    ssid: "",
+    password: "",
+    securityType: "WPA",
+    isHidden: false,
+  });
 
   // Batch state
   const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
@@ -255,7 +264,7 @@ export function QrGeneratorTool() {
 
   // Generate QR code using qr-code-styling
   const generateQRCode = useCallback(async () => {
-    if (!content.trim() && activeTab !== "vcard") return;
+    if (!content.trim() && activeTab !== "vcard" && activeTab !== "wifi") return;
 
     const actualContent =
       activeTab === "vcard" ? generateVCardString(vCardData) : content;
@@ -570,8 +579,9 @@ export function QrGeneratorTool() {
           value={activeTab}
           onValueChange={(v) => setActiveTab(v as typeof activeTab)}
         >
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="single">Single</TabsTrigger>
+            <TabsTrigger value="wifi">WiFi QR</TabsTrigger>
             <TabsTrigger value="vcard">vCard Builder</TabsTrigger>
             <TabsTrigger value="batch">Batch Mode</TabsTrigger>
           </TabsList>
@@ -621,6 +631,15 @@ export function QrGeneratorTool() {
                 </Button>
               ))}
             </div>
+          </TabsContent>
+
+          {/* WiFi QR Generator */}
+          <TabsContent value="wifi" className="space-y-4 mt-4">
+            <WiFiForm
+              data={wifiData}
+              onChange={setWifiData}
+              onQRStringChange={setContent}
+            />
           </TabsContent>
 
           {/* vCard Builder */}
