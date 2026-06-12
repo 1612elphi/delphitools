@@ -175,7 +175,7 @@ export function QrGeneratorTool() {
   const [wifiData, setWifiData] = useState<WiFiFormData>({
     ssid: "",
     password: "",
-    securityType: "WPA",
+    securityType: "nopass",
     isHidden: false,
   });
 

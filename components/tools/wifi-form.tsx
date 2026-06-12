@@ -11,7 +11,7 @@ import {
 export interface WiFiFormData {
   ssid: string;
   password: string;
-  securityType: "WPA" | "WEP" | "nopass";
+  securityType: "nopass" | "WPA" | "WEP" ;
   isHidden: boolean;
 }
 
@@ -66,6 +66,7 @@ export function WiFiForm({ data, onChange, onQRStringChange }: WiFiFormProps) {
         <Label htmlFor="ssid">Network Name (SSID)</Label>
         <Input
           id="ssid"
+          type="text"
           value={data.ssid}
           onChange={(e) => handleFieldChange("ssid", e.target.value)}
           placeholder="My WiFi Network"
@@ -79,7 +80,7 @@ export function WiFiForm({ data, onChange, onQRStringChange }: WiFiFormProps) {
           onValueChange={(value) =>
             handleFieldChange(
               "securityType",
-              value as "WPA" | "WEP" | "nopass"
+              value as WiFiFormData["securityType"]
             )
           }
         >
@@ -87,9 +88,9 @@ export function WiFiForm({ data, onChange, onQRStringChange }: WiFiFormProps) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="WPA">WPA / WPA2 / WPA3</SelectItem>
-            <SelectItem value="WEP">WEP (Legacy)</SelectItem>
-            <SelectItem value="nopass">Open (No Password)</SelectItem>
+            <SelectItem value="nopass">No password</SelectItem>
+            <SelectItem value="WPA">WPA/WPA2</SelectItem>
+            <SelectItem value="WEP">WEP</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -99,7 +100,7 @@ export function WiFiForm({ data, onChange, onQRStringChange }: WiFiFormProps) {
           <Label htmlFor="password">Password</Label>
           <Input
             id="password"
-            type="password"
+            type="text"
             value={data.password}
             onChange={(e) => handleFieldChange("password", e.target.value)}
             placeholder="Enter WiFi password"
