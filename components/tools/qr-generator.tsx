@@ -566,7 +566,6 @@ export function QrGeneratorTool() {
     { label: "URL", placeholder: "https://example.com" },
     { label: "Email", placeholder: "mailto:hello@example.com" },
     { label: "Phone", placeholder: "tel:+1234567890" },
-    { label: "WiFi", placeholder: "WIFI:T:WPA;S:NetworkName;P:password;;" },
     { label: "SMS", placeholder: "sms:+1234567890?body=Hello" },
     { label: "Geo", placeholder: "geo:40.7128,-74.0060" },
   ];
