@@ -1,3 +1,8 @@
+"use client";
+
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -7,57 +12,57 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 export interface WiFiFormData {
   ssid: string;
   password: string;
-  securityType: "nopass" | "WPA" | "WEP" ;
+  securityType: "nopass" | "WPA" | "WEP";
   isHidden: boolean;
+}
+
+// The ZXing WIFI: spec requires escaping \ ; , " : — unescaped quotes make
+// scanners treat the value as hex/quoted rather than literal text
+function escapeWiFiValue(value: string): string {
+  return value.replace(/[\\;,":]/g, "\\$&");
+}
+
+// Format: WIFI:T:{security};S:{ssid};P:{password};H:true;;
+// Returns "" while the form is incomplete — a secured network without a
+// password would encode an unjoinable QR
+export function generateWiFiString(data: WiFiFormData): string {
+  const { ssid, password, securityType, isHidden } = data;
+
+  if (!ssid.trim()) return "";
+  if (securityType !== "nopass" && !password) return "";
+
+  let wifiString = `WIFI:T:${securityType};S:${escapeWiFiValue(ssid)}`;
+
+  if (securityType !== "nopass") {
+    wifiString += `;P:${escapeWiFiValue(password)}`;
+  }
+
+  if (isHidden) {
+    wifiString += ";H:true";
+  }
+
+  return wifiString + ";;";
 }
 
 interface WiFiFormProps {
   data: WiFiFormData;
   onChange: (data: WiFiFormData) => void;
-  onQRStringChange: (qrString: string) => void;
 }
 
-export function WiFiForm({ data, onChange, onQRStringChange }: WiFiFormProps) {
+export function WiFiForm({ data, onChange }: WiFiFormProps) {
+  const [showPassword, setShowPassword] = useState(false);
+  const secured = data.securityType !== "nopass";
+
   const handleFieldChange = (
     field: keyof WiFiFormData,
     value: string | boolean
   ) => {
-    const updatedData = { ...data, [field]: value };
-    onChange(updatedData);
-    // Generate and emit the WiFi QR string
-    generateAndEmitQRString(updatedData);
-  };
-
-  const generateAndEmitQRString = (formData: WiFiFormData) => {
-    const { ssid, password, securityType, isHidden } = formData;
-
-    if (!ssid) {
-      onQRStringChange("");
-      return;
-    }
-
-    // Escape special characters in SSID and password
-    const escapedSSID = ssid.replace(/[;:,\\]/g, "\\$&");
-    const escapedPassword = password.replace(/[;:,\\]/g, "\\$&");
-
-    // Build WiFi string according to RFC standard
-    // Format: WIFI:T:{security};S:{ssid};P:{password};H:{hidden};;
-    let wifiString = `WIFI:T:${securityType};S:${escapedSSID}`;
-
-    if (securityType !== "nopass" && password) {
-      wifiString += `;P:${escapedPassword}`;
-    }
-
-    if (isHidden) {
-      wifiString += ";H:true";
-    }
-
-    wifiString += ";;";
-    onQRStringChange(wifiString);
+    onChange({ ...data, [field]: value });
   };
 
   return (
@@ -73,51 +78,80 @@ export function WiFiForm({ data, onChange, onQRStringChange }: WiFiFormProps) {
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="securityType">Security Type</Label>
-        <Select
-          value={data.securityType}
-          onValueChange={(value) =>
-            handleFieldChange(
-              "securityType",
-              value as WiFiFormData["securityType"]
-            )
-          }
-        >
-          <SelectTrigger id="securityType">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="nopass">No password</SelectItem>
-            <SelectItem value="WPA">WPA/WPA2</SelectItem>
-            <SelectItem value="WEP">WEP</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="securityType">Security Type</Label>
+          <Select
+            value={data.securityType}
+            onValueChange={(value) =>
+              handleFieldChange(
+                "securityType",
+                value as WiFiFormData["securityType"]
+              )
+            }
+          >
+            <SelectTrigger id="securityType" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="nopass">No password</SelectItem>
+              <SelectItem value="WPA">WPA/WPA2</SelectItem>
+              <SelectItem value="WEP">WEP</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-      {data.securityType !== "nopass" && (
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            type="text"
-            value={data.password}
-            onChange={(e) => handleFieldChange("password", e.target.value)}
-            placeholder="Enter WiFi password"
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="off"
+              disabled={!secured}
+              value={secured ? data.password : ""}
+              onChange={(e) => handleFieldChange("password", e.target.value)}
+              placeholder={secured ? "Enter WiFi password" : "Open network"}
+              className="pr-10"
+            />
+            {secured && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:bg-transparent"
+                onClick={() => setShowPassword((show) => !show)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="size-4" />
+                ) : (
+                  <Eye className="size-4" />
+                )}
+              </Button>
+            )}
+          </div>
+          {secured && data.ssid.trim() && !data.password && (
+            <p className="text-xs text-muted-foreground">
+              Enter the password to generate the QR code.
+            </p>
+          )}
         </div>
-      )}
+      </div>
 
-      <label className="flex items-center gap-2 text-sm cursor-pointer">
-        <input
+      <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
+        <div className="space-y-0.5">
+          <Label htmlFor="isHidden">Hidden network</Label>
+          <p className="text-xs text-muted-foreground">
+            For networks that don&apos;t broadcast their SSID.
+          </p>
+        </div>
+        <Switch
           id="isHidden"
-          type="checkbox"
           checked={data.isHidden}
-          onChange={(e) => handleFieldChange("isHidden", e.target.checked)}
-          className="w-4 h-4 rounded border border-input"
+          onCheckedChange={(checked) => handleFieldChange("isHidden", checked)}
         />
-        <span className="font-medium">Hidden SSID</span>
-      </label>
+      </div>
     </div>
   );
 }

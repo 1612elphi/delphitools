@@ -38,8 +38,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Switch } from "@/components/ui/switch";
 import { useFilePaste } from "@/hooks/use-file-paste";
-import { WiFiForm, type WiFiFormData } from "./wifi-form";
+import { WiFiForm, generateWiFiString, type WiFiFormData } from "./wifi-form";
 
 // Types
 type DotType =
@@ -155,6 +156,57 @@ const defaultVCard: VCardData = {
   address: "",
 };
 
+const INFO_FONT =
+  'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif';
+
+const escapeXml = (value: string) =>
+  value.replace(/[&<>'"]/g, (c) =>
+    c === "&"
+      ? "&amp;"
+      : c === "<"
+        ? "&lt;"
+        : c === ">"
+          ? "&gt;"
+          : c === "'"
+            ? "&apos;"
+            : "&quot;"
+  );
+
+// Word-wrap for the exported info block; hard-breaks words wider than the
+// line (long URLs) so text never overflows the QR width
+const wrapText = (
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number
+): string[] => {
+  const lines: string[] = [];
+  let line = "";
+  for (const word of text.split(/\s+/)) {
+    let chunk = word;
+    while (ctx.measureText(chunk).width > maxWidth && chunk.length > 1) {
+      let cut = chunk.length - 1;
+      while (cut > 1 && ctx.measureText(chunk.slice(0, cut)).width > maxWidth) {
+        cut--;
+      }
+      if (line) {
+        lines.push(line);
+        line = "";
+      }
+      lines.push(chunk.slice(0, cut));
+      chunk = chunk.slice(cut);
+    }
+    const tryLine = line ? `${line} ${chunk}` : chunk;
+    if (!line || ctx.measureText(tryLine).width <= maxWidth) {
+      line = tryLine;
+    } else {
+      lines.push(line);
+      line = chunk;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+};
+
 export function QrGeneratorTool() {
   // Main state
   const [activeTab, setActiveTab] = useState<"single" | "batch" | "vcard" | "wifi">(
@@ -165,6 +217,7 @@ export function QrGeneratorTool() {
   const [options, setOptions] = useState<QROptions>(defaultQROptions);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
 
   const [generating, setGenerating] = useState(false);
 
@@ -264,11 +317,17 @@ export function QrGeneratorTool() {
 
   // Generate QR code using qr-code-styling
   const generateQRCode = useCallback(async () => {
-    if (!content.trim() && activeTab !== "vcard" && activeTab !== "wifi") return;
-
     const actualContent =
-      activeTab === "vcard" ? generateVCardString(vCardData) : content;
-    if (!actualContent.trim()) return;
+      activeTab === "vcard"
+        ? generateVCardString(vCardData)
+        : activeTab === "wifi"
+          ? generateWiFiString(wifiData)
+          : content;
+    if (!actualContent.trim()) {
+      setQrDataUrl(null);
+      qrCodeInstance.current = null;
+      return;
+    }
 
     setGenerating(true);
 
@@ -332,7 +391,7 @@ export function QrGeneratorTool() {
     } finally {
       setGenerating(false);
     }
-  }, [content, size, options, activeTab, vCardData, generateVCardString]);
+  }, [content, size, options, activeTab, vCardData, wifiData, generateVCardString]);
 
   // Regenerate when dependencies change
   useEffect(() => {
@@ -383,19 +442,133 @@ export function QrGeneratorTool() {
     if (file) processLogoFile(file);
   };
 
+  // Plaintext details shown under the QR when "Add information" is on;
+  // entries without a label render as a bare line
+  const infoEntries: { label?: string; value: string }[] = (
+    activeTab === "wifi"
+      ? [
+          { label: "Network", value: wifiData.ssid.trim() },
+          ...(wifiData.securityType !== "nopass"
+            ? [{ label: "Password", value: wifiData.password }]
+            : []),
+          ...(wifiData.isHidden ? [{ value: "Hidden network" }] : []),
+        ]
+      : activeTab === "vcard"
+        ? [
+            {
+              label: "Name",
+              value: `${vCardData.firstName} ${vCardData.lastName}`.trim(),
+            },
+            { label: "Organization", value: vCardData.organization },
+            { label: "Job Title", value: vCardData.title },
+            { label: "Email", value: vCardData.email },
+            { label: "Phone", value: vCardData.phone },
+            { label: "Website", value: vCardData.website },
+            { label: "Address", value: vCardData.address },
+          ]
+        : [{ label: "Content", value: content.trim() }]
+  ).filter((entry) => entry.value);
+
+  const includeInfo = showInfo && infoEntries.length > 0;
+
+  const infoTexts = infoEntries.map((entry) =>
+    entry.label ? `${entry.label}: ${entry.value}` : entry.value
+  );
+
+  // Measure and wrap the info block in the QR's coordinate space; scale
+  // converts to bitmap pixels for PNG export
+  const buildInfoLayout = (scale: number) => {
+    const ctx = document.createElement("canvas").getContext("2d");
+    if (!ctx) return null;
+    const fontSize = Math.max(13, Math.round(size * 0.055)) * scale;
+    const lineHeight = Math.round(fontSize * 1.5);
+    const maxWidth = size * 0.88 * scale;
+    ctx.font = `500 ${fontSize}px ${INFO_FONT}`;
+    const lines = infoTexts.flatMap((text) => wrapText(ctx, text, maxWidth));
+    return {
+      fontSize,
+      lineHeight,
+      lines,
+      blockHeight: lines.length * lineHeight + fontSize,
+    };
+  };
+
+  const composeInfoPng = async (): Promise<Blob | null> => {
+    const qr = qrCodeInstance.current;
+    if (!qr) return null;
+    const raw = await qr.getRawData("png");
+    if (!(raw instanceof Blob)) return null;
+    const bitmap = await createImageBitmap(raw);
+    const layout = buildInfoLayout(bitmap.width / size);
+    if (!layout) return null;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height + layout.blockHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    if (!options.transparentBg) {
+      ctx.fillStyle = options.backgroundColor;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    ctx.drawImage(bitmap, 0, 0);
+    ctx.fillStyle = options.foregroundColor;
+    ctx.font = `500 ${layout.fontSize}px ${INFO_FONT}`;
+    ctx.textAlign = "center";
+    layout.lines.forEach((line, i) => {
+      ctx.fillText(
+        line,
+        canvas.width / 2,
+        bitmap.height + (i + 0.75) * layout.lineHeight
+      );
+    });
+    return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+  };
+
+  const composeInfoSvg = async (): Promise<Blob | null> => {
+    const qr = qrCodeInstance.current;
+    if (!qr) return null;
+    const raw = await qr.getRawData("svg");
+    if (!(raw instanceof Blob)) return null;
+    const qrSvg = (await raw.text()).replace(/<\?xml[^?]*\?>/, "");
+    const layout = buildInfoLayout(1);
+    if (!layout) return null;
+
+    const totalHeight = size + layout.blockHeight;
+    const background = options.transparentBg
+      ? ""
+      : `<rect width="100%" height="100%" fill="${options.backgroundColor}"/>`;
+    const textEls = layout.lines
+      .map(
+        (line, i) =>
+          `<text x="${size / 2}" y="${size + (i + 0.75) * layout.lineHeight}" text-anchor="middle" fill="${options.foregroundColor}" font-family='${INFO_FONT}' font-size="${layout.fontSize}" font-weight="500">${escapeXml(line)}</text>`
+      )
+      .join("");
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${totalHeight}" viewBox="0 0 ${size} ${totalHeight}">${background}${qrSvg}${textEls}</svg>`;
+    return new Blob([svg], { type: "image/svg+xml" });
+  };
+
   // Download functions
   const downloadCode = async (format: "png" | "svg") => {
-    if (!qrCodeInstance.current && !qrDataUrl) return;
+    const qr = qrCodeInstance.current;
+    if (!qr) return;
 
     const filename = `qr-code-${Date.now()}`;
 
-    if (qrCodeInstance.current) {
-      if (format === "svg") {
-        qrCodeInstance.current.download({ name: filename, extension: "svg" });
-      } else {
-        qrCodeInstance.current.download({ name: filename, extension: "png" });
-      }
+    if (!includeInfo) {
+      qr.download({ name: filename, extension: format });
+      return;
     }
+
+    const blob =
+      format === "png" ? await composeInfoPng() : await composeInfoSvg();
+    if (!blob) return;
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${filename}.${format}`;
+    link.click();
+    URL.revokeObjectURL(link.href);
   };
 
   // Copy to clipboard
@@ -403,8 +576,10 @@ export function QrGeneratorTool() {
     if (!qrDataUrl) return;
 
     try {
-      const response = await fetch(qrDataUrl);
-      const blob = await response.blob();
+      const blob = includeInfo
+        ? await composeInfoPng()
+        : await (await fetch(qrDataUrl)).blob();
+      if (!blob) return;
       await navigator.clipboard.write([
         new ClipboardItem({ "image/png": blob }),
       ]);
@@ -566,6 +741,7 @@ export function QrGeneratorTool() {
     { label: "URL", placeholder: "https://example.com" },
     { label: "Email", placeholder: "mailto:hello@example.com" },
     { label: "Phone", placeholder: "tel:+1234567890" },
+    { label: "WiFi", placeholder: "WIFI:T:WPA;S:NetworkName;P:password;;" },
     { label: "SMS", placeholder: "sms:+1234567890?body=Hello" },
     { label: "Geo", placeholder: "geo:40.7128,-74.0060" },
   ];
@@ -634,11 +810,7 @@ export function QrGeneratorTool() {
 
           {/* WiFi QR Generator */}
           <TabsContent value="wifi" className="space-y-4 mt-4">
-            <WiFiForm
-              data={wifiData}
-              onChange={setWifiData}
-              onQRStringChange={setContent}
-            />
+            <WiFiForm data={wifiData} onChange={setWifiData} />
           </TabsContent>
 
           {/* vCard Builder */}
@@ -831,7 +1003,22 @@ export function QrGeneratorTool() {
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Preview */}
             <div className="space-y-4">
-              <Label className="font-bold text-lg">Preview</Label>
+              <div className="flex items-center justify-between">
+                <Label className="font-bold text-lg">Preview</Label>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="show-info"
+                    checked={showInfo}
+                    onCheckedChange={setShowInfo}
+                  />
+                  <Label
+                    htmlFor="show-info"
+                    className="text-sm font-normal text-muted-foreground"
+                  >
+                    Add information
+                  </Label>
+                </div>
+              </div>
               <div
                 className={`border-4 border-card rounded-xl p-4 flex items-center justify-center min-h-[320px] ${options.transparentBg ? "bg-[repeating-conic-gradient(#e5e7eb_0%_25%,transparent_0%_50%)] bg-[length:16px_16px]" : ""}`}
                 style={options.transparentBg ? undefined : { backgroundColor: options.backgroundColor }}
@@ -839,16 +1026,36 @@ export function QrGeneratorTool() {
                 {generating ? (
                   <Loader2 className="size-8 animate-spin text-muted-foreground" />
                 ) : qrDataUrl ? (
-                  <img
-                    src={qrDataUrl}
-                    alt="QR Code"
-                    width={size}
-                    height={size}
-                    className="block"
-                  />
+                  <div className="flex max-w-full flex-col items-center">
+                    <img
+                      src={qrDataUrl}
+                      alt="QR Code"
+                      width={size}
+                      height={size}
+                      className="block"
+                    />
+                    {includeInfo && (
+                      <div
+                        className="max-w-full space-y-1 px-4 pb-2 text-center"
+                        style={{ color: options.foregroundColor }}
+                      >
+                        {infoTexts.map((text) => (
+                          <p key={text} className="break-all text-sm font-medium">
+                            {text}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <div className="text-center text-muted-foreground">
-                    <p>Enter content to generate QR code</p>
+                    <p>
+                      {activeTab === "wifi"
+                        ? "Enter network details to generate QR code"
+                        : activeTab === "vcard"
+                          ? "Fill in contact details to generate QR code"
+                          : "Enter content to generate QR code"}
+                    </p>
                   </div>
                 )}
               </div>
@@ -1158,20 +1365,24 @@ export function QrGeneratorTool() {
                             className="font-mono flex-1"
                           />
                         </div>
-                        <label className="flex items-center gap-2 text-sm cursor-pointer">
-                          <input
-                            type="checkbox"
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id="transparent-bg"
                             checked={options.transparentBg}
-                            onChange={(e) =>
+                            onCheckedChange={(checked) =>
                               setOptions((prev) => ({
                                 ...prev,
-                                transparentBg: e.target.checked,
+                                transparentBg: checked,
                               }))
                             }
-                            className="rounded"
                           />
-                          Transparent background
-                        </label>
+                          <Label
+                            htmlFor="transparent-bg"
+                            className="text-sm font-normal"
+                          >
+                            Transparent background
+                          </Label>
+                        </div>
                       </div>
                     </div>
                   </AccordionContent>
