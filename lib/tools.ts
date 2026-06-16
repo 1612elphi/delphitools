@@ -250,6 +250,14 @@ export const toolCategories: ToolCategory[] = [
         icon: FileImage,
         href: "/tools/svg-optimiser",
       },
+      {
+        id: "base64-image-encoder",
+        name: "Base64 Image Encoder",
+        description: "Convert images to Base64 strings for CSS/HTML embedding",
+        icon: FileCode,
+        href: "/tools/base64-image-encoder",
+        new: true,
+      },
     ],
   },
   {

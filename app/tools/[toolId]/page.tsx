@@ -60,6 +60,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   "decoder": dynamic(() => import("@/components/tools/decoder").then(mod => mod.DecoderTool)),
   "doc-converter": dynamic(() => import("@/components/tools/doc-converter").then(mod => mod.DocConverterTool)),
   "text-editor": dynamic(() => import("@/components/tools/text-editor").then(mod => mod.TextEditorTool)),
+  "base64-image-encoder": dynamic(() => import("@/components/tools/base64-image-encoder").then(mod => mod.Base64ImageEncoderTool)),
 };
 
 interface ToolPageProps {
