@@ -101,7 +101,7 @@ applicable on this surface (hardware/native or format constraint).
 | Tool (web ID) | W | C | I | Notes |
 | ------------- | :-: | :-: | :-: | ----- |
 | QR Generator (`qr-genny`) | ✅ | ✅ `qr` | ✅ | WiFi form (security type, hidden SSID, spec-escaped `WIFI:` string) + "Add information" plaintext captions on exports: W ✅ · C ❌ · I ❌ |
-| Barcode Generator (`code-genny`) | ✅ | ✅ `barcode` | ✅ | |
+| Barcode Generator (`code-genny`) | ✅ | ✅ `barcode` | ✅ | Transparent PNG export + toggleable human-readable numbers (HRI) under 1D codes: W ✅ · C ❌ · I ❌ |
 | Meta Tag Generator (`meta-tag-genny`) | ✅ | ✅ `meta` | ✅ | |
 | Regex Tester (`regex-tester`) | ✅ | ✅ `regex` | ✅ | |
 | Tailwind Cheat Sheet (`tailwind-cheatsheet`) | ✅ | ❌ | ✅ | |

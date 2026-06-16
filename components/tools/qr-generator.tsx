@@ -41,6 +41,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useFilePaste } from "@/hooks/use-file-paste";
 import { WiFiForm, generateWiFiString, type WiFiFormData } from "./wifi-form";
+import { CHECKERBOARD_CLASS } from "./code-preview";
 
 // Types
 type DotType =
@@ -253,6 +254,10 @@ export function QrGeneratorTool() {
   const qrCodeInstance = useRef<any>(null);
   const isMountedRef = useRef(true);
   useEffect(() => {
+    // Reset on mount too — StrictMode (dev default) runs mount→cleanup→mount;
+    // without this the flag stays false after the remount and the guarded
+    // batch setState calls are skipped.
+    isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
     };
@@ -1020,7 +1025,7 @@ export function QrGeneratorTool() {
                 </div>
               </div>
               <div
-                className={`border-4 border-card rounded-xl p-4 flex items-center justify-center min-h-[320px] ${options.transparentBg ? "bg-[repeating-conic-gradient(#e5e7eb_0%_25%,transparent_0%_50%)] bg-[length:16px_16px]" : ""}`}
+                className={`border-4 border-card rounded-xl p-4 flex items-center justify-center min-h-[320px] ${options.transparentBg ? CHECKERBOARD_CLASS : ""}`}
                 style={options.transparentBg ? undefined : { backgroundColor: options.backgroundColor }}
               >
                 {generating ? (

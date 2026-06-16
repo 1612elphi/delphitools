@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import {
   Accordion,
   AccordionContent,
@@ -35,6 +36,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import { CHECKERBOARD_CLASS } from "./code-preview";
 
 interface BatchItem {
   id: string;
@@ -55,6 +57,21 @@ type BarcodeType =
 
 // Character set types
 type CharSet = "alphanumeric" | "alphanumeric-limited" | "numeric";
+
+// Mod-10 check digit for the EAN/UPC family. `digits` is the data portion
+// without the trailing check digit (12 for EAN-13, 11 for UPC-A). The weight
+// pair differs per symbology: EAN-13 weights even/odd indices 1/3, UPC-A 3/1.
+const mod10CheckDigit = (
+  digits: string,
+  evenWeight: number,
+  oddWeight: number
+): number => {
+  let sum = 0;
+  for (let i = 0; i < digits.length; i++) {
+    sum += (digits.charCodeAt(i) - 48) * (i % 2 === 0 ? evenWeight : oddWeight);
+  }
+  return (10 - (sum % 10)) % 10;
+};
 
 // Barcode type metadata with inventor info
 const BARCODE_TYPES: Record<
@@ -162,8 +179,15 @@ const BARCODE_TYPES: Record<
       "European Article Number. Standard barcode for retail products worldwide.",
     placeholder: "5901234123457",
     validation: (value: string) => {
-      if (value.length > 0 && !/^\d{12,13}$/.test(value)) {
+      if (value.length === 0) return null;
+      if (!/^\d{12,13}$/.test(value)) {
         return "EAN-13 requires exactly 12 or 13 digits";
+      }
+      if (value.length === 13) {
+        const expected = mod10CheckDigit(value.slice(0, 12), 1, 3);
+        if (value.charCodeAt(12) - 48 !== expected) {
+          return `Check digit should be ${expected} — or enter just the first 12 digits to auto-fill it`;
+        }
       }
       return null;
     },
@@ -180,8 +204,15 @@ const BARCODE_TYPES: Record<
       "Universal Product Code. The original retail barcode, still dominant in North America.",
     placeholder: "012345678905",
     validation: (value: string) => {
-      if (value.length > 0 && !/^\d{11,12}$/.test(value)) {
+      if (value.length === 0) return null;
+      if (!/^\d{11,12}$/.test(value)) {
         return "UPC-A requires exactly 11 or 12 digits";
+      }
+      if (value.length === 12) {
+        const expected = mod10CheckDigit(value.slice(0, 11), 3, 1);
+        if (value.charCodeAt(11) - 48 !== expected) {
+          return `Check digit should be ${expected} — or enter just the first 11 digits to auto-fill it`;
+        }
       }
       return null;
     },
@@ -211,12 +242,69 @@ interface CodeOptions {
   padding: number;
   foregroundColor: string;
   backgroundColor: string;
+  // Same name/type/default as the QR generator's transparentBg, so the two
+  // tools stay in parity.
+  transparentBg: boolean;
+  // Toggles bwip-js `includetext` (human-readable digits under 1D codes).
+  // Defaults ON to preserve the previous always-on behaviour.
+  showText: boolean;
 }
 
 const defaultOptions: CodeOptions = {
   padding: 2,
   foregroundColor: "#000000",
   backgroundColor: "#ffffff",
+  transparentBg: false,
+  showText: true,
+};
+
+// bwip-js bcid for each of our types. Module-level so the single and batch
+// paths share one source of truth.
+const BWIP_TYPE_MAP: Record<BarcodeType, string> = {
+  microqr: "microqrcode",
+  datamatrix: "datamatrix",
+  azteccode: "azteccode",
+  pdf417: "pdf417",
+  code128: "code128",
+  code39: "code39",
+  ean13: "ean13",
+  upca: "upca",
+};
+
+// Builds the bwip-js options for a render. Used by both single and batch so
+// includetext/transparency/colours can never diverge between the two.
+// Transparency relies on OMITTING backgroundcolor: bwip-js only paints a
+// background when the value is a valid 6-hex string, otherwise it clears the
+// canvas to alpha-0 (see node_modules/bwip-js/src/drawing-canvas.js).
+const buildBwipOptions = (
+  type: BarcodeType,
+  text: string,
+  size: number,
+  options: CodeOptions
+) => {
+  const is1D = BARCODE_TYPES[type].category === "1d";
+  return {
+    bcid: BWIP_TYPE_MAP[type],
+    text,
+    scale: is1D ? 3 : Math.max(2, Math.floor(size / 100)),
+    includetext: is1D && options.showText,
+    textxalign: "center" as const,
+    paddingwidth: options.padding * 2,
+    paddingheight: options.padding * 2,
+    barcolor: options.foregroundColor.replace("#", ""),
+    ...(options.transparentBg
+      ? {}
+      : { backgroundcolor: options.backgroundColor.replace("#", "") }),
+    ...(type === "pdf417" ? { height: 10 } : is1D ? { height: 15 } : {}),
+  };
+};
+
+// bwip-js raises errors as "bwipp.someCode#1234: message" or "bwip-js: message".
+// Strip the namespace so users see the human-readable part only.
+const friendlyBwipError = (err: unknown): string => {
+  const raw =
+    err instanceof Error ? err.message : "Failed to generate barcode";
+  return raw.replace(/^(bwipp\.[^:]*|bwip-js):\s*/, "");
 };
 
 export function CodeGeneratorTool() {
@@ -234,8 +322,17 @@ export function CodeGeneratorTool() {
   const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
   const [batchGenerating, setBatchGenerating] = useState(false);
 
-  const containerRef = useRef<HTMLDivElement>(null);
   const batchFileInputRef = useRef<HTMLInputElement>(null);
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    // Reset on mount too — StrictMode (dev default) runs mount→cleanup→mount,
+    // and without this the flag stays false after the remount and every
+    // guarded setState is skipped, freezing the preview.
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Handle code type change - clear content if incompatible
   const handleCodeTypeChange = (newType: BarcodeType) => {
@@ -276,62 +373,22 @@ export function CodeGeneratorTool() {
     try {
       const bwipjs = await import("bwip-js");
 
-      // Map our types to bwip-js types
-      const bwipTypeMap: Record<BarcodeType, string> = {
-        microqr: "microqrcode",
-        datamatrix: "datamatrix",
-        azteccode: "azteccode",
-        pdf417: "pdf417",
-        code128: "code128",
-        code39: "code39",
-        ean13: "ean13",
-        upca: "upca",
-      };
-
       const canvas = document.createElement("canvas");
-      const is1D = typeInfo.category === "1d";
-
-      // Build options object, only including height/width when needed
-      // bwip-js throws errors if these are undefined
-      // For 2D codes, we only set scale to keep them square
-      const bwipOptions = {
-        bcid: bwipTypeMap[codeType],
-        text: content,
-        scale: is1D ? 3 : Math.max(2, Math.floor(size / 100)),
-        includetext: is1D,
-        textxalign: "center" as const,
-        paddingwidth: options.padding * 2,
-        paddingheight: options.padding * 2,
-        backgroundcolor: options.backgroundColor.replace("#", ""),
-        barcolor: options.foregroundColor.replace("#", ""),
-        ...(codeType === "pdf417"
-          ? { height: 10 }
-          : is1D
-            ? { height: 15 }
-            : {}),
-      };
-
-      await bwipjs.toCanvas(canvas, bwipOptions);
-
+      await bwipjs.toCanvas(
+        canvas,
+        buildBwipOptions(codeType, content, size, options)
+      );
       const dataUrl = canvas.toDataURL("image/png");
-      setCodeDataUrl(dataUrl);
 
-      if (containerRef.current) {
-        containerRef.current.innerHTML = "";
-        const img = document.createElement("img");
-        img.src = dataUrl;
-        img.style.maxWidth = `${size}px`;
-        img.style.height = "auto";
-        containerRef.current.appendChild(img);
-      }
+      if (!isMountedRef.current) return;
+      setCodeDataUrl(dataUrl);
     } catch (err) {
       console.error("Code generation failed:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to generate barcode"
-      );
+      if (!isMountedRef.current) return;
+      setError(friendlyBwipError(err));
       setCodeDataUrl(null);
     } finally {
-      setGenerating(false);
+      if (isMountedRef.current) setGenerating(false);
     }
   }, [content, codeType, size, options]);
 
@@ -424,23 +481,13 @@ export function CodeGeneratorTool() {
     setBatchGenerating(true);
     const bwipjs = await import("bwip-js");
     const JSZip = (await import("jszip")).default;
+    if (!isMountedRef.current) return;
 
     const zip = new JSZip();
     const typeInfo = BARCODE_TYPES[codeType];
-    const is1D = typeInfo.category === "1d";
-
-    const bwipTypeMap: Record<BarcodeType, string> = {
-      microqr: "microqrcode",
-      datamatrix: "datamatrix",
-      azteccode: "azteccode",
-      pdf417: "pdf417",
-      code128: "code128",
-      code39: "code39",
-      ean13: "ean13",
-      upca: "upca",
-    };
 
     for (const item of batchItems) {
+      if (!isMountedRef.current) return;
       if (!item.content.trim()) continue;
 
       // Validate
@@ -464,31 +511,17 @@ export function CodeGeneratorTool() {
 
       try {
         const canvas = document.createElement("canvas");
-
-        const bwipOptions = {
-          bcid: bwipTypeMap[codeType],
-          text: item.content,
-          scale: is1D ? 3 : Math.max(2, Math.floor(size / 100)),
-          includetext: is1D,
-          textxalign: "center" as const,
-          paddingwidth: options.padding * 2,
-          paddingheight: options.padding * 2,
-          backgroundcolor: options.backgroundColor.replace("#", ""),
-          barcolor: options.foregroundColor.replace("#", ""),
-          ...(codeType === "pdf417"
-            ? { height: 10 }
-            : is1D
-              ? { height: 15 }
-              : {}),
-        };
-
-        await bwipjs.toCanvas(canvas, bwipOptions);
+        await bwipjs.toCanvas(
+          canvas,
+          buildBwipOptions(codeType, item.content, size, options)
+        );
 
         const dataUrl = canvas.toDataURL("image/png");
 
         // Convert to blob for ZIP
         const response = await fetch(dataUrl);
         const blob = await response.blob();
+        if (!isMountedRef.current) return;
 
         const safeName = item.content
           .slice(0, 30)
@@ -501,6 +534,7 @@ export function CodeGeneratorTool() {
           )
         );
       } catch {
+        if (!isMountedRef.current) return;
         setBatchItems((prev) =>
           prev.map((i) =>
             i.id === item.id ? { ...i, status: "error" } : i
@@ -511,13 +545,14 @@ export function CodeGeneratorTool() {
 
     // Download ZIP
     const zipBlob = await zip.generateAsync({ type: "blob" });
+    if (!isMountedRef.current) return;
     const link = document.createElement("a");
     link.href = URL.createObjectURL(zipBlob);
     link.download = `${typeInfo.name.toLowerCase().replace(/\s+/g, "-")}-batch-${Date.now()}.zip`;
     link.click();
     URL.revokeObjectURL(link.href);
 
-    setBatchGenerating(false);
+    if (isMountedRef.current) setBatchGenerating(false);
   };
 
   const currentType = BARCODE_TYPES[codeType];
@@ -583,15 +618,42 @@ export function CodeGeneratorTool() {
             <div className="grid lg:grid-cols-2 gap-6">
           {/* Preview */}
           <div className="space-y-4">
-            <Label className="font-bold text-lg">Preview</Label>
+            <div className="flex items-center justify-between">
+              <Label className="font-bold text-lg">Preview</Label>
+              {currentType.category === "1d" && (
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="show-text"
+                    checked={options.showText}
+                    onCheckedChange={(checked) =>
+                      setOptions((prev) => ({ ...prev, showText: checked }))
+                    }
+                  />
+                  <Label
+                    htmlFor="show-text"
+                    className="text-sm font-normal text-muted-foreground"
+                  >
+                    Show numbers
+                  </Label>
+                </div>
+              )}
+            </div>
             <div
-              className="border-4 border-card rounded-xl p-4 flex items-center justify-center min-h-[280px]"
-              style={{ backgroundColor: options.backgroundColor }}
+              className={`border-4 border-card rounded-xl p-4 flex items-center justify-center min-h-[280px] ${options.transparentBg ? CHECKERBOARD_CLASS : ""}`}
+              style={
+                options.transparentBg
+                  ? undefined
+                  : { backgroundColor: options.backgroundColor }
+              }
             >
               {generating ? (
                 <Loader2 className="size-8 animate-spin text-muted-foreground" />
-              ) : content.trim() && !error ? (
-                <div ref={containerRef} />
+              ) : codeDataUrl ? (
+                <img
+                  src={codeDataUrl}
+                  alt={currentType.name}
+                  style={{ maxWidth: size, height: "auto" }}
+                />
               ) : (
                 <div className="text-center text-muted-foreground">
                   <p>Enter content to generate {currentType.name}</p>
@@ -721,16 +783,22 @@ export function CodeGeneratorTool() {
                         <input
                           type="color"
                           value={options.backgroundColor}
+                          disabled={options.transparentBg}
                           onChange={(e) =>
                             setOptions((prev) => ({
                               ...prev,
                               backgroundColor: e.target.value,
                             }))
                           }
-                          className="w-12 h-10 rounded border cursor-pointer"
+                          className="w-12 h-10 rounded border cursor-pointer disabled:opacity-40"
                         />
                         <Input
-                          value={options.backgroundColor}
+                          value={
+                            options.transparentBg
+                              ? "transparent"
+                              : options.backgroundColor
+                          }
+                          disabled={options.transparentBg}
                           onChange={(e) =>
                             setOptions((prev) => ({
                               ...prev,
@@ -739,6 +807,24 @@ export function CodeGeneratorTool() {
                           }
                           className="font-mono flex-1"
                         />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          id="transparent-bg"
+                          checked={options.transparentBg}
+                          onCheckedChange={(checked) =>
+                            setOptions((prev) => ({
+                              ...prev,
+                              transparentBg: checked,
+                            }))
+                          }
+                        />
+                        <Label
+                          htmlFor="transparent-bg"
+                          className="text-sm font-normal"
+                        >
+                          Transparent background
+                        </Label>
                       </div>
                     </div>
                   </div>
