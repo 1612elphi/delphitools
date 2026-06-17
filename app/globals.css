@@ -57,17 +57,19 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+  /* Flattened — the dense/hairline rework uses square corners everywhere.
+     rounded-full (pills, switches, avatars) is unaffected. */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  --radius-4xl: 0px;
 }
 
 :root {
-  --radius: 0.625rem;
+  --radius: 0;
   --background: oklch(0.97 0.02 90);
   --foreground: oklch(0.25 0.05 140);
   --card: oklch(0.98 0.015 90);
@@ -147,6 +149,22 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Flush segmented option groups — children sit edge-to-edge, divided by single
+   hairlines. Put `.segmented` + a `grid-cols-*` on any button/option group;
+   child borders/radii are neutralised so only the 1px grid lines show. */
+@layer components {
+  .segmented {
+    display: grid;
+    gap: 1px;
+    background-color: var(--border);
+    border: 1px solid var(--border);
+  }
+  .segmented > * {
+    border: 0 !important;
+    border-radius: 0 !important;
   }
 }
 

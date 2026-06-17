@@ -766,8 +766,10 @@ export function QrGeneratorTool() {
             <TabsTrigger value="batch">Batch Mode</TabsTrigger>
           </TabsList>
 
+          <div className="mt-3 border-2 border-border">
+
           {/* Single Mode */}
-          <TabsContent value="single" className="space-y-4 mt-4">
+          <TabsContent value="single" className="m-0 space-y-4 border-b-2 border-border p-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label className="font-bold">Content</Label>
@@ -799,7 +801,7 @@ export function QrGeneratorTool() {
                 className="min-h-[80px] text-base"
               />
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="segmented grid-cols-6 -mx-4 -mb-4 border-x-0 border-b-0">
               {presets.map((preset) => (
                 <Button
                   key={preset.label}
@@ -814,12 +816,12 @@ export function QrGeneratorTool() {
           </TabsContent>
 
           {/* WiFi QR Generator */}
-          <TabsContent value="wifi" className="space-y-4 mt-4">
+          <TabsContent value="wifi" className="m-0 space-y-4 border-b-2 border-border p-4">
             <WiFiForm data={wifiData} onChange={setWifiData} />
           </TabsContent>
 
           {/* vCard Builder */}
-          <TabsContent value="vcard" className="space-y-4 mt-4">
+          <TabsContent value="vcard" className="m-0 space-y-4 border-b-2 border-border p-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>First Name</Label>
@@ -921,14 +923,14 @@ export function QrGeneratorTool() {
               </div>
             </div>
             {(vCardData.firstName || vCardData.lastName) && (
-              <div className="p-3 rounded-lg bg-muted/50 font-mono text-xs whitespace-pre-wrap">
+              <div className="p-3 border border-border bg-muted/50 font-mono text-xs whitespace-pre-wrap">
                 {generateVCardString(vCardData)}
               </div>
             )}
           </TabsContent>
 
           {/* Batch Mode */}
-          <TabsContent value="batch" className="space-y-4 mt-4">
+          <TabsContent value="batch" className="m-0 space-y-4 p-4">
             <div className="space-y-3">
               {batchItems.map((item, index) => (
                 <div key={item.id} className="flex gap-2 items-center">
@@ -1001,13 +1003,12 @@ export function QrGeneratorTool() {
               </Button>
             </div>
           </TabsContent>
-        </Tabs>
 
-        {/* Main Content Area */}
-        {activeTab !== "batch" && (
-          <div className="grid lg:grid-cols-2 gap-6">
+          {/* Main Content Area */}
+          {activeTab !== "batch" && (
+            <div className="grid lg:grid-cols-2">
             {/* Preview */}
-            <div className="space-y-4">
+            <div className="space-y-4 border-b-2 border-border p-4 lg:border-b-0 lg:border-r-2">
               <div className="flex items-center justify-between">
                 <Label className="font-bold text-lg">Preview</Label>
                 <div className="flex items-center gap-2">
@@ -1025,7 +1026,7 @@ export function QrGeneratorTool() {
                 </div>
               </div>
               <div
-                className={`border-4 border-card rounded-xl p-4 flex items-center justify-center min-h-[320px] ${options.transparentBg ? CHECKERBOARD_CLASS : ""}`}
+                className={`-mx-4 border border-border border-x-0 p-4 flex items-center justify-center min-h-[320px] ${options.transparentBg ? CHECKERBOARD_CLASS : ""}`}
                 style={options.transparentBg ? undefined : { backgroundColor: options.backgroundColor }}
               >
                 {generating ? (
@@ -1068,7 +1069,7 @@ export function QrGeneratorTool() {
               {/* Style Presets */}
               <div className="space-y-2">
                 <Label className="text-sm text-muted-foreground">Quick Styles</Label>
-                <div className="flex flex-wrap gap-2">
+                <div className="segmented grid-cols-3 -mx-4 border-x-0">
                   <Button
                     variant="outline"
                     size="sm"
@@ -1167,11 +1168,39 @@ export function QrGeneratorTool() {
                   >
                     Teal
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setOptions(prev => ({
+                      ...prev,
+                      dotType: "rounded",
+                      cornerSquareType: "extra-rounded",
+                      cornerDotType: "dot",
+                      foregroundColor: "#d97706",
+                      backgroundColor: "#ffffff",
+                    }))}
+                  >
+                    Amber
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setOptions(prev => ({
+                      ...prev,
+                      dotType: "classy-rounded",
+                      cornerSquareType: "extra-rounded",
+                      cornerDotType: "dot",
+                      foregroundColor: "#7c3aed",
+                      backgroundColor: "#ffffff",
+                    }))}
+                  >
+                    Violet
+                  </Button>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="segmented grid-cols-3 -mx-4 -mb-4 border-x-0 border-b-0">
                 <Button
                   size="lg"
                   onClick={() => downloadCode("png")}
@@ -1214,19 +1243,19 @@ export function QrGeneratorTool() {
             </div>
 
             {/* Options */}
-            <div className="space-y-4">
+            <div className="space-y-4 p-4">
               <Label className="font-bold text-lg">Options</Label>
               <Accordion
                 type="multiple"
                 defaultValue={["basic", "style"]}
-                className="space-y-2"
+                className="-mx-4 border-t border-border"
               >
                 {/* Basic Options */}
-                <AccordionItem value="basic" className="border rounded-lg px-4">
-                  <AccordionTrigger className="font-bold">
+                <AccordionItem value="basic" className="border-b border-border">
+                  <AccordionTrigger className="px-4 font-bold">
                     Basics
                   </AccordionTrigger>
-                  <AccordionContent className="space-y-4 pb-4">
+                  <AccordionContent className="space-y-4 px-4 pb-4">
                     {/* Size */}
                     <div className="space-y-2">
                       <div className="flex justify-between">
@@ -1278,7 +1307,7 @@ export function QrGeneratorTool() {
                           </TooltipContent>
                         </Tooltip>
                       </div>
-                      <div className="grid grid-cols-4 gap-2">
+                      <div className="segmented grid-cols-4 -mx-4 border-x-0">
                         {(
                           Object.keys(
                             ERROR_CORRECTION_INFO
@@ -1310,18 +1339,27 @@ export function QrGeneratorTool() {
                 {/* Colors */}
                 <AccordionItem
                   value="colors"
-                  className="border rounded-lg px-4"
+                  className="border-b border-border"
                 >
-                  <AccordionTrigger className="font-bold">
+                  <AccordionTrigger className="px-4 font-bold">
                     Colours
                   </AccordionTrigger>
-                  <AccordionContent className="space-y-4 pb-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Foreground</Label>
-                        <div className="flex gap-2">
+                  <AccordionContent className="space-y-4 px-4 pb-4">
+                    <div className="-mx-4 border-y border-border">
+                      {/* Foreground */}
+                      <div className="flex items-stretch border-b border-border">
+                        <span className="flex w-28 shrink-0 items-center px-4 text-sm">
+                          Foreground
+                        </span>
+                        <div className="relative w-12 shrink-0 border-l border-border">
+                          <div
+                            className="size-full"
+                            style={{ backgroundColor: options.foregroundColor }}
+                            aria-hidden
+                          />
                           <input
                             type="color"
+                            aria-label="Foreground colour"
                             value={options.foregroundColor}
                             onChange={(e) =>
                               setOptions((prev) => ({
@@ -1329,25 +1367,38 @@ export function QrGeneratorTool() {
                                 foregroundColor: e.target.value,
                               }))
                             }
-                            className="w-12 h-10 rounded border cursor-pointer"
-                          />
-                          <Input
-                            value={options.foregroundColor}
-                            onChange={(e) =>
-                              setOptions((prev) => ({
-                                ...prev,
-                                foregroundColor: e.target.value,
-                              }))
-                            }
-                            className="font-mono flex-1"
+                            className="absolute inset-0 size-full cursor-pointer opacity-0"
                           />
                         </div>
+                        <Input
+                          value={options.foregroundColor}
+                          onChange={(e) =>
+                            setOptions((prev) => ({
+                              ...prev,
+                              foregroundColor: e.target.value,
+                            }))
+                          }
+                          className="flex-1 border-0 border-l border-border bg-transparent font-mono"
+                        />
                       </div>
-                      <div className="space-y-2">
-                        <Label>Background</Label>
-                        <div className="flex gap-2">
+                      {/* Background */}
+                      <div className="flex items-stretch">
+                        <span className="flex w-28 shrink-0 items-center px-4 text-sm">
+                          Background
+                        </span>
+                        <div className="relative w-12 shrink-0 border-l border-border">
+                          <div
+                            className={`size-full ${options.transparentBg ? CHECKERBOARD_CLASS : ""}`}
+                            style={
+                              options.transparentBg
+                                ? undefined
+                                : { backgroundColor: options.backgroundColor }
+                            }
+                            aria-hidden
+                          />
                           <input
                             type="color"
+                            aria-label="Background colour"
                             value={options.backgroundColor}
                             disabled={options.transparentBg}
                             onChange={(e) =>
@@ -1356,23 +1407,22 @@ export function QrGeneratorTool() {
                                 backgroundColor: e.target.value,
                               }))
                             }
-                            className="w-12 h-10 rounded border cursor-pointer disabled:opacity-40"
-                          />
-                          <Input
-                            value={options.transparentBg ? "transparent" : options.backgroundColor}
-                            disabled={options.transparentBg}
-                            onChange={(e) =>
-                              setOptions((prev) => ({
-                                ...prev,
-                                backgroundColor: e.target.value,
-                              }))
-                            }
-                            className="font-mono flex-1"
+                            className="absolute inset-0 size-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
                           />
                         </div>
-                        <div className="flex items-center gap-2">
+                        <Input
+                          value={options.transparentBg ? "transparent" : options.backgroundColor}
+                          disabled={options.transparentBg}
+                          onChange={(e) =>
+                            setOptions((prev) => ({
+                              ...prev,
+                              backgroundColor: e.target.value,
+                            }))
+                          }
+                          className="flex-1 border-0 border-l border-border bg-transparent font-mono"
+                        />
+                        <label className="flex shrink-0 cursor-pointer items-center gap-2 border-l border-border px-3 text-sm text-muted-foreground">
                           <Switch
-                            id="transparent-bg"
                             checked={options.transparentBg}
                             onCheckedChange={(checked) =>
                               setOptions((prev) => ({
@@ -1381,27 +1431,22 @@ export function QrGeneratorTool() {
                               }))
                             }
                           />
-                          <Label
-                            htmlFor="transparent-bg"
-                            className="text-sm font-normal"
-                          >
-                            Transparent background
-                          </Label>
-                        </div>
+                          Transparent
+                        </label>
                       </div>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
 
                 {/* Style */}
-                <AccordionItem value="style" className="border rounded-lg px-4">
-                  <AccordionTrigger className="font-bold">
+                <AccordionItem value="style" className="border-b border-border">
+                  <AccordionTrigger className="px-4 font-bold">
                     Shapes
                   </AccordionTrigger>
-                  <AccordionContent className="space-y-4 pb-4">
+                  <AccordionContent className="space-y-4 px-4 pb-4">
                     <div className="space-y-2">
                       <Label>Bit Style</Label>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="segmented grid-cols-3 -mx-4 border-x-0">
                         {DOT_STYLES.map((style) => (
                           <Button
                             key={style.value}
@@ -1411,6 +1456,7 @@ export function QrGeneratorTool() {
                                 : "outline"
                             }
                             size="sm"
+                            className="rounded-none border-0"
                             onClick={() =>
                               setOptions((prev) => ({
                                 ...prev,
@@ -1425,7 +1471,7 @@ export function QrGeneratorTool() {
                     </div>
                     <div className="space-y-2">
                       <Label>Eyes</Label>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="segmented grid-cols-3 -mx-4 border-x-0">
                         {CORNER_SQUARE_STYLES.map((style) => (
                           <Button
                             key={style.value}
@@ -1449,7 +1495,7 @@ export function QrGeneratorTool() {
                     </div>
                     <div className="space-y-2">
                       <Label>Pupils</Label>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="segmented grid-cols-2 -mx-4 border-x-0">
                         {CORNER_DOT_STYLES.map((style) => (
                           <Button
                             key={style.value}
@@ -1475,11 +1521,11 @@ export function QrGeneratorTool() {
                 </AccordionItem>
 
                 {/* Logo */}
-                <AccordionItem value="logo" className="border rounded-lg px-4">
-                  <AccordionTrigger className="font-bold">
+                <AccordionItem value="logo" className="border-b border-border">
+                  <AccordionTrigger className="px-4 font-bold">
                     Logo / Image
                   </AccordionTrigger>
-                  <AccordionContent className="space-y-4 pb-4">
+                  <AccordionContent className="space-y-4 px-4 pb-4">
                     <input
                       ref={logoInputRef}
                       type="file"
@@ -1573,9 +1619,11 @@ export function QrGeneratorTool() {
             </div>
           </div>
         )}
+        </div>
+      </Tabs>
 
         {/* Inventor Acknowledgements */}
-        <div className="border rounded-lg p-4 bg-muted/30">
+        <div className="border-2 border-border p-4 bg-muted/30">
           <div className="flex items-center gap-2 mb-3">
             <Info className="size-5" />
             <h3 className="font-bold">About {QR_INFO.name}</h3>
