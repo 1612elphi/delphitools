@@ -240,171 +240,178 @@ export function BackgroundRemoverTool() {
 
   return (
     <div className="space-y-6">
-      {/* Quality Selection - only show when precise mode is available */}
-      {ENABLE_PRECISE_MODE && (
-        <div className="space-y-3">
-          <label className="font-bold block">Quality</label>
-          <div className="flex gap-2">
-            <Button
-              variant={qualityMode === "fast" ? "default" : "outline"}
-              onClick={() => setQualityMode("fast")}
-              className="flex-1 font-bold"
-              size="lg"
-              disabled={isProcessing}
-            >
-              Fast
-            </Button>
-            <Button
-              variant={qualityMode === "precise" ? "default" : "outline"}
-              onClick={() => setQualityMode("precise")}
-              className="flex-1 font-bold"
-              size="lg"
-              disabled={isProcessing}
-            >
-              Precise
-            </Button>
+      <div className="border-2 border-border">
+        {/* Quality Selection - only show when precise mode is available */}
+        {ENABLE_PRECISE_MODE && (
+          <div className="space-y-3 border-b-2 border-border p-4">
+            <label className="font-bold block">Quality</label>
+            <div className="segmented grid-cols-2 -mx-4 border-x-0">
+              <Button
+                variant={qualityMode === "fast" ? "default" : "outline"}
+                onClick={() => setQualityMode("fast")}
+                className="font-bold"
+                size="lg"
+                disabled={isProcessing}
+              >
+                Fast
+              </Button>
+              <Button
+                variant={qualityMode === "precise" ? "default" : "outline"}
+                onClick={() => setQualityMode("precise")}
+                className="font-bold"
+                size="lg"
+                disabled={isProcessing}
+              >
+                Precise
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {qualityMode === "precise"
+                ? "Better edge detection for hair, fur, and complex shapes. Slower."
+                : "Good for most images with clean edges. Faster processing."}
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {qualityMode === "precise"
-              ? "Better edge detection for hair, fur, and complex shapes. Slower."
-              : "Good for most images with clean edges. Faster processing."}
-          </p>
-        </div>
-      )}
+        )}
 
-      {/* Drop Zone or Image Preview */}
-      {!sourceImage ? (
-        <div
-          onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
-          className="border-2 border-dashed rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
-          onClick={() => document.getElementById("bg-drop-input")?.click()}
-        >
-          <input
-            id="bg-drop-input"
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-          <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-lg font-medium">Drop an image here</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            or click to select a file, or paste
-          </p>
-        </div>
-      ) : !resultImage ? (
-        /* Source image only (before processing) */
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold">Your Image</h3>
-            <Button variant="ghost" size="sm" onClick={clearImage} disabled={isProcessing}>
-              <Trash2 className="size-4 mr-2" />
-              Clear
-            </Button>
-          </div>
+        {/* Drop Zone or Image Preview */}
+        {!sourceImage ? (
           <div
-            className="relative rounded-xl overflow-hidden bg-muted cursor-pointer"
-            onClick={() => !isProcessing && document.getElementById("bg-source-input")?.click()}
+            onDrop={handleDrop}
+            onDragOver={(e) => e.preventDefault()}
+            className="border-2 border-dashed m-4 p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+            onClick={() => document.getElementById("bg-drop-input")?.click()}
           >
             <input
-              id="bg-source-input"
+              id="bg-drop-input"
               type="file"
               accept="image/*"
               onChange={handleFileSelect}
               className="hidden"
             />
-            <img
-              src={sourceImage}
-              alt="Source"
-              className="max-w-full max-h-80 mx-auto object-contain"
-            />
+            <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-lg font-medium">Drop an image here</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              or click to select a file, or paste
+            </p>
           </div>
-        </div>
-      ) : (
-        /* Side by side comparison (after processing) */
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold">Result</h3>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={clearImage}>
+        ) : !resultImage ? (
+          /* Source image only (before processing) */
+          <div>
+            <div className="flex items-center justify-between p-4">
+              <h3 className="font-bold">Your Image</h3>
+              <Button variant="ghost" size="sm" onClick={clearImage} disabled={isProcessing}>
                 <Trash2 className="size-4 mr-2" />
                 Clear
               </Button>
-              <Button size="sm" onClick={downloadResult}>
-                <Download className="size-4 mr-2" />
+            </div>
+            <div
+              className="relative overflow-hidden bg-muted cursor-pointer border-t border-border"
+              onClick={() => !isProcessing && document.getElementById("bg-source-input")?.click()}
+            >
+              <input
+                id="bg-source-input"
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <img
+                src={sourceImage}
+                alt="Source"
+                className="max-w-full max-h-80 mx-auto object-contain"
+              />
+            </div>
+          </div>
+        ) : (
+          /* Side by side comparison (after processing) */
+          <div>
+            <div className="flex min-h-14 items-stretch">
+              <h3 className="flex flex-1 items-center px-4 font-bold">Result</h3>
+              <Button
+                variant="ghost"
+                onClick={clearImage}
+                className="h-auto gap-2 self-stretch rounded-none border-l border-border px-5"
+              >
+                <Trash2 className="size-4" />
+                Clear
+              </Button>
+              <Button
+                onClick={downloadResult}
+                className="h-auto gap-2 self-stretch rounded-none border-l border-border px-6 font-semibold"
+              >
+                <Download className="size-4" />
                 Download PNG
               </Button>
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground text-center">Original</p>
-              <div className="relative rounded-xl overflow-hidden bg-muted aspect-square flex items-center justify-center">
-                <img
-                  src={sourceImage}
-                  alt="Original"
-                  className="max-w-full max-h-full object-contain"
-                />
+            <div className="grid grid-cols-2 border-t border-border">
+              <div className="border-r border-border">
+                <p className="text-sm text-muted-foreground text-center p-2 border-b border-border">Original</p>
+                <div className="relative overflow-hidden bg-muted aspect-square flex items-center justify-center">
+                  <img
+                    src={sourceImage}
+                    alt="Original"
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground text-center p-2 border-b border-border">Background Removed</p>
+                <div
+                  className="relative overflow-hidden aspect-square flex items-center justify-center"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(45deg, #e0e0e0 25%, transparent 25%), linear-gradient(-45deg, #e0e0e0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e0e0e0 75%), linear-gradient(-45deg, transparent 75%, #e0e0e0 75%)",
+                    backgroundSize: "16px 16px",
+                    backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
+                  }}
+                >
+                  <img
+                    src={resultImage}
+                    alt="Background removed"
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
               </div>
             </div>
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground text-center">Background Removed</p>
-              <div
-                className="relative rounded-xl overflow-hidden aspect-square flex items-center justify-center"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(45deg, #e0e0e0 25%, transparent 25%), linear-gradient(-45deg, #e0e0e0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e0e0e0 75%), linear-gradient(-45deg, transparent 75%, #e0e0e0 75%)",
-                  backgroundSize: "16px 16px",
-                  backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
-                }}
-              >
-                <img
-                  src={resultImage}
-                  alt="Background removed"
-                  className="max-w-full max-h-full object-contain"
-                />
-              </div>
-            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Process Button */}
-      {sourceImage && !resultImage && (
-        <div className="space-y-2">
-          <Button
-            size="lg"
-            className="w-full h-14 text-lg font-bold"
-            onClick={removeBackground}
-            disabled={isProcessing}
-          >
-            {isProcessing ? (
-              <>
-                <Loader2 className="size-5 mr-2 animate-spin" />
-                {processing.message}
-                {processing.status === "downloading" && processing.progress !== undefined && (
-                  <span className="ml-1">{processing.progress}%</span>
-                )}
-              </>
-            ) : (
-              "Remove Background"
+        {/* Process Button */}
+        {sourceImage && !resultImage && (
+          <div className="border-t-2 border-border">
+            <Button
+              size="lg"
+              className="w-full h-14 text-lg font-bold"
+              onClick={removeBackground}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="size-5 mr-2 animate-spin" />
+                  {processing.message}
+                  {processing.status === "downloading" && processing.progress !== undefined && (
+                    <span className="ml-1">{processing.progress}%</span>
+                  )}
+                </>
+              ) : (
+                "Remove Background"
+              )}
+            </Button>
+            {processing.status === "downloading" && processing.progress !== undefined && (
+              <div className="w-full h-2 bg-muted overflow-hidden border-t border-border">
+                <div
+                  className="h-full bg-primary transition-all duration-300 ease-out"
+                  style={{ width: `${processing.progress}%` }}
+                />
+              </div>
             )}
-          </Button>
-          {processing.status === "downloading" && processing.progress !== undefined && (
-            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-              <div
-                className="h-full bg-primary transition-all duration-300 ease-out"
-                style={{ width: `${processing.progress}%` }}
-              />
-            </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       {/* Error State */}
       {processing.status === "error" && (
-        <div className="flex items-start gap-3 p-4 rounded-lg border border-red-500/50 bg-red-500/10">
+        <div className="flex items-start gap-3 p-4 border border-red-500/50 bg-red-500/10">
           <AlertCircle className="size-5 text-red-500 shrink-0 mt-0.5" />
           <div>
             <p className="font-medium text-red-500">Error</p>
@@ -414,7 +421,7 @@ export function BackgroundRemoverTool() {
       )}
 
       {/* Info */}
-      <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50">
+      <div className="flex items-start gap-2 p-3 border border-border bg-muted/50">
         <Info className="size-4 text-muted-foreground shrink-0 mt-0.5" />
         <p className="text-xs text-muted-foreground">
           Processing happens entirely in your browser. On first use, a ~180MB processing engine is downloaded and cached.

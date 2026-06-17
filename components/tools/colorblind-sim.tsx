@@ -253,218 +253,267 @@ export function ColorblindSimTool() {
     <div className="space-y-6">
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* Mode Toggle */}
-      <div className="flex gap-2">
-        <Button
-          variant={mode === "colour" ? "default" : "outline"}
-          onClick={() => setMode("colour")}
-        >
-          <Palette className="size-4 mr-2" />
-          Colour Mode
-        </Button>
-        <Button
-          variant={mode === "image" ? "default" : "outline"}
-          onClick={() => setMode("image")}
-        >
-          <ImageIcon className="size-4 mr-2" />
-          Image Mode
-        </Button>
-      </div>
-
-      {/* Colour Mode */}
-      {mode === "colour" && (
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <label className="font-bold">Select Colour</label>
-            <div className="flex gap-2">
-              <input
-                type="color"
-                value={isValidHex(colour) ? colour : "#000000"}
-                onChange={(e) => setColour(e.target.value)}
-                className="w-14 h-10 rounded border cursor-pointer"
-              />
-              <Input
-                value={colour}
-                onChange={(e) => setColour(e.target.value)}
-                placeholder="#e63946"
-                className="font-mono flex-1 max-w-xs"
-              />
-            </div>
-          </div>
-
-          {/* Colour Simulation Grid */}
-          <div className="space-y-3">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {simulationTypes.map((type) => {
-                const info = SIMULATIONS[type];
-                const simHex = simulateHex(colour, type);
-                const isSelected = selectedSim === type;
-
-                return (
-                  <button
-                    key={type}
-                    onClick={() => setSelectedSim(type)}
-                    className={cn(
-                      "p-4 rounded-lg border text-left transition-all",
-                      isSelected ? "ring-2 ring-primary border-primary" : "hover:border-primary/50"
-                    )}
-                  >
-                    <div className="flex gap-3 mb-3">
-                      <div
-                        className="size-12 rounded-lg border shrink-0"
-                        style={{ backgroundColor: simHex }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-bold text-sm truncate">{info.name}</div>
-                        <div className="font-mono text-xs text-muted-foreground">{formatColour(simHex, notation)}</div>
-                      </div>
-                    </div>
-                    <div className="text-xs text-muted-foreground">{info.description}</div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className={cn(
-                        "text-xs px-2 py-0.5 rounded",
-                        info.severity === "none" && "bg-green-500/10 text-green-600 dark:text-green-400",
-                        info.severity === "partial" && "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-                        info.severity === "full" && "bg-red-500/10 text-red-600 dark:text-red-400"
-                      )}>
-                        {info.severity === "none" ? "Normal" : info.severity === "partial" ? "Partial" : "Full"}
-                      </span>
-                      <span className="text-xs text-muted-foreground">{info.prevalence}</span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Side by Side Comparison */}
-          <div className="space-y-3">
-            <label className="font-bold">Comparison</label>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <div className="text-sm text-muted-foreground">Original</div>
-                <div
-                  className="h-32 rounded-lg border"
-                  style={{ backgroundColor: colour }}
-                />
-                <div className="font-mono text-sm text-center">{colour}</div>
-              </div>
-              <div className="space-y-2">
-                <div className="text-sm text-muted-foreground">{SIMULATIONS[selectedSim].name}</div>
-                <div
-                  className="h-32 rounded-lg border"
-                  style={{ backgroundColor: simulateHex(colour, selectedSim) }}
-                />
-                <div className="font-mono text-sm text-center">{simulateHex(colour, selectedSim)}</div>
-              </div>
-            </div>
+      <div className="border-2 border-border">
+        {/* Mode Toggle */}
+        <div className="border-b-2 border-border">
+          <div className="segmented grid-cols-2 -mx-0 border-x-0 border-t-0 border-b-0">
+            <Button
+              variant={mode === "colour" ? "default" : "outline"}
+              onClick={() => setMode("colour")}
+              className="h-12 font-bold"
+            >
+              <Palette className="size-4 mr-2" />
+              Colour Mode
+            </Button>
+            <Button
+              variant={mode === "image" ? "default" : "outline"}
+              onClick={() => setMode("image")}
+              className="h-12 font-bold"
+            >
+              <ImageIcon className="size-4 mr-2" />
+              Image Mode
+            </Button>
           </div>
         </div>
-      )}
 
-      {/* Image Mode */}
-      {mode === "image" && (
-        <div className="space-y-6">
-          {/* Drop Zone */}
-          {!sourceImage && (
-            <div
-              onDrop={handleDrop}
-              onDragOver={(e) => e.preventDefault()}
-              className="border-2 border-dashed rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
-              onClick={() => document.getElementById("colorblind-input")?.click()}
-            >
-              <input
-                id="colorblind-input"
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-lg font-medium">Drop image here</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                or click to select, or paste
-              </p>
-            </div>
-          )}
-
-          {/* Image Preview */}
-          {sourceImage && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <label className="font-bold">Simulation Preview</label>
-                <Button variant="ghost" size="sm" onClick={clearImage}>
-                  <Trash2 className="size-4 mr-2" /> Clear
-                </Button>
+        {/* Colour Mode */}
+        {mode === "colour" && (
+          <>
+            {/* Colour Input */}
+            <div className="border-b-2 border-border p-4">
+              <label className="font-bold block mb-3">Select Colour</label>
+              {/* Colour swatch + hex input as a flush table row */}
+              <div className="flex items-stretch border border-border -mx-4 border-x-0">
+                <div className="relative w-16 shrink-0">
+                  <div
+                    className="size-full"
+                    style={{ backgroundColor: isValidHex(colour) ? colour : "#000000" }}
+                    aria-hidden
+                  />
+                  <input
+                    type="color"
+                    value={isValidHex(colour) ? colour : "#000000"}
+                    onChange={(e) => setColour(e.target.value)}
+                    className="absolute inset-0 size-full cursor-pointer opacity-0"
+                  />
+                </div>
+                <Input
+                  value={colour}
+                  onChange={(e) => setColour(e.target.value)}
+                  placeholder="#e63946"
+                  className="flex-1 border-0 border-l border-border bg-transparent"
+                  style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                />
               </div>
+            </div>
 
-              {/* Simulation Type Buttons */}
-              <div className="flex flex-wrap gap-2">
-                {simulationTypes.map((type) => {
+            {/* Simulation Grid — 3-col table of all 9 types */}
+            <div className="border-b-2 border-border">
+              <div className="p-4 pb-0">
+                <label className="font-bold block mb-3">Vision Types</label>
+              </div>
+              {/* 3-column grid, 3 rows = 9 cells, full-bleed */}
+              <div className="grid grid-cols-3 border-t border-border -mx-0">
+                {simulationTypes.map((type, i) => {
                   const info = SIMULATIONS[type];
+                  const simHex = simulateHex(colour, type);
                   const isSelected = selectedSim === type;
+                  const isLastRow = i >= 6; // last 3 items
 
                   return (
                     <button
                       key={type}
                       onClick={() => setSelectedSim(type)}
                       className={cn(
-                        "px-3 py-1.5 rounded-lg border text-sm transition-colors",
-                        isSelected
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "hover:border-primary/50"
+                        "flex flex-col gap-2 p-3 text-left transition-colors border-b border-border border-l first:border-l-0",
+                        i % 3 === 0 && "border-l-0",
+                        isLastRow && "border-b-0",
+                        isSelected ? "bg-muted" : "hover:bg-muted/50"
                       )}
                     >
-                      {info.name}
+                      {/* Swatch row */}
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="size-8 shrink-0 border border-border"
+                          style={{ backgroundColor: simHex }}
+                        />
+                        <div className="min-w-0">
+                          <div className={cn("text-xs font-bold truncate", isSelected && "text-primary")}>{info.name}</div>
+                          <div
+                            className="text-xs text-muted-foreground"
+                            style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                          >
+                            {formatColour(simHex, notation)}
+                          </div>
+                        </div>
+                      </div>
+                      {/* Severity badge */}
+                      <div className={cn(
+                        "self-start text-xs px-1.5 py-0.5 border",
+                        info.severity === "none" && "border-green-500/40 bg-green-500/10 text-green-600 dark:text-green-400",
+                        info.severity === "partial" && "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+                        info.severity === "full" && "border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400"
+                      )}>
+                        {info.severity === "none" ? "Normal" : info.severity === "partial" ? "Partial" : "Full"}
+                      </div>
                     </button>
                   );
                 })}
               </div>
+            </div>
 
-              {/* Current Simulation Info */}
-              <div className="p-4 rounded-lg border bg-muted/30">
-                <div className="font-bold">{SIMULATIONS[selectedSim].name}</div>
-                <div className="text-sm text-muted-foreground">
-                  {SIMULATIONS[selectedSim].description} — {SIMULATIONS[selectedSim].prevalence}
-                </div>
+            {/* Comparison — flush two-column preview */}
+            <div className="p-4 pb-0">
+              <label className="font-bold block mb-3">Comparison</label>
+            </div>
+            <div className="grid grid-cols-2 border-t border-border">
+              <div className="border-r border-border">
+                <p className="text-xs text-muted-foreground text-center p-2 border-b border-border">Original</p>
+                <div
+                  className="h-24"
+                  style={{ backgroundColor: colour }}
+                />
+                <p
+                  className="text-xs text-center p-2 border-t border-border text-muted-foreground"
+                  style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                >
+                  {colour}
+                </p>
               </div>
-
-              {/* Side by Side Images */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="text-sm font-medium text-muted-foreground">Original</div>
-                  <div className="rounded-lg border overflow-hidden bg-muted/30">
-                    <img
-                      src={sourceImage}
-                      alt="Original"
-                      className="w-full h-auto"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="text-sm font-medium text-muted-foreground">{SIMULATIONS[selectedSim].name}</div>
-                  <div className="rounded-lg border overflow-hidden bg-muted/30">
-                    {simulatedImage ? (
-                      <img
-                        src={simulatedImage}
-                        alt={`Simulated ${SIMULATIONS[selectedSim].name}`}
-                        className="w-full h-auto"
-                      />
-                    ) : (
-                      <div className="aspect-video flex items-center justify-center">
-                        <span className="text-muted-foreground">Processing...</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+              <div>
+                <p className="text-xs text-muted-foreground text-center p-2 border-b border-border truncate px-3">{SIMULATIONS[selectedSim].name}</p>
+                <div
+                  className="h-24"
+                  style={{ backgroundColor: simulateHex(colour, selectedSim) }}
+                />
+                <p
+                  className="text-xs text-center p-2 border-t border-border text-muted-foreground"
+                  style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                >
+                  {simulateHex(colour, selectedSim)}
+                </p>
               </div>
             </div>
-          )}
-        </div>
-      )}
+            {/* Selected sim description */}
+            <div className="border-t border-border p-4">
+              <div className="font-bold text-sm">{SIMULATIONS[selectedSim].name}</div>
+              <div className="text-sm text-muted-foreground mt-0.5">
+                {SIMULATIONS[selectedSim].description} — {SIMULATIONS[selectedSim].prevalence}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Image Mode */}
+        {mode === "image" && (
+          <>
+            {/* Drop Zone */}
+            {!sourceImage && (
+              <div
+                onDrop={handleDrop}
+                onDragOver={(e) => e.preventDefault()}
+                className="border-2 border-dashed m-4 p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+                onClick={() => document.getElementById("colorblind-input")?.click()}
+              >
+                <input
+                  id="colorblind-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-lg font-medium">Drop image here</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  or click to select, or paste
+                </p>
+              </div>
+            )}
+
+            {/* Image loaded — simulation type selector + preview */}
+            {sourceImage && (
+              <>
+                {/* Header bar with Clear */}
+                <div className="flex min-h-14 items-stretch border-b-2 border-border">
+                  <h3 className="flex flex-1 items-center px-4 font-bold">Simulation Preview</h3>
+                  <Button
+                    variant="ghost"
+                    onClick={clearImage}
+                    className="h-auto gap-2 self-stretch rounded-none border-l border-border px-5"
+                  >
+                    <Trash2 className="size-4" />
+                    Clear
+                  </Button>
+                </div>
+
+                {/* Simulation Type Segmented — 3 cols × 3 rows = 9 */}
+                <div className="border-b-2 border-border">
+                  <div className="p-4 pb-3">
+                    <label className="font-bold block">Vision Type</label>
+                  </div>
+                  <div className="segmented grid-cols-3 -mx-0 border-x-0 border-b-0">
+                    {simulationTypes.map((type) => {
+                      const info = SIMULATIONS[type];
+                      const isSelected = selectedSim === type;
+                      return (
+                        <Button
+                          key={type}
+                          variant={isSelected ? "default" : "outline"}
+                          onClick={() => setSelectedSim(type)}
+                          className="text-xs font-medium py-2 h-auto"
+                        >
+                          {info.name}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Current Simulation Info */}
+                <div className="p-4 border-b border-border bg-muted/30">
+                  <div className="font-bold">{SIMULATIONS[selectedSim].name}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {SIMULATIONS[selectedSim].description} — {SIMULATIONS[selectedSim].prevalence}
+                  </div>
+                </div>
+
+                {/* Side by Side Images — flush 2-col grid */}
+                <div className="grid grid-cols-2">
+                  <div className="border-r border-border">
+                    <p className="text-xs text-muted-foreground text-center p-2 border-b border-border">Original</p>
+                    <div className="overflow-hidden bg-muted/30">
+                      <img
+                        src={sourceImage}
+                        alt="Original"
+                        className="w-full h-auto"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground text-center p-2 border-b border-border truncate px-3">{SIMULATIONS[selectedSim].name}</p>
+                    <div className="overflow-hidden bg-muted/30">
+                      {simulatedImage ? (
+                        <img
+                          src={simulatedImage}
+                          alt={`Simulated ${SIMULATIONS[selectedSim].name}`}
+                          className="w-full h-auto"
+                        />
+                      ) : (
+                        <div className="aspect-video flex items-center justify-center">
+                          <span className="text-muted-foreground text-sm">Processing...</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </>
+        )}
+      </div>
 
       {/* Info */}
-      <div className="p-4 rounded-lg border bg-card">
+      <div className="border border-border p-4 bg-card">
         <div className="font-bold mb-2">About Colour Blindness</div>
         <div className="text-sm text-muted-foreground space-y-2">
           <p>

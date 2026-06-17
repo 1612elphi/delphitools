@@ -4,8 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { Copy, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // Bundle KaTeX's stylesheet locally (was fetched from cdn.jsdelivr.net, which
 // leaked usage off-device and pinned a mismatched version). The bundler also
 // inlines KaTeX's font files, so everything stays same-origin.
@@ -259,137 +257,150 @@ export function AlgebraCalcTool() {
     integral: ["x^2", "sin(x)", "1/x"],
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Operation Tabs */}
-      <Tabs
-        value={operation}
-        onValueChange={(v) => setOperation(v as Operation)}
-      >
-        <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full">
-          <TabsTrigger value="simplify">Simplify</TabsTrigger>
-          <TabsTrigger value="expand">Expand</TabsTrigger>
-          <TabsTrigger value="factor">Factor</TabsTrigger>
-          <TabsTrigger value="solve">Solve</TabsTrigger>
-          <TabsTrigger value="derivative">d/dx</TabsTrigger>
-          <TabsTrigger value="integral">&int;</TabsTrigger>
-        </TabsList>
-      </Tabs>
+  const showVariable =
+    operation === "solve" || operation === "derivative" || operation === "integral";
 
-      {/* Input */}
-      <div className="space-y-4">
-        <div className="flex gap-3">
-          <div className="flex-1 space-y-2">
-            <Label htmlFor="expression">Expression</Label>
-            <Input
-              id="expression"
-              value={expression}
-              onChange={(e) => setExpression(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                operation === "solve"
-                  ? "e.g., x^2 - 4 = 0"
-                  : "e.g., (x+1)^2 - x^2"
-              }
-              className="font-mono text-lg"
-            />
-          </div>
-          {(operation === "solve" ||
-            operation === "derivative" ||
-            operation === "integral") && (
-            <div className="w-20 space-y-2">
-              <Label htmlFor="variable">Variable</Label>
+  return (
+    <div className="border-2 border-border">
+      {/* Operation selector */}
+      <div className="segmented grid-cols-6 -m-px">
+        {(["simplify", "expand", "factor", "solve", "derivative", "integral"] as Operation[]).map(
+          (op) => (
+            <Button
+              key={op}
+              variant={operation === op ? "default" : "outline"}
+              onClick={() => setOperation(op)}
+              className="h-10 text-sm font-bold"
+            >
+              {op === "derivative" ? "d/dx" : op === "integral" ? "∫" : op.charAt(0).toUpperCase() + op.slice(1)}
+            </Button>
+          )
+        )}
+      </div>
+
+      {/* Expression input */}
+      <div className="border-b-2 border-border p-4 space-y-1">
+        <label className="font-bold text-sm">Expression</label>
+        <div className="flex items-stretch gap-0 border border-border">
+          <Input
+            id="expression"
+            value={expression}
+            onChange={(e) => setExpression(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={
+              operation === "solve"
+                ? "e.g., x^2 - 4 = 0"
+                : "e.g., (x+1)^2 - x^2"
+            }
+            className="flex-1 border-0 text-lg"
+            style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+          />
+          {showVariable && (
+            <div className="flex items-center border-l border-border">
+              <span className="px-3 text-sm text-muted-foreground select-none">var</span>
               <Input
                 id="variable"
                 value={variable}
                 onChange={(e) => setVariable(e.target.value || "x")}
-                className="font-mono text-center"
+                className="w-12 border-0 text-center"
+                style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
                 maxLength={2}
               />
             </div>
           )}
         </div>
-
-        <Button
-          onClick={calculate}
-          disabled={!expression.trim() || loading || !nerdamerLoaded}
-          className="w-full"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="size-4 mr-2 animate-spin" />
-              Calculating...
-            </>
-          ) : (
-            "Calculate"
-          )}
-        </Button>
       </div>
+
+      {/* Calculate button */}
+      <Button
+        onClick={calculate}
+        disabled={!expression.trim() || loading || !nerdamerLoaded}
+        className="h-14 w-full text-lg font-bold border-b-2 border-border"
+      >
+        {loading ? (
+          <>
+            <Loader2 className="size-4 mr-2 animate-spin" />
+            Calculating…
+          </>
+        ) : (
+          "Calculate"
+        )}
+      </Button>
 
       {/* Result */}
       {(result || error) && (
-        <div
-          className={`border rounded-lg p-6 ${
-            error ? "border-destructive bg-destructive/5" : "bg-card"
-          }`}
-        >
+        <div className="border-b-2 border-border">
           {error ? (
-            <p className="text-destructive">{error}</p>
+            <div className="p-4 text-destructive border-b border-border">{error}</div>
           ) : (
-            <div className="space-y-4">
-              <div className="text-sm text-muted-foreground">
-                Input: <code className="bg-muted px-2 py-1 rounded">{result?.input}</code>
+            <>
+              {/* Input echo */}
+              <div className="flex items-center border-b border-border px-4 py-2 text-sm text-muted-foreground gap-2">
+                <span>Input:</span>
+                <span
+                  className="text-foreground"
+                  style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                >
+                  {result?.input}
+                </span>
               </div>
 
-              {/* LaTeX rendered result */}
+              {/* KaTeX rendered result */}
               <div
                 ref={resultRef}
-                className="text-2xl font-mono overflow-x-auto py-4"
+                className="px-4 py-6 text-2xl overflow-x-auto border-b border-border"
               />
 
-              {/* Plain text output */}
-              <div className="flex items-center justify-between gap-2">
-                <code className="bg-muted px-3 py-2 rounded text-sm flex-1 overflow-x-auto">
+              {/* Plain-text output + actions */}
+              <div className="flex items-stretch border-b border-border">
+                <div
+                  className="flex-1 px-4 py-3 text-sm overflow-x-auto self-center"
+                  style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                >
                   {result?.operation === "solve" && showApproximate && result?.approxOutput
                     ? result.approxOutput
                     : result?.operation === "solve" && result?.exactOutput
                     ? result.exactOutput
                     : result?.output}
-                </code>
-                <div className="flex items-center gap-2">
-                  {result?.operation === "solve" && result?.approxOutput && (
-                    <Button
-                      variant={showApproximate ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setShowApproximate(!showApproximate)}
-                    >
-                      {showApproximate ? "Exact" : "≈ Approx"}
-                    </Button>
-                  )}
-                  <Button variant="outline" size="sm" onClick={copyResult}>
-                    {copied ? (
-                      <Check className="size-4 mr-2" />
-                    ) : (
-                      <Copy className="size-4 mr-2" />
-                    )}
-                    {copied ? "Copied!" : "Copy"}
-                  </Button>
                 </div>
+                {result?.operation === "solve" && result?.approxOutput && (
+                  <Button
+                    variant={showApproximate ? "default" : "outline"}
+                    onClick={() => setShowApproximate(!showApproximate)}
+                    className="h-auto self-stretch border-0 border-l border-border text-sm px-4"
+                  >
+                    {showApproximate ? "Exact" : "≈ Approx"}
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  onClick={copyResult}
+                  className="h-auto self-stretch border-0 border-l border-border px-4"
+                >
+                  {copied ? (
+                    <Check className="size-4" />
+                  ) : (
+                    <Copy className="size-4" />
+                  )}
+                </Button>
               </div>
-            </div>
+            </>
           )}
         </div>
       )}
 
       {/* Examples */}
-      <div className="space-y-2">
-        <p className="text-sm text-muted-foreground">Try an example:</p>
-        <div className="flex flex-wrap gap-2">
-          {examples[operation].map((ex) => (
+      <div className="border-b-2 border-border">
+        <div className="px-4 pt-4 pb-2">
+          <label className="font-bold text-sm">Examples</label>
+        </div>
+        <div className="flex flex-wrap border-t border-border">
+          {examples[operation].map((ex, i) => (
             <button
               key={ex}
               onClick={() => setExpression(ex)}
-              className="px-3 py-1 text-sm bg-muted hover:bg-accent rounded-md font-mono transition-colors"
+              className={`px-4 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors border-b border-border${i > 0 ? " border-l border-border" : ""}`}
+              style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
             >
               {ex}
             </button>
@@ -398,45 +409,35 @@ export function AlgebraCalcTool() {
       </div>
 
       {/* Syntax Reference */}
-      <div className="border rounded-lg p-4 bg-card">
-        <h3 className="font-medium mb-3">Syntax Reference</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-          <div>
-            <span className="text-muted-foreground">Power:</span>{" "}
-            <code className="bg-muted px-1 rounded">x^2</code>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Multiply:</span>{" "}
-            <code className="bg-muted px-1 rounded">a*b</code>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Divide:</span>{" "}
-            <code className="bg-muted px-1 rounded">a/b</code>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Square root:</span>{" "}
-            <code className="bg-muted px-1 rounded">sqrt(x)</code>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Trig:</span>{" "}
-            <code className="bg-muted px-1 rounded">sin(x)</code>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Natural log:</span>{" "}
-            <code className="bg-muted px-1 rounded">log(x)</code>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Euler&apos;s number:</span>{" "}
-            <code className="bg-muted px-1 rounded">e</code>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Pi:</span>{" "}
-            <code className="bg-muted px-1 rounded">pi</code>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Absolute:</span>{" "}
-            <code className="bg-muted px-1 rounded">abs(x)</code>
-          </div>
+      <div>
+        <div className="px-4 pt-4 pb-2">
+          <label className="font-bold text-sm">Syntax Reference</label>
+        </div>
+        <div className="border-t border-border">
+          {[
+            ["Power", "x^2"],
+            ["Multiply", "a*b"],
+            ["Divide", "a/b"],
+            ["Square root", "sqrt(x)"],
+            ["Trig", "sin(x)"],
+            ["Natural log", "log(x)"],
+            ["Euler's number", "e"],
+            ["Pi", "pi"],
+            ["Absolute", "abs(x)"],
+          ].map(([label, syntax], i) => (
+            <div
+              key={label}
+              className={`flex items-center border-b border-border last:border-b-0${i % 2 === 0 ? "" : ""}`}
+            >
+              <span className="px-4 py-2 text-sm text-muted-foreground flex-1">{label}</span>
+              <span
+                className="px-4 py-2 text-sm border-l border-border"
+                style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+              >
+                {syntax}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </div>

@@ -33,7 +33,6 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   convert,
   getEngineState,
@@ -407,166 +406,173 @@ export function DocConverterTool() {
 
   return (
     <div className="space-y-6">
-      {/* Input */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium">Input</Label>
-          <Button variant="ghost" size="sm" onClick={loadScratchpad} title="Load from the Text Scratchpad">
-            <ClipboardPaste className="size-4 mr-1" /> From Scratchpad
-          </Button>
-        </div>
+      <div className="border-2 border-border">
+        {/* Input */}
+        <div className="border-b-2 border-border p-4">
+          <div className="flex min-h-9 items-center justify-between">
+            <Label className="font-bold">Input</Label>
+            <Button variant="ghost" size="sm" onClick={loadScratchpad} title="Load from the Text Scratchpad">
+              <ClipboardPaste className="size-4 mr-1" /> From Scratchpad
+            </Button>
+          </div>
 
-        {inputMode === "upload" ? (
-          <>
-            <div
-              onDrop={onDrop}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragging(true);
-              }}
-              onDragLeave={() => setDragging(false)}
-              className={cn(
-                "flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-8 text-center transition-colors",
-                dragging ? "border-primary bg-primary/5" : "border-border"
-              )}
-            >
-              {file ? (
-                <div className="flex items-center gap-3">
-                  <FileText className="size-5 text-primary" />
-                  <div className="text-left">
-                    <p className="text-sm font-medium">{file.name}</p>
-                    <p className="text-xs text-muted-foreground">{formatBytes(file.size)}</p>
-                  </div>
-                  <Button variant="ghost" size="icon" onClick={clearFile} title="Remove file">
-                    <X className="size-4" />
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <Upload className="size-6 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">Drag &amp; drop a file here, or</p>
-                  <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                    Choose file
-                  </Button>
-                </>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) selectFile(f);
-                  e.target.value = "";
+          {inputMode === "upload" ? (
+            <>
+              <div
+                onDrop={onDrop}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragging(true);
                 }}
+                onDragLeave={() => setDragging(false)}
+                className={cn(
+                  "mt-3 flex flex-col items-center justify-center gap-2 border-2 border-dashed p-8 text-center transition-colors",
+                  dragging ? "border-primary bg-primary/5" : "border-border"
+                )}
+              >
+                {file ? (
+                  <div className="flex items-center gap-3">
+                    <FileText className="size-5 text-primary" />
+                    <div className="text-left">
+                      <p className="text-sm font-medium">{file.name}</p>
+                      <p className="text-xs text-muted-foreground">{formatBytes(file.size)}</p>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={clearFile} title="Remove file">
+                      <X className="size-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="size-6 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">Drag &amp; drop a file here, or</p>
+                    <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                      Choose file
+                    </Button>
+                  </>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) selectFile(f);
+                    e.target.value = "";
+                  }}
+                />
+              </div>
+              {fileError && (
+                <p className="mt-3 flex items-center justify-center gap-1.5 px-2 text-center text-xs text-destructive">
+                  <AlertTriangle className="size-3.5 shrink-0" />
+                  {fileError}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={() => setInputMode("paste")}
+                className="mx-auto mt-3 block text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+              >
+                No file? Paste text instead
+              </button>
+            </>
+          ) : (
+            <>
+              <Textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Paste or type the document you want to convert…"
+                className="mt-3 min-h-[200px] font-mono text-sm leading-relaxed"
               />
-            </div>
-            {fileError && (
-              <p className="flex items-center justify-center gap-1.5 px-2 text-center text-xs text-destructive">
-                <AlertTriangle className="size-3.5 shrink-0" />
-                {fileError}
-              </p>
-            )}
-            <button
-              type="button"
-              onClick={() => setInputMode("paste")}
-              className="mx-auto block text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-            >
-              No file? Paste text instead
-            </button>
-          </>
-        ) : (
-          <>
-            <Textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Paste or type the document you want to convert…"
-              className="min-h-[200px] font-mono text-sm leading-relaxed"
-            />
-            <button
-              type="button"
-              onClick={() => setInputMode("upload")}
-              className="mx-auto block text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-            >
-              Upload a file instead
-            </button>
-          </>
-        )}
-      </div>
-
-      {/* Format selector — the core control */}
-      <div className="rounded-lg border bg-card p-4">
-        <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[1fr_auto_1fr]">
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Convert from</Label>
-            <FormatCombobox
-              value={from}
-              onValueChange={setFrom}
-              formats={inputFormats}
-              includeAuto
-              autoDetectedLabel={autoDetectedLabel}
-              ariaLabel="Source format"
-            />
-          </div>
-
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={swap}
-            disabled={!canSwap}
-            title={canSwap ? "Swap formats" : "Swap unavailable for this pair"}
-            className="mb-0.5 shrink-0"
-          >
-            <ArrowLeftRight className="size-4" />
-          </Button>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Convert to</Label>
-            <FormatCombobox value={to} onValueChange={setTo} formats={outputFormats} ariaLabel="Target format" />
-          </div>
+              <button
+                type="button"
+                onClick={() => setInputMode("upload")}
+                className="mx-auto mt-3 block text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+              >
+                Upload a file instead
+              </button>
+            </>
+          )}
         </div>
 
-        {sourceNeedsFile && inputMode === "paste" && (
-          <p className="mt-3 text-xs text-amber-600 dark:text-amber-400">
-            {fromFormat?.label} is a binary format — switch to <strong>Upload file</strong>.
-          </p>
-        )}
-      </div>
-
-      {/* Options */}
-      <Accordion type="single" collapsible>
-        <AccordionItem value="options" className="border rounded-lg px-4">
-          <AccordionTrigger className="text-sm">Options</AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-4 pt-1">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="standalone" className="text-sm">Standalone document</Label>
-                  <p className="text-xs text-muted-foreground">Emit a complete file with header/footer, not a fragment.</p>
-                </div>
-                <Switch id="standalone" checked={standalone} onCheckedChange={setStandalone} />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="toc" className="text-sm">Table of contents</Label>
-                  <p className="text-xs text-muted-foreground">Generate a TOC from the headings.</p>
-                </div>
-                <Switch id="toc" checked={toc} onCheckedChange={setToc} />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="numsec" className="text-sm">Number sections</Label>
-                  <p className="text-xs text-muted-foreground">Prefix headings with section numbers.</p>
-                </div>
-                <Switch id="numsec" checked={numberSections} onCheckedChange={setNumberSections} />
+        {/* Format selector — the core control */}
+        <div className="border-b-2 border-border p-4">
+          <Label className="font-bold">Format</Label>
+          <div className="-mx-4 -mb-4 mt-3 grid grid-cols-1 border-t border-border sm:grid-cols-[1fr_auto_1fr]">
+            <div className="border-border sm:border-r">
+              <Label className="block px-4 pt-3 text-xs text-muted-foreground">Convert from</Label>
+              <div className="px-4 pb-3 pt-1.5">
+                <FormatCombobox
+                  value={from}
+                  onValueChange={setFrom}
+                  formats={inputFormats}
+                  includeAuto
+                  autoDetectedLabel={autoDetectedLabel}
+                  ariaLabel="Source format"
+                />
               </div>
             </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
 
-      {/* Convert */}
-      <div className="space-y-3">
+            <div className="flex items-center justify-center border-t border-border sm:border-l-0 sm:border-t-0">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={swap}
+                disabled={!canSwap}
+                title={canSwap ? "Swap formats" : "Swap unavailable for this pair"}
+                className="shrink-0"
+              >
+                <ArrowLeftRight className="size-4" />
+              </Button>
+            </div>
+
+            <div className="border-t border-border sm:border-l sm:border-t-0">
+              <Label className="block px-4 pt-3 text-xs text-muted-foreground">Convert to</Label>
+              <div className="px-4 pb-3 pt-1.5">
+                <FormatCombobox value={to} onValueChange={setTo} formats={outputFormats} ariaLabel="Target format" />
+              </div>
+            </div>
+          </div>
+
+          {sourceNeedsFile && inputMode === "paste" && (
+            <p className="mt-3 text-xs text-amber-600 dark:text-amber-400">
+              {fromFormat?.label} is a binary format — switch to <strong>Upload file</strong>.
+            </p>
+          )}
+        </div>
+
+        {/* Options */}
+        <Accordion type="single" collapsible>
+          <AccordionItem value="options" className="border-b-2 border-border">
+            <AccordionTrigger className="px-4 font-bold">Options</AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+              <div className="space-y-4 pt-1">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="standalone" className="text-sm">Standalone document</Label>
+                    <p className="text-xs text-muted-foreground">Emit a complete file with header/footer, not a fragment.</p>
+                  </div>
+                  <Switch id="standalone" checked={standalone} onCheckedChange={setStandalone} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="toc" className="text-sm">Table of contents</Label>
+                    <p className="text-xs text-muted-foreground">Generate a TOC from the headings.</p>
+                  </div>
+                  <Switch id="toc" checked={toc} onCheckedChange={setToc} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="numsec" className="text-sm">Number sections</Label>
+                    <p className="text-xs text-muted-foreground">Prefix headings with section numbers.</p>
+                  </div>
+                  <Switch id="numsec" checked={numberSections} onCheckedChange={setNumberSections} />
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
+        {/* Convert */}
         <Button
           onClick={doConvert}
           disabled={
@@ -574,8 +580,7 @@ export function DocConverterTool() {
             (inputMode === "upload" && !!file && !!fileError) ||
             (inputMode === "paste" && sourceNeedsFile)
           }
-          size="lg"
-          className="w-full"
+          className="h-14 w-full rounded-none border-0 text-lg font-bold"
         >
           {busy ? (
             <>
@@ -588,10 +593,10 @@ export function DocConverterTool() {
         </Button>
 
         {loading && (
-          <div className="space-y-1.5">
-            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+          <div className="space-y-1.5 border-t-2 border-border p-4">
+            <div className="h-2 w-full overflow-hidden bg-muted">
               <div
-                className={cn("h-full rounded-full bg-primary transition-all", pct == null && "animate-pulse")}
+                className={cn("h-full bg-primary transition-all", pct == null && "animate-pulse")}
                 style={{ width: pct == null ? "100%" : `${pct}%` }}
               />
             </div>
@@ -600,12 +605,11 @@ export function DocConverterTool() {
             </p>
           </div>
         )}
-
       </div>
 
       {/* Error */}
       {error && (
-        <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+        <div className="flex items-start gap-2 border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
           <AlertTriangle className="size-4 mt-0.5 shrink-0" />
           <pre className="whitespace-pre-wrap break-words font-sans">{error}</pre>
         </div>
@@ -613,65 +617,67 @@ export function DocConverterTool() {
 
       {/* Output */}
       {result && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">Output</Label>
-            <div className="flex items-center gap-2">
-              {result.kind === "text" && (
-                <Button variant="ghost" size="sm" onClick={copyOutput}>
-                  {copied ? <Check className="size-4 mr-1" /> : <Copy className="size-4 mr-1" />}
-                  {copied ? "Copied" : "Copy"}
-                </Button>
-              )}
-              {result.kind === "pdf" ? (
-                <Button variant="outline" size="sm" onClick={() => printHtmlInIframe(result.html)}>
-                  <Printer className="size-4 mr-1" /> Save as PDF
-                </Button>
-              ) : (
-                <Button variant="outline" size="sm" onClick={downloadResult}>
-                  <Download className="size-4 mr-1" /> Download
-                </Button>
-              )}
-            </div>
+        <div className="border-2 border-border">
+          <div className="flex min-h-14 items-stretch border-b-2 border-border">
+            <Label className="flex flex-1 items-center px-4 font-bold">Output</Label>
+            {result.kind === "text" && (
+              <Button
+                variant="ghost"
+                onClick={copyOutput}
+                className="h-auto gap-2 self-stretch rounded-none border-l border-border px-5"
+              >
+                {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+                {copied ? "Copied" : "Copy"}
+              </Button>
+            )}
+            {result.kind === "pdf" ? (
+              <Button
+                onClick={() => printHtmlInIframe(result.html)}
+                className="h-auto gap-2 self-stretch rounded-none border-l border-border px-6 font-semibold"
+              >
+                <Printer className="size-4" /> Save as PDF
+              </Button>
+            ) : (
+              <Button
+                onClick={downloadResult}
+                className="h-auto gap-2 self-stretch rounded-none border-l border-border px-6 font-semibold"
+              >
+                <Download className="size-4" /> Download
+              </Button>
+            )}
           </div>
 
           {result.kind === "text" ? (
-            <Textarea readOnly value={result.text} className="min-h-[220px] font-mono text-sm leading-relaxed" />
+            <Textarea
+              readOnly
+              value={result.text}
+              className="min-h-[220px] rounded-none border-0 font-mono text-sm leading-relaxed"
+            />
           ) : result.kind === "pdf" ? (
-            <Card>
-              <CardContent className="flex items-center gap-3 py-4">
-                <Printer className="size-6 text-primary" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Print dialog opened</p>
-                  <p className="text-xs text-muted-foreground">
-                    Choose &ldquo;Save as PDF&rdquo; as the destination. Didn&apos;t see it? Use the button.
-                  </p>
-                </div>
-                <Button size="sm" onClick={() => printHtmlInIframe(result.html)}>
-                  <Printer className="size-4 mr-1" /> Save as PDF
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="flex items-center gap-3 p-4">
+              <Printer className="size-6 text-primary" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">Print dialog opened</p>
+                <p className="text-xs text-muted-foreground">
+                  Choose &ldquo;Save as PDF&rdquo; as the destination. Didn&apos;t see it? Use the button.
+                </p>
+              </div>
+            </div>
           ) : (
-            <Card>
-              <CardContent className="flex items-center gap-3 py-4">
-                <FileText className="size-6 text-primary" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{result.filename}</p>
-                  <p className="text-xs text-muted-foreground">{formatBytes(result.blob.size)}</p>
-                </div>
-                <Button size="sm" onClick={downloadResult}>
-                  <Download className="size-4 mr-1" /> Download
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="flex items-center gap-3 p-4">
+              <FileText className="size-6 text-primary" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">{result.filename}</p>
+                <p className="text-xs text-muted-foreground">{formatBytes(result.blob.size)}</p>
+              </div>
+            </div>
           )}
         </div>
       )}
 
       {/* Warnings */}
       {warnings.length > 0 && (
-        <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
+        <div className="border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
           <p className="mb-1 flex items-center gap-1.5 font-medium text-amber-600 dark:text-amber-400">
             <AlertTriangle className="size-4" /> {warnings.length} warning{warnings.length > 1 ? "s" : ""}
           </p>
@@ -685,7 +691,7 @@ export function DocConverterTool() {
       )}
 
       {/* Privacy + engine + licence notice (single box) */}
-      <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3">
+      <div className="flex items-start gap-2 border border-border bg-muted/50 p-3">
         <Info className="size-4 shrink-0 mt-0.5 text-muted-foreground" />
         <p className="text-xs text-muted-foreground">
           Conversion runs entirely in your browser — your documents are never uploaded. On first use the ~16 MB Pandoc

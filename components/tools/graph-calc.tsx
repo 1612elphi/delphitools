@@ -20,12 +20,12 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import { Mafs, Coordinates, Plot, Line } from "mafs";
 import { compile } from "mathjs";
 import "mafs/core.css";
@@ -531,7 +531,7 @@ export function GraphCalcTool() {
 
   // Build CSS classes for styling
   const mafsClasses = [
-    "border rounded-lg overflow-hidden relative",
+    "overflow-hidden relative",
     "[&_.MafsView]:!bg-card",
     // Remove text stroke (outline) and make numbers black with 50% opacity
     "[&_.mafs-shadow]:!stroke-none",
@@ -543,101 +543,110 @@ export function GraphCalcTool() {
   ].filter(Boolean).join(" ");
 
   return (
-    <div className="space-y-4">
+    <div className="border-2 border-border">
       {/* Function Inputs */}
-      <div className="space-y-3">
-        {functions.map((f, index) => (
-          <div key={f.id} className="flex items-center gap-2">
-            {/* Colour indicator */}
-            <div className="border rounded-md p-1.5 shrink-0">
-              <div
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: f.color }}
-              />
-            </div>
-            {/* Function name */}
-            <div className="border rounded-md px-2 py-1.5 text-sm text-muted-foreground shrink-0 font-mono">
-              y<sub>{index + 1}</sub>
-            </div>
-            {/* Operator button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => cycleOperator(f.id)}
-              className="shrink-0 font-mono text-base w-10"
-              title="Click to change operator"
+      <div className="border-b-2 border-border p-4">
+        <label className="font-bold">Functions</label>
+        {/* Function table — one flush row per function */}
+        <div className="-mx-4 mt-4 border-y border-border">
+          {functions.map((f, index) => (
+            <div
+              key={f.id}
+              className="flex items-stretch border-b border-border last:border-b-0"
             >
-              {f.operator}
-            </Button>
-            {/* Expression input */}
-            <div className="flex-1 relative">
-              <Input
-                value={f.expression}
-                onChange={(e) =>
-                  updateFunction(f.id, { expression: e.target.value })
-                }
-                placeholder="x^2, sin(x), etc."
-                className={`font-mono ${
-                  f.error ? "border-destructive" : ""
-                }`}
-              />
-              {f.error && (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-destructive">
-                  {f.error}
-                </span>
-              )}
-            </div>
-            {/* Change colour */}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => cycleColor(f.id)}
-              title="Change colour"
-            >
-              <Palette className="size-4" style={{ color: f.color }} />
-            </Button>
-            {/* Toggle visibility */}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => toggleVisibility(f.id)}
-              title={f.visible ? "Hide" : "Show"}
-            >
-              {f.visible ? (
-                <Eye className="size-4" />
-              ) : (
-                <EyeOff className="size-4 text-muted-foreground" />
-              )}
-            </Button>
-            {functions.length > 1 && (
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => removeFunction(f.id)}
-                title="Remove"
+              {/* Function name */}
+              <div className="flex w-12 shrink-0 items-center justify-center text-sm text-muted-foreground font-mono">
+                y<sub>{index + 1}</sub>
+              </div>
+              {/* Colour swatch — cycles colour */}
+              <button
+                type="button"
+                onClick={() => cycleColor(f.id)}
+                title="Change colour"
+                className="relative w-12 shrink-0 border-l border-border transition-opacity hover:opacity-80"
               >
-                <Trash2 className="size-4 text-destructive" />
-              </Button>
-            )}
-          </div>
-        ))}
+                <div
+                  className="size-full"
+                  style={{ backgroundColor: f.color }}
+                  aria-hidden
+                />
+                <Palette className="absolute left-1/2 top-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2 text-white mix-blend-difference" />
+              </button>
+              {/* Operator button */}
+              <button
+                type="button"
+                onClick={() => cycleOperator(f.id)}
+                className="flex w-12 shrink-0 items-center justify-center border-l border-border font-mono text-base transition-colors hover:bg-muted"
+                title="Click to change operator"
+              >
+                {f.operator}
+              </button>
+              {/* Expression input */}
+              <div className="relative flex-1">
+                <Input
+                  value={f.expression}
+                  onChange={(e) =>
+                    updateFunction(f.id, { expression: e.target.value })
+                  }
+                  placeholder="x^2, sin(x), etc."
+                  className={cn(
+                    "h-full rounded-none border-0 border-l border-border bg-transparent font-mono focus-visible:ring-0",
+                    f.error && "text-destructive"
+                  )}
+                />
+                {f.error && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-destructive">
+                    {f.error}
+                  </span>
+                )}
+              </div>
+              {/* Toggle visibility */}
+              <button
+                type="button"
+                onClick={() => toggleVisibility(f.id)}
+                title={f.visible ? "Hide" : "Show"}
+                className="flex w-12 shrink-0 items-center justify-center border-l border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                {f.visible ? (
+                  <Eye className="size-4" />
+                ) : (
+                  <EyeOff className="size-4 text-muted-foreground" />
+                )}
+              </button>
+              {functions.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeFunction(f.id)}
+                  title="Remove"
+                  className="flex w-12 shrink-0 items-center justify-center border-l border-border text-destructive transition-colors hover:bg-muted"
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={addFunction}>
-            <Plus className="size-4 mr-2" />
+        {/* Add function + display toggles bar */}
+        <div className="-mx-4 -mb-4 flex items-stretch border-t border-border">
+          <Button
+            variant="ghost"
+            onClick={addFunction}
+            className="h-12 flex-1 justify-center rounded-none border-0 font-bold"
+          >
+            <Plus className="mr-2 size-4" />
             Add function
           </Button>
-
-          <div className="flex-1" />
-
           {/* Display toggles */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant={showGrid ? "secondary" : "ghost"}
-                size="icon"
+                variant="ghost"
                 onClick={() => setShowGrid(!showGrid)}
-                className="size-8"
+                className={cn(
+                  "h-12 w-12 rounded-none border-0 border-l border-border",
+                  showGrid && "bg-muted text-foreground"
+                )}
               >
                 <Grid3X3 className="size-4" />
               </Button>
@@ -647,10 +656,12 @@ export function GraphCalcTool() {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant={showAxes ? "secondary" : "ghost"}
-                size="icon"
+                variant="ghost"
                 onClick={() => setShowAxes(!showAxes)}
-                className="size-8"
+                className={cn(
+                  "h-12 w-12 rounded-none border-0 border-l border-border",
+                  showAxes && "bg-muted text-foreground"
+                )}
               >
                 <Axis3D className="size-4" />
               </Button>
@@ -660,10 +671,12 @@ export function GraphCalcTool() {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant={showNumbers ? "secondary" : "ghost"}
-                size="icon"
+                variant="ghost"
                 onClick={() => setShowNumbers(!showNumbers)}
-                className="size-8"
+                className={cn(
+                  "h-12 w-12 rounded-none border-0 border-l border-border",
+                  showNumbers && "bg-muted text-foreground"
+                )}
               >
                 <Hash className="size-4" />
               </Button>
@@ -680,7 +693,7 @@ export function GraphCalcTool() {
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
-        className={`${mafsClasses} ${isPanning ? "cursor-grabbing" : "cursor-grab"}`}
+        className={`${mafsClasses} border-b-2 border-border ${isPanning ? "cursor-grabbing" : "cursor-grab"}`}
       >
         <Mafs
           height={400}
@@ -745,136 +758,153 @@ export function GraphCalcTool() {
       </div>
 
       {/* Controls */}
-      <div className="flex flex-wrap gap-4 items-end">
-        <div className="space-y-1">
-          <Label className="text-xs">X Range</Label>
-          <div className="flex items-center gap-2">
+      <div className="border-b-2 border-border p-4">
+        <label className="font-bold">View</label>
+
+        {/* X / Y range — flush table rows */}
+        <div className="-mx-4 mt-4 border-y border-border">
+          <div className="flex items-stretch border-b border-border">
+            <div className="flex w-20 shrink-0 items-center px-4 text-sm text-muted-foreground">
+              X Range
+            </div>
             <Input
               type="number"
               value={Math.round(xMin * 10) / 10}
               onChange={(e) => setXMin(parseFloat(e.target.value) || -10)}
-              className="w-20 text-center"
+              className="h-10 flex-1 rounded-none border-0 border-l border-border bg-transparent text-center font-mono focus-visible:ring-0"
               step="0.1"
             />
-            <span className="text-muted-foreground">to</span>
+            <span className="flex w-10 shrink-0 items-center justify-center border-l border-border text-muted-foreground">
+              to
+            </span>
             <Input
               type="number"
               value={Math.round(xMax * 10) / 10}
               onChange={(e) => setXMax(parseFloat(e.target.value) || 10)}
-              className="w-20 text-center"
+              className="h-10 flex-1 rounded-none border-0 border-l border-border bg-transparent text-center font-mono focus-visible:ring-0"
               step="0.1"
             />
           </div>
-        </div>
-
-        <div className="space-y-1">
-          <Label className="text-xs">Y Range</Label>
-          <div className="flex items-center gap-2">
+          <div className="flex items-stretch">
+            <div className="flex w-20 shrink-0 items-center px-4 text-sm text-muted-foreground">
+              Y Range
+            </div>
             <Input
               type="number"
               value={Math.round(yMin * 10) / 10}
               onChange={(e) => setYMin(parseFloat(e.target.value) || -10)}
-              className="w-20 text-center"
+              className="h-10 flex-1 rounded-none border-0 border-l border-border bg-transparent text-center font-mono focus-visible:ring-0"
               step="0.1"
             />
-            <span className="text-muted-foreground">to</span>
+            <span className="flex w-10 shrink-0 items-center justify-center border-l border-border text-muted-foreground">
+              to
+            </span>
             <Input
               type="number"
               value={Math.round(yMax * 10) / 10}
               onChange={(e) => setYMax(parseFloat(e.target.value) || 10)}
-              className="w-20 text-center"
+              className="h-10 flex-1 rounded-none border-0 border-l border-border bg-transparent text-center font-mono focus-visible:ring-0"
               step="0.1"
             />
           </div>
         </div>
 
-        {/* Zoom presets */}
-        <div className="space-y-1">
-          <Label className="text-xs">Zoom</Label>
-          <div className="flex items-center gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="sm" onClick={zoomStandard} className="text-xs">
-                  ZStandard
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>-10 to 10</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="sm" onClick={zoomTrig} className="text-xs">
-                  ZTrig
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>-2π to 2π, -4 to 4</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="sm" onClick={zoomDecimal} className="text-xs">
-                  ZDecimal
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>-1 to 1</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="sm" onClick={zoomSquare} className="text-xs">
-                  ZSquare
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>1:1 aspect ratio</TooltipContent>
-            </Tooltip>
-          </div>
+        {/* Zoom presets — segmented */}
+        <label className="mt-4 block text-sm text-muted-foreground">Zoom</label>
+        <div className="segmented mt-2 grid-cols-5 -mx-4 -mb-4 border-x-0 border-b-0">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" onClick={zoomStandard} className="text-xs">
+                ZStandard
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>-10 to 10</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" onClick={zoomTrig} className="text-xs">
+                ZTrig
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>-2π to 2π, -4 to 4</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" onClick={zoomDecimal} className="text-xs">
+                ZDecimal
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>-1 to 1</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" onClick={zoomSquare} className="text-xs">
+                ZSquare
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>1:1 aspect ratio</TooltipContent>
+          </Tooltip>
+          <Button variant="outline" onClick={resetView} className="text-xs">
+            <RotateCcw className="mr-1 size-4" />
+            Reset
+          </Button>
         </div>
+      </div>
 
-        <Button variant="outline" size="sm" onClick={resetView}>
-          <RotateCcw className="size-4 mr-1" />
-          Reset
-        </Button>
-
-        <div className="flex-1" />
-
-        {/* Trace input */}
-        <div className="space-y-1">
-          <Label className="text-xs">Trace</Label>
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">x =</span>
-            <Input
-              type="number"
-              value={traceInput}
-              onChange={(e) => setTraceInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleTrace()}
-              placeholder="0"
-              className="w-24 text-center font-mono"
-            />
-            <Button variant="secondary" size="sm" onClick={handleTrace}>
-              <Crosshair className="size-4" />
-            </Button>
+      {/* Trace */}
+      <div className="border-b-2 border-border p-4">
+        <label className="font-bold">Trace</label>
+        <div className="-mx-4 -mb-4 mt-4 flex items-stretch border-t border-border">
+          <div className="flex shrink-0 items-center px-4 font-mono text-muted-foreground">
+            x =
           </div>
+          <Input
+            type="number"
+            value={traceInput}
+            onChange={(e) => setTraceInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleTrace()}
+            placeholder="0"
+            className="h-14 flex-1 rounded-none border-0 border-l border-border bg-transparent text-center font-mono focus-visible:ring-0"
+          />
+          <Button
+            onClick={handleTrace}
+            className="h-14 rounded-none border-0 border-l border-border px-6 font-bold"
+          >
+            <Crosshair className="mr-2 size-4" />
+            Trace
+          </Button>
         </div>
       </div>
 
       {/* Trace Results Stack */}
       {traceResults.length > 0 && (
-        <div className="border rounded-lg p-3 space-y-2">
+        <div className="border-b-2 border-border p-4">
           <div className="flex items-center justify-between">
-            <Label className="text-xs font-medium">Trace Results</Label>
-            <Button variant="ghost" size="sm" onClick={clearTraceResults} className="h-6 px-2">
-              <X className="size-3 mr-1" />
+            <label className="font-bold">Trace Results</label>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearTraceResults}
+              className="h-6 px-2"
+            >
+              <X className="mr-1 size-3" />
               Clear
             </Button>
           </div>
-          <div className="space-y-2 max-h-40 overflow-y-auto">
+          <div className="-mx-4 -mb-4 mt-4 max-h-40 overflow-y-auto border-t border-border">
             {traceResults.map((trace, traceIdx) => (
-              <div key={`${trace.x}-${traceIdx}`} className="text-sm font-mono bg-muted/50 rounded px-2 py-1">
+              <div
+                key={`${trace.x}-${traceIdx}`}
+                className="border-b border-border px-4 py-2 font-mono text-sm last:border-b-0"
+              >
                 <span className="text-muted-foreground">x = {formatNumber(trace.x)}</span>
                 {trace.results.map((result) => (
-                  <div key={result.id} className="flex items-center gap-2 ml-2">
+                  <div key={result.id} className="ml-2 flex items-center gap-2">
                     <div
-                      className="w-2 h-2 rounded-full shrink-0"
+                      className="size-2 shrink-0 rounded-full"
                       style={{ backgroundColor: result.color }}
                     />
-                    <span className="text-muted-foreground truncate">{result.expression}</span>
+                    <span className="truncate text-muted-foreground">{result.expression}</span>
                     <span>=</span>
                     <span>{formatNumber(result.y)}</span>
                   </div>
@@ -886,17 +916,20 @@ export function GraphCalcTool() {
       )}
 
       {/* Syntax Help */}
-      <div className="text-xs text-muted-foreground space-y-1">
-        <p className="font-medium">Syntax examples:</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <code className="bg-muted px-2 py-1 rounded">x^2</code>
-          <code className="bg-muted px-2 py-1 rounded">sin(x)</code>
-          <code className="bg-muted px-2 py-1 rounded">sqrt(x)</code>
-          <code className="bg-muted px-2 py-1 rounded">log(x)</code>
-          <code className="bg-muted px-2 py-1 rounded">abs(x)</code>
-          <code className="bg-muted px-2 py-1 rounded">2*x + 1</code>
-          <code className="bg-muted px-2 py-1 rounded">exp(x)</code>
-          <code className="bg-muted px-2 py-1 rounded">tan(x)</code>
+      <div className="p-4">
+        <label className="font-bold">Syntax examples</label>
+        <div className="segmented mt-4 grid-cols-2 -mx-4 -mb-4 border-x-0 border-b-0 sm:grid-cols-4">
+          {["x^2", "sin(x)", "sqrt(x)", "log(x)", "abs(x)", "2*x + 1", "exp(x)", "tan(x)"].map(
+            (ex) => (
+              <code
+                key={ex}
+                className="bg-muted px-3 py-2 text-xs text-muted-foreground"
+                style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+              >
+                {ex}
+              </code>
+            )
+          )}
         </div>
       </div>
     </div>

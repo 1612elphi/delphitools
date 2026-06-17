@@ -21,6 +21,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import { MATH_CONSTANTS, formatScientific } from "@/lib/math-constants";
 import { evaluate, pi, e as eulerE } from "mathjs";
 
@@ -350,130 +351,117 @@ export function SciCalcTool() {
   };
 
   return (
-    <div className="max-w-md mx-auto space-y-4">
-      {/* Angle Mode Toggle */}
-      <div className="flex justify-between items-center">
-        <div className="inline-flex rounded-lg border p-1">
+    <div className="mx-auto max-w-md">
+      <div className="border-2 border-border">
+        {/* Header: angle mode + history */}
+        <div className="flex items-stretch border-b-2 border-border">
           <button
+            type="button"
             onClick={() => setAngleMode("deg")}
-            className={`px-3 py-1 text-sm rounded-md transition-colors ${
+            className={cn(
+              "h-12 flex-1 border-r border-border text-sm font-bold transition-colors",
               angleMode === "deg"
                 ? "bg-primary text-primary-foreground"
-                : "hover:bg-accent"
-            }`}
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
           >
             DEG
           </button>
           <button
+            type="button"
             onClick={() => setAngleMode("rad")}
-            className={`px-3 py-1 text-sm rounded-md transition-colors ${
+            className={cn(
+              "h-12 flex-1 border-r border-border text-sm font-bold transition-colors",
               angleMode === "rad"
                 ? "bg-primary text-primary-foreground"
-                : "hover:bg-accent"
-            }`}
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
           >
             RAD
           </button>
+          <Collapsible open={historyOpen} onOpenChange={setHistoryOpen}>
+            <CollapsibleTrigger asChild>
+              <button
+                type="button"
+                className="flex h-12 w-full items-center justify-center gap-2 px-5 text-sm font-bold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <History className="size-4" />
+                History
+                <ChevronDown
+                  className={cn("size-4 transition-transform", historyOpen && "rotate-180")}
+                />
+              </button>
+            </CollapsibleTrigger>
+          </Collapsible>
         </div>
 
-        <Collapsible open={historyOpen} onOpenChange={setHistoryOpen}>
-          <CollapsibleTrigger asChild>
-            <Button variant="outline" size="sm">
-              <History className="size-4 mr-2" />
-              History
-              <ChevronDown
-                className={`size-4 ml-2 transition-transform ${
-                  historyOpen ? "rotate-180" : ""
-                }`}
-              />
-            </Button>
-          </CollapsibleTrigger>
-        </Collapsible>
-      </div>
-
-      {/* Display */}
-      <div className="bg-card border rounded-lg p-4 min-h-[100px]">
-        <div className="text-right space-y-2">
-          <div className="text-muted-foreground text-lg font-mono min-h-[28px] break-all">
-            {expression || "0"}
-          </div>
-          <div className="flex items-center justify-end gap-2">
-            <div
-              className={`text-3xl font-bold font-mono ${
-                error ? "text-destructive" : ""
-              }`}
-            >
-              {error || result || "0"}
+        {/* Display */}
+        <div className="border-b-2 border-border bg-muted/30 p-4">
+          <div className="space-y-2 text-right">
+            <div className="min-h-[28px] break-all font-mono text-lg text-muted-foreground">
+              {expression || "0"}
             </div>
-            {result && !error && (
-              <Button variant="ghost" size="icon" onClick={copyResult}>
-                {copied ? (
-                  <Check className="size-4 text-green-500" />
-                ) : (
-                  <Copy className="size-4" />
-                )}
-              </Button>
-            )}
+            <div className="flex items-center justify-end gap-2">
+              <div className={cn("font-mono text-3xl font-bold", error && "text-destructive")}>
+                {error || result || "0"}
+              </div>
+              {result && !error && (
+                <Button variant="ghost" size="icon" onClick={copyResult}>
+                  {copied ? (
+                    <Check className="size-4 text-green-500" />
+                  ) : (
+                    <Copy className="size-4" />
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* History Panel */}
-      <Collapsible open={historyOpen} onOpenChange={setHistoryOpen}>
-        <CollapsibleContent>
-          <div className="bg-card border rounded-lg p-3 max-h-48 overflow-y-auto">
-            {history.length === 0 ? (
-              <p className="text-muted-foreground text-sm text-center py-2">
-                No history yet
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {history.map((item, idx) => (
+        {/* History panel */}
+        <Collapsible open={historyOpen} onOpenChange={setHistoryOpen}>
+          <CollapsibleContent>
+            <div className="max-h-48 overflow-y-auto border-b-2 border-border">
+              {history.length === 0 ? (
+                <p className="py-4 text-center text-sm text-muted-foreground">
+                  No history yet
+                </p>
+              ) : (
+                history.map((item, idx) => (
                   <button
                     key={`${item.expression}=${item.result}-${idx}`}
                     onClick={() => loadFromHistory(item)}
-                    className="w-full text-right p-2 rounded hover:bg-accent transition-colors"
+                    className="block w-full border-b border-border px-4 py-2 text-right transition-colors last:border-b-0 hover:bg-muted"
                   >
-                    <div className="text-sm text-muted-foreground font-mono">
+                    <div className="font-mono text-sm text-muted-foreground">
                       {item.expression}
                     </div>
-                    <div className="font-bold font-mono">{item.result}</div>
+                    <div className="font-mono font-bold">{item.result}</div>
                   </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
+                ))
+              )}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
-      {/* Button Grid */}
-      <div className="grid gap-2">
-        {/* Main rows */}
-        {BUTTON_ROWS.map((row) => (
-          <div key={row.join("-")} className="grid grid-cols-5 gap-2">
-            {row.map((btn) => renderButton(btn))}
-          </div>
-        ))}
-
-        {/* Bottom section with double-height = button */}
-        <div className="grid grid-cols-5 gap-2" style={{ gridTemplateRows: '3rem 3rem' }}>
-          {/* Row 1: 1, 2, 3, . and = starts here */}
+        {/* Keypad — one unified hairline grid */}
+        <div className="segmented grid-cols-5 border-0">
+          {BUTTON_ROWS.flat().map((btn) => renderButton(btn))}
           {BOTTOM_LEFT[0].map((btn) => renderButton(btn))}
           <Button
             key="="
             variant="outline"
-            className={`row-span-2 h-auto ${getButtonStyle("=")}`}
+            className={cn("row-span-2 h-auto", getButtonStyle("="))}
             onClick={() => handleButton("=")}
           >
             =
           </Button>
-          {/* Row 2: 0, ±, EE, mod */}
           {BOTTOM_LEFT[1].map((btn) => renderButton(btn))}
         </div>
       </div>
 
       {/* Keyboard hint */}
-      <p className="text-xs text-muted-foreground text-center">
+      <p className="mt-3 text-center text-xs text-muted-foreground">
         Keyboard supported: numbers, operators, Enter to calculate, Escape to clear
       </p>
     </div>

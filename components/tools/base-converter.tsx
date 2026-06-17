@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 type Base = "dec" | "hex" | "bin" | "oct";
 type BitwiseOp = "AND" | "OR" | "XOR" | "NOT" | "LSH" | "RSH";
@@ -25,6 +26,15 @@ const BASE_INFO: Record<Base, { name: string; prefix: string; radix: number; pla
 };
 
 const BASES: Base[] = ["dec", "hex", "bin", "oct"];
+
+const BITWISE_REF: { op: string; desc: string }[] = [
+  { op: "AND (&)", desc: "1 if both bits are 1" },
+  { op: "OR (|)", desc: "1 if either bit is 1" },
+  { op: "XOR (^)", desc: "1 if bits differ" },
+  { op: "NOT (~)", desc: "Flip all bits" },
+  { op: "<< (LSH)", desc: "Shift bits left" },
+  { op: ">> (RSH)", desc: "Shift bits right" },
+];
 
 export function BaseConverterTool() {
   const [values, setValues] = useState<BaseValues>({ dec: "", hex: "", bin: "", oct: "" });
@@ -180,243 +190,249 @@ export function BaseConverterTool() {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="converter">
-        <TabsList className="grid grid-cols-2 w-full">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="converter">Converter</TabsTrigger>
           <TabsTrigger value="bitwise">Bitwise Ops</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="converter" className="space-y-6">
-          {/* Base Input Cards */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            {BASES.map((base) => (
-              <div
-                key={base}
-                className={`p-4 rounded-lg border bg-card transition-colors ${
-                  activeBase === base && hasValue ? "ring-2 ring-primary" : ""
-                }`}
-              >
-                <Label className="text-sm text-muted-foreground mb-2 block">
-                  {BASE_INFO[base].name}
-                </Label>
-                <div className="flex items-center gap-2">
-                  {BASE_INFO[base].prefix && (
-                    <span className="text-muted-foreground font-mono text-sm">
-                      {BASE_INFO[base].prefix}
-                    </span>
-                  )}
-                  <Input
-                    value={values[base]}
-                    onChange={(e) => handleBaseInput(base, e.target.value)}
-                    placeholder={BASE_INFO[base].placeholder}
-                    className="font-mono flex-1"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => copyValue(base, values[base])}
-                    disabled={!values[base]}
-                    className="shrink-0"
-                  >
-                    {copied === base ? (
-                      <Check className="size-4 text-green-500" />
-                    ) : (
-                      <Copy className="size-4" />
+        <div className="mt-3 border-2 border-border">
+          {/* Converter — flush base table */}
+          <TabsContent value="converter" className="m-0">
+            <div>
+              {BASES.map((base) => {
+                const isActive = activeBase === base && hasValue;
+                return (
+                  <div
+                    key={base}
+                    className={cn(
+                      "flex items-stretch border-b border-border last:border-b-0",
+                      isActive && "bg-muted/40"
                     )}
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {error && <p className="text-sm text-destructive">{error}</p>}
-
-          {/* Bit Toggle Visualization */}
-          {(!hasValue || decimalValue <= 65535) && (
-            <div className="space-y-3">
-              <Label>Bit Toggle (16-bit)</Label>
-              <div className="flex gap-1 flex-wrap">
-                {bitCells.map((cell) => (
-                  <button
-                    key={`bit-${cell.position}`}
-                    type="button"
-                    onClick={() => toggleBit(cell.position)}
-                    className={`w-8 h-10 text-sm font-mono rounded border transition-colors ${
-                      cell.on
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted hover:bg-accent"
-                    }`}
                   >
-                    {cell.on ? "1" : "0"}
-                  </button>
-                ))}
-              </div>
-              <div className="flex gap-1 text-xs text-muted-foreground">
-                {Array.from({ length: 16 }, (_, i) => (
-                  <span key={i} className="w-8 text-center">
-                    {15 - i}
-                  </span>
-                ))}
-              </div>
+                    <span className="flex w-32 shrink-0 items-center px-4 text-sm font-medium">
+                      {BASE_INFO[base].name}
+                    </span>
+                    <div className="flex flex-1 items-stretch border-l border-border">
+                      {BASE_INFO[base].prefix && (
+                        <span className="flex items-center pl-3 font-mono text-sm text-muted-foreground">
+                          {BASE_INFO[base].prefix}
+                        </span>
+                      )}
+                      <Input
+                        value={values[base]}
+                        onChange={(e) => handleBaseInput(base, e.target.value)}
+                        placeholder={BASE_INFO[base].placeholder}
+                        className="flex-1 border-0 bg-transparent font-mono"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => copyValue(base, values[base])}
+                      disabled={!values[base]}
+                      aria-label={`Copy ${BASE_INFO[base].name}`}
+                      className="flex w-12 shrink-0 items-center justify-center border-l border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+                    >
+                      {copied === base ? (
+                        <Check className="size-4 text-green-500" />
+                      ) : (
+                        <Copy className="size-4" />
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
-          )}
-        </TabsContent>
 
-        <TabsContent value="bitwise" className="space-y-6">
-          {/* Operation Selector */}
-          <div className="flex flex-wrap gap-2">
-            {(["AND", "OR", "XOR", "NOT", "LSH", "RSH"] as BitwiseOp[]).map(
-              (op) => (
-                <Button
-                  key={op}
-                  variant={bitwiseOp === op ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => {
-                    setBitwiseOp(op);
-                    setBitwiseResult(null);
-                  }}
-                >
-                  {op === "LSH" ? "<<" : op === "RSH" ? ">>" : op}
-                </Button>
-              )
+            {error && (
+              <div className="border-t border-border p-3 text-sm text-destructive">
+                {error}
+              </div>
             )}
-          </div>
 
-          {/* Value A Card */}
-          <div className="p-4 rounded-lg border bg-card">
-            <Label className="text-sm text-muted-foreground mb-3 block">
-              Value A
-            </Label>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {BASES.map((base) => (
-                <div key={base} className="flex items-center gap-2">
-                  <span className="w-20 text-sm text-muted-foreground">
-                    {BASE_INFO[base].name}
-                  </span>
-                  {BASE_INFO[base].prefix && (
-                    <span className="text-muted-foreground font-mono text-sm">
-                      {BASE_INFO[base].prefix}
-                    </span>
-                  )}
-                  <Input
-                    value={bitwiseA[base]}
-                    onChange={(e) => handleBitwiseInput("a", base, e.target.value)}
-                    placeholder={BASE_INFO[base].placeholder}
-                    className="font-mono flex-1"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Value B Card (for binary operations) */}
-          {bitwiseOp !== "NOT" && bitwiseOp !== "LSH" && bitwiseOp !== "RSH" && (
-            <div className="p-4 rounded-lg border bg-card">
-              <Label className="text-sm text-muted-foreground mb-3 block">
-                Value B
-              </Label>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {BASES.map((base) => (
-                  <div key={base} className="flex items-center gap-2">
-                    <span className="w-20 text-sm text-muted-foreground">
-                      {BASE_INFO[base].name}
-                    </span>
-                    {BASE_INFO[base].prefix && (
-                      <span className="text-muted-foreground font-mono text-sm">
-                        {BASE_INFO[base].prefix}
+            {/* Bit toggle */}
+            {(!hasValue || decimalValue <= 65535) && (
+              <div className="space-y-3 border-t-2 border-border p-4">
+                <Label className="font-bold">Bit Toggle (16-bit)</Label>
+                <div className="-mx-4">
+                  <div
+                    className="segmented border-x-0"
+                    style={{ gridTemplateColumns: "repeat(16, minmax(0, 1fr))" }}
+                  >
+                    {bitCells.map((cell) => (
+                      <button
+                        key={`bit-${cell.position}`}
+                        type="button"
+                        onClick={() => toggleBit(cell.position)}
+                        className={cn(
+                          "h-10 font-mono text-sm transition-colors",
+                          cell.on
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-background hover:bg-muted"
+                        )}
+                      >
+                        {cell.on ? "1" : "0"}
+                      </button>
+                    ))}
+                  </div>
+                  <div
+                    className="grid gap-px"
+                    style={{ gridTemplateColumns: "repeat(16, minmax(0, 1fr))" }}
+                  >
+                    {Array.from({ length: 16 }, (_, i) => (
+                      <span key={i} className="pt-1 text-center text-[10px] text-muted-foreground">
+                        {15 - i}
                       </span>
-                    )}
-                    <Input
-                      value={bitwiseB[base]}
-                      onChange={(e) => handleBitwiseInput("b", base, e.target.value)}
-                      placeholder={BASE_INFO[base].placeholder}
-                      className="font-mono flex-1"
-                    />
+                    ))}
                   </div>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Bitwise */}
+          <TabsContent value="bitwise" className="m-0">
+            {/* Operation */}
+            <div className="space-y-3 border-b-2 border-border p-4">
+              <Label className="font-bold">Operation</Label>
+              <div className="segmented grid-cols-3 sm:grid-cols-6 -mx-4 -mb-4 border-x-0 border-b-0">
+                {(["AND", "OR", "XOR", "NOT", "LSH", "RSH"] as BitwiseOp[]).map((op) => (
+                  <Button
+                    key={op}
+                    variant={bitwiseOp === op ? "default" : "outline"}
+                    onClick={() => {
+                      setBitwiseOp(op);
+                      setBitwiseResult(null);
+                    }}
+                    className="font-mono"
+                  >
+                    {op === "LSH" ? "<<" : op === "RSH" ? ">>" : op}
+                  </Button>
                 ))}
               </div>
             </div>
-          )}
 
-          {/* Shift Amount (for shift operations) */}
-          {(bitwiseOp === "LSH" || bitwiseOp === "RSH") && (
-            <div className="p-4 rounded-lg border bg-card">
-              <Label className="text-sm text-muted-foreground mb-3 block">
-                Shift Amount
-              </Label>
-              <Input
-                type="number"
-                value={shiftAmount}
-                onChange={(e) => setShiftAmount(e.target.value)}
-                placeholder="1"
-                className="font-mono w-24"
-                min={0}
-                max={31}
-              />
-            </div>
-          )}
-
-          <Button onClick={calculateBitwise} className="w-full">
-            Calculate
-          </Button>
-
-          {/* Result Card */}
-          {bitwiseResult && (
-            <div className="p-4 rounded-lg border bg-card">
-              <Label className="text-sm text-muted-foreground mb-3 block">
-                Result: {bitwiseA.dec} {bitwiseOp === "NOT" ? "~" : bitwiseOp === "LSH" ? "<<" : bitwiseOp === "RSH" ? ">>" : bitwiseOp}{" "}
-                {bitwiseOp === "LSH" || bitwiseOp === "RSH"
-                  ? shiftAmount
-                  : bitwiseOp !== "NOT"
-                  ? bitwiseB.dec
-                  : ""}
-              </Label>
-              <div className="grid gap-2 sm:grid-cols-2">
+            {/* Value A */}
+            <div className="space-y-3 border-b-2 border-border p-4">
+              <Label className="font-bold">Value A</Label>
+              <div className="-mx-4 -mb-4 border-t border-border">
                 {BASES.map((base) => (
-                  <div key={base} className="flex items-center gap-2">
-                    <span className="w-20 text-sm text-muted-foreground">
+                  <div key={base} className="flex items-stretch border-b border-border last:border-b-0">
+                    <span className="flex w-32 shrink-0 items-center px-4 text-sm text-muted-foreground">
                       {BASE_INFO[base].name}
                     </span>
-                    <code className="font-mono">
-                      {BASE_INFO[base].prefix}
-                      {bitwiseResult[base]}
-                    </code>
+                    <div className="flex flex-1 items-stretch border-l border-border">
+                      {BASE_INFO[base].prefix && (
+                        <span className="flex items-center pl-3 font-mono text-sm text-muted-foreground">
+                          {BASE_INFO[base].prefix}
+                        </span>
+                      )}
+                      <Input
+                        value={bitwiseA[base]}
+                        onChange={(e) => handleBitwiseInput("a", base, e.target.value)}
+                        placeholder={BASE_INFO[base].placeholder}
+                        className="flex-1 border-0 bg-transparent font-mono"
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
-          )}
 
-          {/* Quick Reference */}
-          <div className="p-4 rounded-lg border bg-card">
-            <h3 className="font-medium mb-3 text-sm text-muted-foreground">Reference</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-              <div>
-                <span className="font-mono">AND (&)</span>
-                <p className="text-muted-foreground text-xs">1 if both bits are 1</p>
+            {/* Value B */}
+            {bitwiseOp !== "NOT" && bitwiseOp !== "LSH" && bitwiseOp !== "RSH" && (
+              <div className="space-y-3 border-b-2 border-border p-4">
+                <Label className="font-bold">Value B</Label>
+                <div className="-mx-4 -mb-4 border-t border-border">
+                  {BASES.map((base) => (
+                    <div key={base} className="flex items-stretch border-b border-border last:border-b-0">
+                      <span className="flex w-32 shrink-0 items-center px-4 text-sm text-muted-foreground">
+                        {BASE_INFO[base].name}
+                      </span>
+                      <div className="flex flex-1 items-stretch border-l border-border">
+                        {BASE_INFO[base].prefix && (
+                          <span className="flex items-center pl-3 font-mono text-sm text-muted-foreground">
+                            {BASE_INFO[base].prefix}
+                          </span>
+                        )}
+                        <Input
+                          value={bitwiseB[base]}
+                          onChange={(e) => handleBitwiseInput("b", base, e.target.value)}
+                          placeholder={BASE_INFO[base].placeholder}
+                          className="flex-1 border-0 bg-transparent font-mono"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div>
-                <span className="font-mono">OR (|)</span>
-                <p className="text-muted-foreground text-xs">1 if either bit is 1</p>
+            )}
+
+            {/* Shift */}
+            {(bitwiseOp === "LSH" || bitwiseOp === "RSH") && (
+              <div className="space-y-3 border-b-2 border-border p-4">
+                <Label className="font-bold">Shift Amount</Label>
+                <Input
+                  type="number"
+                  value={shiftAmount}
+                  onChange={(e) => setShiftAmount(e.target.value)}
+                  placeholder="1"
+                  className="w-24 font-mono"
+                  min={0}
+                  max={31}
+                />
               </div>
-              <div>
-                <span className="font-mono">XOR (^)</span>
-                <p className="text-muted-foreground text-xs">1 if bits differ</p>
+            )}
+
+            {/* Calculate — flush full-width primary */}
+            <Button
+              onClick={calculateBitwise}
+              className="h-14 w-full rounded-none border-0 border-b-2 border-border text-lg font-bold"
+            >
+              Calculate
+            </Button>
+
+            {/* Result */}
+            {bitwiseResult && (
+              <div className="space-y-3 border-b-2 border-border p-4">
+                <Label className="font-bold">
+                  Result: {bitwiseA.dec}{" "}
+                  {bitwiseOp === "NOT" ? "~" : bitwiseOp === "LSH" ? "<<" : bitwiseOp === "RSH" ? ">>" : bitwiseOp}{" "}
+                  {bitwiseOp === "LSH" || bitwiseOp === "RSH"
+                    ? shiftAmount
+                    : bitwiseOp !== "NOT"
+                    ? bitwiseB.dec
+                    : ""}
+                </Label>
+                <div className="-mx-4 -mb-4 border-t border-border">
+                  {BASES.map((base) => (
+                    <div key={base} className="flex items-stretch border-b border-border last:border-b-0">
+                      <span className="flex w-32 shrink-0 items-center px-4 text-sm text-muted-foreground">
+                        {BASE_INFO[base].name}
+                      </span>
+                      <code className="flex flex-1 items-center border-l border-border px-4 font-mono">
+                        {BASE_INFO[base].prefix}
+                        {bitwiseResult[base]}
+                      </code>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div>
-                <span className="font-mono">NOT (~)</span>
-                <p className="text-muted-foreground text-xs">Flip all bits</p>
-              </div>
-              <div>
-                <span className="font-mono">&lt;&lt; (LSH)</span>
-                <p className="text-muted-foreground text-xs">Shift bits left</p>
-              </div>
-              <div>
-                <span className="font-mono">&gt;&gt; (RSH)</span>
-                <p className="text-muted-foreground text-xs">Shift bits right</p>
+            )}
+
+            {/* Reference */}
+            <div className="space-y-3 p-4">
+              <Label className="font-bold">Reference</Label>
+              <div className="segmented grid-cols-2 sm:grid-cols-3 -mx-4 -mb-4 border-x-0 border-b-0">
+                {BITWISE_REF.map((r) => (
+                  <div key={r.op} className="bg-card p-3">
+                    <div className="font-mono text-sm font-bold">{r.op}</div>
+                    <p className="text-xs text-muted-foreground">{r.desc}</p>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
-        </TabsContent>
+          </TabsContent>
+        </div>
       </Tabs>
     </div>
   );

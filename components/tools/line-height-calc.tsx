@@ -34,91 +34,101 @@ export function LineHeightCalcTool() {
   const optimalLineHeight = (size * 1.5).toFixed(1);
 
   return (
-    <div className="space-y-8">
+    <div className="border-2 border-border">
       {/* Font Size Input */}
-      <div className="space-y-3">
-        <label className="text-lg font-bold block">Font Size</label>
-        <div className="flex gap-3 items-center max-w-xs">
+      <div className="p-4 border-b-2 border-border">
+        <label className="font-bold block mb-3">Font Size</label>
+        <div className="flex items-stretch border border-border">
           <Input
             type="number"
             value={fontSize}
             onChange={(e) => setFontSize(e.target.value)}
-            className="text-2xl h-14 font-bold"
+            className="h-14 text-2xl font-bold border-0 flex-1"
             min="1"
           />
-          <span className="text-xl text-muted-foreground">px</span>
+          <div className="flex items-center px-4 border-l border-border text-muted-foreground text-xl">
+            px
+          </div>
         </div>
       </div>
 
       {/* Recommendations */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="p-6 rounded-xl border-2 border-primary bg-primary/5">
-          <div className="text-sm text-muted-foreground mb-1">Recommended</div>
-          <div className="text-4xl font-bold">{optimalLineHeight}px</div>
-          <div className="text-sm text-muted-foreground mt-2">
-            1.5× ratio — optimal for body text
+      <div className="border-b-2 border-border">
+        <div className="grid grid-cols-2">
+          {/* Recommended */}
+          <div className="p-4 border-r border-border">
+            <div className="text-sm text-muted-foreground mb-1">Recommended</div>
+            <div className="text-4xl font-bold mb-1">{optimalLineHeight}px</div>
+            <div className="text-sm text-muted-foreground mb-3">
+              1.5× ratio — optimal for body text
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => copyValue(`${optimalLineHeight}px`, "optimal")}
+            >
+              {copied === "optimal" ? (
+                <><Check className="size-4 mr-2" /> Copied!</>
+              ) : (
+                <><Copy className="size-4 mr-2" /> Copy</>
+              )}
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-3"
-            onClick={() => copyValue(`${optimalLineHeight}px`, "optimal")}
-          >
-            {copied === "optimal" ? (
-              <><Check className="size-4 mr-2" /> Copied!</>
-            ) : (
-              <><Copy className="size-4 mr-2" /> Copy</>
-            )}
-          </Button>
-        </div>
 
-        <div className="p-6 rounded-xl border bg-card">
-          <div className="text-sm text-muted-foreground mb-1">Golden Ratio</div>
-          <div className="text-4xl font-bold">{goldenLineHeight}px</div>
-          <div className="text-sm text-muted-foreground mt-2">
-            φ (1.618) — harmonious proportions
+          {/* Golden Ratio */}
+          <div className="p-4">
+            <div className="text-sm text-muted-foreground mb-1">Golden Ratio</div>
+            <div className="text-4xl font-bold mb-1">{goldenLineHeight}px</div>
+            <div className="text-sm text-muted-foreground mb-3">
+              φ (1.618) — harmonious proportions
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => copyValue(`${goldenLineHeight}px`, "golden")}
+            >
+              {copied === "golden" ? (
+                <><Check className="size-4 mr-2" /> Copied!</>
+              ) : (
+                <><Copy className="size-4 mr-2" /> Copy</>
+              )}
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-3"
-            onClick={() => copyValue(`${goldenLineHeight}px`, "golden")}
-          >
-            {copied === "golden" ? (
-              <><Check className="size-4 mr-2" /> Copied!</>
-            ) : (
-              <><Copy className="size-4 mr-2" /> Copy</>
-            )}
-          </Button>
         </div>
       </div>
 
-      {/* All Ratios */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-bold">Common Ratios</h3>
-        <div className="grid gap-3">
+      {/* Common Ratios Table */}
+      <div className="border-b-2 border-border">
+        <div className="px-4 py-3 border-b border-border">
+          <label className="font-bold">Common Ratios</label>
+        </div>
+        <div>
           {ratios.map((r) => {
             const lineHeight = (size * r.ratio).toFixed(1);
             const id = r.name.toLowerCase();
             return (
               <div
                 key={r.name}
-                className="flex items-center justify-between p-4 rounded-lg border bg-card"
+                className="flex items-stretch border-b border-border last:border-b-0"
               >
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
+                {/* Name + Use */}
+                <div className="flex-1 p-4">
+                  <div className="flex items-baseline gap-3">
                     <span className="font-bold">{r.name}</span>
-                    <span className="text-sm text-muted-foreground">
-                      {r.ratio}×
-                    </span>
+                    <span className="text-sm text-muted-foreground">{r.ratio}×</span>
                   </div>
                   <div className="text-sm text-muted-foreground">{r.use}</div>
                 </div>
-                <div className="flex items-center gap-3">
+                {/* Computed value */}
+                <div className="flex items-center px-4 border-l border-border">
                   <span className="text-2xl font-bold">{lineHeight}px</span>
+                </div>
+                {/* Copy action */}
+                <div className="flex items-center border-l border-border">
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="h-full w-12 rounded-none"
                     onClick={() => copyValue(`${lineHeight}px`, id)}
                   >
                     {copied === id ? (
@@ -135,11 +145,16 @@ export function LineHeightCalcTool() {
       </div>
 
       {/* Preview */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-bold">Preview</h3>
-        <div className="grid gap-4 md:grid-cols-3">
-          {[1.2, 1.5, 2].map((ratio) => (
-            <div key={ratio} className="p-4 rounded-lg border bg-card">
+      <div>
+        <div className="px-4 py-3 border-b border-border">
+          <label className="font-bold">Preview</label>
+        </div>
+        <div className="grid grid-cols-3">
+          {[1.2, 1.5, 2].map((ratio, i) => (
+            <div
+              key={ratio}
+              className={i > 0 ? "p-4 border-l border-border" : "p-4"}
+            >
               <div className="text-sm text-muted-foreground mb-2">
                 {ratio}× line-height
               </div>

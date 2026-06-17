@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 const TIMEZONES = [
   { value: "UTC", label: "UTC" },
@@ -268,221 +269,297 @@ export function TimeCalcTool() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Current Time Display */}
-      <div className="p-4 rounded-lg border bg-card">
-        <p className="text-sm text-muted-foreground mb-1">Current Time</p>
-        <p className="text-2xl font-mono font-medium tabular-nums">
-          {formatInTimezone(currentTime, "UTC")}
-          <span className="text-muted-foreground ml-2 text-base">UTC</span>
-        </p>
-        <p className="text-sm text-muted-foreground font-mono mt-1">
-          {Math.floor(currentTime.getTime() / 1000)}
-        </p>
+    <div className="space-y-4">
+      {/* Current Time — live ticker */}
+      <div className="border-2 border-border">
+        <div className="border-b border-border p-4">
+          <label className="font-bold">Current Time</label>
+        </div>
+        <div className="flex items-stretch">
+          <div className="flex-1 p-4">
+            <p
+              className="text-2xl tabular-nums"
+              style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+            >
+              {formatInTimezone(currentTime, "UTC")}
+              <span className="ml-2 text-base text-muted-foreground">UTC</span>
+            </p>
+            <p
+              className="mt-1 text-sm text-muted-foreground"
+              style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+            >
+              {Math.floor(currentTime.getTime() / 1000)}
+            </p>
+          </div>
+        </div>
       </div>
 
       <Tabs defaultValue="convert">
-        <TabsList className="grid grid-cols-3 w-full">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="convert">Convert</TabsTrigger>
           <TabsTrigger value="timezones">Timezones</TabsTrigger>
           <TabsTrigger value="arithmetic">Date Math</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="convert" className="space-y-6">
-          {/* Format Input Cards */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            {FORMATS.map((format) => (
-              <div
-                key={format}
-                className={`p-4 rounded-lg border bg-card transition-colors ${
-                  activeFormat === format && hasValue ? "ring-2 ring-primary" : ""
-                }`}
-              >
-                <Label className="text-sm text-muted-foreground mb-2 block">
-                  {FORMAT_INFO[format].name}
-                </Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={values[format]}
-                    onChange={(e) => handleFormatInput(format, e.target.value)}
-                    placeholder={FORMAT_INFO[format].placeholder}
-                    className="font-mono flex-1 text-sm"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => copyValue(values[format], format)}
-                    disabled={!values[format]}
-                    className="shrink-0"
-                  >
-                    {copied === format ? (
-                      <Check className="size-4 text-green-500" />
-                    ) : (
-                      <Copy className="size-4" />
+        <div className="mt-3 border-2 border-border">
+          {/* ── Convert tab ─────────────────────────────────────────── */}
+          <TabsContent value="convert" className="m-0">
+            {/* Format rows — flush table */}
+            <div>
+              {FORMATS.map((format) => {
+                const isActive = activeFormat === format && hasValue;
+                return (
+                  <div
+                    key={format}
+                    className={cn(
+                      "flex items-stretch border-b border-border last:border-b-0",
+                      isActive && "bg-muted/40"
                     )}
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+                  >
+                    <span className="flex w-36 shrink-0 items-center px-4 text-sm font-medium">
+                      {FORMAT_INFO[format].name}
+                    </span>
+                    <div className="flex flex-1 items-stretch border-l border-border">
+                      <Input
+                        value={values[format]}
+                        onChange={(e) => handleFormatInput(format, e.target.value)}
+                        placeholder={FORMAT_INFO[format].placeholder}
+                        className="flex-1 border-0 bg-transparent"
+                        style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => copyValue(values[format], format)}
+                      disabled={!values[format]}
+                      aria-label={`Copy ${FORMAT_INFO[format].name}`}
+                      className="flex w-12 shrink-0 items-center justify-center border-l border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+                    >
+                      {copied === format ? (
+                        <Check className="size-4 text-green-500" />
+                      ) : (
+                        <Copy className="size-4" />
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
 
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={setNow} className="flex-1">
+            {error && (
+              <div className="border-t border-border px-4 py-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+
+            {/* Use Current Time — flush primary */}
+            <Button
+              variant="outline"
+              onClick={setNow}
+              className={cn(
+                "h-12 w-full border-0 border-t border-border",
+                hasValue ? "" : "border-t-0 border-t-2"
+              )}
+            >
               Use Current Time
             </Button>
-          </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+            {/* Relative time */}
+            {currentDate && (
+              <div className="border-t-2 border-border p-4">
+                <Label className="font-bold">Relative</Label>
+                <p className="mt-2 text-lg font-medium">{getRelativeTime(currentDate)}</p>
+              </div>
+            )}
+          </TabsContent>
 
-          {/* Relative Time */}
-          {currentDate && (
-            <div className="p-4 rounded-lg border bg-card">
-              <p className="text-sm text-muted-foreground">Relative</p>
-              <p className="text-lg font-medium">{getRelativeTime(currentDate)}</p>
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="timezones" className="space-y-6">
-          {/* Timezone selector */}
-          <div className="flex gap-2">
-            <Select onValueChange={addTimezone}>
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder="Add timezone..." />
-              </SelectTrigger>
-              <SelectContent>
-                {TIMEZONES.filter((tz) => !selectedZones.includes(tz.value)).map((tz) => (
-                  <SelectItem key={tz.value} value={tz.value}>
-                    {tz.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Timezone cards */}
-          <div className="grid gap-3">
-            {selectedZones.map((tz) => {
-              const tzInfo = TIMEZONES.find((t) => t.value === tz);
-              const offset = getTimezoneOffset(currentTime, tz);
-              return (
-                <div
-                  key={tz}
-                  className="p-4 rounded-lg border bg-card flex items-center justify-between"
-                >
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{tzInfo?.label || tz}</span>
-                      <span className="text-sm text-muted-foreground">{offset}</span>
-                    </div>
-                    <p className="text-lg font-mono tabular-nums mt-1">
-                      {formatInTimezone(currentTime, tz)}
-                    </p>
-                  </div>
-                  {selectedZones.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeTimezone(tz)}
-                      className="shrink-0"
-                    >
-                      <X className="size-4" />
-                    </Button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          <p className="text-xs text-muted-foreground">
-            Times update live. Add up to 6 timezones.
-          </p>
-        </TabsContent>
-
-        <TabsContent value="arithmetic" className="space-y-6">
-          {/* Base Date Input */}
-          <div className="p-4 rounded-lg border bg-card">
-            <Label className="text-sm text-muted-foreground mb-2 block">
-              Starting Date & Time
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                value={baseDateTime}
-                onChange={(e) => setBaseDateTime(e.target.value)}
-                placeholder="2024-01-01 00:00:00"
-                className="font-mono flex-1"
-              />
-              <Button variant="outline" onClick={setNowForArithmetic}>
-                Now
-              </Button>
-            </div>
-          </div>
-
-          {/* Operation */}
-          <div className="p-4 rounded-lg border bg-card">
-            <Label className="text-sm text-muted-foreground mb-3 block">
-              Operation
-            </Label>
-            <div className="flex gap-2 mb-4">
-              <Button
-                variant={arithmeticMode === "add" ? "default" : "outline"}
-                onClick={() => setArithmeticMode("add")}
-                className="flex-1"
-              >
-                <Plus className="size-4 mr-2" />
-                Add
-              </Button>
-              <Button
-                variant={arithmeticMode === "subtract" ? "default" : "outline"}
-                onClick={() => setArithmeticMode("subtract")}
-                className="flex-1"
-              >
-                <Minus className="size-4 mr-2" />
-                Subtract
-              </Button>
-            </div>
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                value={arithmeticAmount}
-                onChange={(e) => setArithmeticAmount(e.target.value)}
-                className="w-24 font-mono"
-                min={0}
-              />
-              <Select
-                value={arithmeticUnit}
-                onValueChange={(v) => setArithmeticUnit(v as TimeUnit)}
-              >
-                <SelectTrigger className="flex-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="minutes">Minutes</SelectItem>
-                  <SelectItem value="hours">Hours</SelectItem>
-                  <SelectItem value="days">Days</SelectItem>
-                  <SelectItem value="weeks">Weeks</SelectItem>
-                  <SelectItem value="months">Months</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Result */}
-          {arithmeticResult && (
-            <div className="p-4 rounded-lg border bg-card">
-              <p className="text-sm text-muted-foreground mb-1">Result</p>
-              <p className="text-xl font-mono font-medium tabular-nums">
-                {formatInTimezone(arithmeticResult, "UTC")}
-              </p>
-              <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
-                <span className="font-mono">
-                  {Math.floor(arithmeticResult.getTime() / 1000)}
-                </span>
-                <span>{getRelativeTime(arithmeticResult)}</span>
+          {/* ── Timezones tab ────────────────────────────────────────── */}
+          <TabsContent value="timezones" className="m-0">
+            {/* Add timezone */}
+            <div className="border-b-2 border-border p-4">
+              <Label className="font-bold">Add Timezone</Label>
+              <div className="mt-3">
+                <Select onValueChange={addTimezone}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Add timezone..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIMEZONES.filter((tz) => !selectedZones.includes(tz.value)).map((tz) => (
+                      <SelectItem key={tz.value} value={tz.value}>
+                        {tz.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-          )}
-        </TabsContent>
+
+            {/* Timezone table */}
+            <div>
+              {selectedZones.map((tz) => {
+                const tzInfo = TIMEZONES.find((t) => t.value === tz);
+                const offset = getTimezoneOffset(currentTime, tz);
+                return (
+                  <div
+                    key={tz}
+                    className="flex items-stretch border-b border-border last:border-b-0"
+                  >
+                    <div className="flex flex-1 flex-col justify-center px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{tzInfo?.label || tz}</span>
+                        <span
+                          className="text-sm text-muted-foreground"
+                          style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                        >
+                          {offset}
+                        </span>
+                      </div>
+                      <p
+                        className="mt-0.5 tabular-nums text-sm text-muted-foreground"
+                        style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                      >
+                        {formatInTimezone(currentTime, tz)}
+                      </p>
+                    </div>
+                    {selectedZones.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeTimezone(tz)}
+                        aria-label={`Remove ${tzInfo?.label || tz}`}
+                        className="flex w-12 shrink-0 items-center justify-center border-l border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        <X className="size-4" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
+              Times update live. Add up to 6 timezones.
+            </div>
+          </TabsContent>
+
+          {/* ── Date Math tab ────────────────────────────────────────── */}
+          <TabsContent value="arithmetic" className="m-0">
+            {/* Starting date */}
+            <div className="border-b-2 border-border p-4">
+              <Label className="font-bold">Starting Date & Time</Label>
+              <div className="mt-3 flex items-stretch border border-border">
+                <Input
+                  value={baseDateTime}
+                  onChange={(e) => setBaseDateTime(e.target.value)}
+                  placeholder="2024-01-01 00:00:00"
+                  className="flex-1 border-0 bg-transparent"
+                  style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                />
+                <button
+                  type="button"
+                  onClick={setNowForArithmetic}
+                  className="flex shrink-0 items-center border-l border-border px-4 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  Now
+                </button>
+              </div>
+            </div>
+
+            {/* Operation — add / subtract segmented */}
+            <div className="border-b-2 border-border p-4">
+              <Label className="font-bold">Operation</Label>
+              <div className="segmented grid-cols-2 -mx-4 -mb-4 mt-3 border-x-0 border-b-0">
+                <Button
+                  variant={arithmeticMode === "add" ? "default" : "outline"}
+                  onClick={() => setArithmeticMode("add")}
+                >
+                  <Plus className="mr-2 size-4" />
+                  Add
+                </Button>
+                <Button
+                  variant={arithmeticMode === "subtract" ? "default" : "outline"}
+                  onClick={() => setArithmeticMode("subtract")}
+                >
+                  <Minus className="mr-2 size-4" />
+                  Subtract
+                </Button>
+              </div>
+            </div>
+
+            {/* Amount + unit — flush row */}
+            <div className="border-b-2 border-border p-4">
+              <Label className="font-bold">Amount</Label>
+              <div className="mt-3 flex items-stretch border border-border">
+                <Input
+                  type="number"
+                  value={arithmeticAmount}
+                  onChange={(e) => setArithmeticAmount(e.target.value)}
+                  className="w-24 border-0 bg-transparent"
+                  style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                  min={0}
+                />
+                <div className="flex flex-1 items-stretch border-l border-border">
+                  <Select
+                    value={arithmeticUnit}
+                    onValueChange={(v) => setArithmeticUnit(v as TimeUnit)}
+                  >
+                    <SelectTrigger className="flex-1 border-0 bg-transparent">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="minutes">Minutes</SelectItem>
+                      <SelectItem value="hours">Hours</SelectItem>
+                      <SelectItem value="days">Days</SelectItem>
+                      <SelectItem value="weeks">Weeks</SelectItem>
+                      <SelectItem value="months">Months</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Result */}
+            {arithmeticResult && (
+              <div className="border-b border-border">
+                <div className="border-b border-border px-4 py-3">
+                  <Label className="font-bold">Result</Label>
+                </div>
+                {/* Result rows — flush table */}
+                <div
+                  className="flex items-stretch border-b border-border"
+                >
+                  <span className="flex w-24 shrink-0 items-center px-4 text-sm text-muted-foreground">
+                    UTC
+                  </span>
+                  <span
+                    className="flex flex-1 items-center border-l border-border px-4 py-3 tabular-nums"
+                    style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                  >
+                    {formatInTimezone(arithmeticResult, "UTC")}
+                  </span>
+                </div>
+                <div className="flex items-stretch border-b border-border">
+                  <span className="flex w-24 shrink-0 items-center px-4 text-sm text-muted-foreground">
+                    Unix
+                  </span>
+                  <span
+                    className="flex flex-1 items-center border-l border-border px-4 py-3 tabular-nums"
+                    style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                  >
+                    {Math.floor(arithmeticResult.getTime() / 1000)}
+                  </span>
+                </div>
+                <div className="flex items-stretch">
+                  <span className="flex w-24 shrink-0 items-center px-4 text-sm text-muted-foreground">
+                    Relative
+                  </span>
+                  <span className="flex flex-1 items-center border-l border-border px-4 py-3">
+                    {getRelativeTime(arithmeticResult)}
+                  </span>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+        </div>
       </Tabs>
     </div>
   );

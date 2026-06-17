@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Download, Copy, Check, RefreshCw } from "lucide-react";
+import { Download, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -24,7 +24,7 @@ export function PlaceholderGennyTool() {
     { label: "HD", w: 1920, h: 1080 },
     { label: "Square", w: 1000, h: 1000 },
     { label: "Banner", w: 1200, h: 400 },
-    { label: "Thumbnail", w: 300, h: 200 },
+    { label: "Thumb", w: 300, h: 200 },
     { label: "Social", w: 1200, h: 630 },
     { label: "Avatar", w: 400, h: 400 },
   ];
@@ -101,92 +101,112 @@ export function PlaceholderGennyTool() {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Size Inputs */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-3">
-          <label className="font-bold block">Width</label>
-          <div className="flex gap-2 items-center">
-            <Input
-              type="number"
-              value={width}
-              onChange={(e) => setWidth(e.target.value)}
-              className="text-xl h-12 font-bold"
-              min="1"
-              max="4096"
-            />
-            <span className="text-muted-foreground">px</span>
+    <div className="border-2 border-border">
+      {/* Dimensions */}
+      <div className="border-b-2 border-border">
+        <div className="flex items-stretch">
+          {/* Width */}
+          <div className="flex-1 border-r border-border p-4">
+            <label className="font-bold block mb-2">Width</label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                value={width}
+                onChange={(e) => setWidth(e.target.value)}
+                className="text-xl h-12 font-bold border-border"
+                min="1"
+                max="4096"
+              />
+              <span className="text-muted-foreground shrink-0">px</span>
+            </div>
+          </div>
+          {/* Height */}
+          <div className="flex-1 p-4">
+            <label className="font-bold block mb-2">Height</label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                value={height}
+                onChange={(e) => setHeight(e.target.value)}
+                className="text-xl h-12 font-bold border-border"
+                min="1"
+                max="4096"
+              />
+              <span className="text-muted-foreground shrink-0">px</span>
+            </div>
           </div>
         </div>
-        <div className="space-y-3">
-          <label className="font-bold block">Height</label>
-          <div className="flex gap-2 items-center">
-            <Input
-              type="number"
-              value={height}
-              onChange={(e) => setHeight(e.target.value)}
-              className="text-xl h-12 font-bold"
-              min="1"
-              max="4096"
-            />
-            <span className="text-muted-foreground">px</span>
-          </div>
+
+        {/* Presets — 6 items, 6 cols, bleed to panel edges */}
+        <div className="segmented grid-cols-6 -mx-0 border-t border-border border-x-0 -mb-0">
+          {presets.map((preset) => (
+            <Button
+              key={preset.label}
+              variant="outline"
+              onClick={() => applyPreset(preset)}
+              className="flex flex-col gap-0.5 h-auto py-2"
+            >
+              <span className="font-bold text-sm">{preset.label}</span>
+              <span className="text-muted-foreground text-xs leading-none">
+                {preset.w}×{preset.h}
+              </span>
+            </Button>
+          ))}
         </div>
       </div>
 
-      {/* Presets */}
-      <div className="flex flex-wrap gap-2">
-        {presets.map((preset) => (
-          <Button
-            key={preset.label}
-            variant="outline"
-            size="sm"
-            onClick={() => applyPreset(preset)}
-          >
-            {preset.label}
-          </Button>
-        ))}
-      </div>
-
-      {/* Colors */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-3">
-          <label className="font-bold block">Background</label>
-          <div className="flex gap-3">
+      {/* Colours table */}
+      <div className="border-b-2 border-border">
+        <div className="px-4 pt-4 pb-2">
+          <label className="font-bold">Colours</label>
+        </div>
+        {/* Background row */}
+        <div className="flex items-stretch border-t border-border">
+          <div className="flex items-center px-4 py-3 w-28 shrink-0 text-sm text-muted-foreground border-r border-border">
+            Background
+          </div>
+          <div className="relative w-12 shrink-0 border-r border-border">
+            <div className="size-full" style={{ backgroundColor: bgColor }} aria-hidden />
             <input
               type="color"
               value={bgColor}
               onChange={(e) => setBgColor(e.target.value)}
-              className="w-12 h-12 rounded border cursor-pointer"
-            />
-            <Input
-              value={bgColor}
-              onChange={(e) => setBgColor(e.target.value)}
-              className="font-mono"
+              className="absolute inset-0 size-full cursor-pointer opacity-0"
             />
           </div>
+          <Input
+            value={bgColor}
+            onChange={(e) => setBgColor(e.target.value)}
+            className="flex-1 border-0 bg-transparent"
+            style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+          />
         </div>
-        <div className="space-y-3">
-          <label className="font-bold block">Text</label>
-          <div className="flex gap-3">
+        {/* Text colour row */}
+        <div className="flex items-stretch border-t border-border">
+          <div className="flex items-center px-4 py-3 w-28 shrink-0 text-sm text-muted-foreground border-r border-border">
+            Text
+          </div>
+          <div className="relative w-12 shrink-0 border-r border-border">
+            <div className="size-full" style={{ backgroundColor: textColor }} aria-hidden />
             <input
               type="color"
               value={textColor}
               onChange={(e) => setTextColor(e.target.value)}
-              className="w-12 h-12 rounded border cursor-pointer"
-            />
-            <Input
-              value={textColor}
-              onChange={(e) => setTextColor(e.target.value)}
-              className="font-mono"
+              className="absolute inset-0 size-full cursor-pointer opacity-0"
             />
           </div>
+          <Input
+            value={textColor}
+            onChange={(e) => setTextColor(e.target.value)}
+            className="flex-1 border-0 bg-transparent"
+            style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+          />
         </div>
       </div>
 
-      {/* Custom Text */}
-      <div className="space-y-3">
-        <label className="font-bold block">Custom Text (optional)</label>
+      {/* Custom text */}
+      <div className="border-b-2 border-border p-4">
+        <label className="font-bold block mb-2">Custom Text <span className="font-normal text-muted-foreground">(optional)</span></label>
         <Input
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -196,9 +216,11 @@ export function PlaceholderGennyTool() {
       </div>
 
       {/* Preview */}
-      <div className="space-y-3">
-        <label className="font-bold block">Preview</label>
-        <div className="border rounded-lg p-4 bg-muted/30 overflow-auto">
+      <div className="border-b-2 border-border">
+        <div className="p-4 pb-0">
+          <label className="font-bold block mb-3">Preview</label>
+        </div>
+        <div className="bg-muted/30 overflow-auto -mx-0 border-t border-border flex items-center justify-center p-4">
           <canvas
             ref={canvasRef}
             style={{
@@ -210,38 +232,46 @@ export function PlaceholderGennyTool() {
         </div>
       </div>
 
-      {/* Format & Actions */}
-      <div className="space-y-4">
-        <div className="flex gap-2">
+      {/* Format selector */}
+      <div className="border-b border-border">
+        <div className="segmented grid-cols-2 border-x-0">
           <Button
             variant={format === "png" ? "default" : "outline"}
             onClick={() => setFormat("png")}
-            className="flex-1"
           >
             PNG
           </Button>
           <Button
             variant={format === "svg" ? "default" : "outline"}
             onClick={() => setFormat("svg")}
-            className="flex-1"
           >
             SVG
           </Button>
         </div>
+      </div>
 
-        <div className="grid gap-3 md:grid-cols-2">
-          <Button size="lg" className="h-14" onClick={download}>
-            <Download className="size-5 mr-2" />
-            Download {format.toUpperCase()}
-          </Button>
-          <Button size="lg" variant="outline" className="h-14" onClick={copyDataUrl}>
-            {copied ? (
-              <><Check className="size-5 mr-2" /> Copied!</>
-            ) : (
-              <><Copy className="size-5 mr-2" /> Copy Data URL</>
-            )}
-          </Button>
-        </div>
+      {/* Actions bar */}
+      <div className="flex items-stretch min-h-14">
+        <Button
+          size="lg"
+          className="flex-1 h-auto self-stretch rounded-none border-0 text-lg font-bold"
+          onClick={download}
+        >
+          <Download className="size-5 mr-2" />
+          Download {format.toUpperCase()}
+        </Button>
+        <Button
+          size="lg"
+          variant="outline"
+          className="h-auto self-stretch rounded-none border-0 border-l border-border px-6"
+          onClick={copyDataUrl}
+        >
+          {copied ? (
+            <><Check className="size-5 mr-2" /> Copied!</>
+          ) : (
+            <><Copy className="size-5 mr-2" /> Copy URL</>
+          )}
+        </Button>
       </div>
     </div>
   );

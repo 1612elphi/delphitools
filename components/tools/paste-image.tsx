@@ -301,111 +301,144 @@ export function PasteImageTool() {
     <div className="space-y-4">
       <canvas ref={canvasRef} className="hidden" />
 
-      {!image ? (
-        <div className="border-2 border-dashed rounded-xl p-12 text-center hover:border-primary/50 transition-colors flex flex-col items-center justify-center min-h-[50vh] bg-muted/10">
-          <ClipboardPaste className="size-16 mx-auto text-muted-foreground mb-4" />
-          <h2 className="text-xl font-semibold mb-2">
-            Press <kbd className="px-2 py-1 mx-1 bg-muted rounded-md border font-mono text-sm">Ctrl</kbd>/<kbd className="px-2 py-1 mx-1 bg-muted rounded-md border font-mono text-sm">Cmd</kbd> + <kbd className="px-2 py-1 mx-1 bg-muted rounded-md border font-mono text-sm">V</kbd> to paste
-          </h2>
-          <p className="text-muted-foreground">
-            Copy any image to your clipboard and paste it directly here.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            {!isCropping ? (
-              <Button onClick={startCropping} variant="secondary" size="sm">
-                <Scissors className="size-4 mr-2" /> Crop
-              </Button>
-            ) : (
-              <>
-                <Button onClick={applyCrop} size="sm">
-                  <Check className="size-4 mr-2" /> Apply Crop
-                </Button>
-                <Button onClick={() => { setIsCropping(false); setCropArea(null); }} variant="outline" size="sm">
-                  Cancel
-                </Button>
-              </>
-            )}
-
-            {!isCropping && (
-              <>
-                {image !== originalImage && (
-                  <Button onClick={resetImage} variant="outline" size="sm">
-                    <RotateCcw className="size-4 mr-2" /> Reset
-                  </Button>
-                )}
-                <Button onClick={downloadImage} size="sm">
-                  <Download className="size-4 mr-2" /> Download PNG
-                </Button>
-                <div className="flex-1" />
-                <Button onClick={clearImage} variant="ghost" size="sm">
-                  <X className="size-4 mr-2" /> Clear
-                </Button>
-              </>
-            )}
+      <div className="border-2 border-border">
+        {!image ? (
+          /* Paste / drop zone */
+          <div className="flex min-h-[50vh] flex-col items-center justify-center p-12 text-center">
+            <ClipboardPaste className="size-12 mx-auto text-muted-foreground mb-4" />
+            <h2 className="text-lg font-bold mb-2">
+              Press{" "}
+              <kbd className="px-2 py-0.5 bg-muted border border-border text-sm" style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>Ctrl</kbd>
+              {"/"}
+              <kbd className="px-2 py-0.5 bg-muted border border-border text-sm" style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>Cmd</kbd>
+              {" + "}
+              <kbd className="px-2 py-0.5 bg-muted border border-border text-sm" style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>V</kbd>
+              {" to paste"}
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              Copy any image to your clipboard and paste it directly here.
+            </p>
           </div>
-
-          <div className="flex justify-center bg-muted/30 rounded-xl border p-4 min-h-[50vh] overflow-hidden">
-            <div
-              ref={containerRef}
-              className="relative inline-block touch-none select-none"
-            >
-              <img
-                ref={imageRef}
-                src={image}
-                alt="Pasted content"
-                className="max-w-full max-h-[70vh] rounded shadow-sm pointer-events-none"
-                draggable={false}
-              />
-
-              {isCropping && cropArea && (
-                <div
-                  className="absolute pointer-events-none"
-                  style={{
-                    left: cropArea.x,
-                    top: cropArea.y,
-                    width: cropArea.width,
-                    height: cropArea.height,
-                    boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.65)",
-                  }}
-                >
-                  <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 border border-white/50">
-                    {Array.from({ length: 9 }).map((_, i) => (
-                      <div key={i} className="border border-white/30" />
-                    ))}
-                  </div>
-
-                  <div
-                    className="absolute inset-0 pointer-events-auto cursor-move"
-                    onMouseDown={(e) => handleDragStart(e, "move")}
-                    onTouchStart={(e) => handleDragStart(e, "move")}
-                  />
-
-                  <div className="absolute top-0 left-0 right-0 h-2 -translate-y-1/2 pointer-events-auto cursor-ns-resize" onMouseDown={(e) => handleDragStart(e, "n")} onTouchStart={(e) => handleDragStart(e, "n")} />
-                  <div className="absolute bottom-0 left-0 right-0 h-2 translate-y-1/2 pointer-events-auto cursor-ns-resize" onMouseDown={(e) => handleDragStart(e, "s")} onTouchStart={(e) => handleDragStart(e, "s")} />
-                  <div className="absolute top-0 bottom-0 left-0 w-2 -translate-x-1/2 pointer-events-auto cursor-ew-resize" onMouseDown={(e) => handleDragStart(e, "w")} onTouchStart={(e) => handleDragStart(e, "w")} />
-                  <div className="absolute top-0 bottom-0 right-0 w-2 translate-x-1/2 pointer-events-auto cursor-ew-resize" onMouseDown={(e) => handleDragStart(e, "e")} onTouchStart={(e) => handleDragStart(e, "e")} />
-
-                  <div className="absolute top-0 left-0 w-4 h-4 bg-white border border-border -translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-nwse-resize shadow-md" onMouseDown={(e) => handleDragStart(e, "nw")} onTouchStart={(e) => handleDragStart(e, "nw")} />
-                  <div className="absolute top-0 right-0 w-4 h-4 bg-white border border-border translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-nesw-resize shadow-md" onMouseDown={(e) => handleDragStart(e, "ne")} onTouchStart={(e) => handleDragStart(e, "ne")} />
-                  <div className="absolute bottom-0 left-0 w-4 h-4 bg-white border border-border -translate-x-1/2 translate-y-1/2 pointer-events-auto cursor-nesw-resize shadow-md" onMouseDown={(e) => handleDragStart(e, "sw")} onTouchStart={(e) => handleDragStart(e, "sw")} />
-                  <div className="absolute bottom-0 right-0 w-4 h-4 bg-white border border-border translate-x-1/2 translate-y-1/2 pointer-events-auto cursor-nwse-resize shadow-md" onMouseDown={(e) => handleDragStart(e, "se")} onTouchStart={(e) => handleDragStart(e, "se")} />
-
-                  {cropArea.width > 50 && cropArea.height > 30 && (
-                    <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground font-mono text-sm px-2 py-1 rounded shadow-sm whitespace-nowrap">
-                      {Math.round(cropArea.width * imageScale.x)}
-                      {" × "}
-                      {Math.round(cropArea.height * imageScale.y)} px
-                    </div>
+        ) : (
+          <>
+            {/* Action bar */}
+            <div className="flex min-h-14 items-stretch border-b-2 border-border">
+              {!isCropping ? (
+                <>
+                  <Button
+                    onClick={startCropping}
+                    variant="outline"
+                    className="h-auto self-stretch rounded-none border-0 border-r border-border px-5 gap-2"
+                  >
+                    <Scissors className="size-4" /> Crop
+                  </Button>
+                  {image !== originalImage && (
+                    <Button
+                      onClick={resetImage}
+                      variant="outline"
+                      className="h-auto self-stretch rounded-none border-0 border-r border-border px-5 gap-2"
+                    >
+                      <RotateCcw className="size-4" /> Reset
+                    </Button>
                   )}
-                </div>
+                  <div className="flex-1" />
+                  <Button
+                    onClick={clearImage}
+                    variant="ghost"
+                    className="h-auto self-stretch rounded-none border-0 border-l border-border px-5 gap-2"
+                  >
+                    <X className="size-4" /> Clear
+                  </Button>
+                  <Button
+                    onClick={downloadImage}
+                    className="h-auto self-stretch rounded-none border-0 border-l border-border px-6 gap-2 font-semibold"
+                  >
+                    <Download className="size-4" /> Download PNG
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={applyCrop}
+                    className="h-auto self-stretch rounded-none border-0 border-r border-border px-6 gap-2 font-semibold"
+                  >
+                    <Check className="size-4" /> Apply Crop
+                  </Button>
+                  <Button
+                    onClick={() => { setIsCropping(false); setCropArea(null); }}
+                    variant="outline"
+                    className="h-auto self-stretch rounded-none border-0 px-5"
+                  >
+                    Cancel
+                  </Button>
+                </>
               )}
             </div>
-          </div>
-        </div>
-      )}
+
+            {/* Image preview */}
+            <div className="flex justify-center bg-muted/30 p-4 min-h-[50vh] overflow-hidden">
+              <div
+                ref={containerRef}
+                className="relative inline-block touch-none select-none"
+              >
+                <img
+                  ref={imageRef}
+                  src={image}
+                  alt="Pasted content"
+                  className="max-w-full max-h-[70vh] pointer-events-none"
+                  draggable={false}
+                />
+
+                {isCropping && cropArea && (
+                  <div
+                    className="absolute pointer-events-none"
+                    style={{
+                      left: cropArea.x,
+                      top: cropArea.y,
+                      width: cropArea.width,
+                      height: cropArea.height,
+                      boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.65)",
+                    }}
+                  >
+                    <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 border border-white/50">
+                      {Array.from({ length: 9 }).map((_, i) => (
+                        <div key={i} className="border border-white/30" />
+                      ))}
+                    </div>
+
+                    <div
+                      className="absolute inset-0 pointer-events-auto cursor-move"
+                      onMouseDown={(e) => handleDragStart(e, "move")}
+                      onTouchStart={(e) => handleDragStart(e, "move")}
+                    />
+
+                    <div className="absolute top-0 left-0 right-0 h-2 -translate-y-1/2 pointer-events-auto cursor-ns-resize" onMouseDown={(e) => handleDragStart(e, "n")} onTouchStart={(e) => handleDragStart(e, "n")} />
+                    <div className="absolute bottom-0 left-0 right-0 h-2 translate-y-1/2 pointer-events-auto cursor-ns-resize" onMouseDown={(e) => handleDragStart(e, "s")} onTouchStart={(e) => handleDragStart(e, "s")} />
+                    <div className="absolute top-0 bottom-0 left-0 w-2 -translate-x-1/2 pointer-events-auto cursor-ew-resize" onMouseDown={(e) => handleDragStart(e, "w")} onTouchStart={(e) => handleDragStart(e, "w")} />
+                    <div className="absolute top-0 bottom-0 right-0 w-2 translate-x-1/2 pointer-events-auto cursor-ew-resize" onMouseDown={(e) => handleDragStart(e, "e")} onTouchStart={(e) => handleDragStart(e, "e")} />
+
+                    <div className="absolute top-0 left-0 w-4 h-4 bg-white border border-border -translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-nwse-resize" onMouseDown={(e) => handleDragStart(e, "nw")} onTouchStart={(e) => handleDragStart(e, "nw")} />
+                    <div className="absolute top-0 right-0 w-4 h-4 bg-white border border-border translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-nesw-resize" onMouseDown={(e) => handleDragStart(e, "ne")} onTouchStart={(e) => handleDragStart(e, "ne")} />
+                    <div className="absolute bottom-0 left-0 w-4 h-4 bg-white border border-border -translate-x-1/2 translate-y-1/2 pointer-events-auto cursor-nesw-resize" onMouseDown={(e) => handleDragStart(e, "sw")} onTouchStart={(e) => handleDragStart(e, "sw")} />
+                    <div className="absolute bottom-0 right-0 w-4 h-4 bg-white border border-border translate-x-1/2 translate-y-1/2 pointer-events-auto cursor-nwse-resize" onMouseDown={(e) => handleDragStart(e, "se")} onTouchStart={(e) => handleDragStart(e, "se")} />
+
+                    {cropArea.width > 50 && cropArea.height > 30 && (
+                      <div
+                        className="absolute top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-sm px-2 py-1 whitespace-nowrap"
+                        style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                      >
+                        {Math.round(cropArea.width * imageScale.x)}
+                        {" × "}
+                        {Math.round(cropArea.height * imageScale.y)} px
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
 
       <p className="text-center text-sm text-muted-foreground">
         Contributed by{" "}

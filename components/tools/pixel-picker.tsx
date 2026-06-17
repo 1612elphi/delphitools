@@ -5,6 +5,7 @@ import { Upload, Copy, Check, Trash2, X, Crosshair } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 import { useColourNotation } from "@/hooks/use-colour-notation";
 import { formatColour } from "@/lib/colour-notation";
 import { getColourName } from "@/lib/colour-names";
@@ -303,12 +304,13 @@ export function PixelPickerTool() {
   const active = activeSwatch !== null ? swatches[activeSwatch] : null;
 
   return (
-    <div className="space-y-6">
+    <div className="border-2 border-border">
       {!imageFile ? (
+        /* Drop zone — full-bleed, flush inside frame */
         <div
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
-          className="border-2 border-dashed rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+          className="flex flex-col items-center justify-center gap-3 p-12 text-center cursor-pointer hover:bg-muted/30 transition-colors"
           onClick={() => document.getElementById("pixel-picker-input")?.click()}
         >
           <input
@@ -318,27 +320,26 @@ export function PixelPickerTool() {
             onChange={handleFileSelect}
             className="hidden"
           />
-          <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-lg font-medium">Drop an image here</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            or click to select a file, or paste
-          </p>
+          <Upload className="size-10 text-muted-foreground" />
+          <div>
+            <p className="font-bold">Drop an image here</p>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              or click to select a file, or paste
+            </p>
+          </div>
         </div>
       ) : (
-        <div className="space-y-4">
-          {/* Controls bar */}
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
+        <>
+          {/* Top bar — filename + P3 toggle */}
+          <div className="flex items-center border-b-2 border-border">
+            <div className="flex flex-1 items-center gap-2 px-4 py-3 min-w-0">
               <span className="text-sm text-muted-foreground truncate">
                 {imageFile.name}
               </span>
-              <Button variant="ghost" size="sm" onClick={clearImage}>
-                <X className="size-4" />
-              </Button>
             </div>
             {p3Supported && (
-              <div className="flex items-center gap-2 shrink-0">
-                <Label htmlFor="p3-toggle" className="text-sm">
+              <div className="flex items-center gap-2 px-4 py-3 border-l border-border shrink-0">
+                <Label htmlFor="p3-toggle" className="text-sm cursor-pointer">
                   Display P3
                 </Label>
                 <Switch
@@ -348,103 +349,30 @@ export function PixelPickerTool() {
                 />
               </div>
             )}
+            <button
+              type="button"
+              onClick={clearImage}
+              aria-label="Remove image"
+              className="flex items-center justify-center w-12 h-full border-l border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            >
+              <X className="size-4" />
+            </button>
           </div>
 
-          {/* Active swatch detail */}
-          {active && (() => {
-            const value = formatColour(active.hex, notation);
-            const name = getColourName(active.hex);
-            const isCopied = copied === value;
-            return (
-              <div className="flex items-center gap-3 p-3 rounded-xl border bg-card">
-                <div
-                  className="size-10 rounded-lg border shadow-inner shrink-0"
-                  style={{ backgroundColor: active.hex }}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-sm">
-                      {notation === "hex" ? active.hex.toUpperCase() : value}
-                    </span>
-                    <span className="text-xs text-muted-foreground capitalize truncate">
-                      {name}
-                    </span>
-                  </div>
-                  {p3Mode && active.p3 && (
-                    <code className="text-xs text-muted-foreground font-mono">
-                      {active.p3}
-                    </code>
-                  )}
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="shrink-0"
-                  onClick={() => copyValue(value)}
-                >
-                  {isCopied ? (
-                    <Check className="size-4" />
-                  ) : (
-                    <Copy className="size-4" />
-                  )}
-                </Button>
-              </div>
-            );
-          })()}
-
-          {/* Swatch history */}
-          {swatches.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap">
-              {swatches.map((swatch, i) => (
-                <div key={`${i}-${swatch.hex}`} className="group relative">
-                  <button
-                    type="button"
-                    onClick={() => setActiveSwatch(i)}
-                    aria-label={`Select swatch ${swatch.hex}`}
-                    className={`block w-8 h-8 rounded-md border-2 shadow-sm transition-all cursor-pointer ${
-                      activeSwatch === i
-                        ? "border-primary ring-2 ring-primary/20 scale-110"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                    style={{ backgroundColor: swatch.hex }}
-                    title={swatch.hex}
-                  />
-                  <button
-                    type="button"
-                    aria-label="Remove swatch"
-                    className="absolute -top-1 -right-1 size-3.5 rounded-full bg-muted border flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
-                    onClick={() => removeSwatch(i)}
-                  >
-                    <X className="size-2" />
-                  </button>
-                </div>
-              ))}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs text-muted-foreground"
-                onClick={clearSwatches}
-              >
-                <Trash2 className="size-3 mr-1" />
-                Clear
-              </Button>
-            </div>
-          )}
-
-          {/* Canvas area */}
-          <div ref={containerRef} className="relative">
+          {/* Canvas area — bleeds to frame edges */}
+          <div ref={containerRef} className="relative border-b-2 border-border">
             <canvas
               ref={canvasRef}
               onClick={handleCanvasClick}
               onMouseMove={handleCanvasMove}
               onMouseLeave={handleCanvasLeave}
-              className="w-full rounded-xl border cursor-crosshair"
+              className="block w-full cursor-crosshair"
               style={{ imageRendering: "auto" }}
             />
 
             {hoverPos && (
               <div
-                className="pointer-events-none absolute border-2 border-background rounded-xl shadow-lg overflow-hidden"
+                className="pointer-events-none absolute border-2 border-background shadow-lg overflow-hidden"
                 style={{
                   width: LOUPE_SIZE,
                   height: LOUPE_SIZE,
@@ -462,27 +390,153 @@ export function PixelPickerTool() {
             )}
           </div>
 
-          <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-            <Crosshair className="size-3.5" />
-            Click anywhere on the image to sample a colour
-          </p>
-        </div>
-      )}
-
-      {imageFile && (
-        <div className="p-4 rounded-lg border bg-muted/30 text-sm text-muted-foreground">
-          <div className="font-bold mb-1 text-foreground">
-            About colour spaces
+          {/* Hint bar */}
+          <div className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground border-b-2 border-border">
+            <Crosshair className="size-3.5 shrink-0" />
+            <span>Click anywhere on the image to sample a colour</span>
           </div>
-          <p>
+
+          {/* Active swatch detail */}
+          {active && (() => {
+            const value = formatColour(active.hex, notation);
+            const name = getColourName(active.hex);
+            const isCopied = copied === value;
+            return (
+              <div className="flex items-stretch border-b-2 border-border">
+                {/* colour swatch cell */}
+                <div
+                  className="w-14 shrink-0 self-stretch"
+                  style={{ backgroundColor: active.hex }}
+                />
+                {/* label / value */}
+                <div className="flex-1 flex flex-col justify-center px-4 py-3 min-w-0 border-l border-border">
+                  <span
+                    className="font-bold text-sm"
+                    style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                  >
+                    {notation === "hex" ? active.hex.toUpperCase() : value}
+                  </span>
+                  <span className="text-xs text-muted-foreground capitalize truncate mt-0.5">
+                    {name}
+                  </span>
+                  {p3Mode && active.p3 && (
+                    <span
+                      className="text-xs text-muted-foreground mt-0.5 truncate"
+                      style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                    >
+                      {active.p3}
+                    </span>
+                  )}
+                </div>
+                {/* copy action */}
+                <button
+                  type="button"
+                  aria-label="Copy colour value"
+                  onClick={() => copyValue(value)}
+                  className="flex w-12 items-center justify-center border-l border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0"
+                >
+                  {isCopied ? (
+                    <Check className="size-4" />
+                  ) : (
+                    <Copy className="size-4" />
+                  )}
+                </button>
+              </div>
+            );
+          })()}
+
+          {/* Sampled swatches table */}
+          {swatches.length > 0 && (
+            <div className="border-b-2 border-border">
+              {/* Table header */}
+              <div className="flex items-center px-4 py-2 border-b border-border">
+                <span className="flex-1 font-bold text-sm">Sampled colours</span>
+                <button
+                  type="button"
+                  onClick={clearSwatches}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Trash2 className="size-3" />
+                  Clear all
+                </button>
+              </div>
+
+              {/* Rows */}
+              {swatches.map((swatch, i) => {
+                const swatchValue = formatColour(swatch.hex, notation);
+                const isActive = activeSwatch === i;
+                const isCopiedSwatch = copied === swatchValue;
+                return (
+                  <div
+                    key={`${i}-${swatch.hex}`}
+                    className={cn(
+                      "flex items-stretch border-b border-border last:border-b-0 cursor-pointer transition-colors",
+                      isActive ? "bg-muted" : "hover:bg-muted/50"
+                    )}
+                    onClick={() => setActiveSwatch(i)}
+                  >
+                    {/* swatch cell */}
+                    <div
+                      className="w-10 shrink-0 self-stretch"
+                      style={{ backgroundColor: swatch.hex }}
+                    />
+                    {/* hex + name */}
+                    <div className="flex flex-1 items-center gap-3 px-3 py-2.5 min-w-0 border-l border-border">
+                      <span
+                        className="text-sm font-bold shrink-0"
+                        style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                      >
+                        {swatch.hex.toUpperCase()}
+                      </span>
+                      <span className="text-xs text-muted-foreground truncate capitalize">
+                        {getColourName(swatch.hex)}
+                      </span>
+                    </div>
+                    {/* copy */}
+                    <button
+                      type="button"
+                      aria-label="Copy colour value"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        copyValue(swatchValue);
+                      }}
+                      className="flex w-10 items-center justify-center border-l border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0"
+                    >
+                      {isCopiedSwatch ? (
+                        <Check className="size-3.5" />
+                      ) : (
+                        <Copy className="size-3.5" />
+                      )}
+                    </button>
+                    {/* remove */}
+                    <button
+                      type="button"
+                      aria-label="Remove swatch"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeSwatch(i);
+                      }}
+                      className="flex w-10 items-center justify-center border-l border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Colour space info */}
+          <div className="px-4 py-3 text-sm text-muted-foreground">
+            <span className="font-bold text-foreground">About colour spaces — </span>
             Colours are sampled in sRGB by default. Images with wide-gamut
             colour profiles (Display P3, Adobe RGB) are converted to sRGB, which
             may shift some colours.
             {p3Supported
               ? " Enable the Display P3 toggle to sample wide-gamut values and get color(display-p3 …) CSS output."
               : " Your browser does not support Display P3 colour sampling."}
-          </p>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

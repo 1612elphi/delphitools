@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { ArrowRightLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 type Unit = "px" | "pt" | "pc" | "ag" | "cc" | "in" | "mm" | "cm" | "em" | "rem";
 
@@ -80,6 +80,14 @@ const UNITS: Record<Unit, UnitInfo> = {
 
 const UNIT_ORDER: Unit[] = ["px", "pt", "pc", "ag", "cc", "in", "mm", "cm", "em", "rem"];
 
+const QUICK_REF = [
+  { label: "1 inch =", value: "96px / 72pt / 25.4mm" },
+  { label: "1 pica =", value: "12 points" },
+  { label: "1 point =", value: "1/72 inch" },
+  { label: "1 agate =", value: "1/14 inch (≈5.14pt)" },
+  { label: "1 cicero =", value: "12 Didot pts (≈4.512mm)" },
+];
+
 export function TypoCalcTool() {
   const [inputValue, setInputValue] = useState("16");
   const [inputUnit, setInputUnit] = useState<Unit>("px");
@@ -105,58 +113,63 @@ export function TypoCalcTool() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="border-2 border-border">
       {/* Base Font Size */}
-      <div className="p-4 rounded-lg border bg-muted/30">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <label className="font-bold">Base Font Size</label>
-            <p className="text-sm text-muted-foreground">
-              Used for em and rem calculations
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              value={baseFontSize}
-              onChange={(e) => setBaseFontSize(e.target.value)}
-              className="w-24 text-center font-mono"
-            />
-            <span className="text-muted-foreground">px</span>
-          </div>
+      <div className="flex items-stretch border-b-2 border-border">
+        <div className="flex flex-1 flex-col justify-center p-4">
+          <label className="font-bold">Base Font Size</label>
+          <p className="text-sm text-muted-foreground">Used for em and rem calculations</p>
+        </div>
+        <div className="flex items-center gap-2 border-l border-border px-4">
+          <Input
+            type="number"
+            value={baseFontSize}
+            onChange={(e) => setBaseFontSize(e.target.value)}
+            className="w-24 border-0 bg-transparent text-center"
+            style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+          />
+          <span className="text-sm text-muted-foreground">px</span>
         </div>
       </div>
 
-      {/* Input */}
-      <div className="space-y-3">
-        <label className="font-bold">Convert From</label>
-        <div className="flex gap-3">
+      {/* Convert From */}
+      <div className="border-b-2 border-border">
+        <div className="p-4 pb-0">
+          <label className="font-bold">Convert From</label>
+        </div>
+        <div className="flex items-stretch">
           <Input
             type="number"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            className="text-2xl h-14 font-mono flex-1"
+            className="h-14 flex-1 border-0 border-t border-border bg-transparent text-2xl"
+            style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
             step="any"
           />
-          <Select value={inputUnit} onValueChange={(v) => setInputUnit(v as Unit)}>
-            <SelectTrigger className="h-14 text-lg font-mono min-w-[100px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {UNIT_ORDER.map((unit) => (
-                <SelectItem key={unit} value={unit}>
-                  {unit}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="border-l border-t border-border">
+            <Select value={inputUnit} onValueChange={(v) => setInputUnit(v as Unit)}>
+              <SelectTrigger className="h-14 min-w-[100px] border-0 bg-transparent text-lg"
+                style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {UNIT_ORDER.map((unit) => (
+                  <SelectItem key={unit} value={unit}>
+                    {unit}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
-      {/* Conversions */}
-      <div className="space-y-3">
-        <label className="font-bold">Converted Values</label>
-        <div className="grid gap-3 sm:grid-cols-2">
+      {/* Converted Values — flush table */}
+      <div className="border-b-2 border-border">
+        <div className="p-4 pb-0">
+          <label className="font-bold">Converted Values</label>
+        </div>
+        <div className="mt-3 border-t border-border">
           {UNIT_ORDER.map((unit) => {
             const converted = UNITS[unit].fromPx(pxValue, basePx);
             const isActive = unit === inputUnit;
@@ -164,66 +177,63 @@ export function TypoCalcTool() {
             return (
               <button
                 key={unit}
+                type="button"
                 onClick={() => swapUnit(unit)}
                 disabled={isActive}
-                className={`p-4 rounded-lg border text-left transition-colors ${
-                  isActive
-                    ? "bg-primary/10 border-primary"
-                    : "bg-card hover:border-primary/50"
-                } group`}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-bold">{UNITS[unit].name}</span>
-                  <span className="text-xs text-muted-foreground font-mono">
-                    {unit}
-                  </span>
-                </div>
-                <div className="text-2xl font-mono font-bold tabular-nums">
-                  {formatValue(converted)}
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  {UNITS[unit].description}
-                </div>
-                {!isActive && (
-                  <div className="flex items-center gap-1 text-xs text-primary mt-2 opacity-0 group-hover:opacity-100">
-                    <ArrowRightLeft className="size-3" />
-                    Click to convert from
-                  </div>
+                className={cn(
+                  "flex w-full items-stretch border-b border-border last:border-b-0 text-left transition-colors",
+                  isActive ? "bg-muted/40" : "hover:bg-muted/20 group"
                 )}
+              >
+                {/* Unit badge */}
+                <span className="flex w-10 shrink-0 items-center justify-center border-r border-border text-xs font-bold text-muted-foreground"
+                  style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>
+                  {unit}
+                </span>
+                {/* Value */}
+                <span
+                  className={cn(
+                    "flex w-40 shrink-0 items-center px-4 text-lg tabular-nums",
+                    isActive ? "text-foreground" : "text-foreground"
+                  )}
+                  style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                >
+                  {formatValue(converted)}
+                </span>
+                {/* Name + description */}
+                <span className="flex flex-1 flex-col justify-center border-l border-border px-4 py-2">
+                  <span className="text-sm font-bold">{UNITS[unit].name}</span>
+                  <span className="text-xs text-muted-foreground">{UNITS[unit].description}</span>
+                </span>
+                {/* Swap action */}
+                <span className={cn(
+                  "flex w-12 shrink-0 items-center justify-center border-l border-border text-muted-foreground transition-colors",
+                  isActive ? "opacity-30" : "opacity-0 group-hover:opacity-100 group-hover:text-primary"
+                )}>
+                  <ArrowRightLeft className="size-4" />
+                </span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Reference */}
-      <div className="p-4 rounded-lg border bg-muted/30">
+      {/* Quick Reference — segmented grid */}
+      <div className="p-4">
         <label className="font-bold block mb-3">Quick Reference</label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
-          <div>
-            <div className="text-muted-foreground">1 inch =</div>
-            <div className="font-mono">96px / 72pt / 25.4mm</div>
-          </div>
-          <div>
-            <div className="text-muted-foreground">1 pica =</div>
-            <div className="font-mono">12 points</div>
-          </div>
-          <div>
-            <div className="text-muted-foreground">1 point =</div>
-            <div className="font-mono">1/72 inch</div>
-          </div>
-          <div>
-            <div className="text-muted-foreground">1 agate =</div>
-            <div className="font-mono">1/14 inch (≈5.14pt)</div>
-          </div>
-          <div>
-            <div className="text-muted-foreground">1 cicero =</div>
-            <div className="font-mono">12 Didot pts (≈4.512mm)</div>
-          </div>
-          <div>
-            <div className="text-muted-foreground">1 em/rem =</div>
-            <div className="font-mono">{basePx}px (base)</div>
-          </div>
+        <div className="segmented grid-cols-2 sm:grid-cols-3 -mx-4 -mb-4 border-x-0 border-b-0">
+          {[
+            ...QUICK_REF,
+            { label: "1 em/rem =", value: `${basePx}px (base)` },
+          ].map((ref) => (
+            <div key={ref.label} className="bg-card p-3">
+              <div className="text-xs text-muted-foreground">{ref.label}</div>
+              <div className="mt-0.5 text-sm font-bold"
+                style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>
+                {ref.value}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

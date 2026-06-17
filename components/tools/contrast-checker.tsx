@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ArrowUpDown, Wand2, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { useColourNotation } from "@/hooks/use-colour-notation";
 import { formatColour } from "@/lib/colour-notation";
 
@@ -154,17 +154,6 @@ function fixContrast(
   return rgbToHex(...fixedRgb);
 }
 
-function ComplianceBadge({ pass, label }: { pass: boolean; label: string }) {
-  return (
-    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
-      pass ? "bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-400" : "bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400"
-    }`}>
-      {pass ? <Check className="size-4" /> : <X className="size-4" />}
-      <span className="font-medium text-sm">{label}</span>
-    </div>
-  );
-}
-
 export function ContrastCheckerTool() {
   const [background, setBackground] = useState("#1a1a2e");
   const [foreground, setForeground] = useState("#eaeaea");
@@ -198,77 +187,110 @@ export function ContrastCheckerTool() {
 
   const isValidHex = (hex: string) => /^#[0-9A-Fa-f]{6}$/.test(hex);
 
+  const monoStyle = { fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" };
+
   return (
-    <div className="space-y-6">
-      {/* Colour Inputs */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <label className="font-bold">Background Colour</label>
-          <div className="flex gap-2">
+    <div className="border-2 border-border">
+
+      {/* Colour Inputs — two flush swatch rows */}
+      <div className="border-b-2 border-border">
+        {/* Background row */}
+        <div className="flex items-stretch border-b border-border">
+          {/* Swatch */}
+          <div className="relative w-14 shrink-0">
+            <div className="size-full" style={{ backgroundColor: isValidHex(background) ? background : "#000000" }} aria-hidden />
             <input
               type="color"
               value={isValidHex(background) ? background : "#000000"}
               onChange={(e) => setBackground(e.target.value)}
-              className="w-14 h-10 rounded border cursor-pointer"
+              className="absolute inset-0 size-full cursor-pointer opacity-0"
             />
-            <Input
+          </div>
+          {/* Label + hex input */}
+          <div className="flex flex-1 flex-col justify-center border-l border-border px-4 py-3">
+            <label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Background</label>
+            <input
               value={background}
               onChange={(e) => setBackground(e.target.value)}
               placeholder="#1a1a2e"
-              className="font-mono flex-1"
+              className="border-0 bg-transparent p-0 text-sm focus:outline-none"
+              style={monoStyle}
             />
+            {notation !== "hex" && isValidHex(background) && (
+              <div className="text-xs text-muted-foreground" style={monoStyle}>
+                {formatColour(background, notation)}
+              </div>
+            )}
           </div>
-          {notation !== "hex" && isValidHex(background) && (
-            <div className="font-mono text-xs text-muted-foreground">
-              {formatColour(background, notation)}
-            </div>
-          )}
         </div>
-        <div className="space-y-2">
-          <label className="font-bold">Foreground Colour</label>
-          <div className="flex gap-2">
+
+        {/* Foreground row */}
+        <div className="flex items-stretch">
+          {/* Swatch */}
+          <div className="relative w-14 shrink-0">
+            <div className="size-full" style={{ backgroundColor: isValidHex(foreground) ? foreground : "#ffffff" }} aria-hidden />
             <input
               type="color"
               value={isValidHex(foreground) ? foreground : "#ffffff"}
               onChange={(e) => setForeground(e.target.value)}
-              className="w-14 h-10 rounded border cursor-pointer"
+              className="absolute inset-0 size-full cursor-pointer opacity-0"
             />
-            <Input
+          </div>
+          {/* Label + hex input */}
+          <div className="flex flex-1 flex-col justify-center border-l border-border px-4 py-3">
+            <label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Foreground</label>
+            <input
               value={foreground}
               onChange={(e) => setForeground(e.target.value)}
               placeholder="#eaeaea"
-              className="font-mono flex-1"
+              className="border-0 bg-transparent p-0 text-sm focus:outline-none"
+              style={monoStyle}
             />
+            {notation !== "hex" && isValidHex(foreground) && (
+              <div className="text-xs text-muted-foreground" style={monoStyle}>
+                {formatColour(foreground, notation)}
+              </div>
+            )}
           </div>
-          {notation !== "hex" && isValidHex(foreground) && (
-            <div className="font-mono text-xs text-muted-foreground">
-              {formatColour(foreground, notation)}
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-wrap gap-2">
-        <Button variant="outline" onClick={flipColors}>
-          <ArrowUpDown className="size-4 mr-2" />
-          Flip Colours
+      {/* Action bar — Flip / Fix AA / Fix AAA */}
+      <div className="segmented grid-cols-3 border-b-2 border-border">
+        <Button variant="outline" onClick={flipColors} className="flex items-center gap-2">
+          <ArrowUpDown className="size-4" />
+          Flip
         </Button>
-        <Button variant="outline" onClick={fixColors} disabled={compliance?.aaNormal}>
-          <Wand2 className="size-4 mr-2" />
+        <Button variant="outline" onClick={fixColors} disabled={compliance?.aaNormal} className="flex items-center gap-2">
+          <Wand2 className="size-4" />
           Fix to AA
         </Button>
-        <Button variant="outline" onClick={fixToAAA} disabled={compliance?.aaaNormal}>
-          <Wand2 className="size-4 mr-2" />
+        <Button variant="outline" onClick={fixToAAA} disabled={compliance?.aaaNormal} className="flex items-center gap-2">
+          <Wand2 className="size-4" />
           Fix to AAA
         </Button>
       </div>
 
-      {/* Preview */}
-      <div className="space-y-2">
-        <label className="font-bold">Preview</label>
+      {/* Contrast ratio display */}
+      <div className="border-b-2 border-border px-4 py-5 text-center">
+        <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Contrast Ratio</div>
+        <div className="mt-1 text-5xl font-bold" style={monoStyle}>
+          {ratio ? `${ratio.toFixed(2)}:1` : "—"}
+        </div>
+        {ratio && (
+          <div className="mt-1 text-sm text-muted-foreground">
+            {ratio >= WCAG.AAA_NORMAL ? "Excellent" : ratio >= WCAG.AA_NORMAL ? "Good" : ratio >= WCAG.AA_LARGE ? "Acceptable for large text" : "Poor"}
+          </div>
+        )}
+      </div>
+
+      {/* Preview — bleeds to edges */}
+      <div className="border-b-2 border-border">
+        <div className="px-4 py-3">
+          <label className="font-bold">Preview</label>
+        </div>
         <div
-          className="p-8 rounded-lg border"
+          className="px-6 py-8"
           style={{ backgroundColor: background }}
         >
           <p style={{ color: foreground }} className="text-4xl font-bold mb-2">
@@ -283,44 +305,49 @@ export function ContrastCheckerTool() {
         </div>
       </div>
 
-      {/* Contrast Ratio */}
-      <div className="p-6 rounded-lg border bg-muted/30 text-center">
-        <div className="text-sm text-muted-foreground mb-1">Contrast Ratio</div>
-        <div className="text-5xl font-bold mb-2">
-          {ratio ? `${ratio.toFixed(2)}:1` : "—"}
-        </div>
-        {ratio && (
-          <div className="text-sm text-muted-foreground">
-            {ratio >= WCAG.AAA_NORMAL ? "Excellent" : ratio >= WCAG.AA_NORMAL ? "Good" : ratio >= WCAG.AA_LARGE ? "Acceptable for large text" : "Poor"}
-          </div>
-        )}
-      </div>
-
-      {/* WCAG Compliance */}
+      {/* WCAG compliance table */}
       {compliance && (
-        <div className="space-y-3">
-          <label className="font-bold">WCAG 2.1 Compliance</label>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-2">
-              <div className="text-sm font-medium text-muted-foreground">Level AA</div>
-              <div className="flex flex-wrap gap-2">
-                <ComplianceBadge pass={compliance.aaNormal} label="Normal Text (4.5:1)" />
-                <ComplianceBadge pass={compliance.aaLarge} label="Large Text (3:1)" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-sm font-medium text-muted-foreground">Level AAA</div>
-              <div className="flex flex-wrap gap-2">
-                <ComplianceBadge pass={compliance.aaaNormal} label="Normal Text (7:1)" />
-                <ComplianceBadge pass={compliance.aaaLarge} label="Large Text (4.5:1)" />
-              </div>
-            </div>
+        <div className="border-b-2 border-border">
+          <div className="px-4 py-3 border-b border-border">
+            <label className="font-bold">WCAG 2.1 Compliance</label>
           </div>
+          {/* Table rows */}
+          {[
+            { level: "AA", label: "Normal text", threshold: "4.5:1", pass: compliance.aaNormal },
+            { level: "AA", label: "Large text", threshold: "3:1", pass: compliance.aaLarge },
+            { level: "AAA", label: "Normal text", threshold: "7:1", pass: compliance.aaaNormal },
+            { level: "AAA", label: "Large text", threshold: "4.5:1", pass: compliance.aaaLarge },
+          ].map((row, i, arr) => (
+            <div
+              key={i}
+              className={cn(
+                "flex items-stretch",
+                i < arr.length - 1 && "border-b border-border"
+              )}
+            >
+              {/* Level badge cell */}
+              <div className="flex w-16 shrink-0 items-center justify-center border-r border-border">
+                <span className="text-xs font-bold text-muted-foreground">{row.level}</span>
+              </div>
+              {/* Description */}
+              <div className="flex flex-1 items-center px-4 py-3">
+                <span className="text-sm">{row.label}</span>
+                <span className="ml-2 text-xs text-muted-foreground" style={monoStyle}>{row.threshold}</span>
+              </div>
+              {/* Pass/fail cell */}
+              <div className={cn(
+                "flex w-16 shrink-0 items-center justify-center border-l border-border",
+                row.pass ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-red-500/10 text-red-600 dark:text-red-400"
+              )}>
+                {row.pass ? <Check className="size-4" /> : <X className="size-4" />}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Info */}
-      <div className="p-4 rounded-lg border bg-card">
+      {/* Info panel */}
+      <div className="px-4 py-4">
         <div className="font-bold mb-2">About WCAG Contrast Requirements</div>
         <ul className="text-sm text-muted-foreground space-y-1">
           <li><strong>AA Normal:</strong> 4.5:1 minimum for text smaller than 18pt (or 14pt bold)</li>
@@ -329,6 +356,7 @@ export function ContrastCheckerTool() {
           <li><strong>AAA Large:</strong> 4.5:1 minimum for large text enhanced accessibility</li>
         </ul>
       </div>
+
     </div>
   );
 }

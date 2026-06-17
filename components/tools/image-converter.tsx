@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useFilePaste } from "@/hooks/use-file-paste";
 
@@ -573,74 +574,72 @@ export function ImageConverterTool() {
 
   return (
     <div className="space-y-6">
-      {/* Drop Zone */}
-      <div
-        onDrop={handleDrop}
-        onDragOver={(e) => e.preventDefault()}
-        className="border-2 border-dashed rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
-        onClick={() => document.getElementById("file-input")?.click()}
-      >
-        <input
-          id="file-input"
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={handleFileSelect}
-          className="hidden"
-        />
-        <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
-        <p className="text-lg font-medium">Drop images here</p>
-        <p className="text-sm text-muted-foreground mt-1">
-          or click to select files, or paste
-        </p>
-      </div>
+      <div className="border-2 border-border">
+        {/* Drop Zone */}
+        <div
+          onDrop={handleDrop}
+          onDragOver={(e) => e.preventDefault()}
+          className="border-2 border-dashed m-4 p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+          onClick={() => document.getElementById("file-input")?.click()}
+        >
+          <input
+            id="file-input"
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
+          <p className="text-lg font-medium">Drop images here</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            or click to select files, or paste
+          </p>
+        </div>
 
-      {/* Format Selection */}
-      <div className="space-y-3">
-        <label className="font-bold block">Convert to</label>
-        <div className="flex flex-wrap gap-2">
-          {(["png", "jpeg", "webp", "avif", "gif", "bmp", "tiff", "ico", "icns"] as ImageFormat[]).map((fmt) => (
+        {/* Format Selection */}
+        <div className="space-y-3 border-t-2 border-border p-4">
+          <label className="font-bold block">Convert to</label>
+          <div className="segmented grid-cols-5 -mx-4 border-x-0">
+            {(["png", "jpeg", "webp", "avif", "gif", "bmp", "tiff", "ico", "icns"] as ImageFormat[]).map((fmt) => (
+              <Button
+                key={fmt}
+                variant={targetFormat === fmt ? "default" : "outline"}
+                onClick={() => setTargetFormat(fmt)}
+                className="uppercase font-bold"
+                size="lg"
+                disabled={fmt === "avif" && avifSupported === false}
+                title={fmt === "avif" && avifSupported === false ? "AVIF encoding not supported in your browser" : undefined}
+              >
+                {fmt}
+              </Button>
+            ))}
             <Button
-              key={fmt}
-              variant={targetFormat === fmt ? "default" : "outline"}
-              onClick={() => setTargetFormat(fmt)}
+              variant="outline"
               className="uppercase font-bold"
               size="lg"
-              disabled={fmt === "avif" && avifSupported === false}
-              title={fmt === "avif" && avifSupported === false ? "AVIF encoding not supported in your browser" : undefined}
+              asChild
             >
-              {fmt}
+              <Link href="/tools/image-tracer">
+                <LinkIcon className="size-4 mr-1.5" />
+                SVG
+              </Link>
             </Button>
-          ))}
-          <Button
-            variant="outline"
-            className="uppercase font-bold"
-            size="lg"
-            asChild
-          >
-            <Link href="/tools/image-tracer">
-              <LinkIcon className="size-4 mr-1.5" />
-              SVG
-            </Link>
-          </Button>
-        </div>
-        {targetFormat === "avif" && avifSupported === false && (
-          <p className="text-sm text-destructive">
-            Your browser does not support AVIF encoding. Try Chrome or Edge.
-          </p>
-        )}
-      </div>
-
-      {/* Settings */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        {/* Format Options Card */}
-        <div className="rounded-xl border bg-card p-4 space-y-4">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {targetFormat.toUpperCase()} Options
-            </span>
-            <div className="flex-1 h-px bg-border" />
           </div>
+          {targetFormat === "avif" && avifSupported === false && (
+            <p className="text-sm text-destructive">
+              Your browser does not support AVIF encoding. Try Chrome or Edge.
+            </p>
+          )}
+        </div>
+
+        {/* Settings */}
+        <div className="grid border-t-2 border-border sm:grid-cols-2">
+        {/* Format Options Panel */}
+        <div className="p-4 space-y-4 border-b border-border sm:border-b-0 sm:border-r sm:border-border">
+          <label className="font-bold block">
+            {targetFormat.toUpperCase()} Options
+          </label>
 
           {targetFormat === "png" && (
             <>
@@ -659,7 +658,7 @@ export function ImageConverterTool() {
                       type="color"
                       value={formatOptions.png.backgroundColour}
                       onChange={(e) => updateFormatOption("png", "backgroundColour", e.target.value)}
-                      className="size-8 rounded border cursor-pointer"
+                      className="size-8 border border-border cursor-pointer"
                     />
                     <span className="text-xs font-mono text-muted-foreground">{formatOptions.png.backgroundColour}</span>
                   </div>
@@ -691,7 +690,7 @@ export function ImageConverterTool() {
                     type="color"
                     value={formatOptions.jpeg.backgroundColour}
                     onChange={(e) => updateFormatOption("jpeg", "backgroundColour", e.target.value)}
-                    className="size-8 rounded border cursor-pointer"
+                    className="size-8 border border-border cursor-pointer"
                   />
                   <span className="text-xs font-mono text-muted-foreground">{formatOptions.jpeg.backgroundColour}</span>
                 </div>
@@ -781,22 +780,19 @@ export function ImageConverterTool() {
           {targetFormat === "bmp" && (
             <div className="space-y-2">
               <Label className="text-sm">Bit depth</Label>
-              <div className="flex gap-2">
+              <div className="segmented grid-cols-2 -mx-4 border-x-0">
                 {([24, 32] as const).map((depth) => (
-                  <button
+                  <Button
                     key={depth}
+                    variant={formatOptions.bmp.bitDepth === depth ? "default" : "outline"}
                     onClick={() => updateFormatOption("bmp", "bitDepth", depth)}
-                    className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                      formatOptions.bmp.bitDepth === depth
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "hover:border-primary/50"
-                    }`}
+                    className="h-auto flex-col py-2 font-bold"
                   >
                     {depth}-bit
                     <span className="block text-xs font-normal opacity-70">
                       {depth === 24 ? "No transparency" : "With alpha"}
                     </span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -829,19 +825,16 @@ export function ImageConverterTool() {
               {!formatOptions.ico.multiSize ? (
                 <div className="space-y-2">
                   <Label className="text-sm">Icon size</Label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="segmented grid-cols-3 -mx-4 border-x-0">
                     {[16, 32, 48, 64, 128, 256].map((s) => (
-                      <button
+                      <Button
                         key={s}
+                        variant={formatOptions.ico.sizes[0] === s ? "default" : "outline"}
                         onClick={() => updateFormatOption("ico", "sizes", [s])}
-                        className={`px-2 py-1.5 rounded-lg border text-sm font-mono transition-colors ${
-                          formatOptions.ico.sizes[0] === s
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "hover:border-primary/50"
-                        }`}
+                        className="font-mono"
                       >
                         {s}px
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </div>
@@ -874,19 +867,16 @@ export function ImageConverterTool() {
               {!formatOptions.icns.multiSize ? (
                 <div className="space-y-2">
                   <Label className="text-sm">Icon size</Label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {[16, 32, 64, 128, 256, 512, 1024].map((s) => (
-                      <button
+                  <div className="segmented grid-cols-4 -mx-4 border-x-0">
+                    {[16, 32, 64, 128, 256, 512, 1024].map((s, i) => (
+                      <Button
                         key={s}
+                        variant={formatOptions.icns.sizes[0] === s ? "default" : "outline"}
                         onClick={() => updateFormatOption("icns", "sizes", [s])}
-                        className={`px-2 py-1.5 rounded-lg border text-sm font-mono transition-colors ${
-                          formatOptions.icns.sizes[0] === s
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "hover:border-primary/50"
-                        }`}
+                        className={cn("font-mono", i === 6 && "col-span-2")}
                       >
                         {s}px
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </div>
@@ -899,32 +889,24 @@ export function ImageConverterTool() {
           )}
         </div>
 
-        {/* Resize Card */}
-        <div className="rounded-xl border bg-card p-4 space-y-4">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Resize
-            </span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
+        {/* Resize Panel */}
+        <div className="p-4 space-y-4">
+          <label className="font-bold block">Resize</label>
 
-          <div className="flex rounded-lg border overflow-hidden">
+          <div className="segmented grid-cols-3 -mx-4 border-x-0">
             {([
               { value: "original", label: "Original" },
               { value: "custom", label: "Dimensions" },
               { value: "percentage", label: "Scale" },
             ] as const).map(({ value, label }) => (
-              <button
+              <Button
                 key={value}
+                variant={resize.mode === value ? "default" : "outline"}
                 onClick={() => setResize((prev) => ({ ...prev, mode: value }))}
-                className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
-                  resize.mode === value
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-accent"
-                }`}
+                className="font-bold"
               >
                 {label}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -949,11 +931,12 @@ export function ImageConverterTool() {
                 </div>
                 <button
                   onClick={() => setResize((prev) => ({ ...prev, lockAspectRatio: !prev.lockAspectRatio }))}
-                  className={`mt-5 p-2 rounded-lg border transition-colors ${
+                  className={cn(
+                    "mt-5 p-2 border transition-colors",
                     resize.lockAspectRatio
                       ? "bg-primary/10 border-primary text-primary"
-                      : "text-muted-foreground hover:border-primary/50"
-                  }`}
+                      : "border-border text-muted-foreground hover:border-primary/50"
+                  )}
                   title={resize.lockAspectRatio ? "Unlock aspect ratio" : "Lock aspect ratio"}
                 >
                   {resize.lockAspectRatio ? <Lock className="size-4" /> : <Unlock className="size-4" />}
@@ -978,19 +961,16 @@ export function ImageConverterTool() {
 
           {resize.mode === "percentage" && (
             <div className="space-y-3">
-              <div className="grid grid-cols-5 gap-2">
+              <div className="segmented grid-cols-5 -mx-4 border-x-0">
                 {[25, 50, 75, 150, 200].map((p) => (
-                  <button
+                  <Button
                     key={p}
+                    variant={resize.percentage === p ? "default" : "outline"}
                     onClick={() => setResize((prev) => ({ ...prev, percentage: p }))}
-                    className={`py-2 rounded-lg border text-sm font-medium transition-colors ${
-                      resize.percentage === p
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "hover:border-primary/50"
-                    }`}
+                    className="font-bold"
                   >
                     {p}%
-                  </button>
+                  </Button>
                 ))}
               </div>
               <div className="flex items-center gap-2">
@@ -1008,53 +988,58 @@ export function ImageConverterTool() {
             </div>
           )}
         </div>
+        </div>
       </div>
 
       {/* Image List */}
       {images.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold">
+        <div className="border-2 border-border">
+          <div className="flex min-h-12 items-stretch border-b-2 border-border">
+            <h3 className="flex flex-1 items-center px-4 font-bold">
               {images.length} image{images.length !== 1 ? "s" : ""} selected
             </h3>
-            <Button variant="ghost" size="sm" onClick={clearAll}>
+            <Button
+              variant="ghost"
+              onClick={clearAll}
+              className="h-auto self-stretch rounded-none border-l border-border px-4"
+            >
               Clear all
             </Button>
           </div>
 
-          <div className="grid gap-3">
+          <div>
             {images.map((file, index) => (
               <div
                 key={`${file.name}-${file.size}-${file.lastModified}`}
-                className="flex items-center gap-4 p-4 rounded-lg border bg-card"
+                className="flex items-stretch border-b border-border"
               >
-                <div className="size-12 rounded bg-muted flex items-center justify-center overflow-hidden">
+                <div className="size-16 shrink-0 bg-muted flex items-center justify-center overflow-hidden border-r border-border">
                   <img
                     src={previewUrls[index]}
                     alt={file.name}
                     className="size-full object-cover"
                   />
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 flex flex-col justify-center px-4 py-2">
                   <p className="font-medium truncate">{file.name}</p>
                   <p className="text-sm text-muted-foreground">
                     {formatSize(file.size)}
                   </p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
+                <button
                   onClick={() => removeImage(index)}
+                  className="flex w-12 items-center justify-center border-l border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  title="Remove"
                 >
                   <X className="size-4" />
-                </Button>
+                </button>
               </div>
             ))}
           </div>
 
           <Button
             size="lg"
-            className="w-full h-14 text-lg font-bold"
+            className="w-full h-14 rounded-none border-0 text-lg font-bold"
             onClick={convertImages}
             disabled={converting}
           >
@@ -1072,24 +1057,28 @@ export function ImageConverterTool() {
 
       {/* Converted Results */}
       {converted.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold text-lg">Converted</h3>
+        <div className="border-2 border-border">
+          <div className="flex min-h-12 items-stretch border-b-2 border-border">
+            <h3 className="flex flex-1 items-center px-4 font-bold text-lg">Converted</h3>
             {converted.length >= 2 && (
-              <Button variant="outline" onClick={downloadAllAsZip}>
+              <Button
+                variant="outline"
+                onClick={downloadAllAsZip}
+                className="h-auto self-stretch rounded-none border-0 border-l border-border px-4"
+              >
                 <Archive className="size-4 mr-2" />
                 Download All as ZIP
               </Button>
             )}
           </div>
 
-          <div className="grid gap-3">
+          <div>
             {converted.map((img) => (
               <div
                 key={img.url}
-                className="flex items-center gap-4 p-4 rounded-lg border bg-card"
+                className="flex items-stretch border-b border-border last:border-b-0"
               >
-                <div className="size-12 rounded bg-muted flex items-center justify-center overflow-hidden">
+                <div className="size-16 shrink-0 bg-muted flex items-center justify-center overflow-hidden border-r border-border">
                   {img.targetFormat === "ico" || img.targetFormat === "icns" || img.targetFormat === "bmp" || img.targetFormat === "tiff" ? (
                     <ImageIcon className="size-6 text-muted-foreground" />
                   ) : (
@@ -1100,13 +1089,16 @@ export function ImageConverterTool() {
                     />
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 flex flex-col justify-center px-4 py-2">
                   <p className="font-medium truncate">{img.name}</p>
                   <p className="text-sm text-muted-foreground">
                     {formatSize(img.size)}
                   </p>
                 </div>
-                <Button onClick={() => downloadImage(img)}>
+                <Button
+                  onClick={() => downloadImage(img)}
+                  className="h-auto self-stretch rounded-none border-0 border-l border-border px-4"
+                >
                   <Download className="size-4 mr-2" />
                   Download
                 </Button>

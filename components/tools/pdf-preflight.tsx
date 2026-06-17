@@ -16,7 +16,6 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import {
   PDFDocument,
@@ -1170,73 +1169,81 @@ export function PdfPreflightTool() {
 
   return (
     <div className="space-y-6">
-      {/* Drop Zone */}
-      {!file ? (
-        <div
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onClick={() => fileInputRef.current?.click()}
-          className={cn(
-            "border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer",
-            isDragActive
-              ? "border-primary bg-primary/5"
-              : "hover:border-primary/50"
-          )}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,application/pdf"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-          <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-lg font-medium">Drop a PDF here</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            or click to select a file, or paste
-          </p>
-        </div>
-      ) : (
-        /* File Info */
-        <div className="border rounded-xl p-6">
-          <div className="flex items-center gap-4">
-            <FileText className="size-10 text-muted-foreground shrink-0" />
-            <div className="min-w-0 flex-1">
-              <p className="font-medium truncate">{file.name}</p>
-              <p className="text-sm text-muted-foreground">
-                {formatSize(file.size)}
-              </p>
+      <div className="border-2 border-border">
+        {/* Drop Zone */}
+        {!file ? (
+          <div
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onClick={() => fileInputRef.current?.click()}
+            className={cn(
+              "border-2 border-dashed m-4 p-8 text-center transition-colors cursor-pointer",
+              isDragActive
+                ? "border-primary bg-primary/5"
+                : "hover:border-primary/50"
+            )}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,application/pdf"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-lg font-medium">Drop a PDF here</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              or click to select a file, or paste
+            </p>
+          </div>
+        ) : (
+          /* File Info */
+          <div className="flex min-h-14 items-stretch">
+            <div className="flex min-w-0 flex-1 items-center gap-4 p-4">
+              <FileText className="size-8 text-muted-foreground shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="font-bold truncate">{file.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {formatSize(file.size)}
+                </p>
+              </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={handleClear}>
+            <Button
+              variant="ghost"
+              onClick={handleClear}
+              className="h-auto self-stretch rounded-none border-l border-border px-5"
+            >
               <X className="size-4" />
               <span className="sr-only">Remove file</span>
             </Button>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Analysing spinner */}
+        {analysing && (
+          <div className="flex items-center justify-center gap-3 border-t-2 border-border py-12">
+            <Loader2 className="size-5 animate-spin text-muted-foreground" />
+            <span className="text-muted-foreground">Analysing PDF...</span>
+          </div>
+        )}
+      </div>
 
       {/* Error Message */}
       {error && <p className="text-sm text-destructive">{error}</p>}
-
-      {/* Analysing spinner */}
-      {analysing && (
-        <div className="flex items-center justify-center gap-3 py-12">
-          <Loader2 className="size-5 animate-spin text-muted-foreground" />
-          <span className="text-muted-foreground">Analysing PDF...</span>
-        </div>
-      )}
 
       {/* Report */}
       {report && !analysing && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left panel: page preview */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-sm">Page Preview</h3>
+          <div className="border-2 border-border">
+            <h3 className="border-b-2 border-border p-4 font-bold">
+              Page Preview
+            </h3>
 
             {pdfDoc ? (
               <>
-                <div className="border rounded-lg overflow-hidden bg-muted/30">
+                <div className="overflow-hidden bg-muted/30 border-b-2 border-border">
                   <canvas
                     ref={canvasRef}
                     className="w-full h-auto"
@@ -1245,28 +1252,28 @@ export function PdfPreflightTool() {
                 </div>
 
                 {/* Page navigation */}
-                <div className="flex items-center justify-center gap-3">
+                <div className="flex items-stretch border-b-2 border-border">
                   <Button
-                    variant="outline"
-                    size="icon"
+                    variant="ghost"
                     disabled={currentPage <= 1}
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    className="h-12 flex-1 rounded-none border-r border-border"
                   >
                     <ChevronLeft className="size-4" />
                     <span className="sr-only">Previous page</span>
                   </Button>
-                  <span className="text-sm text-muted-foreground tabular-nums">
+                  <span className="flex flex-1 items-center justify-center text-sm text-muted-foreground tabular-nums">
                     Page {currentPage} of {report.pageCount}
                   </span>
                   <Button
-                    variant="outline"
-                    size="icon"
+                    variant="ghost"
                     disabled={currentPage >= report.pageCount}
                     onClick={() =>
                       setCurrentPage((p) =>
                         Math.min(report.pageCount, p + 1)
                       )
                     }
+                    className="h-12 flex-1 rounded-none border-l border-border"
                   >
                     <ChevronRight className="size-4" />
                     <span className="sr-only">Next page</span>
@@ -1274,7 +1281,7 @@ export function PdfPreflightTool() {
                 </div>
 
                 {/* Legend */}
-                <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+                <div className="flex flex-wrap gap-4 border-b-2 border-border p-4 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1.5">
                     <span className="w-4 h-0 border-t-2 border-dashed border-blue-500" />
                     Trim
@@ -1290,16 +1297,16 @@ export function PdfPreflightTool() {
                 </div>
               </>
             ) : (
-              <div className="border rounded-lg p-8 text-center text-muted-foreground text-sm">
+              <div className="border-b-2 border-border p-8 text-center text-muted-foreground text-sm">
                 Page preview unavailable
               </div>
             )}
 
             {/* Page dimensions info */}
             {report.pages[currentPage - 1] && (
-              <div className="text-xs text-muted-foreground space-y-1">
+              <div className="space-y-1 border-b-2 border-border p-4 text-xs text-muted-foreground">
                 <p>
-                  <span className="font-medium">Page size:</span>{" "}
+                  <span className="font-bold">Page size:</span>{" "}
                   {report.pages[currentPage - 1].width.toFixed(0)} x{" "}
                   {report.pages[currentPage - 1].height.toFixed(0)}pt (
                   {ptsToMm(report.pages[currentPage - 1].width).toFixed(0)} x{" "}
@@ -1308,14 +1315,14 @@ export function PdfPreflightTool() {
                 </p>
                 {report.pages[currentPage - 1].trimBox && (
                   <p>
-                    <span className="font-medium">Trim:</span>{" "}
+                    <span className="font-bold">Trim:</span>{" "}
                     {report.pages[currentPage - 1].trimBox!.width.toFixed(0)} x{" "}
                     {report.pages[currentPage - 1].trimBox!.height.toFixed(0)}pt
                   </p>
                 )}
                 {report.pages[currentPage - 1].bleedBox && (
                   <p>
-                    <span className="font-medium">Bleed:</span>{" "}
+                    <span className="font-bold">Bleed:</span>{" "}
                     {report.pages[currentPage - 1].bleedBox!.width.toFixed(0)}{" "}
                     x{" "}
                     {report.pages[currentPage - 1].bleedBox!.height.toFixed(0)}
@@ -1332,45 +1339,47 @@ export function PdfPreflightTool() {
               );
               if (pageIssues.length === 0) return null;
               return (
-                <div className="space-y-1.5">
-                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <div className="p-4">
+                  <h4 className="mb-2 text-xs font-bold text-muted-foreground uppercase tracking-wide">
                     Page {currentPage} issues
                   </h4>
-                  {pageIssues.map((issue) => (
-                    <div
-                      key={`${issue.category}-${issue.severity}-${issue.message}`}
-                      className="flex items-start gap-2 rounded-md border px-3 py-2"
-                    >
-                      {issue.severity === "error" && (
-                        <CircleX className="size-3.5 shrink-0 mt-0.5 text-red-500" />
-                      )}
-                      {issue.severity === "warning" && (
-                        <TriangleAlert className="size-3.5 shrink-0 mt-0.5 text-amber-500" />
-                      )}
-                      {issue.severity === "info" && (
-                        <Info className="size-3.5 shrink-0 mt-0.5 text-blue-500" />
-                      )}
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium">{issue.message}</p>
-                        {issue.details && (
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {issue.details}
-                          </p>
+                  <div className="-mx-4 -mb-4 border-y border-border">
+                    {pageIssues.map((issue) => (
+                      <div
+                        key={`${issue.category}-${issue.severity}-${issue.message}`}
+                        className="flex items-start gap-2 border-b border-border px-4 py-2 last:border-b-0"
+                      >
+                        {issue.severity === "error" && (
+                          <CircleX className="size-3.5 shrink-0 mt-0.5 text-red-500" />
                         )}
+                        {issue.severity === "warning" && (
+                          <TriangleAlert className="size-3.5 shrink-0 mt-0.5 text-amber-500" />
+                        )}
+                        {issue.severity === "info" && (
+                          <Info className="size-3.5 shrink-0 mt-0.5 text-blue-500" />
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold">{issue.message}</p>
+                          {issue.details && (
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {issue.details}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               );
             })()}
           </div>
 
           {/* Right panel: report */}
-          <div className="space-y-4">
+          <div className="border-2 border-border">
             {/* Pass / fail badge */}
             <div
               className={cn(
-                "flex items-center gap-3 rounded-lg p-4",
+                "flex items-center gap-3 border-b-2 border-border p-4",
                 errorCount === 0
                   ? "bg-green-500/10 text-green-700 dark:text-green-400"
                   : "bg-red-500/10 text-red-700 dark:text-red-400"
@@ -1380,7 +1389,7 @@ export function PdfPreflightTool() {
                 <>
                   <CircleCheck className="size-6 shrink-0" />
                   <div>
-                    <p className="font-semibold">Ready for print</p>
+                    <p className="font-bold">Ready for print</p>
                     <p className="text-sm opacity-80">
                       No critical issues found
                     </p>
@@ -1390,7 +1399,7 @@ export function PdfPreflightTool() {
                 <>
                   <CircleX className="size-6 shrink-0" />
                   <div>
-                    <p className="font-semibold">Issues found</p>
+                    <p className="font-bold">Issues found</p>
                     <p className="text-sm opacity-80">
                       {errorCount} error{errorCount !== 1 ? "s" : ""} must be
                       resolved before printing
@@ -1401,7 +1410,7 @@ export function PdfPreflightTool() {
             </div>
 
             {/* Severity summary */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 border-b-2 border-border p-4">
               {errorCount > 0 && (
                 <span className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-500/10 text-red-700 dark:text-red-400">
                   {errorCount} error{errorCount !== 1 ? "s" : ""}
@@ -1424,195 +1433,191 @@ export function PdfPreflightTool() {
               )}
             </div>
 
-            <Separator />
-
             {/* Document summary */}
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
-              <span className="text-muted-foreground">PDF Version</span>
-              <span>{report.pdfVersion}</span>
-              <span className="text-muted-foreground">Pages</span>
-              <span>{report.pageCount}</span>
-              <span className="text-muted-foreground">File Size</span>
-              <span>{formatSize(report.fileSize)}</span>
-              <span className="text-muted-foreground">Encrypted</span>
-              <span>{report.encrypted ? "Yes" : "No"}</span>
-              <span className="text-muted-foreground">Fonts</span>
-              <span>
-                {report.fonts.length} (
-                {report.fonts.filter((f) => f.embedded).length} embedded)
-              </span>
+            <div className="border-b-2 border-border p-4">
+              <div className="-mx-4 -my-4 border-y border-border">
+                {[
+                  ["PDF Version", report.pdfVersion],
+                  ["Pages", report.pageCount],
+                  ["File Size", formatSize(report.fileSize)],
+                  ["Encrypted", report.encrypted ? "Yes" : "No"],
+                  [
+                    "Fonts",
+                    `${report.fonts.length} (${report.fonts.filter((f) => f.embedded).length} embedded)`,
+                  ],
+                ].map(([label, value]) => (
+                  <div
+                    key={label}
+                    className="flex items-stretch border-b border-border text-sm last:border-b-0"
+                  >
+                    <span className="w-32 shrink-0 border-r border-border px-4 py-1.5 text-muted-foreground">
+                      {label}
+                    </span>
+                    <span className="px-4 py-1.5 tabular-nums">{value}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Font list */}
             {report.fonts.length > 0 && (
-              <>
-                <Separator />
-                <div>
-                  <h4 className="text-sm font-semibold mb-2">Fonts</h4>
-                  <div className="space-y-1">
-                    {report.fonts.map((font) => (
-                      <div
-                        key={`${font.name}-${font.type ?? ""}-${font.embedded}`}
-                        className="flex items-center justify-between text-sm gap-2"
-                      >
-                        <span className="truncate">
-                          {font.name}
-                          {font.type && (
-                            <span className="text-xs text-muted-foreground ml-1">
-                              ({font.type})
-                            </span>
-                          )}
-                        </span>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <span
-                            className={cn(
-                              "text-xs",
-                              font.embedded
-                                ? "text-green-600 dark:text-green-400"
-                                : "text-red-600 dark:text-red-400"
-                            )}
-                          >
-                            {font.embedded ? "Embedded" : "Not embedded"}
+              <div className="border-b-2 border-border p-4">
+                <h4 className="mb-2 text-sm font-bold">Fonts</h4>
+                <div className="-mx-4 -mb-4 border-y border-border">
+                  {report.fonts.map((font) => (
+                    <div
+                      key={`${font.name}-${font.type ?? ""}-${font.embedded}`}
+                      className="flex items-stretch border-b border-border text-sm last:border-b-0"
+                    >
+                      <span className="flex-1 truncate px-4 py-2">
+                        {font.name}
+                        {font.type && (
+                          <span className="text-xs text-muted-foreground ml-1">
+                            ({font.type})
                           </span>
-                          {font.data && (
-                            <button
-                              type="button"
-                              title={`Download ${font.name}${font.extension}`}
-                              className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                              onClick={() => {
-                                const bytes = font.data!;
-                                const buf = bytes.buffer.slice(
-                                  bytes.byteOffset,
-                                  bytes.byteOffset + bytes.byteLength
-                                ) as ArrayBuffer;
-                                const blob = new Blob([buf], {
-                                  type: "application/octet-stream",
-                                });
-                                const url = URL.createObjectURL(blob);
-                                const a = document.createElement("a");
-                                a.href = url;
-                                a.download = `${font.name}${font.extension}`;
-                                a.click();
-                                URL.revokeObjectURL(url);
-                              }}
-                            >
-                              <Download className="size-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                        )}
+                      </span>
+                      <span
+                        className={cn(
+                          "flex shrink-0 items-center border-l border-border px-4 text-xs",
+                          font.embedded
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-red-600 dark:text-red-400"
+                        )}
+                      >
+                        {font.embedded ? "Embedded" : "Not embedded"}
+                      </span>
+                      {font.data && (
+                        <button
+                          type="button"
+                          title={`Download ${font.name}${font.extension}`}
+                          className="flex w-12 shrink-0 items-center justify-center border-l border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+                          onClick={() => {
+                            const bytes = font.data!;
+                            const buf = bytes.buffer.slice(
+                              bytes.byteOffset,
+                              bytes.byteOffset + bytes.byteLength
+                            ) as ArrayBuffer;
+                            const blob = new Blob([buf], {
+                              type: "application/octet-stream",
+                            });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = `${font.name}${font.extension}`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          }}
+                        >
+                          <Download className="size-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              </>
+              </div>
             )}
 
             {/* Issues by category */}
             {Object.keys(issuesByCategory).length > 0 && (
-              <>
-                <Separator />
-                <div className="space-y-4">
-                  <h4 className="text-sm font-semibold">Issues by Category</h4>
-                  {(
-                    Object.entries(issuesByCategory) as [
-                      CheckCategory,
-                      PreflightIssue[],
-                    ][]
-                  ).map(([category, catIssues]) => (
-                    <div key={category}>
-                      <h5 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                        {CATEGORY_LABELS[category]}
-                      </h5>
-                      <div className="space-y-2">
-                        {catIssues.map((issue) => (
-                          <button
-                            key={`${issue.page ?? "x"}-${issue.severity}-${issue.message}`}
-                            type="button"
-                            className={cn(
-                              "w-full text-left rounded-lg border p-3 transition-colors",
-                              issue.page
-                                ? "hover:bg-muted/50 cursor-pointer"
-                                : "cursor-default"
+              <div className="space-y-4 border-b-2 border-border p-4">
+                <h4 className="text-sm font-bold">Issues by Category</h4>
+                {(
+                  Object.entries(issuesByCategory) as [
+                    CheckCategory,
+                    PreflightIssue[],
+                  ][]
+                ).map(([category, catIssues]) => (
+                  <div key={category}>
+                    <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">
+                      {CATEGORY_LABELS[category]}
+                    </h5>
+                    <div className="border-y border-border">
+                      {catIssues.map((issue) => (
+                        <button
+                          key={`${issue.page ?? "x"}-${issue.severity}-${issue.message}`}
+                          type="button"
+                          className={cn(
+                            "w-full text-left border-b border-border p-3 transition-colors last:border-b-0",
+                            issue.page
+                              ? "hover:bg-muted/50 cursor-pointer"
+                              : "cursor-default"
+                          )}
+                          onClick={() => {
+                            if (issue.page) setCurrentPage(issue.page);
+                          }}
+                        >
+                          <div className="flex items-start gap-2">
+                            {issue.severity === "error" && (
+                              <CircleX className="size-4 shrink-0 mt-0.5 text-red-500" />
                             )}
-                            onClick={() => {
-                              if (issue.page) setCurrentPage(issue.page);
-                            }}
-                          >
-                            <div className="flex items-start gap-2">
-                              {issue.severity === "error" && (
-                                <CircleX className="size-4 shrink-0 mt-0.5 text-red-500" />
-                              )}
-                              {issue.severity === "warning" && (
-                                <TriangleAlert className="size-4 shrink-0 mt-0.5 text-amber-500" />
-                              )}
-                              {issue.severity === "info" && (
-                                <Info className="size-4 shrink-0 mt-0.5 text-blue-500" />
-                              )}
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium">
-                                  {issue.message}
-                                  {issue.page && (
-                                    <span className="text-xs text-muted-foreground font-normal ml-1.5">
-                                      p.{issue.page}
-                                    </span>
-                                  )}
-                                </p>
-                                {issue.details && (
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    {issue.details}
-                                  </p>
+                            {issue.severity === "warning" && (
+                              <TriangleAlert className="size-4 shrink-0 mt-0.5 text-amber-500" />
+                            )}
+                            {issue.severity === "info" && (
+                              <Info className="size-4 shrink-0 mt-0.5 text-blue-500" />
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-bold">
+                                {issue.message}
+                                {issue.page && (
+                                  <span className="text-xs text-muted-foreground font-normal ml-1.5">
+                                    p.{issue.page}
+                                  </span>
                                 )}
-                              </div>
+                              </p>
+                              {issue.details && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {issue.details}
+                                </p>
+                              )}
                             </div>
-                          </button>
-                        ))}
-                      </div>
+                          </div>
+                        </button>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </>
+                  </div>
+                ))}
+              </div>
             )}
 
             {/* Per-page issue breakdown */}
             {issuesByPage.length > 0 && (
-              <>
-                <Separator />
-                <div className="space-y-4">
-                  <h4 className="text-sm font-semibold">Issues by Page</h4>
-                  {issuesByPage.map(({ page, issues: pageIssues }) => (
-                    <div key={page}>
-                      <button
-                        type="button"
-                        className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 hover:text-foreground transition-colors cursor-pointer"
-                        onClick={() => setCurrentPage(page)}
-                      >
-                        Page {page}
-                      </button>
-                      <div className="space-y-1.5">
-                        {pageIssues.map((issue) => (
-                          <button
-                            key={`${issue.severity}-${issue.category}-${issue.message}`}
-                            type="button"
-                            className="w-full text-left flex items-start gap-2 rounded-md px-2 py-1.5 hover:bg-muted/50 cursor-pointer transition-colors"
-                            onClick={() => setCurrentPage(page)}
-                          >
-                            {issue.severity === "error" && (
-                              <CircleX className="size-3.5 shrink-0 mt-0.5 text-red-500" />
-                            )}
-                            {issue.severity === "warning" && (
-                              <TriangleAlert className="size-3.5 shrink-0 mt-0.5 text-amber-500" />
-                            )}
-                            {issue.severity === "info" && (
-                              <Info className="size-3.5 shrink-0 mt-0.5 text-blue-500" />
-                            )}
-                            <span className="text-xs">{issue.message}</span>
-                          </button>
-                        ))}
-                      </div>
+              <div className="space-y-4 p-4">
+                <h4 className="text-sm font-bold">Issues by Page</h4>
+                {issuesByPage.map(({ page, issues: pageIssues }) => (
+                  <div key={page}>
+                    <button
+                      type="button"
+                      className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2 hover:text-foreground transition-colors cursor-pointer"
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      Page {page}
+                    </button>
+                    <div className="border-y border-border">
+                      {pageIssues.map((issue) => (
+                        <button
+                          key={`${issue.severity}-${issue.category}-${issue.message}`}
+                          type="button"
+                          className="w-full text-left flex items-start gap-2 border-b border-border px-3 py-1.5 hover:bg-muted/50 cursor-pointer transition-colors last:border-b-0"
+                          onClick={() => setCurrentPage(page)}
+                        >
+                          {issue.severity === "error" && (
+                            <CircleX className="size-3.5 shrink-0 mt-0.5 text-red-500" />
+                          )}
+                          {issue.severity === "warning" && (
+                            <TriangleAlert className="size-3.5 shrink-0 mt-0.5 text-amber-500" />
+                          )}
+                          {issue.severity === "info" && (
+                            <Info className="size-3.5 shrink-0 mt-0.5 text-blue-500" />
+                          )}
+                          <span className="text-xs">{issue.message}</span>
+                        </button>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 

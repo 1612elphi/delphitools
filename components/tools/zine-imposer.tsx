@@ -84,24 +84,21 @@ function SegmentedControl<T extends string | number>({
     <div
       role="radiogroup"
       aria-label={ariaLabel}
-      className="grid h-9 rounded-md border border-input overflow-hidden"
+      className="segmented h-9"
       style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
     >
-      {options.map((opt, i) => (
-        <button
+      {options.map((opt) => (
+        <Button
           key={String(opt.value)}
           type="button"
           role="radio"
           aria-checked={value === opt.value}
           onClick={() => onChange(opt.value)}
-          className={cn(
-            "text-sm font-medium transition-colors",
-            i > 0 && "border-l border-input",
-            value === opt.value ? "bg-primary text-primary-foreground" : "hover:bg-muted",
-          )}
+          variant={value === opt.value ? "default" : "outline"}
+          className="h-full text-sm font-medium"
         >
           {opt.label}
-        </button>
+        </Button>
       ))}
     </div>
   );
@@ -712,53 +709,51 @@ export function ZineImposerTool() {
   return (
     <div className="space-y-8">
       {/* Configuration */}
-      <div className="space-y-5">
+      <div className="border-2 border-border">
         {/* Fold type — segmented tab picker with mini diagrams */}
-        <div className="space-y-2">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            Fold type
-          </span>
-          <div className="grid grid-cols-2 gap-3" role="tablist" aria-label="Fold type">
+        <div className="border-b-2 border-border p-4">
+          <span className="font-bold block mb-3">Fold type</span>
+          <div
+            className="segmented grid-cols-2 -mx-4 -mb-4 border-x-0 border-b-0"
+            role="tablist"
+            aria-label="Fold type"
+          >
             {ZINE_FOLDS.map((f) => {
               const selected = f.id === foldId;
               return (
-                <button
+                <Button
                   key={f.id}
                   type="button"
                   role="tab"
                   aria-selected={selected}
                   onClick={() => setFoldId(f.id)}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg border p-3 text-left transition-colors",
-                    selected
-                      ? "border-primary bg-primary/10 ring-1 ring-primary"
-                      : "border-input bg-card/60 hover:bg-muted",
-                  )}
+                  variant={selected ? "default" : "outline"}
+                  className="flex h-auto items-center justify-start gap-3 p-3 text-left"
                 >
                   <FoldGlyph
                     id={f.id}
                     className={cn(
                       "h-7 w-11 shrink-0",
-                      selected ? "text-primary" : "text-muted-foreground",
+                      selected ? "" : "text-muted-foreground",
                     )}
                   />
                   <div className="min-w-0">
-                    <div className="text-sm font-medium leading-tight">{f.name}</div>
-                    <div className="text-xs text-muted-foreground">{f.tagline}</div>
+                    <div className="text-sm font-bold leading-tight">{f.name}</div>
+                    <div className={cn("text-xs", selected ? "opacity-80" : "text-muted-foreground")}>
+                      {f.tagline}
+                    </div>
                   </div>
-                </button>
+                </Button>
               );
             })}
           </div>
         </div>
 
         {/* Options + sheet setup */}
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid lg:grid-cols-2">
           {/* Fold options */}
-          <div className="rounded-lg border bg-card/60 p-4 space-y-4">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground block">
-              Options
-            </span>
+          <div className="border-b-2 border-border p-4 space-y-4 lg:border-b-0 lg:border-r-2">
+            <span className="font-bold block">Options</span>
             <p className="text-sm text-muted-foreground">{foldOption.description}</p>
 
             {foldOption.configurablePanels || foldOption.supportsDoubleSided || foldOption.supportsSplit ? (
@@ -817,10 +812,8 @@ export function ZineImposerTool() {
           </div>
 
           {/* Sheet & output */}
-          <div className="rounded-lg border bg-card/60 p-4 space-y-3">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground block">
-              Sheet &amp; output
-            </span>
+          <div className="border-b-2 border-border p-4 space-y-3 lg:border-b-0">
+            <span className="font-bold block">Sheet &amp; output</span>
 
             <div className="space-y-1.5">
               <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
@@ -855,7 +848,7 @@ export function ZineImposerTool() {
         </div>
 
         {/* Page dimensions — compact stats strip */}
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-lg border border-dashed px-4 py-2.5 text-sm">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t-2 border-border bg-muted/30 px-4 py-2.5 text-sm">
           <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             Each page
           </span>
@@ -881,7 +874,7 @@ export function ZineImposerTool() {
           handleBulkUpload(e.dataTransfer.files);
         }}
         onDragOver={(e) => e.preventDefault()}
-        className="border-2 border-dashed rounded-xl p-6 text-center hover:border-primary/50 transition-colors cursor-pointer"
+        className="border-2 border-dashed border-border p-6 text-center hover:border-primary/50 transition-colors cursor-pointer"
         onClick={() => {
           const input = document.createElement("input");
           input.type = "file";
@@ -902,10 +895,10 @@ export function ZineImposerTool() {
       </div>
 
       {/* Image Grid */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            Zine pages · drag to reorder
+      <div className="border-2 border-border">
+        <div className="flex items-center justify-between gap-3 border-b-2 border-border p-4">
+          <span className="font-bold">
+            Zine pages <span className="font-normal text-muted-foreground">· drag to reorder</span>
           </span>
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground">
@@ -927,7 +920,7 @@ export function ZineImposerTool() {
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-4 gap-3 p-4">
           {images.map((image, index) => (
             <div
               key={image ? image.id : `empty-${index}`}
@@ -938,7 +931,7 @@ export function ZineImposerTool() {
               onDrop={(e) => handleDrop(e, index)}
               onDragEnd={handleDragEnd}
               className={cn(
-                "relative aspect-[3/4] border-2 rounded-lg overflow-hidden transition-all",
+                "relative aspect-[3/4] border-2 border-border overflow-hidden transition-all",
                 image
                   ? "border-solid bg-card cursor-grab active:cursor-grabbing"
                   : "border-dashed hover:border-primary/50 cursor-pointer",
@@ -975,7 +968,7 @@ export function ZineImposerTool() {
                       <GripVertical className="size-5 text-white/80" />
                     </div>
 
-                    <div className="absolute top-2 right-2 size-6 rounded-full bg-black/50 flex items-center justify-center">
+                    <div className="absolute top-2 right-2 size-6 bg-black/50 flex items-center justify-center">
                       <span className="text-xs font-bold text-white">
                         {index + 1}
                       </span>
@@ -1025,29 +1018,34 @@ export function ZineImposerTool() {
 
       {/* Preview Section */}
       {previews.length > 0 && (
-        <div className="space-y-3">
-          <Label className="font-bold">Imposition Preview</Label>
-          <p className="text-sm text-muted-foreground">
-            {layout.sides.length > 1
-              ? `Double-sided print. Print both pages, flip on the ${duplexLabel}.`
-              : "Single-sided print."}
-            {layout.cutLines.length > 0 && " The red line shows where to cut."}
-          </p>
-          <div className={cn("grid gap-4", layout.sides.length > 1 && "sm:grid-cols-2")}>
+        <div className="border-2 border-border">
+          <div className="border-b-2 border-border p-4">
+            <Label className="font-bold block mb-1">Imposition Preview</Label>
+            <p className="text-sm text-muted-foreground">
+              {layout.sides.length > 1
+                ? `Double-sided print. Print both pages, flip on the ${duplexLabel}.`
+                : "Single-sided print."}
+              {layout.cutLines.length > 0 && " The red line shows where to cut."}
+            </p>
+          </div>
+          <div className={cn("grid", layout.sides.length > 1 && "sm:grid-cols-2")}>
             {/* Drive the map off the current layout (not the async `previews`
                 array) so a shrinking side count can't index a missing side. */}
             {layout.sides.map((side, i) =>
               previews[i] ? (
-                <div key={side.side} className="space-y-1">
+                <div
+                  key={side.side}
+                  className="border-b border-border last:border-b-0 sm:border-b-0 sm:[&:not(:last-child)]:border-r"
+                >
                   {layout.sides.length > 1 && (
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    <span className="block border-b border-border bg-muted/30 px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
                       {side.side}
                     </span>
                   )}
                   <img
                     src={previews[i]}
                     alt={`Zine imposition preview ${side.side}`}
-                    className="w-full border rounded-lg"
+                    className="w-full p-4"
                   />
                 </div>
               ) : null,
@@ -1059,7 +1057,7 @@ export function ZineImposerTool() {
       {/* Generate Button */}
       <Button
         size="lg"
-        className="w-full h-14 text-lg font-bold"
+        className="h-14 w-full rounded-none border-0 text-lg font-bold"
         onClick={generatePdf}
         disabled={imageCount === 0 || isGenerating}
       >
@@ -1074,9 +1072,9 @@ export function ZineImposerTool() {
       </Button>
 
       {/* Instructions */}
-      <div className="text-sm text-muted-foreground space-y-2 p-4 bg-muted/50 rounded-lg">
-        <p className="font-medium text-foreground">How to fold your zine:</p>
-        <ol className="list-decimal list-inside space-y-1">
+      <div className="border-2 border-border">
+        <p className="border-b-2 border-border p-4 font-bold text-foreground">How to fold your zine:</p>
+        <ol className="list-decimal list-inside space-y-1 p-4 text-sm text-muted-foreground">
           {layout.instructions.map((step, i) => (
             <li key={`${i}-${step}`}>{step}</li>
           ))}

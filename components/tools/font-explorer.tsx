@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Upload, Trash2, Type, Info } from "lucide-react";
+import { Upload, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -146,155 +146,195 @@ export function FontExplorerTool() {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Drop Zone */}
+    <div className="space-y-0">
+      {/* Drop Zone — shown when no font loaded */}
       {!fontUrl && (
-        <div
-          onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
-          className="border-2 border-dashed rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
-          onClick={() => document.getElementById("font-input")?.click()}
-        >
-          <input
-            id="font-input"
-            type="file"
-            accept=".ttf,.otf,.woff,.woff2"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-          <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-lg font-medium">Drop font file here</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            TTF, OTF, WOFF, or WOFF2, or paste
-          </p>
-        </div>
-      )}
-
-      {error && (
-        <div className="p-4 rounded-lg border border-destructive/50 bg-destructive/10 text-destructive">
-          {error}
+        <div className="border-2 border-border">
+          {error && (
+            <div className="border-b border-border p-4 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+          <div
+            onDrop={handleDrop}
+            onDragOver={(e) => e.preventDefault()}
+            className="flex min-h-48 cursor-pointer flex-col items-center justify-center gap-3 p-8 text-center transition-colors hover:bg-muted/30"
+            onClick={() => document.getElementById("font-input")?.click()}
+          >
+            <input
+              id="font-input"
+              type="file"
+              accept=".ttf,.otf,.woff,.woff2"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <Upload className="size-10 text-muted-foreground" />
+            <div>
+              <p className="font-bold">Drop font file here</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                TTF, OTF, WOFF, or WOFF2, or paste
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
       {fontUrl && metadata && (
-        <>
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-lg">{metadata.fullName}</h3>
-              <p className="text-sm text-muted-foreground">{fileName}</p>
+        <div className="border-2 border-border">
+          {/* ── Header bar ─────────────────────────────────────────────── */}
+          <div className="flex items-stretch border-b-2 border-border">
+            <div className="flex flex-1 flex-col justify-center px-4 py-3">
+              <span className="font-bold">{metadata.fullName}</span>
+              <span
+                className="text-sm text-muted-foreground"
+                style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+              >
+                {fileName}
+              </span>
             </div>
-            <Button variant="ghost" size="sm" onClick={clear}>
-              <Trash2 className="size-4 mr-2" /> Clear
+            <Button
+              variant="ghost"
+              onClick={clear}
+              className="h-auto self-stretch border-l border-border px-4"
+            >
+              <Trash2 className="size-4" />
             </Button>
           </div>
 
-          {/* Preview */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <label className="font-bold">Preview</label>
-              <Select value={String(previewSize)} onValueChange={(v) => setPreviewSize(parseInt(v))}>
-                <SelectTrigger size="sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PREVIEW_SIZES.map((size) => (
-                    <SelectItem key={size} value={String(size)}>
-                      {size}px
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {/* ── Preview section ─────────────────────────────────────────── */}
+          <div className="border-b-2 border-border">
+            {/* Preview controls bar */}
+            <div className="flex items-stretch border-b border-border">
+              <span className="flex items-center px-4 font-bold">Preview</span>
+              <div className="flex flex-1 items-stretch border-l border-border">
+                <Input
+                  value={previewText}
+                  onChange={(e) => setPreviewText(e.target.value)}
+                  placeholder="Type to preview…"
+                  className="flex-1 border-0 bg-transparent"
+                />
+              </div>
+              <div className="flex items-stretch border-l border-border">
+                <Select value={String(previewSize)} onValueChange={(v) => setPreviewSize(parseInt(v))}>
+                  <SelectTrigger className="h-auto w-24 self-stretch border-0 bg-transparent">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PREVIEW_SIZES.map((size) => (
+                      <SelectItem key={size} value={String(size)}>
+                        {size}px
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <Input
-              value={previewText}
-              onChange={(e) => setPreviewText(e.target.value)}
-              placeholder="Type to preview..."
-              className="h-12"
-            />
+
+            {/* Live preview canvas */}
             <div
-              className="p-6 rounded-lg border bg-card min-h-[120px] break-words"
+              className="min-h-28 px-4 py-6 text-foreground"
               style={{
                 fontFamily: fontLoaded ? metadata.fontFamily : "inherit",
                 fontSize: previewSize,
                 lineHeight: 1.4,
               }}
             >
-              {previewText || "Type something to preview..."}
+              {previewText || "Type something to preview…"}
             </div>
           </div>
 
-          {/* Sample Texts */}
-          <div className="space-y-3">
-            <label className="font-bold">Sample Texts</label>
-            <div className="grid gap-3">
-              {SAMPLE_TEXTS.map((text, i) => (
-                <div
-                  key={text}
-                  className="p-4 rounded-lg border bg-card"
+          {/* ── Sample texts ────────────────────────────────────────────── */}
+          <div className="border-b-2 border-border">
+            <div className="border-b border-border px-4 py-3">
+              <label className="font-bold">Sample Texts</label>
+            </div>
+            {SAMPLE_TEXTS.map((text, i) => (
+              <div
+                key={text}
+                className="border-b border-border px-4 py-3 last:border-b-0"
+                style={{
+                  fontFamily: fontLoaded ? metadata.fontFamily : "inherit",
+                  fontSize: i < 2 ? 24 : 18,
+                }}
+              >
+                {text}
+              </div>
+            ))}
+          </div>
+
+          {/* ── Size waterfall ──────────────────────────────────────────── */}
+          <div className="border-b-2 border-border">
+            <div className="border-b border-border px-4 py-3">
+              <label className="font-bold">Size Waterfall</label>
+            </div>
+            {[12, 14, 16, 18, 24, 32, 48, 64].map((size) => (
+              <div
+                key={size}
+                className="flex items-baseline border-b border-border last:border-b-0"
+              >
+                <span
+                  className="flex w-14 shrink-0 items-center self-stretch border-r border-border px-4 text-xs text-muted-foreground"
+                  style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                >
+                  {size}px
+                </span>
+                <span
+                  className="px-4 py-2"
                   style={{
                     fontFamily: fontLoaded ? metadata.fontFamily : "inherit",
-                    fontSize: i < 2 ? 24 : 18,
+                    fontSize: size,
+                    lineHeight: size > 40 ? 1.2 : 1.5,
                   }}
                 >
-                  {text}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Size Waterfall */}
-          <div className="space-y-3">
-            <label className="font-bold">Size Waterfall</label>
-            <div className="space-y-2">
-              {[12, 14, 16, 18, 24, 32, 48, 64].map((size) => (
-                <div
-                  key={size}
-                  className="flex items-baseline gap-4"
-                >
-                  <span className="text-xs text-muted-foreground w-10 text-right">
-                    {size}px
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: fontLoaded ? metadata.fontFamily : "inherit",
-                      fontSize: size,
-                    }}
-                  >
-                    Aa Bb Cc Dd Ee Ff Gg
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Font Info */}
-          <div className="space-y-3">
-            <label className="font-bold flex items-center gap-2">
-              <Info className="size-4" /> Font Information
-            </label>
-            <div className="p-4 rounded-lg border bg-muted/30">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <div className="text-sm text-muted-foreground">File Name</div>
-                  <div className="font-mono">{fileName}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">PostScript Name</div>
-                  <div className="font-mono">{metadata.postScriptName}</div>
-                </div>
+                  Aa Bb Cc Dd Ee Ff Gg
+                </span>
               </div>
-              <p className="text-sm text-muted-foreground mt-4">
-                Note: Full font metadata extraction requires specialized font parsing libraries.
-                This tool provides basic font preview functionality.
-              </p>
+            ))}
+          </div>
+
+          {/* ── Font information ────────────────────────────────────────── */}
+          <div className="border-b-2 border-border">
+            <div className="border-b border-border px-4 py-3">
+              <label className="font-bold">Font Information</label>
+            </div>
+            {/* Flush info table */}
+            <div className="flex items-stretch border-b border-border">
+              <span className="flex w-40 shrink-0 items-center px-4 py-3 text-sm text-muted-foreground">
+                File Name
+              </span>
+              <span
+                className="flex flex-1 items-center border-l border-border px-4 py-3 text-sm"
+                style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+              >
+                {fileName}
+              </span>
+            </div>
+            <div className="flex items-stretch border-b border-border">
+              <span className="flex w-40 shrink-0 items-center px-4 py-3 text-sm text-muted-foreground">
+                PostScript Name
+              </span>
+              <span
+                className="flex flex-1 items-center border-l border-border px-4 py-3 text-sm"
+                style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+              >
+                {metadata.postScriptName}
+              </span>
+            </div>
+            <div className="px-4 py-3 text-sm text-muted-foreground">
+              Note: Full font metadata extraction requires specialised font parsing libraries.
+              This tool provides basic font preview functionality.
             </div>
           </div>
 
-          {/* CSS Usage */}
-          <div className="space-y-3">
-            <label className="font-bold">CSS Usage</label>
-            <pre className="p-4 rounded-lg border bg-muted/50 text-sm font-mono overflow-x-auto">
+          {/* ── CSS Usage ───────────────────────────────────────────────── */}
+          <div>
+            <div className="border-b border-border px-4 py-3">
+              <label className="font-bold">CSS Usage</label>
+            </div>
+            <pre
+              className="overflow-x-auto p-4 text-sm"
+              style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+            >
 {`@font-face {
   font-family: '${metadata.fullName}';
   src: url('${fileName}') format('${fileName.endsWith('.woff2') ? 'woff2' : fileName.endsWith('.woff') ? 'woff' : fileName.endsWith('.otf') ? 'opentype' : 'truetype'}');
@@ -307,7 +347,14 @@ export function FontExplorerTool() {
 }`}
             </pre>
           </div>
-        </>
+        </div>
+      )}
+
+      {/* Error shown after a failed load attempt when fontUrl is already set */}
+      {fontUrl && error && (
+        <div className="mt-0 border-2 border-border border-destructive/50 p-4 text-sm text-destructive">
+          {error}
+        </div>
       )}
     </div>
   );
