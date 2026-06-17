@@ -44,6 +44,7 @@
     "markdown-it": "14.2.0",
     "markdown-it-footnote": "4.0.0",
     "mathjs": "^15.1.0",
+    "motion": "^12.40.0",
     "nerdamer": "^1.1.13",
     "next": "^16.1.6",
     "pdf-lib": "^1.17.1",

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Star, ExternalLink } from "lucide-react";
-import { toolCategories, featuredTools } from "@/lib/tools";
+import { ExternalLink } from "lucide-react";
+import { featuredTools, allTools } from "@/lib/tools";
+import { ToolGrid, FeaturedGrid } from "@/components/tool-grid";
 import { DownloadCard } from "@/components/download-card";
 import { StickerWall } from "@/components/sticker-wall";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { SectionHeader } from "@/components/section-header";
 
 export const metadata: Metadata = {
   title: "delphitools — privacy-first browser tools",
@@ -19,125 +19,79 @@ const TAXIWAY_TILES = "TAXIWAY".split("").map((ch, i) => ({ ch, id: `tile-${i}` 
 export default function Home() {
   return (
     <div className="p-6 md:p-8 lg:p-10">
-      {/* Hero Section */}
-      <div className="mb-12">
-        <div className="flex items-center gap-3 mb-4">
-          <img
-            src="/delphi-friday.png"
-            alt="delphitools logo"
-            width={1000}
-            height={48}
-          />
-        </div>
+      {/* Hero */}
+      <header className="mb-12">
+        <img
+          src="/delphi-friday.png"
+          alt=""
+          width={4871}
+          height={1714}
+          className="h-auto w-full max-w-2xl"
+        />
         <h1 className="sr-only">delphitools</h1>
-        <div className="mt-6 max-w-2xl space-y-3 text-muted-foreground">
-          <p className="text-lg">
+        <div className="mt-6 max-w-2xl space-y-3 text-sm leading-relaxed text-muted-foreground">
+          <p className="text-base leading-snug text-foreground">
             A collection of small, low stakes and low effort tools.
           </p>
           <p>
-            No logins, no registration, no data collection. I can&apos;t believe
-            I have to say that. Long live the handmade web.
+            No logins, no registration, no data collection. I can&apos;t believe I have to say
+            that. Long live the handmade web.
           </p>
           <p>
-            If you find these tools useful, I'm glad. You don't owe me anything. But if you're an artist, feel free to <Link className="underline" href="mailto:tools@rmv.fyi">email me your work</Link>. I'd love to see it.
+            If you find these tools useful, I&apos;m glad. You don&apos;t owe me anything. But if
+            you&apos;re an artist, feel free to{" "}
+            <Link className="underline" href="mailto:tools@rmv.fyi">
+              email me your work
+            </Link>
+            . I&apos;d love to see it.
           </p>
           <p>
-            If you would like to donate to delphitools, I ask that you don't. Make a donation to <a className="underline" href="https://donate.wikimedia.org" target="_blank" rel="noopener noreferrer">Wikipedia<span className="sr-only"> (opens in new tab)</span></a> or the <a className="underline" href="https://www.eff.org/donate" target="_blank" rel="noopener noreferrer">EFF<span className="sr-only"> (opens in new tab)</span></a> instead. Email me your proof of donation and I'll put you in the credits.
+            If you would like to donate to delphitools, I ask that you don&apos;t. Make a donation
+            to{" "}
+            <a
+              className="underline"
+              href="https://donate.wikimedia.org"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Wikipedia<span className="sr-only"> (opens in new tab)</span>
+            </a>{" "}
+            or the{" "}
+            <a
+              className="underline"
+              href="https://www.eff.org/donate"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              EFF<span className="sr-only"> (opens in new tab)</span>
+            </a>{" "}
+            instead. Email me your proof of donation and I&apos;ll put you in the credits.
           </p>
         </div>
-      </div>
+      </header>
 
       {/* Greatest Hits */}
       <section className="mb-12">
-        <div className="flex items-center gap-2 mb-4">
-          <Star className="size-5 text-amber-500 fill-amber-500" aria-hidden="true" />
-          <h2 className="text-lg font-semibold text-foreground/80">
-            Delphi&apos;s Greatest Hits
-          </h2>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {featuredTools.map((tool) => {
-            const Icon = tool.icon;
-            return (
-              <Link key={tool.id} href={tool.href}>
-                <Card className="group h-full transition-all border-amber-500/20 bg-amber-500/5 hover:border-amber-500/40 hover:bg-amber-500/10 hover:shadow-md">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex size-10 items-center justify-center rounded-lg bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
-                        <Icon className="size-5 text-amber-600 dark:text-amber-400" />
-                      </div>
-                      <ArrowRight className="size-4 text-amber-500/50 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
-                    </div>
-                    <CardTitle className="text-base mt-3 flex items-center gap-2">
-                      {tool.name}
-                      {tool.beta && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/50 text-amber-600 dark:text-amber-400">Beta</Badge>
-                      )}
-                      {tool.new && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/50 text-primary">New</Badge>
-                      )}
-                    </CardTitle>
-                    <CardDescription className="text-sm">
-                      {tool.description}
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
+        <SectionHeader title="Greatest Hits" count={featuredTools.length} star />
+        <FeaturedGrid />
       </section>
 
-      <DownloadCard />
+      {/* Elsewhere */}
+      <section className="mb-12">
+        <SectionHeader title="Elsewhere" count={2} />
+        <DownloadCard />
+      </section>
 
-      {/* Tool Categories */}
-      <div className="space-y-10">
-        {toolCategories.map((category) => (
-          <section key={category.id}>
-            <h2 className="text-lg font-semibold mb-4 text-foreground/80">
-              {category.name}
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {category.tools.map((tool) => {
-                const Icon = tool.icon;
-                return (
-                  <Link key={tool.id} href={tool.href}>
-                    <Card className="group h-full transition-all hover:border-foreground/20 hover:shadow-md">
-                      <CardHeader className="pb-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex size-10 items-center justify-center rounded-lg bg-muted group-hover:bg-primary/10 transition-colors">
-                            <Icon className="size-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                          </div>
-                          <ArrowRight className="size-4 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
-                        </div>
-                        <CardTitle className="text-base mt-3 flex items-center gap-2">
-                          {tool.name}
-                          {tool.beta && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/50 text-amber-600 dark:text-amber-400">Beta</Badge>
-                          )}
-                          {tool.new && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/50 text-primary">New</Badge>
-                          )}
-                        </CardTitle>
-                        <CardDescription className="text-sm">
-                          {tool.description}
-                        </CardDescription>
-                      </CardHeader>
-                    </Card>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        ))}
-      </div>
+      {/* All Tools */}
+      <section>
+        <SectionHeader title="All Tools" count={allTools.length} />
+        <ToolGrid />
+      </section>
 
       {/* Friends of Delphi */}
       <section className="mt-16">
-        <h2 className="text-lg font-semibold mb-4 text-foreground/80">
-          Friends of Delphi
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <SectionHeader title="Friends of Delphi" count={3} />
+        <div className="grid border-l border-t border-border sm:grid-cols-2 lg:grid-cols-3">
           <a
             href="https://rmv.fyi/projects/taxiway"
             target="_blank"
@@ -145,11 +99,9 @@ export default function Home() {
             className="group block"
           >
             <div
-              className="relative h-full overflow-hidden rounded-xl border transition-all hover:shadow-lg hover:scale-[1.01]"
+              className="relative h-full overflow-hidden border-r border-b border-border transition-all"
               style={{
-                background: 'linear-gradient(145deg, #0d0c0a 0%, #14130f 100%)',
-                borderColor: '#2a2520',
-              }}
+                background: 'linear-gradient(145deg, #0d0c0a 0%, #14130f 100%)',              }}
             >
               <div
                 className="absolute inset-0 opacity-[0.06]"
@@ -228,11 +180,9 @@ export default function Home() {
             className="group block"
           >
             <div
-              className="relative h-full overflow-hidden rounded-xl border transition-all hover:shadow-lg hover:scale-[1.01]"
+              className="relative h-full overflow-hidden border-r border-b border-border transition-all"
               style={{
-                background: 'linear-gradient(145deg, #2d2d33 0%, #272730 100%)',
-                borderColor: '#42424c',
-              }}
+                background: 'linear-gradient(145deg, #2d2d33 0%, #272730 100%)',              }}
             >
               <div
                 className="absolute inset-0 opacity-[0.04]"
@@ -257,7 +207,7 @@ export default function Home() {
                   <h3
                     className="text-3xl leading-none"
                     style={{
-                      fontFamily: "'Instrument Serif', Georgia, serif",
+                      fontFamily: "var(--font-mono)",
                       color: '#e8e4dc',
                     }}
                   >
@@ -278,7 +228,7 @@ export default function Home() {
                   style={{
                     color: '#e8e4dc',
                     opacity: 0.5,
-                    fontFamily: "'Instrument Serif', Georgia, serif",
+                    fontFamily: "var(--font-mono)",
                     fontStyle: 'italic',
                   }}
                 >
@@ -295,11 +245,9 @@ export default function Home() {
             className="group block"
           >
             <div
-              className="relative h-full overflow-hidden rounded-xl border transition-all hover:shadow-lg hover:scale-[1.01]"
+              className="relative h-full overflow-hidden border-r border-b border-border transition-all"
               style={{
-                background: 'linear-gradient(145deg, #0d0d0d 0%, #1a1a2e 100%)',
-                borderColor: '#2a2a3e',
-              }}
+                background: 'linear-gradient(145deg, #0d0d0d 0%, #1a1a2e 100%)',              }}
             >
               <div
                 className="absolute inset-0 opacity-[0.03]"
@@ -363,44 +311,46 @@ export default function Home() {
       {/* Stickers */}
       <StickerWall />
 
-      {/* About Section */}
-      <div className="mt-16 pt-8 border-t">
-        <div className="max-w-2xl space-y-6">
-          <h2 className="text-lg font-semibold text-foreground/80">About</h2>
+      {/* About */}
+      <section className="mt-16">
+        <SectionHeader title="About" />
+        <div className="max-w-2xl space-y-5 text-sm leading-relaxed text-muted-foreground">
+          <p>
+            delphitools is a collection of small, focused utilities that respect your privacy and
+            work entirely in your browser. No data leaves your machine, no accounts required, no
+            tracking. Just tools that do what they say.
+          </p>
+          <p>
+            I love the web. The classic, real web full of weird things. And that web is out there.
+            You just have to find it. And sometimes, you have to make it yourself.
+          </p>
 
-          <div className="space-y-4 text-sm text-muted-foreground">
-            <p>
-              delphitools is a collection of small, focused utilities that respect your privacy
-              and work entirely in your browser. No data leaves your machine, no accounts required,
-              no tracking. Just tools that do what they say.
-            </p>
-            <p>
-              I love the web. The classic, real web full of weird things. And that web is out there. You just have to find it. And sometimes, you have to make it yourself.
-            </p>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 text-sm">
-            <div className="space-y-2">
-              <h3 className="font-medium text-foreground/80">Made by</h3>
-              <p className="text-muted-foreground">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <h3 className="text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-foreground">
+                Made by
+              </h3>
+              <p>
                 <a
                   href="https://rmv.fyi"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-primary transition-colors"
+                  className="text-primary hover:underline"
                 >
                   delphi<span className="sr-only"> (opens in new tab)</span>
                 </a>
               </p>
             </div>
-            <div className="space-y-2">
-              <h3 className="font-medium text-foreground/80">Source</h3>
-              <p className="text-muted-foreground">
+            <div className="space-y-1.5">
+              <h3 className="text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-foreground">
+                Source
+              </h3>
+              <p>
                 <a
                   href="https://github.com/1612elphi/delphitools"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-primary transition-colors"
+                  className="text-primary hover:underline"
                 >
                   1612elphi/delphitools<span className="sr-only"> (opens in new tab)</span>
                 </a>
@@ -409,7 +359,9 @@ export default function Home() {
           </div>
 
           <div className="space-y-2">
-            <h3 className="font-medium text-foreground/80 text-sm">Contributors</h3>
+            <h3 className="text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-foreground">
+              Contributors
+            </h3>
             <div className="flex flex-wrap gap-1.5">
               {[
                 { name: "Himanshu Balani", url: "https://github.com/himanshubalani" },
@@ -424,31 +376,30 @@ export default function Home() {
                   href={person.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs px-2 py-1 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                  className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
                 >
                   {person.name}<span className="sr-only"> (opens in new tab)</span>
                 </a>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground/60 pt-1">
+            <p className="pt-1 text-xs text-muted-foreground/60">
               <a
                 href="https://rmv.fyi/notes/i-hope-you-don-t-use-generative-ai"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="underline hover:text-muted-foreground transition-colors"
+                className="underline transition-colors hover:text-muted-foreground"
               >
                 Behind the scenes of delphitools<span className="sr-only"> (opens in new tab)</span>
               </a>
             </p>
           </div>
 
-          <div className="pt-4 border-t border-border/50">
-            <p className="text-xs text-muted-foreground/60">
-              Built with Next.js, Tailwind CSS, and shadcn/ui. All processing happens locally in your browser.
-            </p>
-          </div>
+          <p className="border-t border-border pt-4 text-xs text-muted-foreground/60">
+            Built with Next.js, Tailwind CSS, and shadcn/ui. All processing happens locally in your
+            browser.
+          </p>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

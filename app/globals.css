@@ -1,71 +1,19 @@
-/* Instrument Serif — self-hosted (was a fonts.googleapis.com @import, which
-   leaked every visitor's IP/User-Agent to Google). Subsets match the Google
-   Fonts output so latin + latin-ext glyphs are preserved. */
+/* iA Writer Quattro — self-hosted variable font (weight axis 400–700, upright +
+   italic). The single typeface for the whole UI; replaces IBM Plex Mono and
+   Instrument Serif. Served locally so no third party sees visitors. */
 @font-face {
-  font-family: 'Instrument Serif';
-  src: url('/fonts/InstrumentSerif-Regular.woff2') format('woff2');
-  font-weight: 400;
+  font-family: 'iA Writer Quattro';
+  src: url('/fonts/iAWriterQuattroV.woff2') format('woff2');
+  font-weight: 400 700;
   font-style: normal;
   font-display: swap;
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 @font-face {
-  font-family: 'Instrument Serif';
-  src: url('/fonts/InstrumentSerif-Regular-ext.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-
-@font-face {
-  font-family: 'Instrument Serif';
-  src: url('/fonts/InstrumentSerif-Italic.woff2') format('woff2');
-  font-weight: 400;
+  font-family: 'iA Writer Quattro';
+  src: url('/fonts/iAWriterQuattroV-Italic.woff2') format('woff2');
+  font-weight: 400 700;
   font-style: italic;
-  font-display: swap;
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-@font-face {
-  font-family: 'Instrument Serif';
-  src: url('/fonts/InstrumentSerif-Italic-ext.woff2') format('woff2');
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-
-@font-face {
-  font-family: 'IBM Plex Mono';
-  src: url('/fonts/IBMPlexMono-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'IBM Plex Mono';
-  src: url('/fonts/IBMPlexMono-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'IBM Plex Mono';
-  src: url('/fonts/IBMPlexMono-SemiBold.woff2') format('woff2');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'IBM Plex Mono';
-  src: url('/fonts/IBMPlexMono-Bold.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
   font-display: swap;
 }
 
@@ -79,7 +27,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
-  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-mono: 'iA Writer Quattro', ui-monospace, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -629,6 +577,31 @@
 @media (forced-colors: active) {
   .sticker-btn:focus-visible .sticker-fold {
     outline-color: Highlight;
+  }
+}
+
+/* ── Home tool grid — icon hover animation ──────────────────────────────
+   Static lucide icons (those without a bespoke animated counterpart in
+   components/animated-icons) get a CSS "draw-in" on cell hover/focus. The 12
+   icons that DO have a motion version animate themselves and are not matched
+   here. pathLength is normalised to 1 in tool-grid.tsx so dasharray:1 == full
+   stroke. */
+@media (prefers-reduced-motion: no-preference) {
+  .tool-ic-draw svg > * {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+  .tool-cell:hover .tool-ic-draw svg > *,
+  .tool-cell:focus-visible .tool-ic-draw svg > * {
+    animation: tool-icon-draw 0.55s ease forwards;
+  }
+  @keyframes tool-icon-draw {
+    from {
+      stroke-dashoffset: 1;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
   }
 }
 
