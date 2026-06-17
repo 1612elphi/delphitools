@@ -3,7 +3,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Upload, Download, Trash2, Move, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { useFilePaste } from "@/hooks/use-file-paste";
 
@@ -253,81 +252,97 @@ export function SocialCropperTool() {
     <div className="space-y-6">
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* Drop Zone */}
-      {!sourceImage && (
-        <div
-          onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
-          className="border-2 border-dashed rounded-xl p-12 text-center hover:border-primary/50 transition-colors cursor-pointer"
-          onClick={() => document.getElementById("cropper-input")?.click()}
-        >
-          <input
-            id="cropper-input"
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-          <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-lg font-medium">Drop image here</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            PNG, JPG, or any image format, or paste
-          </p>
-        </div>
-      )}
+      <div className="border-2 border-border">
+        {/* Drop Zone */}
+        {!sourceImage && (
+          <div
+            onDrop={handleDrop}
+            onDragOver={(e) => e.preventDefault()}
+            className="p-12 text-center hover:bg-muted/30 transition-colors cursor-pointer"
+            onClick={() => document.getElementById("cropper-input")?.click()}
+          >
+            <input
+              id="cropper-input"
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-lg font-medium">Drop image here</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              PNG, JPG, or any image format, or paste
+            </p>
+          </div>
+        )}
 
-      {/* Main workspace */}
-      {sourceImage && (
-        <div className="grid gap-6 lg:grid-cols-[1fr_auto]">
-          {/* Controls */}
-          <div className="space-y-5 min-w-0">
+        {/* Main workspace */}
+        {sourceImage && (
+          <>
             {/* Source info bar */}
-            <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
-              <ImageIcon className="size-4 text-muted-foreground shrink-0" />
-              <span className="text-sm truncate">{fileName}</span>
-              <span className="text-xs text-muted-foreground shrink-0">
-                {imageSize.width} × {imageSize.height}
-              </span>
-              <Button variant="ghost" size="sm" onClick={clear} className="ml-auto shrink-0">
+            <div className="flex min-h-12 items-stretch border-b-2 border-border">
+              <div className="flex flex-1 items-center gap-3 px-4">
+                <ImageIcon className="size-4 text-muted-foreground shrink-0" />
+                <span className="text-sm truncate">{fileName}</span>
+                <span className="text-xs text-muted-foreground shrink-0">
+                  {imageSize.width} × {imageSize.height}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                onClick={clear}
+                className="h-auto gap-2 self-stretch rounded-none border-l border-border px-4"
+              >
                 <Trash2 className="size-4" />
+                Clear
               </Button>
             </div>
 
-            {/* Platform */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Platform</label>
-              <Tabs value={String(selectedPlatform)} onValueChange={(v) => { setSelectedPlatform(Number(v)); setSelectedRatio(0); }}>
-                <TabsList>
-                  {platforms.map((p, i) => (
-                    <TabsTrigger key={p.name} value={String(i)}>{p.name}</TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
+            {/* Platform selector */}
+            <div className="border-b-2 border-border p-4">
+              <label className="font-bold block mb-3">Platform</label>
+              <div className="segmented grid-cols-3 -mx-4 border-x-0 -mb-4 border-b-0">
+                {platforms.map((p, i) => (
+                  <Button
+                    key={p.name}
+                    variant={selectedPlatform === i ? "default" : "outline"}
+                    onClick={() => { setSelectedPlatform(i); setSelectedRatio(0); }}
+                    className="font-bold"
+                  >
+                    {p.name}
+                  </Button>
+                ))}
+              </div>
             </div>
 
-            {/* Aspect Ratio */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Ratio</label>
-              <Tabs value={String(selectedRatio)} onValueChange={(v) => setSelectedRatio(Number(v))}>
-                <TabsList className="flex-wrap h-auto gap-1">
-                  {platforms[selectedPlatform].ratios.map((ratio, i) => (
-                    <TabsTrigger key={ratio.name} value={String(i)} className="text-xs">
-                      {ratio.label} {ratio.name}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
+            {/* Ratio selector */}
+            <div className="border-b-2 border-border p-4">
+              <label className="font-bold block mb-3">Ratio</label>
+              <div className="segmented grid-cols-4 -mx-4 border-x-0 -mb-4 border-b-0">
+                {platforms[selectedPlatform].ratios.map((ratio, i) => (
+                  <Button
+                    key={ratio.name}
+                    variant={selectedRatio === i ? "default" : "outline"}
+                    onClick={() => setSelectedRatio(i)}
+                    className="flex-col gap-0.5 py-2"
+                  >
+                    <span className="text-xs font-bold">{ratio.label}</span>
+                    <span className="text-xs opacity-70">{ratio.name}</span>
+                  </Button>
+                ))}
+              </div>
             </div>
 
             {/* Crop preview */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Move className="size-3.5" /> Drag to reposition
+            <div className="border-b-2 border-border p-4">
+              <label className="font-bold flex items-center gap-2 mb-3">
+                <Move className="size-3.5" />
+                Drag to reposition
               </label>
               <div
                 ref={previewRef}
                 className={cn(
-                  "relative inline-block cursor-move select-none overflow-hidden rounded-lg touch-none ring-1 ring-border",
+                  "relative inline-block cursor-move select-none overflow-hidden touch-none w-full",
                   isDragging && "cursor-grabbing"
                 )}
                 onMouseDown={handleMouseDown}
@@ -336,7 +351,7 @@ export function SocialCropperTool() {
                 <img
                   src={sourceImage}
                   alt="Source"
-                  className="max-w-full max-h-96 pointer-events-none"
+                  className="max-w-full max-h-96 pointer-events-none w-full object-contain"
                   draggable={false}
                 />
                 <div
@@ -358,39 +373,46 @@ export function SocialCropperTool() {
               </div>
             </div>
 
-            {/* Crop stats */}
-            <div className="flex gap-6 text-sm text-muted-foreground">
-              <span>Crop: {Math.round(crop.width)} × {Math.round(crop.height)} px</span>
-              <span>Offset: {Math.round(cropOffset.x)}, {Math.round(cropOffset.y)}</span>
-            </div>
-
-            {/* Download */}
-            {croppedImage && (
-              <Button size="lg" className="w-full" onClick={downloadCropped}>
-                <Download className="size-4 mr-2" />
-                Download for {platforms[selectedPlatform].name}
-              </Button>
-            )}
-          </div>
-
-          {/* Result preview */}
-          {croppedImage && (
-            <div className="flex flex-col items-center gap-3">
-              <label className="text-sm font-medium text-muted-foreground self-start">Result</label>
-              <div className="rounded-lg overflow-hidden shadow-lg ring-1 ring-border">
-                <img
-                  src={croppedImage}
-                  alt="Cropped"
-                  className="max-h-[280px] w-auto"
-                />
-              </div>
-              <span className="text-xs text-muted-foreground">
-                {Math.round(crop.width)} × {Math.round(crop.height)} px
+            {/* Crop stats row */}
+            <div className="flex items-stretch border-b border-border text-sm text-muted-foreground">
+              <span className="flex-1 px-4 py-2.5 border-r border-border">
+                Crop: {Math.round(crop.width)} × {Math.round(crop.height)} px
+              </span>
+              <span className="px-4 py-2.5">
+                Offset: {Math.round(cropOffset.x)}, {Math.round(cropOffset.y)}
               </span>
             </div>
-          )}
-        </div>
-      )}
+
+            {/* Result preview + Download */}
+            {croppedImage && (
+              <>
+                {/* Result preview — full-bleed */}
+                <div className="border-b border-border bg-muted/30 flex items-center justify-center p-4">
+                  <img
+                    src={croppedImage}
+                    alt="Cropped"
+                    className="max-h-64 w-auto border border-border"
+                  />
+                </div>
+
+                {/* Download action bar */}
+                <div className="flex min-h-14 items-stretch border-t border-border">
+                  <span className="flex flex-1 items-center px-4 text-sm text-muted-foreground">
+                    {platforms[selectedPlatform].name} · {currentRatio.label} {currentRatio.name}
+                  </span>
+                  <Button
+                    onClick={downloadCropped}
+                    className="h-auto gap-2 self-stretch rounded-none border-l border-border px-6 font-semibold"
+                  >
+                    <Download className="size-4" />
+                    Download PNG
+                  </Button>
+                </div>
+              </>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

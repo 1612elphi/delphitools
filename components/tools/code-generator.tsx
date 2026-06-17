@@ -563,7 +563,7 @@ export function CodeGeneratorTool() {
         {/* Code Type Selector */}
         <div className="space-y-3">
           <Label className="text-lg font-bold">Code Type</Label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="segmented grid-cols-2 sm:grid-cols-4">
             {Object.entries(BARCODE_TYPES).map(([key, info]) => (
               <Tooltip key={key}>
                 <TooltipTrigger asChild>
@@ -597,10 +597,12 @@ export function CodeGeneratorTool() {
             <TabsTrigger value="batch">Batch Mode</TabsTrigger>
           </TabsList>
 
+          <div className="mt-3 border-2 border-border">
+
           {/* Single Mode */}
-          <TabsContent value="single" className="space-y-6 mt-4">
+          <TabsContent value="single" className="m-0">
             {/* Content Input */}
-            <div className="space-y-2">
+            <div className="space-y-2 border-b-2 border-border p-4">
               <Label className="font-bold">Content</Label>
               <Input
                 value={content}
@@ -615,9 +617,9 @@ export function CodeGeneratorTool() {
             </div>
 
             {/* Main Content Area */}
-            <div className="grid lg:grid-cols-2 gap-6">
+            <div className="grid lg:grid-cols-2">
           {/* Preview */}
-          <div className="space-y-4">
+          <div className="space-y-4 border-b-2 border-border p-4 lg:border-b-0 lg:border-r-2">
             <div className="flex items-center justify-between">
               <Label className="font-bold text-lg">Preview</Label>
               {currentType.category === "1d" && (
@@ -639,7 +641,7 @@ export function CodeGeneratorTool() {
               )}
             </div>
             <div
-              className={`border-4 border-card rounded-xl p-4 flex items-center justify-center min-h-[280px] ${options.transparentBg ? CHECKERBOARD_CLASS : ""}`}
+              className={`-mx-4 border border-border border-x-0 p-4 flex items-center justify-center min-h-[280px] ${options.transparentBg ? CHECKERBOARD_CLASS : ""}`}
               style={
                 options.transparentBg
                   ? undefined
@@ -662,7 +664,7 @@ export function CodeGeneratorTool() {
             </div>
 
             {/* Actions */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="segmented grid-cols-2 -mx-4 -mb-4 border-x-0 border-b-0">
               <Button
                 size="lg"
                 onClick={downloadCode}
@@ -695,19 +697,19 @@ export function CodeGeneratorTool() {
           </div>
 
           {/* Options */}
-          <div className="space-y-4">
+          <div className="space-y-4 p-4">
             <Label className="font-bold text-lg">Options</Label>
             <Accordion
               type="multiple"
               defaultValue={["basic", "colors"]}
-              className="space-y-2"
+              className="-mx-4 border-t border-border"
             >
               {/* Basic Options */}
-              <AccordionItem value="basic" className="border rounded-lg px-4">
-                <AccordionTrigger className="font-bold">
+              <AccordionItem value="basic" className="border-b border-border">
+                <AccordionTrigger className="px-4 font-bold">
                   Basic Settings
                 </AccordionTrigger>
-                <AccordionContent className="space-y-4 pb-4">
+                <AccordionContent className="space-y-4 px-4 pb-4">
                   {/* Size */}
                   <div className="space-y-2">
                     <div className="flex justify-between">
@@ -747,15 +749,24 @@ export function CodeGeneratorTool() {
               </AccordionItem>
 
               {/* Colors */}
-              <AccordionItem value="colors" className="border rounded-lg px-4">
-                <AccordionTrigger className="font-bold">Colours</AccordionTrigger>
-                <AccordionContent className="space-y-4 pb-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Foreground</Label>
-                      <div className="flex gap-2">
+              <AccordionItem value="colors" className="border-b border-border">
+                <AccordionTrigger className="px-4 font-bold">Colours</AccordionTrigger>
+                <AccordionContent className="space-y-4 px-4 pb-4">
+                  <div className="-mx-4 border-y border-border">
+                    {/* Foreground */}
+                    <div className="flex items-stretch border-b border-border">
+                      <span className="flex w-28 shrink-0 items-center px-4 text-sm">
+                        Foreground
+                      </span>
+                      <div className="relative w-12 shrink-0 border-l border-border">
+                        <div
+                          className="size-full"
+                          style={{ backgroundColor: options.foregroundColor }}
+                          aria-hidden
+                        />
                         <input
                           type="color"
+                          aria-label="Foreground colour"
                           value={options.foregroundColor}
                           onChange={(e) =>
                             setOptions((prev) => ({
@@ -763,25 +774,38 @@ export function CodeGeneratorTool() {
                               foregroundColor: e.target.value,
                             }))
                           }
-                          className="w-12 h-10 rounded border cursor-pointer"
-                        />
-                        <Input
-                          value={options.foregroundColor}
-                          onChange={(e) =>
-                            setOptions((prev) => ({
-                              ...prev,
-                              foregroundColor: e.target.value,
-                            }))
-                          }
-                          className="font-mono flex-1"
+                          className="absolute inset-0 size-full cursor-pointer opacity-0"
                         />
                       </div>
+                      <Input
+                        value={options.foregroundColor}
+                        onChange={(e) =>
+                          setOptions((prev) => ({
+                            ...prev,
+                            foregroundColor: e.target.value,
+                          }))
+                        }
+                        className="flex-1 border-0 border-l border-border bg-transparent font-mono"
+                      />
                     </div>
-                    <div className="space-y-2">
-                      <Label>Background</Label>
-                      <div className="flex gap-2">
+                    {/* Background */}
+                    <div className="flex items-stretch">
+                      <span className="flex w-28 shrink-0 items-center px-4 text-sm">
+                        Background
+                      </span>
+                      <div className="relative w-12 shrink-0 border-l border-border">
+                        <div
+                          className={`size-full ${options.transparentBg ? CHECKERBOARD_CLASS : ""}`}
+                          style={
+                            options.transparentBg
+                              ? undefined
+                              : { backgroundColor: options.backgroundColor }
+                          }
+                          aria-hidden
+                        />
                         <input
                           type="color"
+                          aria-label="Background colour"
                           value={options.backgroundColor}
                           disabled={options.transparentBg}
                           onChange={(e) =>
@@ -790,27 +814,26 @@ export function CodeGeneratorTool() {
                               backgroundColor: e.target.value,
                             }))
                           }
-                          className="w-12 h-10 rounded border cursor-pointer disabled:opacity-40"
-                        />
-                        <Input
-                          value={
-                            options.transparentBg
-                              ? "transparent"
-                              : options.backgroundColor
-                          }
-                          disabled={options.transparentBg}
-                          onChange={(e) =>
-                            setOptions((prev) => ({
-                              ...prev,
-                              backgroundColor: e.target.value,
-                            }))
-                          }
-                          className="font-mono flex-1"
+                          className="absolute inset-0 size-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
+                      <Input
+                        value={
+                          options.transparentBg
+                            ? "transparent"
+                            : options.backgroundColor
+                        }
+                        disabled={options.transparentBg}
+                        onChange={(e) =>
+                          setOptions((prev) => ({
+                            ...prev,
+                            backgroundColor: e.target.value,
+                          }))
+                        }
+                        className="flex-1 border-0 border-l border-border bg-transparent font-mono"
+                      />
+                      <label className="flex shrink-0 cursor-pointer items-center gap-2 border-l border-border px-3 text-sm text-muted-foreground">
                         <Switch
-                          id="transparent-bg"
                           checked={options.transparentBg}
                           onCheckedChange={(checked) =>
                             setOptions((prev) => ({
@@ -819,13 +842,8 @@ export function CodeGeneratorTool() {
                             }))
                           }
                         />
-                        <Label
-                          htmlFor="transparent-bg"
-                          className="text-sm font-normal"
-                        >
-                          Transparent background
-                        </Label>
-                      </div>
+                        Transparent
+                      </label>
                     </div>
                   </div>
                 </AccordionContent>
@@ -836,7 +854,7 @@ export function CodeGeneratorTool() {
           </TabsContent>
 
           {/* Batch Mode */}
-          <TabsContent value="batch" className="space-y-4 mt-4">
+          <TabsContent value="batch" className="m-0 space-y-4 p-4">
             <div className="space-y-3">
               {batchItems.map((item, index) => (
                 <div key={item.id} className="flex gap-2 items-center">
@@ -874,11 +892,10 @@ export function CodeGeneratorTool() {
                 onChange={handleBatchFileUpload}
                 className="hidden"
               />
-              <div className="flex gap-2">
+              <div className="segmented grid-cols-2">
                 <Button
                   variant="outline"
                   onClick={addBatchItem}
-                  className="flex-1"
                 >
                   <Plus className="size-4 mr-2" />
                   Add Item
@@ -886,7 +903,6 @@ export function CodeGeneratorTool() {
                 <Button
                   variant="outline"
                   onClick={() => batchFileInputRef.current?.click()}
-                  className="flex-1"
                 >
                   <Upload className="size-4 mr-2" />
                   Upload List
@@ -898,7 +914,7 @@ export function CodeGeneratorTool() {
               <Button
                 onClick={generateBatch}
                 disabled={batchItems.length === 0 || batchGenerating}
-                className="w-full"
+                className="h-14 w-full text-lg font-bold"
               >
                 {batchGenerating ? (
                   <Loader2 className="size-4 mr-2 animate-spin" />
@@ -909,10 +925,11 @@ export function CodeGeneratorTool() {
               </Button>
             </div>
           </TabsContent>
+          </div>
         </Tabs>
 
         {/* Inventor Acknowledgements */}
-        <div className="border rounded-lg p-4 bg-muted/30">
+        <div className="border-2 border-border p-4 bg-muted/30">
           <div className="flex items-center gap-2 mb-3">
             <Info className="size-5" />
             <h3 className="font-bold">About {currentType.name}</h3>

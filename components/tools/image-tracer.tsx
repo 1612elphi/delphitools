@@ -32,6 +32,7 @@ import {
   LucideIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -293,23 +294,23 @@ function Stepper({
         <Label className="text-sm">{label}</Label>
         <InfoTip text={tip} />
       </span>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center border border-border">
         <button
           type="button"
           onClick={() => onChange(Math.max(min, value - step))}
           disabled={value <= min}
-          className="flex items-center justify-center size-7 rounded-md border bg-card hover:bg-accent disabled:opacity-30 disabled:pointer-events-none transition-colors"
+          className="flex items-center justify-center size-7 bg-card hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors"
         >
           <Minus className="size-3" />
         </button>
-        <span className="w-8 text-center text-sm font-mono tabular-nums">
+        <span className="w-8 text-center text-sm font-mono tabular-nums border-x border-border self-stretch flex items-center justify-center">
           {value}
         </span>
         <button
           type="button"
           onClick={() => onChange(Math.min(max, value + step))}
           disabled={value >= max}
-          className="flex items-center justify-center size-7 rounded-md border bg-card hover:bg-accent disabled:opacity-30 disabled:pointer-events-none transition-colors"
+          className="flex items-center justify-center size-7 bg-card hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors"
         >
           <Plus className="size-3" />
         </button>
@@ -320,8 +321,8 @@ function Stepper({
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 pt-1">
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+    <div className="flex items-center gap-2">
+      <span className="text-xs font-bold uppercase tracking-wider">
         {children}
       </span>
       <div className="flex-1 h-px bg-border" />
@@ -354,23 +355,24 @@ function StrokeWidthPicker({
           {value}
         </span>
       </div>
-      <div className="flex gap-1.5">
+      <div className="segmented grid-cols-6">
         {STROKE_OPTIONS.map((sw, i) => (
           <button
             key={sw}
             type="button"
             onClick={() => onChange(sw)}
-            className={`flex-1 h-9 rounded-md border flex items-center justify-center transition-colors ${
+            className={cn(
+              "h-9 flex items-center justify-center transition-colors",
               i === activeIdx
-                ? "border-primary bg-primary/10"
-                : "bg-card hover:bg-accent"
-            }`}
+                ? "bg-primary text-primary-foreground"
+                : "bg-card hover:bg-muted",
+            )}
           >
             {sw === 0 ? (
-              <span className="text-[10px] text-muted-foreground">None</span>
+              <span className="text-[10px] opacity-70">None</span>
             ) : (
               <div
-                className="rounded-full bg-foreground"
+                className="rounded-full bg-current"
                 style={{
                   width: `${Math.min(sw * 6, 24)}px`,
                   height: `${Math.max(sw, 1)}px`,
@@ -408,17 +410,18 @@ function ScalePicker({
           {value}x
         </span>
       </div>
-      <div className="flex gap-1.5">
+      <div className="segmented grid-cols-5">
         {SCALE_OPTIONS.map((s, i) => (
           <button
             key={s}
             type="button"
             onClick={() => onChange(s)}
-            className={`flex-1 h-9 rounded-md border text-xs font-medium transition-colors ${
+            className={cn(
+              "h-9 text-xs font-medium transition-colors",
               i === activeIdx
-                ? "border-primary bg-primary/10 text-primary"
-                : "bg-card hover:bg-accent text-muted-foreground"
-            }`}
+                ? "bg-primary text-primary-foreground"
+                : "bg-card hover:bg-muted text-muted-foreground",
+            )}
           >
             {s}x
           </button>
@@ -438,7 +441,7 @@ function ColourCountCard({
   onChange: (v: number) => void;
 }) {
   return (
-    <div className="rounded-lg border bg-card p-3">
+    <div className="border border-border bg-card p-3">
       <div className="flex items-center justify-between mb-2">
         <span className="flex items-center gap-1.5">
           <Label className="text-sm font-medium">Colours</Label>
@@ -450,7 +453,7 @@ function ColourCountCard({
           type="button"
           onClick={() => onChange(Math.max(2, value - 1))}
           disabled={value <= 2}
-          className="flex items-center justify-center size-9 rounded-lg border bg-background hover:bg-accent disabled:opacity-30 disabled:pointer-events-none transition-colors"
+          className="flex items-center justify-center size-9 border border-border bg-background hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors"
         >
           <Minus className="size-4" />
         </button>
@@ -463,7 +466,7 @@ function ColourCountCard({
           type="button"
           onClick={() => onChange(Math.min(64, value + 1))}
           disabled={value >= 64}
-          className="flex items-center justify-center size-9 rounded-lg border bg-background hover:bg-accent disabled:opacity-30 disabled:pointer-events-none transition-colors"
+          className="flex items-center justify-center size-9 border border-border bg-background hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors"
         >
           <Plus className="size-4" />
         </button>
@@ -799,7 +802,7 @@ export function ImageTracerTool() {
 
   if (!imageFile) {
     return (
-      <div className="space-y-4">
+      <div className="border-2 border-border">
         <div
           onDrop={handleDrop}
           onDragOver={(e) => {
@@ -808,11 +811,10 @@ export function ImageTracerTool() {
           }}
           onDragLeave={() => setIsDragOver(false)}
           onClick={() => fileInputRef.current?.click()}
-          className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors cursor-pointer ${
-            isDragOver
-              ? "border-primary bg-primary/5"
-              : "hover:border-primary/50"
-          }`}
+          className={cn(
+            "border-2 border-dashed m-4 p-12 text-center transition-colors cursor-pointer",
+            isDragOver ? "border-primary bg-primary/5" : "hover:border-primary/50",
+          )}
         >
           <input
             ref={fileInputRef}
@@ -845,112 +847,109 @@ export function ImageTracerTool() {
         className="hidden"
       />
 
-      {/* ── Toolbar ──────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {/* File info */}
-        <div className="flex items-center gap-2 rounded-lg border bg-card px-2.5 py-1.5">
-          {imageSrc && (
-            <div className="size-7 rounded bg-muted overflow-hidden shrink-0">
-              <img src={imageSrc} alt="" className="size-full object-cover" />
-            </div>
-          )}
-          <div className="min-w-0">
+      <div className="border-2 border-border">
+        {/* ── Toolbar ──────────────────────────────────────────────── */}
+        <div className="flex items-stretch border-b-2 border-border min-h-12">
+          {/* File info */}
+          <div className="flex items-center gap-2 px-3 min-w-0 flex-1">
+            {imageSrc && (
+              <div className="size-7 bg-muted overflow-hidden shrink-0 border border-border">
+                <img src={imageSrc} alt="" className="size-full object-cover" />
+              </div>
+            )}
             <p className="text-sm font-medium truncate max-w-[140px]">
               {imageFile.name}
             </p>
+            <span className="text-xs text-muted-foreground shrink-0">
+              {formatSize(imageFile.size)}
+            </span>
+            {hasResult && !tracing && (
+              <span className="text-xs text-muted-foreground shrink-0">
+                · SVG {formatSize(new Blob([rawSvgRef.current || ""]).size)}
+              </span>
+            )}
           </div>
-          <span className="text-xs text-muted-foreground">
-            {formatSize(imageFile.size)}
-          </span>
+
           <button
             type="button"
             onClick={handleClear}
-            className="shrink-0 flex items-center justify-center size-6 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            className="flex w-12 items-center justify-center border-l border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
-            <X className="size-3.5" />
+            <X className="size-4" />
           </button>
         </div>
 
-        {hasResult && !tracing && (
-          <span className="text-xs text-muted-foreground">
-            SVG: {formatSize(new Blob([rawSvgRef.current || ""]).size)}
-          </span>
-        )}
+        {/* ── Preview ──────────────────────────────────────────────── */}
+        <div className="bg-card p-4 min-h-[280px] flex items-center justify-center">
+          {tracing ? (
+            <div className="flex flex-col items-center justify-center p-8">
+              <Loader2 className="size-8 animate-spin text-muted-foreground mb-3" />
+              <p className="text-sm text-muted-foreground">
+                Tracing image&hellip;
+              </p>
+            </div>
+          ) : previewUrl ? (
+            <img
+              src={previewUrl}
+              alt="Traced SVG preview"
+              className="max-w-full max-h-[60vh] object-contain block mx-auto"
+            />
+          ) : imageSrc ? (
+            <img
+              src={imageSrc}
+              alt="Source"
+              className="max-w-full max-h-[60vh] object-contain block mx-auto"
+            />
+          ) : null}
+        </div>
 
-        {/* Spacer */}
-        <div className="flex-1" />
-
-        {/* Inline actions */}
-        <div className="flex items-center gap-1.5">
+        {/* ── Action bar ───────────────────────────────────────────── */}
+        <div className="flex items-stretch border-t-2 border-border min-h-12">
           <Button
-            size="sm"
             onClick={handleDownload}
             disabled={!hasResult || tracing}
+            className="h-auto flex-1 self-stretch rounded-none border-0 font-bold"
           >
-            <Download className="size-3.5 mr-1.5" />
+            <Download className="size-4 mr-1.5" />
             Download
           </Button>
           <Button
-            size="sm"
             variant="outline"
             onClick={handleCopy}
             disabled={!hasResult || tracing}
+            className="h-auto flex-1 self-stretch rounded-none border-0 border-l border-border"
           >
             {copied ? (
               <>
-                <Check className="size-3.5 mr-1.5" />
+                <Check className="size-4 mr-1.5" />
                 Copied
               </>
             ) : (
               <>
-                <Copy className="size-3.5 mr-1.5" />
+                <Copy className="size-4 mr-1.5" />
                 Copy
               </>
             )}
           </Button>
           <Button
-            size="sm"
             variant="outline"
             onClick={sendToOptimiser}
             disabled={!hasResult || tracing}
+            className="h-auto flex-1 self-stretch rounded-none border-0 border-l border-border"
           >
-            <ArrowRight className="size-3.5 mr-1.5" />
+            <ArrowRight className="size-4 mr-1.5" />
             Optimise
           </Button>
         </div>
       </div>
 
-      {/* ── Preview ──────────────────────────────────────────────── */}
-      <div className="rounded-xl border bg-card p-4 min-h-[280px] flex items-center justify-center">
-        {tracing ? (
-          <div className="flex flex-col items-center justify-center p-8">
-            <Loader2 className="size-8 animate-spin text-muted-foreground mb-3" />
-            <p className="text-sm text-muted-foreground">
-              Tracing image&hellip;
-            </p>
-          </div>
-        ) : previewUrl ? (
-          <img
-            src={previewUrl}
-            alt="Traced SVG preview"
-            className="max-w-full max-h-[60vh] object-contain block mx-auto"
-          />
-        ) : imageSrc ? (
-          <img
-            src={imageSrc}
-            alt="Source"
-            className="max-w-full max-h-[60vh] object-contain block mx-auto"
-          />
-        ) : null}
-      </div>
-
       {/* ── Preset + Retrace row ────────────────────────────────── */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-stretch border-2 border-border min-h-12">
         <Popover open={presetsOpen} onOpenChange={setPresetsOpen}>
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2 text-sm hover:bg-accent transition-colors"
+              className="flex items-center gap-2 bg-card px-3 text-sm hover:bg-muted transition-colors"
             >
               <span className="text-xs text-muted-foreground">Preset</span>
               {(() => {
@@ -969,8 +968,8 @@ export function ImageTracerTool() {
               <ChevronsUpDown className="size-3.5 text-muted-foreground" />
             </button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="w-[340px] p-2">
-            <div className="grid grid-cols-4 gap-1">
+          <PopoverContent align="start" className="w-[340px] p-0">
+            <div className="segmented grid-cols-4">
               {PRESETS.map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
@@ -979,11 +978,12 @@ export function ImageTracerTool() {
                     applyPreset(id);
                     setPresetsOpen(false);
                   }}
-                  className={`flex flex-col items-center gap-1 rounded-md px-1 py-2.5 transition-colors ${
+                  className={cn(
+                    "flex flex-col items-center gap-1 px-1 py-2.5 transition-colors",
                     preset === id
-                      ? "bg-primary/10 text-primary"
-                      : "hover:bg-accent text-muted-foreground hover:text-foreground"
-                  }`}
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-card hover:bg-muted text-muted-foreground hover:text-foreground",
+                  )}
                 >
                   <Icon className="size-4" />
                   <span className="text-[10px] leading-tight font-medium">
@@ -997,19 +997,18 @@ export function ImageTracerTool() {
 
         {imageDataRef.current && (
           <Button
-            size="sm"
             onClick={handleRetrace}
             disabled={!dirty || tracing}
-            className="flex-1"
+            className="h-auto flex-1 self-stretch rounded-none border-0 border-l-2 border-border font-bold"
           >
             {tracing ? (
               <>
-                <Loader2 className="size-3.5 mr-1.5 animate-spin" />
+                <Loader2 className="size-4 mr-1.5 animate-spin" />
                 Tracing&hellip;
               </>
             ) : (
               <>
-                <RefreshCw className="size-3.5 mr-1.5" />
+                <RefreshCw className="size-4 mr-1.5" />
                 Retrace
               </>
             )}
@@ -1018,9 +1017,9 @@ export function ImageTracerTool() {
       </div>
 
       {/* ── Controls grid ────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="segmented grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border-2 border-border">
         {/* ── Colours ──────────────────────────────────────────── */}
-        <div className="rounded-xl border bg-card p-4 space-y-4">
+        <div className="bg-card p-4 space-y-4">
           <SectionHeader>Colours</SectionHeader>
           <ColourCountCard
             value={options.numberofcolors}
@@ -1037,7 +1036,7 @@ export function ImageTracerTool() {
         </div>
 
         {/* ── Smoothing ────────────────────────────────────────── */}
-        <div className="rounded-xl border bg-card p-4 space-y-4">
+        <div className="bg-card p-4 space-y-4">
           <SectionHeader>Smoothing</SectionHeader>
           <OptionSlider
             label="Paths"
@@ -1071,7 +1070,7 @@ export function ImageTracerTool() {
         </div>
 
         {/* ── Output ───────────────────────────────────────────── */}
-        <div className="rounded-xl border bg-card p-4 space-y-4">
+        <div className="bg-card p-4 space-y-4">
           <SectionHeader>Output</SectionHeader>
           <StrokeWidthPicker
             value={options.strokewidth}
@@ -1089,22 +1088,19 @@ export function ImageTracerTool() {
         <CollapsibleTrigger asChild>
           <button
             type="button"
-            className="flex items-center justify-between w-full pt-1 group"
+            className="flex items-center justify-between w-full border-2 border-border bg-card px-4 py-3 hover:bg-muted transition-colors group data-[state=open]:border-b-0"
           >
-            <span className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                Advanced
-              </span>
-              <div className="flex-1 h-px bg-border" />
+            <span className="text-xs font-bold uppercase tracking-wider">
+              Advanced
             </span>
             <ChevronDown
-              className={`size-3.5 text-muted-foreground/70 transition-transform ${advancedOpen ? "rotate-180" : ""}`}
+              className={`size-4 text-muted-foreground transition-transform ${advancedOpen ? "rotate-180" : ""}`}
             />
           </button>
         </CollapsibleTrigger>
-        <CollapsibleContent className="pt-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="rounded-xl border bg-card p-4 space-y-4">
+        <CollapsibleContent>
+          <div className="segmented grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border-2 border-t-0 border-border">
+            <div className="bg-card p-4 space-y-4">
               <Stepper
                 label="Blur radius"
                 tip="Gaussian blur pre-processing. Smooths the image before tracing to reduce noise."
@@ -1144,7 +1140,7 @@ export function ImageTracerTool() {
                 </Select>
               </div>
             </div>
-            <div className="rounded-xl border bg-card p-4 space-y-4">
+            <div className="bg-card p-4 space-y-4">
               <OptionSlider
                 label="Min colour ratio"
                 tip="Minimum proportion a colour must occupy to be kept. Raise to eliminate rare colours."
@@ -1182,7 +1178,7 @@ export function ImageTracerTool() {
                 </Select>
               </div>
             </div>
-            <div className="rounded-xl border bg-card p-4 space-y-4">
+            <div className="bg-card p-4 space-y-4">
               <OptionSlider
                 label="Line control point ratio"
                 tip="Adjusts control points on straight line segments. 0 = default placement."

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, Copy, Check } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Search, Copy, Check, ChevronDown, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface CheatSheetItem {
   class: string;
@@ -412,16 +412,25 @@ const CHEATSHEET: CheatSheetCategory[] = [
   },
 ];
 
+const ALL_CATEGORIES = CHEATSHEET.map(c => c.name);
+
 export function TailwindCheatsheetTool() {
   const [search, setSearch] = useState("");
   const [copied, setCopied] = useState<string | null>(null);
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(CHEATSHEET.map(c => c.name)));
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(ALL_CATEGORIES));
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const filteredCategories = useMemo(() => {
-    if (!search) return CHEATSHEET;
+    let cats = CHEATSHEET;
+
+    if (activeCategory) {
+      cats = cats.filter(c => c.name === activeCategory);
+    }
+
+    if (!search) return cats;
 
     const lower = search.toLowerCase();
-    return CHEATSHEET.map(category => ({
+    return cats.map(category => ({
       ...category,
       items: category.items.filter(
         item =>
@@ -430,7 +439,7 @@ export function TailwindCheatsheetTool() {
           item.example?.toLowerCase().includes(lower)
       ),
     })).filter(category => category.items.length > 0);
-  }, [search]);
+  }, [search, activeCategory]);
 
   const copyClass = async (className: string) => {
     await navigator.clipboard.writeText(className);
@@ -452,98 +461,151 @@ export function TailwindCheatsheetTool() {
 
   const totalClasses = CHEATSHEET.reduce((sum, cat) => sum + cat.items.length, 0);
 
+  const monoStyle = { fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" };
+
   return (
-    <div className="space-y-6">
-      {/* Search */}
-      <div className="sticky top-0 z-10 bg-background pb-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={`Search ${totalClasses} classes...`}
-            className="pl-10 h-12"
-          />
+    <div className="border-2 border-border">
+      {/* Search row */}
+      <div className="flex items-stretch border-b-2 border-border">
+        <div className="flex items-center px-4 text-muted-foreground border-r border-border">
+          <Search className="size-4" />
         </div>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={`Search ${totalClasses} classes…`}
+          className="flex-1 h-12 bg-transparent px-4 text-sm outline-none placeholder:text-muted-foreground"
+        />
+        {search && (
+          <button
+            onClick={() => setSearch("")}
+            className="px-4 text-sm text-muted-foreground hover:text-foreground border-l border-border transition-colors"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      {/* Category filter — flush scrollable strip */}
+      <div className="border-b-2 border-border flex items-stretch overflow-x-auto">
+        <button
+          onClick={() => setActiveCategory(null)}
+          className={cn(
+            "shrink-0 px-4 py-3 text-sm font-bold transition-colors border-r border-border",
+            activeCategory === null
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
+        >
+          All
+        </button>
+        {ALL_CATEGORIES.map(name => (
+          <button
+            key={name}
+            onClick={() => setActiveCategory(activeCategory === name ? null : name)}
+            className={cn(
+              "shrink-0 px-4 py-3 text-sm transition-colors border-r border-border last:border-r-0",
+              activeCategory === name
+                ? "bg-primary text-primary-foreground font-bold"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            {name}
+          </button>
+        ))}
       </div>
 
       {/* Categories */}
-      <div className="space-y-4">
-        {filteredCategories.map((category) => {
+      {filteredCategories.length === 0 ? (
+        <div className="px-4 py-12 text-center text-muted-foreground text-sm">
+          No classes found matching &ldquo;{search}&rdquo;
+        </div>
+      ) : (
+        filteredCategories.map((category) => {
           const isExpanded = expandedCategories.has(category.name);
 
           return (
-            <div key={category.name} className="rounded-lg border bg-card overflow-hidden">
+            <div key={category.name} className="border-b border-border last:border-b-0">
+              {/* Category header */}
               <button
                 onClick={() => toggleCategory(category.name)}
-                className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted/50 transition-colors"
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors"
               >
                 <span className="font-bold">{category.name}</span>
-                <span className="text-sm text-muted-foreground">
-                  {category.items.length} classes
+                <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>{category.items.length} classes</span>
+                  {isExpanded
+                    ? <ChevronDown className="size-4" />
+                    : <ChevronRight className="size-4" />
+                  }
                 </span>
               </button>
 
+              {/* Rows table — bleeds to panel edges */}
               {isExpanded && (
-                <div className="border-t">
-                  <table className="w-full text-sm">
-                    <thead className="bg-muted/30">
-                      <tr>
-                        <th className="text-left px-4 py-2 font-medium">Class</th>
-                        <th className="text-left px-4 py-2 font-medium">CSS</th>
-                        <th className="w-12"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {category.items.map((item) => (
-                        <tr key={item.class} className="border-t hover:bg-muted/20">
-                          <td className="px-4 py-2">
-                            <code className="font-mono text-primary">{item.class}</code>
-                            {item.example && (
-                              <span className="text-xs text-muted-foreground ml-2">
-                                e.g. {item.example}
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-4 py-2 text-muted-foreground font-mono text-xs">
-                            {item.css}
-                          </td>
-                          <td className="px-2">
-                            <button
-                              onClick={() => copyClass(item.class)}
-                              className="p-1 rounded hover:bg-muted"
-                              title="Copy class"
-                            >
-                              {copied === item.class ? (
-                                <Check className="size-4 text-green-500" />
-                              ) : (
-                                <Copy className="size-4 text-muted-foreground" />
-                              )}
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="border-t border-border">
+                  {/* Table header */}
+                  <div className="flex items-stretch bg-muted/30 border-b border-border">
+                    <div className="flex-1 px-4 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wide">Class</div>
+                    <div className="flex-1 px-4 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wide border-l border-border">CSS</div>
+                    <div className="w-12 border-l border-border" />
+                  </div>
+                  {/* Rows */}
+                  {category.items.map((item) => (
+                    <div
+                      key={item.class}
+                      className="flex items-stretch border-b border-border last:border-b-0 hover:bg-muted/20 transition-colors"
+                    >
+                      {/* Class cell */}
+                      <div className="flex-1 flex items-center px-4 py-2 min-w-0">
+                        <code
+                          className="text-sm text-primary"
+                          style={monoStyle}
+                        >
+                          {item.class}
+                        </code>
+                        {item.example && (
+                          <span className="text-xs text-muted-foreground ml-3 shrink-0">
+                            e.g. <span style={monoStyle}>{item.example}</span>
+                          </span>
+                        )}
+                      </div>
+                      {/* CSS cell */}
+                      <div className="flex-1 flex items-center px-4 py-2 border-l border-border min-w-0">
+                        <span
+                          className="text-xs text-muted-foreground truncate"
+                          style={monoStyle}
+                        >
+                          {item.css}
+                        </span>
+                      </div>
+                      {/* Copy action cell */}
+                      <button
+                        onClick={() => copyClass(item.class)}
+                        title="Copy class"
+                        className="flex w-12 items-center justify-center border-l border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground shrink-0"
+                      >
+                        {copied === item.class ? (
+                          <Check className="size-4 text-primary" />
+                        ) : (
+                          <Copy className="size-4" />
+                        )}
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
           );
-        })}
-      </div>
-
-      {filteredCategories.length === 0 && (
-        <div className="text-center py-12 text-muted-foreground">
-          No classes found matching "{search}"
-        </div>
+        })
       )}
 
-      {/* Reference */}
-      <div className="p-4 rounded-lg border bg-muted/30 text-sm text-muted-foreground">
-        <strong className="text-foreground">Tip:</strong> Use arbitrary values with square brackets:
-        <code className="mx-1 font-mono text-primary">w-[200px]</code>,
-        <code className="mx-1 font-mono text-primary">text-[#1da1f2]</code>,
-        <code className="mx-1 font-mono text-primary">grid-cols-[1fr_2fr]</code>
+      {/* Tip footer */}
+      <div className="px-4 py-3 border-t-2 border-border bg-muted/30 text-sm text-muted-foreground">
+        <strong className="text-foreground">Tip:</strong> Use arbitrary values with square brackets:{" "}
+        <code style={monoStyle} className="text-primary text-xs">w-[200px]</code>,{" "}
+        <code style={monoStyle} className="text-primary text-xs">text-[#1da1f2]</code>,{" "}
+        <code style={monoStyle} className="text-primary text-xs">grid-cols-[1fr_2fr]</code>
       </div>
     </div>
   );

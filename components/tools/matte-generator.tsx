@@ -233,269 +233,309 @@ export function MatteGeneratorTool() {
     <div className="space-y-6">
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* Drop Zone */}
-      {!sourceImage && (
-        <div
-          onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
-          className="border-2 border-dashed rounded-xl p-12 text-center hover:border-primary/50 transition-colors cursor-pointer"
-          onClick={() => document.getElementById("matte-input")?.click()}
-        >
-          <input
-            id="matte-input"
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-          <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-lg font-medium">Drop image here</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            or click to select, or paste
-          </p>
-        </div>
-      )}
+      <div className="border-2 border-border">
 
-      {/* Main workspace */}
-      {sourceImage && (
-        <div className="grid gap-6 lg:grid-cols-[1fr_auto]">
-          {/* Controls */}
-          <div className="space-y-5 min-w-0">
+        {/* Drop Zone — shown before image loaded */}
+        {!sourceImage && (
+          <div
+            onDrop={handleDrop}
+            onDragOver={(e) => e.preventDefault()}
+            className="border-2 border-dashed m-4 p-12 text-center hover:border-primary/50 transition-colors cursor-pointer"
+            onClick={() => document.getElementById("matte-input")?.click()}
+          >
+            <input
+              id="matte-input"
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-lg font-medium">Drop image here</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              or click to select, or paste
+            </p>
+          </div>
+        )}
+
+        {/* Main workspace — image loaded */}
+        {sourceImage && (
+          <>
             {/* Source info bar */}
-            <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
-              <ImageIcon className="size-4 text-muted-foreground shrink-0" />
-              <span className="text-sm truncate">{fileName}</span>
-              <span className="text-xs text-muted-foreground shrink-0">
-                {imageSize.width} × {imageSize.height}
-              </span>
-              <Button variant="ghost" size="sm" onClick={clear} className="ml-auto shrink-0">
-                <Trash2 className="size-4" />
+            <div className="flex min-h-12 items-stretch border-b-2 border-border">
+              <div className="flex flex-1 items-center gap-3 px-4">
+                <ImageIcon className="size-4 text-muted-foreground shrink-0" />
+                <span className="text-sm truncate">{fileName}</span>
+                <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
+                  {imageSize.width} × {imageSize.height}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                onClick={clear}
+                className="h-auto self-stretch rounded-none border-l border-border px-4"
+              >
+                <Trash2 className="size-4 mr-2" />
+                Clear
               </Button>
             </div>
 
-            {/* Matte Style */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Style</label>
-              <div className="flex gap-2">
-                {STYLE_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.type}
-                    onClick={() => setMatteType(opt.type)}
-                    className={cn(
-                      "flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors",
-                      matteType === opt.type
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "hover:border-primary/50"
-                    )}
-                  >
-                    <opt.icon className="size-4" />
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* Two-column layout: controls + preview */}
+            <div className="grid lg:grid-cols-[1fr_auto]">
 
-            {/* Colour picker for solid color matte */}
-            {matteType === "color" && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Matte Colour</label>
-                <div className="flex flex-wrap gap-2 items-center">
-                  {presetColors.map((color) => (
-                    <button
-                      key={color}
-                      onClick={() => setMatteColor(color)}
-                      className={cn(
-                        "size-9 rounded-lg border-2 transition-all",
-                        matteColor === color
-                          ? "border-primary ring-2 ring-primary/30 scale-110"
-                          : "border-muted hover:border-primary/50"
-                      )}
-                      style={{ backgroundColor: color }}
-                      title={color}
-                    />
-                  ))}
-                  <div className="relative">
-                    <input
-                      type="color"
-                      value={matteColor}
-                      onChange={(e) => setMatteColor(e.target.value)}
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                    />
-                    <div
-                      className="size-9 rounded-lg border-2 border-dashed border-muted flex items-center justify-center text-muted-foreground hover:border-primary/50 transition-colors text-sm"
-                      title="Custom colour"
+              {/* Controls column */}
+              <div className="border-r-0 lg:border-r-2 lg:border-border">
+
+                {/* Matte Style */}
+                <div className="border-b-2 border-border">
+                  <label className="block px-4 pt-4 pb-2 font-bold">Style</label>
+                  <div className="segmented grid-cols-3 -mx-[1px] border-x-0">
+                    {STYLE_OPTIONS.map((opt) => (
+                      <Button
+                        key={opt.type}
+                        variant={matteType === opt.type ? "default" : "outline"}
+                        onClick={() => setMatteType(opt.type)}
+                        className="flex items-center gap-2"
+                      >
+                        <opt.icon className="size-4" />
+                        {opt.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Colour picker — solid matte only */}
+                {matteType === "color" && (
+                  <div className="border-b-2 border-border">
+                    <label className="block px-4 pt-4 pb-2 font-bold">Matte Colour</label>
+                    {/* Colour swatches as a flush table row */}
+                    <div className="flex border-t border-border -mx-[1px] border-x-0">
+                      {presetColors.map((color) => (
+                        <button
+                          key={color}
+                          onClick={() => setMatteColor(color)}
+                          className={cn(
+                            "relative flex-1 h-10 border-l border-border first:border-l-0 transition-all",
+                            matteColor === color ? "ring-2 ring-inset ring-primary" : ""
+                          )}
+                          style={{ backgroundColor: color }}
+                          title={color}
+                        />
+                      ))}
+                      {/* Custom colour swatch cell */}
+                      <div className="relative w-10 shrink-0 border-l border-border">
+                        <div
+                          className="size-full h-10 flex items-center justify-center text-lg"
+                          style={{ backgroundColor: matteColor }}
+                          title="Custom colour"
+                        >
+                          <span
+                            className="text-xs font-bold leading-none select-none"
+                            style={{
+                              color: matteColor === "#ffffff" || matteColor === "#f5f5f5" || matteColor === "#fafafa"
+                                ? "#000000"
+                                : "#ffffff",
+                            }}
+                          >
+                            +
+                          </span>
+                        </div>
+                        <input
+                          type="color"
+                          value={matteColor}
+                          onChange={(e) => setMatteColor(e.target.value)}
+                          className="absolute inset-0 size-full cursor-pointer opacity-0"
+                        />
+                      </div>
+                    </div>
+                    <p className="px-4 pb-3 pt-2 text-xs text-muted-foreground">
+                      Click the coloured cells to select, or the last cell to pick a custom colour.
+                    </p>
+                  </div>
+                )}
+
+                {/* Aspect Ratio */}
+                <div className="border-b-2 border-border">
+                  <label className="block px-4 pt-4 pb-2 font-bold">Aspect Ratio</label>
+                  <div className="segmented grid-cols-5 -mx-[1px] border-x-0">
+                    {RATIO_PRESETS.map((preset) => (
+                      <Button
+                        key={preset.label}
+                        variant={isPresetRatio(preset.w, preset.h) ? "default" : "outline"}
+                        onClick={() => selectPresetRatio(preset.w, preset.h)}
+                        title={preset.description}
+                        className="tabular-nums"
+                      >
+                        {preset.label}
+                      </Button>
+                    ))}
+                    <Button
+                      variant={customRatio ? "default" : "outline"}
+                      onClick={() => setCustomRatio(true)}
                     >
-                      +
+                      Custom
+                    </Button>
+                  </div>
+                  {/* Swap + custom inputs row */}
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <button
+                      onClick={swapRatio}
+                      disabled={isSquare}
+                      className="flex items-center gap-1.5 border border-border px-3 py-1.5 text-sm transition-colors hover:bg-muted disabled:opacity-40 disabled:pointer-events-none"
+                      title={isSquare ? "Square — nothing to rotate" : `Rotate to ${ratioH}:${ratioW}`}
+                      aria-label="Rotate matte orientation"
+                    >
+                      <RotateCw className="size-4" />
+                      Swap
+                    </button>
+                    {customRatio && (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min={1}
+                          max={32}
+                          value={ratioW}
+                          onChange={(e) => setRatioW(Math.max(1, Math.min(32, parseInt(e.target.value) || 1)))}
+                          className="w-20 text-center"
+                          style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                        />
+                        <span className="text-muted-foreground font-medium">:</span>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={32}
+                          value={ratioH}
+                          onChange={(e) => setRatioH(Math.max(1, Math.min(32, parseInt(e.target.value) || 1)))}
+                          className="w-20 text-center"
+                          style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Output Width */}
+                <div className="border-b-2 border-border">
+                  <label className="block px-4 pt-4 pb-2 font-bold">Output Width</label>
+                  <div className="segmented grid-cols-4 -mx-[1px] border-x-0">
+                    {SIZE_PRESETS.map((size) => (
+                      <Button
+                        key={size}
+                        variant={outputSize === size && !customSize ? "default" : "outline"}
+                        onClick={() => { setOutputSize(size); setCustomSize(""); }}
+                        className="tabular-nums"
+                      >
+                        {size}px
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="px-4 py-3">
+                    <Input
+                      type="number"
+                      min={100}
+                      max={8192}
+                      placeholder="Custom px…"
+                      value={customSize}
+                      onChange={(e) => {
+                        setCustomSize(e.target.value);
+                        const v = parseInt(e.target.value);
+                        if (v >= 100 && v <= 8192) {
+                          setOutputSize(v);
+                        }
+                      }}
+                      className="w-full"
+                      style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                    />
+                  </div>
+                </div>
+
+                {/* Padding */}
+                <div className={cn("p-4", !resultImage ? "border-b-2 border-border" : "")}>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="font-bold">Padding</label>
+                    <span
+                      className="text-sm tabular-nums text-muted-foreground"
+                      style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                    >
+                      {padding}px
+                    </span>
+                  </div>
+                  <Slider
+                    value={[padding]}
+                    onValueChange={([v]) => setPadding(v)}
+                    min={0}
+                    max={200}
+                    step={10}
+                  />
+                </div>
+
+              </div>
+
+              {/* Preview column */}
+              <div className="border-t-2 lg:border-t-0 border-border flex flex-col">
+                <label className="block px-4 pt-4 pb-2 font-bold">Preview</label>
+                <div className="flex flex-1 items-center justify-center p-4 bg-muted/30">
+                  <div
+                    className="relative overflow-hidden border border-border"
+                    style={{
+                      width: `${previewWidth}px`,
+                      height: `${previewHeight}px`,
+                      background:
+                        matteType === "color"
+                          ? matteColor
+                          : matteType === "gradient"
+                            ? `linear-gradient(135deg, ${dominantColor}, ${adjustBrightness(dominantColor, -30)})`
+                            : undefined,
+                    }}
+                  >
+                    {matteType === "blur" && (
+                      <img
+                        src={sourceImage}
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover scale-125"
+                        style={{ filter: "blur(20px)" }}
+                      />
+                    )}
+                    <div
+                      className="absolute inset-0 flex items-center justify-center"
+                      style={{ padding: `${previewPaddingPx}px` }}
+                    >
+                      <img
+                        src={sourceImage}
+                        alt="Preview"
+                        className="max-w-full max-h-full object-contain"
+                      />
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
-
-            {/* Aspect Ratio */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Aspect Ratio</label>
-              <div className="flex flex-wrap gap-2 items-center">
-                {RATIO_PRESETS.map((preset) => (
-                  <button
-                    key={preset.label}
-                    onClick={() => selectPresetRatio(preset.w, preset.h)}
-                    className={cn(
-                      "px-3 py-1.5 rounded-lg border text-sm transition-colors",
-                      isPresetRatio(preset.w, preset.h)
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "hover:border-primary/50"
-                    )}
-                    title={preset.description}
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setCustomRatio(true)}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg border text-sm transition-colors",
-                    customRatio
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "hover:border-primary/50"
-                  )}
+                <p
+                  className="text-xs text-muted-foreground text-center px-4 pb-3"
+                  style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
                 >
-                  Custom
-                </button>
-                <button
-                  onClick={swapRatio}
-                  disabled={isSquare}
-                  className="p-1.5 rounded-lg border transition-colors hover:border-primary/50 disabled:opacity-40 disabled:pointer-events-none"
-                  title={isSquare ? "Square — nothing to rotate" : `Rotate to ${ratioH}:${ratioW}`}
-                  aria-label="Rotate matte orientation"
-                >
-                  <RotateCw className="size-4" />
-                </button>
+                  {getOutputDimensions().width} × {getOutputDimensions().height} px
+                </p>
               </div>
-              {customRatio && (
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    min={1}
-                    max={32}
-                    value={ratioW}
-                    onChange={(e) => setRatioW(Math.max(1, Math.min(32, parseInt(e.target.value) || 1)))}
-                    className="w-20 font-mono text-center"
-                  />
-                  <span className="text-muted-foreground font-medium">:</span>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={32}
-                    value={ratioH}
-                    onChange={(e) => setRatioH(Math.max(1, Math.min(32, parseInt(e.target.value) || 1)))}
-                    className="w-20 font-mono text-center"
-                  />
-                </div>
-              )}
+
             </div>
 
-            {/* Output Width */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Output Width</label>
-              <div className="flex flex-wrap gap-2 items-center">
-                {SIZE_PRESETS.map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => { setOutputSize(size); setCustomSize(""); }}
-                    className={cn(
-                      "px-3 py-1.5 rounded-lg border text-sm transition-colors tabular-nums",
-                      outputSize === size && !customSize
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "hover:border-primary/50"
-                    )}
-                  >
-                    {size}px
-                  </button>
-                ))}
-                <Input
-                  type="number"
-                  min={100}
-                  max={8192}
-                  placeholder="Custom"
-                  value={customSize}
-                  onChange={(e) => {
-                    setCustomSize(e.target.value);
-                    const v = parseInt(e.target.value);
-                    if (v >= 100 && v <= 8192) {
-                      setOutputSize(v);
-                    }
-                  }}
-                  className="w-28 font-mono text-sm"
-                />
-              </div>
-            </div>
-
-            {/* Padding */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-muted-foreground">Padding</label>
-                <span className="text-sm tabular-nums text-muted-foreground">{padding}px</span>
-              </div>
-              <Slider
-                value={[padding]}
-                onValueChange={([v]) => setPadding(v)}
-                min={0}
-                max={200}
-                step={10}
-              />
-            </div>
-
-            {/* Download */}
+            {/* Download — flush primary action */}
             {resultImage && (
-              <Button size="lg" className="w-full" onClick={downloadResult}>
-                <Download className="size-4 mr-2" />
-                Download {getOutputDimensions().width} × {getOutputDimensions().height}
-              </Button>
-            )}
-          </div>
-
-          {/* Live Preview */}
-          <div className="flex flex-col items-center gap-3">
-            <label className="text-sm font-medium text-muted-foreground self-start">Preview</label>
-            <div
-              className="relative rounded-lg overflow-hidden shadow-lg ring-1 ring-border"
-              style={{
-                width: `${previewWidth}px`,
-                height: `${previewHeight}px`,
-                background:
-                  matteType === "color"
-                    ? matteColor
-                    : matteType === "gradient"
-                      ? `linear-gradient(135deg, ${dominantColor}, ${adjustBrightness(dominantColor, -30)})`
-                      : undefined,
-              }}
-            >
-              {matteType === "blur" && (
-                <img
-                  src={sourceImage}
-                  alt=""
-                  className="absolute inset-0 w-full h-full object-cover scale-125"
-                  style={{ filter: "blur(20px)" }}
-                />
-              )}
-              <div
-                className="absolute inset-0 flex items-center justify-center"
-                style={{ padding: `${previewPaddingPx}px` }}
-              >
-                <img
-                  src={sourceImage}
-                  alt="Preview"
-                  className="max-w-full max-h-full object-contain rounded-sm shadow-md"
-                />
+              <div className="border-t-2 border-border">
+                <Button
+                  size="lg"
+                  className="w-full h-14 text-lg font-bold rounded-none border-0"
+                  onClick={downloadResult}
+                >
+                  <Download className="size-5 mr-2" />
+                  Download {getOutputDimensions().width} × {getOutputDimensions().height}
+                </Button>
               </div>
-            </div>
-            <span className="text-xs text-muted-foreground">
-              {getOutputDimensions().width} × {getOutputDimensions().height} px
-            </span>
-          </div>
-        </div>
-      )}
+            )}
+
+          </>
+        )}
+
+      </div>
     </div>
   );
 }

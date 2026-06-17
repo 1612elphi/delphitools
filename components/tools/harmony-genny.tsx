@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { useColourNotation } from "@/hooks/use-colour-notation";
 import { formatColour } from "@/lib/colour-notation";
 
@@ -217,143 +217,187 @@ export function HarmonyGennyTool() {
     copyValue(`:root {\n${vars}\n}`, "css");
   };
 
+  const harmonyKeys = Object.keys(HARMONIES) as HarmonyType[];
+
   return (
-    <div className="space-y-6">
-      {/* Input */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <label className="font-bold">Base Colour</label>
-          <div className="flex gap-2">
+    <div className="border-2 border-border">
+
+      {/* ── Base colour input ─────────────────────────────────────────── */}
+      <div className="border-b-2 border-border p-4">
+        <label className="font-bold">Base Colour</label>
+        <div className="mt-3 flex items-stretch border border-border">
+          {/* Native colour picker swatch */}
+          <div className="relative w-14 shrink-0 border-r border-border">
+            <div
+              className="size-full"
+              style={{ backgroundColor: baseColour }}
+              aria-hidden
+            />
             <input
               type="color"
               value={baseColour}
               onChange={(e) => setBaseColour(e.target.value)}
-              className="w-14 h-10 rounded border cursor-pointer"
-            />
-            <Input
-              value={baseColour}
-              onChange={(e) => setBaseColour(e.target.value)}
-              placeholder="#3b82f6"
-              className="font-mono flex-1"
+              className="absolute inset-0 size-full cursor-pointer opacity-0"
             />
           </div>
-        </div>
-        <div className="space-y-2">
-          <label className="font-bold">Harmony Type</label>
-          <Select value={harmonyType} onValueChange={(v) => setHarmonyType(v as HarmonyType)}>
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(HARMONIES).map(([key, info]) => (
-                <SelectItem key={key} value={key}>{info.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Hex text input */}
+          <Input
+            value={baseColour}
+            onChange={(e) => setBaseColour(e.target.value)}
+            placeholder="#3b82f6"
+            className="flex-1 border-0 bg-transparent"
+            style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+          />
         </div>
       </div>
 
-      {/* Harmony Description */}
-      <div className="p-4 rounded-lg border bg-muted/30">
-        <div className="font-bold">{HARMONIES[harmonyType].name}</div>
-        <div className="text-sm text-muted-foreground">
-          {HARMONIES[harmonyType].description}
+      {/* ── Harmony type segmented (4 cols × 3 rows = 12) ────────────── */}
+      <div className="border-b-2 border-border p-4">
+        <label className="font-bold">Harmony Type</label>
+        <div className="segmented mt-3 grid-cols-4 -mx-4 -mb-4 border-x-0 border-b-0">
+          {harmonyKeys.map((key) => (
+            <Button
+              key={key}
+              variant={harmonyType === key ? "default" : "outline"}
+              onClick={() => setHarmonyType(key)}
+              className="h-auto flex-col gap-0.5 py-2 text-left"
+            >
+              <span className="w-full text-xs font-bold leading-tight">
+                {HARMONIES[key].name}
+              </span>
+            </Button>
+          ))}
         </div>
       </div>
 
-      {/* Colour Wheel Visualization */}
+      {/* ── Harmony description ───────────────────────────────────────── */}
+      <div className="border-b-2 border-border px-4 py-3">
+        <span className="font-bold">{HARMONIES[harmonyType].name}</span>
+        <span className="ml-2 text-sm text-muted-foreground">{HARMONIES[harmonyType].description}</span>
+      </div>
+
+      {/* ── Colour wheel + swatch strip ───────────────────────────────── */}
       {colours && (
-        <div className="flex justify-center">
-          <div className="relative w-64 h-64">
-            {/* Colour wheel background */}
-            <div
-              className="absolute inset-0 rounded-full"
-              style={{
-                background: "conic-gradient(from 90deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)",
-                opacity: 0.3,
-              }}
-            />
-            <div className="absolute inset-8 rounded-full bg-background" />
+        <>
+          {/* Wheel visualisation */}
+          <div className="flex justify-center border-b-2 border-border py-6">
+            <div className="relative w-56 h-56">
+              {/* Colour wheel background */}
+              <div
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background: "conic-gradient(from 90deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)",
+                  opacity: 0.3,
+                }}
+              />
+              <div className="absolute inset-7 rounded-full bg-background" />
 
-            {/* Colour markers */}
-            {colours.map((colour, i) => {
-              const angle = (colour.oklch[2] - 90) * (Math.PI / 180);
-              const radius = 100;
-              const x = 128 + radius * Math.cos(angle);
-              const y = 128 + radius * Math.sin(angle);
+              {/* Colour markers */}
+              {colours.map((colour, i) => {
+                const angle = (colour.oklch[2] - 90) * (Math.PI / 180);
+                const radius = 88;
+                const x = 112 + radius * Math.cos(angle);
+                const y = 112 + radius * Math.sin(angle);
 
-              return (
-                <div
-                  key={i}
-                  className="absolute w-8 h-8 -ml-4 -mt-4 rounded-full border-4 border-white shadow-lg"
-                  style={{
-                    left: x,
-                    top: y,
-                    backgroundColor: colour.hex,
-                  }}
-                />
-              );
-            })}
+                return (
+                  <div
+                    key={i}
+                    className="absolute w-7 h-7 -ml-3.5 -mt-3.5 rounded-full border-4 border-background shadow-md"
+                    style={{
+                      left: x,
+                      top: y,
+                      backgroundColor: colour.hex,
+                    }}
+                  />
+                );
+              })}
 
-            {/* Center swatch */}
-            <div
-              className="absolute inset-16 rounded-full border-4 border-white shadow-lg"
-              style={{ backgroundColor: baseColour }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Colour Swatches */}
-      {colours && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="font-bold">Harmony Colours</label>
-            <div className="flex gap-2">
-              <Button size="sm" variant="ghost" onClick={copyAllHex}>
-                {copied === "all" ? <Check className="size-4 mr-1" /> : <Copy className="size-4 mr-1" />}
-                Copy All
-              </Button>
-              <Button size="sm" variant="ghost" onClick={copyAsCssVariables}>
-                {copied === "css" ? <Check className="size-4 mr-1" /> : <Copy className="size-4 mr-1" />}
-                CSS Variables
-              </Button>
+              {/* Center swatch */}
+              <div
+                className="absolute inset-14 rounded-full border-4 border-background shadow-md"
+                style={{ backgroundColor: baseColour }}
+              />
             </div>
           </div>
 
-          <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(colours.length, 5)}, 1fr)` }}>
+          {/* Flush swatch strip */}
+          <div className="flex border-b-2 border-border" style={{ height: "4rem" }}>
             {swatches.map(({ colour, position }) => (
               <button
                 key={`${colour.hex}-${position}`}
                 onClick={() => copyValue(formatColour(colour.hex, notation), colour.hex)}
-                className="p-4 rounded-lg border bg-card hover:border-primary/50 transition-colors"
-              >
-                <div
-                  className="w-full aspect-square rounded-lg mb-3 border"
-                  style={{ backgroundColor: colour.hex }}
-                />
-                <div className="text-center">
-                  <div className="font-mono text-sm font-bold">{formatColour(colour.hex, notation)}</div>
-                  {harmonyType !== "monochromatic" && (
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {colour.angle === 0 ? "Base" : `+${colour.angle}°`}
-                    </div>
-                  )}
-                </div>
-                <div className="text-xs text-primary mt-2 opacity-0 hover:opacity-100 text-center">
-                  Click to copy
-                </div>
-              </button>
+                className="flex-1 transition-opacity hover:opacity-80"
+                style={{ backgroundColor: colour.hex }}
+                title={`Copy ${formatColour(colour.hex, notation)}`}
+              />
             ))}
           </div>
-        </div>
+
+          {/* Colours table */}
+          <div className="border-b-2 border-border">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <label className="font-bold">Harmony Colours</label>
+            </div>
+            {swatches.map(({ colour, position }) => (
+              <div
+                key={`row-${colour.hex}-${position}`}
+                className="flex items-stretch border-b border-border last:border-b-0"
+              >
+                {/* Swatch cell */}
+                <div className="relative w-12 shrink-0 border-r border-border">
+                  <div className="size-full" style={{ backgroundColor: colour.hex }} aria-hidden />
+                </div>
+
+                {/* Hex value */}
+                <div className="flex flex-1 items-center px-4 py-3">
+                  <span
+                    className="font-bold tracking-wide"
+                    style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                  >
+                    {formatColour(colour.hex, notation)}
+                  </span>
+                  {harmonyType !== "monochromatic" && (
+                    <span className="ml-3 text-xs text-muted-foreground">
+                      {colour.angle === 0 ? "Base" : `+${colour.angle}°`}
+                    </span>
+                  )}
+                </div>
+
+                {/* Copy action cell */}
+                <button
+                  type="button"
+                  onClick={() => copyValue(formatColour(colour.hex, notation), colour.hex)}
+                  className="flex w-12 items-center justify-center border-l border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  aria-label="Copy colour"
+                >
+                  {copied === colour.hex ? <Check className="size-4" /> : <Copy className="size-4" />}
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Export actions */}
+          <div className="border-b-2 border-border p-4">
+            <label className="font-bold">Export</label>
+            <div className="segmented mt-3 grid-cols-2 -mx-4 -mb-4 border-x-0 border-b-0">
+              <Button variant="outline" onClick={copyAllHex} className="gap-2">
+                {copied === "all" ? <Check className="size-4" /> : <Copy className="size-4" />}
+                Copy All
+              </Button>
+              <Button variant="outline" onClick={copyAsCssVariables} className="gap-2">
+                {copied === "css" ? <Check className="size-4" /> : <Copy className="size-4" />}
+                CSS Variables
+              </Button>
+            </div>
+          </div>
+        </>
       )}
 
-      {/* All Harmonies Preview */}
-      <div className="space-y-3">
+      {/* ── All Harmonies preview table ───────────────────────────────── */}
+      <div className="p-4">
         <label className="font-bold">All Harmonies</label>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {Object.entries(HARMONIES).map(([key, info]) => {
+        <div className="-mx-4 -mb-4 mt-3 border-t border-border">
+          {harmonyKeys.map((key) => {
             const harmonyColours = generateHarmony(baseColour, key as HarmonyType);
             if (!harmonyColours) return null;
 
@@ -363,26 +407,43 @@ export function HarmonyGennyTool() {
               <button
                 key={key}
                 onClick={() => setHarmonyType(key as HarmonyType)}
-                className={`p-4 rounded-lg border text-left transition-colors ${
-                  isActive ? "bg-primary/10 border-primary" : "bg-card hover:border-primary/50"
-                }`}
+                className={cn(
+                  "flex w-full items-stretch border-b border-border last:border-b-0",
+                  "transition-colors",
+                  isActive ? "bg-muted" : "hover:bg-muted/50"
+                )}
               >
-                <div className="flex gap-1 mb-2">
+                {/* Strip of colours */}
+                <div className="flex h-12 w-32 shrink-0 border-r border-border">
                   {harmonyColours.map((c, i) => (
                     <div
                       key={i}
-                      className="flex-1 h-8 first:rounded-l-md last:rounded-r-md"
+                      className="flex-1"
                       style={{ backgroundColor: c.hex }}
                     />
                   ))}
                 </div>
-                <div className="font-bold text-sm">{info.name}</div>
-                <div className="text-xs text-muted-foreground">{info.description}</div>
+
+                {/* Name + description */}
+                <div className="flex min-w-0 flex-1 flex-col justify-center px-4 text-left">
+                  <span className={cn("text-sm font-bold leading-tight", isActive && "text-primary")}>
+                    {HARMONIES[key].name}
+                  </span>
+                  <span className="mt-0.5 truncate text-xs text-muted-foreground">
+                    {HARMONIES[key].description}
+                  </span>
+                </div>
+
+                {/* Active indicator cell */}
+                <div className="flex w-8 items-center justify-center border-l border-border text-muted-foreground">
+                  {isActive && <Check className="size-3.5 text-primary" />}
+                </div>
               </button>
             );
           })}
         </div>
       </div>
+
     </div>
   );
 }

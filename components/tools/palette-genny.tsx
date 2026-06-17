@@ -1,12 +1,21 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Copy, Check, Plus, Minus, Shuffle, Download, Lock, Unlock, Trash2, Wind } from "lucide-react";
+import { Copy, Check, Plus, Minus, Shuffle, Download, Lock, Unlock, Trash2, Wind, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { getColourName } from "@/lib/colour-names";
-import { useBreakpoint, useIsTouchDevice } from "@/hooks/use-breakpoint";
+import { useBreakpoint } from "@/hooks/use-breakpoint";
 import {
   generatePalette,
   getStrategiesByCategory,
@@ -119,12 +128,11 @@ export function PaletteGennyTool() {
     }))
   );
   const [strategy, setStrategy] = useState<PaletteStrategy>("random-cohesive");
+  const [strategyOpen, setStrategyOpen] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loadedFromUrl, setLoadedFromUrl] = useState(false);
   const hasInitializedFromUrl = useRef(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const paletteRef = useRef<HTMLDivElement>(null);
 
   // Hidden export mode (press P to toggle)
   const { notation } = useColourNotation();
@@ -134,7 +142,6 @@ export function PaletteGennyTool() {
   const [importColorsText, setImportColorsText] = useState("");
 
   const breakpoint = useBreakpoint();
-  const isTouchDevice = useIsTouchDevice();
 
   // Load colors from URL on mount (client-side only)
   useEffect(() => {
@@ -179,7 +186,6 @@ export function PaletteGennyTool() {
         };
       });
     });
-    setSelectedId(null);
   }, [strategy]);
 
   // Keyboard shortcuts
@@ -202,25 +208,6 @@ export function PaletteGennyTool() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [regeneratePalette]);
-
-  // Click outside to deselect
-  useEffect(() => {
-    if (!selectedId || !isTouchDevice) return;
-
-    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
-      const target = e.target as HTMLElement;
-      if (paletteRef.current && !paletteRef.current.contains(target)) {
-        setSelectedId(null);
-      }
-    };
-
-    document.addEventListener("click", handleClickOutside);
-    document.addEventListener("touchend", handleClickOutside);
-    return () => {
-      document.removeEventListener("click", handleClickOutside);
-      document.removeEventListener("touchend", handleClickOutside);
-    };
-  }, [selectedId, isTouchDevice]);
 
   // Add colour
   const addColour = useCallback(() => {
@@ -247,8 +234,7 @@ export function PaletteGennyTool() {
   const removeColour = useCallback((id: string) => {
     if (colours.length <= MIN_COLOURS) return;
     setColours(prev => prev.filter(c => c.id !== id));
-    if (selectedId === id) setSelectedId(null);
-  }, [colours.length, selectedId]);
+  }, [colours.length]);
 
   // Toggle lock
   const toggleLock = useCallback((id: string) => {
@@ -263,16 +249,6 @@ export function PaletteGennyTool() {
       c.id === id ? { ...c, hex } : c
     ));
   }, []);
-
-  // Handle swatch click/tap
-  const handleSwatchClick = useCallback((id: string, e: React.MouseEvent) => {
-    // Ignore clicks that originate inside an opted-out control (e.g. the colour picker).
-    if ((e.target as HTMLElement).closest("[data-no-select]")) return;
-    if (isTouchDevice) {
-      e.stopPropagation();
-      setSelectedId(prev => prev === id ? null : id);
-    }
-  }, [isTouchDevice]);
 
   // Copy all colours
   const copyAllHex = useCallback(() => {
@@ -400,157 +376,130 @@ export function PaletteGennyTool() {
 
   return (
     <div className="space-y-6">
-      {/* Main Palette Display */}
-      <div
-        ref={paletteRef}
-        className={cn(
-          "relative rounded-2xl overflow-hidden shadow-xl shadow-black/10 border border-border/50",
-          "transition-all duration-300 ease-out"
-        )}
-        style={{ minHeight: shouldUseGrid ? "auto" : "320px" }}
-      >
+      {/* Main editor frame */}
+      <div className="border-2 border-border">
+      {/* Main Palette Display — flush periodic-table columns */}
+      <div className="border-b-2 border-border">
         <div
           className={cn(
-            "transition-all duration-300 ease-out",
-            shouldUseGrid ? "grid gap-1 p-1" : "flex h-80"
+            "gap-px bg-border",
+            shouldUseGrid ? "grid" : "flex h-80"
           )}
-          style={shouldUseGrid ? {
-            gridTemplateColumns: breakpoint === "mobile" ? "repeat(2, 1fr)" : "repeat(3, 1fr)",
-          } : undefined}
+          style={
+            shouldUseGrid
+              ? {
+                  gridTemplateColumns:
+                    breakpoint === "mobile" ? "repeat(2, 1fr)" : "repeat(3, 1fr)",
+                }
+              : undefined
+          }
         >
-          {colours.map((colour) => {
-            const isSelected = selectedId === colour.id;
-            const showControls = isSelected || !isTouchDevice;
+          {colours.map((colour, index) => {
+            const contrast = getContrastText(colour.hex);
+            const value =
+              notation === "hex"
+                ? colour.hex.toUpperCase()
+                : formatColour(colour.hex, notation);
+            const name = getColourName(colour.hex);
+            const isCopied = copied === colour.id;
+            const atMin = colours.length <= MIN_COLOURS;
 
             return (
               <div
                 key={colour.id}
                 data-swatch
-                onClick={(e) => handleSwatchClick(colour.id, e)}
                 className={cn(
-                  "relative cursor-pointer transition-all duration-300 ease-out",
-                  shouldUseGrid
-                    ? "aspect-square rounded-xl"
-                    : "flex-1",
-                  // Flex mode: expand on hover/select
-                  !shouldUseGrid && isSelected && "flex-[1.5]",
-                  !shouldUseGrid && !isTouchDevice && "group hover:flex-[1.5]",
-                  // Grid mode: highlight on select
-                  shouldUseGrid && isSelected && "ring-4 ring-white/60 scale-[1.03] z-10 shadow-2xl",
+                  "group flex min-w-0 flex-col bg-background",
+                  !shouldUseGrid && "flex-1"
                 )}
-                style={{ backgroundColor: colour.hex }}
               >
-                {/* Colour overlay controls */}
-                <div
+                {/* Colour fill — click to edit */}
+                <label
+                  data-no-select
+                  title="Click to edit colour"
                   className={cn(
-                    "absolute inset-0 flex flex-col items-center justify-center",
-                    "transition-opacity duration-200",
-                    showControls ? "opacity-100" : "opacity-0",
-                    !isTouchDevice && "group-hover:opacity-100"
+                    "relative block cursor-pointer",
+                    shouldUseGrid ? "aspect-square" : "flex-1"
                   )}
                 >
-                  {/* Top controls row */}
-                  <div className="absolute top-3 left-3 right-3 flex justify-between">
-                    {/* Delete button (if more than MIN) */}
-                    {colours.length > MIN_COLOURS && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); removeColour(colour.id); }}
-                        className={cn(
-                          "p-2 rounded-full transition-all",
-                          "bg-black/20 hover:bg-red-500/80",
-                          "hover:scale-110 active:scale-95"
-                        )}
-                        style={{ color: getContrastText(colour.hex) }}
-                      >
-                        <Trash2 className="size-4" />
-                      </button>
-                    )}
-                    {colours.length <= MIN_COLOURS && <div />}
+                  <div
+                    className="absolute inset-0"
+                    style={{ backgroundColor: colour.hex }}
+                    aria-hidden
+                  />
+                  <input
+                    type="color"
+                    value={colour.hex}
+                    onChange={(e) => updateColour(colour.id, e.target.value)}
+                    aria-label={`Edit colour ${value}`}
+                    className="absolute inset-0 size-full cursor-pointer opacity-0"
+                  />
+                  {/* Index — atomic-number flourish */}
+                  <span
+                    className="pointer-events-none absolute left-1.5 top-1 font-mono text-[10px] font-bold tabular-nums opacity-50"
+                    style={{ color: contrast }}
+                  >
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  {/* Lock state */}
+                  {colour.locked && (
+                    <Lock
+                      className="pointer-events-none absolute right-1.5 top-1.5 size-3.5 drop-shadow-sm"
+                      style={{ color: contrast }}
+                    />
+                  )}
+                </label>
 
-                    {/* Lock button */}
-                    <button
-                      onClick={(e) => { e.stopPropagation(); toggleLock(colour.id); }}
-                      className={cn(
-                        "p-2 rounded-full transition-all",
-                        "hover:scale-110 active:scale-95",
-                        colour.locked
-                          ? "bg-white/90 text-black shadow-lg"
-                          : "bg-black/20 hover:bg-black/40"
-                      )}
-                      style={{ color: colour.locked ? "#000" : getContrastText(colour.hex) }}
-                    >
-                      {colour.locked ? <Lock className="size-4" /> : <Unlock className="size-4" />}
-                    </button>
+                {/* Caption — text breathes */}
+                <div className="border-t border-border px-2 py-1.5 leading-tight">
+                  <div className="truncate font-mono text-sm font-bold tracking-tight">
+                    {value}
                   </div>
-
-                  {/* Center: Colour picker */}
-                  <label
-                    data-no-select
-                    className={cn(
-                      "cursor-pointer p-3 rounded-full transition-all",
-                      "bg-white/20 hover:bg-white/40 backdrop-blur-sm",
-                      "hover:scale-110 active:scale-95"
-                    )}
-                  >
-                    <input
-                      type="color"
-                      value={colour.hex}
-                      onChange={(e) => updateColour(colour.id, e.target.value)}
-                      className="sr-only"
-                    />
-                    <div
-                      className="size-8 rounded-full border-2 border-white shadow-lg"
-                      style={{ backgroundColor: colour.hex }}
-                    />
-                  </label>
-
-                  {/* Copy colour button */}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); copyToClipboard(formatColour(colour.hex, notation), colour.id); }}
-                    className={cn(
-                      "mt-3 px-4 py-2 rounded-full transition-all",
-                      "bg-white/20 hover:bg-white/40 backdrop-blur-sm",
-                      "font-mono text-sm font-semibold tracking-wider",
-                      "flex items-center gap-2",
-                      "hover:scale-105 active:scale-95",
-                      "drop-shadow-sm"
-                    )}
-                    style={{ color: getContrastText(colour.hex) }}
-                  >
-                    {copied === colour.id ? (
-                      <>
-                        <Check className="size-4" />
-                        Copied!
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="size-4" />
-                        {notation === "hex" ? colour.hex.toUpperCase() : formatColour(colour.hex, notation)}
-                      </>
-                    )}
-                  </button>
+                  <div className="truncate text-[11px] capitalize text-muted-foreground">
+                    {name}
+                  </div>
                 </div>
 
-                {/* Lock indicator (always visible when locked, outside of controls) */}
-                {colour.locked && !showControls && (
-                  <div className="absolute top-3 right-3 p-2 rounded-full bg-white/90 shadow-lg animate-in fade-in zoom-in duration-200">
-                    <Lock className="size-4 text-black" />
-                  </div>
-                )}
-
-                {/* Colour label at bottom (when controls not shown) */}
-                {!showControls && (
-                  <div
+                {/* Control bar — flush, hairline-divided */}
+                <div className="flex border-t border-border">
+                  <button
+                    type="button"
+                    onClick={() => toggleLock(colour.id)}
+                    aria-label={colour.locked ? "Unlock colour" : "Lock colour"}
+                    title={colour.locked ? "Unlock" : "Lock"}
                     className={cn(
-                      "absolute bottom-3 left-0 right-0 text-center",
-                      "font-mono text-sm font-semibold tracking-wider",
-                      "opacity-70 drop-shadow-sm"
+                      "flex h-9 flex-1 items-center justify-center transition-colors hover:bg-muted",
+                      colour.locked
+                        ? "text-primary"
+                        : "text-muted-foreground hover:text-foreground"
                     )}
-                    style={{ color: getContrastText(colour.hex) }}
                   >
-                    {notation === "hex" ? colour.hex.toUpperCase() : formatColour(colour.hex, notation)}
-                  </div>
-                )}
+                    {colour.locked ? (
+                      <Lock className="size-4" />
+                    ) : (
+                      <Unlock className="size-4" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(formatColour(colour.hex, notation), colour.id)}
+                    aria-label="Copy colour"
+                    title="Copy"
+                    className="flex h-9 flex-1 items-center justify-center border-l border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    {isCopied ? <Check className="size-4" /> : <Copy className="size-4" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeColour(colour.id)}
+                    disabled={atMin}
+                    aria-label="Remove colour"
+                    title="Remove"
+                    className="flex h-9 flex-1 items-center justify-center border-l border-border text-muted-foreground transition-colors hover:bg-muted hover:text-destructive disabled:pointer-events-none disabled:opacity-30"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
               </div>
             );
           })}
@@ -559,7 +508,7 @@ export function PaletteGennyTool() {
 
       {/* Hidden Export Mode Panel (press P to toggle) */}
       {exportMode && (
-        <div className="p-4 rounded-xl border-2 border-dashed border-yellow-500/50 bg-yellow-500/5 space-y-4">
+        <div className="p-4 border-b-2 border-dashed border-yellow-500/50 bg-yellow-500/5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-yellow-600 dark:text-yellow-400">Export to Collection (Dev Mode)</h3>
             <button
@@ -579,13 +528,13 @@ export function PaletteGennyTool() {
                 onChange={(e) => setExportName(e.target.value)}
                 placeholder="e.g. Ocean Sunset"
                 className={cn(
-                  "w-full h-10 px-3 rounded-lg border bg-background",
+                  "w-full h-10 px-3 border bg-background",
                   "focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 )}
               />
               {exportId && (
                 <p className="text-xs text-muted-foreground">
-                  ID: <code className="px-1 py-0.5 rounded bg-muted">{exportId}</code>
+                  ID: <code className="px-1 py-0.5 bg-muted">{exportId}</code>
                 </p>
               )}
             </div>
@@ -615,7 +564,7 @@ export function PaletteGennyTool() {
                 placeholder={"1a2744\n2c4a7c\nc9a227\nf4e4ba"}
                 rows={4}
                 className={cn(
-                  "flex-1 px-3 py-2 rounded-lg border bg-background font-mono text-sm",
+                  "flex-1 px-3 py-2 border bg-background font-mono text-sm",
                   "focus:ring-2 focus:ring-primary/20 focus:border-primary",
                   "resize-none"
                 )}
@@ -645,7 +594,7 @@ export function PaletteGennyTool() {
                   {copied === "export-json" ? "Copied!" : "Copy"}
                 </Button>
               </div>
-              <pre className="p-3 rounded-lg bg-muted text-xs font-mono overflow-x-auto">
+              <pre className="p-3 bg-muted text-xs font-mono overflow-x-auto">
                 {exportJson}
               </pre>
             </div>
@@ -654,83 +603,118 @@ export function PaletteGennyTool() {
       )}
 
       {/* Controls */}
-      <div className="flex flex-wrap items-center gap-3">
-        {/* Generate button */}
+      <div className="flex min-h-16 items-stretch border-b-2 border-border">
+        {/* Strategy selector (left) — combobox with name + description fused */}
+        <Popover open={strategyOpen} onOpenChange={setStrategyOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              role="combobox"
+              aria-expanded={strategyOpen}
+              aria-label="Choose palette strategy"
+              className="flex min-w-0 flex-1 items-center gap-3 border-r border-border px-4 py-2 text-left transition-colors hover:bg-muted/50"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-bold leading-tight">
+                  {STRATEGY_INFO[strategy].name}
+                </span>
+                <span className="block truncate text-xs leading-tight text-muted-foreground">
+                  {STRATEGY_INFO[strategy].description}
+                </span>
+              </span>
+              <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-[min(24rem,90vw)] p-0">
+            <Command>
+              <CommandInput placeholder="Search strategies…" />
+              <CommandList>
+                <CommandEmpty>No strategy found.</CommandEmpty>
+                {Object.entries(STRATEGY_CATEGORIES).map(([category, label]) => (
+                  <CommandGroup key={category} heading={label}>
+                    {groupedStrategies[category as keyof typeof groupedStrategies]?.map(({ key, info }) => (
+                      <CommandItem
+                        key={key}
+                        value={`${info.name} ${info.description}`}
+                        onSelect={() => {
+                          setStrategy(key as PaletteStrategy);
+                          setStrategyOpen(false);
+                        }}
+                        className="flex items-start gap-2"
+                      >
+                        <Check
+                          className={cn(
+                            "mt-0.5 size-4 shrink-0",
+                            strategy === key ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        <span className="min-w-0 flex-1">
+                          <span className="block font-bold leading-tight">{info.name}</span>
+                          <span className="block text-xs leading-tight text-muted-foreground">
+                            {info.description}
+                          </span>
+                        </span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                ))}
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+
+        {/* Generate (centre, big, primary) */}
         <Button
           onClick={regeneratePalette}
-          className="gap-2 transition-transform hover:scale-105 active:scale-95"
-          size="lg"
+          className="h-auto flex-[1.3] gap-2 rounded-none border-0 text-base font-bold"
         >
-          <Shuffle className="size-4" />
+          <Shuffle className="size-5" />
           Generate
         </Button>
 
-        {/* Strategy selector with grouped options */}
-        <Select value={strategy} onValueChange={(v) => setStrategy(v as PaletteStrategy)}>
-          <SelectTrigger className="h-11 rounded-xl border-2 font-medium">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.entries(STRATEGY_CATEGORIES).map(([category, label]) => (
-              <SelectGroup key={category}>
-                <SelectLabel>{label}</SelectLabel>
-                {groupedStrategies[category as keyof typeof groupedStrategies]?.map(({ key, info }) => (
-                  <SelectItem key={key} value={key}>{info.name}</SelectItem>
-                ))}
-              </SelectGroup>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* Add/Remove buttons */}
-        <div className="flex items-center gap-1 ml-auto">
-          <Button
-            variant="outline"
-            size="icon"
+        {/* Colour count (right) */}
+        <div className="flex items-stretch border-l border-border">
+          <button
+            type="button"
             onClick={() => removeColour(colours[colours.length - 1].id)}
             disabled={colours.length <= MIN_COLOURS}
-            className="transition-transform hover:scale-105 active:scale-95"
+            aria-label="Remove colour"
+            className="flex w-12 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
           >
             <Minus className="size-4" />
-          </Button>
-          <span className="px-3 font-mono text-sm font-bold min-w-[3ch] text-center">
+          </button>
+          <span className="flex min-w-12 items-center justify-center border-x border-border px-2 font-mono text-sm font-bold">
             {colours.length}
           </span>
-          <Button
-            variant="outline"
-            size="icon"
+          <button
+            type="button"
             onClick={addColour}
             disabled={colours.length >= MAX_COLOURS}
-            className="transition-transform hover:scale-105 active:scale-95"
+            aria-label="Add colour"
+            className="flex w-12 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
           >
             <Plus className="size-4" />
-          </Button>
+          </button>
         </div>
       </div>
 
-      {/* Strategy description */}
-      <div className="p-4 rounded-xl border bg-muted/30 text-sm text-muted-foreground">
-        <span className="font-bold text-foreground">{STRATEGY_INFO[strategy].name}:</span>{" "}
-        {STRATEGY_INFO[strategy].description}
-      </div>
-
       {/* Export Options */}
-      <div className="space-y-3">
+      <div className="space-y-3 border-b-2 border-border p-4">
         <label className="font-bold">Export</label>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={copyAllHex} className="gap-2 transition-transform hover:scale-105 active:scale-95">
+        <div className="segmented grid-cols-2 sm:grid-cols-4 -mx-4 -mb-4 border-x-0 border-b-0">
+          <Button variant="outline" onClick={copyAllHex} className="gap-2">
             {copied === "all-hex" ? <Check className="size-4" /> : <Copy className="size-4" />}
             Copy Colours
           </Button>
-          <Button variant="outline" onClick={copyAsCss} className="gap-2 transition-transform hover:scale-105 active:scale-95">
+          <Button variant="outline" onClick={copyAsCss} className="gap-2">
             {copied === "css" ? <Check className="size-4" /> : <Copy className="size-4" />}
             CSS Variables
           </Button>
-          <Button variant="outline" onClick={copyAsJson} className="gap-2 transition-transform hover:scale-105 active:scale-95">
+          <Button variant="outline" onClick={copyAsJson} className="gap-2">
             {copied === "json" ? <Check className="size-4" /> : <Copy className="size-4" />}
             JSON
           </Button>
-          <Button variant="outline" onClick={downloadImage} className="gap-2 transition-transform hover:scale-105 active:scale-95">
+          <Button variant="outline" onClick={downloadImage} className="gap-2">
             <Download className="size-4" />
             Download Image
           </Button>
@@ -738,9 +722,9 @@ export function PaletteGennyTool() {
       </div>
 
       {/* Colour List (detailed view) */}
-      <div className="space-y-3">
+      <div className="p-4">
         <label className="font-bold">Colours</label>
-        <div className="grid gap-2">
+        <div className="-mx-4 -mb-4 mt-3 border-t border-border">
           {colours.map((colour) => {
             const rgb = hexToRgb(colour.hex);
             const oklch = rgb ? rgbToOklch(...rgb) : null;
@@ -750,33 +734,30 @@ export function PaletteGennyTool() {
               <div
                 key={colour.id}
                 className={cn(
-                  "flex items-center gap-4 p-4 rounded-xl",
-                  "border border-border/50 bg-card",
-                  "hover:border-primary/30 hover:bg-card/80",
-                  "transition-all duration-200",
+                  "flex items-stretch",
+                  "border-b border-border bg-card",
+                  "hover:bg-card/80",
+                  "transition-colors duration-200",
                   "group"
                 )}
               >
                 {/* Swatch */}
-                <label className="cursor-pointer">
+                <label className="relative w-16 shrink-0 cursor-pointer border-r border-border">
                   <input
                     type="color"
                     value={colour.hex}
                     onChange={(e) => updateColour(colour.id, e.target.value)}
-                    className="sr-only"
+                    className="absolute inset-0 size-full cursor-pointer opacity-0"
                   />
                   <div
-                    className={cn(
-                      "size-14 rounded-lg border border-black/10",
-                      "shadow-inner",
-                      "group-hover:scale-105 transition-transform"
-                    )}
+                    className="size-full"
                     style={{ backgroundColor: colour.hex }}
+                    aria-hidden
                   />
                 </label>
 
                 {/* Colour info */}
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 p-4">
                   <div className="flex items-center gap-3">
                     <span className="font-mono font-bold text-lg tracking-wide">
                       {notation === "hex" ? colour.hex.toUpperCase() : formatColour(colour.hex, notation)}
@@ -795,7 +776,7 @@ export function PaletteGennyTool() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 border-l border-border px-2">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -845,13 +826,14 @@ export function PaletteGennyTool() {
           })}
         </div>
       </div>
+      </div>
 
       {/* Hidden canvas for image export */}
       <canvas ref={canvasRef} className="hidden" />
 
       {/* Keyboard shortcuts hint */}
       <div className="text-xs text-muted-foreground text-center pt-4 border-t">
-        Press <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">Space</kbd> to generate a new palette
+        Press <kbd className="px-1.5 py-0.5 bg-muted font-mono">Space</kbd> to generate a new palette
       </div>
     </div>
   );

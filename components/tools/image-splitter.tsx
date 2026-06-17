@@ -125,126 +125,161 @@ export function ImageSplitterTool() {
     <div className="space-y-6">
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* Drop Zone */}
-      {!sourceImage && (
-        <div
-          onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
-          className="border-2 border-dashed rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
-          onClick={() => document.getElementById("splitter-input")?.click()}
-        >
-          <input
-            id="splitter-input"
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-          <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-lg font-medium">Drop image here</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            PNG, JPG, or any image format, or paste
-          </p>
-        </div>
-      )}
-
-      {/* Source Preview & Settings */}
-      {sourceImage && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <label className="font-bold">Source Image</label>
-            <Button variant="ghost" size="sm" onClick={clear}>
-              <Trash2 className="size-4 mr-2" /> Clear
-            </Button>
-          </div>
-
-          {/* Preview with grid overlay */}
-          <div className="relative inline-block">
-            <img
-              src={sourceImage}
-              alt="Source"
-              className="max-w-full max-h-80 rounded border"
+      <div className="border-2 border-border">
+        {/* Drop Zone */}
+        {!sourceImage && (
+          <div
+            onDrop={handleDrop}
+            onDragOver={(e) => e.preventDefault()}
+            className="p-8 text-center cursor-pointer hover:bg-muted/30 transition-colors"
+            onClick={() => document.getElementById("splitter-input")?.click()}
+          >
+            <input
+              id="splitter-input"
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
             />
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                display: "grid",
-                gridTemplateColumns: `repeat(${cols}, 1fr)`,
-                gridTemplateRows: `repeat(${rows}, 1fr)`,
-              }}
-            >
-              {Array.from({ length: rows * cols }).map((_, i) => (
-                <div
-                  key={i}
-                  className="border border-primary/50 border-dashed"
+            <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-lg font-medium">Drop image here</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              PNG, JPG, or any image format, or paste
+            </p>
+          </div>
+        )}
+
+        {/* Source Preview & Settings */}
+        {sourceImage && (
+          <>
+            {/* Header bar */}
+            <div className="flex min-h-14 items-stretch border-b-2 border-border">
+              <span className="flex flex-1 items-center px-4 font-bold">Source Image</span>
+              <Button
+                variant="ghost"
+                onClick={clear}
+                className="h-auto gap-2 self-stretch rounded-none border-l border-border px-5"
+              >
+                <Trash2 className="size-4" />
+                Clear
+              </Button>
+            </div>
+
+            {/* Preview with grid overlay */}
+            <div className="border-b-2 border-border bg-muted/30 p-4 flex justify-center">
+              <div className="relative inline-block">
+                <img
+                  src={sourceImage}
+                  alt="Source"
+                  className="max-w-full max-h-80"
                 />
-              ))}
-            </div>
-          </div>
-
-          {/* Grid Settings */}
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-            <div className="space-y-2">
-              <label className="font-bold text-sm">Columns</label>
-              <Input
-                type="number"
-                min={1}
-                max={20}
-                value={cols}
-                onChange={(e) => {
-                  setCols(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)));
-                  setTiles([]);
-                }}
-                className="h-12 text-lg"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="font-bold text-sm">Rows</label>
-              <Input
-                type="number"
-                min={1}
-                max={20}
-                value={rows}
-                onChange={(e) => {
-                  setRows(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)));
-                  setTiles([]);
-                }}
-                className="h-12 text-lg"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="font-bold text-sm">Tile Size</label>
-              <div className="h-12 flex items-center text-muted-foreground">
-                {tileWidth} × {tileHeight} px
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: `repeat(${cols}, 1fr)`,
+                    gridTemplateRows: `repeat(${rows}, 1fr)`,
+                  }}
+                >
+                  {Array.from({ length: rows * cols }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="border border-primary/50 border-dashed"
+                    />
+                  ))}
+                </div>
               </div>
             </div>
-            <div className="space-y-2">
-              <label className="font-bold text-sm">Total Tiles</label>
-              <div className="h-12 flex items-center text-muted-foreground">
-                {rows * cols} tiles
+
+            {/* Grid Settings */}
+            <div className="border-b-2 border-border">
+              <div className="flex border-b border-border">
+                {/* Columns */}
+                <div className="flex-1 border-r border-border">
+                  <div className="px-4 pt-3 pb-1">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Columns</label>
+                  </div>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={cols}
+                    onChange={(e) => {
+                      setCols(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)));
+                      setTiles([]);
+                    }}
+                    className="h-12 border-0 border-t border-border text-lg font-bold bg-transparent"
+                  />
+                </div>
+                {/* Rows */}
+                <div className="flex-1 border-r border-border">
+                  <div className="px-4 pt-3 pb-1">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Rows</label>
+                  </div>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={rows}
+                    onChange={(e) => {
+                      setRows(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)));
+                      setTiles([]);
+                    }}
+                    className="h-12 border-0 border-t border-border text-lg font-bold bg-transparent"
+                  />
+                </div>
+                {/* Tile Size */}
+                <div className="flex-1 border-r border-border">
+                  <div className="px-4 pt-3 pb-1">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Tile Size</label>
+                  </div>
+                  <div className="h-12 flex items-center px-3 border-t border-border text-muted-foreground" style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>
+                    {tileWidth} × {tileHeight} px
+                  </div>
+                </div>
+                {/* Total Tiles */}
+                <div className="flex-1">
+                  <div className="px-4 pt-3 pb-1">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Total</label>
+                  </div>
+                  <div className="h-12 flex items-center px-3 border-t border-border text-muted-foreground" style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>
+                    {rows * cols} tiles
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
-          <Button size="lg" className="w-full h-14" onClick={splitImage}>
-            <Grid3X3 className="size-5 mr-2" />
-            Split Image into {rows * cols} Tiles
-          </Button>
-        </div>
-      )}
+            {/* Split Button */}
+            <Button
+              size="lg"
+              className="w-full h-14 text-lg font-bold rounded-none border-0"
+              onClick={splitImage}
+            >
+              <Grid3X3 className="size-5 mr-2" />
+              Split Image into {rows * cols} Tiles
+            </Button>
+          </>
+        )}
+      </div>
 
       {/* Generated Tiles */}
       {tiles.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <label className="font-bold">Generated Tiles</label>
-            <Button onClick={downloadAll}>
-              <Download className="size-4 mr-2" /> Download All
+        <div className="border-2 border-border">
+          {/* Header bar */}
+          <div className="flex min-h-14 items-stretch border-b-2 border-border">
+            <span className="flex flex-1 items-center px-4 font-bold">Generated Tiles</span>
+            <Button
+              onClick={downloadAll}
+              className="h-auto gap-2 self-stretch rounded-none border-l border-border px-6 font-semibold"
+            >
+              <Download className="size-4" />
+              Download All
             </Button>
           </div>
 
+          {/* Tile grid — 1px gap via segmented pattern */}
           <div
-            className="grid gap-2"
+            className="grid bg-border gap-px"
             style={{
               gridTemplateColumns: `repeat(${cols}, 1fr)`,
             }}
@@ -253,7 +288,7 @@ export function ImageSplitterTool() {
               <button
                 key={`${tile.row}-${tile.col}`}
                 onClick={() => downloadTile(tile)}
-                className="rounded border bg-card hover:border-primary/50 transition-colors overflow-hidden group relative"
+                className="bg-card hover:bg-muted transition-colors overflow-hidden group relative"
               >
                 <img
                   src={tile.dataUrl}
@@ -261,7 +296,7 @@ export function ImageSplitterTool() {
                   className="w-full h-auto"
                 />
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-white text-sm font-medium">
+                  <span className="text-white text-sm font-medium" style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>
                     {tile.row + 1}-{tile.col + 1}
                   </span>
                 </div>

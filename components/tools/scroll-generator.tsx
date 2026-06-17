@@ -3,7 +3,6 @@
 import { useState, useCallback, useRef, useMemo } from "react";
 import { Upload, Download, Trash2, GalleryHorizontal, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { useFilePaste } from "@/hooks/use-file-paste";
 
@@ -214,129 +213,58 @@ export function ScrollGeneratorTool() {
     <div className="space-y-6">
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* Drop Zone */}
-      {!sourceImage && (
-        <div
-          onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
-          className="border-2 border-dashed rounded-xl p-12 text-center hover:border-primary/50 transition-colors cursor-pointer"
-          onClick={() => document.getElementById("scroll-input")?.click()}
-        >
-          <input
-            id="scroll-input"
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-          <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-lg font-medium">Drop panoramic image here</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            or click to select, or paste
-          </p>
-        </div>
-      )}
-
-      {/* Main workspace */}
-      {sourceImage && (
-        <div className="space-y-5">
-          {/* Source info bar */}
-          <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
-            <ImageIcon className="size-4 text-muted-foreground shrink-0" />
-            <span className="text-sm truncate">{fileName}</span>
-            <span className="text-xs text-muted-foreground shrink-0">
-              {imageSize.width} × {imageSize.height}
-            </span>
-            <Button variant="ghost" size="sm" onClick={clear} className="ml-auto shrink-0">
-              <Trash2 className="size-4" />
-            </Button>
+      <div className="border-2 border-border">
+        {/* Drop Zone */}
+        {!sourceImage && (
+          <div
+            onDrop={handleDrop}
+            onDragOver={(e) => e.preventDefault()}
+            className="p-12 text-center hover:bg-muted/30 transition-colors cursor-pointer"
+            onClick={() => document.getElementById("scroll-input")?.click()}
+          >
+            <input
+              id="scroll-input"
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-lg font-bold">Drop panoramic image here</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              or click to select, or paste
+            </p>
           </div>
+        )}
 
-          {/* Controls + Preview side-by-side */}
-          <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-            {/* Controls */}
-            <div className="space-y-5">
-              {/* Tile Shape */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Tile Shape</label>
-                <Tabs value={String(selectedRatio)} onValueChange={(v) => { setSelectedRatio(Number(v)); setTiles([]); }}>
-                  <TabsList className="w-full">
-                    {aspectRatios.map((ratio, i) => (
-                      <TabsTrigger key={ratio.name} value={String(i)}>{ratio.label}</TabsTrigger>
-                    ))}
-                  </TabsList>
-                </Tabs>
+        {/* Main workspace */}
+        {sourceImage && (
+          <>
+            {/* Source info bar */}
+            <div className="flex min-h-12 items-stretch border-b-2 border-border">
+              <div className="flex flex-1 items-center gap-3 px-4">
+                <ImageIcon className="size-4 text-muted-foreground shrink-0" />
+                <span className="text-sm truncate font-bold">{fileName}</span>
+                <span className="text-xs text-muted-foreground shrink-0">
+                  {imageSize.width} × {imageSize.height}
+                </span>
               </div>
-
-              {/* Edge Fill — always visible so it doesn't cause layout shift */}
-              <div className={cn("space-y-3 transition-opacity", tileInfo.needsFill ? "opacity-100" : "opacity-40 pointer-events-none")}>
-                <label className="text-sm font-medium text-muted-foreground">
-                  Edge Fill
-                  {!tileInfo.needsFill && <span className="ml-1.5 text-xs font-normal">(not needed)</span>}
-                </label>
-                <Tabs value={fillMode} onValueChange={(v) => { setFillMode(v as FillMode); setTiles([]); }}>
-                  <TabsList className="w-full">
-                    <TabsTrigger value="blur">Blurred</TabsTrigger>
-                    <TabsTrigger value="color">Solid Colour</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-
-                {fillMode === "color" && (
-                  <div className="flex flex-wrap gap-2 items-center">
-                    {presetColors.map((color) => (
-                      <button
-                        key={color}
-                        onClick={() => { setFillColor(color); setTiles([]); }}
-                        className={cn(
-                          "size-8 rounded-lg border-2 transition-all",
-                          fillColor === color
-                            ? "border-primary ring-2 ring-primary/30 scale-110"
-                            : "border-muted hover:border-primary/50"
-                        )}
-                        style={{ backgroundColor: color }}
-                        title={color}
-                      />
-                    ))}
-                    <div className="relative">
-                      <input
-                        type="color"
-                        value={fillColor}
-                        onChange={(e) => { setFillColor(e.target.value); setTiles([]); }}
-                        className="absolute inset-0 opacity-0 cursor-pointer"
-                      />
-                      <div className="size-8 rounded-lg border-2 border-dashed border-muted flex items-center justify-center text-muted-foreground hover:border-primary/50 transition-colors text-xs">
-                        +
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Stats + Generate */}
-              <div className="space-y-3">
-                <div className="flex items-baseline gap-4 text-sm">
-                  <span className="font-bold text-2xl tabular-nums">{tileInfo.slideCount}</span>
-                  <span className="text-muted-foreground">
-                    slides at {tileInfo.tileWidth} × {tileInfo.tileHeight}
-                  </span>
-                  {tileInfo.needsFill ? (
-                    <span className="text-xs text-amber-500">+ edge fill</span>
-                  ) : (
-                    <span className="text-xs text-primary">perfect fit</span>
-                  )}
-                </div>
-
-                <Button size="lg" className="w-full" onClick={generateTiles}>
-                  <GalleryHorizontal className="size-4 mr-2" />
-                  Generate Slides
-                </Button>
-              </div>
+              <Button
+                variant="ghost"
+                onClick={clear}
+                className="h-auto self-stretch rounded-none border-l border-border px-4 gap-2"
+              >
+                <Trash2 className="size-4" />
+                Clear
+              </Button>
             </div>
 
-            {/* Source preview with grid overlay */}
-            <div className="space-y-2 min-w-0">
-              <label className="text-sm font-medium text-muted-foreground">Slice Preview</label>
-              <div className="relative rounded-lg overflow-hidden shadow-lg ring-1 ring-border">
+            {/* Slice Preview */}
+            <div className="border-b-2 border-border">
+              <div className="px-4 pt-4 pb-2">
+                <label className="font-bold block">Slice Preview</label>
+              </div>
+              <div className="relative overflow-hidden border-t border-border">
                 <img
                   src={sourceImage}
                   alt="Source"
@@ -355,7 +283,7 @@ export function ScrollGeneratorTool() {
                         key={i}
                         className="border-x border-white/40 border-dashed first:border-l-0 last:border-r-0 relative"
                       >
-                        <span className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs px-2.5 py-0.5 rounded-full font-medium shadow-sm">
+                        <span className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs px-2.5 py-0.5 font-medium shadow-sm">
                           {i + 1}
                         </span>
                       </div>
@@ -364,36 +292,143 @@ export function ScrollGeneratorTool() {
                 )}
               </div>
             </div>
-          </div>
-        </div>
-      )}
+
+            {/* Tile Shape */}
+            <div className="border-b-2 border-border p-4">
+              <label className="font-bold block mb-3">Tile Shape</label>
+              <div className="segmented grid-cols-2 -mx-4 border-x-0">
+                {aspectRatios.map((ratio, i) => (
+                  <Button
+                    key={ratio.name}
+                    variant={selectedRatio === i ? "default" : "outline"}
+                    onClick={() => { setSelectedRatio(i); setTiles([]); }}
+                    size="lg"
+                    className="font-bold"
+                  >
+                    {ratio.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Edge Fill */}
+            <div className={cn("border-b-2 border-border p-4 transition-opacity", tileInfo.needsFill ? "opacity-100" : "opacity-40 pointer-events-none")}>
+              <label className="font-bold block mb-3">
+                Edge Fill
+                {!tileInfo.needsFill && <span className="ml-1.5 text-xs font-normal text-muted-foreground">(not needed)</span>}
+              </label>
+              <div className="segmented grid-cols-2 -mx-4 border-x-0 -mt-3 mb-3">
+                <Button
+                  variant={fillMode === "blur" ? "default" : "outline"}
+                  onClick={() => { setFillMode("blur"); setTiles([]); }}
+                  size="lg"
+                  className="font-bold"
+                >
+                  Blurred
+                </Button>
+                <Button
+                  variant={fillMode === "color" ? "default" : "outline"}
+                  onClick={() => { setFillMode("color"); setTiles([]); }}
+                  size="lg"
+                  className="font-bold"
+                >
+                  Solid Colour
+                </Button>
+              </div>
+
+              {fillMode === "color" && (
+                <div className="border border-border -mx-4 border-x-0">
+                  <div className="flex">
+                    {presetColors.map((color) => (
+                      <button
+                        key={color}
+                        onClick={() => { setFillColor(color); setTiles([]); }}
+                        className={cn(
+                          "flex-1 h-12 border-l border-border first:border-l-0 transition-all relative",
+                          fillColor === color ? "ring-2 ring-inset ring-primary" : ""
+                        )}
+                        style={{ backgroundColor: color }}
+                        title={color}
+                      />
+                    ))}
+                    <div className="relative flex-1 h-12 border-l border-border">
+                      <div
+                        className="size-full flex items-center justify-center text-muted-foreground text-xs font-bold"
+                        style={{ backgroundColor: !presetColors.includes(fillColor) ? fillColor : "transparent" }}
+                      >
+                        {presetColors.includes(fillColor) ? "+" : ""}
+                      </div>
+                      <input
+                        type="color"
+                        value={fillColor}
+                        onChange={(e) => { setFillColor(e.target.value); setTiles([]); }}
+                        className="absolute inset-0 size-full cursor-pointer opacity-0"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Stats row */}
+            <div className="flex items-center gap-4 px-4 py-3 border-b-2 border-border bg-muted/30">
+              <span className="font-bold text-2xl tabular-nums">{tileInfo.slideCount}</span>
+              <span className="text-sm text-muted-foreground flex-1">
+                slides at {tileInfo.tileWidth} × {tileInfo.tileHeight}
+              </span>
+              {tileInfo.needsFill ? (
+                <span className="text-xs text-amber-500 font-medium">+ edge fill</span>
+              ) : (
+                <span className="text-xs text-primary font-medium">perfect fit</span>
+              )}
+            </div>
+
+            {/* Generate primary action */}
+            <Button
+              size="lg"
+              className="w-full h-14 text-lg font-bold rounded-none border-0"
+              onClick={generateTiles}
+            >
+              <GalleryHorizontal className="size-5 mr-2" />
+              Generate Slides
+            </Button>
+          </>
+        )}
+      </div>
 
       {/* Generated Tiles */}
       {tiles.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-muted-foreground">
-              {tiles.length} slides ready
-            </label>
-            <Button variant="outline" onClick={downloadAll}>
-              <Download className="size-4 mr-2" /> Download All
+        <div className="border-2 border-border">
+          {/* Header bar */}
+          <div className="flex min-h-12 items-stretch border-b-2 border-border">
+            <div className="flex flex-1 items-center px-4">
+              <label className="font-bold">{tiles.length} slides ready</label>
+            </div>
+            <Button
+              variant="outline"
+              onClick={downloadAll}
+              className="h-auto self-stretch rounded-none border-0 border-l border-border px-5 gap-2"
+            >
+              <Download className="size-4" />
+              Download All
             </Button>
           </div>
 
-          <div className="flex gap-3 overflow-x-auto pb-4">
+          {/* Tile strip */}
+          <div className="flex gap-px overflow-x-auto bg-border p-0">
             {tiles.map((tile) => (
               <button
                 key={tile.index}
                 onClick={() => downloadTile(tile)}
-                className="flex-shrink-0 rounded-lg overflow-hidden group relative ring-1 ring-border hover:ring-primary transition-all shadow-sm hover:shadow-md"
+                className="flex-shrink-0 group relative bg-card"
               >
                 <img
                   src={tile.dataUrl}
                   alt={`Slide ${tile.index + 1}`}
-                  className="h-64 w-auto"
+                  className="h-64 w-auto block"
                 />
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-white text-sm font-medium">
+                  <span className="text-white text-sm font-bold">
                     Slide {tile.index + 1}
                   </span>
                   <Download className="size-5 text-white" />
@@ -402,9 +437,12 @@ export function ScrollGeneratorTool() {
             ))}
           </div>
 
-          <p className="text-sm text-muted-foreground text-center">
-            Post these slides in order to create a seamless scrolling carousel
-          </p>
+          {/* Footer caption */}
+          <div className="px-4 py-3 border-t-2 border-border bg-muted/30">
+            <p className="text-sm text-muted-foreground text-center">
+              Post these slides in order to create a seamless scrolling carousel
+            </p>
+          </div>
         </div>
       )}
     </div>

@@ -203,214 +203,279 @@ export function WatermarkerTool() {
       <canvas ref={canvasRef} className="hidden" />
 
       {/* Upload Areas */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        {/* Base Image */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-muted-foreground">Base Image</label>
-          {!baseImage ? (
-            <div
-              onDrop={handleBaseDrop}
-              onDragOver={(e) => e.preventDefault()}
-              className="border-2 border-dashed rounded-xl p-6 text-center hover:border-primary/50 transition-colors cursor-pointer h-44 flex flex-col items-center justify-center"
-              onClick={() => document.getElementById("base-input")?.click()}
-            >
-              <input
-                id="base-input"
-                type="file"
-                accept="image/*"
-                onChange={handleBaseSelect}
-                className="hidden"
-              />
-              <Upload className="size-8 text-muted-foreground mb-2" />
-              <p className="text-sm font-medium">Drop image here</p>
-              <p className="text-xs text-muted-foreground mt-1">or click to select</p>
+      <div className="border-2 border-border">
+        <div className="grid grid-cols-2 border-b border-border">
+          {/* Base Image */}
+          <div className="border-r border-border">
+            <div className="px-4 py-3 border-b border-border">
+              <label className="font-bold text-sm">Base Image</label>
             </div>
-          ) : (
-            <div className="relative group rounded-lg overflow-hidden ring-1 ring-border">
-              <img
-                src={baseImage}
-                alt="Base"
-                className="w-full h-44 object-contain bg-muted/30"
-              />
-              <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-between">
-                <span className="text-xs text-white/80">{baseSize.width} × {baseSize.height}</span>
-                <button
-                  onClick={() => { setBaseImage(null); setResultImage(null); }}
-                  className="p-1.5 rounded-md bg-black/40 text-white hover:bg-black/60 transition-colors"
-                >
-                  <Trash2 className="size-3.5" />
-                </button>
+            {!baseImage ? (
+              <div
+                onDrop={handleBaseDrop}
+                onDragOver={(e) => e.preventDefault()}
+                className="border-2 border-dashed border-border m-4 p-6 text-center hover:border-primary/50 transition-colors cursor-pointer h-36 flex flex-col items-center justify-center"
+                onClick={() => document.getElementById("base-input")?.click()}
+              >
+                <input
+                  id="base-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleBaseSelect}
+                  className="hidden"
+                />
+                <Upload className="size-7 text-muted-foreground mb-2" />
+                <p className="text-sm font-medium">Drop image here</p>
+                <p className="text-xs text-muted-foreground mt-0.5">or click to select</p>
               </div>
+            ) : (
+              <div className="relative">
+                <img
+                  src={baseImage}
+                  alt="Base"
+                  className="w-full h-44 object-contain bg-muted/30"
+                />
+                <div className="absolute inset-x-0 bottom-0 flex items-center justify-between min-h-8 bg-black/50">
+                  <span
+                    className="text-xs text-white/80 px-2"
+                    style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                  >
+                    {baseSize.width} × {baseSize.height}
+                  </span>
+                  <button
+                    onClick={() => { setBaseImage(null); setResultImage(null); }}
+                    className="flex items-center justify-center w-8 h-8 text-white/70 hover:text-white hover:bg-black/40 transition-colors border-l border-white/20"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Watermark */}
+          <div>
+            <div className="px-4 py-3 border-b border-border">
+              <label className="font-bold text-sm">Watermark (PNG)</label>
             </div>
-          )}
+            {!watermark ? (
+              <div
+                onDrop={handleWatermarkDrop}
+                onDragOver={(e) => e.preventDefault()}
+                className="border-2 border-dashed border-border m-4 p-6 text-center hover:border-primary/50 transition-colors cursor-pointer h-36 flex flex-col items-center justify-center"
+                onClick={() => document.getElementById("watermark-input")?.click()}
+              >
+                <input
+                  id="watermark-input"
+                  type="file"
+                  accept="image/png"
+                  onChange={handleWatermarkSelect}
+                  className="hidden"
+                />
+                <Upload className="size-7 text-muted-foreground mb-2" />
+                <p className="text-sm font-medium">Drop watermark here</p>
+                <p className="text-xs text-muted-foreground mt-0.5">transparent PNG</p>
+              </div>
+            ) : (
+              <div className="relative">
+                <div
+                  className="w-full h-44 flex items-center justify-center"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(45deg, #e0e0e0 25%, transparent 25%), linear-gradient(-45deg, #e0e0e0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e0e0e0 75%), linear-gradient(-45deg, transparent 75%, #e0e0e0 75%)",
+                    backgroundSize: "16px 16px",
+                    backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
+                  }}
+                >
+                  <img
+                    src={watermark}
+                    alt="Watermark"
+                    className="max-w-full max-h-full object-contain p-4"
+                  />
+                </div>
+                <div className="absolute inset-x-0 bottom-0 flex items-center justify-between min-h-8 bg-black/50">
+                  <span
+                    className="text-xs text-white/80 px-2"
+                    style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                  >
+                    {watermarkSize.width} × {watermarkSize.height}
+                  </span>
+                  <button
+                    onClick={() => { setWatermark(null); setResultImage(null); }}
+                    className="flex items-center justify-center w-8 h-8 text-white/70 hover:text-white hover:bg-black/40 transition-colors border-l border-white/20"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Watermark */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-muted-foreground">Watermark (PNG)</label>
-          {!watermark ? (
-            <div
-              onDrop={handleWatermarkDrop}
-              onDragOver={(e) => e.preventDefault()}
-              className="border-2 border-dashed rounded-xl p-6 text-center hover:border-primary/50 transition-colors cursor-pointer h-44 flex flex-col items-center justify-center"
-              onClick={() => document.getElementById("watermark-input")?.click()}
-            >
-              <input
-                id="watermark-input"
-                type="file"
-                accept="image/png"
-                onChange={handleWatermarkSelect}
-                className="hidden"
-              />
-              <Upload className="size-8 text-muted-foreground mb-2" />
-              <p className="text-sm font-medium">Drop watermark here</p>
-              <p className="text-xs text-muted-foreground mt-1">transparent PNG</p>
-            </div>
-          ) : (
-            <div className="relative group rounded-lg overflow-hidden ring-1 ring-border">
-              <div className="w-full h-44 bg-[repeating-conic-gradient(var(--color-muted)_0%_25%,transparent_0%_50%)] bg-[length:16px_16px] flex items-center justify-center">
-                <img
-                  src={watermark}
-                  alt="Watermark"
-                  className="max-w-full max-h-full object-contain p-4"
-                />
-              </div>
-              <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-between">
-                <span className="text-xs text-white/80">{watermarkSize.width} × {watermarkSize.height}</span>
-                <button
-                  onClick={() => { setWatermark(null); setResultImage(null); }}
-                  className="p-1.5 rounded-md bg-black/40 text-white hover:bg-black/60 transition-colors"
-                >
-                  <Trash2 className="size-3.5" />
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        {/* Hint row when neither image loaded */}
+        {!baseImage && !watermark && (
+          <div className="px-4 py-3">
+            <p className="text-xs text-muted-foreground">Paste an image to load it directly.</p>
+          </div>
+        )}
       </div>
 
       {/* Settings & Preview */}
       {bothLoaded && (
-        <div className="grid gap-6 lg:grid-cols-[1fr_auto]">
-          {/* Controls */}
-          <div className="space-y-5 min-w-0">
-            {/* Position */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Position</label>
+        <div className="border-2 border-border">
+          {/* Position */}
+          <div className="border-b-2 border-border">
+            <div className="px-4 pt-4 pb-2">
+              <label className="font-bold block mb-3">Position</label>
               <div className="flex items-center gap-3">
-                <div className="grid grid-cols-3 gap-1">
+                {/* 3×3 grid */}
+                <div className="segmented grid-cols-3 shrink-0" style={{ width: "9rem" }}>
                   {positions.map((pos) => (
-                    <button
+                    <Button
                       key={pos.id}
+                      variant={position === pos.id && position !== "random" ? "default" : "outline"}
                       onClick={() => { setPosition(pos.id); setResultImage(null); }}
-                      className={cn(
-                        "size-9 rounded-md border transition-colors text-base",
-                        position === pos.id && position !== "random"
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "hover:border-primary/50 text-muted-foreground hover:text-foreground"
-                      )}
+                      className="h-12 text-base font-medium"
                     >
                       {pos.label}
-                    </button>
+                    </Button>
                   ))}
                 </div>
                 <Button
                   variant={position === "random" ? "default" : "outline"}
                   size="sm"
                   onClick={generateRandomPosition}
+                  className="gap-1.5"
                 >
-                  <Shuffle className="size-3.5 mr-1.5" />
+                  <Shuffle className="size-3.5" />
                   Random
                 </Button>
               </div>
             </div>
+          </div>
 
+          {/* Sliders section */}
+          <div className="border-b-2 border-border">
             {/* Opacity */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-muted-foreground">Opacity</label>
-                <span className="text-sm tabular-nums text-muted-foreground">{opacity}%</span>
+            <div className="flex items-center border-b border-border">
+              <span className="w-24 shrink-0 px-4 py-4 font-bold text-sm">Opacity</span>
+              <div className="flex-1 px-4 py-4">
+                <Slider
+                  value={[opacity]}
+                  onValueChange={([v]) => setOpacity(v)}
+                  min={5}
+                  max={100}
+                  step={5}
+                />
               </div>
-              <Slider
-                value={[opacity]}
-                onValueChange={([v]) => setOpacity(v)}
-                min={5}
-                max={100}
-                step={5}
-              />
+              <span
+                className="w-16 shrink-0 px-4 py-4 text-sm text-right text-muted-foreground border-l border-border"
+                style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+              >
+                {opacity}%
+              </span>
             </div>
 
             {/* Scale */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-muted-foreground">Size</label>
-                <span className="text-sm tabular-nums text-muted-foreground">{scale}%</span>
+            <div className="flex items-center border-b border-border">
+              <span className="w-24 shrink-0 px-4 py-4 font-bold text-sm">Size</span>
+              <div className="flex-1 px-4 py-4">
+                <Slider
+                  value={[scale]}
+                  onValueChange={([v]) => setScale(v)}
+                  min={5}
+                  max={50}
+                  step={5}
+                />
               </div>
-              <Slider
-                value={[scale]}
-                onValueChange={([v]) => setScale(v)}
-                min={5}
-                max={50}
-                step={5}
-              />
+              <span
+                className="w-16 shrink-0 px-4 py-4 text-sm text-right text-muted-foreground border-l border-border"
+                style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+              >
+                {scale}%
+              </span>
             </div>
 
             {/* Padding */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-muted-foreground">Padding</label>
-                <span className="text-sm tabular-nums text-muted-foreground">{padding}%</span>
+            <div className="flex items-center">
+              <span className="w-24 shrink-0 px-4 py-4 font-bold text-sm">Padding</span>
+              <div className="flex-1 px-4 py-4">
+                <Slider
+                  value={[padding]}
+                  onValueChange={([v]) => setPadding(v)}
+                  min={0}
+                  max={20}
+                  step={1}
+                />
               </div>
-              <Slider
-                value={[padding]}
-                onValueChange={([v]) => setPadding(v)}
-                min={0}
-                max={20}
-                step={1}
-              />
-            </div>
-
-            {/* Blend Mode */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Blend Mode</label>
-              <Tabs value={blendMode} onValueChange={(v) => setBlendMode(v as BlendMode)}>
-                <TabsList>
-                  <TabsTrigger value="normal">Normal</TabsTrigger>
-                  <TabsTrigger value="multiply">Multiply</TabsTrigger>
-                  <TabsTrigger value="screen">Screen</TabsTrigger>
-                  <TabsTrigger value="overlay">Overlay</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-2">
-              <Button size="lg" className="flex-1" onClick={downloadResult} disabled={!resultImage}>
-                <Download className="size-4 mr-2" />
-                Download
-              </Button>
-              <Button variant="outline" size="lg" onClick={clear}>
-                <Trash2 className="size-4" />
-              </Button>
+              <span
+                className="w-16 shrink-0 px-4 py-4 text-sm text-right text-muted-foreground border-l border-border"
+                style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+              >
+                {padding}%
+              </span>
             </div>
           </div>
 
-          {/* Live Preview */}
+          {/* Blend Mode */}
+          <div className="border-b-2 border-border p-4">
+            <label className="font-bold block mb-3">Blend Mode</label>
+            <Tabs value={blendMode} onValueChange={(v) => setBlendMode(v as BlendMode)}>
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="normal">Normal</TabsTrigger>
+                <TabsTrigger value="multiply">Multiply</TabsTrigger>
+                <TabsTrigger value="screen">Screen</TabsTrigger>
+                <TabsTrigger value="overlay">Overlay</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
+          {/* Preview */}
           {resultImage && (
-            <div className="flex flex-col items-center gap-3">
-              <label className="text-sm font-medium text-muted-foreground self-start">Preview</label>
-              <div className="rounded-lg overflow-hidden shadow-lg ring-1 ring-border">
+            <div className="border-b-2 border-border">
+              <div className="px-4 py-3 border-b border-border">
+                <label className="font-bold text-sm">Preview</label>
+              </div>
+              <div className="bg-muted/30">
                 <img
                   src={resultImage}
                   alt="Result"
-                  className="max-w-[320px] max-h-[320px] w-auto"
+                  className="w-full object-contain max-h-96"
                 />
               </div>
-              <span className="text-xs text-muted-foreground">
-                {baseSize.width} × {baseSize.height} px
-              </span>
+              <div className="px-4 py-2 border-t border-border">
+                <span
+                  className="text-xs text-muted-foreground"
+                  style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                >
+                  {baseSize.width} × {baseSize.height} px
+                </span>
+              </div>
             </div>
           )}
+
+          {/* Actions bar */}
+          <div className="flex items-stretch min-h-14">
+            <Button
+              onClick={downloadResult}
+              disabled={!resultImage}
+              className={cn(
+                "flex-1 h-auto self-stretch text-lg font-bold gap-2",
+                "rounded-none border-0"
+              )}
+            >
+              <Download className="size-4" />
+              Download
+            </Button>
+            <Button
+              variant="outline"
+              onClick={clear}
+              className="h-auto self-stretch rounded-none border-0 border-l border-border px-5 gap-2"
+            >
+              <Trash2 className="size-4" />
+              Clear
+            </Button>
+          </div>
         </div>
       )}
     </div>

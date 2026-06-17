@@ -388,25 +388,29 @@ export function TextEditorTool() {
       {/* Toolbar */}
       <div
         className={cn(
-          "flex items-center justify-end gap-2",
+          "flex items-stretch border-2 border-border",
           zen && "transition-opacity duration-300",
           zen && !toolbarVisible && "opacity-0 hover:opacity-100",
         )}
       >
         <Button
           variant="outline"
-          size="sm"
           onClick={() => {
             setToolbarVisible(true);
             setZen((z) => !z);
           }}
           title={zen ? "Exit focus mode" : "Distraction-free focus mode"}
-          className="mr-auto"
+          className="mr-auto h-auto self-stretch rounded-none border-0 px-4 font-bold"
         >
           {zen ? <Minimize2 className="size-4 mr-1.5" /> : <Maximize2 className="size-4 mr-1.5" />}
           {zen ? "Exit" : "Focus"}
         </Button>
-        <Button variant="outline" size="sm" onClick={toggleCodeMode} title="Toggle raw Markdown source">
+        <Button
+          variant="outline"
+          onClick={toggleCodeMode}
+          title="Toggle raw Markdown source"
+          className="h-auto self-stretch rounded-none border-0 border-l border-border px-4 font-bold"
+        >
           {settings.codeMode ? (
             <>
               <FileText className="size-4 mr-1.5" /> Preview
@@ -420,7 +424,10 @@ export function TextEditorTool() {
 
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm">
+            <Button
+              variant="outline"
+              className="h-auto self-stretch rounded-none border-0 border-l border-border px-4 font-bold"
+            >
               <Download className="size-4 mr-1.5" /> Export
             </Button>
           </PopoverTrigger>
@@ -473,7 +480,12 @@ export function TextEditorTool() {
 
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="icon" title="Settings">
+            <Button
+              variant="outline"
+              size="icon"
+              title="Settings"
+              className="h-auto w-12 self-stretch rounded-none border-0 border-l border-border"
+            >
               <Settings className="size-4" />
             </Button>
           </PopoverTrigger>
@@ -513,7 +525,8 @@ export function TextEditorTool() {
               dirtyRef.current = true;
             }}
             spellCheck={false}
-            className="w-full min-h-[70vh] resize-none rounded-lg border bg-card/30 p-4 font-mono text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring"
+            style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+            className="w-full min-h-[70vh] resize-none border-2 border-border bg-card/30 p-4 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring"
           />
         )}
 

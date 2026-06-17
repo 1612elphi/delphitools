@@ -73,82 +73,84 @@ Speaking time: ${stats.speakingTime}`;
   };
 
   return (
-    <div className="space-y-6">
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-lg border bg-card text-center">
+    <div className="border-2 border-border">
+      {/* Primary stats — 4-cell flush grid */}
+      <div className="segmented grid-cols-4 border-x-0 border-t-0">
+        <div className="flex flex-col items-center justify-center px-4 py-5 bg-card">
           <div className="text-4xl font-bold">{stats.words}</div>
           <div className="text-sm text-muted-foreground mt-1">Words</div>
         </div>
-        <div className="p-4 rounded-lg border bg-card text-center">
+        <div className="flex flex-col items-center justify-center px-4 py-5 bg-card">
           <div className="text-4xl font-bold">{stats.characters}</div>
           <div className="text-sm text-muted-foreground mt-1">Characters</div>
         </div>
-        <div className="p-4 rounded-lg border bg-card text-center">
+        <div className="flex flex-col items-center justify-center px-4 py-5 bg-card">
           <div className="text-4xl font-bold">{stats.sentences}</div>
           <div className="text-sm text-muted-foreground mt-1">Sentences</div>
         </div>
-        <div className="p-4 rounded-lg border bg-card text-center">
+        <div className="flex flex-col items-center justify-center px-4 py-5 bg-card">
           <div className="text-4xl font-bold">{stats.paragraphs}</div>
           <div className="text-sm text-muted-foreground mt-1">Paragraphs</div>
         </div>
       </div>
 
-      {/* Text Area */}
-      <div className="space-y-3">
+      {/* Textarea */}
+      <div className="border-b-2 border-border">
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Start typing or paste your text here..."
-          className="w-full min-h-[300px] p-4 rounded-lg border bg-background text-base resize-y focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full min-h-[300px] p-4 bg-background text-base resize-y focus:outline-none border-0"
         />
-
-        {/* Actions */}
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            onClick={() => setText("")}
-            disabled={!text}
-          >
-            <Trash2 className="size-4 mr-2" />
-            Clear
-          </Button>
-          <Button
-            variant="outline"
-            onClick={copyStats}
-            disabled={!text}
-          >
-            {copied ? (
-              <>
-                <Check className="size-4 mr-2" /> Copied!
-              </>
-            ) : (
-              <>
-                <Copy className="size-4 mr-2" /> Copy Stats
-              </>
-            )}
-          </Button>
-        </div>
       </div>
 
-      {/* Additional Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-lg border bg-card">
+      {/* Secondary stats — 4-cell flush table row */}
+      <div className="segmented grid-cols-4 border-x-0 border-t-0">
+        <div className="flex flex-col px-4 py-4 bg-card">
           <div className="text-sm text-muted-foreground">No spaces</div>
           <div className="text-2xl font-bold">{stats.charactersNoSpaces}</div>
         </div>
-        <div className="p-4 rounded-lg border bg-card">
+        <div className="flex flex-col px-4 py-4 bg-card">
           <div className="text-sm text-muted-foreground">Lines</div>
           <div className="text-2xl font-bold">{stats.lines}</div>
         </div>
-        <div className="p-4 rounded-lg border bg-card">
+        <div className="flex flex-col px-4 py-4 bg-card">
           <div className="text-sm text-muted-foreground">Reading time</div>
           <div className="text-2xl font-bold">{stats.readingTime}</div>
         </div>
-        <div className="p-4 rounded-lg border bg-card">
+        <div className="flex flex-col px-4 py-4 bg-card">
           <div className="text-sm text-muted-foreground">Speaking time</div>
           <div className="text-2xl font-bold">{stats.speakingTime}</div>
         </div>
+      </div>
+
+      {/* Action bar */}
+      <div className="flex items-stretch border-t border-border">
+        <Button
+          variant="outline"
+          onClick={() => setText("")}
+          disabled={!text}
+          className="h-14 flex-1 border-0 border-r border-border text-base"
+        >
+          <Trash2 className="size-4 mr-2" />
+          Clear
+        </Button>
+        <Button
+          variant="outline"
+          onClick={copyStats}
+          disabled={!text}
+          className="h-14 flex-1 border-0 text-base"
+        >
+          {copied ? (
+            <>
+              <Check className="size-4 mr-2" /> Copied!
+            </>
+          ) : (
+            <>
+              <Copy className="size-4 mr-2" /> Copy Stats
+            </>
+          )}
+        </Button>
       </div>
     </div>
   );

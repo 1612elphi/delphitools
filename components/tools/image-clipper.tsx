@@ -204,83 +204,105 @@ export function ImageClipperTool() {
 
   return (
     <div className="space-y-4">
-      {!result && (
-        <div
-          onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
-          className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-muted-foreground/25 p-12 text-center transition-colors hover:border-muted-foreground/50 cursor-pointer"
-          onClick={() => inputRef.current?.click()}
-        >
-          <Upload className="h-8 w-8 text-muted-foreground" />
-          <div>
-            <p className="font-medium">Drop a PNG here or click to upload</p>
-            <p className="text-sm text-muted-foreground">
-              or paste from clipboard
-            </p>
-          </div>
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/png"
-            className="hidden"
-            onChange={handleFileChange}
-          />
-        </div>
-      )}
+      <div className="border-2 border-border">
 
-      {processing && (
-        <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
-          <Scissors className="h-4 w-4 animate-pulse" />
-          <span>Clipping…</span>
-        </div>
-      )}
-
-      {error && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
-          {error}
-        </div>
-      )}
-
-      {result && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <p className="text-sm font-medium">
-                {result.originalWidth} × {result.originalHeight}
-                {" → "}
-                {result.clippedWidth} × {result.clippedHeight}
+        {/* Drop zone — shown when no result */}
+        {!result && (
+          <div
+            onDrop={handleDrop}
+            onDragOver={(e) => e.preventDefault()}
+            className="flex flex-col items-center justify-center gap-3 border-2 border-dashed border-muted-foreground/25 m-4 p-12 text-center transition-colors hover:border-muted-foreground/50 cursor-pointer"
+            onClick={() => inputRef.current?.click()}
+          >
+            <Upload className="h-8 w-8 text-muted-foreground" />
+            <div>
+              <p className="font-medium">Drop a PNG here or click to upload</p>
+              <p className="text-sm text-muted-foreground">
+                or paste from clipboard
               </p>
-              {noChange ? (
-                <p className="text-xs text-muted-foreground">
-                  No transparent edges found — image is already minimal
-                </p>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  Trimmed {result.top}px top, {result.right}px right, {result.bottom}px bottom, {result.left}px left
-                </p>
-              )}
             </div>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={reset}>
-                <X className="mr-1 h-3 w-3" />
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/png"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </div>
+        )}
+
+        {/* Processing indicator */}
+        {processing && (
+          <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground border-b border-border">
+            <Scissors className="h-4 w-4 animate-pulse" />
+            <span>Clipping…</span>
+          </div>
+        )}
+
+        {/* Result */}
+        {result && (
+          <>
+            {/* Info + action bar */}
+            <div className="flex min-h-14 items-stretch border-b border-border">
+              <div className="flex flex-1 flex-col justify-center px-4 py-2">
+                <p className="text-sm font-bold">
+                  {result.originalWidth} × {result.originalHeight}
+                  {" → "}
+                  {result.clippedWidth} × {result.clippedHeight}
+                </p>
+                {noChange ? (
+                  <p className="text-xs text-muted-foreground">
+                    No transparent edges found — image is already minimal
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Trimmed {result.top}px top, {result.right}px right, {result.bottom}px bottom, {result.left}px left
+                  </p>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                onClick={reset}
+                className="h-auto self-stretch rounded-none border-l border-border px-4"
+              >
+                <X className="h-4 w-4 mr-2" />
                 Clear
               </Button>
-              <Button size="sm" onClick={handleDownload}>
-                <Download className="mr-1 h-3 w-3" />
-                Download
+              <Button
+                onClick={handleDownload}
+                className="h-auto self-stretch rounded-none border-0 border-l border-border px-6 font-semibold"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download PNG
               </Button>
             </div>
-          </div>
 
-          {preview && (
-            <div className="flex items-center justify-center rounded-lg border bg-[repeating-conic-gradient(oklch(0.9_0_0)_0%_25%,transparent_0%_50%)] bg-[length:16px_16px] p-4 dark:bg-[repeating-conic-gradient(oklch(0.3_0_0)_0%_25%,transparent_0%_50%)]">
-              <img
-                src={preview}
-                alt="Clipped result"
-                className="max-h-96 max-w-full object-contain"
-              />
-            </div>
-          )}
+            {/* Preview — bleeds full width */}
+            {preview && (
+              <div
+                className="flex items-center justify-center p-4"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(45deg, oklch(0.9 0 0) 25%, transparent 25%), linear-gradient(-45deg, oklch(0.9 0 0) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, oklch(0.9 0 0) 75%), linear-gradient(-45deg, transparent 75%, oklch(0.9 0 0) 75%)",
+                  backgroundSize: "16px 16px",
+                  backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
+                }}
+              >
+                <img
+                  src={preview}
+                  alt="Clipped result"
+                  className="max-h-96 max-w-full object-contain"
+                />
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+          {error}
         </div>
       )}
     </div>

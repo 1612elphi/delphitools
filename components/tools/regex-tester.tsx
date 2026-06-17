@@ -126,28 +126,35 @@ export function RegexTesterTool() {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Pattern Input */}
-      <div className="space-y-3">
-        <label className="text-lg font-bold block">Regular Expression</label>
-        <div className="flex gap-2">
-          <span className="flex items-center text-2xl text-muted-foreground">/</span>
+    <div className="border-2 border-border">
+      {/* Pattern input row */}
+      <div className="border-b-2 border-border p-4">
+        <label className="mb-3 block font-bold">Regular Expression</label>
+        <div className="flex items-stretch border border-border">
+          <span className="flex items-center px-3 text-xl text-muted-foreground select-none">/</span>
           <Input
             value={pattern}
             onChange={(e) => setPattern(e.target.value)}
-            placeholder="Enter regex pattern..."
-            className="text-lg h-14 font-mono flex-1"
+            placeholder="Enter regex pattern…"
+            className="h-12 flex-1 border-0 bg-transparent font-mono text-base focus-visible:ring-0"
+            style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
           />
-          <span className="flex items-center text-2xl text-muted-foreground">/</span>
-          <Input
-            value={flags}
-            onChange={(e) => setFlags(e.target.value)}
-            className="w-20 text-lg h-14 font-mono text-center"
-          />
+          <span className="flex items-center px-3 text-xl text-muted-foreground select-none">/</span>
+          <div className="flex items-center border-l border-border px-3">
+            <Input
+              value={flags}
+              onChange={(e) => setFlags(e.target.value)}
+              className="h-12 w-12 border-0 bg-transparent text-center font-mono text-base focus-visible:ring-0"
+              style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+            />
+          </div>
         </div>
+      </div>
 
-        {/* Flag Toggles */}
-        <div className="flex gap-2 flex-wrap">
+      {/* Flag toggles */}
+      <div className="border-b-2 border-border p-4">
+        <label className="mb-3 block font-bold">Flags</label>
+        <div className="segmented grid-cols-4 -mx-4 -mb-4 border-x-0 border-b-0">
           {[
             { flag: "g", label: "Global" },
             { flag: "i", label: "Case insensitive" },
@@ -157,21 +164,28 @@ export function RegexTesterTool() {
             <Button
               key={flag}
               variant={flags.includes(flag) ? "default" : "outline"}
-              size="sm"
               onClick={() => toggleFlag(flag)}
             >
-              <code className="mr-1">{flag}</code> {label}
+              <span
+                className="mr-1.5 font-bold"
+                style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+              >
+                {flag}
+              </span>
+              {label}
             </Button>
           ))}
         </div>
+      </div>
 
-        {/* Presets */}
-        <div className="flex gap-2 flex-wrap">
+      {/* Presets */}
+      <div className="border-b-2 border-border p-4">
+        <label className="mb-3 block font-bold">Presets</label>
+        <div className="segmented grid-cols-4 -mx-4 -mb-4 border-x-0 border-b-0">
           {presets.map((preset) => (
             <Button
               key={preset.label}
-              variant="ghost"
-              size="sm"
+              variant="outline"
               onClick={() => setPattern(preset.pattern)}
             >
               {preset.label}
@@ -180,30 +194,39 @@ export function RegexTesterTool() {
         </div>
       </div>
 
-      {/* Error Display */}
+      {/* Error display */}
       {result.error && (
-        <div className="flex items-center gap-3 p-4 rounded-lg bg-destructive/10 text-destructive border border-destructive/20">
-          <AlertCircle className="size-5 shrink-0" />
-          <span className="font-mono text-sm">{result.error}</span>
+        <div className="flex items-center gap-3 border-b-2 border-border bg-destructive/10 px-4 py-3 text-destructive">
+          <AlertCircle className="size-4 shrink-0" />
+          <span
+            className="text-sm"
+            style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+          >
+            {result.error}
+          </span>
         </div>
       )}
 
-      {/* Test String */}
-      <div className="space-y-3">
-        <label className="text-lg font-bold block">Test String</label>
+      {/* Test string */}
+      <div className="border-b-2 border-border p-4">
+        <label className="mb-3 block font-bold">Test String</label>
         <textarea
           value={testString}
           onChange={(e) => setTestString(e.target.value)}
-          placeholder="Enter text to test against..."
-          className="w-full min-h-[150px] p-4 rounded-lg border bg-background font-mono text-base resize-y focus:outline-none focus:ring-2 focus:ring-ring"
+          placeholder="Enter text to test against…"
+          className="w-full min-h-[120px] border border-border bg-background p-3 text-base resize-y focus:outline-none focus:ring-1 focus:ring-ring"
+          style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
         />
       </div>
 
-      {/* Highlighted Result */}
+      {/* Highlighted matches */}
       {testString && pattern && result.valid && (
-        <div className="space-y-3">
-          <label className="text-lg font-bold block">Highlighted Matches</label>
-          <div className="p-4 rounded-lg border bg-card font-mono text-base whitespace-pre-wrap break-all">
+        <div className="border-b-2 border-border p-4">
+          <label className="mb-3 block font-bold">Highlighted Matches</label>
+          <div
+            className="border border-border bg-card p-3 text-base whitespace-pre-wrap break-all"
+            style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+          >
             {typeof highlightedText === "string" ? (
               highlightedText
             ) : (
@@ -211,14 +234,12 @@ export function RegexTesterTool() {
                 part.isMatch ? (
                   <mark
                     key={`m-${i}-${part.text}`}
-                    className="bg-primary/30 text-foreground rounded px-0.5"
+                    className="bg-primary/30 text-foreground px-0.5"
                   >
                     {part.text}
                   </mark>
                 ) : (
-                  <span key={`t-${i}-${part.text}`}>
-                    {part.text}
-                  </span>
+                  <span key={`t-${i}-${part.text}`}>{part.text}</span>
                 )
               )
             )}
@@ -226,51 +247,70 @@ export function RegexTesterTool() {
         </div>
       )}
 
-      {/* Match Results */}
+      {/* Match results table */}
       {result.matches.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="text-lg font-bold">
+        <div>
+          {/* Header row */}
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <label className="font-bold">
               {result.matches.length} Match{result.matches.length !== 1 ? "es" : ""}
             </label>
-            <Button variant="outline" size="sm" onClick={copyPattern}>
+            <button
+              type="button"
+              onClick={copyPattern}
+              className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
               {copied ? (
                 <>
-                  <Check className="size-4 mr-2" /> Copied!
+                  <Check className="size-3.5 text-green-500" /> Copied!
                 </>
               ) : (
                 <>
-                  <Copy className="size-4 mr-2" /> Copy pattern
+                  <Copy className="size-3.5" /> Copy pattern
                 </>
               )}
-            </Button>
+            </button>
           </div>
-          <div className="grid gap-2">
-            {result.matches.map((match, index) => (
-              <div
-                key={`${match.index}-${match.match}`}
-                className="p-3 rounded-lg border bg-card font-mono text-sm"
-              >
-                <div className="flex items-center gap-4">
-                  <span className="text-muted-foreground">#{index + 1}</span>
-                  <span className="font-bold">{match.match}</span>
-                  <span className="text-muted-foreground text-xs">
-                    index: {match.index}
-                  </span>
-                </div>
-                {match.groups.length > 0 && (
-                  <div className="mt-2 pt-2 border-t text-xs">
-                    <span className="text-muted-foreground">Groups: </span>
-                    {match.groups.map((g, i) => (
-                      <span key={`${match.index}-g${i}-${g}`} className="mr-2">
-                        ${i + 1}: <strong>{g}</strong>
-                      </span>
-                    ))}
-                  </div>
-                )}
+
+          {/* Match rows */}
+          {result.matches.map((match, index) => (
+            <div
+              key={`${match.index}-${match.match}`}
+              className="border-b border-border last:border-b-0"
+            >
+              <div className="flex items-stretch">
+                {/* Index number cell */}
+                <span className="flex w-10 shrink-0 items-center justify-center border-r border-border text-xs text-muted-foreground">
+                  {index + 1}
+                </span>
+                {/* Match value cell */}
+                <span
+                  className="flex flex-1 items-center px-4 py-3 text-sm font-bold"
+                  style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                >
+                  {match.match || <span className="text-muted-foreground italic">empty</span>}
+                </span>
+                {/* Position cell */}
+                <span className="flex shrink-0 items-center border-l border-border px-4 py-3 text-xs text-muted-foreground">
+                  index: {match.index}
+                </span>
               </div>
-            ))}
-          </div>
+              {/* Capture groups sub-row */}
+              {match.groups.length > 0 && (
+                <div className="flex items-center gap-3 border-t border-border bg-muted/30 px-4 py-2 text-xs">
+                  <span className="shrink-0 text-muted-foreground">Groups:</span>
+                  {match.groups.map((g, i) => (
+                    <span key={`${match.index}-g${i}-${g}`}>
+                      <span className="text-muted-foreground">${i + 1}:</span>{" "}
+                      <strong style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>
+                        {g}
+                      </strong>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </div>

@@ -43,6 +43,7 @@ next-env.d.ts
 
 # claude
 CLAUDE.md
+DESIGN.md
 /docs
 .superpowers/
 .claude/scheduled_tasks.lock

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useColourNotation } from "@/hooks/use-colour-notation";
 import { formatColour } from "@/lib/colour-notation";
+import { cn } from "@/lib/utils";
 
 // Colour utilities
 function hexToRgb(hex: string): [number, number, number] | null {
@@ -240,160 +241,223 @@ function TailwindShadesInner() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Input */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="space-y-2">
-          <label className="font-bold">Base Colour</label>
-          <div className="flex gap-2">
-            <input
-              type="color"
-              value={baseColour}
-              onChange={(e) => setBaseColour(e.target.value)}
-              className="w-14 h-10 rounded border cursor-pointer"
-            />
+    <div className="border-2 border-border">
+      {/* Input row */}
+      <div className="p-4">
+        <div className="grid gap-4 sm:grid-cols-3">
+          {/* Base Colour */}
+          <div className="space-y-2">
+            <label className="font-bold">Base Colour</label>
+            <div className="flex items-stretch border border-border">
+              {/* Colour swatch cell */}
+              <div className="relative w-12 shrink-0">
+                <div
+                  className="absolute inset-0 size-full"
+                  style={{ backgroundColor: baseColour }}
+                  aria-hidden
+                />
+                <input
+                  type="color"
+                  value={baseColour}
+                  onChange={(e) => setBaseColour(e.target.value)}
+                  className="absolute inset-0 size-full cursor-pointer opacity-0"
+                  aria-label="Pick base colour"
+                />
+              </div>
+              <Input
+                value={baseColour}
+                onChange={(e) => setBaseColour(e.target.value)}
+                placeholder="#3b82f6"
+                className="flex-1 border-0 border-l border-border bg-transparent"
+                style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+              />
+            </div>
+          </div>
+
+          {/* Colour Name */}
+          <div className="space-y-2">
+            <label className="font-bold">Colour Name</label>
             <Input
-              value={baseColour}
-              onChange={(e) => setBaseColour(e.target.value)}
-              placeholder="#3b82f6"
-              className="font-mono flex-1"
+              value={colourName}
+              onChange={(e) => setColourName(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+              placeholder="primary"
+              style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
             />
           </div>
-        </div>
-        <div className="space-y-2">
-          <label className="font-bold">Colour Name</label>
-          <Input
-            value={colourName}
-            onChange={(e) => setColourName(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-            placeholder="primary"
-            className="font-mono"
-          />
-        </div>
-        <div className="space-y-2 sm:col-span-2 lg:col-span-1">
-          <label className="font-bold">Generation Mode</label>
-          <Select value={mode} onValueChange={(v) => setMode(v as GenerationMode)}>
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {GENERATION_MODES.map((m) => (
-                <SelectItem key={m.value} value={m.value}>
-                  {m.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">
-            {GENERATION_MODES.find((m) => m.value === mode)?.description}
-          </p>
+
+          {/* Generation Mode */}
+          <div className="space-y-2">
+            <label className="font-bold">Generation Mode</label>
+            <Select value={mode} onValueChange={(v) => setMode(v as GenerationMode)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {GENERATION_MODES.map((m) => (
+                  <SelectItem key={m.value} value={m.value}>
+                    {m.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {GENERATION_MODES.find((m) => m.value === mode)?.description}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Shade Preview */}
+      {/* Shade strip + table */}
       {shades && (
-        <div className="space-y-3">
-          <label className="font-bold">Generated Shades</label>
-          <div className="grid grid-cols-11 gap-1 h-24 rounded-lg overflow-hidden">
-            {shades.map((shade) => (
-              <button
-                key={shade.level}
-                onClick={() => copyValue(formatColour(shade.hex, notation), shade.hex)}
-                className="relative group h-full"
-                style={{ backgroundColor: shade.hex }}
-                title={`${shade.level}: ${formatColour(shade.hex, notation)}`}
-              >
-                <div className="absolute inset-0 flex items-end justify-center pb-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className={`text-xs font-bold ${shade.level < 500 ? "text-gray-900" : "text-white"}`}>
+        <>
+          <div className="border-t-2 border-border">
+            <div className="px-4 pt-4 pb-2">
+              <label className="font-bold">Generated Shades</label>
+            </div>
+
+            {/* Flush colour strip — 11 cells */}
+            <div className="flex h-20 -mx-0 border-t border-border border-b border-b-border">
+              {shades.map((shade) => (
+                <button
+                  key={shade.level}
+                  onClick={() => copyValue(formatColour(shade.hex, notation), shade.hex)}
+                  className="relative flex-1 group"
+                  style={{ backgroundColor: shade.hex }}
+                  title={`${shade.level}: ${formatColour(shade.hex, notation)}`}
+                >
+                  <span
+                    className={cn(
+                      "absolute bottom-1 left-0 right-0 text-center text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity",
+                      shade.level < 500 ? "text-black/70" : "text-white/80"
+                    )}
+                  >
                     {shade.level}
                   </span>
-                </div>
-              </button>
-            ))}
-          </div>
-
-          {/* Shade Details */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-            {shades.map((shade) => (
-              <button
-                key={shade.level}
-                onClick={() => copyValue(formatColour(shade.hex, notation), shade.hex)}
-                className="p-3 rounded-lg border bg-card hover:border-primary/50 transition-colors text-left"
-              >
-                <div
-                  className="w-full h-8 rounded mb-2"
-                  style={{ backgroundColor: shade.hex }}
-                />
-                <div className="font-bold text-sm">{shade.level}</div>
-                <div className="font-mono text-xs text-muted-foreground">
-                  {formatColour(shade.hex, notation)}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Code Output */}
-      {shades && (
-        <div className="space-y-4">
-          {/* CSS Variables */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="font-bold">CSS Variables</label>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => copyValue(`:root {\n${generateCssVariables()}\n}`, "css")}
-              >
-                {copied === "css" ? <Check className="size-4 mr-1" /> : <Copy className="size-4 mr-1" />}
-                Copy
-              </Button>
+                </button>
+              ))}
             </div>
-            <pre className="p-4 rounded-lg border bg-muted/50 text-sm font-mono overflow-x-auto">
+
+            {/* Shade table — shade | swatch | hex | copy */}
+            <div>
+              {shades.map((shade) => {
+                const value = formatColour(shade.hex, notation);
+                const isCopied = copied === shade.hex;
+                return (
+                  <div
+                    key={shade.level}
+                    className="flex items-stretch border-b border-border last:border-b-0"
+                  >
+                    {/* Level label */}
+                    <span className="flex w-16 shrink-0 items-center px-4 text-sm font-bold tabular-nums">
+                      {shade.level}
+                    </span>
+
+                    {/* Colour swatch */}
+                    <div className="relative w-12 shrink-0 border-l border-border">
+                      <div
+                        className="absolute inset-0 size-full"
+                        style={{ backgroundColor: shade.hex }}
+                        aria-hidden
+                      />
+                    </div>
+
+                    {/* Hex/value */}
+                    <span
+                      className="flex flex-1 items-center border-l border-border px-4 text-sm text-muted-foreground"
+                      style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                    >
+                      {value}
+                    </span>
+
+                    {/* Copy button */}
+                    <button
+                      type="button"
+                      onClick={() => copyValue(value, shade.hex)}
+                      aria-label={`Copy ${shade.level}`}
+                      className="flex w-12 shrink-0 items-center justify-center border-l border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    >
+                      {isCopied ? (
+                        <Check className="size-4 text-green-500" />
+                      ) : (
+                        <Copy className="size-4" />
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Code Output */}
+          <div className="border-t-2 border-border">
+            {/* CSS Variables */}
+            <div className="border-b-2 border-border">
+              <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                <label className="font-bold">CSS Variables</label>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => copyValue(`:root {\n${generateCssVariables()}\n}`, "css")}
+                >
+                  {copied === "css" ? <Check className="size-4 mr-1" /> : <Copy className="size-4 mr-1" />}
+                  Copy
+                </Button>
+              </div>
+              <pre
+                className="p-4 text-sm bg-muted/30 overflow-x-auto"
+                style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+              >
 {`:root {
 ${generateCssVariables()}
 }`}
-            </pre>
-          </div>
-
-          {/* OKLCH Variables */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="font-bold">CSS Variables (OKLCH)</label>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => copyValue(`:root {\n${generateOklchVariables()}\n}`, "oklch")}
-              >
-                {copied === "oklch" ? <Check className="size-4 mr-1" /> : <Copy className="size-4 mr-1" />}
-                Copy
-              </Button>
+              </pre>
             </div>
-            <pre className="p-4 rounded-lg border bg-muted/50 text-sm font-mono overflow-x-auto">
+
+            {/* OKLCH Variables */}
+            <div className="border-b-2 border-border">
+              <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                <label className="font-bold">CSS Variables (OKLCH)</label>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => copyValue(`:root {\n${generateOklchVariables()}\n}`, "oklch")}
+                >
+                  {copied === "oklch" ? <Check className="size-4 mr-1" /> : <Copy className="size-4 mr-1" />}
+                  Copy
+                </Button>
+              </div>
+              <pre
+                className="p-4 text-sm bg-muted/30 overflow-x-auto"
+                style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+              >
 {`:root {
 ${generateOklchVariables()}
 }`}
-            </pre>
-          </div>
-
-          {/* Tailwind Config */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="font-bold">Tailwind Config</label>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => copyValue(generateTailwindConfig(), "tailwind")}
-              >
-                {copied === "tailwind" ? <Check className="size-4 mr-1" /> : <Copy className="size-4 mr-1" />}
-                Copy
-              </Button>
+              </pre>
             </div>
-            <pre className="p-4 rounded-lg border bg-muted/50 text-sm font-mono overflow-x-auto">
+
+            {/* Tailwind Config */}
+            <div>
+              <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                <label className="font-bold">Tailwind Config</label>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => copyValue(generateTailwindConfig(), "tailwind")}
+                >
+                  {copied === "tailwind" ? <Check className="size-4 mr-1" /> : <Copy className="size-4 mr-1" />}
+                  Copy
+                </Button>
+              </div>
+              <pre
+                className="p-4 text-sm bg-muted/30 overflow-x-auto"
+                style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+              >
 {generateTailwindConfig()}
-            </pre>
+              </pre>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
@@ -402,7 +466,7 @@ ${generateOklchVariables()}
 // Exported component with Suspense boundary
 export function TailwindShadesTool() {
   return (
-    <Suspense fallback={<div className="space-y-6 animate-pulse"><div className="h-10 bg-muted rounded" /><div className="h-24 bg-muted rounded" /></div>}>
+    <Suspense fallback={<div className="border-2 border-border animate-pulse"><div className="h-10 m-4 bg-muted" /><div className="h-24 bg-muted" /></div>}>
       <TailwindShadesInner />
     </Suspense>
   );

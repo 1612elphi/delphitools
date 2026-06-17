@@ -187,112 +187,147 @@ export function FaviconGennyTool() {
     <div className="space-y-6">
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* Drop Zone */}
-      <div
-        onDrop={handleDrop}
-        onDragOver={(e) => e.preventDefault()}
-        className="border-2 border-dashed rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
-        onClick={() => document.getElementById("favicon-input")?.click()}
-      >
-        <input
-          id="favicon-input"
-          type="file"
-          accept="image/*"
-          onChange={handleFileSelect}
-          className="hidden"
-        />
-        <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
-        <p className="text-lg font-medium">Drop image here</p>
-        <p className="text-sm text-muted-foreground mt-1">
-          PNG, JPG, SVG or any image format, or paste
-        </p>
-      </div>
-
-      {/* Source Preview */}
-      {sourceImage && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="font-bold">Source Image</label>
-            <Button variant="ghost" size="sm" onClick={clear}>
-              <Trash2 className="size-4 mr-2" /> Clear
-            </Button>
-          </div>
-          <div className="p-4 rounded-lg border bg-muted/30 flex items-center gap-4">
-            <img
-              src={sourceImage}
-              alt="Source"
-              className="size-24 object-contain rounded border bg-white"
+      <div className="border-2 border-border">
+        {/* Drop Zone */}
+        {!sourceImage ? (
+          <div
+            onDrop={handleDrop}
+            onDragOver={(e) => e.preventDefault()}
+            className="border-2 border-dashed m-4 p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+            onClick={() => document.getElementById("favicon-input")?.click()}
+          >
+            <input
+              id="favicon-input"
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
             />
-            <div className="text-sm text-muted-foreground">
-              <p className="font-medium text-foreground">{fileName}</p>
-              <p className="mt-1">Image will be cropped to square</p>
-            </div>
+            <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-lg font-medium">Drop image here</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              PNG, JPG, SVG or any image format, or paste
+            </p>
           </div>
-        </div>
-      )}
-
-      {/* Generated Favicons */}
-      {favicons.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <label className="font-bold">Generated Favicons</label>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={downloadAsIco}>
-                <Download className="size-4 mr-2" /> Download .ico
-              </Button>
-              <Button onClick={downloadAll}>
-                <Download className="size-4 mr-2" /> Download All
-              </Button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {favicons.map((favicon) => (
-              <button
-                key={favicon.size}
-                onClick={() => downloadFavicon(favicon)}
-                className="p-4 rounded-lg border bg-card hover:border-primary/50 transition-colors group"
+        ) : (
+          /* Source image header bar */
+          <div>
+            <div className="flex min-h-14 items-stretch border-b border-border">
+              <span className="flex flex-1 items-center px-4 font-bold">
+                {fileName || "Source Image"}
+              </span>
+              <Button
+                variant="ghost"
+                onClick={clear}
+                className="h-auto gap-2 self-stretch rounded-none border-l border-border px-5 text-muted-foreground"
               >
-                <div className="flex items-center justify-center h-20 mb-3">
-                  <img
-                    src={favicon.dataUrl}
-                    alt={`${favicon.size}x${favicon.size}`}
-                    style={{ width: Math.min(favicon.size, 64), height: Math.min(favicon.size, 64) }}
-                    className="object-contain bg-white rounded border"
-                  />
-                </div>
-                <div className="text-center">
-                  <div className="font-bold">{favicon.size}×{favicon.size}</div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {getSizeLabel(favicon.size)}
-                  </div>
-                </div>
-                <div className="mt-2 text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                  Click to download
-                </div>
-              </button>
-            ))}
+                <Trash2 className="size-4" />
+                Clear
+              </Button>
+            </div>
+            <div className="flex items-center gap-4 p-4">
+              <div className="shrink-0 border border-border bg-white">
+                <img
+                  src={sourceImage}
+                  alt="Source"
+                  className="size-24 object-contain"
+                />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Image will be centre-cropped to a square for each size.
+              </p>
+            </div>
           </div>
+        )}
 
-          {/* HTML Snippet */}
-          <div className="space-y-2">
-            <label className="font-bold">HTML Snippet</label>
-            <pre className="p-4 rounded-lg border bg-muted/50 text-sm font-mono overflow-x-auto">
-{`<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+        {/* Generating state */}
+        {generating && (
+          <div className="border-t-2 border-border p-6 text-center text-muted-foreground">
+            Generating favicons…
+          </div>
+        )}
+
+        {/* Generated Favicons */}
+        {favicons.length > 0 && (
+          <>
+            {/* Action bar */}
+            <div className="flex min-h-14 items-stretch border-t-2 border-border">
+              <span className="flex flex-1 items-center px-4 font-bold">
+                Generated Favicons
+              </span>
+              <Button
+                variant="outline"
+                onClick={downloadAsIco}
+                className="h-auto gap-2 self-stretch rounded-none border-0 border-l border-border px-5"
+              >
+                <Download className="size-4" />
+                Download .ico
+              </Button>
+              <Button
+                onClick={downloadAll}
+                className="h-auto gap-2 self-stretch rounded-none border-0 border-l border-border px-6 font-semibold"
+              >
+                <Download className="size-4" />
+                Download All
+              </Button>
+            </div>
+
+            {/* Favicon preview table */}
+            <div className="border-t border-border">
+              {favicons.map((favicon) => (
+                <button
+                  key={favicon.size}
+                  onClick={() => downloadFavicon(favicon)}
+                  className="flex w-full items-stretch border-b border-border last:border-b-0 hover:bg-muted transition-colors group"
+                >
+                  {/* Swatch cell */}
+                  <div className="flex w-20 shrink-0 items-center justify-center border-r border-border bg-muted/30 p-2">
+                    <div className="flex items-center justify-center bg-white border border-border"
+                      style={{ width: Math.min(favicon.size, 48) + 8, height: Math.min(favicon.size, 48) + 8 }}
+                    >
+                      <img
+                        src={favicon.dataUrl}
+                        alt={`${favicon.size}×${favicon.size}`}
+                        style={{ width: Math.min(favicon.size, 48), height: Math.min(favicon.size, 48) }}
+                        className="object-contain"
+                      />
+                    </div>
+                  </div>
+                  {/* Size label cell */}
+                  <div className="flex flex-1 items-center px-4 py-3 text-left">
+                    <div>
+                      <div className="font-bold">{favicon.size}×{favicon.size}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {getSizeLabel(favicon.size)}
+                      </div>
+                    </div>
+                  </div>
+                  {/* Download hint cell */}
+                  <div className="flex items-center px-4 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Download className="size-3.5 mr-1.5" />
+                    Download PNG
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* HTML Snippet */}
+            <div className="border-t-2 border-border">
+              <div className="p-4 pb-2">
+                <label className="font-bold">HTML Snippet</label>
+              </div>
+              <pre
+                className="overflow-x-auto px-4 pb-4 text-sm text-muted-foreground"
+                style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+              >{`<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180x180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png">`}
-            </pre>
-          </div>
-        </div>
-      )}
-
-      {generating && (
-        <div className="text-center py-8 text-muted-foreground">
-          Generating favicons...
-        </div>
-      )}
+<link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png">`}</pre>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

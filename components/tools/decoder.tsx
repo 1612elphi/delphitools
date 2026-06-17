@@ -847,36 +847,32 @@ export function DecoderTool() {
   return (
     <div className="space-y-6">
       {/* ── Input ─────────────────────────────────────────────────────────── */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label>Input</Label>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={pasteFromClipboard}
-              className="h-7 px-2 text-muted-foreground hover:text-foreground"
-            >
-              <ClipboardPaste className="size-3.5 mr-1.5" />
-              Paste
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setInput("")}
-              disabled={!input}
-              className="h-7 px-2 text-muted-foreground hover:text-foreground disabled:opacity-40"
-            >
-              <X className="size-3.5 mr-1.5" />
-              Clear
-            </Button>
-          </div>
+      <div className="border-2 border-border">
+        <div className="flex items-stretch border-b-2 border-border">
+          <Label className="flex flex-1 items-center px-4 font-bold">Input</Label>
+          <button
+            type="button"
+            onClick={pasteFromClipboard}
+            className="flex w-28 items-center justify-center gap-1.5 border-l border-border text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <ClipboardPaste className="size-3.5" />
+            Paste
+          </button>
+          <button
+            type="button"
+            onClick={() => setInput("")}
+            disabled={!input}
+            className="flex w-28 items-center justify-center gap-1.5 border-l border-border text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+          >
+            <X className="size-3.5" />
+            Clear
+          </button>
         </div>
         <Textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Paste cipher text or plaintext here…"
-          className="font-mono min-h-[140px]"
+          className="min-h-[140px] rounded-none border-0 bg-transparent font-mono"
         />
       </div>
 
@@ -891,34 +887,38 @@ export function DecoderTool() {
             Manual
           </TabsTrigger>
         </TabsList>
+        <div className="mt-3 border-2 border-border">
 
         {/* ── Auto-decode ──────────────────────────────────────────────── */}
-        <TabsContent value="auto" className="space-y-4">
+        <TabsContent value="auto" className="m-0">
           {!input.trim() ? (
-            <div className="rounded-lg border border-dashed p-8 space-y-4">
+            <div className="space-y-4 p-4">
               <p className="text-sm text-muted-foreground text-center">
                 Enter ciphertext above to see ranked decoding candidates.
               </p>
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                <span className="text-xs text-muted-foreground">Try a sample:</span>
-                {SAMPLES.map((s) => (
-                  <button
-                    key={s.label}
-                    type="button"
-                    onClick={() => setInput(s.text)}
-                    className="text-xs px-2.5 py-1 rounded-full border bg-background hover:bg-muted transition-colors"
-                  >
-                    {s.label}
-                  </button>
-                ))}
+              <div className="-mx-4 -mb-4 border-t border-border">
+                <div className="px-4 py-2 text-xs font-bold text-muted-foreground">
+                  Try a sample:
+                </div>
+                <div className="segmented grid-cols-3 border-x-0 border-b-0">
+                  {SAMPLES.map((s) => (
+                    <Button
+                      key={s.label}
+                      variant="outline"
+                      onClick={() => setInput(s.text)}
+                    >
+                      {s.label}
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
           ) : candidates.length === 0 ? (
-            <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+            <div className="p-8 text-center text-sm text-muted-foreground">
               No confident matches found. Try the Manual tab if you know the cipher.
             </div>
           ) : (
-            <div className="space-y-3">
+            <div>
               {candidates.map((c, i) => {
                 const isHero = i === 0;
                 const score = Math.round(c.score * 100);
@@ -927,24 +927,27 @@ export function DecoderTool() {
                   <div
                     key={`${c.cipher}-${i}`}
                     className={cn(
-                      "rounded-lg border bg-card transition-colors",
-                      isHero ? "p-5 ring-1 ring-primary/40" : "p-4 hover:border-foreground/15",
+                      "border-b-2 border-border last:border-b-0",
+                      isHero && "bg-muted/30",
                     )}
                   >
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <div className="flex items-center gap-2 flex-wrap min-w-0">
+                    {/* Header row — name · detail · score · copy */}
+                    <div className="flex items-stretch border-b border-border">
+                      <div className="flex flex-1 flex-wrap items-center gap-2 px-4 py-3 min-w-0">
                         {isHero && <Sparkles className="size-4 text-primary shrink-0" />}
-                        <span className={cn("font-medium", isHero && "text-base")}>{c.cipher}</span>
+                        <span className={cn("font-bold", isHero && "text-base")}>{c.cipher}</span>
                         {c.detail && (
-                          <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                          <span className="font-mono text-xs px-1.5 py-0.5 bg-muted text-muted-foreground">
                             {c.detail}
                           </span>
                         )}
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-7 shrink-0"
+                      <span className="flex w-16 shrink-0 items-center justify-center border-l border-border font-mono text-sm tabular-nums text-muted-foreground">
+                        {score}%
+                      </span>
+                      <button
+                        type="button"
+                        className="flex w-12 shrink-0 items-center justify-center border-l border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                         onClick={() => copy(c.output, `auto-${i}`)}
                         title="Copy output"
                       >
@@ -953,28 +956,23 @@ export function DecoderTool() {
                         ) : (
                           <Copy className="size-4" />
                         )}
-                      </Button>
+                      </button>
                     </div>
 
                     {/* Confidence bar */}
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                        <div
-                          className={cn(
-                            "h-full rounded-full transition-all",
-                            isHero ? "bg-primary" : "bg-primary/60",
-                          )}
-                          style={{ width: `${Math.max(4, score)}%` }}
-                        />
-                      </div>
-                      <span className="text-xs tabular-nums text-muted-foreground w-9 text-right">
-                        {score}%
-                      </span>
+                    <div className="h-1.5 bg-muted">
+                      <div
+                        className={cn(
+                          "h-full transition-all",
+                          isHero ? "bg-primary" : "bg-primary/60",
+                        )}
+                        style={{ width: `${Math.max(4, score)}%` }}
+                      />
                     </div>
 
                     <pre
                       className={cn(
-                        "font-mono whitespace-pre-wrap break-words rounded bg-muted/40 p-3",
+                        "font-mono whitespace-pre-wrap break-words p-4",
                         isHero ? "text-sm" : "text-xs",
                       )}
                     >
@@ -982,208 +980,207 @@ export function DecoderTool() {
                     </pre>
 
                     {canOpenInManual && (
-                      <div className="mt-3 flex justify-end">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openInManual(c)}
-                          className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                        >
-                          Tweak in Manual
-                          <ArrowRight className="size-3 ml-1" />
-                        </Button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => openInManual(c)}
+                        className="flex w-full items-center justify-center gap-1 border-t border-border py-2 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        Tweak in Manual
+                        <ArrowRight className="size-3" />
+                      </button>
                     )}
                   </div>
                 );
               })}
             </div>
           )}
-
-          <p className="text-xs text-muted-foreground">
+          <p className="border-t-2 border-border p-4 text-xs text-muted-foreground">
             Candidates are ranked by English-likeness (letter frequency + common words). Vigenère key recovery uses the Index of Coincidence and works best on ciphertext longer than ~50 letters.
           </p>
         </TabsContent>
 
         {/* ── Manual ───────────────────────────────────────────────────── */}
-        <TabsContent value="manual" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            {/* Left column — controls */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Cipher</Label>
-                <Select value={cipher} onValueChange={(v) => setCipher(v as CipherId)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {["Classical", "Codes", "Encodings"].map((group) => (
-                      <SelectGroup key={group}>
-                        <SelectLabel>{group}</SelectLabel>
-                        {CIPHER_OPTIONS.filter((o) => o.group === group).map((o) => (
-                          <SelectItem key={o.value} value={o.value}>
-                            {o.label}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
+        <TabsContent value="manual" className="m-0">
+          {/* Cipher */}
+          <div className="space-y-2 border-b-2 border-border p-4">
+            <Label className="font-bold">Cipher</Label>
+            <Select value={cipher} onValueChange={(v) => setCipher(v as CipherId)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {["Classical", "Codes", "Encodings"].map((group) => (
+                  <SelectGroup key={group}>
+                    <SelectLabel>{group}</SelectLabel>
+                    {CIPHER_OPTIONS.filter((o) => o.group === group).map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  </SelectGroup>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-              <div className="space-y-2">
-                <Label>Direction</Label>
-                <div className="grid grid-cols-2 rounded-md border bg-muted/30 p-1">
-                  {(["decode", "encode"] as const).map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => setMode(m)}
-                      className={cn(
-                        "text-sm py-1.5 rounded transition-colors capitalize",
-                        mode === m
-                          ? "bg-background shadow-sm font-medium"
-                          : "text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      {m}
-                    </button>
-                  ))}
+          {/* Direction */}
+          <div className="space-y-2 border-b-2 border-border p-4">
+            <Label className="font-bold">Direction</Label>
+            <div className="segmented grid-cols-2 -mx-4 -mb-4 border-x-0 border-b-0">
+              {(["decode", "encode"] as const).map((m) => (
+                <Button
+                  key={m}
+                  variant={mode === m ? "default" : "outline"}
+                  onClick={() => setMode(m)}
+                  className="capitalize"
+                >
+                  {m}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Cipher-specific parameters */}
+          {cipher === "caesar" && (
+            <div className="space-y-2 border-b-2 border-border p-4">
+              <Label className="font-bold">Shift (1–25)</Label>
+              <Input
+                type="number"
+                min={1}
+                max={25}
+                value={params.caesarShift}
+                onChange={(e) =>
+                  setParams({ ...params, caesarShift: Number(e.target.value) || 0 })
+                }
+                className="font-mono"
+              />
+            </div>
+          )}
+
+          {cipher === "vigenere" && (
+            <div className="space-y-2 border-b-2 border-border p-4">
+              <Label className="font-bold">Key</Label>
+              <Input
+                value={params.vigenereKey}
+                onChange={(e) =>
+                  setParams({ ...params, vigenereKey: e.target.value })
+                }
+                placeholder="e.g. LEMON"
+                className="font-mono uppercase"
+              />
+            </div>
+          )}
+
+          {cipher === "affine" && (
+            <div className="space-y-2 border-b-2 border-border p-4">
+              <Label className="font-bold">Parameters</Label>
+              <div className="-mx-4 -mb-4 flex items-stretch border-t border-border">
+                <div className="flex flex-1 items-stretch border-r border-border">
+                  <span className="flex shrink-0 items-center px-4 text-sm text-muted-foreground">
+                    a <span className="ml-1 text-xs">(coprime w/ 26)</span>
+                  </span>
+                  <Select
+                    value={String(params.affineA)}
+                    onValueChange={(v) => setParams({ ...params, affineA: Number(v) })}
+                  >
+                    <SelectTrigger className="flex-1 rounded-none border-0 border-l border-border font-mono">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25].map((n) => (
+                        <SelectItem key={n} value={String(n)}>
+                          {n}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
-
-              {/* Cipher-specific parameters */}
-              {cipher === "caesar" && (
-                <div className="space-y-2">
-                  <Label>Shift (1–25)</Label>
+                <div className="flex flex-1 items-stretch">
+                  <span className="flex shrink-0 items-center px-4 text-sm text-muted-foreground">
+                    b <span className="ml-1 text-xs">(0–25)</span>
+                  </span>
                   <Input
                     type="number"
-                    min={1}
+                    min={0}
                     max={25}
-                    value={params.caesarShift}
+                    value={params.affineB}
                     onChange={(e) =>
-                      setParams({ ...params, caesarShift: Number(e.target.value) || 0 })
+                      setParams({ ...params, affineB: Number(e.target.value) || 0 })
                     }
+                    className="flex-1 rounded-none border-0 border-l border-border bg-transparent font-mono"
                   />
                 </div>
-              )}
+              </div>
+            </div>
+          )}
 
-              {cipher === "vigenere" && (
-                <div className="space-y-2">
-                  <Label>Key</Label>
-                  <Input
-                    value={params.vigenereKey}
-                    onChange={(e) =>
-                      setParams({ ...params, vigenereKey: e.target.value })
-                    }
-                    placeholder="e.g. LEMON"
-                    className="font-mono uppercase"
-                  />
-                </div>
-              )}
+          {cipher === "rail-fence" && (
+            <div className="space-y-2 border-b-2 border-border p-4">
+              <Label className="font-bold">Rails (2–10)</Label>
+              <Input
+                type="number"
+                min={2}
+                max={10}
+                value={params.rails}
+                onChange={(e) =>
+                  setParams({ ...params, rails: Number(e.target.value) || 2 })
+                }
+                className="font-mono"
+              />
+            </div>
+          )}
 
-              {cipher === "affine" && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label>a <span className="text-muted-foreground font-normal">(coprime w/ 26)</span></Label>
-                    <Select
-                      value={String(params.affineA)}
-                      onValueChange={(v) => setParams({ ...params, affineA: Number(v) })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25].map((n) => (
-                          <SelectItem key={n} value={String(n)}>
-                            {n}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>b <span className="text-muted-foreground font-normal">(0–25)</span></Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={25}
-                      value={params.affineB}
-                      onChange={(e) =>
-                        setParams({ ...params, affineB: Number(e.target.value) || 0 })
-                      }
-                    />
-                  </div>
-                </div>
-              )}
-
-              {cipher === "rail-fence" && (
-                <div className="space-y-2">
-                  <Label>Rails (2–10)</Label>
-                  <Input
-                    type="number"
-                    min={2}
-                    max={10}
-                    value={params.rails}
-                    onChange={(e) =>
-                      setParams({ ...params, rails: Number(e.target.value) || 2 })
-                    }
-                  />
-                </div>
+          {/* Output */}
+          <div className="space-y-3 p-4">
+            <div className="flex items-center justify-between">
+              <Label className="font-bold">Output</Label>
+              {manualOutput && !manualHasError && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copy(manualOutput, "manual")}
+                  className="h-7 px-2 text-muted-foreground hover:text-foreground"
+                >
+                  {copiedKey === "manual" ? (
+                    <Check className="size-3.5 mr-1.5 text-emerald-600 dark:text-emerald-400" />
+                  ) : (
+                    <Copy className="size-3.5 mr-1.5" />
+                  )}
+                  Copy
+                </Button>
               )}
             </div>
-
-            {/* Right column — output */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Output</Label>
-                {manualOutput && !manualHasError && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copy(manualOutput, "manual")}
-                    className="h-7 px-2 text-muted-foreground hover:text-foreground"
-                  >
-                    {copiedKey === "manual" ? (
-                      <Check className="size-3.5 mr-1.5 text-emerald-600 dark:text-emerald-400" />
-                    ) : (
-                      <Copy className="size-3.5 mr-1.5" />
-                    )}
-                    Copy
-                  </Button>
-                )}
-              </div>
-              <div
-                className={cn(
-                  "rounded-lg border bg-card min-h-[200px] p-3",
-                  manualHasError && "border-destructive/50",
-                )}
-              >
-                {!input ? (
-                  <p className="text-sm text-muted-foreground italic">
-                    Enter input above to see the result.
-                  </p>
-                ) : (
-                  <pre
-                    className={cn(
-                      "font-mono text-sm whitespace-pre-wrap break-words",
-                      manualHasError && "text-destructive",
-                    )}
-                  >
-                    {manualOutput}
-                  </pre>
-                )}
-              </div>
+            <div
+              className={cn(
+                "-mx-4 -mb-4 min-h-[200px] border-t border-border bg-card p-4",
+                manualHasError && "bg-destructive/5",
+              )}
+            >
+              {!input ? (
+                <p className="text-sm text-muted-foreground italic">
+                  Enter input above to see the result.
+                </p>
+              ) : (
+                <pre
+                  className={cn(
+                    "font-mono text-sm whitespace-pre-wrap break-words",
+                    manualHasError && "text-destructive",
+                  )}
+                >
+                  {manualOutput}
+                </pre>
+              )}
             </div>
           </div>
         </TabsContent>
+        </div>
       </Tabs>
 
       {/* Reference */}
-      <Accordion type="single" collapsible>
+      <Accordion type="single" collapsible className="border-2 border-border">
         <AccordionItem value="ref" className="border-b-0">
-          <AccordionTrigger className="text-sm">Cipher reference</AccordionTrigger>
-          <AccordionContent>
+          <AccordionTrigger className="px-4 font-bold">Cipher reference</AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
             <div className="text-sm text-muted-foreground space-y-3">
               <div>
                 <p className="font-medium text-foreground">Classical (alphabet) ciphers</p>

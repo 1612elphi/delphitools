@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { useColourNotation } from "@/hooks/use-colour-notation";
 import { formatColour } from "@/lib/colour-notation";
+import { cn } from "@/lib/utils";
 
 // Types
 type GradientMode = "linear" | "corners" | "mesh";
@@ -293,9 +294,15 @@ function DeferredPositionInput({
   );
 
   return (
-    <div className="flex items-center gap-1">
-      <Input {...inputProps} type="number" className="w-20" min={0} max={100} />
-      <span className="text-muted-foreground">%</span>
+    <div className="flex w-24 shrink-0 items-center border-l border-border">
+      <Input
+        {...inputProps}
+        type="number"
+        className="w-full border-0 bg-transparent text-center font-mono"
+        min={0}
+        max={100}
+      />
+      <span className="pr-3 text-muted-foreground">%</span>
     </div>
   );
 }
@@ -538,37 +545,39 @@ function SortableColourStop({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-2 p-2 rounded-lg border bg-muted/30"
+      className="flex items-stretch border-b border-border last:border-b-0 bg-muted/30"
     >
       <button
         type="button"
         {...attributes}
         {...listeners}
-        className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none"
+        className="flex w-10 shrink-0 cursor-grab items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:cursor-grabbing touch-none"
       >
         <GripVertical className="size-4" />
       </button>
-      <input
-        type="color"
-        value={stop.colour}
-        onChange={(e) => onUpdate({ colour: e.target.value })}
-        className="w-10 h-10 rounded-lg cursor-pointer border-0"
-      />
+      <div className="relative w-12 shrink-0 border-l border-border">
+        <div className="size-full" style={{ backgroundColor: stop.colour }} aria-hidden />
+        <input
+          type="color"
+          value={stop.colour}
+          onChange={(e) => onUpdate({ colour: e.target.value })}
+          className="absolute inset-0 size-full cursor-pointer opacity-0"
+        />
+      </div>
       <DeferredHexInput
         value={stop.colour}
         onChange={(colour) => onUpdate({ colour })}
-        className="w-28 font-mono text-sm"
+        className="w-28 flex-1 border-0 border-l border-border bg-transparent font-mono text-sm"
       />
       <DeferredPositionInput
         value={stop.position}
         onChange={(position) => onUpdate({ position })}
       />
       <Button
-        size="icon"
         variant="ghost"
         onClick={onRemove}
         disabled={!canRemove}
-        className="ml-auto"
+        className="flex w-12 shrink-0 items-center justify-center self-stretch rounded-none border-0 border-l border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
       >
         <Trash2 className="size-4" />
       </Button>
@@ -612,9 +621,10 @@ function SortableMeshPoint({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-2 p-2 rounded-lg border transition-colors ${
-        isHovered ? "bg-muted/50 border-primary/50" : "bg-muted/30"
-      }`}
+      className={cn(
+        "flex items-stretch border-b border-border transition-colors last:border-b-0",
+        isHovered ? "bg-muted/50" : "bg-muted/30"
+      )}
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
     >
@@ -622,42 +632,47 @@ function SortableMeshPoint({
         type="button"
         {...attributes}
         {...listeners}
-        className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none"
+        className="flex w-10 shrink-0 cursor-grab items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:cursor-grabbing touch-none"
       >
         <GripVertical className="size-4" />
       </button>
 
       {/* Number badge */}
-      <div
-        className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 border-white shrink-0"
-        style={{
-          backgroundColor: point.colour,
-          color: getLuminance(point.colour) > 0.5 ? "#000" : "#fff",
-        }}
-      >
-        {index + 1}
+      <div className="flex w-10 shrink-0 items-center justify-center border-l border-border">
+        <div
+          className="flex size-6 items-center justify-center rounded-full border-2 border-white text-xs font-bold"
+          style={{
+            backgroundColor: point.colour,
+            color: getLuminance(point.colour) > 0.5 ? "#000" : "#fff",
+          }}
+        >
+          {index + 1}
+        </div>
       </div>
 
-      {/* Colour picker */}
-      <input
-        type="color"
-        value={point.colour}
-        onChange={(e) => onColourChange(e.target.value)}
-        className="w-10 h-10 rounded-lg cursor-pointer border-0 shrink-0"
-      />
+      {/* Colour picker swatch cell */}
+      <div className="relative w-12 shrink-0 border-l border-border">
+        <div className="size-full" style={{ backgroundColor: point.colour }} aria-hidden />
+        <input
+          type="color"
+          value={point.colour}
+          onChange={(e) => onColourChange(e.target.value)}
+          className="absolute inset-0 size-full cursor-pointer opacity-0"
+        />
+      </div>
 
       {/* Colour info */}
-      <div className="flex flex-col min-w-0 flex-1">
-        <span className="text-sm font-medium truncate">
+      <div className="flex min-w-0 flex-1 flex-col justify-center border-l border-border px-3 py-2">
+        <span className="truncate text-sm font-medium">
           {getColourName(point.colour)}
         </span>
-        <span className="text-xs font-mono text-muted-foreground">
+        <span className="font-mono text-xs text-muted-foreground">
           {formatColour(point.colour, notation)}
         </span>
       </div>
 
       {/* Position */}
-      <div className="text-xs text-muted-foreground whitespace-nowrap">
+      <div className="flex shrink-0 items-center whitespace-nowrap border-l border-border px-3 font-mono text-xs text-muted-foreground">
         ({Math.round(point.x * 100)}%, {Math.round(point.y * 100)}%)
       </div>
     </div>
@@ -1109,8 +1124,9 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
           <TabsTrigger value="mesh">Mesh</TabsTrigger>
         </TabsList>
 
+        <div className="mt-3 border-2 border-border">
         {/* Preview with interactive dots */}
-        <div className="mt-6 rounded-lg border overflow-hidden relative">
+        <div className="overflow-hidden relative border-b-2 border-border">
           <canvas
             ref={previewCanvasRef}
             className="w-full h-[300px] object-cover"
@@ -1179,24 +1195,24 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
 
           {/* Hint text for corners/mesh modes */}
           {mode === "corners" && (
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-white/70 bg-black/30 px-2 py-1 rounded-full backdrop-blur-sm">
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-white/70 bg-black/30 px-2 py-1 backdrop-blur-sm">
               Click dots to change colours
             </div>
           )}
           {mode === "mesh" && (
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-white/70 bg-black/30 px-2 py-1 rounded-full backdrop-blur-sm">
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-white/70 bg-black/30 px-2 py-1 backdrop-blur-sm">
               Drag dots to reposition, click to change colour
             </div>
           )}
         </div>
 
         {/* Linear Controls */}
-        <TabsContent value="linear" className="space-y-6 mt-6">
-          <div className="space-y-6">
+        <TabsContent value="linear" className="m-0">
+          <div>
             {/* Colour Stops */}
-            <div className="space-y-2">
+            <div className="space-y-3 border-b-2 border-border p-4">
               <div className="flex items-center justify-between">
-                <Label>Colour Stops</Label>
+                <Label className="font-bold">Colour Stops</Label>
                 <div className="flex gap-2">
                   <Button
                     size="sm"
@@ -1223,7 +1239,7 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
                   items={colourStops.map((s) => s.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  <div className="space-y-2">
+                  <div className="-mx-4 border-y border-border">
                     {colourStops.map((stop, index) => (
                       <SortableColourStop
                         key={stop.id}
@@ -1240,15 +1256,15 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
             </div>
 
             {/* Angle Control */}
-            <div className="space-y-3">
+            <div className="space-y-3 border-b-2 border-border p-4">
               <div className="flex items-center justify-between">
-                <Label>Angle</Label>
+                <Label className="font-bold">Angle</Label>
                 <div className="flex items-center gap-2">
                   <Input
                     type="number"
                     value={angle}
                     onChange={(e) => setAngle(Math.max(0, Math.min(360, Number(e.target.value))))}
-                    className="w-20 text-center"
+                    className="w-20 text-center font-mono"
                     min={0}
                     max={360}
                   />
@@ -1287,14 +1303,14 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
                 />
               </div>
               {/* Quick angle presets */}
-              <div className="flex gap-1 flex-wrap">
+              <div className="segmented grid-cols-8 -mx-4 border-x-0">
                 {[0, 45, 90, 135, 180, 225, 270, 315].map((preset) => (
                   <Button
                     key={preset}
                     size="sm"
                     variant={angle === preset ? "default" : "outline"}
                     onClick={() => setAngle(preset)}
-                    className="h-7 px-2 text-xs"
+                    className="text-xs"
                   >
                     {preset}°
                   </Button>
@@ -1303,9 +1319,9 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
             </div>
 
             {/* Noise Control */}
-            <div className="space-y-3">
+            <div className="space-y-3 p-4">
               <div className="flex items-center justify-between">
-                <Label>Noise</Label>
+                <Label className="font-bold">Noise</Label>
                 <span className="text-sm text-muted-foreground">{noise}%</span>
               </div>
               <Slider
@@ -1323,55 +1339,64 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
         </TabsContent>
 
         {/* Corners Controls */}
-        <TabsContent value="corners" className="mt-6">
-          <div className="grid grid-cols-2 gap-4">
-            {(
-              [
-                ["topLeft", "Top Left"],
-                ["topRight", "Top Right"],
-                ["bottomLeft", "Bottom Left"],
-                ["bottomRight", "Bottom Right"],
-              ] as const
-            ).map(([key, label]) => (
-              <div
-                key={key}
-                className={`space-y-2 p-3 rounded-lg border transition-colors ${
-                  hoveredCorner === key ? "bg-muted/50 border-primary/50" : ""
-                }`}
-                onMouseEnter={() => setHoveredCorner(key)}
-                onMouseLeave={() => setHoveredCorner(null)}
-              >
-                <div className="flex items-center justify-between">
-                  <Label>{label}</Label>
-                  <span className="text-xs text-muted-foreground">
-                    {getColourName(corners[key])}
-                  </span>
+        <TabsContent value="corners" className="m-0">
+          <div className="space-y-3 border-b-2 border-border p-4">
+            <Label className="font-bold">Corner Colours</Label>
+            <div className="-mx-4 grid grid-cols-2 border-y border-border">
+              {(
+                [
+                  ["topLeft", "Top Left"],
+                  ["topRight", "Top Right"],
+                  ["bottomLeft", "Bottom Left"],
+                  ["bottomRight", "Bottom Right"],
+                ] as const
+              ).map(([key, label], i) => (
+                <div
+                  key={key}
+                  className={cn(
+                    "flex items-stretch border-border transition-colors",
+                    i % 2 === 0 && "border-r",
+                    i < 2 && "border-b",
+                    hoveredCorner === key ? "bg-muted/50" : ""
+                  )}
+                  onMouseEnter={() => setHoveredCorner(key)}
+                  onMouseLeave={() => setHoveredCorner(null)}
+                >
+                  <div className="relative w-12 shrink-0 border-r border-border">
+                    <div className="size-full" style={{ backgroundColor: corners[key] }} aria-hidden />
+                    <input
+                      type="color"
+                      value={corners[key]}
+                      onChange={(e) =>
+                        setCorners((prev) => ({ ...prev, [key]: normalizeHex(e.target.value) ?? prev[key] }))
+                      }
+                      className="absolute inset-0 size-full cursor-pointer opacity-0"
+                    />
+                  </div>
+                  <div className="flex min-w-0 flex-1 flex-col justify-center px-3 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <Label className="font-bold">{label}</Label>
+                      <span className="truncate text-xs text-muted-foreground">
+                        {getColourName(corners[key])}
+                      </span>
+                    </div>
+                    <DeferredHexInput
+                      value={corners[key]}
+                      onChange={(colour) =>
+                        setCorners((prev) => ({ ...prev, [key]: colour }))
+                      }
+                      className="mt-1 h-8 border-0 bg-transparent px-0 font-mono text-sm"
+                    />
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={corners[key]}
-                    onChange={(e) =>
-                      setCorners((prev) => ({ ...prev, [key]: normalizeHex(e.target.value) ?? prev[key] }))
-                    }
-                    className="w-12 h-12 rounded-lg cursor-pointer border-0"
-                  />
-                  <DeferredHexInput
-                    value={corners[key]}
-                    onChange={(colour) =>
-                      setCorners((prev) => ({ ...prev, [key]: colour }))
-                    }
-                    className="font-mono text-sm"
-                  />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
           {/* Noise Control */}
-          <div className="space-y-3 mt-6">
+          <div className="space-y-3 p-4">
             <div className="flex items-center justify-between">
-              <Label>Noise</Label>
+              <Label className="font-bold">Noise</Label>
               <span className="text-sm text-muted-foreground">{noise}%</span>
             </div>
             <Slider
@@ -1388,11 +1413,11 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
         </TabsContent>
 
         {/* Mesh Controls */}
-        <TabsContent value="mesh" className="space-y-6 mt-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Grid Size</Label>
-              <div className="flex gap-2">
+        <TabsContent value="mesh" className="m-0">
+          <div>
+            <div className="space-y-3 border-b-2 border-border p-4">
+              <Label className="font-bold">Grid Size</Label>
+              <div className="segmented grid-cols-2 -mx-4 border-x-0">
                 <Button
                   variant={meshConfig.gridSize === 2 ? "default" : "outline"}
                   onClick={() => setMeshGridSize(2)}
@@ -1408,8 +1433,8 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Control Points (drag on preview or reorder below)</Label>
+            <div className="space-y-3 border-b-2 border-border p-4">
+              <Label className="font-bold">Control Points (drag on preview or reorder below)</Label>
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -1420,7 +1445,7 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
                   items={meshConfig.points.map((p) => p.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  <div className="space-y-2">
+                  <div className="-mx-4 border-y border-border">
                     {meshConfig.points.map((point, index) => (
                       <SortableMeshPoint
                         key={point.id}
@@ -1440,9 +1465,9 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
             </div>
 
             {/* Noise Control */}
-            <div className="space-y-3">
+            <div className="space-y-3 p-4">
               <div className="flex items-center justify-between">
-                <Label>Noise</Label>
+                <Label className="font-bold">Noise</Label>
                 <span className="text-sm text-muted-foreground">{noise}%</span>
               </div>
               <Slider
@@ -1458,28 +1483,23 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
             </div>
           </div>
         </TabsContent>
+        </div>
       </Tabs>
 
       {/* Export Panel */}
-      <div className="border-t pt-6">
-        <div className="grid gap-6 md:grid-cols-2">
+      <div className="border-2 border-border">
+        <div className="grid md:grid-cols-2">
           {/* Image Export */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-base font-semibold">Image Export</Label>
-              <Button onClick={downloadImage} size="sm">
-                <Download className="size-4 mr-2" />
-                Download PNG
-              </Button>
-            </div>
+          <div className="border-b-2 border-border md:border-b-0 md:border-r-2">
+            <div className="space-y-3 p-4">
+              <Label className="text-base font-bold">Image Export</Label>
 
-            <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
               <div className="flex flex-wrap items-center gap-2">
                 <Input
                   type="number"
                   value={exportWidth}
                   onChange={(e) => setExportWidth(Number(e.target.value))}
-                  className="w-20 h-8 text-sm"
+                  className="w-20 h-8 text-sm font-mono"
                   min={100}
                   max={8192}
                 />
@@ -1488,14 +1508,14 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
                   type="number"
                   value={exportHeight}
                   onChange={(e) => setExportHeight(Number(e.target.value))}
-                  className="w-20 h-8 text-sm"
+                  className="w-20 h-8 text-sm font-mono"
                   min={100}
                   max={8192}
                 />
                 <span className="text-muted-foreground text-sm">px</span>
               </div>
 
-              <div className="flex flex-wrap gap-1">
+              <div className="segmented grid-cols-4 -mx-4 border-x-0">
                 {[
                   { label: "512", w: 512, h: 512 },
                   { label: "1K", w: 1024, h: 1024 },
@@ -1518,7 +1538,7 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
                       setExportWidth(preset.w);
                       setExportHeight(preset.h);
                     }}
-                    className="h-7 px-2 text-xs"
+                    className="text-xs"
                   >
                     {preset.label}
                   </Button>
@@ -1531,31 +1551,47 @@ background: ${meshConfig.points.map((p) => `radial-gradient(circle at ${Math.rou
                 </p>
               )}
             </div>
+
+            <Button
+              onClick={downloadImage}
+              className="h-14 w-full rounded-none border-0 border-t-2 border-border text-lg font-bold"
+            >
+              <Download className="size-4 mr-2" />
+              Download PNG
+            </Button>
           </div>
 
           {/* CSS Export */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-base font-semibold">CSS</Label>
-              <Button variant="outline" onClick={copyCSS} size="sm">
-                {copied === "css" ? (
-                  <Check className="size-4 mr-2" />
-                ) : (
-                  <Copy className="size-4 mr-2" />
-                )}
-                {copied === "css" ? "Copied!" : "Copy CSS"}
-              </Button>
+          <div className="flex flex-col">
+            <div className="flex-1 space-y-3 p-4">
+              <Label className="text-base font-bold">CSS</Label>
+
+              <pre
+                className="-mx-4 border-y border-border bg-muted/30 p-4 text-sm overflow-x-auto whitespace-pre-wrap min-h-[120px]"
+                style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+              >
+                {generateCSS()}
+              </pre>
+
+              {mode === "mesh" && (
+                <p className="text-xs text-muted-foreground">
+                  Mesh gradients can&apos;t be perfectly replicated in CSS. Use image export for accurate results.
+                </p>
+              )}
             </div>
 
-            <pre className="p-4 rounded-lg border bg-muted/30 text-sm font-mono overflow-x-auto whitespace-pre-wrap min-h-[120px]">
-              {generateCSS()}
-            </pre>
-
-            {mode === "mesh" && (
-              <p className="text-xs text-muted-foreground">
-                Mesh gradients can&apos;t be perfectly replicated in CSS. Use image export for accurate results.
-              </p>
-            )}
+            <Button
+              variant="outline"
+              onClick={copyCSS}
+              className="h-14 w-full rounded-none border-0 border-t-2 border-border text-lg font-bold"
+            >
+              {copied === "css" ? (
+                <Check className="size-4 mr-2" />
+              ) : (
+                <Copy className="size-4 mr-2" />
+              )}
+              {copied === "css" ? "Copied!" : "Copy CSS"}
+            </Button>
           </div>
         </div>
       </div>

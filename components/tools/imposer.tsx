@@ -582,64 +582,64 @@ export function ImposerTool() {
 
   return (
     <div className="space-y-6">
-      {/* PDF Upload */}
-      <div
-        onDragOver={(e) => {
-          e.preventDefault();
-          setIsDragging(true);
-        }}
-        onDragLeave={() => setIsDragging(false)}
-        onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
-        className={cn(
-          "border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors",
-          isDragging
-            ? "border-primary bg-primary/5"
-            : "hover:border-primary/50"
-        )}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="application/pdf"
-          className="hidden"
-          onChange={handleFileInput}
-        />
-        {pdfFileName ? (
-          <div className="flex items-center justify-center gap-3">
-            <FileText className="size-8 text-primary" />
-            <div className="text-left">
-              <p className="font-medium">{pdfFileName}</p>
-              <p className="text-sm text-muted-foreground">
-                {pdfPageCount} page{pdfPageCount !== 1 ? "s" : ""} &mdash;{" "}
-                <button
-                  className="underline hover:text-foreground"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    clearPdf();
-                  }}
-                >
-                  remove
-                </button>
-              </p>
+      <div className="border-2 border-border">
+        {/* PDF Upload */}
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+          className={cn(
+            "border-2 border-dashed m-4 p-8 text-center cursor-pointer transition-colors",
+            isDragging
+              ? "border-primary bg-primary/5"
+              : "hover:border-primary/50"
+          )}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            onChange={handleFileInput}
+          />
+          {pdfFileName ? (
+            <div className="flex items-center justify-center gap-3">
+              <FileText className="size-8 text-primary" />
+              <div className="text-left">
+                <p className="font-medium">{pdfFileName}</p>
+                <p className="text-sm text-muted-foreground">
+                  {pdfPageCount} page{pdfPageCount !== 1 ? "s" : ""} &mdash;{" "}
+                  <button
+                    className="underline hover:text-foreground"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      clearPdf();
+                    }}
+                  >
+                    remove
+                  </button>
+                </p>
+              </div>
             </div>
-          </div>
-        ) : (
-          <>
-            <Upload className="size-10 mx-auto text-muted-foreground mb-3" />
-            <p className="font-medium">Drop a PDF here, or click to browse</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              or paste from clipboard
-            </p>
-          </>
-        )}
-      </div>
+          ) : (
+            <>
+              <Upload className="size-10 mx-auto text-muted-foreground mb-3" />
+              <p className="font-medium">Drop a PDF here, or click to browse</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                or paste from clipboard
+              </p>
+            </>
+          )}
+        </div>
 
-      {/* ── Configuration ─────────────────────────────────────────── */}
-      <div className="space-y-4">
+        {/* ── Configuration ─────────────────────────────────────────── */}
         {/* Layout Selector — Rich Combobox */}
-        <div className="space-y-1.5">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Layout</span>
+        <div className="space-y-1.5 border-t-2 border-border p-4">
+          <label className="font-bold block">Layout</label>
           <Popover open={layoutOpen} onOpenChange={setLayoutOpen}>
             <PopoverTrigger asChild>
               <button
@@ -708,12 +708,10 @@ export function ImposerTool() {
         </div>
 
         {/* Two-card grid */}
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid border-t-2 border-border sm:grid-cols-2">
           {/* Sheet Setup Card */}
-          <div className="rounded-lg border bg-card/60 p-4">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-3 block">
-              Sheet Setup
-            </span>
+          <div className="border-b-2 border-border p-4 sm:border-b-0 sm:border-r-2">
+            <label className="font-bold mb-3 block">Sheet Setup</label>
             <div className="space-y-3">
               {/* Paper size */}
               <div className="space-y-1.5">
@@ -757,31 +755,19 @@ export function ImposerTool() {
                   label="Orientation"
                   info="How the sheet feeds through the printer. Landscape is usually needed for side-by-side layouts like saddle stitch."
                 />
-                <div className="grid grid-cols-2 h-9 rounded-md border border-input overflow-hidden">
-                  <button
-                    type="button"
+                <div className="segmented grid-cols-2">
+                  <Button
+                    variant={orientation === "portrait" ? "default" : "outline"}
                     onClick={() => setOrientation("portrait")}
-                    className={cn(
-                      "text-sm font-medium transition-colors",
-                      orientation === "portrait"
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-muted"
-                    )}
                   >
                     Portrait
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant={orientation === "landscape" ? "default" : "outline"}
                     onClick={() => setOrientation("landscape")}
-                    className={cn(
-                      "text-sm font-medium transition-colors border-l border-input",
-                      orientation === "landscape"
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-muted"
-                    )}
                   >
                     Landscape
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -815,31 +801,19 @@ export function ImposerTool() {
                     label="Duplex flip"
                     info="How your printer flips the paper for double-sided printing. Long edge is standard for most booklets. Short edge (tumble) flips top-to-bottom."
                   />
-                  <div className="grid grid-cols-2 h-9 rounded-md border border-input overflow-hidden">
-                    <button
-                      type="button"
+                  <div className="segmented grid-cols-2">
+                    <Button
+                      variant={duplexFlip === "long-edge" ? "default" : "outline"}
                       onClick={() => setDuplexFlip("long-edge")}
-                      className={cn(
-                        "text-sm font-medium transition-colors",
-                        duplexFlip === "long-edge"
-                          ? "bg-primary text-primary-foreground"
-                          : "hover:bg-muted"
-                      )}
                     >
                       Long edge
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant={duplexFlip === "short-edge" ? "default" : "outline"}
                       onClick={() => setDuplexFlip("short-edge")}
-                      className={cn(
-                        "text-sm font-medium transition-colors border-l border-input",
-                        duplexFlip === "short-edge"
-                          ? "bg-primary text-primary-foreground"
-                          : "hover:bg-muted"
-                      )}
                     >
                       Short edge
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
@@ -851,22 +825,15 @@ export function ImposerTool() {
                     label="Copies / sheet"
                     info="How many identical copies of your page to fit on each sheet."
                   />
-                  <div className="grid grid-cols-5 h-9 rounded-md border border-input overflow-hidden">
-                    {GANG_RUN_OPTIONS.map((n, i) => (
-                      <button
+                  <div className="segmented grid-cols-5">
+                    {GANG_RUN_OPTIONS.map((n) => (
+                      <Button
                         key={n}
-                        type="button"
+                        variant={nUp === n ? "default" : "outline"}
                         onClick={() => setNUp(n)}
-                        className={cn(
-                          "text-sm font-medium transition-colors",
-                          i > 0 && "border-l border-input",
-                          nUp === n
-                            ? "bg-primary text-primary-foreground"
-                            : "hover:bg-muted"
-                        )}
                       >
                         {n}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </div>
@@ -900,10 +867,8 @@ export function ImposerTool() {
           </div>
 
           {/* Spacing & Finishing Card */}
-          <div className="rounded-lg border bg-card/60 p-4">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-3 block">
-              Spacing & Finishing
-            </span>
+          <div className="p-4">
+            <label className="font-bold mb-3 block">Spacing &amp; Finishing</label>
             <div className="space-y-3">
               <SliderWithInfo
                 label="Margins"
@@ -1005,11 +970,11 @@ export function ImposerTool() {
       </div>
 
       {/* Preview area */}
-      <div className="space-y-4">
+      <div className="border-2 border-border">
         {result && (
           <>
             {/* Summary bar */}
-            <div className="p-3 bg-muted/50 rounded-lg">
+            <div className="p-4 bg-muted/50 border-b-2 border-border">
               <p className="text-sm font-medium">
                 {pdfPageCount || sourcePages} page
                 {(pdfPageCount || sourcePages) !== 1 ? "s" : ""}{" "}
@@ -1027,22 +992,24 @@ export function ImposerTool() {
 
             {/* Paginated stack preview */}
             {activeSheetData && (
-              <PaginatedSheetStack
-                sheet={activeSheetData}
-                sheetIndex={activeSheet}
-                totalSheets={totalSheets}
-                isFlipped={isFlipped}
-                blankMode={blankMode}
-                cropMarks={cropMarks}
-                layoutId={layoutId}
-                sheetW={sheetW}
-                sheetH={sheetH}
-                onFlip={flipCard}
-                onPrev={prevSheet}
-                onNext={nextSheet}
-                onGoTo={goToSheet}
-                drawSheetSide={drawSheetSide}
-              />
+              <div className="p-4">
+                <PaginatedSheetStack
+                  sheet={activeSheetData}
+                  sheetIndex={activeSheet}
+                  totalSheets={totalSheets}
+                  isFlipped={isFlipped}
+                  blankMode={blankMode}
+                  cropMarks={cropMarks}
+                  layoutId={layoutId}
+                  sheetW={sheetW}
+                  sheetH={sheetH}
+                  onFlip={flipCard}
+                  onPrev={prevSheet}
+                  onNext={nextSheet}
+                  onGoTo={goToSheet}
+                  drawSheetSide={drawSheetSide}
+                />
+              </div>
             )}
           </>
         )}
@@ -1055,12 +1022,11 @@ export function ImposerTool() {
       </div>
 
       {/* Actions bar */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex min-h-14 items-stretch border-2 border-border">
         <Button
-          size="lg"
-          className="flex-1 h-12 font-bold"
           onClick={generateImposedPdf}
           disabled={!pdfBytes || isGenerating}
+          className="h-auto flex-1 self-stretch rounded-none border-0 text-lg font-bold"
         >
           {isGenerating ? (
             <>
@@ -1076,10 +1042,9 @@ export function ImposerTool() {
         </Button>
 
         <Button
-          size="lg"
           variant="outline"
-          className="h-12"
           onClick={() => setPrintGuideOpen((o) => !o)}
+          className="h-auto self-stretch rounded-none border-0 border-l-2 border-border px-5"
         >
           <Printer className="size-5 mr-2" />
           Print Guide
@@ -1093,7 +1058,7 @@ export function ImposerTool() {
 
       {/* Print Order Helper */}
       {printGuideOpen && result && (
-        <div className="border rounded-lg p-4 space-y-3">
+        <div className="border-2 border-border p-4 space-y-3">
           <div className="flex items-center gap-2">
             <ScissorsLineDashed className="size-5 text-muted-foreground" />
             <h3 className="font-bold text-sm">Manual Duplex Printing Guide</h3>

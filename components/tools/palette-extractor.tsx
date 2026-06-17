@@ -520,11 +520,11 @@ export function PaletteExtractorTool() {
 
   if (!imageFile) {
     return (
-      <div className="space-y-6">
+      <div className="border-2 border-border">
         <div
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
-          className="border-2 border-dashed rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+          className="cursor-pointer p-8 text-center transition-colors hover:bg-muted/30"
           onClick={() =>
             document.getElementById("palette-extractor-input")?.click()
           }
@@ -537,7 +537,7 @@ export function PaletteExtractorTool() {
             className="hidden"
           />
           <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-lg font-medium">Drop an image here</p>
+          <p className="text-lg font-bold">Drop an image here</p>
           <p className="text-sm text-muted-foreground mt-1">
             or click to select a file, or paste
           </p>
@@ -547,13 +547,13 @@ export function PaletteExtractorTool() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="border-2 border-border">
       {/* Palette Display */}
       {palette.length > 0 && (
         <div
           ref={paletteRef}
           className={cn(
-            "relative rounded-2xl overflow-hidden shadow-xl shadow-black/10 border border-border/50",
+            "relative overflow-hidden border-b-2 border-border",
             "transition-all duration-300 ease-out",
             extracting && "opacity-60"
           )}
@@ -585,7 +585,7 @@ export function PaletteExtractorTool() {
                   onClick={(e) => handleSwatchClick(i, e)}
                   className={cn(
                     "relative cursor-pointer transition-all duration-300 ease-out",
-                    shouldUseGrid ? "aspect-square rounded-xl" : "flex-1",
+                    shouldUseGrid ? "aspect-square" : "flex-1",
                     !shouldUseGrid && isSelected && "flex-[1.5]",
                     !shouldUseGrid && !isTouchDevice && "group hover:flex-[1.5]",
                     shouldUseGrid &&
@@ -611,7 +611,7 @@ export function PaletteExtractorTool() {
                         );
                       }}
                       className={cn(
-                        "px-4 py-2 rounded-full transition-all",
+                        "px-4 py-2 transition-all",
                         "bg-white/20 hover:bg-white/40 backdrop-blur-sm",
                         "font-mono text-sm font-semibold tracking-wider",
                         "flex items-center gap-2",
@@ -660,13 +660,13 @@ export function PaletteExtractorTool() {
       )}
 
       {/* Toolbar: source image + strategy + re-extract + count */}
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-card p-3">
+      <div className="flex min-h-16 items-stretch border-b-2 border-border">
         {/* Source thumbnail + change */}
         <button
           onClick={() =>
             document.getElementById("palette-extractor-input-change")?.click()
           }
-          className="relative size-11 rounded-lg overflow-hidden border shrink-0 hover:ring-2 hover:ring-primary/40 transition-all"
+          className="relative w-16 shrink-0 overflow-hidden border-r border-border transition-colors hover:bg-muted"
           title={`Source: ${imageFile.name} — click to change`}
         >
           {imageUrl && (
@@ -687,7 +687,7 @@ export function PaletteExtractorTool() {
 
         {/* Strategy dropdown */}
         <Select value={strategy} onValueChange={(v) => setStrategy(v as ExtractionStrategy)}>
-          <SelectTrigger size="sm">
+          <SelectTrigger className="h-auto flex-1 self-stretch rounded-none border-0 border-r border-border font-mono">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -703,9 +703,8 @@ export function PaletteExtractorTool() {
         <Button
           onClick={reExtract}
           disabled={extracting}
-          variant="outline"
-          size="sm"
-          className="gap-2"
+          variant="ghost"
+          className="h-auto self-stretch gap-2 rounded-none border-0 px-4 font-bold"
           title="Re-extract with new seeds (Space)"
         >
           <Shuffle className="size-4" />
@@ -713,24 +712,22 @@ export function PaletteExtractorTool() {
         </Button>
 
         {/* Count +/- */}
-        <div className="flex items-center gap-1 ml-auto">
+        <div className="flex items-stretch border-l border-border">
           <Button
             variant="ghost"
-            size="icon"
-            className="size-8"
+            className="flex h-auto w-12 items-center justify-center self-stretch rounded-none border-0 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
             onClick={() => setCount((c) => Math.max(MIN_COLOURS, c - 1))}
             disabled={count <= MIN_COLOURS}
             title="Fewer colours"
           >
             <Minus className="size-3.5" />
           </Button>
-          <span className="px-1 font-mono text-sm font-bold min-w-[2ch] text-center">
+          <span className="flex min-w-12 items-center justify-center border-x border-border px-2 font-mono text-sm font-bold">
             {count}
           </span>
           <Button
             variant="ghost"
-            size="icon"
-            className="size-8"
+            className="flex h-auto w-12 items-center justify-center self-stretch rounded-none border-0 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
             onClick={() => setCount((c) => Math.min(MAX_COLOURS, c + 1))}
             disabled={count >= MAX_COLOURS}
             title="More colours"
@@ -741,138 +738,132 @@ export function PaletteExtractorTool() {
       </div>
 
       {/* Strategy description */}
-      <p className="text-sm text-muted-foreground">
-        <span className="font-semibold text-foreground">
-          {STRATEGIES[strategy].name}
-        </span>{" "}
-        — {STRATEGIES[strategy].description}
-      </p>
+      <div className="border-b-2 border-border p-4">
+        <p className="text-sm text-muted-foreground">
+          <span className="font-bold text-foreground">
+            {STRATEGIES[strategy].name}
+          </span>{" "}
+          — {STRATEGIES[strategy].description}
+        </p>
+      </div>
 
       {/* Export actions */}
       {palette.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={copyAllColours}
-            className="gap-2"
-          >
-            {copied === "all" ? (
-              <Check className="size-3.5" />
-            ) : (
-              <Copy className="size-3.5" />
+        <div className="border-b-2 border-border p-4">
+          <label className="font-bold">Export</label>
+          <div
+            className={cn(
+              "segmented -mx-4 -mb-4 mt-3 border-x-0 border-b-0",
+              paletteGennyUrl ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"
             )}
-            Copy All
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={copyAsCss}
-            className="gap-2"
           >
-            {copied === "css" ? (
-              <Check className="size-3.5" />
-            ) : (
-              <Copy className="size-3.5" />
-            )}
-            CSS Variables
-          </Button>
-          {paletteGennyUrl && (
             <Button
               variant="outline"
-              size="sm"
-              asChild
-              className="gap-2 ml-auto"
+              onClick={copyAllColours}
+              className="h-12 gap-2 font-bold"
             >
-              <Link href={paletteGennyUrl}>
-                <Palette className="size-3.5" />
-                Open in Palette Generator
-                <ExternalLink className="size-3" />
-              </Link>
+              {copied === "all" ? (
+                <Check className="size-3.5" />
+              ) : (
+                <Copy className="size-3.5" />
+              )}
+              Copy All
             </Button>
-          )}
+            <Button
+              variant="outline"
+              onClick={copyAsCss}
+              className="h-12 gap-2 font-bold"
+            >
+              {copied === "css" ? (
+                <Check className="size-3.5" />
+              ) : (
+                <Copy className="size-3.5" />
+              )}
+              CSS Variables
+            </Button>
+            {paletteGennyUrl && (
+              <Button variant="outline" asChild className="h-12 gap-2 font-bold">
+                <Link href={paletteGennyUrl}>
+                  <Palette className="size-3.5" />
+                  Open in Palette Generator
+                  <ExternalLink className="size-3" />
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
       )}
 
       {/* Colour list */}
       {palette.length > 0 && (
-        <div className="grid gap-2">
-          {palette.map((cluster, i) => {
-            const name = getColourName(cluster.hex);
-            const formatted = formatColour(cluster.hex, notation);
-            const pct = totalPixels > 0
-              ? ((cluster.count / totalPixels) * 100).toFixed(1)
-              : "0";
+        <div className="border-b-2 border-border p-4">
+          <label className="font-bold">Colours</label>
+          <div className="-mx-4 -mb-4 mt-3 border-t border-border">
+            {palette.map((cluster, i) => {
+              const name = getColourName(cluster.hex);
+              const formatted = formatColour(cluster.hex, notation);
+              const pct = totalPixels > 0
+                ? ((cluster.count / totalPixels) * 100).toFixed(1)
+                : "0";
 
-            return (
-              <div
-                key={`list-${cluster.hex}-${i}`}
-                className={cn(
-                  "flex items-center gap-4 px-4 py-3 rounded-xl",
-                  "border border-border/50 bg-card",
-                  "hover:border-primary/30 hover:bg-card/80",
-                  "transition-all duration-200",
-                  "group"
-                )}
-              >
+              return (
                 <div
-                  className="size-10 rounded-lg border border-black/10 shadow-inner shrink-0 group-hover:scale-105 transition-transform"
-                  style={{ backgroundColor: cluster.hex }}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono font-bold tracking-wide">
-                      {notation === "hex"
-                        ? cluster.hex.toUpperCase()
-                        : formatted}
-                    </span>
-                    <span className="text-sm text-muted-foreground capitalize truncate">
-                      {name}
-                    </span>
+                  key={`list-${cluster.hex}-${i}`}
+                  className="flex items-stretch border-b border-border bg-card transition-colors hover:bg-card/80"
+                >
+                  {/* Swatch */}
+                  <div
+                    className="w-16 shrink-0 border-r border-border"
+                    style={{ backgroundColor: cluster.hex }}
+                    aria-hidden
+                  />
+                  {/* Colour info */}
+                  <div className="min-w-0 flex-1 p-4">
+                    <div className="flex items-center gap-3">
+                      <span className="font-mono font-bold tracking-wide">
+                        {notation === "hex"
+                          ? cluster.hex.toUpperCase()
+                          : formatted}
+                      </span>
+                      <span className="truncate text-sm capitalize text-muted-foreground">
+                        {name}
+                      </span>
+                    </div>
+                    <div className="mt-0.5 font-mono text-xs text-muted-foreground">
+                      {pct}% of image
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground font-mono mt-0.5">
-                    {pct}% of image
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-8"
+                  {/* Actions */}
+                  <button
                     onClick={() => copyValue(formatted, `list-${i}`)}
                     title="Copy colour"
+                    className="flex w-12 items-center justify-center border-l border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   >
                     {copied === `list-${i}` ? (
                       <Check className="size-4" />
                     ) : (
                       <Copy className="size-4" />
                     )}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-8"
-                    asChild
+                  </button>
+                  <Link
+                    href={`/tools/tailwind-shades?color=${encodeURIComponent(cluster.hex)}`}
                     title="Generate Tailwind shades"
+                    className="flex w-12 items-center justify-center border-l border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   >
-                    <Link
-                      href={`/tools/tailwind-shades?color=${encodeURIComponent(cluster.hex)}`}
-                    >
-                      <Wind className="size-4" />
-                    </Link>
-                  </Button>
+                    <Wind className="size-4" />
+                  </Link>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       )}
 
       {/* Keyboard hint */}
       {palette.length > 0 && (
-        <p className="text-xs text-muted-foreground text-center">
+        <p className="p-4 text-center text-xs text-muted-foreground">
           Press{" "}
-          <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">
+          <kbd className="bg-muted px-1.5 py-0.5 font-mono">
             Space
           </kbd>{" "}
           to re-extract with new seeds

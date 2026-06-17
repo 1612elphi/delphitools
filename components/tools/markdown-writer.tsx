@@ -15,21 +15,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "delphitools-scratchpad";
-
-function ToolButton({ onClick, children, title }: { onClick: () => void; children: React.ReactNode; title?: string }) {
-  return (
-    <Button
-      onClick={onClick}
-      title={title}
-      variant="outline"
-      size="sm"
-    >
-      {children}
-    </Button>
-  );
-}
 
 function PanelHeader({
   id,
@@ -44,16 +32,18 @@ function PanelHeader({
   activePanel: string | null;
   setActivePanel: React.Dispatch<React.SetStateAction<string | null>>;
 }) {
+  const isActive = activePanel === id;
   return (
     <button
-      onClick={() => setActivePanel(activePanel === id ? null : id)}
-      className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-        activePanel === id ? "bg-primary/10 text-primary" : "hover:bg-muted"
-      }`}
+      onClick={() => setActivePanel(isActive ? null : id)}
+      className={cn(
+        "flex items-center gap-2 px-3 py-2 text-sm font-medium border-r border-border transition-colors last:border-r-0",
+        isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted text-foreground"
+      )}
     >
       <Icon className="size-4" />
-      <span className="font-medium text-sm">{label}</span>
-      <ChevronDown className={`size-3 ml-1 transition-transform ${activePanel === id ? "rotate-180" : ""}`} />
+      {label}
+      <ChevronDown className={cn("size-3 ml-0.5 transition-transform", isActive && "rotate-180")} />
     </button>
   );
 }
@@ -65,7 +55,6 @@ export function MarkdownWriterTool() {
   const [findText, setFindText] = useState("");
   const [replaceText, setReplaceText] = useState("");
   const [useRegex, setUseRegex] = useState(false);
-  const [showFind, setShowFind] = useState(false);
   const [extractedItems, setExtractedItems] = useState<string[]>([]);
   const [activePanel, setActivePanel] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -256,9 +245,9 @@ export function MarkdownWriterTool() {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Tool Panels */}
-      <div className="flex flex-wrap gap-2">
+    <div className="border-2 border-border">
+      {/* Panel Selector Bar */}
+      <div className="flex border-b-2 border-border overflow-x-auto">
         <PanelHeader id="case" icon={CaseSensitive} label="Case" activePanel={activePanel} setActivePanel={setActivePanel} />
         <PanelHeader id="lines" icon={ArrowUpDown} label="Lines" activePanel={activePanel} setActivePanel={setActivePanel} />
         <PanelHeader id="cleanup" icon={Sparkles} label="Clean Up" activePanel={activePanel} setActivePanel={setActivePanel} />
@@ -268,69 +257,74 @@ export function MarkdownWriterTool() {
 
       {/* Case Panel */}
       {activePanel === "case" && (
-        <div className="p-3 rounded-lg border bg-card flex flex-wrap gap-2">
-          <ToolButton onClick={toUpperCase}>UPPERCASE</ToolButton>
-          <ToolButton onClick={toLowerCase}>lowercase</ToolButton>
-          <ToolButton onClick={toTitleCase}>Title Case</ToolButton>
-          <ToolButton onClick={toSentenceCase}>Sentence case</ToolButton>
-          <ToolButton onClick={toCamelCase}>camelCase</ToolButton>
-          <ToolButton onClick={toSnakeCase}>snake_case</ToolButton>
-          <ToolButton onClick={toKebabCase}>kebab-case</ToolButton>
+        <div className="border-b-2 border-border">
+          <div className="segmented grid-cols-4 -mx-0 border-x-0 border-t-0">
+            <Button variant="outline" onClick={toUpperCase}>UPPERCASE</Button>
+            <Button variant="outline" onClick={toLowerCase}>lowercase</Button>
+            <Button variant="outline" onClick={toTitleCase}>Title Case</Button>
+            <Button variant="outline" onClick={toSentenceCase}>Sentence case</Button>
+            <Button variant="outline" onClick={toCamelCase}>camelCase</Button>
+            <Button variant="outline" onClick={toSnakeCase}>snake_case</Button>
+            <Button variant="outline" onClick={toKebabCase} className="col-span-2">kebab-case</Button>
+          </div>
         </div>
       )}
 
       {/* Lines Panel */}
       {activePanel === "lines" && (
-        <div className="p-3 rounded-lg border bg-card flex flex-wrap gap-2">
-          <ToolButton onClick={sortLines}>Sort A-Z</ToolButton>
-          <ToolButton onClick={sortLinesReverse}>Sort Z-A</ToolButton>
-          <ToolButton onClick={sortByLength}>Sort by Length</ToolButton>
-          <ToolButton onClick={reverseLines}>Reverse Order</ToolButton>
-          <ToolButton onClick={shuffleLines}>Shuffle</ToolButton>
-          <ToolButton onClick={removeDuplicates}>Remove Duplicates</ToolButton>
-          <ToolButton onClick={addLineNumbers}>Add Line Numbers</ToolButton>
-          <ToolButton onClick={removeLineNumbers}>Remove Line Numbers</ToolButton>
+        <div className="border-b-2 border-border">
+          <div className="segmented grid-cols-4 border-x-0 border-t-0">
+            <Button variant="outline" onClick={sortLines}>Sort A–Z</Button>
+            <Button variant="outline" onClick={sortLinesReverse}>Sort Z–A</Button>
+            <Button variant="outline" onClick={sortByLength}>By Length</Button>
+            <Button variant="outline" onClick={reverseLines}>Reverse Order</Button>
+            <Button variant="outline" onClick={shuffleLines}>Shuffle</Button>
+            <Button variant="outline" onClick={removeDuplicates}>Remove Duplicates</Button>
+            <Button variant="outline" onClick={addLineNumbers}>Add Line Nos.</Button>
+            <Button variant="outline" onClick={removeLineNumbers}>Remove Line Nos.</Button>
+          </div>
         </div>
       )}
 
       {/* Cleanup Panel */}
       {activePanel === "cleanup" && (
-        <div className="p-3 rounded-lg border bg-card flex flex-wrap gap-2">
-          <ToolButton onClick={trimWhitespace}>Trim Lines</ToolButton>
-          <ToolButton onClick={removeEmptyLines}>Remove Empty Lines</ToolButton>
-          <ToolButton onClick={removeExtraSpaces}>Remove Extra Spaces</ToolButton>
-          <ToolButton onClick={removeLineBreaks}>Join Lines</ToolButton>
-          <ToolButton onClick={() => addLineBreaks(80)}>Wrap at 80</ToolButton>
-          <ToolButton onClick={() => addLineBreaks(120)}>Wrap at 120</ToolButton>
-          <ToolButton onClick={encodeUrlChars} title="Encode special characters (e.g. / → %2F)">Encode URL</ToolButton>
-          <ToolButton onClick={decodeUrlChars} title="Decode %XX characters (e.g. %2F → /)">Decode URL</ToolButton>
+        <div className="border-b-2 border-border">
+          <div className="segmented grid-cols-4 border-x-0 border-t-0">
+            <Button variant="outline" onClick={trimWhitespace}>Trim Lines</Button>
+            <Button variant="outline" onClick={removeEmptyLines}>Remove Empty Lines</Button>
+            <Button variant="outline" onClick={removeExtraSpaces}>Remove Extra Spaces</Button>
+            <Button variant="outline" onClick={removeLineBreaks}>Join Lines</Button>
+            <Button variant="outline" onClick={() => addLineBreaks(80)}>Wrap at 80</Button>
+            <Button variant="outline" onClick={() => addLineBreaks(120)}>Wrap at 120</Button>
+            <Button variant="outline" onClick={encodeUrlChars} title="Encode special characters (e.g. / → %2F)">Encode URL</Button>
+            <Button variant="outline" onClick={decodeUrlChars} title="Decode %XX characters (e.g. %2F → /)">Decode URL</Button>
+          </div>
         </div>
       )}
 
       {/* Find & Replace Panel */}
       {activePanel === "find" && (
-        <div className="p-3 rounded-lg border bg-card space-y-3">
-          <div className="flex gap-2 flex-wrap">
+        <div className="border-b-2 border-border">
+          <div className="flex border-b border-border">
             <Input
               value={findText}
               onChange={(e) => setFindText(e.target.value)}
-              placeholder="Find..."
-              className="flex-1 min-w-[150px]"
+              placeholder="Find…"
+              className="flex-1 border-0 border-r border-border bg-transparent px-4 py-3 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             <Input
               value={replaceText}
               onChange={(e) => setReplaceText(e.target.value)}
-              placeholder="Replace with..."
-              className="flex-1 min-w-[150px]"
+              placeholder="Replace with…"
+              className="flex-1 border-0 bg-transparent px-4 py-3 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
             />
           </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <label className="flex items-center gap-2 text-sm">
+          <div className="flex items-center px-4 py-2 gap-4">
+            <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={useRegex}
                 onChange={(e) => setUseRegex(e.target.checked)}
-                className="rounded"
               />
               Use Regex
             </label>
@@ -339,13 +333,9 @@ export function MarkdownWriterTool() {
                 {countMatches()} matches
               </span>
             )}
-            <div className="flex gap-2 ml-auto">
-              <Button size="sm" variant="outline" onClick={() => doReplace(false)}>
-                Replace
-              </Button>
-              <Button size="sm" onClick={() => doReplace(true)}>
-                Replace All
-              </Button>
+            <div className="segmented grid-cols-2 ml-auto" style={{ width: "auto", minWidth: "220px" }}>
+              <Button variant="outline" onClick={() => doReplace(false)}>Replace</Button>
+              <Button onClick={() => doReplace(true)}>Replace All</Button>
             </div>
           </div>
         </div>
@@ -353,25 +343,28 @@ export function MarkdownWriterTool() {
 
       {/* Extract Panel */}
       {activePanel === "extract" && (
-        <div className="p-3 rounded-lg border bg-card space-y-3">
-          <div className="flex flex-wrap gap-2">
-            <ToolButton onClick={extractEmails}>Extract Emails</ToolButton>
-            <ToolButton onClick={extractUrls}>Extract URLs</ToolButton>
-            <ToolButton onClick={extractNumbers}>Extract Numbers</ToolButton>
+        <div className="border-b-2 border-border">
+          <div className="segmented grid-cols-3 border-x-0 border-t-0">
+            <Button variant="outline" onClick={extractEmails}>Extract Emails</Button>
+            <Button variant="outline" onClick={extractUrls}>Extract URLs</Button>
+            <Button variant="outline" onClick={extractNumbers}>Extract Numbers</Button>
           </div>
           {extractedItems.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  Found {extractedItems.length} items
+            <div className="border-t border-border">
+              <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+                <span className="text-sm text-muted-foreground font-bold">
+                  {extractedItems.length} items found
                 </span>
-                <Button size="sm" variant="ghost" onClick={copyExtracted}>
-                  <Copy className="size-3 mr-1" /> Copy All
+                <Button size="sm" variant="ghost" onClick={copyExtracted} className="h-7 gap-1">
+                  <Copy className="size-3" /> Copy All
                 </Button>
               </div>
-              <div className="max-h-32 overflow-auto p-2 rounded bg-muted text-sm font-mono">
+              <div
+                className="max-h-32 overflow-auto px-4 py-2 bg-muted/30 text-sm"
+                style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+              >
                 {extractedItems.map((item) => (
-                  <div key={item} className="truncate">{item}</div>
+                  <div key={item} className="truncate py-0.5 border-b border-border last:border-b-0">{item}</div>
                 ))}
               </div>
             </div>
@@ -384,30 +377,49 @@ export function MarkdownWriterTool() {
         ref={textareaRef}
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        placeholder="Start typing or paste text here..."
-        className="w-full min-h-[500px] p-4 rounded-lg border bg-card resize-y font-mono text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground/50"
+        placeholder="Start typing or paste text here…"
+        className="w-full min-h-[500px] p-4 bg-card resize-y text-base leading-relaxed focus:outline-none placeholder:text-muted-foreground/50 border-0"
+        style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
       />
 
       {/* Status Bar */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
+      <div className="flex items-center justify-between border-t-2 border-border px-4 py-2 text-xs text-muted-foreground bg-muted/30">
         <div className="flex items-center gap-4">
           <span>{wordCount} words</span>
           <span>{charCount} chars</span>
           <span>{lineCount} lines</span>
-        </div>
-        <div className="flex items-center gap-2">
           {lastSaved && (
             <span className="text-muted-foreground/60">
               Saved {lastSaved.toLocaleTimeString()}
             </span>
           )}
-          <Button size="sm" variant="ghost" onClick={copyContent}>
+        </div>
+        <div className="flex items-stretch border-l border-border -my-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={copyContent}
+            className="h-auto self-stretch px-3 border-0 border-r border-border"
+            title="Copy"
+          >
             {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
           </Button>
-          <Button size="sm" variant="ghost" onClick={downloadContent}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={downloadContent}
+            className="h-auto self-stretch px-3 border-0 border-r border-border"
+            title="Download"
+          >
             <Download className="size-4" />
           </Button>
-          <Button size="sm" variant="ghost" onClick={clearContent}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={clearContent}
+            className="h-auto self-stretch px-3 border-0"
+            title="Clear"
+          >
             <Trash2 className="size-4" />
           </Button>
         </div>

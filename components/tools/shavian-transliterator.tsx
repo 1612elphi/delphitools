@@ -194,9 +194,9 @@ export function ShavianTransliteratorTool() {
   const hasContent = tokens.some((t) => t.type === "word");
 
   return (
-    <div className="space-y-6">
-      {/* Explanation */}
-      <div className="text-sm text-muted-foreground space-y-1">
+    <div className="space-y-4">
+      {/* Explanation — breathes outside the frame */}
+      <div className="text-sm text-muted-foreground space-y-1 px-0">
         <p>
           The <strong className="text-foreground">Shavian alphabet</strong> (𐑖𐑱𐑝𐑾𐑯) is a phonemic writing system designed for English by Kingsley Read, commissioned by the will of George Bernard Shaw. Each letter represents exactly one sound — no silent letters, no ambiguous spellings.
         </p>
@@ -205,154 +205,187 @@ export function ShavianTransliteratorTool() {
         </p>
       </div>
 
-      {/* Input */}
-      <Textarea
-        placeholder="Type or paste English text here..."
-        value={input}
-        onChange={(e) => handleInput(e.target.value)}
-        className="min-h-[100px] text-base"
-      />
+      {/* Main frame */}
+      <div className="border-2 border-border">
 
-      {/* Gloss Grid */}
-      {hasContent && (
-        <div className="rounded-lg border bg-card p-4">
-          <div className="flex flex-wrap gap-y-3 items-start">
-            {tokens.map((token, tokenIdx) => {
-              if (token.type === "whitespace") {
-                return <div key={`ws-${tokenIdx}`} className="w-4" />;
-              }
-              if (token.type === "punctuation") {
-                return (
-                  <span key={`punct-${tokenIdx}-${token.value}`} className="text-muted-foreground text-lg self-end pb-5 -ml-1">
-                    {token.value}
-                  </span>
-                );
-              }
-              if (!token.gloss) return null;
+        {/* Input pane */}
+        <div className="border-b-2 border-border">
+          <div className="px-4 pt-3 pb-1">
+            <label className="font-bold text-xs uppercase tracking-wide text-muted-foreground">English input</label>
+          </div>
+          <Textarea
+            placeholder="Type or paste English text here..."
+            value={input}
+            onChange={(e) => handleInput(e.target.value)}
+            className="min-h-[100px] text-base border-0 border-t border-border bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
+          />
+        </div>
 
-              const gloss = token.gloss;
-
-              return (
-                <div key={`word-${tokenIdx}-${gloss.latin}`} className="flex flex-col items-start gap-0.5">
-                  {/* Latin row — click to cycle marker: none → namer · → acroring ⸰ → acroarc ꤮ */}
-                  <button
-                    onClick={() => cycleMarker(tokenIdx)}
-                    className={`text-sm px-1 rounded transition-colors cursor-pointer hover:bg-accent ${
-                      gloss.marker !== "none" ? "text-orange-400 font-medium" : "text-muted-foreground"
-                    }`}
-                    title={
-                      gloss.marker === "none" ? "Add namer dot · (proper noun)" :
-                      gloss.marker === "namer" ? "Switch to acroring ⸰ (initialism)" :
-                      gloss.marker === "acroring" ? "Switch to acroarc ꤮ (acronym)" :
-                      "Remove marker"
-                    }
-                  >
-                    {gloss.latin}
-                  </button>
-
-                  {/* Shavian row — per-letter clickable */}
-                  <div className="flex gap-px items-center">
-                    {gloss.marker !== "none" && (
-                      <span
-                        className="text-[22px] leading-tight text-orange-400 px-0.5"
-                        style={{ fontFamily: "'Noto Sans Shavian', sans-serif" }}
-                      >
-                        {markerPrefix(gloss.marker)}
-                      </span>
-                    )}
-                    {gloss.phonemes.map((phoneme, pIdx) => {
-                      const isActive =
-                        activePopover?.tokenIdx === tokenIdx &&
-                        activePopover?.phonemeIdx === pIdx;
-
-                      return (
-                        <div key={`phoneme-${tokenIdx}-${pIdx}`} className="relative">
-                          <button
-                            onClick={() =>
-                              setActivePopover(
-                                isActive ? null : { tokenIdx, phonemeIdx: pIdx }
-                              )
-                            }
-                            className={`
-                              text-[22px] leading-tight px-1 py-0.5 rounded
-                              transition-all cursor-pointer
-                              hover:bg-accent hover:-translate-y-0.5
-                              ${isActive ? "bg-accent ring-2 ring-primary -translate-y-0.5" : ""}
-                              ${gloss.marker !== "none" ? "text-orange-400" : "text-foreground"}
-                            `}
-                            style={{ fontFamily: "'Noto Sans Shavian', sans-serif" }}
-                          >
-                            {phoneme.shavian}
-                          </button>
-
-                          {/* Popover */}
-                          {isActive && (
-                            <div
-                              ref={popoverRef}
-                              className="absolute top-full left-0 z-50 mt-1 min-w-[180px] rounded-lg border bg-popover p-1.5 shadow-lg"
-                            >
-                              {/* Current selection */}
-                              <div className="flex items-center gap-2.5 px-2.5 py-1.5 rounded bg-accent/50 border-l-2 border-primary mb-1">
-                                <span
-                                  className="text-xl w-7 text-center"
-                                  style={{ fontFamily: "'Noto Sans Shavian', sans-serif" }}
-                                >
-                                  {phoneme.shavian}
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  {getShavianLetter(phoneme.shavian)?.name ?? ""}
-                                </span>
-                                <span className="text-xs text-green-500 ml-auto">
-                                  /{phoneme.ipa}/
-                                </span>
-                              </div>
-
-                              {/* Alternatives */}
-                              {phoneme.alternatives.map((alt) => (
-                                <button
-                                  key={alt.shavian}
-                                  onClick={() => swapPhoneme(tokenIdx, pIdx, alt)}
-                                  className="flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded text-left hover:bg-accent transition-colors cursor-pointer"
-                                >
-                                  <span
-                                    className="text-xl w-7 text-center"
-                                    style={{ fontFamily: "'Noto Sans Shavian', sans-serif" }}
-                                  >
-                                    {alt.shavian}
-                                  </span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {alt.name}
-                                  </span>
-                                  <span className="text-xs text-green-500 ml-auto">
-                                    /{alt.ipa}/
-                                  </span>
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* IPA row — per-letter aligned */}
-                  <div className="flex gap-px">
-                    {gloss.phonemes.map((phoneme, pIdx) => (
-                      <span
-                        key={`ipa-${tokenIdx}-${pIdx}`}
-                        className={`text-[13px] px-1 min-w-[20px] ${gloss.source === "heuristic" && !gloss.userEdited ? "text-destructive" : "text-green-500"}`}
-                      >
-                        {phoneme.ipa}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+        {/* Output pane — always rendered; shows placeholder when empty */}
+        <div>
+          <div className="flex items-center justify-between px-4 pt-3 pb-1 border-b border-border">
+            <label className="font-bold text-xs uppercase tracking-wide text-muted-foreground">Shavian gloss</label>
+            {dictStatus === "loading-core" && (
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Loading dictionary…
+              </span>
+            )}
+            {dictStatus === "loading-full" && (
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Loading full dictionary…
+              </span>
+            )}
+            {dictStatus === "ready" && (
+              <span className="text-xs text-green-500">Dictionary ready</span>
+            )}
           </div>
 
-          {/* Status bar */}
-          <div className="flex items-center gap-4 mt-4 pt-4 border-t text-xs text-muted-foreground">
+          {/* Gloss grid */}
+          <div className="p-4 min-h-[120px]">
+            {hasContent ? (
+              <div className="flex flex-wrap gap-y-3 items-start">
+                {tokens.map((token, tokenIdx) => {
+                  if (token.type === "whitespace") {
+                    return <div key={`ws-${tokenIdx}`} className="w-4" />;
+                  }
+                  if (token.type === "punctuation") {
+                    return (
+                      <span key={`punct-${tokenIdx}-${token.value}`} className="text-muted-foreground text-lg self-end pb-5 -ml-1">
+                        {token.value}
+                      </span>
+                    );
+                  }
+                  if (!token.gloss) return null;
+
+                  const gloss = token.gloss;
+
+                  return (
+                    <div key={`word-${tokenIdx}-${gloss.latin}`} className="flex flex-col items-start gap-0.5">
+                      {/* Latin row — click to cycle marker: none → namer · → acroring ⸰ → acroarc ꤮ */}
+                      <button
+                        onClick={() => cycleMarker(tokenIdx)}
+                        className={`text-sm px-1 transition-colors cursor-pointer hover:bg-accent ${
+                          gloss.marker !== "none" ? "text-orange-400 font-medium" : "text-muted-foreground"
+                        }`}
+                        title={
+                          gloss.marker === "none" ? "Add namer dot · (proper noun)" :
+                          gloss.marker === "namer" ? "Switch to acroring ⸰ (initialism)" :
+                          gloss.marker === "acroring" ? "Switch to acroarc ꤮ (acronym)" :
+                          "Remove marker"
+                        }
+                      >
+                        {gloss.latin}
+                      </button>
+
+                      {/* Shavian row — per-letter clickable */}
+                      <div className="flex gap-px items-center">
+                        {gloss.marker !== "none" && (
+                          <span
+                            className="text-[22px] leading-tight text-orange-400 px-0.5"
+                            style={{ fontFamily: "'Noto Sans Shavian', sans-serif" }}
+                          >
+                            {markerPrefix(gloss.marker)}
+                          </span>
+                        )}
+                        {gloss.phonemes.map((phoneme, pIdx) => {
+                          const isActive =
+                            activePopover?.tokenIdx === tokenIdx &&
+                            activePopover?.phonemeIdx === pIdx;
+
+                          return (
+                            <div key={`phoneme-${tokenIdx}-${pIdx}`} className="relative">
+                              <button
+                                onClick={() =>
+                                  setActivePopover(
+                                    isActive ? null : { tokenIdx, phonemeIdx: pIdx }
+                                  )
+                                }
+                                className={`
+                                  text-[22px] leading-tight px-1 py-0.5
+                                  transition-all cursor-pointer
+                                  hover:bg-accent hover:-translate-y-0.5
+                                  ${isActive ? "bg-accent ring-2 ring-primary -translate-y-0.5" : ""}
+                                  ${gloss.marker !== "none" ? "text-orange-400" : "text-foreground"}
+                                `}
+                                style={{ fontFamily: "'Noto Sans Shavian', sans-serif" }}
+                              >
+                                {phoneme.shavian}
+                              </button>
+
+                              {/* Popover */}
+                              {isActive && (
+                                <div
+                                  ref={popoverRef}
+                                  className="absolute top-full left-0 z-50 mt-1 min-w-[180px] border border-border bg-popover shadow-lg"
+                                >
+                                  {/* Current selection */}
+                                  <div className="flex items-center gap-2.5 px-2.5 py-1.5 bg-accent/50 border-b border-border border-l-2 border-l-primary">
+                                    <span
+                                      className="text-xl w-7 text-center"
+                                      style={{ fontFamily: "'Noto Sans Shavian', sans-serif" }}
+                                    >
+                                      {phoneme.shavian}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {getShavianLetter(phoneme.shavian)?.name ?? ""}
+                                    </span>
+                                    <span className="text-xs text-green-500 ml-auto">
+                                      /{phoneme.ipa}/
+                                    </span>
+                                  </div>
+
+                                  {/* Alternatives */}
+                                  {phoneme.alternatives.map((alt) => (
+                                    <button
+                                      key={alt.shavian}
+                                      onClick={() => swapPhoneme(tokenIdx, pIdx, alt)}
+                                      className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-left hover:bg-accent transition-colors cursor-pointer border-b border-border last:border-b-0"
+                                    >
+                                      <span
+                                        className="text-xl w-7 text-center"
+                                        style={{ fontFamily: "'Noto Sans Shavian', sans-serif" }}
+                                      >
+                                        {alt.shavian}
+                                      </span>
+                                      <span className="text-xs text-muted-foreground">
+                                        {alt.name}
+                                      </span>
+                                      <span className="text-xs text-green-500 ml-auto">
+                                        /{alt.ipa}/
+                                      </span>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* IPA row — per-letter aligned */}
+                      <div className="flex gap-px">
+                        {gloss.phonemes.map((phoneme, pIdx) => (
+                          <span
+                            key={`ipa-${tokenIdx}-${pIdx}`}
+                            className={`text-[13px] px-1 min-w-[20px] ${gloss.source === "heuristic" && !gloss.userEdited ? "text-destructive" : "text-green-500"}`}
+                          >
+                            {phoneme.ipa}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Start typing above to see the Shavian transliteration.</p>
+            )}
+          </div>
+
+          {/* Legend row — flush, hairline-divided */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 border-t border-border bg-muted/30 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-green-500" />
               Dictionary match
@@ -365,38 +398,30 @@ export function ShavianTransliteratorTool() {
               <span className="w-2 h-2 rounded-full bg-orange-400" />
               Marked (· namer, ⸰ initialism, ꤮ acronym)
             </span>
-            {dictStatus === "loading-core" && (
-              <span className="flex items-center gap-1.5 ml-auto">
-                <Loader2 className="w-3 h-3 animate-spin" />
-                Loading dictionary...
-              </span>
-            )}
-            {dictStatus === "loading-full" && (
-              <span className="flex items-center gap-1.5 ml-auto">
-                <Loader2 className="w-3 h-3 animate-spin" />
-                Loading full dictionary...
-              </span>
-            )}
-            {dictStatus === "ready" && (
-              <span className="ml-auto text-green-500">Dictionary ready</span>
-            )}
           </div>
         </div>
-      )}
 
-      {/* Actions */}
-      {hasContent && (
-        <div className="flex gap-2">
-          <Button onClick={copyShavian} className="gap-2">
-            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            {copied ? "Copied!" : "Copy Shavian"}
-          </Button>
-          <Button variant="outline" className="gap-2" onClick={() => exportGloss(tokens)}>
-            <Download className="w-4 h-4" />
-            Export Gloss
-          </Button>
-        </div>
-      )}
+        {/* Action bar — flush, full-width, 2px top divider */}
+        {hasContent && (
+          <div className="flex border-t-2 border-border">
+            <Button
+              onClick={copyShavian}
+              className="flex-1 h-14 gap-2 text-base font-bold border-0"
+            >
+              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              {copied ? "Copied!" : "Copy Shavian"}
+            </Button>
+            <Button
+              variant="outline"
+              className="h-14 px-6 gap-2 border-0 border-l border-border"
+              onClick={() => exportGloss(tokens)}
+            >
+              <Download className="w-4 h-4" />
+              Export Gloss
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

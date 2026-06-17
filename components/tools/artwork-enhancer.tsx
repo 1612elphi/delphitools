@@ -160,101 +160,135 @@ export function ArtworkEnhancerTool() {
 
   return (
     <div className="space-y-6">
-      {/* Upload Area */}
-      {!image ? (
-        <div
-          onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
-          className="border-2 border-dashed rounded-xl p-12 text-center hover:border-primary/50 transition-colors cursor-pointer"
-        >
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleSelect}
-            className="hidden"
-            id="image-upload"
-          />
-          <label htmlFor="image-upload" className="cursor-pointer">
+      <div className="border-2 border-border">
+        {!image ? (
+          /* Upload drop zone */
+          <div
+            onDrop={handleDrop}
+            onDragOver={(e) => e.preventDefault()}
+            className="border-2 border-dashed m-4 p-12 text-center hover:border-primary/50 transition-colors cursor-pointer"
+            onClick={() => document.getElementById("artwork-upload")?.click()}
+          >
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleSelect}
+              className="hidden"
+              id="artwork-upload"
+            />
             <Upload className="size-12 mx-auto mb-4 text-muted-foreground" />
             <p className="text-lg font-medium mb-1">Drop your artwork here</p>
             <p className="text-sm text-muted-foreground">or click to browse, or paste</p>
-          </label>
-        </div>
-      ) : (
-        <>
-          {/* Controls */}
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="font-bold">Noise Opacity</label>
-                <span className="text-sm text-muted-foreground font-mono">{opacity}%</span>
-              </div>
-              <Slider
-                value={[opacity]}
-                onValueChange={([v]) => setOpacity(v)}
-                min={1}
-                max={20}
-                step={1}
-              />
-              <p className="text-xs text-muted-foreground">Classic trick uses 2% opacity</p>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="font-bold">Noise Scale</label>
-                <span className="text-sm text-muted-foreground font-mono">{noiseScale}x</span>
-              </div>
-              <Slider
-                value={[noiseScale]}
-                onValueChange={([v]) => setNoiseScale(v)}
-                min={1}
-                max={4}
-                step={1}
-              />
-              <p className="text-xs text-muted-foreground">Higher = blockier noise</p>
-            </div>
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={generateNoise} className="gap-2">
-              <RefreshCw className="size-4" />
-              Regenerate Noise
-            </Button>
-            <Button variant="outline" onClick={clearImage} className="gap-2">
-              <Trash2 className="size-4" />
-              Clear
-            </Button>
-            <Button onClick={downloadResult} disabled={!resultImage} className="gap-2 ml-auto">
-              <Download className="size-4" />
-              Download
-            </Button>
-          </div>
-
-          {/* Preview */}
-          <div className="space-y-3">
-            <label className="font-bold">Preview</label>
-            <div className="border rounded-xl overflow-hidden bg-[repeating-conic-gradient(#e5e5e5_0%_25%,#ffffff_0%_50%)] bg-[length:16px_16px]">
-              {resultImage && (
-                <img
-                  src={resultImage}
-                  alt="Enhanced artwork"
-                  className="w-full h-auto max-h-[600px] object-contain"
+        ) : (
+          <>
+            {/* Controls — two columns, each breathes with p-4 */}
+            <div className="grid grid-cols-2 border-b-2 border-border">
+              {/* Noise Opacity */}
+              <div className="p-4 border-r border-border">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="font-bold">Noise Opacity</label>
+                  <span
+                    className="text-sm text-muted-foreground"
+                    style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                  >
+                    {opacity}%
+                  </span>
+                </div>
+                <Slider
+                  value={[opacity]}
+                  onValueChange={([v]) => setOpacity(v)}
+                  min={1}
+                  max={20}
+                  step={1}
                 />
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground text-center">
-              {imageSize.width} × {imageSize.height}px
-            </p>
-          </div>
-        </>
-      )}
+                <p className="text-xs text-muted-foreground mt-2">Classic trick uses 2% opacity</p>
+              </div>
 
-      {/* Hidden canvas for processing */}
-      <canvas ref={canvasRef} className="hidden" />
+              {/* Noise Scale */}
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="font-bold">Noise Scale</label>
+                  <span
+                    className="text-sm text-muted-foreground"
+                    style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                  >
+                    {noiseScale}x
+                  </span>
+                </div>
+                <Slider
+                  value={[noiseScale]}
+                  onValueChange={([v]) => setNoiseScale(v)}
+                  min={1}
+                  max={4}
+                  step={1}
+                />
+                <p className="text-xs text-muted-foreground mt-2">Higher = blockier noise</p>
+              </div>
+            </div>
+
+            {/* Preview — full-bleed */}
+            <div className="border-b-2 border-border">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                <label className="font-bold">Preview</label>
+                <span
+                  className="text-xs text-muted-foreground"
+                  style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                >
+                  {imageSize.width} × {imageSize.height}px
+                </span>
+              </div>
+              <div
+                style={{
+                  backgroundImage:
+                    "linear-gradient(45deg, #e0e0e0 25%, transparent 25%), linear-gradient(-45deg, #e0e0e0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e0e0e0 75%), linear-gradient(-45deg, transparent 75%, #e0e0e0 75%)",
+                  backgroundSize: "16px 16px",
+                  backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
+                }}
+              >
+                {resultImage && (
+                  <img
+                    src={resultImage}
+                    alt="Enhanced artwork"
+                    className="w-full h-auto max-h-[600px] object-contain"
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Action bar */}
+            <div className="flex min-h-14 items-stretch">
+              <Button
+                variant="outline"
+                onClick={generateNoise}
+                className="h-auto gap-2 self-stretch rounded-none border-0 px-5 font-semibold"
+              >
+                <RefreshCw className="size-4" />
+                Regenerate
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={clearImage}
+                className="h-auto gap-2 self-stretch rounded-none border-l border-border px-5"
+              >
+                <Trash2 className="size-4" />
+                Clear
+              </Button>
+              <Button
+                onClick={downloadResult}
+                disabled={!resultImage}
+                className="h-auto flex-1 gap-2 self-stretch rounded-none border-l border-border text-base font-bold"
+              >
+                <Download className="size-4" />
+                Download PNG
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Info */}
-      <div className="p-4 rounded-lg border bg-muted/30 text-sm">
+      <div className="border border-border bg-muted/30 p-4 text-sm">
         <p className="font-bold mb-1">About this technique</p>
         <p className="text-muted-foreground">
           Adding colour noise at low opacity with overlay blend mode is a classic
@@ -263,6 +297,9 @@ export function ArtworkEnhancerTool() {
           traditional media.
         </p>
       </div>
+
+      {/* Hidden canvas for processing */}
+      <canvas ref={canvasRef} className="hidden" />
     </div>
   );
 }

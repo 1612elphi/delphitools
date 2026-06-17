@@ -2,10 +2,9 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { Copy, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 interface Unit {
   name: string;
@@ -428,8 +427,8 @@ export function UnitConverterTool() {
   const hasValue = inputValue !== "" && inputUnit !== null;
 
   return (
-    <div className="space-y-6">
-      {/* Category Tabs - Full Width */}
+    <div className="space-y-3">
+      {/* Category Tabs */}
       <Tabs value={category} onValueChange={handleCategoryChange}>
         <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${CATEGORY_KEYS.length}, 1fr)` }}>
           {CATEGORY_KEYS.map((key) => (
@@ -440,8 +439,8 @@ export function UnitConverterTool() {
         </TabsList>
       </Tabs>
 
-      {/* Unit Input Cards */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Unit table — one row per unit, live conversion */}
+      <div className="border-2 border-border">
         {unitKeys.map((unitKey) => {
           const unit = currentCategory.units[unitKey];
           const isActive = inputUnit === unitKey && hasValue;
@@ -450,36 +449,35 @@ export function UnitConverterTool() {
           return (
             <div
               key={unitKey}
-              className={`p-4 rounded-lg border bg-card transition-colors ${
-                isActive ? "ring-2 ring-primary" : ""
-              }`}
+              className={cn(
+                "flex items-stretch border-b border-border last:border-b-0",
+                isActive && "bg-muted/40"
+              )}
             >
-              <Label className="text-sm text-muted-foreground mb-2 block">
-                {unit.name}
-                <span className="ml-1 opacity-60">({unit.symbol})</span>
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  value={isActive ? inputValue : displayValue}
-                  onChange={(e) => handleUnitInput(unitKey, e.target.value)}
-                  placeholder="0"
-                  className="font-mono flex-1"
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => copyValue(displayValue || inputValue, unitKey)}
-                  disabled={!displayValue && !inputValue}
-                  className="shrink-0"
-                >
-                  {copied === unitKey ? (
-                    <Check className="size-4 text-green-500" />
-                  ) : (
-                    <Copy className="size-4" />
-                  )}
-                </Button>
-              </div>
+              <span className="flex w-40 shrink-0 items-center gap-1.5 px-4 text-sm">
+                <span className="font-medium">{unit.name}</span>
+                <span className="font-mono text-xs text-muted-foreground">{unit.symbol}</span>
+              </span>
+              <Input
+                type="number"
+                value={isActive ? inputValue : displayValue}
+                onChange={(e) => handleUnitInput(unitKey, e.target.value)}
+                placeholder="0"
+                className="flex-1 border-0 border-l border-border bg-transparent text-right font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => copyValue(displayValue || inputValue, unitKey)}
+                disabled={!displayValue && !inputValue}
+                aria-label={`Copy ${unit.name}`}
+                className="flex w-12 shrink-0 items-center justify-center border-l border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+              >
+                {copied === unitKey ? (
+                  <Check className="size-4 text-green-500" />
+                ) : (
+                  <Copy className="size-4" />
+                )}
+              </button>
             </div>
           );
         })}

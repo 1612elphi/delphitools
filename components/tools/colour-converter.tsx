@@ -288,16 +288,33 @@ export function ColourConverterTool() {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Colour Preview */}
-      <div className="flex gap-4">
-        <div
-          className="w-32 h-32 rounded-xl border shadow-inner"
-          style={{ backgroundColor: colours?.hex || "#ffffff" }}
-        />
-        <div className="flex-1 space-y-3">
-          <div>
-            <label className="font-bold text-sm">Input Format</label>
+    <div className="border-2 border-border">
+
+      {/* Input row — swatch + format select + value */}
+      <div className="flex items-stretch border-b-2 border-border">
+        {/* Colour swatch (native colour picker) */}
+        <div className="relative w-20 shrink-0 border-r-2 border-border">
+          <div
+            className="size-full"
+            style={{ backgroundColor: colours?.hex || "#ffffff" }}
+            aria-hidden
+          />
+          <input
+            type="color"
+            value={colours?.hex || "#ffffff"}
+            onChange={(e) => {
+              setInputFormat("hex");
+              setInputValue(e.target.value);
+            }}
+            className="absolute inset-0 size-full cursor-pointer opacity-0"
+            aria-label="Pick colour"
+          />
+        </div>
+
+        {/* Format selector + value input */}
+        <div className="flex flex-1 items-stretch divide-x divide-border">
+          <div className="flex flex-col justify-center px-4 py-3 min-w-[9rem]">
+            <label className="text-xs font-bold text-muted-foreground mb-1">Format</label>
             <Select
               value={inputFormat}
               onValueChange={(v) => {
@@ -308,7 +325,7 @@ export function ColourConverterTool() {
                 setInputFormat(newFormat);
               }}
             >
-              <SelectTrigger className="w-full mt-1">
+              <SelectTrigger className="border-0 h-7 p-0 font-bold text-sm focus:ring-0 bg-transparent">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -318,38 +335,60 @@ export function ColourConverterTool() {
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <label className="font-bold text-sm">Value</label>
+
+          <div className="flex flex-col justify-center px-4 py-3 flex-1">
+            <label className="text-xs font-bold text-muted-foreground mb-1">Value</label>
             <Input
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder={formats.find(f => f.id === inputFormat)?.placeholder}
-              className="mt-1 font-mono"
+              className="border-0 h-7 p-0 focus-visible:ring-0 bg-transparent text-sm"
+              style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
             />
           </div>
         </div>
       </div>
 
-      {/* Conversions */}
-      {colours ? (
-        <div className="space-y-3">
-          <label className="font-bold">All Formats</label>
-          <div className="grid gap-2">
-            {formats.map((format) => {
+      {/* Conversions table */}
+      <div>
+        <div className="px-4 py-2 border-b border-border">
+          <label className="font-bold text-sm">All Formats</label>
+        </div>
+
+        {colours ? (
+          <div>
+            {formats.map((format, i) => {
               const output = formatOutput(format.id, colours);
               const isCopied = copied === output;
+              const isLast = i === formats.length - 1;
 
               return (
                 <div
                   key={format.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border bg-card"
+                  className={`flex items-stretch${isLast ? "" : " border-b border-border"}`}
                 >
-                  <div className="w-16 font-bold text-sm">{format.name}</div>
-                  <code className="flex-1 font-mono text-sm">{output}</code>
+                  {/* Format name cell */}
+                  <div className="flex items-center px-4 py-3 w-28 shrink-0 border-r border-border">
+                    <span className="font-bold text-sm">{format.name}</span>
+                  </div>
+
+                  {/* Value cell */}
+                  <div className="flex flex-1 items-center px-4 py-3 border-r border-border min-w-0">
+                    <code
+                      className="text-sm truncate"
+                      style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                    >
+                      {output}
+                    </code>
+                  </div>
+
+                  {/* Copy action cell */}
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => copyValue(output)}
+                    className="h-auto self-stretch w-12 shrink-0 border-0 text-muted-foreground hover:text-foreground hover:bg-muted"
+                    aria-label={`Copy ${format.name}`}
                   >
                     {isCopied ? <Check className="size-4" /> : <Copy className="size-4" />}
                   </Button>
@@ -357,26 +396,49 @@ export function ColourConverterTool() {
               );
             })}
           </div>
-        </div>
-      ) : (
-        <div className="p-8 text-center text-muted-foreground border rounded-lg border-dashed">
-          Enter a valid colour value to see conversions
-        </div>
-      )}
+        ) : (
+          <div className="px-4 py-8 text-center text-sm text-muted-foreground border-b border-border">
+            Enter a valid colour value to see conversions
+          </div>
+        )}
+      </div>
 
       {/* Quick Reference */}
-      <div className="p-4 rounded-lg border bg-muted/30 text-sm">
-        <div className="font-bold mb-2">Format Examples</div>
-        <div className="grid gap-2 sm:grid-cols-2 text-muted-foreground">
-          <div><span className="font-mono">HEX:</span> #3b82f6</div>
-          <div><span className="font-mono">RGB:</span> 59, 130, 246</div>
-          <div><span className="font-mono">Decimal RGB:</span> 0.2314, 0.5098, 0.9647</div>
-          <div><span className="font-mono">HSL:</span> 217, 91%, 60%</div>
-          <div><span className="font-mono">LAB:</span> 54.5 8.5 -65.5</div>
-          <div><span className="font-mono">LCH:</span> 54.5 66.0 277.5</div>
-          <div><span className="font-mono">OKLCH:</span> 0.64 0.15 264</div>
+      <div className="border-t-2 border-border">
+        <div className="px-4 py-2 border-b border-border">
+          <label className="font-bold text-sm">Format Examples</label>
+        </div>
+        <div className="grid sm:grid-cols-2">
+          {[
+            ["HEX", "#3b82f6"],
+            ["RGB", "59, 130, 246"],
+            ["Decimal RGB", "0.2314, 0.5098, 0.9647"],
+            ["HSL", "217, 91%, 60%"],
+            ["LAB", "54.5 8.5 -65.5"],
+            ["LCH", "54.5 66.0 277.5"],
+            ["OKLAB", "0.64 -0.01 -0.15"],
+            ["OKLCH", "0.64 0.15 264"],
+          ].map(([label, example], i, arr) => {
+            const isLastRow = i >= arr.length - (arr.length % 2 === 0 ? 2 : 1);
+            const isOdd = i % 2 === 1;
+            return (
+              <div
+                key={label}
+                className={`flex items-baseline gap-2 px-4 py-2 text-sm${isLastRow ? "" : " border-b border-border"}${isOdd ? " sm:border-l border-border" : ""}`}
+              >
+                <span className="font-bold text-xs text-muted-foreground w-20 shrink-0">{label}</span>
+                <code
+                  className="text-muted-foreground"
+                  style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                >
+                  {example}
+                </code>
+              </div>
+            );
+          })}
         </div>
       </div>
+
     </div>
   );
 }

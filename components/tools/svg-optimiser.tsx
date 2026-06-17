@@ -150,107 +150,138 @@ export function SvgOptimiserTool() {
 
   return (
     <div className="space-y-6">
-      {/* Drop Zone */}
-      <div
-        onDrop={handleDrop}
-        onDragOver={(e) => e.preventDefault()}
-        className="border-2 border-dashed rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
-        onClick={() => document.getElementById("svg-input")?.click()}
-      >
-        <input
-          id="svg-input"
-          type="file"
-          accept=".svg,image/svg+xml"
-          onChange={handleFileSelect}
-          className="hidden"
-        />
-        <Upload className="size-12 mx-auto text-muted-foreground mb-4" />
-        <p className="text-lg font-medium">Drop SVG file here</p>
-        <p className="text-sm text-muted-foreground mt-1">
-          or click to select, or paste SVG code below
-        </p>
-      </div>
+      <div className="border-2 border-border">
 
-      {/* Input */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <label className="font-bold">Input SVG</label>
-          {input && (
-            <Button variant="ghost" size="sm" onClick={clear}>
-              <Trash2 className="size-4 mr-2" /> Clear
-            </Button>
-          )}
-        </div>
-        <textarea
-          value={input}
-          onChange={handlePaste}
-          placeholder="Paste your SVG code here..."
-          className="w-full h-40 p-4 rounded-lg border bg-background font-mono text-sm resize-y focus:outline-none focus:ring-2 focus:ring-ring"
-        />
-      </div>
-
-      {/* Stats */}
-      {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 rounded-lg border bg-card text-center">
-            <div className="text-sm text-muted-foreground">Original</div>
-            <div className="text-2xl font-bold">{formatBytes(stats.original)}</div>
-          </div>
-          <div className="p-4 rounded-lg border bg-card text-center">
-            <div className="text-sm text-muted-foreground">Optimized</div>
-            <div className="text-2xl font-bold">{formatBytes(stats.optimized)}</div>
-          </div>
-          <div className="p-4 rounded-lg border bg-card text-center">
-            <div className="text-sm text-muted-foreground">Saved</div>
-            <div className="text-2xl font-bold text-primary">{formatBytes(stats.saved)}</div>
-          </div>
-          <div className="p-4 rounded-lg border bg-card text-center">
-            <div className="text-sm text-muted-foreground">Reduction</div>
-            <div className="text-2xl font-bold text-primary">{stats.percent}%</div>
-          </div>
-        </div>
-      )}
-
-      {/* Output */}
-      {output && (
-        <div className="space-y-3">
-          <label className="font-bold">Optimized SVG</label>
-          <textarea
-            value={output}
-            readOnly
-            className="w-full h-40 p-4 rounded-lg border bg-muted/50 font-mono text-sm resize-y"
+        {/* Drop Zone */}
+        <div
+          onDrop={handleDrop}
+          onDragOver={(e) => e.preventDefault()}
+          className="border-b-2 border-border border-dashed p-8 text-center hover:bg-muted/30 transition-colors cursor-pointer"
+          onClick={() => document.getElementById("svg-input")?.click()}
+        >
+          <input
+            id="svg-input"
+            type="file"
+            accept=".svg,image/svg+xml"
+            onChange={handleFileSelect}
+            className="hidden"
           />
+          <Upload className="size-10 mx-auto text-muted-foreground mb-3" />
+          <p className="text-base font-bold">Drop SVG file here</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            or click to select, or paste SVG code below
+          </p>
+        </div>
 
-          {/* Preview */}
-          <div className="p-4 rounded-lg border bg-muted/30">
-            <div className="text-sm text-muted-foreground mb-2">Preview</div>
-            <div className="flex items-center justify-center p-4 bg-white rounded overflow-hidden">
-              {previewUrl && (
-                <img
-                  src={previewUrl}
-                  alt="Optimised SVG preview"
-                  className="max-w-full max-h-[200px] w-auto h-auto"
-                />
-              )}
+        {/* Input SVG */}
+        <div className="border-b-2 border-border">
+          <div className="flex min-h-12 items-stretch border-b border-border">
+            <label className="flex flex-1 items-center px-4 font-bold">Input SVG</label>
+            {input && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clear}
+                className="h-auto self-stretch rounded-none border-l border-border px-4 gap-2"
+              >
+                <Trash2 className="size-4" />
+                Clear
+              </Button>
+            )}
+          </div>
+          <textarea
+            value={input}
+            onChange={handlePaste}
+            placeholder="Paste your SVG code here..."
+            className="w-full h-40 p-4 bg-transparent border-0 text-sm resize-y focus:outline-none focus:ring-0"
+            style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+          />
+        </div>
+
+        {/* Stats — flush table */}
+        {stats && (
+          <div className="border-b-2 border-border">
+            <div className="px-4 py-3 border-b border-border">
+              <label className="font-bold">Results</label>
+            </div>
+            <div className="flex items-stretch border-b border-border last:border-b-0">
+              <div className="flex-1 p-4 border-r border-border">
+                <div className="text-xs text-muted-foreground mb-1">Original</div>
+                <div className="text-xl font-bold" style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>{formatBytes(stats.original)}</div>
+              </div>
+              <div className="flex-1 p-4 border-r border-border">
+                <div className="text-xs text-muted-foreground mb-1">Optimised</div>
+                <div className="text-xl font-bold" style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>{formatBytes(stats.optimized)}</div>
+              </div>
+              <div className="flex-1 p-4 border-r border-border">
+                <div className="text-xs text-muted-foreground mb-1">Saved</div>
+                <div className="text-xl font-bold text-primary" style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>{formatBytes(stats.saved)}</div>
+              </div>
+              <div className="flex-1 p-4">
+                <div className="text-xs text-muted-foreground mb-1">Reduction</div>
+                <div className="text-xl font-bold text-primary" style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>{stats.percent}%</div>
+              </div>
             </div>
           </div>
+        )}
 
-          {/* Actions */}
-          <div className="grid gap-3 md:grid-cols-2">
-            <Button size="lg" className="h-14" onClick={downloadOutput}>
-              <Download className="size-5 mr-2" />
-              Download Optimized SVG
-            </Button>
-            <Button size="lg" variant="outline" className="h-14" onClick={copyOutput}>
-              {copied ? (
-                <><Check className="size-5 mr-2" /> Copied!</>
-              ) : (
-                <><Copy className="size-5 mr-2" /> Copy SVG Code</>
-              )}
-            </Button>
-          </div>
-        </div>
-      )}
+        {/* Output + Preview + Actions */}
+        {output && (
+          <>
+            {/* Optimised SVG output */}
+            <div className="border-b-2 border-border">
+              <div className="px-4 py-3 border-b border-border">
+                <label className="font-bold">Optimised SVG</label>
+              </div>
+              <textarea
+                value={output}
+                readOnly
+                className="w-full h-40 p-4 bg-muted/30 border-0 text-sm resize-y focus:outline-none focus:ring-0"
+                style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+              />
+            </div>
+
+            {/* Preview */}
+            <div className="border-b-2 border-border">
+              <div className="px-4 py-3 border-b border-border">
+                <label className="font-bold">Preview</label>
+              </div>
+              <div className="flex items-center justify-center p-6 bg-white">
+                {previewUrl && (
+                  <img
+                    src={previewUrl}
+                    alt="Optimised SVG preview"
+                    className="max-w-full max-h-[200px] w-auto h-auto"
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Primary actions flush bar */}
+            <div className="flex items-stretch min-h-14">
+              <Button
+                onClick={downloadOutput}
+                className="flex-1 h-auto self-stretch rounded-none border-0 text-base font-bold gap-2"
+              >
+                <Download className="size-5" />
+                Download Optimised SVG
+              </Button>
+              <Button
+                variant="outline"
+                onClick={copyOutput}
+                className="flex-1 h-auto self-stretch rounded-none border-0 border-l border-border text-base font-semibold gap-2"
+              >
+                {copied ? (
+                  <><Check className="size-5" /> Copied!</>
+                ) : (
+                  <><Copy className="size-5" /> Copy SVG Code</>
+                )}
+              </Button>
+            </div>
+          </>
+        )}
+
+      </div>
     </div>
   );
 }

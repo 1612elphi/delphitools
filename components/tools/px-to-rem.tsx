@@ -61,32 +61,37 @@ export function PxToRemTool() {
     setMode(mode === "px-to-rem" ? "rem-to-px" : "px-to-rem");
   };
 
+  const REFERENCE_PX = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 40, 48];
+
   return (
-    <div className="space-y-8">
-      {/* Base Size Setting */}
-      <div className="flex items-center gap-4">
-        <label className="text-sm font-medium text-muted-foreground">
-          Base font size:
-        </label>
-        <div className="flex items-center gap-2">
+    <div className="border-2 border-border">
+      {/* Base size row */}
+      <div className="flex items-stretch border-b-2 border-border">
+        <span className="flex items-center px-4 text-sm font-bold text-muted-foreground shrink-0">
+          Base font size
+        </span>
+        <div className="flex items-stretch border-l border-border flex-1">
           <Input
             type="number"
             value={baseSize}
             onChange={(e) => handleBaseChange(e.target.value)}
-            className="w-20 text-center font-bold"
+            className="border-0 bg-transparent font-bold text-center w-24"
+            style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
           />
-          <span className="text-sm text-muted-foreground">px</span>
+          <span className="flex items-center pr-4 text-sm text-muted-foreground">px</span>
         </div>
       </div>
 
-      {/* Main Converter */}
-      <div className="grid gap-6 md:grid-cols-[1fr,auto,1fr] items-center">
-        {/* PX Input */}
-        <div className="space-y-3">
-          <label className="text-lg font-bold block">
-            {mode === "px-to-rem" ? "Pixels" : "Result"}
-          </label>
-          <div className="relative">
+      {/* Main converter — three columns: px | swap | rem */}
+      <div className="grid grid-cols-[1fr,auto,1fr] border-b-2 border-border">
+        {/* PX column */}
+        <div className="flex flex-col">
+          <div className="px-4 py-2 border-b border-border">
+            <label className="text-sm font-bold text-muted-foreground">
+              {mode === "px-to-rem" ? "Pixels (input)" : "Pixels (result)"}
+            </label>
+          </div>
+          <div className="relative flex items-stretch">
             <Input
               type="number"
               value={pxValue}
@@ -97,48 +102,49 @@ export function PxToRemTool() {
               }
               readOnly={mode === "rem-to-px"}
               placeholder="0"
-              className="text-3xl h-16 pr-16 font-bold"
+              className="border-0 bg-transparent text-3xl h-16 font-bold pr-12"
+              style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
             />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xl text-muted-foreground font-medium">
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg text-muted-foreground font-medium">
               px
             </span>
           </div>
           {pxValue && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
+            <button
+              type="button"
               onClick={() => copyToClipboard(pxValue, "px")}
+              className="flex items-center justify-center gap-2 h-10 border-t border-border text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               {copied === "px" ? (
-                <>
-                  <Check className="size-4 mr-2" /> Copied!
-                </>
+                <><Check className="size-4" /> Copied!</>
               ) : (
-                <>
-                  <Copy className="size-4 mr-2" /> Copy {pxValue}px
-                </>
+                <><Copy className="size-4" /> Copy {pxValue}px</>
               )}
-            </Button>
+            </button>
           )}
         </div>
 
-        {/* Toggle Button */}
-        <Button
-          variant="outline"
-          size="icon"
-          className="size-14 rounded-full shrink-0"
-          onClick={toggleMode}
-        >
-          <ArrowRightLeft className="size-6" />
-        </Button>
+        {/* Swap button */}
+        <div className="flex items-center justify-center border-l border-r border-border px-3">
+          <Button
+            variant="outline"
+            size="icon"
+            className="size-10 border border-border"
+            onClick={toggleMode}
+            aria-label="Swap direction"
+          >
+            <ArrowRightLeft className="size-5" />
+          </Button>
+        </div>
 
-        {/* REM Input */}
-        <div className="space-y-3">
-          <label className="text-lg font-bold block">
-            {mode === "rem-to-px" ? "REM" : "Result"}
-          </label>
-          <div className="relative">
+        {/* REM column */}
+        <div className="flex flex-col">
+          <div className="px-4 py-2 border-b border-border">
+            <label className="text-sm font-bold text-muted-foreground">
+              {mode === "rem-to-px" ? "REM (input)" : "REM (result)"}
+            </label>
+          </div>
+          <div className="relative flex items-stretch">
             <Input
               type="number"
               value={remValue}
@@ -149,50 +155,64 @@ export function PxToRemTool() {
               }
               readOnly={mode === "px-to-rem"}
               placeholder="0"
-              className="text-3xl h-16 pr-20 font-bold"
+              className="border-0 bg-transparent text-3xl h-16 font-bold pr-16"
+              style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
             />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xl text-muted-foreground font-medium">
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg text-muted-foreground font-medium">
               rem
             </span>
           </div>
           {remValue && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
+            <button
+              type="button"
               onClick={() => copyToClipboard(remValue, "rem")}
+              className="flex items-center justify-center gap-2 h-10 border-t border-border text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               {copied === "rem" ? (
-                <>
-                  <Check className="size-4 mr-2" /> Copied!
-                </>
+                <><Check className="size-4" /> Copied!</>
               ) : (
-                <>
-                  <Copy className="size-4 mr-2" /> Copy {remValue}rem
-                </>
+                <><Copy className="size-4" /> Copy {remValue}rem</>
               )}
-            </Button>
+            </button>
           )}
         </div>
       </div>
 
-      {/* Quick Reference */}
-      <div className="border rounded-lg p-6 bg-card">
-        <h3 className="font-bold mb-4">Quick Reference</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
-          {[8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 40, 48].map((px) => (
-            <button
-              key={px}
-              onClick={() => handlePxChange(px.toString())}
-              className="p-3 rounded-md border bg-background hover:bg-accent transition-colors text-center"
-            >
-              <div className="font-bold">{px}px</div>
-              <div className="text-sm text-muted-foreground">
-                {(px / base).toFixed(3).replace(/\.?0+$/, "")}rem
-              </div>
-            </button>
-          ))}
+      {/* Quick Reference table */}
+      <div>
+        <div className="px-4 py-2 border-b border-border">
+          <label className="text-sm font-bold">Quick Reference</label>
         </div>
+        {/* Table header */}
+        <div className="flex items-stretch border-b border-border bg-muted/30">
+          <span className="flex-1 px-4 py-2 text-xs font-bold text-muted-foreground border-r border-border">
+            px
+          </span>
+          <span className="flex-1 px-4 py-2 text-xs font-bold text-muted-foreground">
+            rem (base {base}px)
+          </span>
+        </div>
+        {REFERENCE_PX.map((px) => (
+          <button
+            key={px}
+            type="button"
+            onClick={() => handlePxChange(px.toString())}
+            className="flex w-full items-stretch border-b border-border last:border-b-0 text-left transition-colors hover:bg-muted/50"
+          >
+            <span
+              className="flex-1 px-4 py-2 border-r border-border font-bold"
+              style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+            >
+              {px}px
+            </span>
+            <span
+              className="flex-1 px-4 py-2 text-muted-foreground"
+              style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+            >
+              {(px / base).toFixed(4).replace(/\.?0+$/, "")}rem
+            </span>
+          </button>
+        ))}
       </div>
     </div>
   );
