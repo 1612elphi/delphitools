@@ -280,6 +280,7 @@ export function AppSidebar() {
                   { name: "Himanshu Balani", url: "https://github.com/himanshubalani" },
                   { name: "Mahmoud Ashraf", url: "https://github.com/SNO7E-G" },
                   { name: "Moamal Alaa", url: "https://github.com/Moamal-2000" },
+                  { name: "Muhammad Fikri", url: "https://github.com/MuhammadFikriiii" },
                   { name: "Claude", url: "https://rmv.fyi/notes/i-hope-you-don-t-use-generative-ai" },
                 ].map((person) => (
                   <a
