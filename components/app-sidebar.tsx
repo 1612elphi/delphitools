@@ -316,6 +316,7 @@ export function AppSidebar() {
                   { name: "Joe Herby", org: "EFF", orgUrl: "https://www.eff.org" },
                   { name: "Val C", org: "EFF", orgUrl: "https://www.eff.org" },
                   { name: "Kacper Węgrowski", org: "Wikipedia", orgUrl: "https://donate.wikimedia.org" },
+                  { name: "Carlos Araújo", org: "Wikipedia", orgUrl: "https://donate.wikimedia.org" },
                 ].map((donor) => (
                   <a
                     key={donor.name}
