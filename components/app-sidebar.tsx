@@ -313,6 +313,7 @@ export function AppSidebar() {
               <div className="flex flex-wrap gap-1.5">
                 {[
                   { name: "Joe Herby", org: "EFF", orgUrl: "https://www.eff.org" },
+                  { name: "Val C", org: "EFF", orgUrl: "https://www.eff.org" },
                   { name: "Kacper Węgrowski", org: "Wikipedia", orgUrl: "https://donate.wikimedia.org" },
                 ].map((donor) => (
                   <a
