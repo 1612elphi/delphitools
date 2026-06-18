@@ -23,11 +23,11 @@ applicable on this surface (hardware/native or format constraint).
 
 ## Summary
 
-- **Tools tracked:** 55
+- **Tools tracked:** 56
 - **On all three surfaces:** 33
-- **Web:** 52 · **CLI:** 38 · **iOS:** 51
+- **Web:** 53 · **CLI:** 38 · **iOS:** 51
 - iOS-exclusive (native/hardware): Colour Camera, Document Scanner, Font Installer, NFC Reader/Writer
-- Web-exclusive: Palette Extractor, Pixel Picker, Cipher Decoder, Document Converter (pandoc.wasm is GPL — incompatible with the App Store, and won't run on-device on iOS)
+- Web-exclusive: Palette Extractor, Pixel Picker, Cipher Decoder, Base64 Image Encoder, Document Converter (pandoc.wasm is GPL — incompatible with the App Store, and won't run on-device on iOS)
 - CLI-only sub-feature: `hash` (text hashing, folded into Encoding Tools elsewhere)
 
 ---
@@ -62,6 +62,7 @@ applicable on this surface (hardware/native or format constraint).
 | SVG Optimiser (`svg-optimiser`) | ✅ | ✅ `svgo` | ✅ | |
 | Paste Image (`paste-image`) | ✅ | ➖ | ✅ | clipboard-driven |
 | Placeholder Generator (`placeholder-genny`) | ✅ | ❌ | ✅ | |
+| Base64 Image Encoder (`base64-image-encoder`) | ✅ | ❌ | ❌ | image file → Base64 data URI; cf. Encoding Tools (`encode`) for text |
 | Document Scanner (`document-scanner`) | ➖ | ➖ | ✅ | iOS-only (camera + OCR) |
 
 ## Social Media
