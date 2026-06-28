@@ -22,6 +22,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   "svg-optimiser": dynamic(() => import("@/components/tools/svg-optimiser").then(mod => mod.SvgOptimiserTool)),
   "favicon-genny": dynamic(() => import("@/components/tools/favicon-genny").then(mod => mod.FaviconGennyTool)),
   "image-splitter": dynamic(() => import("@/components/tools/image-splitter").then(mod => mod.ImageSplitterTool)),
+  "image-joiner": dynamic(() => import("@/components/tools/image-joiner").then(mod => mod.ImageJoinerTool)),
   "typo-calc": dynamic(() => import("@/components/tools/typo-calc").then(mod => mod.TypoCalcTool)),
   "glyph-browser": dynamic(() => import("@/components/tools/glyph-browser").then(mod => mod.GlyphBrowserTool)),
   "font-explorer": dynamic(() => import("@/components/tools/font-explorer").then(mod => mod.FontExplorerTool)),

@@ -33,6 +33,7 @@ Long live the handmade web.
 - svg optimiser
 - placeholder genny
 - image splitter
+- image joiner
 - image converter
 - image clipper
 - artwork enhancer
