@@ -46,6 +46,7 @@ import {
   Wind,
   GitCompare,
   KeyRound,
+  Combine,
 } from "lucide-react";
 
 export interface Tool {
@@ -221,6 +222,13 @@ export const toolCategories: ToolCategory[] = [
         description: "Split images into tiles",
         icon: Scissors,
         href: "/tools/image-splitter",
+      },
+      {
+        id: "image-joiner",
+        name: "Image Joiner",
+        description: "Arrange images horizontally or vertically",
+        icon: Combine,
+        href: "/tools/image-joiner",
       },
       {
         id: "image-tracer",

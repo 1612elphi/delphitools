@@ -58,6 +58,7 @@ applicable on this surface (hardware/native or format constraint).
 | Image Clipper (`image-clipper`) | ✅ | ✅ `clip` | ✅ | trim transparent edges |
 | Image Converter (`image-converter`) | ✅ | ✅ `convert` | ✅ | |
 | Image Splitter (`image-splitter`) | ✅ | ✅ `split` | ✅ | |
+| Image Joiner (`image-joiner`) | ✅ | ❌ | ❌ | |
 | Image Tracer (`image-tracer`) | ✅ | ✅ `trace` | ✅ | raster → SVG |
 | SVG Optimiser (`svg-optimiser`) | ✅ | ✅ `svgo` | ✅ | |
 | Paste Image (`paste-image`) | ✅ | ➖ | ✅ | clipboard-driven |
