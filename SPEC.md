@@ -10,7 +10,7 @@ workflows); the contested calls and what the gauntlet changed are recorded inlin
 Visual source of truth = the interactive sketches under `sketches/` (gitignored),
 see [§16](#16-sketches--visual-source-of-truth).
 
-Status: **design phase complete; pre-build.**
+Status: **building** — M0 scaffold landed; doc-model **schema v1 ratified** (2026-06-29).
 
 ---
 

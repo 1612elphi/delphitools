@@ -1,12 +1,13 @@
 /**
- * DRAFT observable document store (M1-2). A tiny external store designed to bind
- * to React via useSyncExternalStore (no new state dependency). Holds the single
+ * Observable document store (M1-2). A tiny external store designed to bind to
+ * React via useSyncExternalStore (no new state dependency). Holds the single
  * authoritative SubstrataDoc; the reconciler (M1-3) subscribes and re-syncs
  * Fabric on change.
  *
- * ⚠️ DRAFT — mutations here are placeholders. Real action creators must route
- * through the command/patch history (M1-8) so undo/redo works; do NOT build
- * features on top of `update()` directly until that lands.
+ * The store API (getSnapshot/subscribe/setDoc/update) is stable. NOTE: real edit
+ * actions must route through the command/patch history (M1-8) so undo/redo works
+ * — `update()` is the low-level primitive history is built on, not the surface
+ * that features call directly.
  *
  * SSR-safe: module evaluation only sets `state = null` and touches no browser
  * API.
@@ -43,9 +44,9 @@ export function setDoc(next: SubstrataDoc | null): void {
 }
 
 /**
- * Apply an immutable update. DRAFT: bypasses history — every real edit must go
- * through M1-8 instead. The mutator must return a NEW doc (no in-place
- * mutation) so future structural sharing / patching stays correct.
+ * Apply an immutable update. Low-level primitive: bypasses history, so real
+ * edits go through M1-8 (which is built on this). The mutator must return a NEW
+ * doc (no in-place mutation) so structural sharing / patching stays correct.
  */
 export function update(mutator: (doc: SubstrataDoc) => SubstrataDoc): void {
   if (!state) return;
