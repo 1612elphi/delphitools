@@ -7,9 +7,9 @@
  * that declares whether each effect renders inner or outer, so the doc model
  * needs neither two hard-coded arrays nor a per-instance phase flag.
  *
- * DRAFT: this stub fixes the structure + the inner/outer classification only.
- * The render functions, typed param schemas/defaults, and the ∑CG display labels
- * land with the Effects panel (M3).
+ * v1 stub: the structure + the inner/outer classification are frozen. Render
+ * functions, typed param schemas/defaults, and the ∑CG display labels are added
+ * with the Effects panel (M3) — additively, no change to the entries' shape.
  */
 
 import type { EffectPhase } from "./doc-model";

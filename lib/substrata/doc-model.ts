@@ -1,13 +1,14 @@
 /**
- * DRAFT document model (M1-2) — the proposed single source of truth for a
- * Substrata scene. Per §5/§6: the doc model is authoritative; Fabric is a pure
- * render target (one-way doc → Fabric, M1-3). Undo/redo (M1-8) patches THIS,
- * never Fabric JSON.
+ * Document model (M1-2) — the single source of truth for a Substrata scene. Per
+ * §5/§6: the doc model is authoritative; Fabric is a pure render target (one-way
+ * doc → Fabric, M1-3). Undo/redo (M1-8) patches THIS, never Fabric JSON.
  *
- * ⚠️ DRAFT — DO NOT HARDEN AGAINST THIS YET. The schema (group nesting depth,
- * blend-mode enumeration, where bit-depth/colour-mode live, default artboard
- * dims) is gated on Ruby's sign-off (human gate after M1-2). It compiles so the
- * persistence + WebGL scaffolds have a real type to reference; expect churn.
+ * ✅ RATIFIED — schema v1, signed off 2026-06-29: blend-mode = all 16 canvas
+ * tokens; group nesting unlimited; bit-depth + colour-mode document-wide on the
+ * artboard; default artboard 2000×1500. Downstream code MAY harden against this.
+ * Changes from here are ADDITIVE only and must bump the Dexie/.substrata schema
+ * version non-destructively (§13). Forward-staged refinements (typed `type`
+ * unions, fuller text/shape models) are flagged inline and don't change v1 shape.
  *
  * British spelling in our own fields (`colour…`); CSS/Fabric tokens keep their
  * own spelling.
@@ -52,8 +53,8 @@ export interface Transform {
  * (`image.filters[]`) — brightness, blur, levels, etc. Order matters. A filter
  * only ever transforms the visible pixels of the layer and cannot draw outside
  * its bounds (that's the filter/effect line: filters stay in, effects can go
- * out). DRAFT shape — `type` becomes a typed union backed by a filter registry
- * in M3.
+ * out). `type` is a registry key — a string in v1, narrowed to a typed union
+ * backed by a filter registry in M3 (additive, no v1 shape change).
  */
 export interface Filter {
   id: string;
@@ -117,7 +118,7 @@ export interface RasterLayer extends BaseLayer {
 
 export interface TextLayer extends BaseLayer {
   kind: "text";
-  /** DRAFT — full text model (per-range styles etc.) lands in M2 */
+  /** v1 minimal; the full text model (per-range styles etc.) is added additively in M2 */
   text: string;
   fontFamily: string;
   fontSize: number;
@@ -126,7 +127,7 @@ export interface TextLayer extends BaseLayer {
 
 export interface ShapeLayer extends BaseLayer {
   kind: "shape";
-  /** DRAFT — shape param union lands in M2 (PIECES) */
+  /** v1 minimal; the shape param union is added additively in M2 (PIECES) */
   shape: string;
   fill: string;
   stroke: string | null;
