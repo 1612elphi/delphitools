@@ -48,34 +48,40 @@ export interface Transform {
 }
 
 /**
- * Drop shadow. Lives at the LAYER level (alongside opacity + blendMode), NOT in
- * the effects[] stack — on purpose, for engine reasons, even though the UI
- * surfaces it inside the Effects panel so it reads as an "effect" to the user:
- *   - It maps to Fabric's object-level `fabric.Shadow`, which works on ANY layer
- *     kind (raster/text/shape). The effects[] stack is raster-only pixel filters
- *     (`image.filters[]`) — a shadow there couldn't apply to text/shapes without
- *     rasterising them first.
- *   - A shadow draws OUTSIDE the layer's pixel bounds; a WebGL pixel filter only
- *     transforms pixels within the source texture, so it structurally can't.
- *   - One shadow per layer (like one opacity / one blend), not a reorderable
- *     stack — so a single field fits better than a list entry.
+ * A pixel filter: a raster-only, in-bounds adjustment in the layer's filter
+ * stack (`image.filters[]`) — brightness, blur, levels, etc. Order matters.
+ * These transform the layer's OWN pixels and cannot draw outside its bounds.
+ * DRAFT shape — `type` becomes a typed union backed by a filter registry in M3.
  */
-export interface ShadowSpec {
-  colour: string;
-  blur: number;
-  offsetX: number;
-  offsetY: number;
-}
-
-/**
- * A non-destructive pixel effect entry (§6). DRAFT shape — `type` becomes a
- * typed discriminated union in M3 when the effect tiers are implemented.
- */
-export interface Effect {
+export interface Filter {
   id: string;
   type: string;
   enabled: boolean;
   params: Record<string, number>;
+}
+
+/**
+ * Where a layer style composites relative to the layer's own pixels:
+ *   - "outer": drawn BEHIND the layer (drop shadow, outer glow, outer stroke)
+ *   - "inner": drawn IN FRONT, clipped to the layer's alpha (inner shadow/glow)
+ * The phase per style type is declared once in the style registry
+ * (lib/substrata/layer-styles.ts) — the single, extensible source of truth.
+ */
+export type StylePhase = "outer" | "inner";
+
+/**
+ * A layer-style instance — drop/inner shadow, outer/inner glow, stroke, overlay…
+ * Unlike a Filter, a style works on ANY layer kind and may draw OUTSIDE the
+ * layer bounds, which is exactly why these are not pixel filters. `type` keys
+ * into the style registry, which declares the phase + params, so adding a new
+ * style happens in one place. Drop shadow is simply `type: "drop-shadow"`.
+ */
+export interface LayerStyle {
+  id: string;
+  type: string;
+  enabled: boolean;
+  /** colours are strings, numerics are numbers; validated against the registry */
+  params: Record<string, number | string>;
 }
 
 interface BaseLayer {
@@ -87,9 +93,16 @@ interface BaseLayer {
   opacity: number;
   blendMode: BlendMode;
   transform: Transform;
-  shadow: ShadowSpec | null;
-  /** ordered, non-destructive; empty until M3 */
-  effects: Effect[];
+  /**
+   * Per-layer non-destructive stack, composited in order:
+   *   outer styles → (layer content + pixel filters) → inner styles
+   *   → then opacity/blendMode composite this layer onto those below.
+   * Both arrays are empty until M3.
+   */
+  /** Pixel filters (raster adjustments), ordered & reorderable. */
+  filters: Filter[];
+  /** Layer styles (shadow/glow/stroke/overlay); inner/outer per the registry. */
+  styles: LayerStyle[];
 }
 
 export interface RasterLayer extends BaseLayer {
