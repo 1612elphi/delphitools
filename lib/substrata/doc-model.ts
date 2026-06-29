@@ -48,10 +48,12 @@ export interface Transform {
 }
 
 /**
- * A pixel filter: a raster-only, in-bounds adjustment in the layer's filter
- * stack (`image.filters[]`) — brightness, blur, levels, etc. Order matters.
- * These transform the layer's OWN pixels and cannot draw outside its bounds.
- * DRAFT shape — `type` becomes a typed union backed by a filter registry in M3.
+ * A FILTER: a raster-only, INSIDE-only adjustment in the layer's filter stack
+ * (`image.filters[]`) — brightness, blur, levels, etc. Order matters. A filter
+ * only ever transforms the visible pixels of the layer and cannot draw outside
+ * its bounds (that's the filter/effect line: filters stay in, effects can go
+ * out). DRAFT shape — `type` becomes a typed union backed by a filter registry
+ * in M3.
  */
 export interface Filter {
   id: string;
@@ -61,22 +63,22 @@ export interface Filter {
 }
 
 /**
- * Where a layer style composites relative to the layer's own pixels:
+ * Where an effect composites relative to the layer's own pixels:
  *   - "outer": drawn BEHIND the layer (drop shadow, outer glow, outer stroke)
  *   - "inner": drawn IN FRONT, clipped to the layer's alpha (inner shadow/glow)
- * The phase per style type is declared once in the style registry
- * (lib/substrata/layer-styles.ts) — the single, extensible source of truth.
+ * The phase per effect type is declared once in the effect registry
+ * (lib/substrata/effects.ts) — the single, extensible source of truth.
  */
-export type StylePhase = "outer" | "inner";
+export type EffectPhase = "outer" | "inner";
 
 /**
- * A layer-style instance — drop/inner shadow, outer/inner glow, stroke, overlay…
- * Unlike a Filter, a style works on ANY layer kind and may draw OUTSIDE the
- * layer bounds, which is exactly why these are not pixel filters. `type` keys
- * into the style registry, which declares the phase + params, so adding a new
- * style happens in one place. Drop shadow is simply `type: "drop-shadow"`.
+ * An EFFECT instance — drop/inner shadow, outer/inner glow, stroke, overlay…
+ * Unlike a Filter, an effect works on ANY layer kind and may draw OUTSIDE the
+ * layer bounds — that's the whole reason it's an effect and not a filter. `type`
+ * keys into the effect registry, which declares the phase + params, so adding a
+ * new effect happens in one place. Drop shadow is simply `type: "drop-shadow"`.
  */
-export interface LayerStyle {
+export interface Effect {
   id: string;
   type: string;
   enabled: boolean;
@@ -95,14 +97,14 @@ interface BaseLayer {
   transform: Transform;
   /**
    * Per-layer non-destructive stack, composited in order:
-   *   outer styles → (layer content + pixel filters) → inner styles
+   *   outer effects → (layer content + filters) → inner effects
    *   → then opacity/blendMode composite this layer onto those below.
    * Both arrays are empty until M3.
    */
-  /** Pixel filters (raster adjustments), ordered & reorderable. */
+  /** Filters (raster, inside-only adjustments), ordered & reorderable. */
   filters: Filter[];
-  /** Layer styles (shadow/glow/stroke/overlay); inner/outer per the registry. */
-  styles: LayerStyle[];
+  /** Effects (shadow/glow/stroke/overlay); can reach outside; phase per registry. */
+  effects: Effect[];
 }
 
 export interface RasterLayer extends BaseLayer {

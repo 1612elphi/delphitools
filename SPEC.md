@@ -179,17 +179,18 @@ opentype.js, AVIF WASM) — never on landing-page weight.
 - **Layers:** raster / text / shape. Reorder, show/hide, lock, opacity, blend,
   rename, group. **Object-making = layer-making** — no "add layer" button; the
   primary add is **Upload**.
-- **Per-layer non-destructive stack**, modelled in three buckets (the UI Effects
-  panel surfaces the first two together):
-  - **Pixel filters** (`filters[]` → `image.filters[]`, raster only) — ordered,
-    toggleable, reorderable. Transform the layer's own pixels, in-bounds.
-  - **Layer styles** (`styles[]`: drop/inner shadow, outer/inner glow, stroke,
-    overlay…) — work on **any** layer kind and may draw outside the bounds, so
-    they are *not* pixel filters. Each declares **inner/outer** phase in a central
-    **style registry** (`lib/substrata/layer-styles.ts`); extend by adding a
-    registry entry. Drop shadow = `type:"drop-shadow"` (was `fabric.Shadow`).
+- **Per-layer non-destructive stack**, modelled in three buckets. The line
+  between the first two: **filters stay inside** (on the visible pixels),
+  **effects can reach outside** the bounds.
+  - **Filters** (`filters[]` → `image.filters[]`, raster only) — ordered,
+    toggleable, reorderable. Transform the layer's own pixels, in-bounds only.
+  - **Effects** (`effects[]`: drop/inner shadow, outer/inner glow, stroke,
+    overlay…) — work on **any** layer kind and may draw outside the bounds. Each
+    declares **inner/outer** phase in a central **effect registry**
+    (`lib/substrata/effects.ts`); extend by adding a registry entry. Drop shadow
+    = `type:"drop-shadow"` (was `fabric.Shadow`).
   - **Compositing** on the layer — opacity, blend mode (`globalCompositeOperation`).
-  - Composite order: outer styles → (content + filters) → inner styles → opacity/blend.
+  - Composite order: outer effects → (content + filters) → inner effects → opacity/blend.
 - **Background removal** is an async **"bake" effect**: the model emits a grayscale
   alpha matte, cached per layer and alpha-multiplied at composite — a generated
   alpha channel, **not** a Fabric `clipPath`/mask (satisfies *no masks*). Original
