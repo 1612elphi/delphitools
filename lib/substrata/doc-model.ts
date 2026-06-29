@@ -47,6 +47,19 @@ export interface Transform {
   flipY: boolean;
 }
 
+/**
+ * Drop shadow. Lives at the LAYER level (alongside opacity + blendMode), NOT in
+ * the effects[] stack — on purpose, for engine reasons, even though the UI
+ * surfaces it inside the Effects panel so it reads as an "effect" to the user:
+ *   - It maps to Fabric's object-level `fabric.Shadow`, which works on ANY layer
+ *     kind (raster/text/shape). The effects[] stack is raster-only pixel filters
+ *     (`image.filters[]`) — a shadow there couldn't apply to text/shapes without
+ *     rasterising them first.
+ *   - A shadow draws OUTSIDE the layer's pixel bounds; a WebGL pixel filter only
+ *     transforms pixels within the source texture, so it structurally can't.
+ *   - One shadow per layer (like one opacity / one blend), not a reorderable
+ *     stack — so a single field fits better than a list entry.
+ */
 export interface ShadowSpec {
   colour: string;
   blur: number;
@@ -124,6 +137,33 @@ export interface Artboard {
   colourMode: ColourMode;
   /** CSS colour or null for transparent */
   background: string | null;
+}
+
+/**
+ * A new scene opens INSTANTLY to this — no wizard, no template wall (§6). Other
+ * sizes come from the preset picker (see ArtboardPreset); the default is just
+ * the one you get without choosing.
+ */
+export const DEFAULT_ARTBOARD: Artboard = {
+  width: 2000,
+  height: 1500,
+  resolution: 72,
+  bitDepth: 8,
+  colourMode: "rgb",
+  background: "#ffffff",
+};
+
+/**
+ * A selectable size for the new-scene preset panel (planned UI — Scene ▸ New
+ * scene). `label` is ∑CG user-facing copy; WHICH presets to ship (social, print,
+ * device, …) is a product decision still open. Dimensions are data, not copy.
+ */
+export interface ArtboardPreset {
+  id: string;
+  label: string;
+  width: number;
+  height: number;
+  resolution: number;
 }
 
 export interface SubstrataDoc {
