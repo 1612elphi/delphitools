@@ -191,3 +191,57 @@ export interface SubstrataDoc {
   createdAt: number;
   updatedAt: number;
 }
+
+// ── factories ────────────────────────────────────────────────────────────────
+// Client-only (crypto.randomUUID / Date.now); never called during prerender.
+
+/** Stable id for documents and layers. Secure-context only. */
+export function newId(): string {
+  return crypto.randomUUID();
+}
+
+export function identityTransform(): Transform {
+  return { x: 0, y: 0, scaleX: 1, scaleY: 1, angle: 0, flipX: false, flipY: false };
+}
+
+/**
+ * A new, empty scene at the default artboard. `name` is document data; the UI
+ * supplies the ∑CG placeholder ("Untitled scene") when it is blank — we don't
+ * author copy here.
+ */
+export function createEmptyDoc(name = ""): SubstrataDoc {
+  const now = Date.now();
+  return {
+    id: newId(),
+    schemaVersion: SCHEMA_VERSION,
+    name,
+    artboard: { ...DEFAULT_ARTBOARD },
+    layers: [],
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+export function createRasterLayer(opts: {
+  name: string;
+  blobHash: string;
+  naturalWidth: number;
+  naturalHeight: number;
+  transform: Transform;
+}): RasterLayer {
+  return {
+    kind: "raster",
+    id: newId(),
+    name: opts.name,
+    visible: true,
+    locked: false,
+    opacity: 1,
+    blendMode: "source-over",
+    transform: opts.transform,
+    filters: [],
+    effects: [],
+    blobHash: opts.blobHash,
+    naturalWidth: opts.naturalWidth,
+    naturalHeight: opts.naturalHeight,
+  };
+}
