@@ -41,6 +41,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# local design sketches / mockups (not shipped)
+/sketches/
+
 # claude
 CLAUDE.md
 DESIGN.md
