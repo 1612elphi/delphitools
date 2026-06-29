@@ -172,7 +172,10 @@ opentype.js, AVIF WASM) — never on landing-page weight.
 ## 6. The document model
 
 - **One document = one artboard** (preset or custom dims), opens instantly to a
-  usable canvas — no wizard, no template wall. (Multi-artboard = later.)
+  usable canvas — no wizard, no template wall. **Default = 2000×1500** (72 ppi,
+  white), no prompt; a **new-scene preset panel** (Scene ▸ New scene) offers
+  other sizes for those who want them. Preset list (social/print/device/…) is
+  TBD; labels are `∑CG`. (Multi-artboard = later.)
 - **Layers:** raster / text / shape. Reorder, show/hide, lock, opacity, blend,
   rename, group. **Object-making = layer-making** — no "add layer" button; the
   primary add is **Upload**.
