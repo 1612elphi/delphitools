@@ -2,6 +2,8 @@
 
 import dynamic from "next/dynamic";
 
+import { LayersPanel } from "@/components/substrata/modules/layers-panel";
+
 // The Fabric canvas is loaded only on the client: ssr:false keeps the heavy,
 // browser-only Fabric module out of the static-export prerender. Everything
 // imperative and canvas-related hangs off this single dynamic boundary.
@@ -30,8 +32,13 @@ export function SubstrataShell() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       {/* ∑CG: <TopBar/> mounts here (M0-4/M0-5) — gated on visual review */}
-      <FabricCanvas />
-      {/* ∑CG: omnibar + utility-rail dock regions mount here (M0-6) — gated */}
+      <div className="flex min-h-0 flex-1">
+        <FabricCanvas />
+        {/* Provisional fixed dock. The real omnibar + utility-rail docking system
+            (move modules to any edge via the Workspace menu) is M0-6/cross-cutting
+            and gated on visual review — this just makes the Layers module usable. */}
+        <LayersPanel />
+      </div>
     </div>
   );
 }
