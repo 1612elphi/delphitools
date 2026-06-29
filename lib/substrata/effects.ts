@@ -1,27 +1,28 @@
 /**
- * Layer-style registry — the single, extensible source of truth for layer
- * styles (the family drop shadow belongs to). Adding a new style = add one entry
- * here; the document model only stores instances (LayerStyle) that reference a
- * `type`. This is the "other library" that declares whether each style renders
- * inner or outer, so the doc model needs neither two hard-coded arrays nor a
- * per-instance phase flag.
+ * Effect registry — the single, extensible source of truth for effects (the
+ * family drop shadow belongs to: things that work on any layer kind and can draw
+ * OUTSIDE the layer bounds, as opposed to filters, which stay inside the visible
+ * pixels). Adding a new effect = add one entry here; the document model only
+ * stores instances (Effect) that reference a `type`. This is the "other library"
+ * that declares whether each effect renders inner or outer, so the doc model
+ * needs neither two hard-coded arrays nor a per-instance phase flag.
  *
  * DRAFT: this stub fixes the structure + the inner/outer classification only.
  * The render functions, typed param schemas/defaults, and the ∑CG display labels
  * land with the Effects panel (M3).
  */
 
-import type { StylePhase } from "./doc-model";
+import type { EffectPhase } from "./doc-model";
 
-export interface StyleDefinition {
+export interface EffectDefinition {
   type: string;
-  phase: StylePhase;
+  phase: EffectPhase;
   /** accepted param keys; a typed schema + defaults arrive in M3 */
   params: string[];
   // label?: string  // ∑CG — user-facing name, added with the M3 Effects panel
 }
 
-export const STYLE_REGISTRY: Record<string, StyleDefinition> = {
+export const EFFECT_REGISTRY: Record<string, EffectDefinition> = {
   "drop-shadow": {
     type: "drop-shadow",
     phase: "outer",
@@ -57,16 +58,16 @@ export const STYLE_REGISTRY: Record<string, StyleDefinition> = {
   },
 };
 
-export const getStyleDef = (type: string): StyleDefinition | undefined => STYLE_REGISTRY[type];
+export const getEffectDef = (type: string): EffectDefinition | undefined => EFFECT_REGISTRY[type];
 
-export const stylePhase = (type: string): StylePhase | undefined => STYLE_REGISTRY[type]?.phase;
+export const effectPhase = (type: string): EffectPhase | undefined => EFFECT_REGISTRY[type]?.phase;
 
-/** Partition a layer's styles into render phases (outer behind, inner in front). */
-export function byPhase<T extends { type: string }>(styles: T[]): { outer: T[]; inner: T[] } {
+/** Partition a layer's effects into render phases (outer behind, inner in front). */
+export function byPhase<T extends { type: string }>(effects: T[]): { outer: T[]; inner: T[] } {
   const outer: T[] = [];
   const inner: T[] = [];
-  for (const s of styles) {
-    (stylePhase(s.type) === "inner" ? inner : outer).push(s);
+  for (const e of effects) {
+    (effectPhase(e.type) === "inner" ? inner : outer).push(e);
   }
   return { outer, inner };
 }
