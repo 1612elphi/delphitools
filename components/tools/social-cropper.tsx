@@ -5,41 +5,7 @@ import { Upload, Download, Trash2, Move, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useFilePaste } from "@/hooks/use-file-paste";
-
-interface Platform {
-  name: string;
-  ratios: { name: string; label: string; width: number; height: number }[];
-}
-
-const platforms: Platform[] = [
-  {
-    name: "Instagram",
-    ratios: [
-      { name: "Square", label: "1:1", width: 1, height: 1 },
-      { name: "Portrait", label: "4:5", width: 4, height: 5 },
-      { name: "Landscape", label: "1.91:1", width: 1.91, height: 1 },
-      { name: "Reels", label: "9:16", width: 9, height: 16 },
-    ],
-  },
-  {
-    name: "Bluesky",
-    ratios: [
-      { name: "Square", label: "1:1", width: 1, height: 1 },
-      { name: "Landscape", label: "16:9", width: 16, height: 9 },
-      { name: "Portrait", label: "3:4", width: 3, height: 4 },
-      { name: "Wide", label: "2:1", width: 2, height: 1 },
-    ],
-  },
-  {
-    name: "Threads",
-    ratios: [
-      { name: "Square", label: "1:1", width: 1, height: 1 },
-      { name: "Portrait", label: "4:5", width: 4, height: 5 },
-      { name: "Landscape", label: "1.91:1", width: 1.91, height: 1 },
-      { name: "Stories", label: "9:16", width: 9, height: 16 },
-    ],
-  },
-];
+import { SOCIAL_PLATFORMS as platforms } from "@/lib/social-presets";
 
 export function SocialCropperTool() {
   const [sourceImage, setSourceImage] = useState<string | null>(null);
