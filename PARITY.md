@@ -29,6 +29,18 @@ applicable on this surface (hardware/native or format constraint).
 - iOS-exclusive (native/hardware): Colour Camera, Document Scanner, Font Installer, NFC Reader/Writer
 - Web-exclusive: Palette Extractor, Pixel Picker, Cipher Decoder, Base64 Image Encoder, Document Converter (pandoc.wasm is GPL — incompatible with the App Store, and won't run on-device on iOS)
 - CLI-only sub-feature: `hash` (text hashing, folded into Encoding Tools elsewhere)
+- Web-only **app** (not a catalogue tool): Substrata — see the note below; excluded from the counts above.
+
+---
+
+## Substrata (image editor) — outside the parity contract
+
+**Substrata** is a browser-based image editor at `/editor` in the web repo. It is
+**not** a tool in the catalogue (`lib/tools.ts`) and is **web-only / explicitly
+non-parity**: a heavy Fabric.js canvas app (layers, per-layer effects stack,
+local persistence) with no realistic CLI or iOS sibling, so it is excluded from
+the W/C/I tables and the tool counts above. Precedent: the Base64 Image Encoder
+is similarly web-only. Spec: `SPEC.md`. Build plan: `BUILD-PLAN.md`.
 
 ---
 
