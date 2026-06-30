@@ -19,7 +19,7 @@ export function PersistenceToggle() {
   const enabled = useSyncExternalStore(subscribePersistence, getPersistenceEnabled, () => false);
 
   return (
-    <div className="flex h-9 shrink-0 items-center gap-2 border-t border-border px-2 text-xs">
+    <div className="flex h-9 items-center gap-2 px-2 text-xs">
       <HardDrive className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
       <span className="flex-1 truncate text-muted-foreground">
         {/* ∑CG: local-storage toggle label + state

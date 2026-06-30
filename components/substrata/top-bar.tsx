@@ -37,6 +37,7 @@ import { subscribe, getSnapshot, undo, redo, canUndo, canRedo } from "@/lib/subs
 import { getPersistenceEnabled, subscribePersistence } from "@/lib/substrata/persistence-pref";
 import { getOmnibarEdge, setOmnibarEdge, subscribeDock, type Edge } from "@/lib/substrata/dock-pref";
 import { importImageFile } from "@/lib/substrata/import-raster";
+import { PersistenceToggle } from "@/components/substrata/persistence-toggle";
 
 /**
  * Top bar (§7) — parity with sketches/mockup.html. Functional chrome labels use
@@ -266,6 +267,9 @@ function SceneMenu({
         <DiRow label="Colour" value="sRGB" />
         <DiRow label="Layers" value={String(doc?.layers.length ?? 0)} />
         <DiRow label="Stored" value={persistOn ? "Local" : "Off"} />
+      </Box>
+      <Box>
+        <PersistenceToggle />
       </Box>
     </div>
   );
