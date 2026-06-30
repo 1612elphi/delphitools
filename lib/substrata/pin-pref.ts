@@ -31,6 +31,13 @@ export function togglePin(id: ModuleId): void {
   for (const l of listeners) l();
 }
 
+/** Force a module open (pinned) or closed. */
+export function setPinned(id: ModuleId, open: boolean): void {
+  if (pinned.includes(id) === open) return;
+  pinned = open ? [...pinned, id] : pinned.filter((x) => x !== id);
+  for (const l of listeners) l();
+}
+
 export function subscribePins(listener: () => void): () => void {
   listeners.add(listener);
   return () => {

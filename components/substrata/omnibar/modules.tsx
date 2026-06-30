@@ -44,22 +44,35 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
 /** Uniform rail height (the §8 "every pinned module is the same height"). */
 const RAIL_H = "h-[300px]";
 
-export function ModuleBox({ id, inRail = false }: { id: ModuleId; inRail?: boolean }) {
+export type ModuleVariant = "bloom" | "rail" | "dock";
+
+/**
+ * Render a module. `bloom` = hover-peek (own width, natural height); `rail` =
+ * pinned in the rail (own width, uniform height, sticky header, ✕ close);
+ * `dock` = pinned in a side sidebar (full sidebar width, natural height, ✕).
+ */
+export function ModuleBox({ id, variant = "bloom" }: { id: ModuleId; variant?: ModuleVariant }) {
   const def = MODULES[id];
+  const closable = variant !== "bloom";
   return (
-    <div className={cn(def.width, inRail && cn("flex flex-col overflow-hidden", RAIL_H))}>
+    <div
+      className={cn(
+        variant === "dock" ? "w-full" : def.width,
+        variant === "rail" && cn("flex flex-col overflow-hidden", RAIL_H),
+      )}
+    >
       <div
         className={cn(
           "flex h-[30px] items-center gap-2 border-b border-border bg-card pl-[11px] pr-[7px]",
-          inRail && "sticky top-0 z-[2]",
+          variant === "rail" && "sticky top-0 z-[2]",
         )}
       >
         <span className="text-[10.5px] font-bold uppercase tracking-wide">{def.title}</span>
         {def.sub != null && <span className="ml-auto text-[10px] text-muted-foreground">{def.sub}</span>}
-        {inRail && (
+        {closable && (
           <button
             onClick={() => togglePin(id)}
-            // ∑CG: unpin button aria-label. sample: "Unpin from rail"
+            // ∑CG: close/unpin button aria-label. sample: "Close panel"
             aria-label="∑CG"
             className={cn(
               "grid size-[22px] place-items-center text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -70,7 +83,7 @@ export function ModuleBox({ id, inRail = false }: { id: ModuleId; inRail?: boole
           </button>
         )}
       </div>
-      <div className={cn(inRail && "min-h-0 flex-1 overflow-auto")}>{def.body}</div>
+      <div className={cn(variant === "rail" && "min-h-0 flex-1 overflow-auto")}>{def.body}</div>
     </div>
   );
 }

@@ -35,7 +35,16 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { subscribe, getSnapshot, undo, redo, canUndo, canRedo } from "@/lib/substrata/doc-store";
 import { getPersistenceEnabled, subscribePersistence } from "@/lib/substrata/persistence-pref";
-import { getOmnibarEdge, setOmnibarEdge, subscribeDock, type Edge } from "@/lib/substrata/dock-pref";
+import {
+  getOmnibarEdge,
+  setOmnibarEdge,
+  getModuleDockAll,
+  setModuleDock,
+  subscribeDock,
+  type Edge,
+  type DockTarget,
+} from "@/lib/substrata/dock-pref";
+import { setPinned, type ModuleId } from "@/lib/substrata/pin-pref";
 import { importImageFile } from "@/lib/substrata/import-raster";
 import { PersistenceToggle } from "@/components/substrata/persistence-toggle";
 
@@ -423,8 +432,27 @@ const SEG_ICON: Record<string, React.ReactNode> = {
 };
 const renderSeg = (s: string): React.ReactNode => SEG_ICON[s] ?? s;
 
+const DOCK_TO_LETTER: Record<DockTarget, string> = { left: "L", right: "R", rail: "Rail" };
+const LETTER_TO_DOCK: Record<string, DockTarget> = { L: "left", R: "right", Rail: "rail" };
+
+function DockRow({ label, id, docks }: { label: string; id: ModuleId; docks: Record<ModuleId, DockTarget> }) {
+  return (
+    <WRow
+      label={label}
+      seg={["L", "R", "Rail"]}
+      active={DOCK_TO_LETTER[docks[id]]}
+      onSelect={(s) => {
+        setModuleDock(id, LETTER_TO_DOCK[s]);
+        setPinned(id, true); // placing a module also shows it
+      }}
+      render={renderSeg}
+    />
+  );
+}
+
 function WorkspaceMenu() {
   const edge = useSyncExternalStore(subscribeDock, getOmnibarEdge, () => "bottom" as Edge);
+  const docks = useSyncExternalStore(subscribeDock, getModuleDockAll, getModuleDockAll);
   return (
     <Box className="min-w-[254px] py-1">
       <WRow
@@ -439,10 +467,10 @@ function WorkspaceMenu() {
       <div className="px-3 pb-0.5 pt-1.5 text-[9.5px] uppercase tracking-wide text-muted-foreground">
         Dock modules
       </div>
-      <WRow label="Layers" seg={["L", "R", "Rail"]} on={["L"]} render={renderSeg} />
-      <WRow label="Effects" seg={["L", "R", "Rail"]} on={["Rail"]} render={renderSeg} />
-      <WRow label="Inspector" seg={["L", "R", "Rail"]} on={["R"]} render={renderSeg} />
-      <WRow label="Colour" seg={["L", "R", "Rail"]} on={["Rail"]} render={renderSeg} />
+      <DockRow label="Layers" id="layers" docks={docks} />
+      <DockRow label="Effects" id="effects" docks={docks} />
+      <DockRow label="Inspector" id="inspector" docks={docks} />
+      <DockRow label="Colour" id="colour" docks={docks} />
       <Sep />
       <WRow label="Zoom" seg={["−", "67%", "+", "Fit"]} on={[]} render={renderSeg} />
       <WRow label="Guides" seg={["Rulers", "Grid", "Snap"]} on={["Rulers", "Snap"]} render={renderSeg} />

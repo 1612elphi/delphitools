@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 
 import { TopBar } from "@/components/substrata/top-bar";
 import { Omnibar } from "@/components/substrata/omnibar/omnibar";
+import { Sidebar } from "@/components/substrata/sidebar";
 import { useEditorShortcuts } from "@/hooks/use-editor-shortcuts";
 
 // The Fabric canvas is loaded only on the client: ssr:false keeps the heavy,
@@ -36,12 +37,16 @@ export function SubstrataShell() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <TopBar />
-      {/* Canvas area (relative so the floating omnibar + rail position against it).
-          Panels (Layers/etc.) now live in the omnibar — peek on hover, pin to the
-          rail. The opt-in storage toggle rehomed to the Scene menu. */}
-      <div className="relative flex min-h-0 flex-1">
-        <FabricCanvas />
-        <Omnibar />
+      {/* Body: left sidebar · canvas area · right sidebar. Modules dock to a
+          sidebar or the rail (Workspace ▸ Dock modules); sidebars appear only when
+          they hold a module. The omnibar + rail float over the canvas area. */}
+      <div className="flex min-h-0 flex-1">
+        <Sidebar side="left" />
+        <div className="relative flex min-h-0 flex-1">
+          <FabricCanvas />
+          <Omnibar />
+        </div>
+        <Sidebar side="right" />
       </div>
     </div>
   );
