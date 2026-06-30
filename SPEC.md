@@ -30,8 +30,10 @@ each layer carries its own **effects stack**. *Substrata* = sub-strata = layers.
 - **Completely local.** All pixels stay on-device. No upload, no server-side
   processing, ever.
 - **No account.** No login/signup/email. Usable anonymously and offline.
-- **Optional persistence.** Local autosave by default; portable files are an
-  explicit user action. Nothing required.
+- **Opt-in persistence.** **Nothing is written to the browser until the user
+  explicitly turns local storage on — OFF by default.** Even then it's a recovery
+  cache, not the truth; portable files are the durable export. Turning it off
+  **purges** the local copy (no trace). Nothing required to use the editor.
 - **Honest, not patronising.** Status says it's stored *in this browser*, not the
   cloud. No fake "synced", no upsell, no dark patterns.
 - **No modal hell.** One persistent surface (the omnibar) + summonable floating
@@ -303,11 +305,14 @@ verify · import via `createImageBitmap` (downscale to artboard, keep original b
 reference). History = command/patch ring buffer (50–100) over the doc model,
 content-addressed COW raster snapshots, coalesced slider drags.
 
-**Persistence:** Dexie stores (`projects` = artboard + layer tree + effect stacks
-as JSON; `blobs` content-addressed by SHA-256, ref-counted; `handles`; `snapshots`
-for recovery) · OPFS for large rasters · FS Access `.substrata` (+ fallback) ·
-`fflate` STORE-mode zip (`manifest.json` + `blobs/<sha256>`) in a Worker ·
-debounced transactional autosave · `persist()`/`estimate()` surfaced.
+**Persistence (opt-in, off by default):** a user toggle gates ALL browser writes
+(`lib/substrata/persistence-pref`, localStorage flag, removed on opt-out) · Dexie
+stores (`projects` = artboard + layer tree + effect stacks as JSON; `blobs`
+content-addressed by SHA-256, ref-counted; `handles`; `snapshots` for recovery) ·
+OPFS for large rasters · FS Access `.substrata` (+ fallback) · `fflate` STORE-mode
+zip (`manifest.json` + `blobs/<sha256>`) in a Worker · debounced transactional
+autosave; enabling persists the current scene, disabling purges all local data ·
+`persist()`/`estimate()` surfaced.
 
 **Should (post-v1, pre-stretch):** local project manager (thumbnails) · align/
 distribute · eyedropper + recent colours · drag-reorder rail · batch social-size

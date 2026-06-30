@@ -4,12 +4,14 @@ import { useEffect, useRef } from "react";
 import { Canvas } from "fabric";
 import { getSnapshot, subscribe, setDoc } from "@/lib/substrata/doc-store";
 import { createEmptyDoc } from "@/lib/substrata/doc-model";
-import type { Artboard } from "@/lib/substrata/doc-model";
+import type { Artboard, SubstrataDoc } from "@/lib/substrata/doc-model";
 import { createReconcileState, reconcile, getLayerIdForObject } from "@/lib/substrata/sync";
 import { initSubstrataFilterBackend } from "@/lib/substrata/filter-backend";
 import { importImageFile } from "@/lib/substrata/import-raster";
 import { setTransform } from "@/lib/substrata/layer-ops";
 import { getActiveLayerId, setActiveLayer, subscribeSelection } from "@/lib/substrata/selection";
+import { loadLatestProject, startAutosave, persistAll, clearPersistedData } from "@/lib/substrata/autosave";
+import { getPersistenceEnabled, subscribePersistence } from "@/lib/substrata/persistence-pref";
 import { useFilePaste } from "@/hooks/use-file-paste";
 
 /**
@@ -51,8 +53,6 @@ export function FabricCanvas() {
     });
     initSubstrataFilterBackend();
     const state = createReconcileState();
-
-    if (!getSnapshot()) setDoc(createEmptyDoc());
 
     // Apply the selection store onto the canvas. Runs both on selection change
     // AND after every reconcile, so a layer selected the instant it's created
@@ -131,6 +131,44 @@ export function FabricCanvas() {
     render();
     fit();
 
+    // Restore the last autosaved project ONLY if the user opted into local
+    // storage; otherwise start a fresh scene. Async — the canvas shows the void
+    // for a few ms until the doc resolves.
+    let cancelled = false;
+    void (async () => {
+      if (getSnapshot()) return;
+      let doc: SubstrataDoc | null = null;
+      if (getPersistenceEnabled()) {
+        try {
+          doc = await loadLatestProject();
+        } catch {
+          doc = null;
+        }
+      }
+      if (cancelled || getSnapshot()) return;
+      setDoc(doc ?? createEmptyDoc());
+      fit();
+    })();
+
+    // Autosave lifecycle follows the opt-in preference: enabling persists the
+    // current scene + its rasters and starts autosaving; disabling stops and
+    // purges the local copy (privacy hangup — off means no trace).
+    let stopAutosave: (() => void) | null = null;
+    const syncPersistence = () => {
+      const on = getPersistenceEnabled();
+      if (on && !stopAutosave) {
+        stopAutosave = startAutosave();
+        const doc = getSnapshot();
+        if (doc) void persistAll(doc);
+      } else if (!on && stopAutosave) {
+        stopAutosave();
+        stopAutosave = null;
+        void clearPersistedData();
+      }
+    };
+    const unsubscribePersistence = subscribePersistence(syncPersistence);
+    syncPersistence();
+
     const ro = new ResizeObserver(fit);
     ro.observe(wrap);
 
@@ -147,6 +185,9 @@ export function FabricCanvas() {
     wrap.addEventListener("drop", onDrop);
 
     return () => {
+      cancelled = true;
+      stopAutosave?.();
+      unsubscribePersistence();
       unsubscribe();
       unsubscribeSelection();
       ro.disconnect();

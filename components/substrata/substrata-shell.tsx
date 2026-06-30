@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 
 import { LayersPanel } from "@/components/substrata/modules/layers-panel";
+import { PersistenceToggle } from "@/components/substrata/persistence-toggle";
 import { useEditorShortcuts } from "@/hooks/use-editor-shortcuts";
 
 // The Fabric canvas is loaded only on the client: ssr:false keeps the heavy,
@@ -39,8 +40,11 @@ export function SubstrataShell() {
         <FabricCanvas />
         {/* Provisional fixed dock. The real omnibar + utility-rail docking system
             (move modules to any edge via the Workspace menu) is M0-6/cross-cutting
-            and gated on visual review — this just makes the Layers module usable. */}
-        <LayersPanel />
+            and gated on visual review — this just makes the modules usable. */}
+        <div className="flex w-56 shrink-0 flex-col border-l border-border bg-background">
+          <LayersPanel />
+          <PersistenceToggle />
+        </div>
       </div>
     </div>
   );

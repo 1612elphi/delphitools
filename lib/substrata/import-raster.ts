@@ -12,6 +12,7 @@ import type { Artboard, Transform } from "./doc-model";
 import { getSnapshot, update } from "./doc-store";
 import { setActiveLayer } from "./selection";
 import { getRaster, putRaster, sha256Hex } from "./raster-cache";
+import { persistRaster } from "./blobs";
 
 /** Centre the layer on the artboard, scaled down to fit if it's larger. */
 function placeOnArtboard(artboard: Artboard, w: number, h: number): Transform {
@@ -60,6 +61,7 @@ export async function importImageFile(file: File): Promise<void> {
     ctx.drawImage(bitmap, 0, 0);
     bitmap.close();
     putRaster(hash, raster);
+    void persistRaster(hash); // persist to IndexedDB for reload (best-effort)
   }
 
   const w = raster.width;
