@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 
 import { TopBar } from "@/components/substrata/top-bar";
+import { Omnibar } from "@/components/substrata/omnibar/omnibar";
 import { LayersPanel } from "@/components/substrata/modules/layers-panel";
 import { PersistenceToggle } from "@/components/substrata/persistence-toggle";
 import { useEditorShortcuts } from "@/hooks/use-editor-shortcuts";
@@ -38,10 +39,14 @@ export function SubstrataShell() {
     <div className="flex h-full w-full flex-col overflow-hidden">
       <TopBar />
       <div className="flex min-h-0 flex-1">
-        <FabricCanvas />
-        {/* Provisional fixed dock. The real omnibar + utility-rail docking system
-            (move modules to any edge via the Workspace menu) is M0-6/cross-cutting
-            and gated on visual review — this just makes the modules usable. */}
+        {/* Canvas area (relative so the floating omnibar positions against it). */}
+        <div className="relative flex min-h-0 flex-1">
+          <FabricCanvas />
+          <Omnibar />
+        </div>
+        {/* Provisional fixed dock — migrates into the rail next pass; persistence
+            toggle rehomes to the top bar's save status. Kept for now so Layers +
+            the opt-in storage control stay usable. */}
         <div className="flex w-56 shrink-0 flex-col border-l border-border bg-background">
           <LayersPanel />
           <PersistenceToggle />
