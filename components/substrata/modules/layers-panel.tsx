@@ -23,7 +23,7 @@ export function LayersPanel() {
   const layers = doc?.layers ?? [];
 
   return (
-    <aside className="flex h-full w-56 flex-col border-l border-border bg-background text-foreground">
+    <aside className="flex min-h-0 flex-1 flex-col bg-background text-foreground">
       <div className="flex h-8 shrink-0 items-center border-b border-border px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
         {/* ∑CG: Layers panel title
             spec: ≤12 chars, the panel name; British spelling.
