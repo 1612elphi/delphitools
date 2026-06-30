@@ -19,12 +19,23 @@ import {
   CopyPlus,
   Trash2,
   BoxSelect,
+  PanelTop,
+  PanelBottom,
+  PanelLeft,
+  PanelRight,
+  CornerDownRight,
+  Dock,
+  Minus,
+  Ruler,
+  Grid3x3,
+  Magnet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { subscribe, getSnapshot, undo, redo, canUndo, canRedo } from "@/lib/substrata/doc-store";
 import { getPersistenceEnabled, subscribePersistence } from "@/lib/substrata/persistence-pref";
+import { getOmnibarEdge, setOmnibarEdge, subscribeDock, type Edge } from "@/lib/substrata/dock-pref";
 import { importImageFile } from "@/lib/substrata/import-raster";
 
 /**
@@ -386,29 +397,73 @@ function Ab({ icon, label, onClick }: { icon: React.ReactNode; label: string; on
 
 /* ── Workspace: docking + guides (visual stubs) ──────────────────────────────── */
 
+const EDGE_TO_LETTER: Record<Edge, string> = { top: "T", bottom: "B", left: "L", right: "R" };
+const LETTER_TO_EDGE: Record<string, Edge> = { T: "top", B: "bottom", L: "left", R: "right" };
+
+const SEG_ICON_CLS = "size-3.5";
+/** Shared seg-key → icon map. Keys are consistent across rows (L = dock-left
+ *  everywhere, etc.); a key with no icon (e.g. "67%") falls back to its text. */
+const SEG_ICON: Record<string, React.ReactNode> = {
+  "↳": <CornerDownRight className={SEG_ICON_CLS} />,
+  T: <PanelTop className={SEG_ICON_CLS} />,
+  B: <PanelBottom className={SEG_ICON_CLS} />,
+  L: <PanelLeft className={SEG_ICON_CLS} />,
+  R: <PanelRight className={SEG_ICON_CLS} />,
+  Rail: <Dock className={SEG_ICON_CLS} />,
+  "−": <Minus className={SEG_ICON_CLS} />,
+  "+": <Plus className={SEG_ICON_CLS} />,
+  Fit: <Maximize2 className={SEG_ICON_CLS} />,
+  Rulers: <Ruler className={SEG_ICON_CLS} />,
+  Grid: <Grid3x3 className={SEG_ICON_CLS} />,
+  Snap: <Magnet className={SEG_ICON_CLS} />,
+};
+const renderSeg = (s: string): React.ReactNode => SEG_ICON[s] ?? s;
+
 function WorkspaceMenu() {
+  const edge = useSyncExternalStore(subscribeDock, getOmnibarEdge, () => "bottom" as Edge);
   return (
     <Box className="min-w-[254px] py-1">
-      <WRow label="Omnibar" seg={["T", "B", "L", "R"]} on={["B"]} />
-      <WRow label="Rail" seg={["↳", "T", "B", "L", "R"]} on={["↳"]} />
+      <WRow
+        label="Omnibar"
+        seg={["T", "B", "L", "R"]}
+        active={EDGE_TO_LETTER[edge]}
+        onSelect={(s) => setOmnibarEdge(LETTER_TO_EDGE[s])}
+        render={renderSeg}
+      />
+      <WRow label="Rail" seg={["↳", "T", "B", "L", "R"]} on={["↳"]} render={renderSeg} />
       <Sep />
       <div className="px-3 pb-0.5 pt-1.5 text-[9.5px] uppercase tracking-wide text-muted-foreground">
         Dock modules
       </div>
-      <WRow label="Layers" seg={["L", "R", "Rail"]} on={["L"]} />
-      <WRow label="Effects" seg={["L", "R", "Rail"]} on={["Rail"]} />
-      <WRow label="Inspector" seg={["L", "R", "Rail"]} on={["R"]} />
-      <WRow label="Colour" seg={["L", "R", "Rail"]} on={["Rail"]} />
+      <WRow label="Layers" seg={["L", "R", "Rail"]} on={["L"]} render={renderSeg} />
+      <WRow label="Effects" seg={["L", "R", "Rail"]} on={["Rail"]} render={renderSeg} />
+      <WRow label="Inspector" seg={["L", "R", "Rail"]} on={["R"]} render={renderSeg} />
+      <WRow label="Colour" seg={["L", "R", "Rail"]} on={["Rail"]} render={renderSeg} />
       <Sep />
-      <WRow label="Zoom" seg={["−", "67%", "+", "Fit"]} on={[]} />
-      <WRow label="Guides" seg={["Rulers", "Grid", "Snap"]} on={["Rulers", "Snap"]} />
+      <WRow label="Zoom" seg={["−", "67%", "+", "Fit"]} on={[]} render={renderSeg} />
+      <WRow label="Guides" seg={["Rulers", "Grid", "Snap"]} on={["Rulers", "Snap"]} render={renderSeg} />
       <Sep />
       <Item label="Theme" />
     </Box>
   );
 }
 
-function WRow({ label, seg, on }: { label: string; seg: string[]; on: string[] }) {
+function WRow({
+  label,
+  seg,
+  on,
+  active,
+  onSelect,
+  render,
+}: {
+  label: string;
+  seg: string[];
+  on?: string[];
+  active?: string;
+  onSelect?: (seg: string) => void;
+  render?: (seg: string) => React.ReactNode;
+}) {
+  const isOn = (s: string) => (active !== undefined ? s === active : (on ?? []).includes(s));
   return (
     <div className="flex items-center justify-between gap-3.5 px-3 py-[5px] text-xs">
       <span>{label}</span>
@@ -416,12 +471,15 @@ function WRow({ label, seg, on }: { label: string; seg: string[]; on: string[] }
         {seg.map((s) => (
           <span
             key={s}
+            title={s}
+            onClick={() => onSelect?.(s)}
             className={cn(
-              "grid h-[22px] min-w-[22px] cursor-default place-items-center px-1.5",
-              on.includes(s) ? "bg-primary text-primary-foreground" : "bg-background hover:bg-accent",
+              "grid h-[22px] min-w-[22px] place-items-center px-1.5",
+              isOn(s) ? "bg-primary text-primary-foreground" : "bg-background hover:bg-accent",
+              onSelect ? "cursor-pointer" : "cursor-default",
             )}
           >
-            {s}
+            {render ? render(s) : s}
           </span>
         ))}
       </div>
