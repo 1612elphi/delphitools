@@ -80,6 +80,9 @@ export function FabricCanvas() {
       const doc = getSnapshot();
       if (!doc) return;
       reconcile(canvas, doc, state);
+      // Drop selection if its layer is gone (e.g. undoing an import).
+      const sel = getActiveLayerId();
+      if (sel && !doc.layers.some((l) => l.id === sel)) setActiveLayer(null);
       applySelection();
     };
 

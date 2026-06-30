@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 
 import { LayersPanel } from "@/components/substrata/modules/layers-panel";
+import { useEditorShortcuts } from "@/hooks/use-editor-shortcuts";
 
 // The Fabric canvas is loaded only on the client: ssr:false keeps the heavy,
 // browser-only Fabric module out of the static-export prerender. Everything
@@ -29,6 +30,8 @@ const FabricCanvas = dynamic(
  * All visible strings in those surfaces are ∑CG gaps to be filled via slopsieve.
  */
 export function SubstrataShell() {
+  useEditorShortcuts();
+
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       {/* ∑CG: <TopBar/> mounts here (M0-4/M0-5) — gated on visual review */}
