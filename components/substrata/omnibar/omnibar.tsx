@@ -26,42 +26,46 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getActiveTool, setActiveTool, subscribeTool, type ToolId } from "@/lib/substrata/tool";
+import { getOmnibarEdge, subscribeDock, type Edge } from "@/lib/substrata/dock-pref";
 
 /**
- * Omnibar (§8) — floating bottom-centre tool + panel cockpit, parity with the
- * dock in sketches/mockup.html. THIS pass: the bar (tools / settings / panels /
- * overflow) with hover-peek blooms (CSS-driven). Pin-to-rail (the stateful FLIP
- * + uniform-height rail) and real module contents land next; bloom bodies are
- * placeholders for now. Functional labels use mockup words; copy stays ∑CG.
+ * Omnibar (§8) — floating tool + panel cockpit, dockable to any edge (Workspace ▸
+ * Omnibar). Top/bottom render horizontal; left/right render as a narrow vertical
+ * palette (text tags hide). Hover-peek blooms point toward the canvas per edge.
+ * Pin-to-rail + real module contents are the next pass; bloom bodies are
+ * placeholders. Functional labels = mockup words; copy ∑CG.
  */
-
-interface SubTool {
-  icon: React.ReactNode;
-  // ∑CG: per-subtool tooltip — labels added with the tools themselves (M2)
-}
 
 interface ToolDef {
   id: ToolId;
   key: string;
   head: React.ReactNode;
-  rest: SubTool[];
+  rest: React.ReactNode[];
 }
 
 const ICON = "size-[15px]";
 
 const TOOLS: ToolDef[] = [
-  { id: "move", key: "V", head: <Move className={ICON} />, rest: [{ icon: <Crop className={ICON} /> }] },
-  { id: "select", key: "M", head: <BoxSelect className={ICON} />, rest: [{ icon: <Lasso className={ICON} /> }, { icon: <Wand2 className={ICON} /> }] },
-  { id: "adjust", key: "A", head: <SlidersHorizontal className={ICON} />, rest: [{ icon: <Sparkles className={ICON} /> }, { icon: <Palette className={ICON} /> }] },
-  { id: "text", key: "T", head: <Type className={ICON} />, rest: [{ icon: <PenTool className={ICON} /> }] },
-  { id: "pieces", key: "P", head: <Shapes className={ICON} />, rest: [{ icon: <Square className={ICON} /> }, { icon: <PenTool className={ICON} /> }, { icon: <Pencil className={ICON} /> }] },
+  { id: "move", key: "V", head: <Move className={ICON} />, rest: [<Crop key="c" className={ICON} />] },
+  { id: "select", key: "M", head: <BoxSelect className={ICON} />, rest: [<Lasso key="l" className={ICON} />, <Wand2 key="w" className={ICON} />] },
+  { id: "adjust", key: "A", head: <SlidersHorizontal className={ICON} />, rest: [<Sparkles key="f" className={ICON} />, <Palette key="p" className={ICON} />] },
+  { id: "text", key: "T", head: <Type className={ICON} />, rest: [<PenTool key="o" className={ICON} />] },
+  { id: "pieces", key: "P", head: <Shapes className={ICON} />, rest: [<Square key="s" className={ICON} />, <PenTool key="pn" className={ICON} />, <Pencil key="pc" className={ICON} />] },
 ];
+
+const DOCK_POS: Record<Edge, string> = {
+  bottom: "inset-x-0 bottom-0 flex-col items-center justify-end",
+  top: "inset-x-0 top-0 flex-col items-center justify-start",
+  left: "inset-y-0 left-0 flex-row items-center justify-start",
+  right: "inset-y-0 right-0 flex-row items-center justify-end",
+};
 
 export function Omnibar() {
   const activeTool = useSyncExternalStore(subscribeTool, getActiveTool, () => "move" as ToolId);
+  const edge = useSyncExternalStore(subscribeDock, getOmnibarEdge, () => "bottom" as Edge);
   const [overflow, setOverflow] = useState(false);
+  const vertical = edge === "left" || edge === "right";
 
-  // Single-key tool shortcuts (V/M/A/T/P), ignored while typing / with modifiers.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -77,72 +81,91 @@ export function Omnibar() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  const bar = cn(
+    "pointer-events-auto flex items-stretch border border-border bg-background shadow-lg",
+    vertical ? "w-12 flex-col" : "h-12 flex-row",
+  );
+
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex flex-col items-center gap-3.5 p-4">
+    <div className={cn("pointer-events-none absolute z-40 flex gap-3.5 p-4", DOCK_POS[edge])}>
       {/* rail mounts here next pass */}
 
-      {/* barrow: main bar + (when open) the overflow bar IN LINE to its right */}
-      <div className="pointer-events-none flex items-start gap-2.5">
-      <div className="pointer-events-auto flex h-12 items-stretch border border-border bg-background shadow-lg">
-        {/* tools */}
-        <Zone>
-          {TOOLS.map((tool) => (
-            <ToolStack key={tool.id} tool={tool} selected={activeTool === tool.id} onSelect={() => setActiveTool(tool.id)} />
-          ))}
-        </Zone>
+      <div className={cn("pointer-events-none flex items-start gap-2.5", vertical ? "flex-col" : "flex-row")}>
+        <div className={bar}>
+          {/* tools */}
+          <Zone vertical={vertical}>
+            {TOOLS.map((tool) => (
+              <ToolStack
+                key={tool.id}
+                tool={tool}
+                selected={activeTool === tool.id}
+                vertical={vertical}
+                edge={edge}
+                onSelect={() => setActiveTool(tool.id)}
+              />
+            ))}
+          </Zone>
 
-        {/* settings (contextual; effects placeholder) */}
-        <div className="group/trigger relative flex flex-1 cursor-pointer select-none items-center gap-2 px-3 text-muted-foreground hover:bg-accent">
-          <span className="text-foreground">
-            <Sparkles className={ICON} />
-          </span>
-          <span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
-            <span className="text-[10px] font-bold uppercase tracking-wide text-foreground">FX</span>
-            <Tag>Bokeh</Tag>
-            <Tag>Gaussian</Tag>
-          </span>
-          <Bloom align="center">
-            <PlaceholderBox title="Effects" sub="Photo" width="w-[296px]" />
-          </Bloom>
-        </div>
-
-        {/* panels */}
-        <Panels>
-          <PanelButton label="Layers" icon={<Layers className={ICON} />} />
-          <PanelButton label="Inspector" icon={<BoxIcon className={ICON} />} />
-          <PanelButton
-            label="Colour"
-            icon={<span className="size-[18px] border border-foreground/35" style={{ background: "#3E6B33", boxShadow: "inset 0 0 0 1px rgba(255,255,255,.4)" }} />}
-          />
-          <PanelButton label="Export" icon={<Download className={ICON} />} />
-        </Panels>
-
-        {/* overflow */}
-        <Zone>
-          <button
-            onClick={() => setOverflow((v) => !v)}
-            // ∑CG: overflow toggle tooltip — sample: "More tools"
-            aria-label="∑CG"
+          {/* settings (contextual; effects placeholder) */}
+          <div
             className={cn(
-              "grid size-9 place-items-center",
-              overflow ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+              "group/trigger relative flex flex-1 cursor-pointer select-none items-center text-muted-foreground hover:bg-accent",
+              vertical ? "justify-center py-2" : "gap-2 px-3",
             )}
           >
-            <MoreHorizontal className={cn(ICON, "transition-transform", overflow && "rotate-180")} />
-          </button>
-        </Zone>
-      </div>
+            <span className="text-foreground">
+              <Sparkles className={ICON} />
+            </span>
+            {!vertical && (
+              <span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+                <span className="text-[10px] font-bold uppercase tracking-wide text-foreground">FX</span>
+                <Tag>Bokeh</Tag>
+                <Tag>Gaussian</Tag>
+              </span>
+            )}
+            <Bloom edge={edge} cross="center">
+              <PlaceholderBox title="Effects" sub="Photo" width="w-[296px]" />
+            </Bloom>
+          </div>
 
-      {/* overflow bar — in line, to the right of the main bar */}
-      {overflow && (
-        <div className="pointer-events-auto flex h-12 items-stretch border border-border bg-background shadow-lg">
-          <Panels>
-            <PanelButton label="Canvas size" align="center" icon={<Frame className={ICON} />} />
-            <PanelButton label="Align" align="center" icon={<AlignHorizontalDistributeCenter className={ICON} />} />
-            <PanelButton label="Rotate & flip" align="center" icon={<RotateCw className={ICON} />} />
+          {/* panels */}
+          <Panels vertical={vertical}>
+            <PanelButton label="Layers" icon={<Layers className={ICON} />} edge={edge} />
+            <PanelButton label="Inspector" icon={<BoxIcon className={ICON} />} edge={edge} />
+            <PanelButton
+              label="Colour"
+              edge={edge}
+              icon={<span className="size-[18px] border border-foreground/35" style={{ background: "#3E6B33", boxShadow: "inset 0 0 0 1px rgba(255,255,255,.4)" }} />}
+            />
+            <PanelButton label="Export" icon={<Download className={ICON} />} edge={edge} />
           </Panels>
+
+          {/* overflow */}
+          <Zone vertical={vertical}>
+            <button
+              onClick={() => setOverflow((v) => !v)}
+              // ∑CG: overflow toggle tooltip — sample: "More tools"
+              aria-label="∑CG"
+              className={cn(
+                "grid size-9 place-items-center",
+                overflow ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+              )}
+            >
+              <MoreHorizontal className={cn(ICON, "transition-transform", overflow && "rotate-180")} />
+            </button>
+          </Zone>
         </div>
-      )}
+
+        {/* overflow bar — in line, beside the main bar */}
+        {overflow && (
+          <div className={bar}>
+            <Panels vertical={vertical}>
+              <PanelButton label="Canvas size" icon={<Frame className={ICON} />} edge={edge} cross="center" />
+              <PanelButton label="Align" icon={<AlignHorizontalDistributeCenter className={ICON} />} edge={edge} cross="center" />
+              <PanelButton label="Rotate & flip" icon={<RotateCw className={ICON} />} edge={edge} cross="center" />
+            </Panels>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -150,12 +173,30 @@ export function Omnibar() {
 
 /* ── building blocks ─────────────────────────────────────────────────────────── */
 
-function Zone({ children }: { children: React.ReactNode }) {
-  return <div className="flex items-center gap-0.5 border-border p-1.5 [&+&]:border-l">{children}</div>;
+function Zone({ vertical, children }: { vertical: boolean; children: React.ReactNode }) {
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-0.5 border-border p-1.5",
+        vertical ? "flex-col [&+&]:border-t" : "[&+&]:border-l",
+      )}
+    >
+      {children}
+    </div>
+  );
 }
 
-function Panels({ children }: { children: React.ReactNode }) {
-  return <div className="flex items-center gap-0.5 border-l border-border p-1.5">{children}</div>;
+function Panels({ vertical, children }: { vertical: boolean; children: React.ReactNode }) {
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-0.5 border-border p-1.5",
+        vertical ? "flex-col border-t" : "border-l",
+      )}
+    >
+      {children}
+    </div>
+  );
 }
 
 function Tag({ children }: { children: React.ReactNode }) {
@@ -166,10 +207,22 @@ function Tag({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ToolStack({ tool, selected, onSelect }: { tool: ToolDef; selected: boolean; onSelect: () => void }) {
+function ToolStack({
+  tool,
+  selected,
+  vertical,
+  edge,
+  onSelect,
+}: {
+  tool: ToolDef;
+  selected: boolean;
+  vertical: boolean;
+  edge: Edge;
+  onSelect: () => void;
+}) {
   return (
     <div className="group/tool relative flex items-center" title={tool.id}>
-      <div className="flex items-center gap-0.5">
+      <div className={cn("flex items-center gap-0.5", vertical ? "flex-col" : "flex-row")}>
         <button
           onClick={onSelect}
           className={cn(
@@ -183,57 +236,92 @@ function ToolStack({ tool, selected, onSelect }: { tool: ToolDef; selected: bool
           )}
           <span className="absolute bottom-px right-0.5 text-[8px] font-bold opacity-65">{tool.key}</span>
         </button>
-        {tool.rest.map((sub, i) => (
+        {tool.rest.map((icon, i) => (
           <button
             key={i}
             className={cn(
-              "grid h-9 w-0 place-items-center overflow-hidden text-muted-foreground opacity-0 transition-all hover:bg-accent hover:text-accent-foreground",
-              selected && "group-hover/tool:w-[34px] group-hover/tool:opacity-100",
+              "grid size-9 place-items-center overflow-hidden text-muted-foreground opacity-0 transition-all hover:bg-accent hover:text-accent-foreground",
+              vertical ? "h-0" : "w-0",
+              selected && (vertical ? "group-hover/tool:h-[34px]" : "group-hover/tool:w-[34px]"),
+              selected && "group-hover/tool:opacity-100",
             )}
+            // ∑CG: subtool tooltips — labels arrive with the tools (M2)
+            aria-label={`${tool.id} subtool`}
           >
-            {sub.icon}
+            {icon}
           </button>
         ))}
       </div>
+      {/* unused edge ref keeps the prop meaningful for future fan direction tuning */}
+      <span hidden data-edge={edge} />
     </div>
   );
 }
 
-function PanelButton({ label, icon, align = "right" }: { label: string; icon: React.ReactNode; align?: "right" | "center" }) {
+function PanelButton({
+  label,
+  icon,
+  edge,
+  cross = "end",
+}: {
+  label: string;
+  icon: React.ReactNode;
+  edge: Edge;
+  cross?: "center" | "end";
+}) {
   return (
     <div className="group/trigger relative">
       <button
-        // tool/panel name shown in the bloom header; the button is icon-only
         aria-label={label}
         className="grid size-9 place-items-center text-muted-foreground hover:bg-accent hover:text-accent-foreground"
       >
         {icon}
       </button>
-      <Bloom align={align}>
+      <Bloom edge={edge} cross={cross}>
         <PlaceholderBox title={label} />
       </Bloom>
     </div>
   );
 }
 
-/** Hover-peek bloom that rises above the omnibar. Pin-to-rail comes next pass. */
-function Bloom({ align, children }: { align: "right" | "center"; children: React.ReactNode }) {
+/** Hover-peek bloom that rises toward the canvas from the docked edge. */
+function Bloom({ edge, cross, children }: { edge: Edge; cross: "center" | "end"; children: React.ReactNode }) {
+  // Position the bloom on the canvas side of the bar, plus cross-axis alignment.
+  const place: Record<Edge, string> = {
+    bottom: cn("bottom-full pb-3.5", cross === "center" ? "left-1/2 -translate-x-1/2" : "right-[-1px]"),
+    top: cn("top-full pt-3.5", cross === "center" ? "left-1/2 -translate-x-1/2" : "right-[-1px]"),
+    left: cn("left-full pl-3.5", cross === "center" ? "top-1/2 -translate-y-1/2" : "bottom-[-1px]"),
+    right: cn("right-full pr-3.5", cross === "center" ? "top-1/2 -translate-y-1/2" : "bottom-[-1px]"),
+  };
+  const enter: Record<Edge, string> = {
+    bottom: "translate-y-2.5",
+    top: "-translate-y-2.5",
+    left: "-translate-x-2.5",
+    right: "translate-x-2.5",
+  };
+  const origin: Record<Edge, string> = {
+    bottom: "bottom center",
+    top: "top center",
+    left: "left center",
+    right: "right center",
+  };
   return (
-    <div
-      className={cn(
-        "pointer-events-none absolute bottom-full z-[60] pb-3.5",
-        align === "center" ? "left-1/2 -translate-x-1/2" : "right-[-1px]",
-      )}
-    >
-      <div className="translate-y-2.5 scale-[.99] border border-border bg-background opacity-0 shadow-lg transition-all duration-150 [transform-origin:bottom_center] group-hover/trigger:translate-y-0 group-hover/trigger:scale-100 group-hover/trigger:opacity-100 group-hover/trigger:[pointer-events:auto]">
+    <div className={cn("pointer-events-none absolute z-[60]", place[edge])}>
+      <div
+        style={{ transformOrigin: origin[edge] }}
+        className={cn(
+          "scale-[.99] border border-border bg-background opacity-0 shadow-lg transition-all duration-150",
+          enter[edge],
+          "group-hover/trigger:translate-x-0 group-hover/trigger:translate-y-0 group-hover/trigger:scale-100 group-hover/trigger:opacity-100 group-hover/trigger:[pointer-events:auto]",
+        )}
+      >
         {children}
       </div>
     </div>
   );
 }
 
-/** Placeholder module box (header only) — real module contents land with the
- *  modals pass. Title is a functional label (mockup word). */
+/** Placeholder module box (header only) — real contents land with the modals pass. */
 function PlaceholderBox({ title, sub, width = "w-[224px]" }: { title: string; sub?: string; width?: string }) {
   return (
     <div className={width}>
@@ -243,7 +331,7 @@ function PlaceholderBox({ title, sub, width = "w-[224px]" }: { title: string; su
       </div>
       <div className="flex items-center gap-2 p-2.5">
         <Plus className="size-3.5 text-muted-foreground/50" />
-        {/* ∑CG: empty module placeholder hint — module UIs land in the modals pass */}
+        {/* ∑CG: empty module placeholder — module UIs land in the modals pass */}
         <span className="text-[11px] text-muted-foreground">∑CG</span>
       </div>
     </div>
