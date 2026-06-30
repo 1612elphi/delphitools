@@ -8,10 +8,19 @@
  */
 
 import { update } from "./doc-store";
-import type { Layer } from "./doc-model";
+import type { Layer, Transform } from "./doc-model";
 
 function mapLayer(layers: Layer[], id: string, fn: (layer: Layer) => Layer): Layer[] {
   return layers.map((l) => (l.id === id ? fn(l) : l));
+}
+
+/** Commit a layer transform (the one place a Fabric interaction writes back). */
+export function setTransform(id: string, transform: Transform): void {
+  update((doc) => ({
+    ...doc,
+    layers: mapLayer(doc.layers, id, (l) => ({ ...l, transform })),
+    updatedAt: Date.now(),
+  }));
 }
 
 export function setVisibility(id: string, visible: boolean): void {

@@ -19,6 +19,14 @@ import { getRaster } from "./raster-cache";
 
 const ARTBOARD_KEY = "__artboard__";
 
+/** Reverse map (Fabric object → layer id) so canvas events can resolve the layer
+ *  without Fabric becoming a source of truth. WeakMap so disposed objects GC. */
+const layerIdOf = new WeakMap<FabricObject, string>();
+
+export function getLayerIdForObject(obj: FabricObject): string | undefined {
+  return layerIdOf.get(obj);
+}
+
 export interface ReconcileState {
   /** layer id (or ARTBOARD_KEY) → its Fabric object */
   byId: Map<string, FabricObject>;
@@ -51,6 +59,17 @@ export function reconcile(canvas: Canvas, doc: SubstrataDoc, state: ReconcileSta
   });
   artboard.setCoords();
   desired.push(artboard);
+
+  // Clip the whole canvas to the artboard: it's a frame. Layers can be positioned
+  // freely (dragged past an edge), but only the part inside the artboard renders —
+  // the same crop export uses, made visible while editing. This is the artboard
+  // boundary, NOT a layer mask (the no-masks rule, §6/§11, is about per-layer
+  // masking as an editing feature). The canvas clipPath is viewport-transformed
+  // by Fabric, so it tracks pan/zoom.
+  const clip = (canvas.clipPath instanceof Rect ? canvas.clipPath : new Rect({ originX: "left", originY: "top" })) as Rect;
+  clip.set({ left: 0, top: 0, width: doc.artboard.width, height: doc.artboard.height });
+  clip.setCoords();
+  canvas.clipPath = clip;
 
   // Layers, in document order.
   for (const layer of doc.layers) {
@@ -91,6 +110,7 @@ function syncLayer(
     // Content-addressed source is immutable per layer, so the element is set once.
     obj = new FabricImage(src);
     byId.set(layer.id, obj);
+    layerIdOf.set(obj, layer.id);
     canvas.add(obj);
   }
 
@@ -108,9 +128,11 @@ function syncLayer(
     globalCompositeOperation: layer.blendMode,
     originX: "center",
     originY: "center",
-    // Interaction is wired by the MOVE tool (M1-10); inert until then.
-    selectable: false,
-    evented: false,
+    // MOVE interaction: a layer is selectable/draggable unless locked. Interactive
+    // edits commit back to the doc via object:modified (the one controlled
+    // Fabric→doc path); the doc stays authoritative.
+    selectable: !layer.locked,
+    evented: !layer.locked,
   });
   obj.setCoords();
   return obj;

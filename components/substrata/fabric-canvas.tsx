@@ -5,9 +5,11 @@ import { Canvas } from "fabric";
 import { getSnapshot, subscribe, setDoc } from "@/lib/substrata/doc-store";
 import { createEmptyDoc } from "@/lib/substrata/doc-model";
 import type { Artboard } from "@/lib/substrata/doc-model";
-import { createReconcileState, reconcile } from "@/lib/substrata/sync";
+import { createReconcileState, reconcile, getLayerIdForObject } from "@/lib/substrata/sync";
 import { initSubstrataFilterBackend } from "@/lib/substrata/filter-backend";
 import { importImageFile } from "@/lib/substrata/import-raster";
+import { setTransform } from "@/lib/substrata/layer-ops";
+import { getActiveLayerId, setActiveLayer, subscribeSelection } from "@/lib/substrata/selection";
 import { useFilePaste } from "@/hooks/use-file-paste";
 
 /**
@@ -30,6 +32,7 @@ function fitView(canvas: Canvas, artboard: Artboard): void {
   canvas.setViewportTransform([z, 0, 0, z, tx, ty]);
 }
 
+
 export function FabricCanvas() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const elRef = useRef<HTMLCanvasElement>(null);
@@ -39,15 +42,45 @@ export function FabricCanvas() {
     const el = elRef.current;
     if (!wrap || !el) return;
 
-    const canvas = new Canvas(el, { selection: false, preserveObjectStacking: true });
+    const canvas = new Canvas(el, {
+      selection: false,
+      preserveObjectStacking: true,
+      // Draw selection controls AFTER the artboard clipPath so a layer's handles
+      // stay visible even when its content is dragged off the canvas (clipped).
+      controlsAboveOverlay: true,
+    });
     initSubstrataFilterBackend();
     const state = createReconcileState();
 
     if (!getSnapshot()) setDoc(createEmptyDoc());
 
+    // Apply the selection store onto the canvas. Runs both on selection change
+    // AND after every reconcile, so a layer selected the instant it's created
+    // (e.g. on import) gets its controls once its Fabric object exists — the
+    // post-update subscriber alone can race object creation.
+    const applySelection = () => {
+      const id = getActiveLayerId();
+      const current = canvas.getActiveObject();
+      if (id === null) {
+        if (current) {
+          canvas.discardActiveObject();
+          canvas.requestRenderAll();
+        }
+        return;
+      }
+      const obj = state.byId.get(id);
+      if (obj && current !== obj) {
+        canvas.setActiveObject(obj);
+        canvas.requestRenderAll();
+      }
+      // obj not created yet → a later reconcile's applySelection picks it up.
+    };
+
     const render = () => {
       const doc = getSnapshot();
-      if (doc) reconcile(canvas, doc, state);
+      if (!doc) return;
+      reconcile(canvas, doc, state);
+      applySelection();
     };
 
     const fit = () => {
@@ -56,6 +89,40 @@ export function FabricCanvas() {
       if (doc) fitView(canvas, doc.artboard);
       canvas.requestRenderAll();
     };
+
+    // Canvas → store: reflect the active Fabric object into the selection store.
+    const syncSelectionToStore = () => {
+      const obj = canvas.getActiveObject();
+      setActiveLayer(obj ? getLayerIdForObject(obj) ?? null : null);
+    };
+    canvas.on("selection:created", syncSelectionToStore);
+    canvas.on("selection:updated", syncSelectionToStore);
+    canvas.on("selection:cleared", () => setActiveLayer(null));
+
+    // The one controlled Fabric → doc path: commit a transform after a drag/
+    // scale/rotate ends. The doc stays authoritative; reconcile re-syncs.
+    canvas.on("object:modified", (e) => {
+      const obj = e.target;
+      if (!obj) return;
+      const id = getLayerIdForObject(obj);
+      if (!id) return;
+      setTransform(id, {
+        x: obj.left,
+        y: obj.top,
+        scaleX: obj.scaleX,
+        scaleY: obj.scaleY,
+        angle: obj.angle,
+        flipX: obj.flipX,
+        flipY: obj.flipY,
+      });
+    });
+
+    // Layers move freely; the canvas clipPath (set in reconcile) hides anything
+    // past the artboard edge, so no position constraint is needed here.
+
+    // Store → canvas: reflect the selection store onto the canvas. id-equality
+    // guards on both sides keep this from looping with the events above.
+    const unsubscribeSelection = subscribeSelection(applySelection);
 
     const unsubscribe = subscribe(render);
     render();
@@ -78,6 +145,7 @@ export function FabricCanvas() {
 
     return () => {
       unsubscribe();
+      unsubscribeSelection();
       ro.disconnect();
       wrap.removeEventListener("dragover", onDragOver);
       wrap.removeEventListener("drop", onDrop);

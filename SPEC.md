@@ -175,7 +175,10 @@ opentype.js, AVIF WASM) — never on landing-page weight.
   usable canvas — no wizard, no template wall. **Default = 2000×1500** (72 ppi,
   white), no prompt; a **new-scene preset panel** (Scene ▸ New scene) offers
   other sizes for those who want them. Preset list (social/print/device/…) is
-  TBD; labels are `∑CG`. (Multi-artboard = later.)
+  TBD; labels are `∑CG`. (Multi-artboard = later.) Layers may be positioned
+  freely past the edge; **the artboard clips the rendered + exported view** — it's
+  the frame. Selection handles still draw outside it (`controlsAboveOverlay`) so an
+  off-canvas layer stays grabbable.
 - **Layers:** raster / text / shape. Reorder, show/hide, lock, opacity, blend,
   rename, group. **Object-making = layer-making** — no "add layer" button; the
   primary add is **Upload**.
@@ -195,8 +198,10 @@ opentype.js, AVIF WASM) — never on landing-page weight.
   alpha matte, cached per layer and alpha-multiplied at composite — a generated
   alpha channel, **not** a Fabric `clipPath`/mask (satisfies *no masks*). Original
   RGBA kept; toggle-off restores; re-bake only on source/param change.
-- **No masks, no clipping.** Selections (from SELECT) are transient regions for
-  move/delete/fill/copy, not persistent masks.
+- **No layer masks, no clip-paths as an editing feature.** (The artboard frame
+  clipping the view above is *not* a layer mask — it's the canvas boundary.)
+  Selections (from SELECT) are transient regions for move/delete/fill/copy, not
+  persistent masks.
 
 ---
 

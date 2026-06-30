@@ -9,7 +9,8 @@
 import { clampToCap } from "./webgl-limits";
 import { createRasterLayer } from "./doc-model";
 import type { Artboard, Transform } from "./doc-model";
-import { update } from "./doc-store";
+import { getSnapshot, update } from "./doc-store";
+import { setActiveLayer } from "./selection";
 import { getRaster, putRaster, sha256Hex } from "./raster-cache";
 
 /** Centre the layer on the artboard, scaled down to fit if it's larger. */
@@ -63,18 +64,18 @@ export async function importImageFile(file: File): Promise<void> {
 
   const w = raster.width;
   const h = raster.height;
-  update((doc) => ({
-    ...doc,
-    layers: [
-      ...doc.layers,
-      createRasterLayer({
-        name: file.name,
-        blobHash: hash,
-        naturalWidth: w,
-        naturalHeight: h,
-        transform: placeOnArtboard(doc.artboard, w, h),
-      }),
-    ],
-    updatedAt: Date.now(),
-  }));
+  const artboard = getSnapshot()?.artboard;
+  if (!artboard) return;
+
+  const layer = createRasterLayer({
+    name: file.name,
+    blobHash: hash,
+    naturalWidth: w,
+    naturalHeight: h,
+    transform: placeOnArtboard(artboard, w, h),
+  });
+  // Select first so the reconcile triggered by `update` applies it the moment the
+  // layer's Fabric object is created (avoids the post-update selection race).
+  setActiveLayer(layer.id);
+  update((doc) => ({ ...doc, layers: [...doc.layers, layer], updatedAt: Date.now() }));
 }
