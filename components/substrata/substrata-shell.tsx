@@ -4,8 +4,6 @@ import dynamic from "next/dynamic";
 
 import { TopBar } from "@/components/substrata/top-bar";
 import { Omnibar } from "@/components/substrata/omnibar/omnibar";
-import { LayersPanel } from "@/components/substrata/modules/layers-panel";
-import { PersistenceToggle } from "@/components/substrata/persistence-toggle";
 import { useEditorShortcuts } from "@/hooks/use-editor-shortcuts";
 
 // The Fabric canvas is loaded only on the client: ssr:false keeps the heavy,
@@ -38,19 +36,12 @@ export function SubstrataShell() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <TopBar />
-      <div className="flex min-h-0 flex-1">
-        {/* Canvas area (relative so the floating omnibar positions against it). */}
-        <div className="relative flex min-h-0 flex-1">
-          <FabricCanvas />
-          <Omnibar />
-        </div>
-        {/* Provisional fixed dock — migrates into the rail next pass; persistence
-            toggle rehomes to the top bar's save status. Kept for now so Layers +
-            the opt-in storage control stay usable. */}
-        <div className="flex w-56 shrink-0 flex-col border-l border-border bg-background">
-          <LayersPanel />
-          <PersistenceToggle />
-        </div>
+      {/* Canvas area (relative so the floating omnibar + rail position against it).
+          Panels (Layers/etc.) now live in the omnibar — peek on hover, pin to the
+          rail. The opt-in storage toggle rehomed to the Scene menu. */}
+      <div className="relative flex min-h-0 flex-1">
+        <FabricCanvas />
+        <Omnibar />
       </div>
     </div>
   );

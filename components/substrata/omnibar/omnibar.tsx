@@ -22,18 +22,19 @@ import {
   Frame,
   AlignHorizontalDistributeCenter,
   RotateCw,
-  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getActiveTool, setActiveTool, subscribeTool, type ToolId } from "@/lib/substrata/tool";
 import { getOmnibarEdge, subscribeDock, type Edge } from "@/lib/substrata/dock-pref";
+import { getPinned, subscribePins, togglePin, type ModuleId } from "@/lib/substrata/pin-pref";
+import { ModuleBox } from "@/components/substrata/omnibar/modules";
+import { Rail } from "@/components/substrata/omnibar/rail";
 
 /**
- * Omnibar (§8) — floating tool + panel cockpit, dockable to any edge (Workspace ▸
- * Omnibar). Top/bottom render horizontal; left/right render as a narrow vertical
- * palette (text tags hide). Hover-peek blooms point toward the canvas per edge.
- * Pin-to-rail + real module contents are the next pass; bloom bodies are
- * placeholders. Functional labels = mockup words; copy ∑CG.
+ * Omnibar (§8) — floating tool + panel cockpit, dockable to any edge. Tools
+ * cockpit + settings + panel triggers; each panel/effects trigger peeks on hover
+ * and pins to the rail on click (the rail renders the same module content at
+ * uniform height). Top/bottom horizontal, left/right vertical. Copy ∑CG.
  */
 
 interface ToolDef {
@@ -44,6 +45,7 @@ interface ToolDef {
 }
 
 const ICON = "size-[15px]";
+const EMPTY_PINS: readonly ModuleId[] = [];
 
 const TOOLS: ToolDef[] = [
   { id: "move", key: "V", head: <Move className={ICON} />, rest: [<Crop key="c" className={ICON} />] },
@@ -63,8 +65,12 @@ const DOCK_POS: Record<Edge, string> = {
 export function Omnibar() {
   const activeTool = useSyncExternalStore(subscribeTool, getActiveTool, () => "move" as ToolId);
   const edge = useSyncExternalStore(subscribeDock, getOmnibarEdge, () => "bottom" as Edge);
+  const pinned = useSyncExternalStore(subscribePins, getPinned, () => EMPTY_PINS);
   const [overflow, setOverflow] = useState(false);
+
   const vertical = edge === "left" || edge === "right";
+  const railFirst = edge === "bottom" || edge === "right";
+  const isPinned = (id: ModuleId) => pinned.includes(id);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -86,87 +92,98 @@ export function Omnibar() {
     vertical ? "w-12 flex-col" : "h-12 flex-row",
   );
 
-  return (
-    <div className={cn("pointer-events-none absolute z-40 flex gap-3.5 p-4", DOCK_POS[edge])}>
-      {/* rail mounts here next pass */}
+  const railEl = <Rail vertical={vertical} />;
+  const barrowEl = (
+    <div className={cn("pointer-events-none flex items-start gap-2.5", vertical ? "flex-col" : "flex-row")}>
+      <div className={bar}>
+        {/* tools */}
+        <Zone vertical={vertical}>
+          {TOOLS.map((tool) => (
+            <ToolStack key={tool.id} tool={tool} selected={activeTool === tool.id} vertical={vertical} onSelect={() => setActiveTool(tool.id)} />
+          ))}
+        </Zone>
 
-      <div className={cn("pointer-events-none flex items-start gap-2.5", vertical ? "flex-col" : "flex-row")}>
-        <div className={bar}>
-          {/* tools */}
-          <Zone vertical={vertical}>
-            {TOOLS.map((tool) => (
-              <ToolStack
-                key={tool.id}
-                tool={tool}
-                selected={activeTool === tool.id}
-                vertical={vertical}
-                edge={edge}
-                onSelect={() => setActiveTool(tool.id)}
-              />
-            ))}
-          </Zone>
-
-          {/* settings (contextual; effects placeholder) */}
-          <div
-            className={cn(
-              "group/trigger relative flex flex-1 cursor-pointer select-none items-center text-muted-foreground hover:bg-accent",
-              vertical ? "justify-center py-2" : "gap-2 px-3",
-            )}
-          >
-            <span className="text-foreground">
-              <Sparkles className={ICON} />
+        {/* settings (effects) — pinnable */}
+        <div
+          onClick={() => togglePin("effects")}
+          className={cn(
+            "group/trigger relative flex flex-1 cursor-pointer select-none items-center hover:bg-accent",
+            vertical ? "justify-center py-2" : "gap-2 px-3",
+            isPinned("effects") ? "text-primary shadow-[inset_0_-2px_0_var(--primary)]" : "text-muted-foreground",
+          )}
+        >
+          <span className={isPinned("effects") ? "text-primary" : "text-foreground"}>
+            <Sparkles className={ICON} />
+          </span>
+          {!vertical && (
+            <span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+              <span className={cn("text-[10px] font-bold uppercase tracking-wide", isPinned("effects") ? "text-primary" : "text-foreground")}>FX</span>
+              <Tag>Bokeh</Tag>
+              <Tag>Gaussian</Tag>
             </span>
-            {!vertical && (
-              <span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
-                <span className="text-[10px] font-bold uppercase tracking-wide text-foreground">FX</span>
-                <Tag>Bokeh</Tag>
-                <Tag>Gaussian</Tag>
-              </span>
-            )}
+          )}
+          {!isPinned("effects") && (
             <Bloom edge={edge} cross="center">
-              <PlaceholderBox title="Effects" sub="Photo" width="w-[296px]" />
+              <ModuleBox id="effects" />
             </Bloom>
-          </div>
-
-          {/* panels */}
-          <Panels vertical={vertical}>
-            <PanelButton label="Layers" icon={<Layers className={ICON} />} edge={edge} />
-            <PanelButton label="Inspector" icon={<BoxIcon className={ICON} />} edge={edge} />
-            <PanelButton
-              label="Colour"
-              edge={edge}
-              icon={<span className="size-[18px] border border-foreground/35" style={{ background: "#3E6B33", boxShadow: "inset 0 0 0 1px rgba(255,255,255,.4)" }} />}
-            />
-            <PanelButton label="Export" icon={<Download className={ICON} />} edge={edge} />
-          </Panels>
-
-          {/* overflow */}
-          <Zone vertical={vertical}>
-            <button
-              onClick={() => setOverflow((v) => !v)}
-              // ∑CG: overflow toggle tooltip — sample: "More tools"
-              aria-label="∑CG"
-              className={cn(
-                "grid size-9 place-items-center",
-                overflow ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-              )}
-            >
-              <MoreHorizontal className={cn(ICON, "transition-transform", overflow && "rotate-180")} />
-            </button>
-          </Zone>
+          )}
         </div>
 
-        {/* overflow bar — in line, beside the main bar */}
-        {overflow && (
-          <div className={bar}>
-            <Panels vertical={vertical}>
-              <PanelButton label="Canvas size" icon={<Frame className={ICON} />} edge={edge} cross="center" />
-              <PanelButton label="Align" icon={<AlignHorizontalDistributeCenter className={ICON} />} edge={edge} cross="center" />
-              <PanelButton label="Rotate & flip" icon={<RotateCw className={ICON} />} edge={edge} cross="center" />
-            </Panels>
-          </div>
-        )}
+        {/* panels */}
+        <Panels vertical={vertical}>
+          <PanelButton id="layers" icon={<Layers className={ICON} />} edge={edge} pinned={isPinned("layers")} />
+          <PanelButton id="inspector" icon={<BoxIcon className={ICON} />} edge={edge} pinned={isPinned("inspector")} />
+          <PanelButton
+            id="colour"
+            edge={edge}
+            pinned={isPinned("colour")}
+            icon={<span className="size-[18px] border border-foreground/35" style={{ background: "#3E6B33", boxShadow: "inset 0 0 0 1px rgba(255,255,255,.4)" }} />}
+          />
+          <PanelButton id="export" icon={<Download className={ICON} />} edge={edge} pinned={isPinned("export")} />
+        </Panels>
+
+        {/* overflow */}
+        <Zone vertical={vertical}>
+          <button
+            onClick={() => setOverflow((v) => !v)}
+            // ∑CG: overflow toggle tooltip — sample: "More tools"
+            aria-label="∑CG"
+            className={cn(
+              "grid size-9 place-items-center",
+              overflow ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+            )}
+          >
+            <MoreHorizontal className={cn(ICON, "transition-transform", overflow && "rotate-180")} />
+          </button>
+        </Zone>
       </div>
+
+      {/* overflow bar — in line, beside the main bar */}
+      {overflow && (
+        <div className={bar}>
+          <Panels vertical={vertical}>
+            <PanelButton id="csize" icon={<Frame className={ICON} />} edge={edge} cross="center" pinned={isPinned("csize")} />
+            <PanelButton id="align" icon={<AlignHorizontalDistributeCenter className={ICON} />} edge={edge} cross="center" pinned={isPinned("align")} />
+            <PanelButton id="rotate" icon={<RotateCw className={ICON} />} edge={edge} cross="center" pinned={isPinned("rotate")} />
+          </Panels>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className={cn("pointer-events-none absolute z-40 flex gap-3.5 p-4", DOCK_POS[edge])}>
+      {railFirst ? (
+        <>
+          {railEl}
+          {barrowEl}
+        </>
+      ) : (
+        <>
+          {barrowEl}
+          {railEl}
+        </>
+      )}
     </div>
   );
 }
@@ -175,12 +192,7 @@ export function Omnibar() {
 
 function Zone({ vertical, children }: { vertical: boolean; children: React.ReactNode }) {
   return (
-    <div
-      className={cn(
-        "flex items-center gap-0.5 border-border p-1.5",
-        vertical ? "flex-col [&+&]:border-t" : "[&+&]:border-l",
-      )}
-    >
+    <div className={cn("flex items-center gap-0.5 border-border p-1.5", vertical ? "flex-col [&+&]:border-t" : "[&+&]:border-l")}>
       {children}
     </div>
   );
@@ -188,12 +200,7 @@ function Zone({ vertical, children }: { vertical: boolean; children: React.React
 
 function Panels({ vertical, children }: { vertical: boolean; children: React.ReactNode }) {
   return (
-    <div
-      className={cn(
-        "flex items-center gap-0.5 border-border p-1.5",
-        vertical ? "flex-col border-t" : "border-l",
-      )}
-    >
+    <div className={cn("flex items-center gap-0.5 border-border p-1.5", vertical ? "flex-col border-t" : "border-l")}>
       {children}
     </div>
   );
@@ -207,19 +214,7 @@ function Tag({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ToolStack({
-  tool,
-  selected,
-  vertical,
-  edge,
-  onSelect,
-}: {
-  tool: ToolDef;
-  selected: boolean;
-  vertical: boolean;
-  edge: Edge;
-  onSelect: () => void;
-}) {
+function ToolStack({ tool, selected, vertical, onSelect }: { tool: ToolDef; selected: boolean; vertical: boolean; onSelect: () => void }) {
   return (
     <div className="group/tool relative flex items-center" title={tool.id}>
       <div className={cn("flex items-center gap-0.5", vertical ? "flex-col" : "flex-row")}>
@@ -239,54 +234,61 @@ function ToolStack({
         {tool.rest.map((icon, i) => (
           <button
             key={i}
+            // ∑CG: subtool tooltips — labels arrive with the tools (M2)
+            aria-label={`${tool.id} subtool`}
             className={cn(
               "grid size-9 place-items-center overflow-hidden text-muted-foreground opacity-0 transition-all hover:bg-accent hover:text-accent-foreground",
               vertical ? "h-0" : "w-0",
               selected && (vertical ? "group-hover/tool:h-[34px]" : "group-hover/tool:w-[34px]"),
               selected && "group-hover/tool:opacity-100",
             )}
-            // ∑CG: subtool tooltips — labels arrive with the tools (M2)
-            aria-label={`${tool.id} subtool`}
           >
             {icon}
           </button>
         ))}
       </div>
-      {/* unused edge ref keeps the prop meaningful for future fan direction tuning */}
-      <span hidden data-edge={edge} />
     </div>
   );
 }
 
 function PanelButton({
-  label,
+  id,
   icon,
   edge,
+  pinned,
   cross = "end",
 }: {
-  label: string;
+  id: ModuleId;
   icon: React.ReactNode;
   edge: Edge;
+  pinned: boolean;
   cross?: "center" | "end";
 }) {
   return (
     <div className="group/trigger relative">
       <button
-        aria-label={label}
-        className="grid size-9 place-items-center text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+        onClick={() => togglePin(id)}
+        aria-label={id}
+        className={cn(
+          "grid size-9 place-items-center",
+          pinned
+            ? "bg-primary/10 text-primary ring-1 ring-inset ring-primary"
+            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+        )}
       >
         {icon}
       </button>
-      <Bloom edge={edge} cross={cross}>
-        <PlaceholderBox title={label} />
-      </Bloom>
+      {!pinned && (
+        <Bloom edge={edge} cross={cross}>
+          <ModuleBox id={id} />
+        </Bloom>
+      )}
     </div>
   );
 }
 
 /** Hover-peek bloom that rises toward the canvas from the docked edge. */
 function Bloom({ edge, cross, children }: { edge: Edge; cross: "center" | "end"; children: React.ReactNode }) {
-  // Position the bloom on the canvas side of the bar, plus cross-axis alignment.
   const place: Record<Edge, string> = {
     bottom: cn("bottom-full pb-3.5", cross === "center" ? "left-1/2 -translate-x-1/2" : "right-[-1px]"),
     top: cn("top-full pt-3.5", cross === "center" ? "left-1/2 -translate-x-1/2" : "right-[-1px]"),
@@ -299,12 +301,7 @@ function Bloom({ edge, cross, children }: { edge: Edge; cross: "center" | "end";
     left: "-translate-x-2.5",
     right: "translate-x-2.5",
   };
-  const origin: Record<Edge, string> = {
-    bottom: "bottom center",
-    top: "top center",
-    left: "left center",
-    right: "right center",
-  };
+  const origin: Record<Edge, string> = { bottom: "bottom center", top: "top center", left: "left center", right: "right center" };
   return (
     <div className={cn("pointer-events-none absolute z-[60]", place[edge])}>
       <div
@@ -316,23 +313,6 @@ function Bloom({ edge, cross, children }: { edge: Edge; cross: "center" | "end";
         )}
       >
         {children}
-      </div>
-    </div>
-  );
-}
-
-/** Placeholder module box (header only) — real contents land with the modals pass. */
-function PlaceholderBox({ title, sub, width = "w-[224px]" }: { title: string; sub?: string; width?: string }) {
-  return (
-    <div className={width}>
-      <div className="flex h-[30px] items-center gap-2 border-b border-border bg-card pl-[11px] pr-[7px]">
-        <span className="text-[10.5px] font-bold uppercase tracking-wide">{title}</span>
-        {sub && <span className="ml-auto text-[10px] text-muted-foreground">{sub}</span>}
-      </div>
-      <div className="flex items-center gap-2 p-2.5">
-        <Plus className="size-3.5 text-muted-foreground/50" />
-        {/* ∑CG: empty module placeholder — module UIs land in the modals pass */}
-        <span className="text-[11px] text-muted-foreground">∑CG</span>
       </div>
     </div>
   );

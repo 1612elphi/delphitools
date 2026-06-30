@@ -10,44 +10,41 @@ import { getRaster } from "@/lib/substrata/raster-cache";
 import type { Layer } from "@/lib/substrata/doc-model";
 
 /**
- * Layers module (M1-6). Reads the doc + selection stores; all edits go through
- * the doc store (one-way). Top layer shown first (reverse of the array, since
- * array order is bottom→top z-order). DESIGN.md: dense, flush, hairline, square,
- * mono. Sketch fidelity (tree elbows, candy-stripe, drag-reorder, the big Upload
- * + group/dupe/toss footer) is a follow-up pass; this is list + show/hide +
- * select. All user-facing strings are ∑CG.
+ * Layers module (M1-6) — the BODY only; the module box (omnibar bloom / rail)
+ * supplies the header. Reads the doc + selection stores; edits go through the doc
+ * store (one-way). Top layer first. DESIGN.md dense/flush/hairline. Sketch
+ * fidelity (tree elbows, candy-stripe, drag-reorder, blend/upload footer) is a
+ * follow-up; this is list + show/hide + select. Copy ∑CG.
  */
-export function LayersPanel() {
+export function LayersBody() {
   const doc = useSyncExternalStore(subscribe, getSnapshot, () => null);
   const activeId = useSyncExternalStore(subscribeSelection, getActiveLayerId, () => null);
   const layers = doc?.layers ?? [];
 
-  return (
-    <aside className="flex min-h-0 flex-1 flex-col bg-background text-foreground">
-      <div className="flex h-8 shrink-0 items-center border-b border-border px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-        {/* ∑CG: Layers panel title
-            spec: ≤12 chars, the panel name; British spelling.
-            sample: "Layers" */}
+  if (layers.length === 0) {
+    return (
+      <div className="flex items-center justify-center p-4 text-center text-xs text-muted-foreground">
+        {/* ∑CG: empty-state hint when no layers exist
+            spec: ≤60 chars, drop or paste an image to start; British spelling.
+            sample: "Drop or paste an image to begin." */}
         ∑CG
       </div>
+    );
+  }
 
-      {layers.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center p-4 text-center text-xs text-muted-foreground">
-          {/* ∑CG: empty-state hint when no layers exist
-              spec: ≤60 chars, tells the user to drop or paste an image to start;
-              friendly-plain; British spelling.
-              sample: "Drop or paste an image to begin." */}
-          ∑CG
-        </div>
-      ) : (
-        <div className="flex-1 overflow-y-auto">
-          {[...layers].reverse().map((layer) => (
-            <LayerRow key={layer.id} layer={layer} active={layer.id === activeId} />
-          ))}
-        </div>
-      )}
-    </aside>
+  return (
+    <div>
+      {[...layers].reverse().map((layer) => (
+        <LayerRow key={layer.id} layer={layer} active={layer.id === activeId} />
+      ))}
+    </div>
   );
+}
+
+/** Layer count for the module box header (sub2). */
+export function LayersCount() {
+  const doc = useSyncExternalStore(subscribe, getSnapshot, () => null);
+  return <>{doc?.layers.length ?? 0}</>;
 }
 
 function LayerRow({ layer, active }: { layer: Layer; active: boolean }) {
@@ -74,9 +71,7 @@ function LayerRow({ layer, active }: { layer: Layer; active: boolean }) {
       </span>
       <button
         type="button"
-        // ∑CG: aria-label for the layer show/hide toggle
-        //   spec: ≤24 chars, describes toggling layer visibility; British spelling.
-        //   sample: "Toggle visibility"
+        // ∑CG: aria-label for the layer show/hide toggle. sample: "Toggle visibility"
         aria-label="∑CG"
         onClick={(e) => {
           e.stopPropagation();
