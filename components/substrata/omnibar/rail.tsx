@@ -4,6 +4,7 @@ import { useSyncExternalStore } from "react";
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { getPinned, subscribePins, type ModuleId } from "@/lib/substrata/pin-pref";
+import { getModuleDockAll, subscribeDock } from "@/lib/substrata/dock-pref";
 import { ModuleBox } from "@/components/substrata/omnibar/modules";
 
 const EMPTY: readonly ModuleId[] = [];
@@ -18,7 +19,9 @@ const EASE = [0.2, 0.7, 0.3, 1] as const;
  */
 export function Rail({ vertical }: { vertical: boolean }) {
   const pinned = useSyncExternalStore(subscribePins, getPinned, () => EMPTY);
-  if (pinned.length === 0) return null;
+  const docks = useSyncExternalStore(subscribeDock, getModuleDockAll, getModuleDockAll);
+  const railModules = pinned.filter((id) => docks[id] === "rail");
+  if (railModules.length === 0) return null;
 
   // Modules enter/leave from the omnibar side: along Y for a horizontal bar,
   // along X for a vertical one.
@@ -33,7 +36,7 @@ export function Rail({ vertical }: { vertical: boolean }) {
         )}
       >
         <AnimatePresence mode="popLayout">
-          {pinned.map((id) => (
+          {railModules.map((id) => (
             <motion.div
               key={id}
               layout
@@ -43,7 +46,7 @@ export function Rail({ vertical }: { vertical: boolean }) {
               transition={{ duration: 0.24, ease: EASE }}
               className="border border-border bg-background shadow-lg"
             >
-              <ModuleBox id={id} inRail />
+              <ModuleBox id={id} variant="rail" />
             </motion.div>
           ))}
         </AnimatePresence>
