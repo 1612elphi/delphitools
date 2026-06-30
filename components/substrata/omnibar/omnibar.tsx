@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getActiveTool, setActiveTool, subscribeTool, type ToolId } from "@/lib/substrata/tool";
-import { getOmnibarEdge, subscribeDock, type Edge } from "@/lib/substrata/dock-pref";
+import { getOmnibarEdge, getRailEdge, subscribeDock, type Edge, type RailEdge } from "@/lib/substrata/dock-pref";
 import { getPinned, subscribePins, togglePin, type ModuleId } from "@/lib/substrata/pin-pref";
 import { ModuleBox } from "@/components/substrata/omnibar/modules";
 import { Rail } from "@/components/substrata/omnibar/rail";
@@ -68,9 +68,18 @@ export function Omnibar() {
   const pinned = useSyncExternalStore(subscribePins, getPinned, () => EMPTY_PINS);
   const [overflow, setOverflow] = useState(false);
 
+  const railEdge = useSyncExternalStore(subscribeDock, getRailEdge, () => "follow" as RailEdge);
   const vertical = edge === "left" || edge === "right";
   const railFirst = edge === "bottom" || edge === "right";
   const isPinned = (id: ModuleId) => pinned.includes(id);
+
+  // Rail position: "follow" → adjacent to the omnibar (in the dock); otherwise its
+  // own edge, independent. If that edge IS the omnibar's edge, dock it adjacent
+  // too (stacked) rather than as a separate container that would overlap.
+  const follow = railEdge === "follow";
+  const effRailEdge = follow ? edge : railEdge;
+  const railVertical = effRailEdge === "left" || effRailEdge === "right";
+  const inDock = effRailEdge === edge;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -92,7 +101,7 @@ export function Omnibar() {
     vertical ? "w-12 flex-col" : "h-12 flex-row",
   );
 
-  const railEl = <Rail vertical={vertical} />;
+  const railEl = <Rail vertical={railVertical} />;
   const barrowEl = (
     <div className={cn("pointer-events-none flex items-start gap-2.5", vertical ? "flex-col" : "flex-row")}>
       <div className={bar}>
@@ -172,19 +181,27 @@ export function Omnibar() {
   );
 
   return (
-    <div className={cn("pointer-events-none absolute z-40 flex gap-3.5 p-4", DOCK_POS[edge])}>
-      {railFirst ? (
-        <>
-          {railEl}
-          {barrowEl}
-        </>
-      ) : (
-        <>
-          {barrowEl}
-          {railEl}
-        </>
+    <>
+      <div className={cn("pointer-events-none absolute z-40 flex gap-3.5 p-4", DOCK_POS[edge])}>
+        {inDock ? (railFirst ? (
+          <>
+            {railEl}
+            {barrowEl}
+          </>
+        ) : (
+          <>
+            {barrowEl}
+            {railEl}
+          </>
+        )) : (
+          barrowEl
+        )}
+      </div>
+      {/* rail decoupled from the omnibar — its own edge */}
+      {!inDock && (
+        <div className={cn("pointer-events-none absolute z-30 flex p-4", DOCK_POS[effRailEdge])}>{railEl}</div>
       )}
-    </div>
+    </>
   );
 }
 

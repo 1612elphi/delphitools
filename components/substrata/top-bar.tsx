@@ -38,10 +38,13 @@ import { getPersistenceEnabled, subscribePersistence } from "@/lib/substrata/per
 import {
   getOmnibarEdge,
   setOmnibarEdge,
+  getRailEdge,
+  setRailEdge,
   getModuleDockAll,
   setModuleDock,
   subscribeDock,
   type Edge,
+  type RailEdge,
   type DockTarget,
 } from "@/lib/substrata/dock-pref";
 import { setPinned, type ModuleId } from "@/lib/substrata/pin-pref";
@@ -434,6 +437,8 @@ const renderSeg = (s: string): React.ReactNode => SEG_ICON[s] ?? s;
 
 const DOCK_TO_LETTER: Record<DockTarget, string> = { left: "L", right: "R", rail: "Rail" };
 const LETTER_TO_DOCK: Record<string, DockTarget> = { L: "left", R: "right", Rail: "rail" };
+const RAIL_TO_LETTER: Record<RailEdge, string> = { follow: "↳", top: "T", bottom: "B", left: "L", right: "R" };
+const LETTER_TO_RAIL: Record<string, RailEdge> = { "↳": "follow", T: "top", B: "bottom", L: "left", R: "right" };
 
 function DockRow({ label, id, docks }: { label: string; id: ModuleId; docks: Record<ModuleId, DockTarget> }) {
   return (
@@ -452,6 +457,7 @@ function DockRow({ label, id, docks }: { label: string; id: ModuleId; docks: Rec
 
 function WorkspaceMenu() {
   const edge = useSyncExternalStore(subscribeDock, getOmnibarEdge, () => "bottom" as Edge);
+  const rail = useSyncExternalStore(subscribeDock, getRailEdge, () => "follow" as RailEdge);
   const docks = useSyncExternalStore(subscribeDock, getModuleDockAll, getModuleDockAll);
   return (
     <Box className="min-w-[254px] py-1">
@@ -462,7 +468,13 @@ function WorkspaceMenu() {
         onSelect={(s) => setOmnibarEdge(LETTER_TO_EDGE[s])}
         render={renderSeg}
       />
-      <WRow label="Rail" seg={["↳", "T", "B", "L", "R"]} on={["↳"]} render={renderSeg} />
+      <WRow
+        label="Rail"
+        seg={["↳", "T", "B", "L", "R"]}
+        active={RAIL_TO_LETTER[rail]}
+        onSelect={(s) => setRailEdge(LETTER_TO_RAIL[s])}
+        render={renderSeg}
+      />
       <Sep />
       <div className="px-3 pb-0.5 pt-1.5 text-[9.5px] uppercase tracking-wide text-muted-foreground">
         Dock modules
@@ -475,9 +487,19 @@ function WorkspaceMenu() {
       <WRow label="Zoom" seg={["−", "67%", "+", "Fit"]} on={[]} render={renderSeg} />
       <WRow label="Guides" seg={["Rulers", "Grid", "Snap"]} on={["Rulers", "Snap"]} render={renderSeg} />
       <Sep />
-      <Item label="Theme" />
+      <Item label="Theme" onClick={toggleTheme} />
     </Box>
   );
+}
+
+function toggleTheme() {
+  const next = !document.documentElement.classList.contains("dark");
+  document.documentElement.classList.toggle("dark", next);
+  try {
+    localStorage.setItem("theme", next ? "dark" : "light");
+  } catch {
+    /* storage blocked — theme still toggles for the session */
+  }
 }
 
 function WRow({
