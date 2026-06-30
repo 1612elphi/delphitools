@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 
+import { TopBar } from "@/components/substrata/top-bar";
 import { LayersPanel } from "@/components/substrata/modules/layers-panel";
 import { PersistenceToggle } from "@/components/substrata/persistence-toggle";
 import { useEditorShortcuts } from "@/hooks/use-editor-shortcuts";
@@ -35,7 +36,7 @@ export function SubstrataShell() {
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      {/* ∑CG: <TopBar/> mounts here (M0-4/M0-5) — gated on visual review */}
+      <TopBar />
       <div className="flex min-h-0 flex-1">
         <FabricCanvas />
         {/* Provisional fixed dock. The real omnibar + utility-rail docking system
