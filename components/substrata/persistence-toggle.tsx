@@ -8,6 +8,7 @@ import {
   setPersistenceEnabled,
   subscribePersistence,
 } from "@/lib/substrata/persistence-pref";
+import { toast } from "@/lib/substrata/toast";
 
 /**
  * Opt-in local-storage toggle (M1-9). Off by default; until the user turns it
@@ -31,7 +32,10 @@ export function PersistenceToggle() {
       </span>
       <Switch
         checked={enabled}
-        onCheckedChange={setPersistenceEnabled}
+        onCheckedChange={(v) => {
+          setPersistenceEnabled(v);
+          toast(v ? "saved" : "storage-off");
+        }}
         // ∑CG: aria-label for the local-storage toggle
         //   spec: ≤32 chars, describes enabling local storage / autosave in this browser.
         //   sample: "Save my work in this browser"

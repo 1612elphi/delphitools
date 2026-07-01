@@ -216,7 +216,10 @@ tool surface, not "unfinished".
 - **Centre:** editable file name (`Untitled scene`) + **local save status** — must
   read as *in this browser* (`∑CG`: e.g. `Saved in browser` / `Saving…` /
   `Unsaved changes`).
-- **Right:** undo/redo · zoom (− % + / fit) · **Export** · theme toggle.
+- **Right:** undo/redo · zoom (− % + / fit) · **Export** · theme toggle. The
+  undo/redo control is a **status slot**: when a transient toast fires (see below)
+  it animates the buttons out, shows the toast, then swaps them back. The zoom `%`
+  **cycles** 100% → fit → last-manual on click.
 
 **Menus (rebracketed — not File/Edit/View/Help):**
 - **Scene** — two boxes: (1) the file menu (New scene / Open / Open recent /
@@ -267,6 +270,14 @@ cream/forest-green/amber; 2px major / 1px nested dividers; `.segmented` groups;
   - **Prism** — wavelength spectroscope (nm + band), shaped by `WATTS` (intensity)
     and `NTU` (haze). `∑CG` names.
   - **Shade** — 24-hue reel → 5 named tonal shades.
+- **Status toasts** — tiny transient confirmations that occupy the top-bar
+  undo/redo **status slot** (buttons swap out for the toast, then back;
+  auto-clears ~1.8s; reduced-motion respected). Fired by a **semantic key**
+  (`toast("canvas-fit")`), never a literal string — the slot maps key → icon +
+  `∑CG` text (`lib/substrata/toast.ts`, `components/substrata/toast-slot.tsx`).
+  Reserve for lightweight action confirmations that lack other feedback (fit,
+  saved, storage-off, image-added, copied, exported…), NOT for errors or anything
+  needing user action. One at a time; re-firing a key re-triggers the animation.
 
 ---
 
@@ -379,8 +390,10 @@ stock/icon/font store · no silent project-format migration that breaks saved fi
 All user-facing strings are `∑CG` gaps with commented spec/sample, filled via
 **slopsieve**. Known: colour-picker names (Prism / WATTS / NTU + shade families),
 the cutout/effect gating body, the **local save-status** text, the Edit history
-hint, Clip mode descriptions (if reinstated), empty-state/onboarding microcopy, and
-the file-noun ("Scene"). Colour *family* names come from `lib/colour-names.ts`.
+hint, Clip mode descriptions (if reinstated), empty-state/onboarding microcopy,
+the file-noun ("Scene"), and the **status-toast strings** (keyed in the toast
+slot: canvas-fit / saved / storage-off / image-added / copied / exported / …).
+Colour *family* names come from `lib/colour-names.ts`.
 
 ---
 
