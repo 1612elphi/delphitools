@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
-import { Folder, Image as ImageIcon, MousePointer2, RotateCw, Scaling, Square, Type } from "lucide-react";
+import { Folder, Frame, Image as ImageIcon, RotateCw, Scaling, Square, Type } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
   Select,
@@ -13,7 +13,8 @@ import {
 import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
 import { getActiveLayerId, subscribeSelection } from "@/lib/substrata/selection";
 import { setBlendMode, setOpacity, setTransform } from "@/lib/substrata/layer-ops";
-import type { BlendMode, Layer } from "@/lib/substrata/doc-model";
+import { getPersistenceEnabled, subscribePersistence } from "@/lib/substrata/persistence-pref";
+import type { BlendMode, Layer, SubstrataDoc } from "@/lib/substrata/doc-model";
 
 /**
  * Inspector module (modals pass) — the BODY only; the module box supplies the
@@ -114,17 +115,8 @@ export function InspectorBody() {
   const activeId = useSyncExternalStore(subscribeSelection, getActiveLayerId, () => null);
   const layer = doc && activeId ? doc.layers.find((l) => l.id === activeId) ?? null : null;
 
-  if (!layer) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-1.5 p-6 text-center text-muted-foreground">
-        <MousePointer2 className="size-4 opacity-50" aria-hidden />
-        {/* ∑CG: inspector empty-state hint (no selection)
-            spec: ≤48 chars; tells the user to select a layer to edit it; British spelling.
-            sample: "Select a layer to inspect it." */}
-        <span className="text-xs">∑CG</span>
-      </div>
-    );
-  }
+  // No selection → show the canvas/scene info (mirrors the Scene menu's readout).
+  if (!layer) return <CanvasInfo doc={doc} />;
 
   const KindIcon = KIND_ICON[layer.kind];
   const nat = layer.kind === "raster" ? { w: layer.naturalWidth, h: layer.naturalHeight } : null;
@@ -172,13 +164,13 @@ export function InspectorBody() {
   );
 
   return (
-    <div>
-      {/* selection identity */}
+    <div className="flex h-full flex-col overflow-hidden text-xs">
+      {/* selection identity — header strip; text breathes (DESIGN.md §1) */}
       <div className="flex items-center gap-2 border-b border-border bg-accent px-3 py-1.5">
         <span className="grid size-6 shrink-0 place-items-center bg-primary text-primary-foreground">
           <KindIcon className="size-3.5" aria-hidden />
         </span>
-        <span className="truncate text-xs font-semibold text-accent-foreground" title={layer.name}>
+        <span className="truncate font-semibold text-accent-foreground" title={layer.name}>
           {layer.name}
         </span>
         {nat && (
@@ -188,21 +180,29 @@ export function InspectorBody() {
         )}
       </div>
 
-      {/* Transform */}
-      <div className="px-3 py-2">
-        <div className="mb-1.5 text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">Transform</div>
-        <div className="segmented grid-cols-2">
-          {cells.map((c) => (
-            <NumField key={c.key} label={c.label} icon={c.icon} unit={c.unit} value={c.value} onCommit={c.onCommit} />
-          ))}
-        </div>
+      {/* Transform — the title breathes (padded); the value grid is a flush
+          container that bleeds edge to edge (DESIGN.md §6/§7). Internal 1px
+          hairlines; a 2px major divider closes the section (§5). */}
+      <div className="px-3 pb-1.5 pt-2 text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">
+        Transform
+      </div>
+      <div className="segmented grid-cols-2 border-x-0 border-b-0">
+        {cells.map((c) => (
+          <NumField key={c.key} label={c.label} icon={c.icon} unit={c.unit} value={c.value} onCommit={c.onCommit} />
+        ))}
       </div>
 
-      {/* Blend + opacity — one line */}
-      <div className="flex items-center gap-2 border-t border-border px-3 py-2 text-[11px] text-muted-foreground">
-        <span className="shrink-0">Blend</span>
+      {/* Appearance — a flush action bar pinned to the BOTTOM of the card
+          (mt-auto), split off by the 2px major divider (DESIGN.md §5/§9/§11): the
+          blend mode fills, opacity is an equal-height cell behind a 1px hairline.
+          Labels dropped so long mode names ("Colour Dodge") fit; % self-labels. */}
+      <div className="mt-auto flex h-9 items-stretch border-t-2 border-border">
         <Select value={layer.blendMode} onValueChange={(v) => setBlendMode(layer.id, v as BlendMode)}>
-          <SelectTrigger size="sm" className="h-7 min-w-0 flex-1 text-xs">
+          <SelectTrigger
+            className="h-full min-w-0 flex-1 gap-1 border-0 bg-card px-3 text-xs shadow-none hover:bg-accent focus-visible:ring-0 dark:bg-card dark:hover:bg-accent"
+            // ∑CG: aria-label for the blend-mode dropdown. sample: "Blend mode"
+            aria-label="∑CG"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -213,7 +213,6 @@ export function InspectorBody() {
             ))}
           </SelectContent>
         </Select>
-        <span className="shrink-0">at</span>
         <OpacityField layerId={layer.id} opacity={layer.opacity} />
       </div>
     </div>
@@ -277,13 +276,66 @@ function NumField({
   );
 }
 
-/** Compact opacity field (0–100%) sitting inside the blend line. */
+/** Opacity field (0–100%) — a flush cell in the appearance bar, same height as
+ *  the blend dropdown, divided off by a 1px hairline. */
 function OpacityField({ layerId, opacity }: { layerId: string; opacity: number }) {
   const field = useNumberField(opacity * 100, (n) => setOpacity(layerId, Math.max(0, Math.min(100, n)) / 100));
   return (
-    <label className="flex h-7 w-[54px] shrink-0 items-center gap-0.5 border border-border bg-card px-2">
+    <label className="flex h-full w-[62px] shrink-0 items-center gap-0.5 border-l border-border bg-card px-3">
       <input className="w-full min-w-0 bg-transparent text-right text-xs tabular-nums outline-none" {...field} />
       <span className="shrink-0 text-[10px] text-muted-foreground">%</span>
     </label>
+  );
+}
+
+/**
+ * No-selection state: the canvas / scene readout (dimensions, resolution, bit
+ * depth, colour mode, layer count, storage) — the same facts the Scene menu
+ * shows, so the Inspector always has something useful. Row labels/values are
+ * functional chrome (mockup words), matching the Scene menu.
+ */
+function CanvasInfo({ doc }: { doc: SubstrataDoc | null }) {
+  const persistOn = useSyncExternalStore(subscribePersistence, getPersistenceEnabled, () => false);
+  const ab = doc?.artboard;
+  return (
+    <div className="flex h-full flex-col overflow-hidden text-xs">
+      {/* canvas identity — mirrors the layer seltype header */}
+      <div className="flex items-center gap-2 border-b border-border bg-accent px-3 py-1.5">
+        <span className="grid size-6 shrink-0 place-items-center bg-primary text-primary-foreground">
+          <Frame className="size-3.5" aria-hidden />
+        </span>
+        <span className="truncate font-semibold text-accent-foreground" title={doc?.name || undefined}>
+          {doc?.name?.trim() ? (
+            doc.name
+          ) : (
+            // ∑CG: placeholder name for an unsaved/untitled scene (≤ 24 chars; British spelling).
+            //   sample: "Untitled scene"
+            <span className="text-accent-foreground/70">∑CG</span>
+          )}
+        </span>
+        {ab && (
+          <span className="ml-auto shrink-0 text-[11px] tabular-nums text-muted-foreground">
+            {ab.width}×{ab.height}
+          </span>
+        )}
+      </div>
+      <div className="border-b-2 border-border">
+        <InfoRow label="Dimensions" value={ab ? `${ab.width} × ${ab.height} px` : "—"} />
+        <InfoRow label="Resolution" value={ab ? `${ab.resolution} ppi` : "—"} />
+        <InfoRow label="Bit depth" value="8-bit / ch" />
+        <InfoRow label="Colour" value="sRGB" />
+        <InfoRow label="Layers" value={String(doc?.layers.length ?? 0)} />
+        <InfoRow label="Stored" value={persistOn ? "Local" : "Off"} />
+      </div>
+    </div>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4 px-3 py-[5px] text-[11.5px]">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="tabular-nums">{value}</span>
+    </div>
   );
 }

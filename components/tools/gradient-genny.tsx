@@ -36,6 +36,7 @@ import {
 import { useColourNotation } from "@/hooks/use-colour-notation";
 import { formatColour } from "@/lib/colour-notation";
 import { cn } from "@/lib/utils";
+import { DeferredHexInput, normalizeHex, useDeferredInput } from "@/components/colour-field";
 
 // Types
 type GradientMode = "linear" | "corners" | "mesh";
@@ -70,13 +71,6 @@ type CornerKey = keyof CornerColours;
 // Utility functions
 function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
-}
-
-function normalizeHex(hex: string): string | null {
-  // Strip all leading # characters, then validate as 6-digit hex
-  const stripped = hex.replace(/^#+/, "");
-  if (/^[a-f\d]{6}$/i.test(stripped)) return `#${stripped}`;
-  return null;
 }
 
 function hexToRgb(hex: string): [number, number, number] | null {
@@ -219,63 +213,6 @@ function generateInitialMeshPoints(gridSize: 2 | 3): MeshPoint[] {
 // Hook for inputs that defer updates until Enter/blur.
 // `parse` is pure: returns the normalized string value or null to reject.
 // `onCommit` is called with the parsed value on successful commit.
-function useDeferredInput(
-  value: string,
-  parse: (draft: string) => string | null,
-  onCommit: (parsed: string) => void
-) {
-  const [draft, setDraft] = useState(value);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (document.activeElement !== inputRef.current) {
-      setDraft(value);
-    }
-  }, [value]);
-
-  const commit = () => {
-    const result = parse(draft);
-    if (result !== null) {
-      onCommit(result);
-      setDraft(result);
-    } else {
-      setDraft(value);
-    }
-  };
-
-  return {
-    ref: inputRef,
-    value: draft,
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => setDraft(e.target.value),
-    onBlur: commit,
-    onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        commit();
-        inputRef.current?.blur();
-      }
-    },
-  };
-}
-
-function DeferredHexInput({
-  value,
-  onChange,
-  className,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  className?: string;
-}) {
-  const inputProps = useDeferredInput(
-    value,
-    (d) => normalizeHex(d),
-    onChange
-  );
-
-  return <Input {...inputProps} className={className} />;
-}
-
 function DeferredPositionInput({
   value,
   onChange,

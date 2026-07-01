@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { getActiveTool, setActiveTool, subscribeTool, type ToolId } from "@/lib/substrata/tool";
 import { getOmnibarEdge, getRailEdge, subscribeDock, type Edge, type RailEdge } from "@/lib/substrata/dock-pref";
 import { getPinned, subscribePins, togglePin, type ModuleId } from "@/lib/substrata/pin-pref";
+import { getColour, subscribeColour } from "@/lib/substrata/colour-store";
 import { ModuleBox } from "@/components/substrata/omnibar/modules";
 import { Rail } from "@/components/substrata/omnibar/rail";
 
@@ -142,12 +143,7 @@ export function Omnibar() {
         <Panels vertical={vertical}>
           <PanelButton id="layers" icon={<Layers className={ICON} />} edge={edge} pinned={isPinned("layers")} />
           <PanelButton id="inspector" icon={<BoxIcon className={ICON} />} edge={edge} pinned={isPinned("inspector")} />
-          <PanelButton
-            id="colour"
-            edge={edge}
-            pinned={isPinned("colour")}
-            icon={<span className="size-[18px] border border-foreground/35" style={{ background: "#3E6B33", boxShadow: "inset 0 0 0 1px rgba(255,255,255,.4)" }} />}
-          />
+          <PanelButton id="colour" edge={edge} pinned={isPinned("colour")} icon={<ColourSwatchIcon />} />
           <PanelButton id="export" icon={<Download className={ICON} />} edge={edge} pinned={isPinned("export")} />
         </Panels>
 
@@ -265,6 +261,17 @@ function ToolStack({ tool, selected, vertical, onSelect }: { tool: ToolDef; sele
         ))}
       </div>
     </div>
+  );
+}
+
+/** Colour panel trigger icon — a live swatch of the current picker colour. */
+function ColourSwatchIcon() {
+  const colour = useSyncExternalStore(subscribeColour, getColour, getColour);
+  return (
+    <span
+      className="size-[18px] border border-foreground/35"
+      style={{ backgroundColor: colour.hex, boxShadow: "inset 0 0 0 1px rgba(255,255,255,.4)" }}
+    />
   );
 }
 
