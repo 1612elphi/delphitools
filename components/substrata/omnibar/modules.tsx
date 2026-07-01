@@ -4,6 +4,7 @@ import { Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { togglePin, type ModuleId } from "@/lib/substrata/pin-pref";
 import { LayersBody, LayersCount } from "@/components/substrata/modules/layers-panel";
+import { InspectorBody } from "@/components/substrata/modules/inspector-panel";
 
 /**
  * Module registry + box wrapper. One definition per omnibar module; the SAME
@@ -33,7 +34,7 @@ function Placeholder() {
 export const MODULES: Record<ModuleId, ModuleDef> = {
   layers: { id: "layers", title: "Layers", width: "w-[224px]", body: <LayersBody />, sub: <LayersCount /> },
   effects: { id: "effects", title: "Effects", width: "w-[296px]", body: <Placeholder /> },
-  inspector: { id: "inspector", title: "Inspector", width: "w-[224px]", body: <Placeholder /> },
+  inspector: { id: "inspector", title: "Inspector", width: "w-[236px]", body: <InspectorBody /> },
   colour: { id: "colour", title: "Colour", width: "w-[224px]", body: <Placeholder /> },
   export: { id: "export", title: "Export", width: "w-[224px]", body: <Placeholder /> },
   csize: { id: "csize", title: "Canvas size", width: "w-[224px]", body: <Placeholder /> },
