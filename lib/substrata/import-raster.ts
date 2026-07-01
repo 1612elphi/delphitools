@@ -13,6 +13,7 @@ import { getSnapshot, update } from "./doc-store";
 import { setActiveLayer } from "./selection";
 import { getRaster, putRaster, sha256Hex } from "./raster-cache";
 import { persistRaster } from "./blobs";
+import { toast } from "./toast";
 
 /** Centre the layer on the artboard, scaled down to fit if it's larger. */
 function placeOnArtboard(artboard: Artboard, w: number, h: number): Transform {
@@ -80,4 +81,5 @@ export async function importImageFile(file: File): Promise<void> {
   // layer's Fabric object is created (avoids the post-update selection race).
   setActiveLayer(layer.id);
   update((doc) => ({ ...doc, layers: [...doc.layers, layer], updatedAt: Date.now() }));
+  toast("image-added");
 }

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Canvas } from "fabric";
+import { Canvas, Point } from "fabric";
 import { getSnapshot, subscribe, setDoc } from "@/lib/substrata/doc-store";
+import { registerViewportController, reportZoom } from "@/lib/substrata/viewport";
 import { createEmptyDoc } from "@/lib/substrata/doc-model";
 import type { Artboard, SubstrataDoc } from "@/lib/substrata/doc-model";
 import { createReconcileState, reconcile, getLayerIdForObject } from "@/lib/substrata/sync";
@@ -86,12 +87,128 @@ export function FabricCanvas() {
       applySelection();
     };
 
+    // Zoom-% cycle state: 100% → fit → last manual zoom. Reset by any manual zoom.
+    let cycleStep = -1;
+    let cycleAnchor = 1;
+    const resetCycle = () => {
+      cycleStep = -1;
+    };
+
     const fit = () => {
       canvas.setDimensions({ width: wrap.clientWidth, height: wrap.clientHeight });
       const doc = getSnapshot();
       if (doc) fitView(canvas, doc.artboard);
       canvas.requestRenderAll();
+      resetCycle();
+      reportZoom(canvas.getZoom());
     };
+
+    const setCanvasCursor = (c: string) => {
+      canvas.defaultCursor = c || "default";
+      if (canvas.upperCanvasEl) canvas.upperCanvasEl.style.cursor = c;
+    };
+
+    // ── viewport: zoom + pan ──────────────────────────────────────────────────
+    const ZMIN = 0.02;
+    const ZMAX = 64;
+    const clampZoom = (z: number) => Math.max(ZMIN, Math.min(ZMAX, z));
+    const centre = () => new Point(canvas.getWidth() / 2, canvas.getHeight() / 2);
+    const zoomAtCentre = (factor: number) => {
+      resetCycle();
+      canvas.zoomToPoint(centre(), clampZoom(canvas.getZoom() * factor));
+      reportZoom(canvas.getZoom());
+    };
+    registerViewportController({
+      zoomIn: () => zoomAtCentre(1.2),
+      zoomOut: () => zoomAtCentre(1 / 1.2),
+      fit,
+      setZoom: (z) => {
+        resetCycle();
+        canvas.zoomToPoint(centre(), clampZoom(z));
+        reportZoom(canvas.getZoom());
+      },
+      reset: () => {
+        resetCycle();
+        canvas.zoomToPoint(centre(), 1);
+        reportZoom(canvas.getZoom());
+      },
+      cycle: () => {
+        // 100% → fit → the zoom that was active before cycling began.
+        if (cycleStep === -1) cycleAnchor = canvas.getZoom();
+        cycleStep = (cycleStep + 1) % 3;
+        if (cycleStep === 0) {
+          canvas.zoomToPoint(centre(), 1);
+        } else if (cycleStep === 1) {
+          const doc = getSnapshot();
+          if (doc) fitView(canvas, doc.artboard);
+        } else {
+          canvas.zoomToPoint(centre(), clampZoom(cycleAnchor));
+        }
+        reportZoom(canvas.getZoom());
+      },
+    });
+
+    // Wheel: ⌘/Ctrl (or trackpad pinch) zooms to the cursor; plain wheel pans.
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (e.ctrlKey || e.metaKey) {
+        resetCycle();
+        const r = wrap.getBoundingClientRect();
+        const p = new Point(e.clientX - r.left, e.clientY - r.top);
+        canvas.zoomToPoint(p, clampZoom(canvas.getZoom() * Math.pow(0.999, e.deltaY)));
+        reportZoom(canvas.getZoom());
+      } else {
+        canvas.relativePan(new Point(-e.deltaX, -e.deltaY));
+      }
+    };
+    wrap.addEventListener("wheel", onWheel, { passive: false });
+
+    // Space-drag to pan.
+    const isInteractive = (t: EventTarget | null) => {
+      const el = t as HTMLElement | null;
+      return !!el && (el.isContentEditable || /^(BUTTON|INPUT|TEXTAREA|SELECT|A)$/.test(el.tagName));
+    };
+    let spaceHeld = false;
+    let panning = false;
+    let panX = 0;
+    let panY = 0;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Space" && !spaceHeld && !isInteractive(e.target)) {
+        spaceHeld = true;
+        canvas.skipTargetFind = true; // pan cleanly without grabbing objects
+        setCanvasCursor("grab");
+        e.preventDefault();
+      }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") {
+        spaceHeld = false;
+        panning = false;
+        canvas.skipTargetFind = false;
+        setCanvasCursor("");
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    canvas.on("mouse:down", (opt) => {
+      if (!spaceHeld) return;
+      panning = true;
+      setCanvasCursor("grabbing");
+      const ev = opt.e as MouseEvent;
+      panX = ev.clientX;
+      panY = ev.clientY;
+    });
+    canvas.on("mouse:move", (opt) => {
+      if (!panning) return;
+      const ev = opt.e as MouseEvent;
+      canvas.relativePan(new Point(ev.clientX - panX, ev.clientY - panY));
+      panX = ev.clientX;
+      panY = ev.clientY;
+    });
+    canvas.on("mouse:up", () => {
+      panning = false;
+      if (spaceHeld) setCanvasCursor("grab");
+    });
 
     // Canvas → store: reflect the active Fabric object into the selection store.
     const syncSelectionToStore = () => {
@@ -190,8 +307,12 @@ export function FabricCanvas() {
       unsubscribePersistence();
       unsubscribe();
       unsubscribeSelection();
+      registerViewportController(null);
       ro.disconnect();
       wrap.removeEventListener("dragover", onDragOver);
+      wrap.removeEventListener("wheel", onWheel);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
       wrap.removeEventListener("drop", onDrop);
       void canvas.dispose();
     };

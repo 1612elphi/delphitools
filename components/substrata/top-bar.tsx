@@ -48,8 +48,11 @@ import {
   type DockTarget,
 } from "@/lib/substrata/dock-pref";
 import { setPinned, type ModuleId } from "@/lib/substrata/pin-pref";
+import { getZoom, subscribeViewport, viewport } from "@/lib/substrata/viewport";
+import { toast } from "@/lib/substrata/toast";
 import { importImageFile } from "@/lib/substrata/import-raster";
 import { PersistenceToggle } from "@/components/substrata/persistence-toggle";
+import { ToastSlot } from "@/components/substrata/toast-slot";
 
 /**
  * Top bar (§7) — parity with sketches/mockup.html. Functional chrome labels use
@@ -70,6 +73,7 @@ export function TopBar() {
   const undoable = useSyncExternalStore(subscribe, canUndo, () => false);
   const redoable = useSyncExternalStore(subscribe, canRedo, () => false);
   const persistOn = useSyncExternalStore(subscribePersistence, getPersistenceEnabled, () => false);
+  const zoom = useSyncExternalStore(subscribeViewport, getZoom, () => 1);
 
   // Click outside any menu root closes the open menu.
   useEffect(() => {
@@ -151,21 +155,27 @@ export function TopBar() {
         </span>
       </div>
 
-      {/* Right: undo/redo · zoom · fit · export · theme */}
+      {/* Right: undo/redo (swaps to a status toast) · zoom · fit · export · theme */}
       <div className="ml-auto flex items-center gap-1">
-        <Button variant="ghost" size="icon" className="size-7" disabled={!undoable} onClick={() => undo()} aria-label="∑CG">
-          <Undo2 className="size-[15px]" />
-        </Button>
-        <Button variant="ghost" size="icon" className="size-7" disabled={!redoable} onClick={() => redo()} aria-label="∑CG">
-          <Redo2 className="size-[15px]" />
-        </Button>
+        <ToastSlot />
         <span className="mx-1 h-[18px] w-px bg-border" />
         <div className="flex items-center border border-border">
-          <button className="grid size-[26px] place-items-center text-muted-foreground hover:bg-accent hover:text-foreground">−</button>
-          <span className="grid h-[26px] min-w-[46px] place-items-center border-x border-border text-[11.5px] tabular-nums">Fit</span>
-          <button className="grid size-[26px] place-items-center text-muted-foreground hover:bg-accent hover:text-foreground">+</button>
+          <button onClick={() => viewport.zoomOut()} className="grid size-[26px] place-items-center text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="∑CG">−</button>
+          <button onClick={() => viewport.cycle()} className="grid h-[26px] min-w-[46px] place-items-center border-x border-border text-[11.5px] tabular-nums hover:bg-accent" aria-label="∑CG">
+            {Math.round(zoom * 100)}%
+          </button>
+          <button onClick={() => viewport.zoomIn()} className="grid size-[26px] place-items-center text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="∑CG">+</button>
         </div>
-        <Button variant="ghost" size="icon" className="size-7" aria-label="∑CG">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-7"
+          aria-label="∑CG"
+          onClick={() => {
+            viewport.fit();
+            toast("canvas-fit");
+          }}
+        >
           <Maximize2 className="size-[15px]" />
         </Button>
         <span className="mx-1 h-[18px] w-px bg-border" />
@@ -459,6 +469,8 @@ function WorkspaceMenu() {
   const edge = useSyncExternalStore(subscribeDock, getOmnibarEdge, () => "bottom" as Edge);
   const rail = useSyncExternalStore(subscribeDock, getRailEdge, () => "follow" as RailEdge);
   const docks = useSyncExternalStore(subscribeDock, getModuleDockAll, getModuleDockAll);
+  const zoom = useSyncExternalStore(subscribeViewport, getZoom, () => 1);
+  const pct = `${Math.round(zoom * 100)}%`;
   return (
     <Box className="min-w-[254px] py-1">
       <WRow
@@ -484,7 +496,19 @@ function WorkspaceMenu() {
       <DockRow label="Inspector" id="inspector" docks={docks} />
       <DockRow label="Colour" id="colour" docks={docks} />
       <Sep />
-      <WRow label="Zoom" seg={["−", "67%", "+", "Fit"]} on={[]} render={renderSeg} />
+      <WRow
+        label="Zoom"
+        seg={["−", pct, "+", "Fit"]}
+        onSelect={(s) => {
+          if (s === "−") viewport.zoomOut();
+          else if (s === "+") viewport.zoomIn();
+          else if (s === "Fit") {
+            viewport.fit();
+            toast("canvas-fit");
+          } else viewport.cycle();
+        }}
+        render={renderSeg}
+      />
       <WRow label="Guides" seg={["Rulers", "Grid", "Snap"]} on={["Rulers", "Snap"]} render={renderSeg} />
       <Sep />
       <Item label="Theme" onClick={toggleTheme} />
