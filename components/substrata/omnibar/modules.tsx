@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { togglePin, type ModuleId } from "@/lib/substrata/pin-pref";
 import { LayersBody, LayersCount } from "@/components/substrata/modules/layers-panel";
 import { InspectorBody } from "@/components/substrata/modules/inspector-panel";
+import { ColourBody, ColourName } from "@/components/substrata/modules/colour-panel";
 
 /**
  * Module registry + box wrapper. One definition per omnibar module; the SAME
@@ -35,7 +36,7 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
   layers: { id: "layers", title: "Layers", width: "w-[224px]", body: <LayersBody />, sub: <LayersCount /> },
   effects: { id: "effects", title: "Effects", width: "w-[296px]", body: <Placeholder /> },
   inspector: { id: "inspector", title: "Inspector", width: "w-[236px]", body: <InspectorBody /> },
-  colour: { id: "colour", title: "Colour", width: "w-[224px]", body: <Placeholder /> },
+  colour: { id: "colour", title: "Colour", width: "w-[236px]", body: <ColourBody />, sub: <ColourName /> },
   export: { id: "export", title: "Export", width: "w-[224px]", body: <Placeholder /> },
   csize: { id: "csize", title: "Canvas size", width: "w-[224px]", body: <Placeholder /> },
   align: { id: "align", title: "Align", width: "w-[224px]", body: <Placeholder /> },
