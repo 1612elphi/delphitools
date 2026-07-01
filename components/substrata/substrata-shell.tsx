@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect } from "react";
 import dynamic from "next/dynamic";
 
 import { TopBar } from "@/components/substrata/top-bar";
 import { Omnibar } from "@/components/substrata/omnibar/omnibar";
 import { Sidebar } from "@/components/substrata/sidebar";
 import { useEditorShortcuts } from "@/hooks/use-editor-shortcuts";
+import { hydrateLayoutPrefs } from "@/lib/substrata/dock-pref";
 
 // The Fabric canvas is loaded only on the client: ssr:false keeps the heavy,
 // browser-only Fabric module out of the static-export prerender. Everything
@@ -33,6 +35,12 @@ const FabricCanvas = dynamic(
  */
 export function SubstrataShell() {
   useEditorShortcuts();
+
+  // Restore the persisted dock/rail/pin layout after mount (kept out of the
+  // initial render so it can't desync the prerendered HTML — see dock-pref).
+  useEffect(() => {
+    hydrateLayoutPrefs();
+  }, []);
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">

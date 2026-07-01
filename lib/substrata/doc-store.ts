@@ -65,6 +65,39 @@ export function update(mutator: (doc: SubstrataDoc) => SubstrataDoc): void {
   emit();
 }
 
+/**
+ * Coalesced (transient) edits for continuous gestures — an opacity slider drag,
+ * a value scrubber, a colour drag. Such a gesture emits many intermediate values;
+ * we want the canvas to update live but the whole gesture to be ONE undo step.
+ *
+ *   beginTransient()   captures the pre-gesture doc (no history change yet)
+ *   updateTransient()  applies a live value + emits, WITHOUT recording history
+ *   commitTransient()  records that single pre-gesture snapshot — only if the
+ *                      doc actually changed during the gesture
+ *
+ * Assumes gestures are atomic (no unrelated `update()` runs mid-gesture).
+ */
+let transientBase: SubstrataDoc | null = null;
+
+export function beginTransient(): void {
+  transientBase = state;
+}
+
+export function updateTransient(mutator: (doc: SubstrataDoc) => SubstrataDoc): void {
+  if (!state) return;
+  state = mutator(state);
+  emit();
+}
+
+export function commitTransient(): void {
+  const base = transientBase;
+  transientBase = null;
+  if (!state || !base || state === base) return; // nothing actually changed
+  undoStack.push(base);
+  if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+  redoStack.length = 0;
+}
+
 export function canUndo(): boolean {
   return undoStack.length > 0;
 }

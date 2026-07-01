@@ -7,8 +7,8 @@
  * `mapLayer` is flat for now; it gains group recursion additively in M2.
  */
 
-import { update } from "./doc-store";
-import type { Layer, Transform } from "./doc-model";
+import { update, updateTransient } from "./doc-store";
+import type { BlendMode, Layer, SubstrataDoc, Transform } from "./doc-model";
 
 function mapLayer(layers: Layer[], id: string, fn: (layer: Layer) => Layer): Layer[] {
   return layers.map((l) => (l.id === id ? fn(l) : l));
@@ -19,6 +19,30 @@ export function setTransform(id: string, transform: Transform): void {
   update((doc) => ({
     ...doc,
     layers: mapLayer(doc.layers, id, (l) => ({ ...l, transform })),
+    updatedAt: Date.now(),
+  }));
+}
+
+/**
+ * Set a layer's opacity (0–1). `transient: true` routes through the coalesced
+ * gesture path (live canvas update, no per-frame history) — used while dragging
+ * the Inspector opacity slider; the slider's release commits the single step.
+ */
+export function setOpacity(id: string, opacity: number, opts?: { transient?: boolean }): void {
+  const apply = (doc: SubstrataDoc): SubstrataDoc => ({
+    ...doc,
+    layers: mapLayer(doc.layers, id, (l) => ({ ...l, opacity })),
+    updatedAt: Date.now(),
+  });
+  if (opts?.transient) updateTransient(apply);
+  else update(apply);
+}
+
+/** Set a layer's compositing blend mode. */
+export function setBlendMode(id: string, blendMode: BlendMode): void {
+  update((doc) => ({
+    ...doc,
+    layers: mapLayer(doc.layers, id, (l) => ({ ...l, blendMode })),
     updatedAt: Date.now(),
   }));
 }
