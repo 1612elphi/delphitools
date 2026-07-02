@@ -340,12 +340,37 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
 
 ## Next
 
-1. **M2 (Make)** — multi-select + groups LANDED (see Stubs for v1 limits).
-   Remaining: **snapping + guides/rulers/grid** (the Workspace stubs, M2-12),
-   TEXT / PIECES / SELECT tools (M2-2/M2-3/M2-6/M2-10 carry Ruby decisions:
-   freehand dep, bundled fonts, text-on-path scope, SELECT region semantics),
-   cross-parent layer drag + group transform composition (deferred from the
-   multi-select pass).
+**✅ M2-1 SCHEMA RATIFIED (Ruby, 2026-07-02)** — build against this shape:
+- **TextLayer**: `mode: "point" | "area"` (+ area box w/h); object-level align
+  (incl. justify) / lineHeight / charSpacing / direction (RTL/LTR) / baseline;
+  **per-range deltas** `{start, end, style}` with the MINIMAL prop set
+  {fontWeight, italic, fill, underline, overline, linethrough} (per-range
+  size/family = v1.1, additive); `onPath: null` reserved; **NO dropShadow
+  field** — `effects[]` owns shadows.
+- **ShapeLayer**: discriminated params — rect{width,height,cornerRadius} ·
+  ellipse{rx,ry} · line{length} · polygon{sides,radius} ·
+  star{points,outerRadius,innerRadius}; `fill: string | Gradient`
+  (`{type: "linear"|"radial", stops[{offset,colour}], coords}` — coords
+  RELATIVE 0–1); `stroke: {colour,width,dash?} | null` (vector stroke;
+  the stroke EFFECT stays the separate any-layer outline).
+- **PathLayer** (new): `anchors[{x,y,inX,inY,outX,outY}]` (handles RELATIVE to
+  their anchor) + `closed`; shape fill/stroke model.
+- **FreehandLayer** (new): `rawPoints [x,y,pressure][]` is the truth (rendered
+  path never persisted); `strokeOptions {size,thinning,smoothing,streamline,
+  simulatePressure}` (perfect-freehand shape); fill.
+- **Conventions**: centre-origin transform.x/y for ALL kinds ("centre origin is
+  fine — this isn't gonna be a photoshop killer" — Ruby); intrinsic geometry
+  unscaled in params, transform scales it. SCHEMA_VERSION 1→2, Dexie
+  version(2) no-op upgrade, v1 docs restore with defaulted fields.
+
+1. **Next chunk (recommended): M3 Tier-0 — FX moves pixels.** Wire the filter
+   registry to Fabric built-in filters, doc→Fabric `filters[]` sync + rAF
+   coalescing + preview downscale (`filter-backend.ts` scaffold). Zero pending
+   decisions. Tier-1 GLSL + film-sim LUTs after.
+2. **Then M2 tools** — PIECES (schema now ratified), TEXT (still needs the
+   bundled-fonts call, M2-3), SELECT (needs M2-10 semantics), freehand dep
+   (M2-2), text-on-path scope (M2-6), rulers design, snap-feel QA,
+   cross-parent layer drag + group transform composition.
 2. **M3 effects engine** — render fns onto the FX registries (additive), doc→Fabric
    filters[] sync + preview-downscale, the four GLSL customs, colour-balance params
    (M3-7), duotone presets (M3-9), Threshold/Posterise ship/defer (M3-5),
