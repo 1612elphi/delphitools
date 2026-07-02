@@ -13,21 +13,17 @@ export type ModuleId =
   | "layers"
   | "inspector"
   | "colour"
-  | "export"
-  | "csize"
-  | "align"
-  | "rotate";
+  | "arrange";
 
-/** Runtime list of every module id (for validating persisted layout). */
+/** Runtime list of every module id (for validating persisted layout). Export and
+ *  Canvas size are NOT modules — they're blocking modals (see lib/substrata/modal).
+ *  Align + Rotate are consolidated into "arrange". */
 export const MODULE_IDS: readonly ModuleId[] = [
   "effects",
   "layers",
   "inspector",
   "colour",
-  "export",
-  "csize",
-  "align",
-  "rotate",
+  "arrange",
 ];
 
 export function isModuleId(v: unknown): v is ModuleId {

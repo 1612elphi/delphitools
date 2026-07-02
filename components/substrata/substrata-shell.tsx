@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { TopBar } from "@/components/substrata/top-bar";
 import { Omnibar } from "@/components/substrata/omnibar/omnibar";
 import { Sidebar } from "@/components/substrata/sidebar";
+import { ModalHost } from "@/components/substrata/modal-host";
 import { useEditorShortcuts } from "@/hooks/use-editor-shortcuts";
 import { hydrateLayoutPrefs } from "@/lib/substrata/dock-pref";
 
@@ -56,6 +57,7 @@ export function SubstrataShell() {
         </div>
         <Sidebar side="right" />
       </div>
+      <ModalHost />
     </div>
   );
 }

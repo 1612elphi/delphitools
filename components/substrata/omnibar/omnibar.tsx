@@ -17,11 +17,8 @@ import {
   Pencil,
   Layers,
   Box as BoxIcon,
-  Download,
   MoreHorizontal,
-  Frame,
   AlignHorizontalDistributeCenter,
-  RotateCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getActiveTool, setActiveTool, subscribeTool, type ToolId } from "@/lib/substrata/tool";
@@ -144,7 +141,6 @@ export function Omnibar() {
           <PanelButton id="layers" icon={<Layers className={ICON} />} edge={edge} pinned={isPinned("layers")} />
           <PanelButton id="inspector" icon={<BoxIcon className={ICON} />} edge={edge} pinned={isPinned("inspector")} />
           <PanelButton id="colour" edge={edge} pinned={isPinned("colour")} icon={<ColourSwatchIcon />} />
-          <PanelButton id="export" icon={<Download className={ICON} />} edge={edge} pinned={isPinned("export")} />
         </Panels>
 
         {/* overflow */}
@@ -167,9 +163,7 @@ export function Omnibar() {
       {overflow && (
         <div className={bar}>
           <Panels vertical={vertical}>
-            <PanelButton id="csize" icon={<Frame className={ICON} />} edge={edge} cross="center" pinned={isPinned("csize")} />
-            <PanelButton id="align" icon={<AlignHorizontalDistributeCenter className={ICON} />} edge={edge} cross="center" pinned={isPinned("align")} />
-            <PanelButton id="rotate" icon={<RotateCw className={ICON} />} edge={edge} cross="center" pinned={isPinned("rotate")} />
+            <PanelButton id="arrange" icon={<AlignHorizontalDistributeCenter className={ICON} />} edge={edge} cross="center" pinned={isPinned("arrange")} />
           </Panels>
         </div>
       )}

@@ -4,10 +4,10 @@ Snapshot of the `delphitools-editor` branch for the Substrata editor. Companion
 to `SPEC.md` (canonical spec) and `BUILD-PLAN.md` (milestone task breakdown).
 This file = what actually exists in the code right now.
 
-**Status:** M0 scaffold + M1 core complete; the full UI cockpit (top bar, omnibar,
-rail, sidebars, docking, viewport, toasts) is built. **Next: the modals pass** —
-real module contents (Effects accordion, Colour picker, Inspector, Export) to
-replace the placeholders.
+**Status:** M0 scaffold + M1 core + the full UI cockpit are complete. The **modals
+pass is largely done** — Layers, Inspector, Colour (7-mode picker incl. the spectral
+EQ), and Arrange are real modules; Export + Canvas size are blocking modals. **Only
+FX (Effects) is left, deferred** to the M3 render engine.
 
 Route: `/editor` (sidebar-free, static-export, client-only via `dynamic ssr:false`).
 Dev: `npm run dev` → http://localhost:3000/editor. Gate: `npm run build` + `tsc --noEmit`.
@@ -49,6 +49,27 @@ Dev: `npm run dev` → http://localhost:3000/editor. Gate: `npm run build` + `ts
 - **Status toasts** — transient confirmations in the top-bar status slot (swaps
   undo/redo out, auto-clears). Wired: canvas-fit, saved, storage-off, image-added.
 
+**Modules & modals**
+- **Layers** — drag-reorder (dnd-kit), show/hide (candy-stripe hidden rows), lock,
+  select, live thumbnail, selected-arrow marker; pinned footer with blend/opacity for
+  the active layer + Upload / Group(disabled) / Duplicate / Toss. Group + nested
+  group rows / tree-elbows / nested drag deferred (multi-select, M2).
+- **Inspector** — selected layer's transform (X/Y/W/H/∠/scale with field maths:
+  `+100`,`*1.5`,…) + a pinned blend/opacity action-bar; **no selection → canvas/scene
+  info** (dims, resolution, layers, storage) + a "Canvas size…" button.
+- **Colour** — 7 picker modes over one HSV-internal current-colour store: hue cube ·
+  HSV triangle · RGB/HSL sliders · swatches wall · prism · **spectral EQ** · shade.
+  Shared footer swatch/hex/eyedropper (uses `components/colour-field`); the omnibar
+  trigger shows the live colour. **No fill sink yet** (nothing consumes the colour → M4).
+- **Arrange** (merged Align + Rotate) — align-to-artboard (6) + rotate 90°/flip;
+  distribute shown disabled (multi-select, M2).
+- **Export modal** — shell (format/scale/quality UI; Export is a no-op stub → M6).
+  **Canvas size modal** — functional: dimension presets + W/H/resolution/background
+  (+ transparent) committed via `setArtboard` (undoable). Both are blocking Radix
+  dialogs (`ModalHost` + `lib/substrata/modal`), NOT dock modules.
+- **Transparency** — a null artboard background renders a theme-aware **checkerboard
+  Pattern** in artboard space (pans/zooms; layers composite over it).
+
 ---
 
 ## Architecture
@@ -74,9 +95,11 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   (raster/text/shape/group), `Filter` (inside-only) vs `Effect` (outside-capable),
   `Transform`; factories (`createEmptyDoc`, `createRasterLayer`), `DEFAULT_ARTBOARD`.
 - `doc-store.ts` — observable doc + snapshot **history** (undo/redo/canUndo/canRedo).
-- `sync.ts` — one-way doc→Fabric **reconciler**; artboard + raster layers, clipPath,
-  layer↔object id map (`getLayerIdForObject`).
-- `layer-ops.ts` — doc mutations (visibility, transform) via `update()`.
+- `sync.ts` — one-way doc→Fabric **reconciler**; artboard (+ transparency checker
+  Pattern) + raster layers, clipPath, layer↔object id map (`getLayerIdForObject`).
+- `layer-ops.ts` — doc mutations via `update()`: visibility, lock, transform,
+  opacity (transient-aware), blend, **duplicate / delete / reorder** (all undoable).
+- `artboard-ops.ts` — `setArtboard(patch)` (Canvas size modal; undoable).
 - `effects.ts` — effect registry (drop-shadow/glow/stroke/overlay → inner/outer phase).
 
 **Assets + persistence**
@@ -88,12 +111,23 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
 - `persistence-pref.ts` — opt-in flag (off by default, purge on disable).
 
 **UI state**
-- `selection.ts` — active layer. `tool.ts` — active tool. `viewport.ts` — zoom
-  bridge + cycle. `dock-pref.ts` — omnibar edge, rail edge, per-module dock target.
-- `pin-pref.ts` — open (pinned) modules. `toast.ts` — status toasts.
+- `selection.ts` — active layer (SINGLE-select). `tool.ts` — active tool.
+  `viewport.ts` — zoom bridge + cycle. `dock-pref.ts` — omnibar edge, rail edge,
+  per-module dock target. `pin-pref.ts` — open (pinned) modules (`MODULE_IDS`:
+  effects/layers/inspector/colour/arrange). `toast.ts` — status toasts.
+  `modal.ts` — which blocking modal is open (export/canvas-size).
+- `layout-storage.ts` — localStorage persistence for dock/rail/pin layout (not
+  gated on the opt-in; UI ergonomics, not document content).
+
+**Colour maths (pure)**
+- `colour-convert.ts` (sRGB↔OKLCH + hex), `colour-hsv.ts` (HSV/HSL↔sRGB),
+  `colour-prism.ts` (wavelength→sRGB), `colour-spectrum.ts` (**SPD→sRGB** via the
+  CIE 1931 Wyman analytic CMF — the spectral-EQ engine), `colour-store.ts` (the
+  current-colour store, HSV-internal). `lib/colour-names.ts` (repo) — nearest name.
+
+**Capability / GPU**
 - `capabilities.ts` — secure-context/feature detection. `webgl-limits.ts`,
-  `filter-backend.ts` — WebGL guard rails. `colour-convert.ts` (OKLCH),
-  `colour-prism.ts` (wavelength) — pure colour maths for the picker.
+  `filter-backend.ts` — WebGL guard rails.
 
 **Components (`components/substrata/*`)**
 - `substrata-shell.tsx` — top bar · [left sidebar · canvas+omnibar · right sidebar].
@@ -102,7 +136,15 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
 - `top-bar.tsx` — §7 bar + all four menus + Workspace wiring.
 - `omnibar/omnibar.tsx` · `omnibar/rail.tsx` · `omnibar/modules.tsx` (registry +
   `ModuleBox` variants bloom/rail/dock) · `sidebar.tsx`.
-- `modules/layers-panel.tsx` — real Layers module body (`LayersBody`/`LayersCount`).
+- `modules/layers-panel.tsx` (drag-reorder + footer), `modules/inspector-panel.tsx`
+  (exports `BLEND_OPTIONS`), `modules/arrange-panel.tsx`.
+- `modules/colour-panel.tsx` (tabbed shell + hue cube + footer) · `modules/
+  colour-picker-kit.tsx` (shared `usePointerArea`/`Knob`) · `modules/colour-modes/*`
+  (triangle · sliders · swatches · prism · spectrum · shade).
+- `modal-host.tsx` + `modals/{export,canvas-size}-modal.tsx` (blocking dialogs).
+- `components/colour-field.tsx` (repo root) — shared `ColourSwatchCell` +
+  `DeferredHexInput` + `useDeferredInput`/`normalizeHex`; reused by the colour modal
+  footer, the Canvas size modal, AND `components/tools/gradient-genny.tsx` (DRY).
 - `toast-slot.tsx` · `persistence-toggle.tsx` · `secure-context-notice.tsx` (unmounted stub).
 - `app/editor/{layout,page}.tsx` — route (server layout w/ metadata + client page).
 - `hooks/use-editor-shortcuts.ts` — undo/redo keymap.
@@ -111,8 +153,14 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
 
 ## Stubs / placeholders (what's NOT done)
 
-- **Module contents**: only **Layers** is real. Effects / Inspector / Colour /
-  Export / Canvas-size / Align / Rotate render a placeholder box → **the modals pass**.
+- **Selection is SINGLE-SELECT only** (`selection.ts` holds one active layer id).
+  Multi-select is **M2**. Everything that needs a multi-selection is therefore
+  deferred / shown disabled: **Arrange ▸ Distribute**, **Layers ▸ Group**, and any
+  range/shift-click selection or multi-layer op. Build single-select paths only and
+  flag multi-select bits in-code.
+- **Module contents**: Layers · Inspector · Colour · Arrange are real; **Effects**
+  renders a placeholder → deferred (needs the M3 render engine). Export + Canvas
+  size are **blocking modals** now (Canvas size functional, Export a shell → M6).
 - **Top bar**: file ops (New/Open/Save/…) are no-ops (→ M5/M6); Edit history list
   is a static visual stub (real labelled history later); ACXV keypad no-op; Export
   no-op (→ M6).
@@ -124,6 +172,32 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   mockup's words per Ruby's call; voice-y microcopy + toast text stay `∑CG`).
   Fill via **slopsieve**.
 - Rail last-unpin exit skips its animation (rail unmounts to avoid a phantom gap).
+
+---
+
+## Mockups / visual source of truth (`sketches/*.html`)
+
+Static HTML+JS prototypes in **`sketches/`** (gitignored — present in the working
+tree). They are the **canonical look + interaction** for each surface; read the
+relevant one before (re)building a panel and match it (dense / flush / square /
+hairline, iA Writer Quattro, cream-green-amber). Open them in a browser to see them
+live. What each covers:
+
+- **`backdrop-sketch.html`** — the whole editor: header, omnibar tool cockpit +
+  rulers, workspace/artboard with selection handles + smart guides, and the right
+  column (Inspector: seltype · Transform grid · Appearance · Adjust · Cutout · +
+  Layers · status bar). The master layout reference.
+- **`mockup.html`** — earlier full-app mockup (chrome / catalogue framing).
+- **`modals.html`** — the three "designed-for-real" cards: **Effects** stack
+  (single-open accordion — the FX build target), **Layers** panel (tree elbows,
+  candy-stripe, blend/opacity footer, Upload/group/dupe/toss), **Colour** picker.
+- **`omnibar.html`** — omnibar detail (tool stacks, hover-fans, docking).
+- **`pickers.html`** — BASIC colour pickers: hue cube (SV + hue), HSV triangle,
+  RGB sliders.
+- **`pickers-fun.html`** — FUN colour pickers: swatches wall, prism (WATTS/NTU),
+  shade reel. (Prism maths ported to `colour-prism.ts`.)
+
+Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions).
 
 ---
 
@@ -142,11 +216,13 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
 
 ## Next
 
-1. **Modals pass** — real contents for Effects (single-open accordion, per
-   `sketches/modals.html`), Colour (Swatches/Prism/Shade tabs, engines exist in
-   `colour-convert`/`colour-prism` + `sketches/pickers-fun.html`), Inspector
-   (X/Y/W/H/opacity from selection), Export (format/scale UI; wiring is M6).
-2. **M2 (Make)** — TEXT, PIECES, SELECT tools; Inspector live; snapping + guides/
-   rulers/grid (the remaining Workspace stubs).
-3. **M3 effects engine**, **M4 colour**, **M5 persist (project mgr + .substrata)**,
-   **M6 export**, **M7 background removal** — per BUILD-PLAN.
+1. **FX (Effects)** — the last panel of the modals pass. Single-open accordion per
+   `sketches/modals.html`, wired to the layer's `effects[]` array (add / reorder /
+   toggle / remove / params) using `effects.ts` registry. Structural only for now —
+   the per-pixel render is the **M3** engine, so params won't move pixels yet.
+2. **M2 (Make)** — **multi-select** (unblocks Arrange ▸ Distribute, Layers ▸ Group,
+   range/shift-select, group rows + nested drag), TEXT / PIECES / SELECT tools,
+   snapping + guides/rulers/grid (the remaining Workspace stubs).
+3. **M3 effects engine**, **M4 colour** (fills for text/shapes — the colour picker's
+   missing sink), **M5 persist** (project mgr + `.substrata`), **M6 export pipeline**,
+   **M7 background removal** — per BUILD-PLAN.
