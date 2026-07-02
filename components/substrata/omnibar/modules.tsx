@@ -1,18 +1,20 @@
 "use client";
 
-import { Plus, X } from "lucide-react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { togglePin, type ModuleId } from "@/lib/substrata/pin-pref";
 import { LayersBody, LayersCount } from "@/components/substrata/modules/layers-panel";
 import { InspectorBody } from "@/components/substrata/modules/inspector-panel";
 import { ColourBody, ColourName } from "@/components/substrata/modules/colour-panel";
 import { ArrangeBody } from "@/components/substrata/modules/arrange-panel";
+import { FxBody, FxSub } from "@/components/substrata/modules/fx-panel";
 
 /**
  * Module registry + box wrapper. One definition per omnibar module; the SAME
  * content renders in the hover-peek bloom (unpinned) or the rail (pinned). The
- * box supplies the header (title · sub · unpin-when-pinned). Layers is the real
- * module; the rest are placeholders until the modals pass. Titles = mockup words.
+ * box supplies the header (title · sub · unpin-when-pinned). All five modules
+ * are real as of the modals pass. Titles = mockup/omnibar words ("FX" matches
+ * its omnibar trigger — the module holds effects + filters + colour changes).
  */
 
 export interface ModuleDef {
@@ -23,19 +25,9 @@ export interface ModuleDef {
   sub?: React.ReactNode;
 }
 
-function Placeholder() {
-  return (
-    <div className="flex items-center gap-2 p-2.5">
-      <Plus className="size-3.5 text-muted-foreground/50" />
-      {/* ∑CG: empty module placeholder — real module UI lands in the modals pass */}
-      <span className="text-[11px] text-muted-foreground">∑CG</span>
-    </div>
-  );
-}
-
 export const MODULES: Record<ModuleId, ModuleDef> = {
   layers: { id: "layers", title: "Layers", width: "w-[224px]", body: <LayersBody />, sub: <LayersCount /> },
-  effects: { id: "effects", title: "Effects", width: "w-[296px]", body: <Placeholder /> },
+  effects: { id: "effects", title: "FX", width: "w-[296px]", body: <FxBody />, sub: <FxSub /> },
   inspector: { id: "inspector", title: "Inspector", width: "w-[236px]", body: <InspectorBody /> },
   colour: { id: "colour", title: "Colour", width: "w-[236px]", body: <ColourBody />, sub: <ColourName /> },
   arrange: { id: "arrange", title: "Arrange", width: "w-[224px]", body: <ArrangeBody /> },

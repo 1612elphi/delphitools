@@ -11,8 +11,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
-import { getActiveLayerId, subscribeSelection } from "@/lib/substrata/selection";
+import { findLayer, isGroup, leafLayers } from "@/lib/substrata/layer-tree";
+import { getActiveLayerId, getSelectedLayerIds, subscribeSelection } from "@/lib/substrata/selection";
 import { setBlendMode, setOpacity, setTransform } from "@/lib/substrata/layer-ops";
+
+const EMPTY_IDS: readonly string[] = [];
 import { getPersistenceEnabled, subscribePersistence } from "@/lib/substrata/persistence-pref";
 import { openModal } from "@/lib/substrata/modal";
 import type { BlendMode, Layer, SubstrataDoc } from "@/lib/substrata/doc-model";
@@ -115,10 +118,17 @@ export const BLEND_OPTIONS: { value: BlendMode; label: string }[] = [
 export function InspectorBody() {
   const doc = useSyncExternalStore(subscribe, getSnapshot, () => null);
   const activeId = useSyncExternalStore(subscribeSelection, getActiveLayerId, () => null);
-  const layer = doc && activeId ? doc.layers.find((l) => l.id === activeId) ?? null : null;
+  const selectedIds = useSyncExternalStore(subscribeSelection, getSelectedLayerIds, () => EMPTY_IDS);
+  const layer = doc && activeId ? findLayer(doc.layers, activeId) : null;
 
   // No selection → show the canvas/scene info (mirrors the Scene menu's readout).
   if (!layer) return <CanvasInfo doc={doc} />;
+
+  // A GROUP primary gets NO transform/blend/opacity fields — a group's own
+  // transform stays identity and its blend/opacity aren't applied in v1
+  // (layer-tree.ts semantics); offering the fields would write dead values a
+  // future group-composition renderer would suddenly start reading.
+  if (isGroup(layer)) return <GroupInfo layer={layer} count={selectedIds.length} />;
 
   const KindIcon = KIND_ICON[layer.kind];
   const nat = layer.kind === "raster" ? { w: layer.naturalWidth, h: layer.naturalHeight } : null;
@@ -175,6 +185,16 @@ export function InspectorBody() {
         <span className="truncate font-semibold text-accent-foreground" title={layer.name}>
           {layer.name}
         </span>
+        {selectedIds.length > 1 && (
+          /* multi-selection marker — the fields below edit the PRIMARY layer.
+             ∑CG: aria-label for the ×N count. sample: "Layers selected" */
+          <span
+            aria-label="∑CG"
+            className="shrink-0 border border-border bg-card px-1 text-[10px] tabular-nums text-muted-foreground"
+          >
+            ×{selectedIds.length}
+          </span>
+        )}
         {nat && (
           <span className="ml-auto shrink-0 text-[11px] tabular-nums text-muted-foreground">
             {nat.w}×{nat.h}
@@ -287,6 +307,40 @@ function OpacityField({ layerId, opacity }: { layerId: string; opacity: number }
       <input className="w-full min-w-0 bg-transparent text-right text-xs tabular-nums outline-none" {...field} />
       <span className="shrink-0 text-[10px] text-muted-foreground">%</span>
     </label>
+  );
+}
+
+/** Group-primary state: identity strip + member count (no editable fields —
+ *  see the isGroup branch above). */
+function GroupInfo({ layer, count }: { layer: Layer; count: number }) {
+  const members = leafLayers(layer).length;
+  return (
+    <div className="flex h-full flex-col overflow-hidden text-xs">
+      <div className="flex items-center gap-2 border-b border-border bg-accent px-3 py-1.5">
+        <span className="grid size-6 shrink-0 place-items-center bg-primary text-primary-foreground">
+          <Folder className="size-3.5" aria-hidden />
+        </span>
+        <span className="truncate font-semibold text-accent-foreground" title={layer.name || undefined}>
+          {layer.name || (
+            // ∑CG: display name for an unnamed group (matches the Layers panel gap)
+            //   spec: ≤ 12 chars, noun; British spelling. sample: "Group"
+            <span className="font-normal text-accent-foreground/70">∑CG</span>
+          )}
+        </span>
+        {count > 1 && (
+          /* ∑CG: aria-label for the ×N count. sample: "Layers selected" */
+          <span
+            aria-label="∑CG"
+            className="ml-auto shrink-0 border border-border bg-card px-1 text-[10px] tabular-nums text-muted-foreground"
+          >
+            ×{count}
+          </span>
+        )}
+      </div>
+      <div className="border-b border-border">
+        <InfoRow label="Layers" value={String(members)} />
+      </div>
+    </div>
   );
 }
 

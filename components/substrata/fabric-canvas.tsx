@@ -1,18 +1,41 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Canvas, Point } from "fabric";
+import {
+  ActiveSelection,
+  Canvas,
+  FitContentLayout,
+  InteractiveFabricObject,
+  LayoutManager,
+  Point,
+  controlsUtils,
+  util as fabricUtil,
+} from "fabric";
+import type { FabricObject, LayoutStrategyResult, StrictLayoutContext } from "fabric";
 import { getSnapshot, subscribe, setDoc } from "@/lib/substrata/doc-store";
 import { registerViewportController, reportZoom } from "@/lib/substrata/viewport";
 import { createEmptyDoc } from "@/lib/substrata/doc-model";
-import type { Artboard, SubstrataDoc } from "@/lib/substrata/doc-model";
+import type { Artboard, SubstrataDoc, Transform } from "@/lib/substrata/doc-model";
 import { createReconcileState, reconcile, getLayerIdForObject } from "@/lib/substrata/sync";
 import { initSubstrataFilterBackend } from "@/lib/substrata/filter-backend";
 import { importImageFile } from "@/lib/substrata/import-raster";
-import { setTransform } from "@/lib/substrata/layer-ops";
-import { getActiveLayerId, setActiveLayer, subscribeSelection } from "@/lib/substrata/selection";
+import { setTransform, setTransforms } from "@/lib/substrata/layer-ops";
+import { collectIds, findLayer, leafLayers, leafRenderList } from "@/lib/substrata/layer-tree";
+import {
+  getSelectedLayerIds,
+  pruneSelection,
+  setSelection,
+  subscribeSelection,
+} from "@/lib/substrata/selection";
 import { loadLatestProject, startAutosave, persistAll, clearPersistedData } from "@/lib/substrata/autosave";
 import { getPersistenceEnabled, subscribePersistence } from "@/lib/substrata/persistence-pref";
+import { GRID_SIZE, getGuides, subscribeGuides } from "@/lib/substrata/guides-pref";
+import {
+  getToolSettings,
+  setTransformAsGroup,
+  subscribeToolSettings,
+} from "@/lib/substrata/tool-settings";
+import { buildSnapField, computeSnap, type SnapBox } from "@/lib/substrata/snap-engine";
 import { useFilePaste } from "@/hooks/use-file-paste";
 
 /**
@@ -25,6 +48,25 @@ import { useFilePaste } from "@/hooks/use-file-paste";
  * Still skeleton-grade: viewport just fits the artboard to the container (real
  * pan/zoom is M1-4); no tool interaction yet (MOVE is M1-10).
  */
+
+/**
+ * Layout strategy for "transform separately" selections (Affinity-style): the
+ * ActiveSelection's box fits ONLY the ANCHOR child (index 0 — the first id in
+ * the selection store), so Fabric's native border + handles sit on the anchor
+ * object while the other members get lightweight overlay boxes. Because the
+ * box centre == the anchor's centre, the own-centre separate-rotation keeps
+ * the anchor glued to its handles through rotations.
+ */
+// (inherits FitContentLayout's static `type` — it's only a serialisation key,
+// and this layout manager is never persisted)
+class AnchorBoxLayout extends FitContentLayout {
+  calcBoundingBox(
+    objects: FabricObject[],
+    context: StrictLayoutContext,
+  ): LayoutStrategyResult | undefined {
+    return super.calcBoundingBox(objects.length > 0 ? [objects[0]] : objects, context);
+  }
+}
 
 /** Fit the artboard within the viewport with a little padding, centred. */
 function fitView(canvas: Canvas, artboard: Artboard): void {
@@ -46,7 +88,8 @@ export function FabricCanvas() {
     if (!wrap || !el) return;
 
     const canvas = new Canvas(el, {
-      selection: false,
+      // Native multi-select (M2): shift-click membership + rubber-band box.
+      selection: true,
       preserveObjectStacking: true,
       // Draw selection controls AFTER the artboard clipPath so a layer's handles
       // stay visible even when its content is dragged off the canvas (clipped).
@@ -55,35 +98,139 @@ export function FabricCanvas() {
     initSubstrataFilterBackend();
     const state = createReconcileState();
 
-    // Apply the selection store onto the canvas. Runs both on selection change
-    // AND after every reconcile, so a layer selected the instant it's created
+    // ── selection chrome (backdrop-sketch parity) ─────────────────────────────
+    // Square 8px paper-filled handles with a primary 1.5px border, primary
+    // selection border, and a CIRCULAR rotate handle on Fabric's stem. Controls
+    // are shared through ownDefaults (Fabric's documented pattern for one
+    // shared control set) — NOTE for M2 text: Textbox needs its own control
+    // set, so this shared record must become per-kind then.
+    const sharedControls = controlsUtils.createObjectDefaultControls();
+    sharedControls.mtr.render = controlsUtils.renderCircleControl;
+    const applySelectionChrome = () => {
+      const css = getComputedStyle(document.documentElement);
+      const primary = css.getPropertyValue("--primary").trim();
+      const paper = css.getPropertyValue("--background").trim();
+      const chrome = {
+        transparentCorners: false,
+        cornerStyle: "rect" as const,
+        cornerSize: 8,
+        cornerColor: paper,
+        cornerStrokeColor: primary,
+        borderColor: primary,
+        borderScaleFactor: 1.5,
+      };
+      Object.assign(InteractiveFabricObject.ownDefaults, chrome, { controls: sharedControls });
+      // recolour objects that already exist (theme flips re-run this)
+      for (const [id, obj] of state.byId) {
+        if (id !== "__artboard__") obj.set(chrome);
+      }
+      canvas.selectionColor = `color-mix(in oklch, ${primary} 10%, transparent)`;
+      canvas.selectionBorderColor = primary;
+      canvas.selectionLineWidth = 1;
+      canvas.requestRenderAll();
+    };
+    applySelectionChrome();
+    const themeObserver = new MutationObserver(applySelectionChrome);
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+
+    // Suppresses the canvas→store echo while WE drive the canvas selection
+    // programmatically (store→canvas apply, commit-time rebuild). Without it, a
+    // group id selected in the panel would bounce back as its leaf ids.
+    let squelchSelectionEvents = false;
+
+    /** Store ids → the SELECTABLE leaf objects they cover (group ids expand to
+     *  their visible, unlocked leaf members — groups are folders). Flags are
+     *  composed from the DOC ROOT, so a hidden/locked ancestor above the
+     *  selected node excludes its leaves (matching the reconciler). */
+    const selectedLeafObjects = (): FabricObject[] => {
+      const doc = getSnapshot();
+      if (!doc) return [];
+      const effective = new Map(leafRenderList(doc.layers).map((e) => [e.layer.id, e]));
+      const out: FabricObject[] = [];
+      for (const id of getSelectedLayerIds()) {
+        const layer = findLayer(doc.layers, id);
+        if (!layer) continue;
+        for (const leaf of leafLayers(layer)) {
+          const entry = effective.get(leaf.id);
+          if (!entry || !entry.visible || entry.locked) continue;
+          const obj = state.byId.get(leaf.id);
+          if (obj && !out.includes(obj)) out.push(obj);
+        }
+      }
+      return out;
+    };
+
+    // ActiveSelections WE built in separate mode (anchor-box layout) — the
+    // overlay and the rebuild guard key off membership here.
+    const anchorStyled = new WeakSet<ActiveSelection>();
+
+    // Apply the selection store onto the canvas. Runs on selection change AND
+    // after every reconcile, so a layer selected the instant it's created
     // (e.g. on import) gets its controls once its Fabric object exists — the
     // post-update subscriber alone can race object creation.
     const applySelection = () => {
-      const id = getActiveLayerId();
-      const current = canvas.getActiveObject();
-      if (id === null) {
-        if (current) {
-          canvas.discardActiveObject();
-          canvas.requestRenderAll();
-        }
+      const objs = selectedLeafObjects();
+      const current = canvas.getActiveObjects();
+      const active = canvas.getActiveObject();
+      const separate = !getToolSettings().transformAsGroup;
+      const sameSet = objs.length === current.length && objs.every((o) => current.includes(o));
+      // A live multi-selection must also match the CURRENT transform mode.
+      // CRUCIAL: convert IN PLACE (swap the layout manager + re-layout), never
+      // discard/rebuild — applySelection runs synchronously inside Fabric's
+      // own mouse handlers (selection events → store → here), and swapping the
+      // active object out from under a mid-flight mousedown leaves Fabric
+      // driving a zombie selection (ghost chrome, garbage child coords).
+      if (sameSet && active instanceof ActiveSelection && anchorStyled.has(active) !== separate) {
+        active.layoutManager = new LayoutManager(separate ? new AnchorBoxLayout() : new FitContentLayout());
+        if (separate) anchorStyled.add(active);
+        else anchorStyled.delete(active);
+        active.triggerLayout();
+        active.setCoords();
+        canvas.requestRenderAll();
         return;
       }
-      const obj = state.byId.get(id);
-      if (obj && current !== obj) {
-        canvas.setActiveObject(obj);
-        canvas.requestRenderAll();
+      // Same object set + right mode → leave the live selection alone (breaks
+      // the loop with the canvas events; never rebuilds an AS mid-use).
+      if (sameSet) return;
+      squelchSelectionEvents = true;
+      try {
+        if (objs.length === 0) {
+          if (active) canvas.discardActiveObject();
+        } else if (objs.length === 1) {
+          canvas.setActiveObject(objs[0]);
+        } else {
+          const as = new ActiveSelection(objs, {
+            canvas,
+            ...(separate ? { layoutManager: new LayoutManager(new AnchorBoxLayout()) } : {}),
+          });
+          if (separate) anchorStyled.add(as);
+          canvas.setActiveObject(as);
+        }
+      } finally {
+        squelchSelectionEvents = false;
       }
-      // obj not created yet → a later reconcile's applySelection picks it up.
+      canvas.requestRenderAll();
     };
 
     const render = () => {
       const doc = getSnapshot();
       if (!doc) return;
+      // A live ActiveSelection holds its children in selection-RELATIVE coords,
+      // while reconcile writes doc-ABSOLUTE transforms — running it into grouped
+      // children corrupts their positions (visibly, and a later drag would then
+      // commit garbage). Tear the selection down first (squelched; Fabric bakes
+      // coords back), reconcile onto ungrouped objects, rebuild from the store.
+      if (canvas.getActiveObject() instanceof ActiveSelection) {
+        squelchSelectionEvents = true;
+        try {
+          canvas.discardActiveObject();
+        } finally {
+          squelchSelectionEvents = false;
+        }
+      }
       reconcile(canvas, doc, state);
-      // Drop selection if its layer is gone (e.g. undoing an import).
-      const sel = getActiveLayerId();
-      if (sel && !doc.layers.some((l) => l.id === sel)) setActiveLayer(null);
+      // Drop selected ids whose layers are gone (e.g. undoing an import).
+      pruneSelection(new Set(collectIds(doc.layers)));
       applySelection();
     };
 
@@ -210,39 +357,422 @@ export function FabricCanvas() {
       if (spaceHeld) setCanvasCursor("grab");
     });
 
-    // Canvas → store: reflect the active Fabric object into the selection store.
+    // Canvas → store: reflect the user's canvas selection (leaf ids — clicking
+    // the canvas selects layers, not their groups; group selection comes from
+    // the Layers panel). Squelched while WE drive the canvas programmatically.
     const syncSelectionToStore = () => {
-      const obj = canvas.getActiveObject();
-      setActiveLayer(obj ? getLayerIdForObject(obj) ?? null : null);
+      if (squelchSelectionEvents) return;
+      const ids = canvas
+        .getActiveObjects()
+        .map((o) => getLayerIdForObject(o))
+        .filter((id): id is string => !!id);
+      setSelection(ids);
     };
     canvas.on("selection:created", syncSelectionToStore);
     canvas.on("selection:updated", syncSelectionToStore);
-    canvas.on("selection:cleared", () => setActiveLayer(null));
+    canvas.on("selection:cleared", syncSelectionToStore);
 
-    // The one controlled Fabric → doc path: commit a transform after a drag/
+    /** Absolute doc transform read off an object's COMPOSED matrix — correct
+     *  even while the object sits inside an ActiveSelection (whose transform it
+     *  includes). qrDecompose folds flips into scale signs; split them back
+     *  out. translateX/Y is the absolute centre (our x/y convention). Skew from
+     *  scaling a mixed-rotation selection is dropped — accepted v1 limit. */
+    const absoluteTransformOf = (obj: FabricObject): Transform => {
+      const d = fabricUtil.qrDecompose(obj.calcTransformMatrix());
+      return {
+        x: d.translateX,
+        y: d.translateY,
+        scaleX: Math.abs(d.scaleX),
+        scaleY: Math.abs(d.scaleY),
+        angle: d.angle,
+        flipX: d.scaleX < 0,
+        flipY: d.scaleY < 0,
+      };
+    };
+
+    // The one controlled Fabric → doc path: commit transforms after a drag/
     // scale/rotate ends. The doc stays authoritative; reconcile re-syncs.
     canvas.on("object:modified", (e) => {
-      const obj = e.target;
-      if (!obj) return;
-      const id = getLayerIdForObject(obj);
+      const target = e.target;
+      if (!target) return;
+
+      if (target instanceof ActiveSelection) {
+        // Multi-selection gesture: read every child's ABSOLUTE transform from
+        // its composed matrix and commit them as ONE undo step. NEVER discard
+        // the selection in here — _discardActiveObject sees the discarded
+        // object as the still-current transform target and re-runs
+        // endCurrentTransform → re-fires object:modified → infinite recursion
+        // (SelectableCanvas.ts:1295; the stack overflow also aborts Fabric's
+        // `_currentTransform = null`, leaving the bbox glued to the cursor).
+        // The commit defers one microtask so the doc-emit → render() →
+        // selection teardown/rebuild runs after Fabric's mouseup has fully
+        // completed and the transform is closed.
+        const entries = target.getObjects().flatMap((obj) => {
+          const id = getLayerIdForObject(obj);
+          return id ? [{ id, transform: absoluteTransformOf(obj) }] : [];
+        });
+        queueMicrotask(() => setTransforms(entries));
+        return;
+      }
+
+      const id = getLayerIdForObject(target);
       if (!id) return;
       setTransform(id, {
-        x: obj.left,
-        y: obj.top,
-        scaleX: obj.scaleX,
-        scaleY: obj.scaleY,
-        angle: obj.angle,
-        flipX: obj.flipX,
-        flipY: obj.flipY,
+        x: target.left,
+        y: target.top,
+        scaleX: target.scaleX,
+        scaleY: target.scaleY,
+        angle: target.angle,
+        flipX: target.flipX,
+        flipY: target.flipY,
       });
     });
 
     // Layers move freely; the canvas clipPath (set in reconcile) hides anything
     // past the artboard edge, so no position constraint is needed here.
 
+    // ── snapping + smart guides + grid (M2-12) ────────────────────────────────
+    // object:moving gets a scene-space correction against the artboard edges/
+    // centre, sibling bboxes, and (when on) the grid; matched lines draw on the
+    // top context. Threshold FEELS in screen px, so it divides by zoom.
+    // Unrotated-bbox approximation (documented in snap-engine.ts).
+    const SNAP_SCREEN_PX = 6;
+    let activeGuides: { v: number[]; h: number[] } | null = null;
+
+    // ── transform separately (the shared MOVE/SELECT setting) ────────────────
+    // With "Separate" on, rotating/scaling a multi-selection transforms each
+    // child about its OWN centre: per frame, the child's selection-local matrix
+    // is rewritten to G⁻¹ · T(cᵢ) · D · T(-cᵢ) · Wᵢ — Wᵢ its world matrix at
+    // gesture start, cᵢ its centre, D the gesture's rotation/scale delta, G the
+    // live selection matrix. The commit path composes G · local, so it needs no
+    // special casing. Translation is identical either way (not intercepted).
+    let separateBase: {
+      world: Map<FabricObject, ReturnType<FabricObject["calcTransformMatrix"]>>;
+      angle: number;
+      scaleX: number;
+      scaleY: number;
+    } | null = null;
+
+    canvas.on("before:transform", (e) => {
+      const t = e.transform?.target;
+      separateBase =
+        t instanceof ActiveSelection
+          ? {
+              world: new Map(t.getObjects().map((o) => [o, o.calcTransformMatrix()])),
+              angle: t.angle,
+              scaleX: t.scaleX,
+              scaleY: t.scaleY,
+            }
+          : null;
+    });
+
+    const transformSeparately = (target: FabricObject, kind: "rotate" | "scale") => {
+      if (!separateBase || getToolSettings().transformAsGroup || !(target instanceof ActiveSelection)) {
+        return;
+      }
+      const th = fabricUtil.degreesToRadians(target.angle - separateBase.angle);
+      const D =
+        kind === "rotate"
+          ? ([Math.cos(th), Math.sin(th), -Math.sin(th), Math.cos(th), 0, 0] as const)
+          : ([target.scaleX / separateBase.scaleX, 0, 0, target.scaleY / separateBase.scaleY, 0, 0] as const);
+      const Ginv = fabricUtil.invertTransform(target.calcTransformMatrix());
+      for (const child of target.getObjects()) {
+        const W = separateBase.world.get(child);
+        if (!W) continue;
+        const cx = W[4]; // a world matrix's translation is the child's centre
+        const cy = W[5];
+        // T(c) · D · T(-c), collapsed
+        const about: [number, number, number, number, number, number] = [
+          D[0],
+          D[1],
+          D[2],
+          D[3],
+          cx - D[0] * cx - D[2] * cy,
+          cy - D[1] * cx - D[3] * cy,
+        ];
+        const local = fabricUtil.multiplyTransformMatrices(
+          Ginv,
+          fabricUtil.multiplyTransformMatrices(about, W),
+        );
+        fabricUtil.applyTransformToObject(child, local);
+        child.setCoords();
+      }
+    };
+
+    // Live drag read-out (the sketch's dimbadge): move → X/Y · scale → W × H ·
+    // rotate → angle. Rides in MOUSE vicinity (Ruby's call), not under the
+    // bbox. px/py are viewport coords. Values are data (numbers + units).
+    let dragBadge: {
+      target: FabricObject;
+      kind: "move" | "scale" | "rotate";
+      px: number;
+      py: number;
+    } | null = null;
+    canvas.on("object:scaling", (e) => {
+      const p = canvas.getViewportPoint(e.e);
+      dragBadge = e.target ? { target: e.target, kind: "scale", px: p.x, py: p.y } : null;
+      if (e.target) transformSeparately(e.target, "scale");
+      canvas.requestRenderAll();
+    });
+    canvas.on("object:rotating", (e) => {
+      const target = e.target;
+      // ⇧ snaps rotation to 45° steps — applied BEFORE the separate-mode
+      // correction and the badge, so both read the snapped angle. Objects and
+      // selections use centre origins, so a plain angle write spins in place.
+      if (target && "shiftKey" in e.e && e.e.shiftKey) {
+        target.set({ angle: Math.round(target.angle / 45) * 45 });
+        target.setCoords();
+      }
+      const p = canvas.getViewportPoint(e.e);
+      dragBadge = target ? { target, kind: "rotate", px: p.x, py: p.y } : null;
+      if (target) transformSeparately(target, "rotate");
+      canvas.requestRenderAll();
+    });
+
+    const boxOf = (obj: FabricObject): SnapBox => {
+      const c = obj.getCenterPoint();
+      return { x: c.x, y: c.y, w: obj.getScaledWidth(), h: obj.getScaledHeight() };
+    };
+
+    canvas.on("object:moving", (e) => {
+      if (e.target) {
+        const p = canvas.getViewportPoint(e.e);
+        dragBadge = { target: e.target, kind: "move", px: p.x, py: p.y };
+      }
+      const g = getGuides();
+      const target = e.target;
+      const doc = getSnapshot();
+      if (!target || !doc || (!g.snap && !g.grid)) {
+        activeGuides = null;
+        return;
+      }
+      const moving = new Set(target instanceof ActiveSelection ? target.getObjects() : [target]);
+      const others: SnapBox[] = [];
+      if (g.snap) {
+        for (const [id, obj] of state.byId) {
+          if (id === "__artboard__" || moving.has(obj) || !obj.visible) continue;
+          others.push(boxOf(obj));
+        }
+      }
+      const field = g.snap
+        ? buildSnapField(doc.artboard, others)
+        : { v: [] as number[], h: [] as number[] };
+      const res = computeSnap(
+        boxOf(target),
+        field,
+        g.grid ? GRID_SIZE : null,
+        SNAP_SCREEN_PX / canvas.getZoom(),
+      );
+      if (res.dx || res.dy) {
+        const c = target.getCenterPoint();
+        target.setPositionByOrigin(new Point(c.x + res.dx, c.y + res.dy), "center", "center");
+        target.setCoords();
+      }
+      activeGuides = res.v.length || res.h.length ? { v: res.v, h: res.h } : null;
+      canvas.requestRenderAll();
+    });
+
+    const clearGuides = () => {
+      if (activeGuides || dragBadge) {
+        activeGuides = null;
+        dragBadge = null;
+        canvas.requestRenderAll();
+      }
+    };
+    canvas.on("mouse:up", clearGuides);
+
+    // Draw pass: grid (when on) + the matched smart guides, in viewport space
+    // on the top context. Skipped entirely when there's nothing to draw so the
+    // top context stays fabric's own (rubber-band selector etc.).
+    canvas.on("after:render", () => {
+      const g = getGuides();
+      const showGrid = g.grid;
+      // separate-mode members (beyond the anchor, which wears the real chrome)
+      // each get an independent overlay box, Affinity-style
+      const activeObj = canvas.getActiveObject();
+      const sepMembers =
+        activeObj instanceof ActiveSelection && anchorStyled.has(activeObj)
+          ? activeObj.getObjects().slice(1)
+          : null;
+      const ctx = canvas.contextTop;
+      if (!ctx) return;
+      // ALWAYS clear before deciding whether to draw — an early return here
+      // leaves the previous frame's chrome as a frozen stain on the top canvas
+      // (member boxes that "don't move", accumulating per deselect).
+      canvas.clearContext(ctx);
+      if (!showGrid && !activeGuides && !dragBadge && !sepMembers) return;
+      const doc = getSnapshot();
+      if (!doc) return;
+      const vt = canvas.viewportTransform;
+      const z = vt[0];
+      const sx = (x: number) => x * z + vt[4];
+      const sy = (y: number) => y * z + vt[5];
+      const css = getComputedStyle(document.documentElement);
+
+      if (showGrid) {
+        ctx.save();
+        ctx.strokeStyle = css.getPropertyValue("--foreground").trim() || "#000";
+        ctx.globalAlpha = 0.12;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let x = 0; x <= doc.artboard.width; x += GRID_SIZE) {
+          ctx.moveTo(sx(x), sy(0));
+          ctx.lineTo(sx(x), sy(doc.artboard.height));
+        }
+        for (let y = 0; y <= doc.artboard.height; y += GRID_SIZE) {
+          ctx.moveTo(sx(0), sy(y));
+          ctx.lineTo(sx(doc.artboard.width), sy(y));
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      if (activeGuides) {
+        // smart guides read dashed-destructive per the backdrop sketch
+        ctx.save();
+        ctx.strokeStyle = css.getPropertyValue("--destructive").trim() || "#c33";
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (const x of activeGuides.v) {
+          ctx.moveTo(sx(x), 0);
+          ctx.lineTo(sx(x), canvas.getHeight());
+        }
+        for (const y of activeGuides.h) {
+          ctx.moveTo(0, sy(y));
+          ctx.lineTo(canvas.getWidth(), sy(y));
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      if (sepMembers) {
+        // fresh corners each frame (calcACoords skips the setCoords cache, so
+        // the boxes track mid-gesture without extra bookkeeping). NOTE: a
+        // grouped object's aCoords live in its PARENT plane (v7 coordinate
+        // model) — i.e. selection-relative here — so compose with the
+        // selection's matrix to reach scene coords, or the boxes render as
+        // origin-anchored phantoms.
+        const selMatrix = (activeObj as ActiveSelection).calcTransformMatrix();
+        ctx.save();
+        ctx.strokeStyle = css.getPropertyValue("--primary").trim() || "#3a7";
+        ctx.lineWidth = 1;
+        for (const child of sepMembers) {
+          const c = child.calcACoords();
+          const pts = [c.tl, c.tr, c.br, c.bl].map((p) => fabricUtil.transformPoint(p, selMatrix));
+          // a member fully OUTSIDE the artboard renders as nothing (the canvas
+          // clip) — dash + dim its box so it reads as "selected, but off-canvas"
+          // instead of a phantom rectangle
+          const xs2 = pts.map((p) => p.x);
+          const ys2 = pts.map((p) => p.y);
+          const offCanvas =
+            Math.max(...xs2) < 0 ||
+            Math.min(...xs2) > doc.artboard.width ||
+            Math.max(...ys2) < 0 ||
+            Math.min(...ys2) > doc.artboard.height;
+          ctx.setLineDash(offCanvas ? [3, 3] : []);
+          ctx.globalAlpha = offCanvas ? 0.5 : 1;
+          ctx.beginPath();
+          ctx.moveTo(sx(pts[0].x), sy(pts[0].y));
+          ctx.lineTo(sx(pts[1].x), sy(pts[1].y));
+          ctx.lineTo(sx(pts[2].x), sy(pts[2].y));
+          ctx.lineTo(sx(pts[3].x), sy(pts[3].y));
+          ctx.closePath();
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      if (dragBadge) {
+        // the sketch's dimbadge as a cursor-following pill (offset below-right,
+        // flipping inside the viewport at the edges)
+        const t = dragBadge.target;
+        let text: string;
+        if (dragBadge.kind === "move") {
+          const c = t.getCenterPoint();
+          text = `X ${Math.round(c.x)}  Y ${Math.round(c.y)}`;
+        } else if (dragBadge.kind === "scale") {
+          text = `${Math.round(t.getScaledWidth())} × ${Math.round(t.getScaledHeight())}`;
+        } else {
+          text = `${Math.round(((t.angle % 360) + 360) % 360)}°`;
+        }
+        ctx.save();
+        ctx.font = '10.5px "iA Writer Quattro", ui-monospace, monospace';
+        const w = ctx.measureText(text).width + 14;
+        const h = 17;
+        let bx = dragBadge.px + 14;
+        let by = dragBadge.py + 18;
+        if (bx + w > canvas.getWidth() - 2) bx = dragBadge.px - 14 - w;
+        if (by + h > canvas.getHeight() - 2) by = dragBadge.py - 18 - h;
+        ctx.fillStyle = css.getPropertyValue("--primary").trim() || "#3a7";
+        ctx.fillRect(bx, by, w, h);
+        ctx.fillStyle = css.getPropertyValue("--primary-foreground").trim() || "#fff";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, bx + w / 2, by + h / 2 + 1);
+        ctx.restore();
+      }
+    });
+
+    // Toggling grid/snap re-renders immediately (grid shows/hides).
+    const unsubscribeGuides = subscribeGuides(() => canvas.requestRenderAll());
+    // Toggling Group/Separate swaps a live multi-selection's layout + overlay.
+    const unsubscribeToolSettings = subscribeToolSettings(() => {
+      applySelection();
+      canvas.requestRenderAll();
+    });
+
     // Store → canvas: reflect the selection store onto the canvas. id-equality
     // guards on both sides keep this from looping with the events above.
     const unsubscribeSelection = subscribeSelection(applySelection);
+
+    // Dev-only debug rig for selection-chrome bugs — console + automation.
+    // window.__substrata.{selection, layers, select, setSeparate} (dev builds only).
+    if (process.env.NODE_ENV !== "production") {
+      const toScreen = (x: number, y: number) => {
+        const vt = canvas.viewportTransform;
+        return { x: x * vt[0] + vt[4], y: y * vt[3] + vt[5] };
+      };
+      (window as unknown as Record<string, unknown>).__substrata = {
+        selection: () => {
+          const a = canvas.getActiveObject();
+          return {
+            active: a?.constructor.name,
+            box: a && { left: a.left, top: a.top, width: a.width, height: a.height, angle: a.angle },
+            children:
+              a instanceof ActiveSelection
+                ? a.getObjects().map((o) => ({
+                    id: getLayerIdForObject(o),
+                    left: o.left,
+                    top: o.top,
+                    angle: o.angle,
+                    scaleX: o.scaleX,
+                    scaleY: o.scaleY,
+                    skewX: o.skewX,
+                    aCoords: o.calcACoords(),
+                  }))
+                : null,
+          };
+        },
+        layers: () => {
+          const doc = getSnapshot();
+          if (!doc) return [];
+          return leafRenderList(doc.layers).map((e) => {
+            const obj = state.byId.get(e.layer.id);
+            const c = obj?.getCenterPoint();
+            return {
+              id: e.layer.id,
+              name: e.layer.name,
+              scene: c && { x: c.x, y: c.y },
+              screen: c && toScreen(c.x, c.y),
+            };
+          });
+        },
+        select: (ids: string[]) => setSelection(ids),
+        setSeparate: (v: boolean) => setTransformAsGroup(!v),
+        upperCanvasCount: () => document.querySelectorAll("canvas.upper-canvas").length,
+      };
+    }
 
     const unsubscribe = subscribe(render);
     render();
@@ -307,6 +837,10 @@ export function FabricCanvas() {
       unsubscribePersistence();
       unsubscribe();
       unsubscribeSelection();
+      unsubscribeGuides();
+      unsubscribeToolSettings();
+      themeObserver.disconnect();
+      delete (window as unknown as Record<string, unknown>).__substrata;
       registerViewportController(null);
       ro.disconnect();
       wrap.removeEventListener("dragover", onDragOver);

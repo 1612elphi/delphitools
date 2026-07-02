@@ -49,6 +49,7 @@ import {
   type DockTarget,
 } from "@/lib/substrata/dock-pref";
 import { setPinned, type ModuleId } from "@/lib/substrata/pin-pref";
+import { getGuides, subscribeGuides, toggleGuide } from "@/lib/substrata/guides-pref";
 import { getZoom, subscribeViewport, viewport } from "@/lib/substrata/viewport";
 import { toast } from "@/lib/substrata/toast";
 import { importImageFile } from "@/lib/substrata/import-raster";
@@ -486,6 +487,7 @@ function DockRow({ label, id, docks }: { label: string; id: ModuleId; docks: Rec
 
 function WorkspaceMenu() {
   const edge = useSyncExternalStore(subscribeDock, getOmnibarEdge, () => "bottom" as Edge);
+  const guides = useSyncExternalStore(subscribeGuides, getGuides, getGuides);
   const rail = useSyncExternalStore(subscribeDock, getRailEdge, () => "follow" as RailEdge);
   const docks = useSyncExternalStore(subscribeDock, getModuleDockAll, getModuleDockAll);
   const zoom = useSyncExternalStore(subscribeViewport, getZoom, () => 1);
@@ -528,7 +530,16 @@ function WorkspaceMenu() {
         }}
         render={renderSeg}
       />
-      <WRow label="Guides" seg={["Rulers", "Grid", "Snap"]} on={["Rulers", "Snap"]} render={renderSeg} />
+      {/* Rulers stores state only (renderer pending); Grid + Snap are live (M2-12). */}
+      <WRow
+        label="Guides"
+        seg={["Rulers", "Grid", "Snap"]}
+        on={[guides.rulers && "Rulers", guides.grid && "Grid", guides.snap && "Snap"].filter(
+          (s): s is string => typeof s === "string",
+        )}
+        onSelect={(s) => toggleGuide(s.toLowerCase() as "rulers" | "grid" | "snap")}
+        render={renderSeg}
+      />
       <Sep />
       <Item label="Theme" onClick={toggleTheme} />
     </Box>

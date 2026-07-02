@@ -2,18 +2,28 @@
 
 import { useEffect } from "react";
 import { undo, redo } from "@/lib/substrata/doc-store";
+import { nudgeSelection } from "@/lib/substrata/layer-ops";
+import { getActiveTool } from "@/lib/substrata/tool";
+import { getToolSettings } from "@/lib/substrata/tool-settings";
 
 /**
- * Substrata keyboard map (M1-8 slice: undo/redo). ⌘/Ctrl+Z = undo,
- * ⌘/Ctrl+Shift+Z or Ctrl+Y = redo. Ignored while typing in a field. Mounted by
- * the editor shell; the top-bar undo/redo buttons (gated) will call the same
- * doc-store actions.
+ * Substrata keyboard map. ⌘/Ctrl+Z = undo, ⌘/Ctrl+Shift+Z or Ctrl+Y = redo.
+ * Arrow keys nudge the selection while MOVE is the active tool (step = the
+ * MOVE settings' nudge value, ⇧ ×10; one undo step per press). Ignored while
+ * typing in a field. Mounted by the editor shell; the top-bar undo/redo
+ * buttons call the same doc-store actions.
  */
+
+const ARROWS: Record<string, readonly [number, number]> = {
+  ArrowLeft: [-1, 0],
+  ArrowRight: [1, 0],
+  ArrowUp: [0, -1],
+  ArrowDown: [0, 1],
+};
+
 export function useEditorShortcuts(): void {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (!(e.metaKey || e.ctrlKey)) return;
-
       const target = e.target as HTMLElement | null;
       if (
         target &&
@@ -25,6 +35,15 @@ export function useEditorShortcuts(): void {
         return;
       }
 
+      const arrow = ARROWS[e.key];
+      if (arrow && !e.metaKey && !e.ctrlKey && !e.altKey && getActiveTool() === "move") {
+        e.preventDefault();
+        const step = getToolSettings().move.nudge * (e.shiftKey ? 10 : 1);
+        nudgeSelection(arrow[0] * step, arrow[1] * step);
+        return;
+      }
+
+      if (!(e.metaKey || e.ctrlKey)) return;
       const key = e.key.toLowerCase();
       if (key === "z") {
         e.preventDefault();

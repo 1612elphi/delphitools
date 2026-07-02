@@ -5,6 +5,7 @@ import {
   Move,
   Crop,
   BoxSelect,
+  Brush,
   Lasso,
   Wand2,
   SlidersHorizontal,
@@ -21,12 +22,31 @@ import {
   AlignHorizontalDistributeCenter,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getActiveTool, setActiveTool, subscribeTool, type ToolId } from "@/lib/substrata/tool";
+import {
+  getActiveSubs,
+  getActiveTool,
+  setActiveSub,
+  setActiveTool,
+  subscribeTool,
+  type ToolId,
+} from "@/lib/substrata/tool";
 import { getOmnibarEdge, getRailEdge, subscribeDock, type Edge, type RailEdge } from "@/lib/substrata/dock-pref";
 import { getPinned, subscribePins, togglePin, type ModuleId } from "@/lib/substrata/pin-pref";
 import { getColour, subscribeColour } from "@/lib/substrata/colour-store";
+import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
+import { findLayer } from "@/lib/substrata/layer-tree";
+import { getActiveLayerId, subscribeSelection } from "@/lib/substrata/selection";
+import { fxDisplayLabel } from "@/lib/substrata/fx-ops";
+import {
+  getToolSettings,
+  subscribeToolSettings,
+  type PieceShape,
+  type ToolSettings,
+} from "@/lib/substrata/tool-settings";
+import type { Layer } from "@/lib/substrata/doc-model";
 import { ModuleBox } from "@/components/substrata/omnibar/modules";
 import { Rail } from "@/components/substrata/omnibar/rail";
+import { ToolSettingsBody } from "@/components/substrata/omnibar/tool-settings";
 
 /**
  * Omnibar (§8) — floating tool + panel cockpit, dockable to any edge. Tools
@@ -38,19 +58,60 @@ import { Rail } from "@/components/substrata/omnibar/rail";
 interface ToolDef {
   id: ToolId;
   key: string;
-  head: React.ReactNode;
-  rest: React.ReactNode[];
+  /** the stack's subtools; [0] is the head/default. Ids are internal (tool.ts
+   *  activeSubs vocabulary — lasso/wand key the contextual read-out); labels
+   *  are Ruby's canonical subtool names (authored chrome, not ∑CG). */
+  subs: { id: string; label: string; icon: React.ReactNode }[];
 }
 
 const ICON = "size-[15px]";
 const EMPTY_PINS: readonly ModuleId[] = [];
 
 const TOOLS: ToolDef[] = [
-  { id: "move", key: "V", head: <Move className={ICON} />, rest: [<Crop key="c" className={ICON} />] },
-  { id: "select", key: "M", head: <BoxSelect className={ICON} />, rest: [<Lasso key="l" className={ICON} />, <Wand2 key="w" className={ICON} />] },
-  { id: "adjust", key: "A", head: <SlidersHorizontal className={ICON} />, rest: [<Sparkles key="f" className={ICON} />, <Palette key="p" className={ICON} />] },
-  { id: "text", key: "T", head: <Type className={ICON} />, rest: [<PenTool key="o" className={ICON} />] },
-  { id: "pieces", key: "P", head: <Shapes className={ICON} />, rest: [<Square key="s" className={ICON} />, <PenTool key="pn" className={ICON} />, <Pencil key="pc" className={ICON} />] },
+  {
+    id: "move",
+    key: "V",
+    subs: [
+      { id: "move", label: "Move", icon: <Move className={ICON} /> },
+      { id: "crop", label: "Crop", icon: <Crop className={ICON} /> },
+    ],
+  },
+  {
+    id: "select",
+    key: "M",
+    subs: [
+      { id: "select", label: "Select", icon: <BoxSelect className={ICON} /> },
+      { id: "lasso", label: "Lasso", icon: <Lasso className={ICON} /> },
+      { id: "wand", label: "Wand", icon: <Wand2 className={ICON} /> },
+    ],
+  },
+  {
+    id: "adjust",
+    key: "A",
+    subs: [
+      { id: "adjust", label: "Adjust", icon: <SlidersHorizontal className={ICON} /> },
+      { id: "filters", label: "Filters", icon: <Sparkles className={ICON} /> },
+      { id: "colour", label: "Colour", icon: <Palette className={ICON} /> },
+    ],
+  },
+  {
+    id: "text",
+    key: "T",
+    subs: [
+      { id: "text", label: "Text", icon: <Type className={ICON} /> },
+      { id: "bezier", label: "Bezier", icon: <PenTool className={ICON} /> },
+    ],
+  },
+  {
+    id: "pieces",
+    key: "P",
+    subs: [
+      { id: "pieces", label: "Pieces", icon: <Shapes className={ICON} /> },
+      { id: "primitives", label: "Primitives", icon: <Square className={ICON} /> },
+      { id: "brush", label: "Brush", icon: <Brush className={ICON} /> },
+      { id: "pencil", label: "Pencil", icon: <Pencil className={ICON} /> },
+    ],
+  },
 ];
 
 const DOCK_POS: Record<Edge, string> = {
@@ -62,6 +123,7 @@ const DOCK_POS: Record<Edge, string> = {
 
 export function Omnibar() {
   const activeTool = useSyncExternalStore(subscribeTool, getActiveTool, () => "move" as ToolId);
+  const activeSubs = useSyncExternalStore(subscribeTool, getActiveSubs, getActiveSubs);
   const edge = useSyncExternalStore(subscribeDock, getOmnibarEdge, () => "bottom" as Edge);
   const pinned = useSyncExternalStore(subscribePins, getPinned, () => EMPTY_PINS);
   const [overflow, setOverflow] = useState(false);
@@ -87,7 +149,14 @@ export function Omnibar() {
       const hit = TOOLS.find((tool) => tool.key.toLowerCase() === e.key.toLowerCase());
       if (hit) {
         e.preventDefault();
-        setActiveTool(hit.id);
+        // re-firing the active tool's key cycles its subtools (M2-8 keymap)
+        if (hit.id === getActiveTool()) {
+          const ids = hit.subs.map((s) => s.id);
+          const next = ids[(ids.indexOf(getActiveSubs()[hit.id]) + 1) % ids.length];
+          setActiveSub(hit.id, next);
+        } else {
+          setActiveTool(hit.id);
+        }
       }
     };
     window.addEventListener("keydown", onKey);
@@ -106,35 +175,20 @@ export function Omnibar() {
         {/* tools */}
         <Zone vertical={vertical}>
           {TOOLS.map((tool) => (
-            <ToolStack key={tool.id} tool={tool} selected={activeTool === tool.id} vertical={vertical} onSelect={() => setActiveTool(tool.id)} />
+            <ToolStack
+              key={tool.id}
+              tool={tool}
+              selected={activeTool === tool.id}
+              activeSub={activeSubs[tool.id]}
+              vertical={vertical}
+              onSelectSub={(sub) => setActiveSub(tool.id, sub)}
+            />
           ))}
         </Zone>
 
-        {/* settings (effects) — pinnable */}
-        <div
-          onClick={() => togglePin("effects")}
-          className={cn(
-            "group/trigger relative flex flex-1 cursor-pointer select-none items-center hover:bg-accent",
-            vertical ? "justify-center py-2" : "gap-2 px-3",
-            isPinned("effects") ? "text-primary shadow-[inset_0_-2px_0_var(--primary)]" : "text-muted-foreground",
-          )}
-        >
-          <span className={isPinned("effects") ? "text-primary" : "text-foreground"}>
-            <Sparkles className={ICON} />
-          </span>
-          {!vertical && (
-            <span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
-              <span className={cn("text-[10px] font-bold uppercase tracking-wide", isPinned("effects") ? "text-primary" : "text-foreground")}>FX</span>
-              <Tag>Bokeh</Tag>
-              <Tag>Gaussian</Tag>
-            </span>
-          )}
-          {!isPinned("effects") && (
-            <Bloom edge={edge} cross="center">
-              <ModuleBox id="effects" />
-            </Bloom>
-          )}
-        </div>
+        {/* contextual settings zone — the middle reads the ACTIVE TOOL (Ruby's
+            call), not a fixed FX strip */}
+        <ContextZone activeTool={activeTool} vertical={vertical} edge={edge} pinned={isPinned("effects")} />
 
         {/* panels */}
         <Panels vertical={vertical}>
@@ -221,38 +275,194 @@ function Tag({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ToolStack({ tool, selected, vertical, onSelect }: { tool: ToolDef; selected: boolean; vertical: boolean; onSelect: () => void }) {
+const PIECE_LABEL: Record<PieceShape, string> = {
+  rectangle: "Rectangle",
+  ellipse: "Ellipse",
+  line: "Line",
+  polygon: "Polygon",
+};
+
+/**
+ * Live read-out chips per tool (Ruby's spec): MOVE = the selection's X/Y ·
+ * SELECT = the active subtool's mode settings (marquee touch/cover +
+ * group/separate, lasso sensitivity, wand tolerance) · ADJUST = the layer's
+ * stack labels · TEXT = font + size · PIECES = the chosen shape. All live —
+ * doc/selection chips track the stores; the rest read tool-settings, so they
+ * update the moment the M2 tools start writing it.
+ */
+function readoutChips(tool: ToolId, sub: string, layer: Layer | null, ts: ToolSettings): string[] {
+  switch (tool) {
+    case "move":
+      return layer
+        ? [`X ${Math.round(layer.transform.x)}`, `Y ${Math.round(layer.transform.y)}`]
+        : [];
+    case "select": {
+      const s = ts.select;
+      if (sub === "lasso") return [`Sensitivity ${s.sensitivity}%`];
+      if (sub === "wand") return [`Tolerance ${s.tolerance}`];
+      return [s.mode === "touch" ? "Touch" : "Cover", ts.transformAsGroup ? "Group" : "Separate"];
+    }
+    case "adjust":
+      return layer
+        ? [
+            ...layer.filters.map((f) => fxDisplayLabel("filters", f)),
+            ...layer.effects.map((f) => fxDisplayLabel("effects", f)),
+          ]
+        : [];
+    case "text":
+      return [ts.text.fontFamily, `${ts.text.fontSize} px`];
+    case "pieces":
+      return [PIECE_LABEL[ts.pieces.shape]];
+  }
+}
+
+/**
+ * The contextual settings zone (Ruby's call): the omnibar's middle reads the
+ * ACTIVE TOOL — icon, name, and live chips summarising its state — and its
+ * bloom opens that tool's settings. ADJUST is the FX mode: the bloom/pin
+ * target is the FX module. Stub tools peek a placeholder settings bloom and
+ * aren't pinnable until their real settings exist (M2 TEXT/PIECES/SELECT ·
+ * M3 ADJUST subtools · MOVE).
+ */
+function ContextZone({
+  activeTool,
+  vertical,
+  edge,
+  pinned,
+}: {
+  activeTool: ToolId;
+  vertical: boolean;
+  edge: Edge;
+  pinned: boolean;
+}) {
+  const doc = useSyncExternalStore(subscribe, getSnapshot, () => null);
+  const layerId = useSyncExternalStore(subscribeSelection, getActiveLayerId, () => null);
+  const toolSettings = useSyncExternalStore(subscribeToolSettings, getToolSettings, getToolSettings);
+  const activeSubs = useSyncExternalStore(subscribeTool, getActiveSubs, getActiveSubs);
+  const isAdjust = activeTool === "adjust";
+  const layer = doc && layerId ? findLayer(doc.layers, layerId) : null;
+  const sub = activeSubs[activeTool];
+  const chips = readoutChips(activeTool, sub, layer, toolSettings).slice(0, 2);
+  const tool = TOOLS.find((t) => t.id === activeTool);
+  const subDef = tool?.subs.find((s) => s.id === sub) ?? tool?.subs[0];
+  const hot = isAdjust && pinned;
+
   return (
-    <div className="group/tool relative flex items-center" title={tool.id}>
+    <div
+      onClick={isAdjust ? () => togglePin("effects") : undefined}
+      className={cn(
+        "group/trigger relative flex flex-1 select-none items-center hover:bg-accent",
+        isAdjust ? "cursor-pointer" : "cursor-default",
+        vertical ? "justify-center py-2" : "gap-2 px-3",
+        hot ? "text-primary shadow-[inset_0_-2px_0_var(--primary)]" : "text-muted-foreground",
+      )}
+    >
+      {/* icon + title track the ACTIVE SUBTOOL, not just the stack head */}
+      <span className={hot ? "text-primary" : "text-foreground"}>{subDef?.icon}</span>
+      {!vertical && (
+        <span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+          <span
+            className={cn(
+              "text-[10px] font-bold uppercase tracking-wide",
+              hot ? "text-primary" : "text-foreground",
+            )}
+          >
+            {subDef?.label}
+          </span>
+          {chips.map((c, i) => (
+            <Tag key={i}>{c}</Tag>
+          ))}
+        </span>
+      )}
+      {isAdjust ? (
+        !pinned && (
+          <Bloom edge={edge} cross="center">
+            {/* the FX module is interactive and this bloom lives INSIDE the
+                trigger's click target — keep its clicks from toggling the pin */}
+            <div onClick={(e) => e.stopPropagation()}>
+              <ModuleBox id="effects" />
+            </div>
+          </Bloom>
+        )
+      ) : (
+        <Bloom edge={edge} cross="center">
+          <ToolSettingsBody tool={activeTool} title={subDef?.label ?? ""} />
+        </Bloom>
+      )}
+    </div>
+  );
+}
+
+/**
+ * One tool stack: head + subtool fan. Subtools select like main tools (Ruby's
+ * call): clicking one activates it (bg-primary), and while a NON-default
+ * subtool is live the fan stays expanded — no hover needed — until another
+ * tool is picked. The head is subs[0]; when a fan subtool is active the head
+ * drops to the soft stack-active look so exactly one cell reads "current".
+ */
+function ToolStack({
+  tool,
+  selected,
+  activeSub,
+  vertical,
+  onSelectSub,
+}: {
+  tool: ToolDef;
+  selected: boolean;
+  activeSub: string;
+  vertical: boolean;
+  onSelectSub: (sub: string) => void;
+}) {
+  const [head, ...rest] = tool.subs;
+  const headActive = selected && activeSub === head.id;
+  const fanPinned = selected && activeSub !== head.id;
+
+  return (
+    <div className="group/tool relative flex items-center">
       <div className={cn("flex items-center gap-0.5", vertical ? "flex-col" : "flex-row")}>
         <button
-          onClick={onSelect}
+          onClick={() => onSelectSub(head.id)}
+          title={head.label}
+          aria-label={head.label}
           className={cn(
             "relative grid size-9 place-items-center",
-            selected ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+            headActive
+              ? "bg-primary text-primary-foreground"
+              : fanPinned
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
           )}
         >
-          {tool.head}
-          {tool.rest.length > 0 && (
+          {head.icon}
+          {rest.length > 0 && (
             <span className="absolute right-0.5 top-[3px] size-0 border-l-[3.5px] border-t-[3.5px] border-l-transparent border-t-current opacity-45" />
           )}
           <span className="absolute bottom-px right-0.5 text-[8px] font-bold opacity-65">{tool.key}</span>
         </button>
-        {tool.rest.map((icon, i) => (
-          <button
-            key={i}
-            // ∑CG: subtool tooltips — labels arrive with the tools (M2)
-            aria-label={`${tool.id} subtool`}
-            className={cn(
-              "grid size-9 place-items-center overflow-hidden text-muted-foreground opacity-0 transition-all hover:bg-accent hover:text-accent-foreground",
-              vertical ? "h-0" : "w-0",
-              selected && (vertical ? "group-hover/tool:h-[34px]" : "group-hover/tool:w-[34px]"),
-              selected && "group-hover/tool:opacity-100",
-            )}
-          >
-            {icon}
-          </button>
-        ))}
+        {rest.map((sub) => {
+          const subActive = selected && activeSub === sub.id;
+          return (
+            <button
+              key={sub.id}
+              onClick={() => onSelectSub(sub.id)}
+              title={sub.label}
+              aria-label={sub.label}
+              className={cn(
+                "grid size-9 place-items-center overflow-hidden opacity-0 transition-all",
+                subActive
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                vertical ? "h-0" : "w-0",
+                selected && (vertical ? "group-hover/tool:h-[34px]" : "group-hover/tool:w-[34px]"),
+                selected && "group-hover/tool:opacity-100",
+                fanPinned && (vertical ? "h-[34px]" : "w-[34px]"),
+                fanPinned && "opacity-100",
+              )}
+            >
+              {sub.icon}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -321,7 +531,17 @@ function Bloom({ edge, cross, children }: { edge: Edge; cross: "center" | "end";
   };
   const origin: Record<Edge, string> = { bottom: "bottom center", top: "top center", left: "left center", right: "right center" };
   return (
-    <div className={cn("pointer-events-none absolute z-[60]", place[edge])}>
+    <div
+      className={cn(
+        // The wrapper's padding spans the trigger→bloom gap. It must become a
+        // HOVER BRIDGE while the group is hovered (the classic hover-gap /
+        // safe-triangle problem): with the wrapper stuck on pointer-events-none,
+        // crossing the gap drops :hover off the trigger and the bloom collapses
+        // before the cursor can reach it. Idle, it stays click-transparent.
+        "pointer-events-none absolute z-[60] group-hover/trigger:[pointer-events:auto]",
+        place[edge],
+      )}
+    >
       <div
         style={{ transformOrigin: origin[edge] }}
         className={cn(

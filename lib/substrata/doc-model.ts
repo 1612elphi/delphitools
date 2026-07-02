@@ -53,14 +53,19 @@ export interface Transform {
  * (`image.filters[]`) — brightness, blur, levels, etc. Order matters. A filter
  * only ever transforms the visible pixels of the layer and cannot draw outside
  * its bounds (that's the filter/effect line: filters stay in, effects can go
- * out). `type` is a registry key — a string in v1, narrowed to a typed union
- * backed by a filter registry in M3 (additive, no v1 shape change).
+ * out). `type` keys into the filter registry (lib/substrata/filters.ts), which
+ * declares each filter's category/tier/params; narrowing `type` to a typed
+ * union stays an M3 option (additive, no v1 shape change).
  */
 export interface Filter {
   id: string;
   type: string;
   enabled: boolean;
-  params: Record<string, number>;
+  /** colours are strings (Duotone/Vignette), numerics are numbers — value kinds
+   *  follow the registry's ParamSpecs (hard validation is an M3 concern).
+   *  Widened additively from number-only — every v1 doc written before the
+   *  widening remains valid, so SCHEMA_VERSION stays 1. */
+  params: Record<string, number | string>;
 }
 
 /**
@@ -100,7 +105,8 @@ interface BaseLayer {
    * Per-layer non-destructive stack, composited in order:
    *   outer effects → (layer content + filters) → inner effects
    *   → then opacity/blendMode composite this layer onto those below.
-   * Both arrays are empty until M3.
+   * Both arrays are editable via the FX module (fx-ops.ts); rendering them is
+   * the M3 engine — until then params are stored/undoable but move no pixels.
    */
   /** Filters (raster, inside-only adjustments), ordered & reorderable. */
   filters: Filter[];
