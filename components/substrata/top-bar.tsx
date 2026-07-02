@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { subscribe, getSnapshot, undo, redo, canUndo, canRedo } from "@/lib/substrata/doc-store";
 import { getPersistenceEnabled, subscribePersistence } from "@/lib/substrata/persistence-pref";
+import { openModal } from "@/lib/substrata/modal";
 import {
   getOmnibarEdge,
   setOmnibarEdge,
@@ -179,7 +180,11 @@ export function TopBar() {
           <Maximize2 className="size-[15px]" />
         </Button>
         <span className="mx-1 h-[18px] w-px bg-border" />
-        <button className="flex h-[30px] items-center gap-1.5 bg-primary px-3 text-[12.5px] font-semibold text-primary-foreground hover:brightness-105">
+        <button
+          type="button"
+          onClick={() => openModal("export")}
+          className="flex h-[30px] items-center gap-1.5 bg-primary px-3 text-[12.5px] font-semibold text-primary-foreground hover:brightness-105"
+        >
           <Download className="size-[15px]" />
           Export
         </button>
@@ -265,10 +270,24 @@ function SceneMenu({
           <Item label="Open…" hint="⌘O" onClick={onClose} />
           <Item label="Open recent" hint="›" />
           <Item label="Import image…" hint="⌘I" onClick={onImport} />
+          <Item
+            label="Canvas size…"
+            onClick={() => {
+              onClose();
+              openModal("canvas-size");
+            }}
+          />
           <Sep />
           <Item label="Save" hint="⌘S" onClick={onClose} />
           <Item label="Save a copy…" hint="⇧⌘S" onClick={onClose} />
-          <Item label="Export…" hint="⌘E" onClick={onClose} />
+          <Item
+            label="Export…"
+            hint="⌘E"
+            onClick={() => {
+              onClose();
+              openModal("export");
+            }}
+          />
           <Sep />
           <Item label="Rename" onClick={onClose} />
           <Item label="Duplicate" onClick={onClose} />

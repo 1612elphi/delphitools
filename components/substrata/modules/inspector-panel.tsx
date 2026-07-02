@@ -14,6 +14,7 @@ import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
 import { getActiveLayerId, subscribeSelection } from "@/lib/substrata/selection";
 import { setBlendMode, setOpacity, setTransform } from "@/lib/substrata/layer-ops";
 import { getPersistenceEnabled, subscribePersistence } from "@/lib/substrata/persistence-pref";
+import { openModal } from "@/lib/substrata/modal";
 import type { BlendMode, Layer, SubstrataDoc } from "@/lib/substrata/doc-model";
 
 /**
@@ -90,8 +91,9 @@ const KIND_ICON: Record<Layer["kind"], LucideIcon> = {
 };
 
 // Standard canvas compositing modes → their conventional names (British
-// spelling). Treated as functional chrome labels, not authored copy.
-const BLEND_OPTIONS: { value: BlendMode; label: string }[] = [
+// spelling). Treated as functional chrome labels, not authored copy. Shared with
+// the Layers footer blend dropdown.
+export const BLEND_OPTIONS: { value: BlendMode; label: string }[] = [
   { value: "source-over", label: "Normal" },
   { value: "multiply", label: "Multiply" },
   { value: "screen", label: "Screen" },
@@ -319,7 +321,7 @@ function CanvasInfo({ doc }: { doc: SubstrataDoc | null }) {
           </span>
         )}
       </div>
-      <div className="border-b-2 border-border">
+      <div className="border-b border-border">
         <InfoRow label="Dimensions" value={ab ? `${ab.width} × ${ab.height} px` : "—"} />
         <InfoRow label="Resolution" value={ab ? `${ab.resolution} ppi` : "—"} />
         <InfoRow label="Bit depth" value="8-bit / ch" />
@@ -327,6 +329,15 @@ function CanvasInfo({ doc }: { doc: SubstrataDoc | null }) {
         <InfoRow label="Layers" value={String(doc?.layers.length ?? 0)} />
         <InfoRow label="Stored" value={persistOn ? "Local" : "Off"} />
       </div>
+      {/* opens the same Canvas-size modal as Scene ▸ Canvas size… */}
+      <button
+        type="button"
+        onClick={() => openModal("canvas-size")}
+        className="flex items-center gap-1.5 border-b-2 border-border px-3 py-2 text-[11px] text-muted-foreground hover:bg-accent hover:text-foreground"
+      >
+        <Scaling className="size-3.5" aria-hidden />
+        Canvas size…
+      </button>
     </div>
   );
 }

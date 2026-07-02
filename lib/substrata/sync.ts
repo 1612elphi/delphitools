@@ -13,11 +13,40 @@
  */
 
 import type { Canvas, FabricObject } from "fabric";
-import { FabricImage, Rect } from "fabric";
+import { FabricImage, Pattern, Rect } from "fabric";
 import type { SubstrataDoc, Layer } from "./doc-model";
 import { getRaster } from "./raster-cache";
 
 const ARTBOARD_KEY = "__artboard__";
+
+/** Build the transparency-checker tile (2×2 of 10px squares) for a theme. */
+function checkerSource(dark: boolean): HTMLCanvasElement {
+  const [a, b] = dark ? ["#404040", "#333333"] : ["#ffffff", "#cccccc"];
+  const c = document.createElement("canvas");
+  c.width = 20;
+  c.height = 20;
+  const ctx = c.getContext("2d")!;
+  ctx.fillStyle = a;
+  ctx.fillRect(0, 0, 20, 20);
+  ctx.fillStyle = b;
+  ctx.fillRect(0, 0, 10, 10);
+  ctx.fillRect(10, 10, 10, 10);
+  return c;
+}
+
+/**
+ * Cached checkerboard Pattern for a transparent artboard (background === null).
+ * Lives in artboard space, so it pans/zooms with the canvas and layers composite
+ * over it (revealing transparency wherever nothing is painted). Theme-aware,
+ * rebuilt when the light/dark class flips.
+ */
+function getCheckerPattern(state: ReconcileState): Pattern {
+  const dark = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
+  if (!state.checker || state.checker.dark !== dark) {
+    state.checker = { dark, pattern: new Pattern({ source: checkerSource(dark), repeat: "repeat" }) };
+  }
+  return state.checker.pattern;
+}
 
 /** Reverse map (Fabric object → layer id) so canvas events can resolve the layer
  *  without Fabric becoming a source of truth. WeakMap so disposed objects GC. */
@@ -30,6 +59,8 @@ export function getLayerIdForObject(obj: FabricObject): string | undefined {
 export interface ReconcileState {
   /** layer id (or ARTBOARD_KEY) → its Fabric object */
   byId: Map<string, FabricObject>;
+  /** cached transparency checker (rebuilt on theme flip) */
+  checker?: { dark: boolean; pattern: Pattern };
 }
 
 export function createReconcileState(): ReconcileState {
@@ -53,7 +84,8 @@ export function reconcile(canvas: Canvas, doc: SubstrataDoc, state: ReconcileSta
     top: 0,
     width: doc.artboard.width,
     height: doc.artboard.height,
-    fill: doc.artboard.background ?? "rgba(0,0,0,0)",
+    // A colour fills opaque; a null (transparent) background shows the checker.
+    fill: doc.artboard.background ?? getCheckerPattern(state),
     originX: "left",
     originY: "top",
   });
