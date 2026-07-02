@@ -4,9 +4,12 @@
  * creates/updates/removes objects to match. Fabric is never read back as truth —
  * interactive edits (M1-10) commit to the doc and re-enter through here.
  *
- * v1 renders the artboard + raster layers (flat). Text/shape/group layers,
- * pixel filters, and effects are added additively in later milestones; an
- * unhandled layer kind is skipped, never half-rendered.
+ * v1 renders the artboard + raster layers. GROUPS FLATTEN AWAY (M2): they are
+ * organisational folders (layer-tree.ts) — the reconciler walks the leaf list
+ * in doc order and composes each leaf's EFFECTIVE visibility/lock from its
+ * ancestors. Text/shape rendering, pixel filters, and effects are added
+ * additively in later milestones; an unhandled layer kind is skipped, never
+ * half-rendered.
  *
  * Convention: a layer's transform.x/y is the object CENTRE in scene coordinates
  * (objects use originX/originY = "center").
@@ -15,6 +18,7 @@
 import type { Canvas, FabricObject } from "fabric";
 import { FabricImage, Pattern, Rect } from "fabric";
 import type { SubstrataDoc, Layer } from "./doc-model";
+import { leafRenderList } from "./layer-tree";
 import { getRaster } from "./raster-cache";
 
 const ARTBOARD_KEY = "__artboard__";
@@ -103,12 +107,12 @@ export function reconcile(canvas: Canvas, doc: SubstrataDoc, state: ReconcileSta
   clip.setCoords();
   canvas.clipPath = clip;
 
-  // Layers, in document order.
-  for (const layer of doc.layers) {
-    const obj = syncLayer(canvas, layer, byId);
+  // Leaf layers in document order (groups flatten; flags compose down the tree).
+  for (const entry of leafRenderList(doc.layers)) {
+    const obj = syncLayer(canvas, entry.layer, entry.visible, entry.locked, byId);
     if (obj) {
       desired.push(obj);
-      seen.add(layer.id);
+      seen.add(entry.layer.id);
     }
   }
 
@@ -129,6 +133,9 @@ export function reconcile(canvas: Canvas, doc: SubstrataDoc, state: ReconcileSta
 function syncLayer(
   canvas: Canvas,
   layer: Layer,
+  /** effective flags — the layer's own composed with its group ancestors' */
+  visible: boolean,
+  locked: boolean,
   byId: Map<string, FabricObject>,
 ): FabricObject | null {
   // Only raster layers in v1; other kinds render in later milestones.
@@ -156,15 +163,15 @@ function syncLayer(
     flipX: t.flipX,
     flipY: t.flipY,
     opacity: layer.opacity,
-    visible: layer.visible,
+    visible,
     globalCompositeOperation: layer.blendMode,
     originX: "center",
     originY: "center",
-    // MOVE interaction: a layer is selectable/draggable unless locked. Interactive
-    // edits commit back to the doc via object:modified (the one controlled
-    // Fabric→doc path); the doc stays authoritative.
-    selectable: !layer.locked,
-    evented: !layer.locked,
+    // MOVE interaction: a layer is selectable/draggable unless (effectively)
+    // locked. Interactive edits commit back to the doc via object:modified (the
+    // one controlled Fabric→doc path); the doc stays authoritative.
+    selectable: !locked,
+    evented: !locked,
   });
   obj.setCoords();
   return obj;

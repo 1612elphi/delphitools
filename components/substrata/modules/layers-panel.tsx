@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Copy, Eye, EyeOff, FolderPlus, Lock, Trash2, Upload } from "lucide-react";
+import { ChevronDown, Copy, Eye, EyeOff, Folder, FolderMinus, FolderPlus, Lock, Trash2, Upload } from "lucide-react";
 import {
   DndContext,
   PointerSensor,
@@ -16,16 +16,34 @@ import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
-import { getActiveLayerId, setActiveLayer, subscribeSelection } from "@/lib/substrata/selection";
 import {
-  deleteLayer,
-  duplicateLayer,
+  getActiveLayerId,
+  getSelectedLayerIds,
+  getSelectionAnchor,
+  setActiveLayer,
+  setSelection,
+  subscribeSelection,
+  toggleInSelection,
+} from "@/lib/substrata/selection";
+import {
+  deleteLayers,
+  duplicateLayers,
+  groupLayers,
   setBlendMode,
-  setLayerOrder,
   setOpacity,
+  setSiblingOrder,
   toggleLock,
   toggleVisibility,
+  ungroupLayer,
 } from "@/lib/substrata/layer-ops";
+import {
+  findLayer,
+  flattenForPanel,
+  isGroup,
+  leafRenderList,
+  siblingListOf,
+  type PanelRow,
+} from "@/lib/substrata/layer-tree";
 import { getRaster } from "@/lib/substrata/raster-cache";
 import { importImageFile } from "@/lib/substrata/import-raster";
 import { BLEND_OPTIONS } from "@/components/substrata/modules/inspector-panel";
@@ -34,42 +52,96 @@ import type { BlendMode, Layer } from "@/lib/substrata/doc-model";
 /**
  * Layers module — the BODY only; the module box supplies the header. Reads the
  * doc + selection stores; edits go through layer-ops (one-way, undoable). Top
- * layer first. Sketch fidelity (modals.html): candy-stripe hidden rows, a
- * selected-arrow marker, hover-reveal eye, lock toggle, drag-reorder, and a
- * footer with the blend/opacity controls + an Upload / group / duplicate / toss
- * action bar. The list scrolls; the footer is pinned.
+ * layer first at every level. Sketch fidelity (modals.html): candy-stripe
+ * hidden rows, a selected-arrow marker on the primary, hover-reveal eye, lock
+ * toggle, drag-reorder, group rows with a folder thumb + collapse chevron +
+ * tree-elbow gutters, and a footer with blend/opacity + Upload / group /
+ * duplicate / toss.
  *
- * SINGLE-SELECT ONLY (selection.ts). Grouping needs a multi-selection (M2), so
- * the group action is disabled for now; nested group rows / tree elbows / nested
- * drag land with grouping too. Copy is ∑CG.
+ * MULTI-SELECT (M2): plain click = single select · ⌘/Ctrl-click toggles ·
+ * shift-click ranges from the anchor over the VISIBLE rows. All selected rows
+ * highlight; the primary (last-selected) carries the arrow and drives the
+ * footer's blend/opacity. Group = the selection when it shares one sibling
+ * list; a single selected group offers Ungroup. Toss deletes the whole
+ * selection as one undo step. Drag-reorder is constrained to a row's own
+ * sibling list (cross-parent drag is a later refinement; while dragging a
+ * group row its children don't visually follow — the drop result is correct).
  */
+
+// Collapsed-group ids — tiny module-level store so the state survives the
+// module box remounting between bloom/rail/dock (useSyncExternalStore shape).
+let collapsedGroups: ReadonlySet<string> = new Set();
+const collapseListeners = new Set<() => void>();
+const getCollapsed = () => collapsedGroups;
+const subscribeCollapsed = (l: () => void) => {
+  collapseListeners.add(l);
+  return () => {
+    collapseListeners.delete(l);
+  };
+};
+function toggleCollapsed(id: string): void {
+  const next = new Set(collapsedGroups);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  collapsedGroups = next;
+  for (const l of collapseListeners) l();
+}
+
+const EMPTY_IDS: readonly string[] = [];
+
 export function LayersBody() {
   const doc = useSyncExternalStore(subscribe, getSnapshot, () => null);
+  const selectedIds = useSyncExternalStore(subscribeSelection, getSelectedLayerIds, () => EMPTY_IDS);
   const activeId = useSyncExternalStore(subscribeSelection, getActiveLayerId, () => null);
-  const layers = doc?.layers ?? [];
-  const activeLayer = activeId ? layers.find((l) => l.id === activeId) ?? null : null;
+  const collapsed = useSyncExternalStore(subscribeCollapsed, getCollapsed, getCollapsed);
 
-  // Displayed top-first; reorder maps back to doc order (bottom-first).
-  const displayed = [...layers].reverse();
-  const displayedIds = displayed.map((l) => l.id);
+  const layers = doc?.layers ?? [];
+  const rows = flattenForPanel(layers, collapsed);
+  const rowIds = rows.map((r) => r.layer.id);
+  const activeLayer = doc && activeId ? findLayer(doc.layers, activeId) : null;
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   const onDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
     if (!over || active.id === over.id) return;
-    const from = displayedIds.indexOf(String(active.id));
-    const to = displayedIds.indexOf(String(over.id));
-    if (from === -1 || to === -1) return;
-    const next = [...displayedIds];
-    next.splice(to, 0, next.splice(from, 1)[0]);
-    setLayerOrder([...next].reverse()); // back to doc order
+    const from = rows.find((r) => r.layer.id === String(active.id));
+    const to = rows.find((r) => r.layer.id === String(over.id));
+    // reorder is scoped to ONE sibling list; cross-parent drops are ignored
+    if (!from || !to || from.parentId !== to.parentId) return;
+    const siblings = rows.filter((r) => r.parentId === from.parentId).map((r) => r.layer.id);
+    const fi = siblings.indexOf(from.layer.id);
+    const ti = siblings.indexOf(to.layer.id);
+    if (fi === -1 || ti === -1) return;
+    const next = [...siblings];
+    next.splice(ti, 0, next.splice(fi, 1)[0]);
+    setSiblingOrder(from.parentId, [...next].reverse()); // display top-first → doc order
+  };
+
+  const onRowClick = (e: React.MouseEvent, id: string) => {
+    if (e.shiftKey) {
+      const anchor = getSelectionAnchor();
+      const ai = anchor ? rowIds.indexOf(anchor) : -1;
+      const ci = rowIds.indexOf(id);
+      if (ai !== -1 && ci !== -1) {
+        const [lo, hi] = ai < ci ? [ai, ci] : [ci, ai];
+        // keep the anchor; the clicked end becomes primary (range reads that way)
+        const range = rowIds.slice(lo, hi + 1);
+        setSelection(ci < ai ? [...range].reverse() : range, { anchor });
+        return;
+      }
+    }
+    if (e.metaKey || e.ctrlKey) {
+      toggleInSelection(id);
+      return;
+    }
+    setActiveLayer(id);
   };
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <div className="min-h-0 flex-1 overflow-auto">
-        {layers.length === 0 ? (
+        {rows.length === 0 ? (
           <div className="flex items-center justify-center p-4 text-center text-xs text-muted-foreground">
             {/* ∑CG: empty-state hint when no layers exist
                 spec: ≤ 60 chars, drop/paste/upload an image to start; British spelling.
@@ -83,30 +155,51 @@ export function LayersBody() {
             modifiers={[restrictToVerticalAxis, restrictToParentElement]}
             onDragEnd={onDragEnd}
           >
-            <SortableContext items={displayedIds} strategy={verticalListSortingStrategy}>
-              {displayed.map((layer) => (
-                <LayerRow key={layer.id} layer={layer} active={layer.id === activeId} />
+            <SortableContext items={rowIds} strategy={verticalListSortingStrategy}>
+              {rows.map((row) => (
+                <LayerRow
+                  key={row.layer.id}
+                  row={row}
+                  selected={selectedIds.includes(row.layer.id)}
+                  primary={row.layer.id === activeId}
+                  collapsed={collapsed.has(row.layer.id)}
+                  onClick={(e) => onRowClick(e, row.layer.id)}
+                />
               ))}
             </SortableContext>
           </DndContext>
         )}
       </div>
-      <Footer activeId={activeId} activeLayer={activeLayer} />
+      <Footer doc={!!doc} selectedIds={selectedIds} activeLayer={activeLayer} />
     </div>
   );
 }
 
-/** Layer count for the module box header (sub2). */
+/** Leaf-layer count for the module box header (groups don't count themselves). */
 export function LayersCount() {
   const doc = useSyncExternalStore(subscribe, getSnapshot, () => null);
-  return <>{doc?.layers.length ?? 0}</>;
+  return <>{doc ? leafRenderList(doc.layers).length : 0}</>;
 }
 
 // The candy-stripe for hidden rows — theme-aware via color-mix on --foreground.
 const HIDDEN_STRIPE =
   "repeating-linear-gradient(-45deg, color-mix(in oklch, var(--foreground) 9%, transparent) 0 4px, transparent 4px 9px)";
 
-function LayerRow({ layer, active }: { layer: Layer; active: boolean }) {
+function LayerRow({
+  row,
+  selected,
+  primary,
+  collapsed,
+  onClick,
+}: {
+  row: PanelRow;
+  selected: boolean;
+  primary: boolean;
+  collapsed: boolean;
+  onClick: (e: React.MouseEvent) => void;
+}) {
+  const { layer, depth, lastChild } = row;
+  const group = isGroup(layer);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: layer.id,
   });
@@ -125,44 +218,105 @@ function LayerRow({ layer, active }: { layer: Layer; active: boolean }) {
       style={style}
       {...attributes}
       {...listeners}
-      onClick={() => setActiveLayer(layer.id)}
+      onClick={onClick}
       className={cn(
         "group relative flex h-[30px] cursor-default items-center gap-2 border-b border-border/60 pr-1.5 text-xs outline-none",
-        active ? "bg-accent" : "hover:bg-accent",
+        selected ? "bg-accent" : "hover:bg-accent",
       )}
     >
-      {/* selected marker — a little arrow (per the sketch, not a stripe) */}
-      {active && (
+      {/* primary marker — a little arrow (per the sketch, not a stripe) */}
+      {primary && (
         <span
           aria-hidden
           className="pointer-events-none absolute left-[2px] top-1/2 z-[2] size-0 -translate-y-1/2 border-y-[4px] border-l-[6px] border-y-transparent border-l-primary"
         />
       )}
 
-      <LayerThumb layer={layer} />
-      <span className="relative flex-1 truncate" title={layer.name}>
-        {layer.name}
+      {/* nested indent: ancestor continuation guides (│ where that ancestor has
+          siblings below), then this row's tree elbow (├ mid / └ end) */}
+      {depth > 0 && (
+        <span aria-hidden className="flex shrink-0 self-stretch">
+          {row.trail.slice(1).map((ancestorLast, i) => (
+            <span key={i} className="relative w-[14px]">
+              {!ancestorLast && (
+                <span className="absolute inset-y-0 left-[10px] border-l border-muted-foreground/55" />
+              )}
+            </span>
+          ))}
+          <span className="relative w-[22px]">
+            <span
+              className={cn(
+                "absolute left-[10px] top-0 border-l border-muted-foreground/55",
+                lastChild ? "bottom-1/2" : "bottom-0",
+              )}
+            />
+            <span className="absolute left-[10px] top-1/2 w-2 border-t border-muted-foreground/55" />
+          </span>
+        </span>
+      )}
+
+      {group ? (
+        <span
+          className={cn(
+            "grid size-[22px] shrink-0 place-items-center border border-border bg-muted text-muted-foreground",
+            depth === 0 && "ml-1.5",
+          )}
+        >
+          <Folder className="size-3.5" />
+        </span>
+      ) : (
+        <LayerThumb layer={layer} inset={depth === 0} />
+      )}
+
+      <span
+        className={cn("relative flex-1 truncate", group && "font-semibold")}
+        title={layer.name || undefined}
+      >
+        {layer.name || (
+          // ∑CG: display name for an unnamed group row
+          //   spec: ≤ 12 chars, noun; British spelling. sample: "Group"
+          <span className="font-normal text-muted-foreground">∑CG</span>
+        )}
       </span>
 
-      {/* lock — muted when unlocked (hover to reveal), solid when locked */}
-      <button
-        type="button"
-        onPointerDown={stop}
-        onClick={(e) => {
-          stop(e);
-          toggleLock(layer.id);
-        }}
-        // ∑CG: aria-label for the layer lock toggle. sample: "Lock layer"
-        aria-label="∑CG"
-        className={cn(
-          "relative z-[1] grid size-4 shrink-0 place-items-center transition-opacity",
-          layer.locked
-            ? "text-foreground"
-            : "text-muted-foreground opacity-0 hover:text-foreground group-hover:opacity-100",
-        )}
-      >
-        <Lock className="size-3.5" />
-      </button>
+      {group ? (
+        /* collapse chevron in the lock slot (the sketch's group-row layout) */
+        <button
+          type="button"
+          onPointerDown={stop}
+          onClick={(e) => {
+            stop(e);
+            toggleCollapsed(layer.id);
+          }}
+          // ∑CG: aria-label for the group expand/collapse toggle. sample: "Collapse group"
+          aria-label="∑CG"
+          className="relative z-[1] grid size-4 shrink-0 place-items-center text-muted-foreground hover:text-foreground"
+        >
+          <ChevronDown
+            className={cn("size-3.5 transition-transform motion-reduce:transition-none", collapsed && "-rotate-90")}
+          />
+        </button>
+      ) : (
+        /* lock — muted when unlocked (hover to reveal), solid when locked */
+        <button
+          type="button"
+          onPointerDown={stop}
+          onClick={(e) => {
+            stop(e);
+            toggleLock(layer.id);
+          }}
+          // ∑CG: aria-label for the layer lock toggle. sample: "Lock layer"
+          aria-label="∑CG"
+          className={cn(
+            "relative z-[1] grid size-4 shrink-0 place-items-center transition-opacity",
+            layer.locked
+              ? "text-foreground"
+              : "text-muted-foreground opacity-0 hover:text-foreground group-hover:opacity-100",
+          )}
+        >
+          <Lock className="size-3.5" />
+        </button>
+      )}
 
       {/* visibility — eye at the far right, revealed on hover unless hidden */}
       <button
@@ -186,7 +340,7 @@ function LayerRow({ layer, active }: { layer: Layer; active: boolean }) {
 }
 
 /** Small live thumbnail drawn from the cached raster (raster layers only). */
-function LayerThumb({ layer }: { layer: Layer }) {
+function LayerThumb({ layer, inset }: { layer: Layer; inset: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const hash = layer.kind === "raster" ? layer.blobHash : null;
 
@@ -210,7 +364,7 @@ function LayerThumb({ layer }: { layer: Layer }) {
       ref={ref}
       width={24}
       height={24}
-      className="relative z-[1] ml-1.5 size-[22px] shrink-0 border border-border bg-muted"
+      className={cn("relative z-[1] size-[22px] shrink-0 border border-border bg-muted", inset && "ml-1.5")}
       aria-hidden
     />
   );
@@ -218,7 +372,15 @@ function LayerThumb({ layer }: { layer: Layer }) {
 
 // ── footer: blend/opacity + action bar ───────────────────────────────────────
 
-function Footer({ activeId, activeLayer }: { activeId: string | null; activeLayer: Layer | null }) {
+function Footer({
+  doc,
+  selectedIds,
+  activeLayer,
+}: {
+  doc: boolean;
+  selectedIds: readonly string[];
+  activeLayer: Layer | null;
+}) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -227,14 +389,29 @@ function Footer({ activeId, activeLayer }: { activeId: string | null; activeLaye
     e.currentTarget.value = ""; // allow re-picking the same file
   };
 
+  // Group when the multi-selection shares ONE sibling list; a single selected
+  // group flips the button to Ungroup. (Group blend/opacity are v1-deferred —
+  // the footer controls disable when the primary is a group.)
+  const snapshot = getSnapshot();
+  const canGroup =
+    doc &&
+    selectedIds.length >= 2 &&
+    !!snapshot &&
+    (() => {
+      const list = siblingListOf(snapshot.layers, selectedIds[0]);
+      return !!list && selectedIds.every((id) => list.some((l) => l.id === id));
+    })();
+  const soleGroup = activeLayer && selectedIds.length === 1 && isGroup(activeLayer) ? activeLayer : null;
+  const primaryIsGroup = !!activeLayer && isGroup(activeLayer);
+
   return (
     <div className="shrink-0 border-t-2 border-border">
-      {/* blend + opacity for the active layer (labels dropped so long mode names fit) */}
+      {/* blend + opacity for the primary layer (labels dropped so long mode names fit) */}
       <div className="flex items-center gap-2 border-b border-border px-2.5 py-2">
         <Select
           value={activeLayer?.blendMode ?? "source-over"}
-          onValueChange={(v) => activeId && setBlendMode(activeId, v as BlendMode)}
-          disabled={!activeLayer}
+          onValueChange={(v) => activeLayer && setBlendMode(activeLayer.id, v as BlendMode)}
+          disabled={!activeLayer || primaryIsGroup}
         >
           <SelectTrigger
             size="sm"
@@ -252,10 +429,13 @@ function Footer({ activeId, activeLayer }: { activeId: string | null; activeLaye
             ))}
           </SelectContent>
         </Select>
-        <OpacityField layerId={activeId} opacity={activeLayer?.opacity ?? 1} />
+        <OpacityField
+          layerId={activeLayer && !primaryIsGroup ? activeLayer.id : null}
+          opacity={activeLayer?.opacity ?? 1}
+        />
       </div>
 
-      {/* action bar: big Upload primary + group (multi-select, disabled) · duplicate · toss */}
+      {/* action bar: big Upload primary + group/ungroup · duplicate · toss */}
       <div className="flex items-stretch">
         <button
           type="button"
@@ -267,24 +447,34 @@ function Footer({ activeId, activeLayer }: { activeId: string | null; activeLaye
           Upload
         </button>
         <input ref={fileRef} type="file" accept="image/*" onChange={onPick} className="hidden" />
-        <ActionBtn
-          icon={FolderPlus}
-          disabled
-          // ∑CG: aria-label for group-layers (needs a multi-selection, M2). sample: "Group layers"
-          aria="∑CG"
-        />
+        {soleGroup ? (
+          <ActionBtn
+            icon={FolderMinus}
+            onClick={() => ungroupLayer(soleGroup.id)}
+            // ∑CG: aria-label for ungroup. sample: "Ungroup"
+            aria="∑CG"
+          />
+        ) : (
+          <ActionBtn
+            icon={FolderPlus}
+            disabled={!canGroup}
+            onClick={() => canGroup && groupLayers(selectedIds)}
+            // ∑CG: aria-label for group-selected-layers. sample: "Group layers"
+            aria="∑CG"
+          />
+        )}
         <ActionBtn
           icon={Copy}
-          disabled={!activeId}
-          onClick={() => activeId && duplicateLayer(activeId)}
-          // ∑CG: aria-label for duplicate layer. sample: "Duplicate layer"
+          disabled={selectedIds.length === 0}
+          onClick={() => duplicateLayers(selectedIds)}
+          // ∑CG: aria-label for duplicate selected layer(s). sample: "Duplicate layers"
           aria="∑CG"
         />
         <ActionBtn
           icon={Trash2}
-          disabled={!activeId}
-          onClick={() => activeId && deleteLayer(activeId)}
-          // ∑CG: aria-label for delete layer. sample: "Delete layer"
+          disabled={selectedIds.length === 0}
+          onClick={() => deleteLayers(selectedIds)}
+          // ∑CG: aria-label for delete selected layer(s). sample: "Delete layers"
           aria="∑CG"
         />
       </div>
@@ -316,7 +506,7 @@ function ActionBtn({
   );
 }
 
-/** Opacity field (0–100%) for the active layer; commits on blur/Enter. */
+/** Opacity field (0–100%) for the primary layer; commits on blur/Enter. */
 function OpacityField({ layerId, opacity }: { layerId: string | null; opacity: number }) {
   const [draft, setDraft] = useState<string | null>(null);
   const shown = draft ?? String(Math.round(opacity * 100));
@@ -336,7 +526,7 @@ function OpacityField({ layerId, opacity }: { layerId: string | null; opacity: n
         value={shown}
         disabled={!layerId}
         inputMode="numeric"
-        // ∑CG: aria-label for the active layer's opacity field. sample: "Opacity"
+        // ∑CG: aria-label for the primary layer's opacity field. sample: "Opacity"
         aria-label="∑CG"
         onChange={(e) => setDraft(e.currentTarget.value)}
         onFocus={(e) => e.currentTarget.select()}

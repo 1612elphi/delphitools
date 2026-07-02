@@ -2,36 +2,66 @@
  * Effect registry — the single, extensible source of truth for effects (the
  * family drop shadow belongs to: things that work on any layer kind and can draw
  * OUTSIDE the layer bounds, as opposed to filters, which stay inside the visible
- * pixels). Adding a new effect = add one entry here; the document model only
- * stores instances (Effect) that reference a `type`. This is the "other library"
- * that declares whether each effect renders inner or outer, so the doc model
- * needs neither two hard-coded arrays nor a per-instance phase flag.
+ * pixels — see filters.ts for that registry). Adding a new effect = add one
+ * entry here; the document model only stores instances (Effect) that reference
+ * a `type`. This is the "other library" that declares whether each effect
+ * renders inner or outer, so the doc model needs neither two hard-coded arrays
+ * nor a per-instance phase flag.
  *
- * v1 stub: the structure + the inner/outer classification are frozen. Render
- * functions, typed param schemas/defaults, and the ∑CG display labels are added
- * with the Effects panel (M3) — additively, no change to the entries' shape.
+ * The inner/outer classification is frozen (schema v1). `params` carries the
+ * typed spec/defaults the FX panel renders (the additive upgrade promised for
+ * the panel); render functions attach in M3, additively. Labels are standard
+ * layer-style terms — functional chrome per Ruby's call (the BLEND_OPTIONS
+ * precedent), not authored copy.
  */
 
 import type { EffectPhase } from "./doc-model";
+import type { FxDefinition, ParamSpec } from "./param-spec";
 
-export interface EffectDefinition {
-  type: string;
+export interface EffectDefinition extends FxDefinition {
   phase: EffectPhase;
-  /** accepted param keys; a typed schema + defaults arrive in M3 */
-  params: string[];
-  // label?: string  // ∑CG — user-facing name, added with the M3 Effects panel
 }
+
+const colour = (key: string, label: string, def: string): ParamSpec => ({
+  kind: "colour",
+  key,
+  label,
+  default: def,
+});
+
+const offset = (key: string, label: string, def: number): ParamSpec => ({
+  kind: "stepper",
+  key,
+  label,
+  min: -500,
+  max: 500,
+  step: 1,
+  default: def,
+  unit: "px",
+});
 
 export const EFFECT_REGISTRY: Record<string, EffectDefinition> = {
   "drop-shadow": {
     type: "drop-shadow",
     phase: "outer",
-    params: ["colour", "blur", "offsetX", "offsetY", "spread"],
+    label: "Drop shadow",
+    params: [
+      colour("colour", "Colour", "#000000"),
+      { kind: "slider", key: "blur", label: "Blur", min: 0, max: 250, step: 1, default: 24, unit: "px" },
+      offset("offsetX", "Offset X", 8),
+      offset("offsetY", "Offset Y", 8),
+      { kind: "slider", key: "spread", label: "Spread", min: 0, max: 100, step: 1, default: 0, unit: "px" },
+    ],
   },
   "outer-glow": {
     type: "outer-glow",
     phase: "outer",
-    params: ["colour", "blur", "intensity"],
+    label: "Outer glow",
+    params: [
+      colour("colour", "Colour", "#ffffff"),
+      { kind: "slider", key: "blur", label: "Blur", min: 0, max: 250, step: 1, default: 40, unit: "px" },
+      { kind: "slider", key: "intensity", label: "Intensity", min: 0, max: 100, step: 1, default: 50, unit: "%" },
+    ],
   },
   // Stroke is nominally "outer", but `position` (outer|inner|centre, M3) lets a
   // single registered type cover all three — which a hard inner/outer array split
@@ -39,22 +69,52 @@ export const EFFECT_REGISTRY: Record<string, EffectDefinition> = {
   stroke: {
     type: "stroke",
     phase: "outer",
-    params: ["colour", "width", "position"],
+    label: "Stroke",
+    params: [
+      colour("colour", "Colour", "#000000"),
+      { kind: "stepper", key: "width", label: "Width", min: 1, max: 100, step: 1, default: 2, unit: "px" },
+      {
+        kind: "select",
+        key: "position",
+        label: "Position",
+        default: "outer",
+        options: [
+          { value: "outer", label: "Outer" },
+          { value: "centre", label: "Centre" },
+          { value: "inner", label: "Inner" },
+        ],
+      },
+    ],
   },
   "inner-shadow": {
     type: "inner-shadow",
     phase: "inner",
-    params: ["colour", "blur", "offsetX", "offsetY"],
+    label: "Inner shadow",
+    params: [
+      colour("colour", "Colour", "#000000"),
+      { kind: "slider", key: "blur", label: "Blur", min: 0, max: 250, step: 1, default: 18, unit: "px" },
+      offset("offsetX", "Offset X", 6),
+      offset("offsetY", "Offset Y", 6),
+    ],
   },
   "inner-glow": {
     type: "inner-glow",
     phase: "inner",
-    params: ["colour", "blur", "intensity"],
+    label: "Inner glow",
+    params: [
+      colour("colour", "Colour", "#ffffff"),
+      { kind: "slider", key: "blur", label: "Blur", min: 0, max: 250, step: 1, default: 24, unit: "px" },
+      { kind: "slider", key: "intensity", label: "Intensity", min: 0, max: 100, step: 1, default: 50, unit: "%" },
+    ],
   },
   "colour-overlay": {
     type: "colour-overlay",
     phase: "inner",
-    params: ["colour", "opacity"],
+    label: "Colour overlay",
+    params: [
+      colour("colour", "Colour", "#000000"),
+      { kind: "slider", key: "opacity", label: "Opacity", min: 0, max: 100, step: 1, default: 100, unit: "%" },
+    ],
   },
 };
 

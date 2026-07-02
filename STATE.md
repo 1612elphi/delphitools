@@ -5,9 +5,10 @@ to `SPEC.md` (canonical spec) and `BUILD-PLAN.md` (milestone task breakdown).
 This file = what actually exists in the code right now.
 
 **Status:** M0 scaffold + M1 core + the full UI cockpit are complete. The **modals
-pass is largely done** — Layers, Inspector, Colour (7-mode picker incl. the spectral
-EQ), and Arrange are real modules; Export + Canvas size are blocking modals. **Only
-FX (Effects) is left, deferred** to the M3 render engine.
+pass is DONE** — Layers, Inspector, Colour (7-mode picker incl. the spectral EQ),
+Arrange, and **FX** are real modules; Export + Canvas size are blocking modals.
+FX is **structural**: stacks are editable + undoable, but params move no pixels
+until the M3 render engine.
 
 Route: `/editor` (sidebar-free, static-export, client-only via `dynamic ssr:false`).
 Dev: `npm run dev` → http://localhost:3000/editor. Gate: `npm run build` + `tsc --noEmit`.
@@ -39,8 +40,25 @@ Dev: `npm run dev` → http://localhost:3000/editor. Gate: `npm run build` + `ts
   wired; Help), editable-slot scene name + persistence-aware status dot, right
   cluster (status slot, zoom, fit, Export stub, theme).
 - **Omnibar (§8)** — floating tool cockpit; 5 tool stacks (MOVE/SELECT/ADJUST/
-  TEXT/PIECES) with V/M/A/T/P keys + selected-tool hover-fan; settings zone;
-  panel triggers with hover-peek blooms; overflow bar in line.
+  TEXT/PIECES) with V/M/A/T/P keys + selected-tool hover-fan; **subtools are
+  selectable modes** (Ruby's call): fan icons select + highlight like main
+  tools (`tool.ts` `activeSubs`, remembered per stack; head = subs[0], soft
+  stack-active look when a fan sub is live), a NON-default subtool pins its fan
+  expanded until another tool is picked, re-firing the active tool's key cycles
+  its subtools (M2-8 keymap), and the contextual-zone icon/title + SELECT chips
+  track the live subtool. **Canonical subtool names (Ruby-authored chrome, used
+  as zone title / tooltip / aria):** Move·Crop / Select·Lasso·Wand /
+  Adjust·Filters·Colour / Text·Bezier / Pieces·Primitives·Brush·Pencil;
+  **contextual
+  settings zone** (Ruby's call: the middle reads the ACTIVE TOOL — icon + name
+  + LIVE chips per tool: MOVE = selection X/Y from the doc; SELECT = subtool
+  mode settings (marquee touch/cover + group/separate, lasso sensitivity, wand
+  tolerance); ADJUST = the layer's stack labels via `fxDisplayLabel`, bloom/pin
+  targets the FX module; TEXT = font + size; PIECES = shape. Non-doc chips read
+  the new **`tool-settings.ts` store** — defaults now, the M2 tools write it
+  later; stub tools peek a placeholder settings bloom (∑CG) and aren't pinnable
+  until their settings exist); panel triggers with hover-peek blooms; overflow
+  bar in line.
 - **Docking system** — modules peek (hover) or pin; dock target per module
   (**left sidebar / right sidebar / rail**); rail position independent of the
   omnibar (follow ↳ or own edge); omnibar dockable to any edge (T/B/L/R,
@@ -63,6 +81,28 @@ Dev: `npm run dev` → http://localhost:3000/editor. Gate: `npm run build` + `ts
   trigger shows the live colour. **No fill sink yet** (nothing consumes the colour → M4).
 - **Arrange** (merged Align + Rotate) — align-to-artboard (6) + rotate 90°/flip;
   distribute shown disabled (multi-select, M2).
+- **FX** (title "FX", module id `effects`) — holds ALL THREE layer-property
+  families (Ruby's call): **filters** = ALL adjustments, colour AND spatial
+  (brightness…levels/duotone/blur), in `filters[]`; **colour** = the
+  **film-sim/LUT family** (one `film-sim` type, also `filters[]`) picked from
+  PRESETS named after film stocks/movies (names = ∑CG; 8 placeholder looks in
+  `FILM_SIM_PRESETS`, swatch gradients are placeholder visuals → real LUT looks
+  in M3); effects (shadow/glow/stroke/overlay) in `effects[]`. ONE pipeline,
+  two zones (filter chain incl. sims on top, effects below, 4px divider),
+  drag-reorder per zone (dnd-kit), single-open accordion across both (grid-rows
+  collapse anim, `inert` when closed), Add picker (popover: film-sim **preset
+  cards** first, then hairline icon-card grids per type group — home-catalogue
+  cell language, NO icon animations per Ruby; icons in panel-side `FX_ICONS`;
+  **one-per-type** — ghosts present types / the active preset; picking another
+  preset RETARGETS the layer's sim), per-block reset (hidden when disabled) /
+  remove / enable switch, params rendered generically from registry ParamSpecs
+  (slider/stepper/colour/select/**presets** — the sketch's flush swatch grid;
+  film-sim blocks title themselves after their preset). Slider + colour-swatch
+  gestures coalesce to ONE undo step via the transient path (gesture boundary
+  on the pointer — Radix onValueCommit is unreliable in controlled mode).
+  Effect + param labels are conventional graphics terms = functional chrome
+  (Ruby's call, BLEND_OPTIONS precedent); voice-y microcopy + preset/category
+  names stay ∑CG. **Structural only**: no pixels move until M3.
 - **Export modal** — shell (format/scale/quality UI; Export is a no-op stub → M6).
   **Canvas size modal** — functional: dimension presets + W/H/resolution/background
   (+ transparent) committed via `setArtboard` (undoable). Both are blocking Radix
@@ -97,10 +137,24 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
 - `doc-store.ts` — observable doc + snapshot **history** (undo/redo/canUndo/canRedo).
 - `sync.ts` — one-way doc→Fabric **reconciler**; artboard (+ transparency checker
   Pattern) + raster layers, clipPath, layer↔object id map (`getLayerIdForObject`).
-- `layer-ops.ts` — doc mutations via `update()`: visibility, lock, transform,
-  opacity (transient-aware), blend, **duplicate / delete / reorder** (all undoable).
+- `layer-tree.ts` — pure tree utils over nested layers (find/map/remove/
+  leafRenderList/flattenForPanel) + the ratified v1 GROUP SEMANTICS header.
+- `layer-ops.ts` — TREE-AWARE doc mutations via `update()`: visibility, lock,
+  transform (+ **setTransforms** batch = one undo step), opacity (transient-
+  aware), blend, duplicate (deep-clone, groups too), **deleteLayers /
+  groupLayers / ungroupLayer / setSiblingOrder** (all undoable).
 - `artboard-ops.ts` — `setArtboard(patch)` (Canvas size modal; undoable).
-- `effects.ts` — effect registry (drop-shadow/glow/stroke/overlay → inner/outer phase).
+- `param-spec.ts` — shared ParamSpec system (slider/stepper/colour/select +
+  `defaultParams`) both FX registries and the panel consume.
+- `effects.ts` — effect registry (drop-shadow/glow/stroke/overlay → inner/outer
+  phase) + labels + typed ParamSpecs/defaults.
+- `filters.ts` — filter registry (SPEC §9 Tier-0/Tier-1; `category:
+  "colour" | "filter"` = UI taxonomy only; colour-balance params await M3-7,
+  duotone presets M3-9; colour-overlay lives in effects.ts, not duplicated).
+  NOTE: `Filter.params` widened additively to `number | string` (Duotone/
+  Vignette colours); SCHEMA_VERSION stays 1.
+- `fx-ops.ts` — undoable mutations over BOTH stacks (add/remove/toggle/reset/
+  param(transient-aware)/reorder), one-per-type guard, insert-at-top.
 
 **Assets + persistence**
 - `raster-cache.ts` — in-memory hash→`<canvas>` cache + `sha256Hex`.
@@ -111,13 +165,40 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
 - `persistence-pref.ts` — opt-in flag (off by default, purge on disable).
 
 **UI state**
-- `selection.ts` — active layer (SINGLE-select). `tool.ts` — active tool.
+- `selection.ts` — active layer (SINGLE-select). `tool.ts` — active tool +
+  active SUBTOOL per stack (`activeSubs`, remembered; `setActiveSub` selects
+  both). `tool-settings.ts` — per-tool settings (move nudge · select mode/
+  sensitivity/tolerance · text font/size · pieces shape) + the SHARED
+  **`transformAsGroup`** flag (Ruby: "move is also transform" — MOVE bloom
+  toggle + SELECT chips bind to one flag; "Separate" makes multi-selection
+  rotate/scale act about each layer's OWN centre via per-frame matrix
+  correction in fabric-canvas). **Separate-mode chrome is Affinity-style**
+  (Ruby's ask): the ActiveSelection lays out via `AnchorBoxLayout` (box = the
+  ANCHOR child, selection-store id[0]) so native border+handles sit on the
+  first-selected object; other members get independent overlay boxes
+  (calcACoords per frame); toggling Group/Separate rebuilds a live selection.
+  Known: anchor = literal first id (canvas shift-click order ≈ canvas
+  stacking); corner-scaling drifts the anchor off its box (own-centre
+  scaling — centred scaling tracks exactly). Read by the contextual zone,
+  written by the tool settings blooms / M2 tools.
+  **Fabric coordinate lore (bug-earned):** a grouped object's `aCoords`/
+  `calcACoords()` live in the PARENT plane (selection-relative inside an
+  ActiveSelection) — compose with the group's `calcTransformMatrix()` before
+  treating them as scene coords, or overlays render origin-anchored phantoms.
+  Also: the top-context overlay must clear UNCONDITIONALLY each after:render
+  (an early return leaves frozen stains). Dev builds expose a
+  **`window.__substrata` debug rig** (selection/layers dumps, select,
+  setSeparate) and `.repro-phantom.mjs` (untracked) drives /editor headlessly
+  via puppeteer-core (installed --no-save) + local Chrome — reusable for
+  canvas-interaction verification.
   `viewport.ts` — zoom bridge + cycle. `dock-pref.ts` — omnibar edge, rail edge,
   per-module dock target. `pin-pref.ts` — open (pinned) modules (`MODULE_IDS`:
   effects/layers/inspector/colour/arrange). `toast.ts` — status toasts.
   `modal.ts` — which blocking modal is open (export/canvas-size).
 - `layout-storage.ts` — localStorage persistence for dock/rail/pin layout (not
   gated on the opt-in; UI ergonomics, not document content).
+- `guides-pref.ts` — rulers/grid/snap toggles + `GRID_SIZE` (localStorage, same
+  rationale). `snap-engine.ts` — pure snap maths (field build + computeSnap).
 
 **Colour maths (pure)**
 - `colour-convert.ts` (sRGB↔OKLCH + hex), `colour-hsv.ts` (HSV/HSL↔sRGB),
@@ -137,7 +218,8 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
 - `omnibar/omnibar.tsx` · `omnibar/rail.tsx` · `omnibar/modules.tsx` (registry +
   `ModuleBox` variants bloom/rail/dock) · `sidebar.tsx`.
 - `modules/layers-panel.tsx` (drag-reorder + footer), `modules/inspector-panel.tsx`
-  (exports `BLEND_OPTIONS`), `modules/arrange-panel.tsx`.
+  (exports `BLEND_OPTIONS`), `modules/arrange-panel.tsx`, `modules/fx-panel.tsx`
+  (the FX pipeline module; exports `FxBody`/`FxSub`).
 - `modules/colour-panel.tsx` (tabbed shell + hue cube + footer) · `modules/
   colour-picker-kit.tsx` (shared `usePointerArea`/`Knob`) · `modules/colour-modes/*`
   (triangle · sliders · swatches · prism · spectrum · shade).
@@ -153,21 +235,63 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
 
 ## Stubs / placeholders (what's NOT done)
 
-- **Selection is SINGLE-SELECT only** (`selection.ts` holds one active layer id).
-  Multi-select is **M2**. Everything that needs a multi-selection is therefore
-  deferred / shown disabled: **Arrange ▸ Distribute**, **Layers ▸ Group**, and any
-  range/shift-click selection or multi-layer op. Build single-select paths only and
-  flag multi-select bits in-code.
-- **Module contents**: Layers · Inspector · Colour · Arrange are real; **Effects**
-  renders a placeholder → deferred (needs the M3 render engine). Export + Canvas
-  size are **blocking modals** now (Canvas size functional, Export a shell → M6).
+- **Multi-select is LIVE (M2 pass)** — `selection.ts` holds an ORDERED id list
+  (last = primary; `getActiveLayerId()` unchanged for single-layer surfaces) +
+  shift-range anchor. Canvas: Fabric `selection: true` (shift-click + rubber-
+  band), doc↔canvas sync with an echo-squelch; ActiveSelection commits DISCARD
+  first (Fabric bakes absolute coords; flips unfold from negative scale), then
+  `setTransforms` (ONE undo step), then rebuild; the render loop ALSO tears a
+  live ActiveSelection down before reconciling (children hold selection-
+  relative coords — reconcile must never write into them). **Groups are LIVE
+  as folders** (`layer-tree.ts` semantics: group transform stays identity;
+  children scene-absolute; visibility/lock compose EFFECTIVELY; group opacity/
+  blend/fx deferred — footer disables them for group primaries). Layers panel:
+  ⌘/ctrl-toggle + shift-range over visible rows, group rows (folder thumb ·
+  bold name · collapse chevron in the lock slot · ∑CG placeholder for unnamed),
+  tree-elbow gutters, drag scoped to ONE sibling list (group-row drags don't
+  visually carry children mid-drag; drop is correct; cross-parent drag ignored),
+  Group/Ungroup + delete-selection + **duplicate-selection** footer (copies
+  nudge +24 — group copies nudge their leaves — and become the selection, one
+  undo step). Arrange: align/rotate/flip act on ALL selected leaves,
+  root-composed effective flags filter out hidden/locked leaves everywhere
+  (canvas + Arrange); **Distribute enabled** (≥3, spreads centres). Inspector
+  shows a ×N marker (fields edit the primary); a GROUP primary gets a
+  read-only identity + member count (no transform/blend fields — v1 group
+  semantics). Tree elbows carry ancestor trails (correct at any depth).
+  Reviewed by two subagents; all confirmed findings fixed. Known v1 limits
+  (in-code):
+  skew from scaling mixed-rotation selections is dropped on commit; canvas
+  clicks select leaves (group selection via panel); only raster leaves have
+  dims for align/distribute.
+- **Module contents**: all five modules (Layers · FX · Inspector · Colour ·
+  Arrange) are real. **FX is structural** — stacks/params edit + undo, but the
+  per-pixel render is M3 (registry render fns, Fabric filters[] sync, GLSL
+  customs). Colour-balance has no params yet (M3-7 model open); duotone preset
+  grid is M3-9; Threshold/Posterise carry the M3-5 ship/defer call. Export +
+  Canvas size are **blocking modals** (Canvas size functional, Export a shell → M6).
 - **Top bar**: file ops (New/Open/Save/…) are no-ops (→ M5/M6); Edit history list
   is a static visual stub (real labelled history later); ACXV keypad no-op; Export
   no-op (→ M6).
-- **Workspace**: Guides (Rulers/Grid/Snap) not wired → **M2** (needs canvas overlays
-  + the snapping engine). Everything else in Workspace is live.
+- **Workspace**: Guides row — **Grid + Snap are LIVE** (M2-12): `guides-pref.ts`
+  store (localStorage, snap defaults on), pure `snap-engine.ts` (artboard
+  edges/centre + sibling bbox edges/centres + grid pitch `GRID_SIZE` 50,
+  6-screen-px threshold ÷ zoom, unrotated-bbox approximation), wired to
+  `object:moving` with primary-coloured smart-guide lines + a 12%-alpha grid
+  drawn on the top context. **Rulers** toggle stores state but has NO renderer
+  yet (needs the backdrop-sketch ruler design). Everything else in Workspace is
+  live. Snap thresholds/feel + grid pitch await Ruby's QA.
 - **Tools**: only MOVE is behaviourally live; SELECT/TEXT/PIECES/ADJUST set state
-  only → **M2/M3**.
+  only → **M2/M3**. **RULE (Ruby): a built tool ships its settings + chrome.**
+  MOVE is complete per the rule: sketch-styled selection handles (8px square
+  paper-fill/primary-border corners via shared `ownDefaults.controls`, circular
+  rotate handle, theme-observed recolour — NOTE: Textbox needs its own control
+  set in M2), smart guides now dashed-DESTRUCTIVE per the sketch, live
+  **drag badges** (move → X/Y · scale → W×H · rotate → angle, primary pill under
+  the bbox), **arrow-key nudge** (MOVE-gated, step = MOVE settings' nudge, ⇧
+  ×10, one undo step/press, `nudgeSelection` in layer-ops), and a real **MOVE
+  settings bloom** (`omnibar/tool-settings.tsx`: Snap/Grid switches sharing
+  guides-pref + the nudge stepper). Other tools keep placeholder blooms until
+  they land. Sketch extras still open: guide gap-pills, rulers renderer.
 - **Copy**: all user-facing strings are `∑CG` (functional chrome labels use the
   mockup's words per Ruby's call; voice-y microcopy + toast text stay `∑CG`).
   Fill via **slopsieve**.
@@ -216,13 +340,16 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
 
 ## Next
 
-1. **FX (Effects)** — the last panel of the modals pass. Single-open accordion per
-   `sketches/modals.html`, wired to the layer's `effects[]` array (add / reorder /
-   toggle / remove / params) using `effects.ts` registry. Structural only for now —
-   the per-pixel render is the **M3** engine, so params won't move pixels yet.
-2. **M2 (Make)** — **multi-select** (unblocks Arrange ▸ Distribute, Layers ▸ Group,
-   range/shift-select, group rows + nested drag), TEXT / PIECES / SELECT tools,
-   snapping + guides/rulers/grid (the remaining Workspace stubs).
-3. **M3 effects engine**, **M4 colour** (fills for text/shapes — the colour picker's
-   missing sink), **M5 persist** (project mgr + `.substrata`), **M6 export pipeline**,
+1. **M2 (Make)** — multi-select + groups LANDED (see Stubs for v1 limits).
+   Remaining: **snapping + guides/rulers/grid** (the Workspace stubs, M2-12),
+   TEXT / PIECES / SELECT tools (M2-2/M2-3/M2-6/M2-10 carry Ruby decisions:
+   freehand dep, bundled fonts, text-on-path scope, SELECT region semantics),
+   cross-parent layer drag + group transform composition (deferred from the
+   multi-select pass).
+2. **M3 effects engine** — render fns onto the FX registries (additive), doc→Fabric
+   filters[] sync + preview-downscale, the four GLSL customs, colour-balance params
+   (M3-7), duotone presets (M3-9), Threshold/Posterise ship/defer (M3-5),
+   rasterize-for-effects (M3-15), ADJUST wiring (M3-14).
+3. **M4 colour** (fills for text/shapes — the colour picker's missing sink),
+   **M5 persist** (project mgr + `.substrata`), **M6 export pipeline**,
    **M7 background removal** — per BUILD-PLAN.
