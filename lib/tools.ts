@@ -46,6 +46,7 @@ import {
   Wind,
   GitCompare,
   KeyRound,
+  CaseSensitive,
 } from "lucide-react";
 
 export interface Tool {
@@ -314,6 +315,14 @@ export const toolCategories: ToolCategory[] = [
         description: "Convert pixels to rem units",
         icon: Ruler,
         href: "/tools/px-to-rem",
+      },
+      {
+        id: "text-case-converter",
+        name: "Text Case Converter",
+        description: "Convert text between sentence, lower, upper, capitalized, alternating, and inverse case",
+        icon: CaseSensitive,
+        href: "/tools/text-case-converter",
+        new: true,
       },
       {
         id: "text-diff",

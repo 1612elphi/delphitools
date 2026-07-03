@@ -56,6 +56,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   "image-clipper": dynamic(() => import("@/components/tools/image-clipper").then(mod => mod.ImageClipperTool)),
   "pixel-picker": dynamic(() => import("@/components/tools/pixel-picker").then(mod => mod.PixelPickerTool)),
   "palette-extractor": dynamic(() => import("@/components/tools/palette-extractor").then(mod => mod.PaletteExtractorTool)),
+  "text-case-converter": dynamic(() => import("@/components/tools/text-case-converter").then(mod => mod.TextCaseConverterTool)),
   "text-diff": dynamic(() => import("@/components/tools/text-diff").then(mod => mod.TextDiffTool)),
   "decoder": dynamic(() => import("@/components/tools/decoder").then(mod => mod.DecoderTool)),
   "doc-converter": dynamic(() => import("@/components/tools/doc-converter").then(mod => mod.DocConverterTool)),
