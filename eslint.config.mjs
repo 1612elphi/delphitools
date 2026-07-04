@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Vendored third-party code (MIT pandoc-wasm wrapper) — not ours to lint.
     "lib/pandoc/pandoc-core.js",
+    // Vendored libjxl emscripten glue (from @jsquash/jxl) served from /public.
+    "public/jxl/jxl_enc.js",
   ]),
 ]);
 

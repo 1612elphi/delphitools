@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useFilePaste } from "@/hooks/use-file-paste";
 
-type ImageFormat = "png" | "jpeg" | "webp" | "avif" | "gif" | "bmp" | "tiff" | "ico" | "icns";
+type ImageFormat = "png" | "jpeg" | "webp" | "jxl" | "gif" | "bmp" | "tiff" | "ico" | "icns";
 
 type ResizeMode = "original" | "custom" | "percentage";
 
@@ -40,8 +40,9 @@ interface WebpOptions {
   lossless: boolean;
 }
 
-interface AvifOptions {
+interface JxlOptions {
   quality: number;
+  lossless: boolean;
 }
 
 interface GifOptions {
@@ -70,7 +71,7 @@ interface FormatOptionsMap {
   png: PngOptions;
   jpeg: JpegOptions;
   webp: WebpOptions;
-  avif: AvifOptions;
+  jxl: JxlOptions;
   gif: GifOptions;
   bmp: BmpOptions;
   tiff: TiffOptions;
@@ -163,8 +164,58 @@ async function encodeWebp(canvas: HTMLCanvasElement, options: WebpOptions): Prom
   return canvasToBlob(canvas, "image/webp", options.quality);
 }
 
-async function encodeAvif(canvas: HTMLCanvasElement, options: AvifOptions): Promise<Blob> {
-  return canvasToBlob(canvas, "image/avif", options.quality);
+interface JxlEncoderModule {
+  encode(
+    data: Uint8ClampedArray,
+    width: number,
+    height: number,
+    options: Record<string, unknown>,
+  ): Uint8Array | null;
+}
+
+// libjxl (the emscripten build from @jsquash/jxl) copied verbatim into
+// /public/jxl/ (jxl_enc.js + jxl_enc.wasm; re-copy from
+// node_modules/@jsquash/jxl/codec/enc/ on a version bump). We load it at
+// RUNTIME with a bundler-ignored dynamic import: Next 16 uses Turbopack for
+// both dev and `next build`, and Turbopack deadlocks (0% CPU hang) if it tries
+// to trace the emscripten glue, so it must never enter the module graph. The
+// magic comments keep both Turbopack and webpack out of it. locateFile points
+// the codec at the self-hosted wasm; this single-threaded build needs no
+// SharedArrayBuffer, hence no COOP/COEP headers on the static export.
+let jxlModulePromise: Promise<JxlEncoderModule> | null = null;
+
+function getJxlModule(): Promise<JxlEncoderModule> {
+  jxlModulePromise ??= (async () => {
+    const { default: factory } = (await import(
+      /* webpackIgnore: true */ /* turbopackIgnore: true */
+      // @ts-expect-error runtime-only module served from /public/jxl, not bundled
+      "/jxl/jxl_enc.js"
+    )) as { default: (opts: unknown) => Promise<JxlEncoderModule> };
+    return factory({ noInitialRun: true, locateFile: (path: string) => `/jxl/${path}` });
+  })();
+  return jxlModulePromise;
+}
+
+async function encodeJxl(canvas: HTMLCanvasElement, options: JxlOptions): Promise<Blob> {
+  const mod = await getJxlModule();
+  const ctx = canvas.getContext("2d")!;
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  // Option shape mirrors @jsquash/jxl's defaults; quality 100 == lossless.
+  const result = mod.encode(imageData.data, imageData.width, imageData.height, {
+    effort: 7,
+    quality: options.lossless ? 100 : options.quality,
+    progressive: false,
+    epf: -1,
+    lossyPalette: false,
+    decodingSpeedTier: 0,
+    photonNoiseIso: 0,
+    lossyModular: false,
+    lossless: options.lossless,
+  });
+  if (!result) throw new Error("JXL encoding failed");
+  // Copy out of the WASM heap into a standalone buffer (also satisfies BlobPart,
+  // which excludes ArrayBufferLike/SharedArrayBuffer-backed views).
+  return new Blob([new Uint8Array(result)], { type: "image/jxl" });
 }
 
 async function encodeGif(canvas: HTMLCanvasElement, options: GifOptions): Promise<Blob> {
@@ -360,8 +411,6 @@ export function ImageConverterTool() {
   const [converted, setConverted] = useState<ConvertedImage[]>([]);
   const [converting, setConverting] = useState(false);
 
-  const [avifSupported, setAvifSupported] = useState<boolean | null>(null);
-
   const [resize, setResize] = useState<ResizeOptions>({
     mode: "original",
     width: 0,
@@ -374,7 +423,7 @@ export function ImageConverterTool() {
     png: { transparency: true, backgroundColour: "#ffffff" },
     jpeg: { quality: 90, backgroundColour: "#ffffff" },
     webp: { quality: 90, lossless: false },
-    avif: { quality: 80 },
+    jxl: { quality: 90, lossless: false },
     gif: { maxColours: 256, quantization: "rgb565" },
     bmp: { bitDepth: 32 },
     tiff: {},
@@ -397,14 +446,6 @@ export function ImageConverterTool() {
       converted.forEach((img) => URL.revokeObjectURL(img.url));
     };
   }, [converted]);
-
-  useEffect(() => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 1;
-    canvas.height = 1;
-    const result = canvas.toDataURL("image/avif").startsWith("data:image/avif");
-    setAvifSupported(result);
-  }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -498,8 +539,8 @@ export function ImageConverterTool() {
           case "webp":
             blob = await encodeWebp(canvas, formatOptions.webp);
             break;
-          case "avif":
-            blob = await encodeAvif(canvas, formatOptions.avif);
+          case "jxl":
+            blob = await encodeJxl(canvas, formatOptions.jxl);
             break;
           case "gif":
             blob = await encodeGif(canvas, formatOptions.gif);
@@ -601,15 +642,13 @@ export function ImageConverterTool() {
         <div className="space-y-3 border-t-2 border-border p-4">
           <label className="font-bold block">Convert to</label>
           <div className="segmented grid-cols-5 -mx-4 border-x-0">
-            {(["png", "jpeg", "webp", "avif", "gif", "bmp", "tiff", "ico", "icns"] as ImageFormat[]).map((fmt) => (
+            {(["png", "jpeg", "webp", "jxl", "gif", "bmp", "tiff", "ico", "icns"] as ImageFormat[]).map((fmt) => (
               <Button
                 key={fmt}
                 variant={targetFormat === fmt ? "default" : "outline"}
                 onClick={() => setTargetFormat(fmt)}
                 className="uppercase font-bold"
                 size="lg"
-                disabled={fmt === "avif" && avifSupported === false}
-                title={fmt === "avif" && avifSupported === false ? "AVIF encoding not supported in your browser" : undefined}
               >
                 {fmt}
               </Button>
@@ -626,11 +665,6 @@ export function ImageConverterTool() {
               </Link>
             </Button>
           </div>
-          {targetFormat === "avif" && avifSupported === false && (
-            <p className="text-sm text-destructive">
-              Your browser does not support AVIF encoding. Try Chrome or Edge.
-            </p>
-          )}
         </div>
 
         {/* Settings */}
@@ -726,20 +760,31 @@ export function ImageConverterTool() {
             </>
           )}
 
-          {targetFormat === "avif" && (
-            <div className="space-y-3">
+          {targetFormat === "jxl" && (
+            <>
               <div className="flex items-center justify-between">
-                <Label className="text-sm">Quality</Label>
-                <span className="text-sm font-mono text-muted-foreground tabular-nums">{formatOptions.avif.quality}%</span>
+                <Label className="text-sm">Lossless</Label>
+                <Switch
+                  checked={formatOptions.jxl.lossless}
+                  onCheckedChange={(v) => updateFormatOption("jxl", "lossless", v)}
+                />
               </div>
-              <Slider
-                value={[formatOptions.avif.quality]}
-                onValueChange={([v]) => updateFormatOption("avif", "quality", v)}
-                min={1}
-                max={100}
-                step={1}
-              />
-            </div>
+              {!formatOptions.jxl.lossless && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm">Quality</Label>
+                    <span className="text-sm font-mono text-muted-foreground tabular-nums">{formatOptions.jxl.quality}%</span>
+                  </div>
+                  <Slider
+                    value={[formatOptions.jxl.quality]}
+                    onValueChange={([v]) => updateFormatOption("jxl", "quality", v)}
+                    min={1}
+                    max={100}
+                    step={1}
+                  />
+                </div>
+              )}
+            </>
           )}
 
           {targetFormat === "gif" && (
@@ -1079,7 +1124,7 @@ export function ImageConverterTool() {
                 className="flex items-stretch border-b border-border last:border-b-0"
               >
                 <div className="size-16 shrink-0 bg-muted flex items-center justify-center overflow-hidden border-r border-border">
-                  {img.targetFormat === "ico" || img.targetFormat === "icns" || img.targetFormat === "bmp" || img.targetFormat === "tiff" ? (
+                  {img.targetFormat === "ico" || img.targetFormat === "icns" || img.targetFormat === "bmp" || img.targetFormat === "tiff" || img.targetFormat === "jxl" ? (
                     <ImageIcon className="size-6 text-muted-foreground" />
                   ) : (
                     <img
