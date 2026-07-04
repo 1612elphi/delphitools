@@ -50,3 +50,6 @@ DESIGN.md
 
 # build data (downloaded source files for dictionary builds)
 scripts/data/
+
+# design sketches / mockups (not part of the app)
+/sketches/
