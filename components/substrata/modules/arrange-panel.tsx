@@ -22,6 +22,7 @@ import { findLayer, leafLayers, leafRenderList } from "@/lib/substrata/layer-tre
 import { getActiveLayerId, getSelectedLayerIds, subscribeSelection } from "@/lib/substrata/selection";
 import { setTransforms } from "@/lib/substrata/layer-ops";
 import type { Layer, Transform } from "@/lib/substrata/doc-model";
+import { layerDims } from "@/lib/substrata/shape-geometry";
 
 const EMPTY_IDS: readonly string[] = [];
 
@@ -71,11 +72,11 @@ export function ArrangeBody() {
 
   const ab = doc.artboard;
   const t = primary.transform;
-  const dimsOf = (l: Layer) =>
-    l.kind === "raster"
-      ? { w: l.naturalWidth * l.transform.scaleX, h: l.naturalHeight * l.transform.scaleY }
-      : null;
-  // v1: only raster leaves have dimensions; others join align/distribute in M2+.
+  const dimsOf = (l: Layer) => {
+    const d = layerDims(l);
+    return d ? { w: d.width * l.transform.scaleX, h: d.height * l.transform.scaleY } : null;
+  };
+  // Raster + shape leaves have dimensions; text joins align/distribute in M2.
   const sized = leaves.filter((l) => dimsOf(l) !== null);
   const canAlign = sized.length > 0;
   const canDistribute = sized.length >= 3;

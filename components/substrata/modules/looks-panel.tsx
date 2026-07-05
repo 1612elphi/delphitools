@@ -39,18 +39,20 @@ export function LooksBody() {
   const activeId = useSyncExternalStore(subscribeSelection, getActiveLayerId, () => null);
   const layer = doc && activeId ? findLayer(doc.layers, activeId) : null;
 
-  if (!layer || isGroup(layer)) {
+  // Looks grade PIXELS — raster layers only (a shape gets a look after
+  // rasterize, M3-15). Same hint as no-selection: pick a (raster) layer.
+  if (!layer || layer.kind !== "raster") {
     return (
       <div className="p-4 text-center text-xs text-muted-foreground">
-        {/* ∑CG: LOOKS empty-state hint (no selection, or a group selected)
-            spec: ≤ 48 chars; tells the user to select a layer to pick a look;
-            British spelling.
-            sample: "Select a layer to pick a look." */}
+        {/* ∑CG: LOOKS empty-state hint (no selection, a group, or a non-raster
+            layer selected)
+            spec: ≤ 48 chars; tells the user to select an image layer to pick
+            a look; British spelling.
+            sample: "Select an image layer to pick a look." */}
         ∑CG
       </div>
     );
   }
-  if (layer.kind !== "raster") return null;
 
   return <LooksGallery key={layer.id} layer={layer} />;
 }

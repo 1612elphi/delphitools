@@ -279,6 +279,7 @@ const PIECE_LABEL: Record<PieceShape, string> = {
   ellipse: "Ellipse",
   line: "Line",
   polygon: "Polygon",
+  star: "Star",
 };
 
 /**
@@ -310,8 +311,18 @@ function readoutChips(tool: ToolId, sub: string, layer: Layer | null, ts: ToolSe
         : [];
     case "text":
       return [ts.text.fontFamily, `${ts.text.fontSize} px`];
-    case "pieces":
-      return [PIECE_LABEL[ts.pieces.shape]];
+    case "pieces": {
+      const p = ts.pieces;
+      const extra =
+        p.shape === "polygon"
+          ? [`${p.sides} sides`]
+          : p.shape === "star"
+            ? [`${p.starPoints} points`]
+            : p.shape === "rectangle" && p.cornerRadius > 0
+              ? [`R ${p.cornerRadius}`]
+              : [];
+      return [PIECE_LABEL[p.shape], ...extra];
+    }
   }
 }
 
@@ -384,7 +395,7 @@ function ContextZone({
         )
       ) : (
         <Bloom edge={edge} cross="center">
-          <ToolSettingsBody tool={activeTool} title={subDef?.label ?? ""} />
+          <ToolSettingsBody tool={activeTool} sub={sub} title={subDef?.label ?? ""} />
         </Bloom>
       )}
     </div>

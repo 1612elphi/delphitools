@@ -65,6 +65,10 @@ export class SubstrataDB extends Dexie {
       handles: "id, updatedAt",
       snapshots: "id, projectId, createdAt",
     });
+    // v2 — doc SCHEMA_VERSION 1→2 (ratified M2-1 shape model). Same stores and
+    // indexes; the doc JSON is a stored value, so no upgrade step (loadLatest
+    // stamps the version — v1 docs contain no shape layers).
+    this.version(2).stores({});
   }
 }
 

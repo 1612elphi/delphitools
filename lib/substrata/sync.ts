@@ -16,11 +16,12 @@
  */
 
 import type { Canvas, FabricObject } from "fabric";
-import { Pattern, Rect } from "fabric";
-import type { SubstrataDoc, Layer } from "./doc-model";
+import { Ellipse, Gradient as FabricGradient, Line, Pattern, Polygon, Rect } from "fabric";
+import type { SubstrataDoc, Layer, ShapeLayer, ShapeParams, Gradient } from "./doc-model";
 import { EffectsImage } from "./effects-image";
 import { leafRenderList } from "./layer-tree";
 import { getRaster } from "./raster-cache";
+import { polygonPoints, starPoints } from "./shape-geometry";
 import { syncImageEffects, syncImageFilters } from "./filter-sync";
 
 const ARTBOARD_KEY = "__artboard__";
@@ -140,20 +141,14 @@ function syncLayer(
   locked: boolean,
   byId: Map<string, FabricObject>,
 ): FabricObject | null {
-  // Only raster layers in v1; other kinds render in later milestones.
-  if (layer.kind !== "raster") return null;
-
-  const src = getRaster(layer.blobHash);
-  if (!src) return null; // not decoded yet — a later reconcile will pick it up
-
-  let obj = byId.get(layer.id) as EffectsImage | undefined;
-  if (!obj) {
-    // Content-addressed source is immutable per layer, so the element is set once.
-    obj = new EffectsImage(src);
-    byId.set(layer.id, obj);
-    layerIdOf.set(obj, layer.id);
-    canvas.add(obj);
-  }
+  // Raster + shape render in v1; text renders in M2 (TEXT tool).
+  const obj =
+    layer.kind === "raster"
+      ? syncRasterContent(canvas, layer, byId)
+      : layer.kind === "shape"
+        ? syncShapeContent(canvas, layer, byId)
+        : null;
+  if (!obj) return null;
 
   const t = layer.transform;
   obj.set({
@@ -175,9 +170,120 @@ function syncLayer(
     selectable: !locked,
     evented: !locked,
   });
-  // FX stacks (M3): both signature-diffed inside, so this is cheap per pass.
-  syncImageFilters(obj, layer.filters);
-  syncImageEffects(obj, layer.effects);
+  if (layer.kind === "raster") {
+    // FX stacks (M3): both signature-diffed inside, so this is cheap per pass.
+    syncImageFilters(obj as EffectsImage, layer.filters);
+    syncImageEffects(obj as EffectsImage, layer.effects);
+  }
   obj.setCoords();
+  return obj;
+}
+
+function syncRasterContent(
+  canvas: Canvas,
+  layer: Layer & { kind: "raster" },
+  byId: Map<string, FabricObject>,
+): FabricObject | null {
+  const src = getRaster(layer.blobHash);
+  if (!src) return null; // not decoded yet — a later reconcile will pick it up
+
+  let obj = byId.get(layer.id) as EffectsImage | undefined;
+  if (!obj) {
+    // Content-addressed source is immutable per layer, so the element is set once.
+    obj = new EffectsImage(src);
+    byId.set(layer.id, obj);
+    layerIdOf.set(obj, layer.id);
+    canvas.add(obj);
+  }
+  return obj;
+}
+
+/** Doc Gradient → fabric Gradient. Relative 0–1 coords map straight onto
+ *  fabric's "percentage" gradientUnits (resolved against object dims). */
+function toFabricFill(fill: ShapeLayer["fill"]): string | FabricGradient<unknown, "linear" | "radial"> {
+  if (typeof fill === "string") return fill;
+  const g = fill as Gradient;
+  return new FabricGradient({
+    type: g.type,
+    gradientUnits: "percentage",
+    coords: g.coords,
+    colorStops: g.stops.map((s) => ({ offset: s.offset, color: s.colour })),
+  });
+}
+
+function buildShapeObject(p: ShapeParams): FabricObject {
+  switch (p.shape) {
+    case "rectangle":
+      return new Rect({ width: p.width, height: p.height, rx: p.cornerRadius, ry: p.cornerRadius });
+    case "ellipse":
+      return new Ellipse({ rx: p.rx, ry: p.ry });
+    case "line":
+      return new Line([-p.length / 2, 0, p.length / 2, 0]);
+    case "polygon":
+      return new Polygon(polygonPoints(p.sides, p.radius));
+    case "star":
+      return new Polygon(starPoints(p.points, p.outerRadius, p.innerRadius));
+  }
+}
+
+/** In-place geometry update (all verified against fabric 7.4.0: Ellipse._set
+ *  doubles rx/ry into width/height, Line._set recomputes on coord props,
+ *  Polyline.setDimensions is public). Params stay INTRINSIC — the transform
+ *  scales them — so a settings edit rebuilds geometry, not scale. */
+function updateShapeGeometry(obj: FabricObject, p: ShapeParams): void {
+  switch (p.shape) {
+    case "rectangle":
+      obj.set({ width: p.width, height: p.height, rx: p.cornerRadius, ry: p.cornerRadius });
+      break;
+    case "ellipse":
+      obj.set({ rx: p.rx, ry: p.ry });
+      break;
+    case "line":
+      obj.set({ x1: -p.length / 2, y1: 0, x2: p.length / 2, y2: 0 });
+      break;
+    case "polygon":
+    case "star": {
+      const poly = obj as Polygon;
+      poly.points = p.shape === "polygon" ? polygonPoints(p.sides, p.radius) : starPoints(p.points, p.outerRadius, p.innerRadius);
+      poly.setDimensions();
+      break;
+    }
+  }
+  obj.set("dirty", true);
+}
+
+/** Fabric object kind per layer, so a params.shape change recreates instead of
+ *  mis-mutating (not reachable from the tool today — shape type is fixed at
+ *  draw time — but cheap to be correct about). */
+const shapeKindOf = new WeakMap<FabricObject, ShapeParams["shape"]>();
+
+function syncShapeContent(
+  canvas: Canvas,
+  layer: ShapeLayer,
+  byId: Map<string, FabricObject>,
+): FabricObject {
+  const p = layer.params;
+  let obj = byId.get(layer.id);
+  if (obj && shapeKindOf.get(obj) !== p.shape) {
+    canvas.remove(obj);
+    byId.delete(layer.id);
+    obj = undefined;
+  }
+  if (!obj) {
+    obj = buildShapeObject(p);
+    shapeKindOf.set(obj, p.shape);
+    byId.set(layer.id, obj);
+    layerIdOf.set(obj, layer.id);
+    canvas.add(obj);
+  } else {
+    updateShapeGeometry(obj, p);
+  }
+  obj.set({
+    // A line renders stroke-only; fill would paint nothing but costs a fill pass.
+    fill: p.shape === "line" ? null : toFabricFill(layer.fill),
+    stroke: layer.stroke?.colour ?? null,
+    strokeWidth: layer.stroke?.width ?? 0,
+    strokeDashArray: layer.stroke?.dash ?? null,
+  });
   return obj;
 }

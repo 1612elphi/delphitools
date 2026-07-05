@@ -10,7 +10,7 @@
 
 import { getDB } from "./db";
 import { getSnapshot, subscribe } from "./doc-store";
-import type { Layer, SubstrataDoc } from "./doc-model";
+import { SCHEMA_VERSION, type Layer, type SubstrataDoc } from "./doc-model";
 import { hydrateRaster, persistRaster } from "./blobs";
 import { getPersistenceEnabled } from "./persistence-pref";
 
@@ -50,7 +50,9 @@ export async function loadLatestProject(): Promise<SubstrataDoc | null> {
   const rec = await getDB().projects.orderBy("updatedAt").last();
   if (!rec) return null;
   await Promise.all(rasterHashes(rec.doc.layers).map((h) => hydrateRaster(h)));
-  return rec.doc;
+  // Forward-stamp older docs: v1 predates shape layers, so the shape alone is
+  // already valid v2 — no field migration (doc-model SCHEMA_VERSION notes).
+  return { ...rec.doc, schemaVersion: SCHEMA_VERSION };
 }
 
 /** On opt-in: persist the current scene + all its rasters so a reload restores. */
