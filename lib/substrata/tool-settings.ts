@@ -12,6 +12,7 @@
  */
 
 import type { PieceShape } from "./doc-model";
+import type { TextStylePreset } from "./text-style";
 
 export interface MoveSettings {
   /** arrow-key nudge step in scene px (⇧ multiplies ×10) */
@@ -29,9 +30,12 @@ export interface SelectSettings {
 }
 
 export interface TextSettings {
+  /** font-choice id (sans/serif/mono) or an uploaded family (fonts.ts) */
   fontFamily: string;
   /** px at scene scale */
   fontSize: number;
+  /** style preset applied to NEW text (text-style.ts quick-set fields) */
+  style: TextStylePreset;
 }
 
 /** The five primitives — re-exported so panel code keeps one import site;
@@ -73,7 +77,7 @@ const DEFAULTS: ToolSettings = {
   transformAsGroup: true,
   move: { nudge: 1 },
   select: { mode: "touch", sensitivity: 50, tolerance: 32 },
-  text: { fontFamily: "Inter", fontSize: 64 },
+  text: { fontFamily: "sans", fontSize: 64, style: "regular" },
   pieces: {
     shape: "rectangle",
     fill: "#3e6b33", // the house green — colour data, not copy; M4 wires the picker

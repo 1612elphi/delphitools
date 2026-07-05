@@ -13,7 +13,11 @@ import {
 import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
 import { findLayer, isGroup, leafLayers } from "@/lib/substrata/layer-tree";
 import { getActiveLayerId, getSelectedLayerIds, subscribeSelection } from "@/lib/substrata/selection";
-import { setBlendMode, setFill, setOpacity, setShapeParams, setShapeStroke, setTransform } from "@/lib/substrata/layer-ops";
+import { setBlendMode, setFill, setOpacity, setShapeParams, setShapeStroke, setTextProps, setTransform } from "@/lib/substrata/layer-ops";
+import { FONT_CHOICES, getUploadedFonts, subscribeFonts } from "@/lib/substrata/fonts";
+import { deriveTextStyle, styleFields, textAccent } from "@/lib/substrata/text-style";
+import { TextStyleRow } from "@/components/substrata/text-style-row";
+import { cn } from "@/lib/utils";
 import { CornerPresetIcon, PresetRow, Stepper, type PresetOption } from "@/components/substrata/preset-row";
 import { TransientColourCell } from "@/components/substrata/transient-colour";
 import { Switch } from "@/components/ui/switch";
@@ -235,6 +239,7 @@ export function InspectorBody() {
             </div>
           </>
         )}
+        {layer.kind === "text" && <TextSection layer={layer} />}
       </div>
 
       {/* Appearance — a flush action bar pinned to the BOTTOM of the card,
@@ -426,6 +431,81 @@ function ShapeSection({ layer }: { layer: Layer & { kind: "shape" } }) {
           </>
         )}
         <StrokeRows layer={layer} />
+      </div>
+    </>
+  );
+}
+
+const TEXT_SIZE_PRESETS: PresetOption[] = [16, 24, 48, 96].map((v) => ({ value: v, label: String(v) }));
+
+/**
+ * After-the-fact text controls (the shape-section pattern): font choice,
+ * size presets, style presets (quick-set fill/stroke/plate around the layer's
+ * accent, active state DERIVED — text-style.ts), accent colour.
+ */
+function TextSection({ layer }: { layer: Layer & { kind: "text" } }) {
+  const uploadedFonts = useSyncExternalStore(subscribeFonts, getUploadedFonts, getUploadedFonts);
+  const accent = textAccent(layer);
+  const families = [...FONT_CHOICES.map((c) => ({ id: c.id, label: c.label, css: c.css })),
+    ...uploadedFonts.map((f) => ({ id: f, label: f, css: `"${f}"` }))];
+
+  return (
+    <>
+      <SectionTitle text="Text" />
+      <div className="border-t border-border">
+        <ShapeRow label="Font">
+          <span className="segmented" style={{ gridTemplateColumns: `repeat(${Math.min(families.length, 3)}, minmax(0, 1fr))` }}>
+            {families.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                title={f.label}
+                onClick={() => setTextProps(layer.id, { fontFamily: f.id })}
+                style={{ fontFamily: f.css }}
+                className={cn(
+                  "h-6 max-w-[52px] truncate px-1.5 text-[10.5px]",
+                  layer.fontFamily === f.id
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
+          </span>
+        </ShapeRow>
+        <ShapeRow label="Size">
+          <PresetRow
+            options={TEXT_SIZE_PRESETS}
+            value={layer.fontSize}
+            onChange={(fontSize) => setTextProps(layer.id, { fontSize })}
+            min={6}
+            max={400}
+            unit="px"
+          />
+        </ShapeRow>
+        <ShapeRow label="Style">
+          <TextStyleRow
+            value={deriveTextStyle(layer)}
+            onPick={(preset) => setTextProps(layer.id, styleFields(preset, accent, layer.fontSize))}
+          />
+        </ShapeRow>
+        <ShapeRow label="Colour">
+          <TransientColourCell
+            value={accent}
+            onApply={(hex, transient) =>
+              setTextProps(
+                layer.id,
+                styleFields(deriveTextStyle(layer), hex, layer.fontSize),
+                transient ? { transient } : undefined,
+              )
+            }
+            // ∑CG: aria-label for the text accent swatch. sample: "Text colour"
+            swatchAria="∑CG"
+            // ∑CG: aria-label for the text accent hex field. sample: "Text hex"
+            hexAria="∑CG"
+          />
+        </ShapeRow>
       </div>
     </>
   );

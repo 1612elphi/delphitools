@@ -51,6 +51,7 @@ import { BLEND_OPTIONS } from "@/components/substrata/modules/inspector-panel";
 import type { BlendMode, Layer, ShapeParams } from "@/lib/substrata/doc-model";
 import { polygonPoints, shapeDims, starPoints } from "@/lib/substrata/shape-geometry";
 import { freehandDims, outlineToPathD, strokeOutline } from "@/lib/substrata/freehand";
+import { resolveFontCss } from "@/lib/substrata/fonts";
 
 /**
  * Layers module — the BODY only; the module box supplies the header. Reads the
@@ -397,7 +398,9 @@ function LayerThumb({ layer, inset }: { layer: Layer; inset: boolean }) {
       ? JSON.stringify([layer.params, layer.fill, layer.stroke])
       : layer.kind === "freehand"
         ? `${layer.rawPoints.length}|${layer.fill}|${layer.strokeOptions.size}`
-        : null;
+        : layer.kind === "text"
+          ? `${layer.text}|${layer.fill}|${layer.plate?.colour}|${layer.stroke?.colour}|${layer.fontFamily}`
+          : null;
 
   useEffect(() => {
     const el = ref.current;
@@ -405,6 +408,23 @@ function LayerThumb({ layer, inset }: { layer: Layer; inset: boolean }) {
     const ctx = el.getContext("2d");
     if (!ctx) return;
     ctx.clearRect(0, 0, el.width, el.height);
+    if (layer.kind === "text") {
+      // Specimen thumb: the layer's OWN first characters (data, not copy),
+      // plate colour as the backdrop when the style has one.
+      if (layer.plate) {
+        ctx.fillStyle = layer.plate.colour;
+        ctx.beginPath();
+        ctx.roundRect(1, 5, el.width - 2, el.height - 10, layer.plate.shape === "pill" ? 7 : 2);
+        ctx.fill();
+      }
+      const ink = layer.fill !== "transparent" ? layer.fill : (layer.stroke?.colour ?? "#888888");
+      ctx.fillStyle = ink;
+      ctx.font = `bold 11px ${resolveFontCss(layer.fontFamily)}`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(layer.text.slice(0, 2), el.width / 2, el.height / 2 + 1);
+      return;
+    }
     if (layer.kind === "freehand") {
       const dims = freehandDims(layer.rawPoints, layer.strokeOptions);
       const s = (el.width - 6) / Math.max(dims.width, dims.height, 1);

@@ -36,6 +36,7 @@ import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
 import { findLayer } from "@/lib/substrata/layer-tree";
 import { getActiveLayerId, subscribeSelection } from "@/lib/substrata/selection";
 import { fxDisplayLabel } from "@/lib/substrata/fx-ops";
+import { fontLabel } from "@/lib/substrata/fonts";
 import {
   getToolSettings,
   subscribeToolSettings,
@@ -310,7 +311,7 @@ function readoutChips(tool: ToolId, sub: string, layer: Layer | null, ts: ToolSe
           ]
         : [];
     case "text":
-      return [ts.text.fontFamily, `${ts.text.fontSize} px`];
+      return [fontLabel(ts.text.fontFamily), `${ts.text.fontSize} px`];
     case "pieces": {
       const p = ts.pieces;
       if (sub === "brush") return [`${p.brushSize} px`];
