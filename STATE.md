@@ -484,10 +484,15 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   reconciler NEVER clobbers a live edit (isEditing skip).
   `SubstrataText extends IText` draws the plate (cache padded, EffectsImage
   precedent; selection bbox stays the text's — plate overhang isn't
-  clickable, accepted v1). Bloom = font segments + Upload + size/style
-  presets; Inspector Text section = font/size/style/accent; colour sink
-  recolours the layer's ACCENT (style re-expresses: plate + contrast ink /
-  stroke / fill). layerDims: null for text (W/H fields hidden; align skips —
+  clickable, accepted v1). Bloom = font DROPDOWN (Ruby's ask; shared
+  `FontSelect`, faces previewed) + Upload + size/style presets, and bloom
+  edits LIVE-APPLY to the active text layer; Inspector Text section =
+  font dropdown/size/style/accent; colour sink recolours the layer's ACCENT
+  (style re-expresses: plate + contrast ink / stroke / fill). Mid-edit lore
+  (bug-earned, 2026-07-06): font/size/style props apply DURING editing (only
+  `text` stays fabric's until exit), and fabric anchors the LEFT edge while
+  typing by mutating `left` — the exit commit adopts the visual centre into
+  the transform or the text snaps back to the click point. layerDims: null for text (W/H fields hidden; align skips —
   measure-in-doc-space is a later nicety). 10-check harness
   `.verify-text.mjs` ALL PASS (click-to-type, plates, sink accent, edit
   round-trip, abandon). PIECES

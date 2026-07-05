@@ -1,7 +1,57 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { FONT_CHOICES, getUploadedFonts, subscribeFonts } from "@/lib/substrata/fonts";
 import { TEXT_STYLE_PRESETS, type TextStylePreset } from "@/lib/substrata/text-style";
 import { cn } from "@/lib/utils";
+
+/** Font dropdown (Ruby 2026-07-06: dropdown, not buttons) — the three system
+ *  stacks + session uploads, each previewed in its own face. Shared by the
+ *  TEXT bloom and the Inspector. */
+export function FontSelect({
+  value,
+  onChange,
+  className,
+}: {
+  value: string;
+  onChange: (family: string) => void;
+  className?: string;
+}) {
+  const uploadedFonts = useSyncExternalStore(subscribeFonts, getUploadedFonts, getUploadedFonts);
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger
+        className={cn(
+          "gap-1 rounded-none border-border bg-card px-2 text-[11px] shadow-none focus-visible:ring-0 dark:bg-card [&>svg]:size-3",
+          className,
+        )}
+        // ∑CG: aria-label for the font dropdown. sample: "Font"
+        aria-label="∑CG"
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {FONT_CHOICES.map((c) => (
+          <SelectItem key={c.id} value={c.id} className="text-xs" style={{ fontFamily: c.css }}>
+            {c.label}
+          </SelectItem>
+        ))}
+        {uploadedFonts.map((f) => (
+          <SelectItem key={f} value={f} className="text-xs" style={{ fontFamily: `"${f}"` }}>
+            {f}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
 
 /**
  * The four text styles as a flush segmented strip (Ruby 2026-07-06: regular ·

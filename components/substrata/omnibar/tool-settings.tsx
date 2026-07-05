@@ -3,8 +3,13 @@
 import { useRef, useSyncExternalStore } from "react";
 import { ChevronDown, ChevronUp, Circle, Pentagon, Slash, Square, Star, Upload } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { FONT_CHOICES, getUploadedFonts, subscribeFonts, uploadLocalFont } from "@/lib/substrata/fonts";
-import { TextStyleRow } from "@/components/substrata/text-style-row";
+import { uploadLocalFont } from "@/lib/substrata/fonts";
+import { FontSelect, TextStyleRow } from "@/components/substrata/text-style-row";
+import { getActiveLayerId } from "@/lib/substrata/selection";
+import { getSnapshot } from "@/lib/substrata/doc-store";
+import { findLayer } from "@/lib/substrata/layer-tree";
+import { setTextProps } from "@/lib/substrata/layer-ops";
+import { styleFields, textAccent, type TextStylePreset } from "@/lib/substrata/text-style";
 import { Switch } from "@/components/ui/switch";
 import { ColourSwatchCell, DeferredHexInput } from "@/components/colour-field";
 import {
@@ -319,94 +324,82 @@ function FreehandSettings({ sub, title }: { sub: "brush" | "pencil"; title: stri
 const TEXT_SIZES: PresetOption[] = [16, 24, 48, 96].map((v) => ({ value: v, label: String(v) }));
 
 /** TEXT (M2): font choice (system stacks + session uploads — Ruby's call, no
- *  bundled files), size presets, style presets. Colour rides the shared
- *  current-colour → pieces.fill sink, like every other tool. */
+ *  bundled files; dropdown per her 2026-07-06 ask), size presets, style
+ *  presets. Colour rides the shared current-colour sink. Settings describe
+ *  the NEXT text AND live-apply to the active text layer — a font click must
+ *  restyle the text you're editing (Ruby, same day). */
 function TextToolSettings({ title }: { title: string }) {
   const ts = useSyncExternalStore(subscribeToolSettings, getToolSettings, getToolSettings);
-  const uploadedFonts = useSyncExternalStore(subscribeFonts, getUploadedFonts, getUploadedFonts);
   const fileRef = useRef<HTMLInputElement>(null);
   const t = ts.text;
-  const setFont = (fontFamily: string) => updateToolSettings("text", { fontFamily });
+
+  /** patch the selected text layer too, so the bloom edits what you see */
+  const applyLive = (patch: { fontFamily?: string; fontSize?: number } | { style: TextStylePreset }) => {
+    const id = getActiveLayerId();
+    const doc = getSnapshot();
+    const layer = doc && id ? findLayer(doc.layers, id) : null;
+    if (!layer || layer.kind !== "text") return;
+    if ("style" in patch) setTextProps(id!, styleFields(patch.style, textAccent(layer), layer.fontSize));
+    else setTextProps(id!, patch);
+  };
+  const setFont = (fontFamily: string) => {
+    updateToolSettings("text", { fontFamily });
+    applyLive({ fontFamily });
+  };
 
   return (
     <div className="w-[200px]">
       <Head title={title} />
-      <div className="m-[11px] mb-2 flex flex-col gap-1">
-        <span className="segmented grid-cols-3">
-          {FONT_CHOICES.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setFont(c.id)}
-              style={{ fontFamily: c.css }}
-              className={cn(
-                "h-7 px-1.5 text-[11px]",
-                t.fontFamily === c.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
-              )}
-            >
-              {c.label}
-            </button>
-          ))}
+      <Row label="Font">
+        <span className="flex items-stretch gap-1">
+          <FontSelect value={t.fontFamily} onChange={setFont} className="h-6 w-[104px]" />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            // ∑CG: aria-label for the font upload button. sample: "Upload font"
+            aria-label="∑CG"
+            title="∑CG"
+            className="grid h-6 w-7 place-items-center border border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <Upload className="size-3" aria-hidden />
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".woff2,.woff,.ttf,.otf"
+            className="hidden"
+            // ∑CG: aria-label for the font-file input. sample: "Upload a font file"
+            aria-label="∑CG"
+            onChange={async (e) => {
+              const file = e.currentTarget.files?.[0];
+              e.currentTarget.value = "";
+              if (!file) return;
+              setFont(await uploadLocalFont(file));
+            }}
+          />
         </span>
-        {uploadedFonts.length > 0 && (
-          <span className="segmented grid-cols-2">
-            {uploadedFonts.map((f) => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => setFont(f)}
-                title={f}
-                style={{ fontFamily: `"${f}"` }}
-                className={cn(
-                  "h-7 truncate px-1.5 text-[11px]",
-                  t.fontFamily === f
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
-                )}
-              >
-                {f}
-              </button>
-            ))}
-          </span>
-        )}
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          className="flex h-7 items-center justify-center gap-1.5 border border-border bg-card text-[11px] text-muted-foreground hover:bg-accent hover:text-foreground"
-        >
-          <Upload className="size-3" aria-hidden />
-          {/* Upload = the layers-footer's word (functional chrome) */}
-          Upload
-        </button>
-        <input
-          ref={fileRef}
-          type="file"
-          accept=".woff2,.woff,.ttf,.otf"
-          className="hidden"
-          // ∑CG: aria-label for the font-file input. sample: "Upload a font file"
-          aria-label="∑CG"
-          onChange={async (e) => {
-            const file = e.currentTarget.files?.[0];
-            e.currentTarget.value = "";
-            if (!file) return;
-            setFont(await uploadLocalFont(file));
-          }}
-        />
-      </div>
+      </Row>
       <Row label="Size">
         <PresetRow
           options={TEXT_SIZES}
           value={t.fontSize}
-          onChange={(fontSize) => updateToolSettings("text", { fontSize })}
+          onChange={(fontSize) => {
+            updateToolSettings("text", { fontSize });
+            applyLive({ fontSize });
+          }}
           min={6}
           max={400}
           unit="px"
         />
       </Row>
       <Row label="Style">
-        <TextStyleRow value={t.style} onPick={(style) => updateToolSettings("text", { style })} />
+        <TextStyleRow
+          value={t.style}
+          onPick={(style) => {
+            updateToolSettings("text", { style });
+            applyLive({ style });
+          }}
+        />
       </Row>
     </div>
   );

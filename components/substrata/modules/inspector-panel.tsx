@@ -14,10 +14,8 @@ import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
 import { findLayer, isGroup, leafLayers } from "@/lib/substrata/layer-tree";
 import { getActiveLayerId, getSelectedLayerIds, subscribeSelection } from "@/lib/substrata/selection";
 import { setBlendMode, setFill, setOpacity, setShapeParams, setShapeStroke, setTextProps, setTransform } from "@/lib/substrata/layer-ops";
-import { FONT_CHOICES, getUploadedFonts, subscribeFonts } from "@/lib/substrata/fonts";
 import { deriveTextStyle, styleFields, textAccent } from "@/lib/substrata/text-style";
-import { TextStyleRow } from "@/components/substrata/text-style-row";
-import { cn } from "@/lib/utils";
+import { FontSelect, TextStyleRow } from "@/components/substrata/text-style-row";
 import { CornerPresetIcon, PresetRow, Stepper, type PresetOption } from "@/components/substrata/preset-row";
 import { TransientColourCell } from "@/components/substrata/transient-colour";
 import { Switch } from "@/components/ui/switch";
@@ -444,35 +442,18 @@ const TEXT_SIZE_PRESETS: PresetOption[] = [16, 24, 48, 96].map((v) => ({ value: 
  * accent, active state DERIVED — text-style.ts), accent colour.
  */
 function TextSection({ layer }: { layer: Layer & { kind: "text" } }) {
-  const uploadedFonts = useSyncExternalStore(subscribeFonts, getUploadedFonts, getUploadedFonts);
   const accent = textAccent(layer);
-  const families = [...FONT_CHOICES.map((c) => ({ id: c.id, label: c.label, css: c.css })),
-    ...uploadedFonts.map((f) => ({ id: f, label: f, css: `"${f}"` }))];
 
   return (
     <>
       <SectionTitle text="Text" />
       <div className="border-t border-border">
         <ShapeRow label="Font">
-          <span className="segmented" style={{ gridTemplateColumns: `repeat(${Math.min(families.length, 3)}, minmax(0, 1fr))` }}>
-            {families.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                title={f.label}
-                onClick={() => setTextProps(layer.id, { fontFamily: f.id })}
-                style={{ fontFamily: f.css }}
-                className={cn(
-                  "h-6 max-w-[52px] truncate px-1.5 text-[10.5px]",
-                  layer.fontFamily === f.id
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
-                )}
-              >
-                {f.label}
-              </button>
-            ))}
-          </span>
+          <FontSelect
+            value={layer.fontFamily}
+            onChange={(fontFamily) => setTextProps(layer.id, { fontFamily })}
+            className="h-6 w-[120px]"
+          />
         </ShapeRow>
         <ShapeRow label="Size">
           <PresetRow

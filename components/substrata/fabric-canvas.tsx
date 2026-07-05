@@ -470,7 +470,17 @@ export function FabricCanvas() {
         deleteLayers([id]);
         return;
       }
-      setTextProps(id, { text: obj.text, name: obj.text.slice(0, 24) });
+      // Fabric anchors the LEFT edge while typing (it mutates `left` as the
+      // text grows) — adopt the visual centre into the doc transform or the
+      // text snaps back to the click point when the reconciler re-syncs.
+      const doc = getSnapshot();
+      const layer = doc ? findLayer(doc.layers, id) : null;
+      const c = obj.getCenterPoint();
+      setTextProps(id, {
+        text: obj.text,
+        name: obj.text.slice(0, 24),
+        ...(layer ? { transform: { ...layer.transform, x: c.x, y: c.y } } : {}),
+      });
     });
 
     // ── Brush/Pencil freehand (M2-2) ──────────────────────────────────────────
@@ -1002,6 +1012,7 @@ export function FabricCanvas() {
         toolSettings: (tool: "move" | "select" | "text" | "pieces", patch: object) =>
           updateToolSettings(tool, patch),
         shapeParams: setShapeParams,
+        textProps: setTextProps,
         // M4 colour QA: drive the picker store (flows through the sink).
         colour: setHex,
         // M3 effects QA: same pair over the effects[] stack.
