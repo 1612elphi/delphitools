@@ -105,8 +105,9 @@ interface BaseLayer {
    * Per-layer non-destructive stack, composited in order:
    *   outer effects → (layer content + filters) → inner effects
    *   → then opacity/blendMode composite this layer onto those below.
-   * Both arrays are editable via the FX module (fx-ops.ts); rendering them is
-   * the M3 engine — until then params are stored/undoable but move no pixels.
+   * Both arrays are editable via the FX module (fx-ops.ts). Tier-0 filters
+   * render via filter-sync/filter-factory (M3); Tier-1 filters and effects are
+   * stored/undoable but move no pixels until their engines land.
    */
   /** Filters (raster, inside-only adjustments), ordered & reorderable. */
   filters: Filter[];

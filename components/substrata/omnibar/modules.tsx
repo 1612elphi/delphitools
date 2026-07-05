@@ -8,13 +8,15 @@ import { InspectorBody } from "@/components/substrata/modules/inspector-panel";
 import { ColourBody, ColourName } from "@/components/substrata/modules/colour-panel";
 import { ArrangeBody } from "@/components/substrata/modules/arrange-panel";
 import { FxBody, FxSub } from "@/components/substrata/modules/fx-panel";
+import { LooksBody, LooksSub } from "@/components/substrata/modules/looks-panel";
 
 /**
  * Module registry + box wrapper. One definition per omnibar module; the SAME
  * content renders in the hover-peek bloom (unpinned) or the rail (pinned). The
- * box supplies the header (title · sub · unpin-when-pinned). All five modules
- * are real as of the modals pass. Titles = mockup/omnibar words ("FX" matches
- * its omnibar trigger — the module holds effects + filters + colour changes).
+ * box supplies the header (title · sub · unpin-when-pinned). All six modules
+ * are real. Titles = mockup/omnibar words ("FX" matches its omnibar trigger —
+ * the module holds adjustments + effects; the film-sim/LUT family lives in
+ * LOOKS, whose category Ruby hasn't named yet → its title is the ∑CG gap).
  */
 
 export interface ModuleDef {
@@ -30,6 +32,11 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
   effects: { id: "effects", title: "FX", width: "w-[296px]", body: <FxBody />, sub: <FxSub /> },
   inspector: { id: "inspector", title: "Inspector", width: "w-[236px]", body: <InspectorBody /> },
   colour: { id: "colour", title: "Colour", width: "w-[236px]", body: <ColourBody />, sub: <ColourName /> },
+  // ∑CG: module title for the film-sim/LUT gallery — Ruby's unnamed third
+  //   family ("LUTs, CSTs, don't have a good name for this yet").
+  //   spec: ≤ 10 chars, noun, renders uppercase in the header; British
+  //   spelling. sample: "Looks"
+  looks: { id: "looks", title: "∑CG", width: "w-[312px]", body: <LooksBody />, sub: <LooksSub /> },
   arrange: { id: "arrange", title: "Arrange", width: "w-[224px]", body: <ArrangeBody /> },
 };
 

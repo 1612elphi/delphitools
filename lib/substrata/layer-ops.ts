@@ -17,7 +17,9 @@ import {
   leafLayers,
   leafRenderList,
   mapLayerInTree,
+  parentIdOf,
   removeLayers,
+  siblingListOf,
 } from "./layer-tree";
 import { getSelectedLayerIds, pruneSelection, setActiveLayer, setSelection } from "./selection";
 import type { BlendMode, GroupLayer, Layer, SubstrataDoc, Transform } from "./doc-model";
@@ -302,6 +304,49 @@ export function nudgeSelection(dx: number, dy: number): void {
     }
   }
   setTransforms(entries);
+}
+
+export type ReorderDirection = "front" | "forward" | "backward" | "back";
+
+/**
+ * Restack the selected ids within their (shared) sibling list — the context
+ * menu's Bring/Send actions. Doc order is bottom→top, so "front" moves ids to
+ * the END. forward/backward step each selected item one slot, skipping over
+ * other selected items so a block moves as a block. No-op when the ids span
+ * different sibling lists (cross-parent restack is v1-out, like panel drag).
+ */
+export function reorderLayers(ids: readonly string[], dir: ReorderDirection): void {
+  const doc = getSnapshot();
+  if (!doc || ids.length === 0) return;
+  const list = siblingListOf(doc.layers, ids[0]);
+  if (!list || !ids.every((id) => list.some((l) => l.id === id))) return;
+  const parentId = parentIdOf(doc.layers, ids[0]) ?? null;
+
+  const selected = new Set(ids);
+  const order = list.map((l) => l.id);
+  let next: string[];
+  if (dir === "front") {
+    next = [...order.filter((id) => !selected.has(id)), ...order.filter((id) => selected.has(id))];
+  } else if (dir === "back") {
+    next = [...order.filter((id) => selected.has(id)), ...order.filter((id) => !selected.has(id))];
+  } else {
+    next = [...order];
+    if (dir === "forward") {
+      // walk top→bottom so a swap never collides with an already-moved item
+      for (let i = next.length - 2; i >= 0; i--) {
+        if (selected.has(next[i]) && !selected.has(next[i + 1])) {
+          [next[i], next[i + 1]] = [next[i + 1], next[i]];
+        }
+      }
+    } else {
+      for (let i = 1; i < next.length; i++) {
+        if (selected.has(next[i]) && !selected.has(next[i - 1])) {
+          [next[i], next[i - 1]] = [next[i - 1], next[i]];
+        }
+      }
+    }
+  }
+  if (next.some((id, i) => id !== order[i])) setSiblingOrder(parentId, next);
 }
 
 /** Reorder ONE sibling list (root when parentId is null) to `orderedIds`

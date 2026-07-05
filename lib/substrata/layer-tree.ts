@@ -105,6 +105,20 @@ export function removeLayers(
   return { layers: nextLayers, removed };
 }
 
+/** The id of the group containing `id`: null when it sits at the root,
+ *  undefined when it isn't in the tree (mirrors siblingListOf — the pair
+ *  feeds setSiblingOrder). */
+export function parentIdOf(layers: readonly Layer[], id: string): string | null | undefined {
+  if (layers.some((l) => l.id === id)) return null;
+  for (const l of layers) {
+    if (isGroup(l)) {
+      const hit = parentIdOf(l.children, id);
+      if (hit !== undefined) return hit ?? l.id;
+    }
+  }
+  return undefined;
+}
+
 /** The sibling list an id lives in: the root list or its group's children.
  *  Returns null when the id isn't in the tree. */
 export function siblingListOf(layers: readonly Layer[], id: string): readonly Layer[] | null {

@@ -6,11 +6,10 @@ import {
   Crop,
   BoxSelect,
   Brush,
+  Film,
   Lasso,
   Wand2,
   SlidersHorizontal,
-  Sparkles,
-  Palette,
   Type,
   PenTool,
   Shapes,
@@ -88,11 +87,10 @@ const TOOLS: ToolDef[] = [
   {
     id: "adjust",
     key: "A",
-    subs: [
-      { id: "adjust", label: "Adjust", icon: <SlidersHorizontal className={ICON} /> },
-      { id: "filters", label: "Filters", icon: <Sparkles className={ICON} /> },
-      { id: "colour", label: "Colour", icon: <Palette className={ICON} /> },
-    ],
+    // No subtools (Ruby, 2026-07-03): the planned FILTERS/COLOUR split
+    // collapsed once both families landed in the ONE filters[] pipeline —
+    // a single ADJUST button fronts the whole FX mode.
+    subs: [{ id: "adjust", label: "Adjust", icon: <SlidersHorizontal className={ICON} /> }],
   },
   {
     id: "text",
@@ -195,6 +193,7 @@ export function Omnibar() {
           <PanelButton id="layers" icon={<Layers className={ICON} />} edge={edge} pinned={isPinned("layers")} />
           <PanelButton id="inspector" icon={<BoxIcon className={ICON} />} edge={edge} pinned={isPinned("inspector")} />
           <PanelButton id="colour" edge={edge} pinned={isPinned("colour")} icon={<ColourSwatchIcon />} />
+          <PanelButton id="looks" icon={<Film className={ICON} />} edge={edge} pinned={isPinned("looks")} />
         </Panels>
 
         {/* overflow */}
@@ -321,8 +320,7 @@ function readoutChips(tool: ToolId, sub: string, layer: Layer | null, ts: ToolSe
  * ACTIVE TOOL — icon, name, and live chips summarising its state — and its
  * bloom opens that tool's settings. ADJUST is the FX mode: the bloom/pin
  * target is the FX module. Stub tools peek a placeholder settings bloom and
- * aren't pinnable until their real settings exist (M2 TEXT/PIECES/SELECT ·
- * M3 ADJUST subtools · MOVE).
+ * aren't pinnable until their real settings exist (M2 TEXT/PIECES/SELECT).
  */
 function ContextZone({
   activeTool,

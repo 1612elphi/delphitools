@@ -7,9 +7,9 @@
  * v1 renders the artboard + raster layers. GROUPS FLATTEN AWAY (M2): they are
  * organisational folders (layer-tree.ts) — the reconciler walks the leaf list
  * in doc order and composes each leaf's EFFECTIVE visibility/lock from its
- * ancestors. Text/shape rendering, pixel filters, and effects are added
- * additively in later milestones; an unhandled layer kind is skipped, never
- * half-rendered.
+ * ancestors. Tier-0 pixel filters render via filter-sync (M3); text/shape
+ * rendering, Tier-1 filters, and effects are added additively in later
+ * milestones; an unhandled layer kind is skipped, never half-rendered.
  *
  * Convention: a layer's transform.x/y is the object CENTRE in scene coordinates
  * (objects use originX/originY = "center").
@@ -20,6 +20,7 @@ import { FabricImage, Pattern, Rect } from "fabric";
 import type { SubstrataDoc, Layer } from "./doc-model";
 import { leafRenderList } from "./layer-tree";
 import { getRaster } from "./raster-cache";
+import { syncImageFilters } from "./filter-sync";
 
 const ARTBOARD_KEY = "__artboard__";
 
@@ -173,6 +174,8 @@ function syncLayer(
     selectable: !locked,
     evented: !locked,
   });
+  // Filter stack (M3): signature-diffed inside, so this is cheap per pass.
+  syncImageFilters(obj, layer.filters);
   obj.setCoords();
   return obj;
 }

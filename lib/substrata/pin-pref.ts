@@ -13,16 +13,19 @@ export type ModuleId =
   | "layers"
   | "inspector"
   | "colour"
+  | "looks"
   | "arrange";
 
 /** Runtime list of every module id (for validating persisted layout). Export and
  *  Canvas size are NOT modules — they're blocking modals (see lib/substrata/modal).
- *  Align + Rotate are consolidated into "arrange". */
+ *  Align + Rotate are consolidated into "arrange". "looks" = the film-sim/LUT
+ *  gallery (pulled out of FX — Ruby, 2026-07-03). */
 export const MODULE_IDS: readonly ModuleId[] = [
   "effects",
   "layers",
   "inspector",
   "colour",
+  "looks",
   "arrange",
 ];
 

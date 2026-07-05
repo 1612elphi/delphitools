@@ -12,6 +12,7 @@ export type ToastId =
   | "image-added"
   | "zoom-100"
   | "copied"
+  | "paste-empty"
   | "exported";
 
 export interface ToastState {
