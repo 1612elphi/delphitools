@@ -117,9 +117,10 @@ export type FreehandSub = keyof typeof FREEHAND_NAMES;
 
 /**
  * The two freehand flavours (persisted per stroke so future default tweaks
- * never reflow old art): Brush = fat and pressure-expressive; Pencil = thin
- * and steady (higher streamline irons out jitter, minimal thinning).
- * ponytail: taste numbers — Ruby's QA tunes them.
+ * never reflow old art): Brush = fat and pressure-expressive, streamlined;
+ * Pencil = thin, faithful to the hand — NO streamlining whatsoever (Ruby
+ * 2026-07-06; brush streamline approved). Brush thinning is the remaining
+ * taste knob.
  */
 export function freehandOptions(
   sub: FreehandSub,
@@ -128,7 +129,7 @@ export function freehandOptions(
 ): FreehandStrokeOptions {
   return sub === "brush"
     ? { size: s.brushSize, thinning: 0.6, smoothing: 0.5, streamline: 0.5, simulatePressure }
-    : { size: s.pencilSize, thinning: 0.15, smoothing: 0.5, streamline: 0.65, simulatePressure };
+    : { size: s.pencilSize, thinning: 0.15, smoothing: 0.5, streamline: 0, simulatePressure };
 }
 
 /** Single-commit append (freehand release): root level, frontmost, ONE undo
