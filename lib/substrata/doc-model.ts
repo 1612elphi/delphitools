@@ -188,12 +188,36 @@ export interface ShapeLayer extends BaseLayer {
   stroke: ShapeStroke | null;
 }
 
+/** perfect-freehand's option shape (ratified M2-1) — persisted per layer so a
+ *  stroke re-renders identically forever, whatever the library's defaults do. */
+export interface FreehandStrokeOptions {
+  size: number;
+  /** pressure→width effect, 0–1 */
+  thinning: number;
+  smoothing: number;
+  streamline: number;
+  /** true when drawn with a mouse/finger; false = real pen pressure recorded */
+  simulatePressure: boolean;
+}
+
+export interface FreehandLayer extends BaseLayer {
+  kind: "freehand";
+  /**
+   * [x, y, pressure] in layer-local coords (centre-origin like every kind) —
+   * the TRUTH. The rendered outline path is a derived artifact and is never
+   * persisted (ratified M2-1).
+   */
+  rawPoints: [number, number, number][];
+  strokeOptions: FreehandStrokeOptions;
+  fill: string;
+}
+
 export interface GroupLayer extends BaseLayer {
   kind: "group";
   children: Layer[];
 }
 
-export type Layer = RasterLayer | TextLayer | ShapeLayer | GroupLayer;
+export type Layer = RasterLayer | TextLayer | ShapeLayer | FreehandLayer | GroupLayer;
 
 export type ColourMode = "rgb";
 
@@ -297,6 +321,30 @@ export function createRasterLayer(opts: {
     blobHash: opts.blobHash,
     naturalWidth: opts.naturalWidth,
     naturalHeight: opts.naturalHeight,
+  };
+}
+
+export function createFreehandLayer(opts: {
+  name: string;
+  rawPoints: [number, number, number][];
+  strokeOptions: FreehandStrokeOptions;
+  fill: string;
+  transform: Transform;
+}): FreehandLayer {
+  return {
+    kind: "freehand",
+    id: newId(),
+    name: opts.name,
+    visible: true,
+    locked: false,
+    opacity: 1,
+    blendMode: "source-over",
+    transform: opts.transform,
+    filters: [],
+    effects: [],
+    rawPoints: opts.rawPoints,
+    strokeOptions: opts.strokeOptions,
+    fill: opts.fill,
   };
 }
 

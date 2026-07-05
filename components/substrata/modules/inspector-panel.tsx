@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
-import { Folder, Frame, Image as ImageIcon, RotateCw, Scaling, Square, Type } from "lucide-react";
+import { Brush, Folder, Frame, Image as ImageIcon, RotateCw, Scaling, Square, Type } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
   Select,
@@ -92,6 +92,7 @@ const KIND_ICON: Record<Layer["kind"], LucideIcon> = {
   raster: ImageIcon,
   text: Type,
   shape: Square,
+  freehand: Brush,
   group: Folder,
 };
 

@@ -16,11 +16,12 @@
  */
 
 import type { Canvas, FabricObject } from "fabric";
-import { Ellipse, Gradient as FabricGradient, Line, Pattern, Polygon, Rect } from "fabric";
-import type { SubstrataDoc, Layer, ShapeLayer, ShapeParams, Gradient } from "./doc-model";
+import { Ellipse, Gradient as FabricGradient, Line, Path, Pattern, Polygon, Rect } from "fabric";
+import type { SubstrataDoc, FreehandLayer, Layer, ShapeLayer, ShapeParams, Gradient } from "./doc-model";
 import { EffectsImage } from "./effects-image";
 import { leafRenderList } from "./layer-tree";
 import { getRaster } from "./raster-cache";
+import { outlineToPathD, strokeOutline } from "./freehand";
 import { polygonPoints, starPoints } from "./shape-geometry";
 import { syncImageEffects, syncImageFilters } from "./filter-sync";
 
@@ -141,13 +142,15 @@ function syncLayer(
   locked: boolean,
   byId: Map<string, FabricObject>,
 ): FabricObject | null {
-  // Raster + shape render in v1; text renders in M2 (TEXT tool).
+  // Raster + shape + freehand render; text renders in M2 (TEXT tool).
   const obj =
     layer.kind === "raster"
       ? syncRasterContent(canvas, layer, byId)
       : layer.kind === "shape"
         ? syncShapeContent(canvas, layer, byId)
-        : null;
+        : layer.kind === "freehand"
+          ? syncFreehandContent(canvas, layer, byId)
+          : null;
   if (!obj) return null;
 
   const t = layer.transform;
@@ -250,6 +253,41 @@ function updateShapeGeometry(obj: FabricObject, p: ShapeParams): void {
     }
   }
   obj.set("dirty", true);
+}
+
+/** Geometry identity per freehand Path — the doc is immutable, so reference
+ *  equality on rawPoints/strokeOptions is the change signal (no JSON of
+ *  hundreds of points per reconcile pass). */
+const freehandBuiltFor = new WeakMap<FabricObject, { pts: unknown; opts: unknown }>();
+
+/** Freehand stroke → fabric.Path of the perfect-freehand outline (fill-only —
+ *  the stroke's body IS a filled polygon). Points are layer-local (centre-
+ *  normalised at commit), so the Path centres like every other kind. A stroke's
+ *  geometry is immutable after commit; a rebuild only happens if a future
+ *  editor mutates points/options. */
+function syncFreehandContent(
+  canvas: Canvas,
+  layer: FreehandLayer,
+  byId: Map<string, FabricObject>,
+): FabricObject | null {
+  let obj = byId.get(layer.id);
+  const built = obj && freehandBuiltFor.get(obj);
+  if (obj && built && (built.pts !== layer.rawPoints || built.opts !== layer.strokeOptions)) {
+    canvas.remove(obj);
+    byId.delete(layer.id);
+    obj = undefined;
+  }
+  if (!obj) {
+    const d = outlineToPathD(strokeOutline(layer.rawPoints, layer.strokeOptions));
+    if (!d) return null; // degenerate stroke (fewer than 3 outline points)
+    obj = new Path(d);
+    freehandBuiltFor.set(obj, { pts: layer.rawPoints, opts: layer.strokeOptions });
+    byId.set(layer.id, obj);
+    layerIdOf.set(obj, layer.id);
+    canvas.add(obj);
+  }
+  obj.set({ fill: layer.fill, stroke: null, strokeWidth: 0 });
+  return obj;
 }
 
 /** Fabric object kind per layer, so a params.shape change recreates instead of

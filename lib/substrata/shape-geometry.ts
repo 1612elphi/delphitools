@@ -7,6 +7,7 @@
  */
 
 import type { Layer, ShapeParams } from "./doc-model";
+import { freehandDims } from "./freehand";
 
 export interface Pt {
   x: number;
@@ -73,11 +74,13 @@ export function shapeDims(params: ShapeParams): { width: number; height: number 
 
 /**
  * Intrinsic (unscaled) dims for any leaf that has them — raster natural size,
- * shape geometry. Null for text (sizing needs fonts, M2) and groups; the
- * align/distribute/inspector surfaces skip dimension-less layers.
+ * shape geometry, freehand outline bbox. Null for text (sizing needs fonts,
+ * M2) and groups; align/distribute/inspector surfaces skip dimension-less
+ * layers.
  */
 export function layerDims(layer: Layer): { width: number; height: number } | null {
   if (layer.kind === "raster") return { width: layer.naturalWidth, height: layer.naturalHeight };
   if (layer.kind === "shape") return shapeDims(layer.params);
+  if (layer.kind === "freehand") return freehandDims(layer.rawPoints, layer.strokeOptions);
   return null;
 }
