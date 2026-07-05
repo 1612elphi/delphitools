@@ -96,7 +96,9 @@ export function setShapeStroke(
  *  the bloom + Inspector). Transient-aware for streamed colour picks. */
 export function setTextProps(
   id: string,
-  patch: Partial<Pick<TextLayer, "text" | "fontFamily" | "fontSize" | "fill" | "stroke" | "plate" | "name">>,
+  patch: Partial<
+    Pick<TextLayer, "text" | "fontFamily" | "fontSize" | "fill" | "stroke" | "plate" | "name" | "transform">
+  >,
   opts?: { transient?: boolean },
 ): void {
   const apply = (doc: SubstrataDoc): SubstrataDoc => ({

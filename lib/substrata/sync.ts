@@ -312,9 +312,11 @@ function syncTextContent(
     layerIdOf.set(obj, layer.id);
     canvas.add(obj);
   }
-  if (obj.isEditing) return obj; // syncLayer skips the rest too
+  // Font/size/style apply even MID-EDIT (Ruby 2026-07-06: a font click must
+  // restyle the text you're typing); only `text` itself stays fabric's until
+  // editing:exited commits it (syncLayer also skips transform while editing).
+  if (!obj.isEditing) obj.set({ text: layer.text });
   obj.set({
-    text: layer.text,
     fontFamily: resolveFontCss(layer.fontFamily),
     fontSize: layer.fontSize,
     fill: layer.fill,
