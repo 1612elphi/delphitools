@@ -14,8 +14,9 @@
  *
  * Performance rides on Fabric's caching: the composite re-runs only when the
  * cache is dirty (effect edits via filter-sync's signature diff, zoom changes
- * via Fabric's own zoomChanged check), pans just re-blit. The cache-size cap
- * (_limitCacheSize) bounds the composite cost, so no preview proxy is needed.
+ * via Fabric's own zoomChanged check, rotation/flips via the pose check in
+ * isCacheDirty), pans just re-blit. The cache-size cap (_limitCacheSize)
+ * bounds the composite cost, so no preview proxy is needed.
  *
  * ⚠️ Imports Fabric — client-only, keep behind the ssr:false dynamic boundary.
  */
@@ -27,9 +28,17 @@ import { effectsReach, getScratch, paintEffects } from "./effect-render";
 type DrawContext = Parameters<FabricImage["drawObject"]>[2];
 
 export class EffectsImage extends FabricImage {
-  /** ENABLED effects only, in apply order — set by filter-sync's
-   *  syncImageEffects (which also dirties the cache on change). */
+  /** ENABLED effects only (registry defaults merged), in apply order — set by
+   *  filter-sync's syncImageEffects (which also dirties the cache on change). */
   effects: Effect[] = [];
+
+  /** effectsReach memo — _getCacheCanvasDimensions runs every rendered frame
+   *  (pans included), but the stack only changes when sync assigns it. */
+  private _reachFor?: readonly Effect[];
+  private _reach = 0;
+
+  /** angle|flipX|flipY the cache was last composited with. */
+  private _composedPose = "";
 
   /** Effects composite ON the cache, so an effect-laden image must always own
    *  one, even where Fabric would normally skip (e.g. inside a cached parent). */
@@ -37,9 +46,26 @@ export class EffectsImage extends FabricImage {
     return this.effects.length > 0 || super.needsItsOwnCache();
   }
 
+  /** Baked shadow offsets counter-rotate to stay scene-absolute, so a rotation
+   *  or flip alone must recomposite — Fabric wouldn't dirty the cache (angle
+   *  isn't a cacheProperty). Three string compares per frame; live rotation
+   *  drags recomposite each frame and stay correct throughout. */
+  override isCacheDirty(skipCanvas?: boolean): boolean {
+    if (this.effects.length > 0 && this.pose() !== this._composedPose) this.dirty = true;
+    return super.isCacheDirty(skipCanvas);
+  }
+
+  private pose(): string {
+    return `${this.getTotalAngle()}|${this.flipX}|${this.flipY}`;
+  }
+
   override _getCacheCanvasDimensions() {
     const dims = super._getCacheCanvasDimensions();
-    const reach = effectsReach(this.effects);
+    if (this._reachFor !== this.effects) {
+      this._reachFor = this.effects;
+      this._reach = effectsReach(this.effects);
+    }
+    const reach = this._reach;
     if (reach > 0) {
       // Scene px → device px via the uncapped zoom; if _limitCacheSize later
       // caps the zoom the pad merely overshoots (a slightly larger canvas).
@@ -73,5 +99,6 @@ export class EffectsImage extends FabricImage {
       flipX: this.flipX,
       flipY: this.flipY,
     });
+    this._composedPose = this.pose();
   }
 }

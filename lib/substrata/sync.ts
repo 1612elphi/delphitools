@@ -177,7 +177,7 @@ function syncLayer(
   });
   // FX stacks (M3): both signature-diffed inside, so this is cheap per pass.
   syncImageFilters(obj, layer.filters);
-  syncImageEffects(obj, layer.effects, layer.transform);
+  syncImageEffects(obj, layer.effects);
   obj.setCoords();
   return obj;
 }

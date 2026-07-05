@@ -18,10 +18,11 @@
 
 import { getFilterBackend, WebGLFilterBackend } from "fabric";
 import type { FabricImage, StaticCanvas } from "fabric";
-import type { Effect, Filter, Transform } from "./doc-model";
+import type { Effect, Filter } from "./doc-model";
 import type { EffectsImage } from "./effects-image";
 import { buildFabricFilters } from "./filter-factory";
 import { getEffectDef } from "./effects";
+import { defaultParams } from "./param-spec";
 import { isGestureActive } from "./doc-store";
 import { isLutLook, lutEpoch } from "./lut-data";
 
@@ -65,10 +66,7 @@ export function syncImageFilters(img: FabricImage, stack: readonly Filter[]): vo
   // LUT looks load async — mixing the epoch in makes the signature change when
   // a strip arrives, so the pending look re-applies without a doc edit.
   const hasLut = enabled.some((f) => f.type === "film-sim" && isLutLook(String(f.params.preset)));
-  const sig =
-    (preview ? "p|" : "f|") +
-    (hasLut ? `L${lutEpoch()}|` : "") +
-    JSON.stringify(enabled.map((f) => [f.type, f.params]));
+  const sig = (preview ? "p|" : "f|") + (hasLut ? `L${lutEpoch()}|` : "") + stackSig(enabled);
   if (appliedSig.get(img) === sig) return;
   appliedSig.set(img, sig);
 
@@ -77,25 +75,34 @@ export function syncImageFilters(img: FabricImage, stack: readonly Filter[]): vo
   rafId ??= requestAnimationFrame(flush);
 }
 
-const appliedEffectsSig = new WeakMap<FabricImage, string>();
+/** The stack signature both syncs diff on (type + params of the enabled list). */
+const stackSig = (enabled: ReadonlyArray<{ type: string; params: unknown }>): string =>
+  JSON.stringify(enabled.map((e) => [e.type, e.params]));
+
+const appliedEffects = new WeakMap<FabricImage, { stack: readonly Effect[]; sig: string }>();
 
 /**
  * Doc→Fabric effects sync (the reconciler calls this beside syncImageFilters):
- * hand the ENABLED stack to the EffectsImage and dirty its cache so drawObject
+ * hand the ENABLED stack — registry defaults merged, so the renderer never
+ * guesses its own (the filter-factory convention, and how pre-Opacity-param
+ * docs stay right) — to the EffectsImage and dirty its cache so drawObject
  * recomposites. No rAF/apply machinery needed — compositing happens inside
- * Fabric's own cache render. The transform's angle/flips are in the signature
- * because baked shadow offsets counter-rotate to stay scene-absolute: a
- * rotation alone must recomposite even though Fabric wouldn't dirty the cache
- * (mid-drag the shadow swings with the object; it settles on commit).
+ * Fabric's own cache render, and rotation/flip invalidation lives there too
+ * (the pose check in isCacheDirty). The doc is immutable, so an unchanged
+ * stack reference (any reconcile the layer's fx didn't cause) exits before
+ * any per-pass work.
  */
-export function syncImageEffects(img: EffectsImage, stack: readonly Effect[], t: Transform): void {
-  const enabled = stack.filter((e) => e.enabled && getEffectDef(e.type));
-  const sig =
-    enabled.length === 0
-      ? ""
-      : `${t.angle}|${t.flipX}|${t.flipY}|` + JSON.stringify(enabled.map((e) => [e.type, e.params]));
-  if (appliedEffectsSig.get(img) === sig) return;
-  appliedEffectsSig.set(img, sig);
+export function syncImageEffects(img: EffectsImage, stack: readonly Effect[]): void {
+  const prev = appliedEffects.get(img);
+  if (prev?.stack === stack) return;
+  const enabled: Effect[] = [];
+  for (const e of stack) {
+    const def = e.enabled ? getEffectDef(e.type) : undefined;
+    if (def) enabled.push({ ...e, params: { ...defaultParams(def.params), ...e.params } });
+  }
+  const sig = stackSig(enabled);
+  appliedEffects.set(img, { stack, sig });
+  if (prev?.sig === sig) return;
   img.effects = enabled;
   img.set("dirty", true);
 }

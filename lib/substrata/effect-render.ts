@@ -7,11 +7,19 @@
  *   clipped to the content's alpha) → [opacity/blend apply at the cache blit].
  *
  * Everything works in DEVICE space (the cache canvas' pixels) under an identity
- * transform. The one primitive is the canvas shadow trick: painting a source
- * far off-canvas with shadowOffsetX pulled back leaves only its (optionally
- * blurred, colour-tinted) silhouette — blur, tint, dilation and erosion all
- * compose from it, so there is no per-pixel work and no ctx.filter dependency
- * (Safari lacks it; shadow* is universal, and it's what Fabric itself uses).
+ * transform — a file-wide contract: paintEffects sets it on the cache ctx, and
+ * getScratch hands out reset contexts. The one primitive is the canvas shadow
+ * trick: painting a source far off-canvas with shadowOffsetX pulled back leaves
+ * only its (optionally blurred, colour-tinted) silhouette — blur, tint,
+ * dilation and erosion all compose from it, so there is no per-pixel work and
+ * no ctx.filter dependency (Safari lacks it; shadow* is universal, and it's
+ * what Fabric itself uses).
+ *
+ * Params arrive COMPLETE: syncImageEffects merges registry defaults before the
+ * stack reaches an EffectsImage (the filter-factory convention — the renderer
+ * never guesses its own), so painters read them bare. The registry's `phase`
+ * field is descriptive taxonomy; the renderer routes per type, with stroke
+ * split across both passes by its `position` param.
  *
  * Array order = apply order = paint order (the filters-stack convention,
  * ratified 2026-07-03): the panel's TOP effect paints first, so an outer
@@ -37,29 +45,40 @@ export interface EffectGeom {
   flipY: boolean;
 }
 
-const num = (v: unknown, d: number): number =>
-  typeof v === "number" && Number.isFinite(v) ? v : d;
-const str = (v: unknown, d: string): string => (typeof v === "string" ? v : d);
+/** Type narrowing only — params are default-merged upstream, never absent. */
+const num = (v: number | string | undefined): number => (typeof v === "number" ? v : 0);
+const str = (v: number | string | undefined): string => (typeof v === "string" ? v : "");
+
+/** Stroke position + effective ring radius (centre straddles the edge). */
+const strokeGeom = (p: Effect["params"]): { pos: string; r: number } => {
+  const pos = str(p.position);
+  return { pos, r: num(p.width) * (pos === "centre" ? 0.5 : 1) };
+};
 
 /**
  * Max distance (scene px) the stack reaches OUTSIDE the layer bounds — the
- * cache-canvas padding. 0 when nothing overflows. Canvas shadowBlur `b` has a
- * visible tail of ≈ b (σ = b/2), so blur counts at face value; +2px slack.
+ * cache-canvas padding. 0 when nothing overflows. Canvas shadowBlur `b` is
+ * σ = b/2, still ~2% alpha at distance b — count it at 1.2× so a max-blur
+ * shadow fades out inside the pad instead of clipping to a hard seam.
  */
+const BLUR_REACH = 1.2;
 export function effectsReach(effects: readonly Effect[]): number {
   let r = 0;
   for (const e of effects) {
     const p = e.params;
     switch (e.type) {
       case "drop-shadow":
-        r = Math.max(r, Math.hypot(num(p.offsetX, 8), num(p.offsetY, 8)) + num(p.blur, 24) + num(p.spread, 0));
+        r = Math.max(
+          r,
+          Math.hypot(num(p.offsetX), num(p.offsetY)) + num(p.blur) * BLUR_REACH + num(p.spread),
+        );
         break;
       case "outer-glow":
-        r = Math.max(r, num(p.blur, 40));
+        r = Math.max(r, num(p.blur) * BLUR_REACH);
         break;
       case "stroke": {
-        const pos = str(p.position, "outer");
-        if (pos !== "inner") r = Math.max(r, num(p.width, 2) * (pos === "centre" ? 0.5 : 1));
+        const { pos, r: w } = strokeGeom(p);
+        if (pos !== "inner") r = Math.max(r, w);
         break;
       }
     }
@@ -76,15 +95,16 @@ export function effectsReach(effects: readonly Effect[]): number {
 const pool: HTMLCanvasElement[] = [];
 export function getScratch(i: number, w: number, h: number): CanvasRenderingContext2D {
   const c = pool[i] ?? (pool[i] = document.createElement("canvas"));
-  if (c.width !== w || c.height !== h) {
-    c.width = w;
+  const resized = c.width !== w || c.height !== h;
+  if (resized) {
+    c.width = w; // resizing also resets all context state, clear included
     c.height = h;
   }
   const ctx = c.getContext("2d")!;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalCompositeOperation = "source-over";
   ctx.globalAlpha = 1;
-  ctx.clearRect(0, 0, w, h);
+  if (!resized) ctx.clearRect(0, 0, w, h);
   return ctx;
 }
 
@@ -101,7 +121,6 @@ function stampShadow(
   alpha: number,
 ): void {
   ctx.save();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalAlpha = alpha;
   ctx.shadowColor = colour;
   ctx.shadowBlur = blur;
@@ -111,34 +130,71 @@ function stampShadow(
   ctx.restore();
 }
 
-const RING = 24;
-function ringOffsets(r: number): Array<readonly [number, number]> {
-  return Array.from({ length: RING }, (_, i) => {
-    const a = (i / RING) * 2 * Math.PI;
-    return [Math.cos(a) * r, Math.sin(a) * r] as const;
-  });
+/** Draw src onto ctx at a given alpha, optionally stacked (n blits of alpha a
+ *  composite to 1−(1−a)ⁿ — the glow intensity ramp). */
+function blit(ctx: CanvasRenderingContext2D, src: HTMLCanvasElement, alpha: number, times = 1): void {
+  ctx.globalAlpha = alpha;
+  for (let i = 0; i < times; i++) ctx.drawImage(src, 0, 0);
+  ctx.globalAlpha = 1;
 }
 
-/** Morphological dilation by r: the source's silhouette unioned across a ring
- *  of offsets (sharp stamps — blur 0 shadow = hard tinted silhouette). */
+const RING = 24;
+const UNIT_RING = Array.from({ length: RING }, (_, i) => {
+  const a = (i / RING) * 2 * Math.PI;
+  return [Math.cos(a), Math.sin(a)] as const;
+});
+
+/** Morphological dilation by r: tint the silhouette ONCE into tmp, then union
+ *  it across the ring — the shadow render is paid once, the stamps are blits.
+ *  ponytail: repeated stamps treat alpha as near-binary — 50%-alpha content
+ *  dilates to ~opaque and erodes to ~nothing (stroke on translucent pixels
+ *  degrades); a threshold pass on tmp if that ever matters. */
 function dilate(
   dst: CanvasRenderingContext2D,
   src: CanvasImageSource,
   r: number,
   colour: string,
+  tmp: CanvasRenderingContext2D,
 ): void {
-  stampShadow(dst, src, colour, 0, 0, 0, 1);
-  for (const [dx, dy] of ringOffsets(r)) stampShadow(dst, src, colour, 0, dx, dy, 1);
+  stampShadow(tmp, src, colour, 0, 0, 0, 1);
+  dst.drawImage(tmp.canvas, 0, 0);
+  for (const [ux, uy] of UNIT_RING) dst.drawImage(tmp.canvas, ux * r, uy * r);
 }
 
-/** Morphological erosion by r, in place: intersect dst with shifted copies of
- *  src (dst must already hold src's silhouette at the origin). */
+/** Morphological erosion by r, onto a fresh scratch: copy src, then intersect
+ *  with ring-shifted copies of it. */
 function erode(dst: CanvasRenderingContext2D, src: CanvasImageSource, r: number): void {
-  dst.save();
-  dst.setTransform(1, 0, 0, 1, 0, 0);
+  dst.drawImage(src, 0, 0);
   dst.globalCompositeOperation = "destination-in";
-  for (const [dx, dy] of ringOffsets(r)) dst.drawImage(src, dx, dy);
-  dst.restore();
+  for (const [ux, uy] of UNIT_RING) dst.drawImage(src, ux * r, uy * r);
+  dst.globalCompositeOperation = "source-over";
+}
+
+/** The content's silhouette filled flat: colour ∧ content alpha. */
+function tintContent(colour: string, content: HTMLCanvasElement): CanvasRenderingContext2D {
+  const b = getScratch(1, content.width, content.height);
+  b.fillStyle = colour;
+  b.fillRect(0, 0, content.width, content.height);
+  b.globalCompositeOperation = "destination-in";
+  b.drawImage(content, 0, 0);
+  b.globalCompositeOperation = "source-over";
+  return b;
+}
+
+/** tintContent minus a blurred/offset silhouette of the content — the classic
+ *  inner-shadow/glow field (the alpha ops commute, so mask-then-subtract). */
+function carve(
+  colour: string,
+  content: HTMLCanvasElement,
+  blur: number,
+  dx: number,
+  dy: number,
+): HTMLCanvasElement {
+  const b = tintContent(colour, content);
+  b.globalCompositeOperation = "destination-out";
+  stampShadow(b, content, "#000", blur, dx, dy, 1);
+  b.globalCompositeOperation = "source-over";
+  return b.canvas;
 }
 
 /** Scene-space offset → cache-local device px: the cache blit re-applies the
@@ -163,130 +219,93 @@ export function paintEffects(
   effects: readonly Effect[],
   geom: EffectGeom,
 ): void {
+  const k = (geom.kx + geom.ky) / 2;
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  for (const e of effects) paintBehind(ctx, content, e, geom);
+  for (const e of effects) paintBehind(ctx, content, e, geom, k);
   ctx.drawImage(content, 0, 0);
-  for (const e of effects) paintInFront(ctx, content, e, geom);
+  for (const e of effects) paintInFront(ctx, content, e, geom, k);
   ctx.restore();
 }
 
-/** Outer phase — painted before (so behind) the content. Registry `phase` is
- *  the panel taxonomy; stroke routes by its `position` param instead (an inner
- *  stroke must paint in front, a centre stroke half-and-half). */
+/** Outer pass — painted before (so behind) the content. */
 function paintBehind(
   ctx: CanvasRenderingContext2D,
   content: HTMLCanvasElement,
   e: Effect,
   g: EffectGeom,
+  k: number,
 ): void {
   const p = e.params;
-  const k = (g.kx + g.ky) / 2;
   switch (e.type) {
     case "drop-shadow": {
-      const colour = str(p.colour, "#000000");
-      const spread = num(p.spread, 0) * k;
-      const { dx, dy } = bakedOffset(num(p.offsetX, 8), num(p.offsetY, 8), g);
+      const colour = str(p.colour);
+      const spread = num(p.spread) * k;
+      const { dx, dy } = bakedOffset(num(p.offsetX), num(p.offsetY), g);
       let src: CanvasImageSource = content;
       if (spread >= 0.5) {
         const b = getScratch(1, content.width, content.height);
-        dilate(b, content, spread, colour);
+        dilate(b, content, spread, colour, getScratch(2, content.width, content.height));
         src = b.canvas;
       }
-      stampShadow(ctx, src, colour, num(p.blur, 24) * k, dx, dy, num(p.opacity, 35) / 100);
+      stampShadow(ctx, src, colour, num(p.blur) * k, dx, dy, num(p.opacity) / 100);
       break;
     }
     case "outer-glow": {
-      const a = num(p.intensity, 50) / 100;
+      const a = num(p.intensity) / 100;
       if (a === 0) break;
-      const colour = str(p.colour, "#ffffff");
-      const blur = num(p.blur, 40) * k;
-      // Two stamps: combined alpha 2a−a², so intensity ramps softly to solid.
-      stampShadow(ctx, content, colour, blur, 0, 0, a);
-      stampShadow(ctx, content, colour, blur, 0, 0, a);
+      const b = getScratch(1, content.width, content.height);
+      stampShadow(b, content, str(p.colour), num(p.blur) * k, 0, 0, 1);
+      // Double blit: combined alpha 2a−a², so intensity ramps softly to solid.
+      blit(ctx, b.canvas, a, 2);
       break;
     }
     case "stroke": {
-      const pos = str(p.position, "outer");
+      const { pos, r } = strokeGeom(p);
       if (pos === "inner") break;
-      const w = num(p.width, 2) * k * (pos === "centre" ? 0.5 : 1);
       // Dilated silhouette straight onto the cache; the content re-covers the
       // interior. ponytail: semi-transparent content shows the stroke beneath —
       // subtract the eroded interior first if that ever reads wrong.
-      dilate(ctx, content, w, str(p.colour, "#000000"));
+      dilate(ctx, content, r * k, str(p.colour), getScratch(1, content.width, content.height));
       break;
     }
   }
 }
 
-/** Inner phase — painted after the content, every result masked to its alpha. */
+/** Inner pass — painted after the content, every result masked to its alpha. */
 function paintInFront(
   ctx: CanvasRenderingContext2D,
   content: HTMLCanvasElement,
   e: Effect,
   g: EffectGeom,
+  k: number,
 ): void {
   const p = e.params;
-  const k = (g.kx + g.ky) / 2;
-  const w = content.width;
-  const h = content.height;
-
-  /** colour everywhere EXCEPT a blurred/offset silhouette, masked to content —
-   *  the classic inner-shadow/glow field. */
-  const carve = (colour: string, blur: number, dx: number, dy: number): HTMLCanvasElement => {
-    const b = getScratch(1, w, h);
-    b.fillStyle = colour;
-    b.fillRect(0, 0, w, h);
-    b.globalCompositeOperation = "destination-out";
-    stampShadow(b, content, "#000", blur, dx, dy, 1);
-    b.globalCompositeOperation = "destination-in";
-    b.drawImage(content, 0, 0);
-    return b.canvas;
-  };
-
   switch (e.type) {
     case "inner-shadow": {
-      const { dx, dy } = bakedOffset(num(p.offsetX, 6), num(p.offsetY, 6), g);
-      const field = carve(str(p.colour, "#000000"), num(p.blur, 18) * k, dx, dy);
-      ctx.globalAlpha = num(p.opacity, 35) / 100;
-      ctx.drawImage(field, 0, 0);
-      ctx.globalAlpha = 1;
+      const { dx, dy } = bakedOffset(num(p.offsetX), num(p.offsetY), g);
+      blit(ctx, carve(str(p.colour), content, num(p.blur) * k, dx, dy), num(p.opacity) / 100);
       break;
     }
     case "inner-glow": {
-      const a = num(p.intensity, 50) / 100;
-      if (a === 0) break;
-      const field = carve(str(p.colour, "#ffffff"), num(p.blur, 24) * k, 0, 0);
-      ctx.globalAlpha = a;
-      ctx.drawImage(field, 0, 0);
-      ctx.drawImage(field, 0, 0);
-      ctx.globalAlpha = 1;
+      const a = num(p.intensity) / 100;
+      if (a > 0) blit(ctx, carve(str(p.colour), content, num(p.blur) * k, 0, 0), a, 2);
       break;
     }
-    case "colour-overlay": {
-      const b = getScratch(1, w, h);
-      b.fillStyle = str(p.colour, "#000000");
-      b.fillRect(0, 0, w, h);
-      b.globalCompositeOperation = "destination-in";
-      b.drawImage(content, 0, 0);
-      ctx.globalAlpha = num(p.opacity, 100) / 100;
-      ctx.drawImage(b.canvas, 0, 0);
-      ctx.globalAlpha = 1;
+    case "colour-overlay":
+      blit(ctx, tintContent(str(p.colour), content).canvas, num(p.opacity) / 100);
       break;
-    }
     case "stroke": {
-      const pos = str(p.position, "outer");
+      const { pos, r } = strokeGeom(p);
       if (pos === "outer") break;
-      const r = num(p.width, 2) * k * (pos === "centre" ? 0.5 : 1);
       // Ring = silhouette minus its erosion.
-      const b = getScratch(1, w, h);
-      stampShadow(b, content, str(p.colour, "#000000"), 0, 0, 0, 1);
-      const c = getScratch(2, w, h);
-      c.drawImage(content, 0, 0);
-      erode(c, content, r);
+      const b = getScratch(1, content.width, content.height);
+      stampShadow(b, content, str(p.colour), 0, 0, 0, 1);
+      const c = getScratch(2, content.width, content.height);
+      erode(c, content, r * k);
       b.globalCompositeOperation = "destination-out";
       b.drawImage(c.canvas, 0, 0);
-      ctx.drawImage(b.canvas, 0, 0);
+      blit(ctx, b.canvas, 1);
       break;
     }
   }
