@@ -19,6 +19,7 @@ const EMPTY_IDS: readonly string[] = [];
 import { getPersistenceEnabled, subscribePersistence } from "@/lib/substrata/persistence-pref";
 import { openModal } from "@/lib/substrata/modal";
 import type { BlendMode, Layer, SubstrataDoc } from "@/lib/substrata/doc-model";
+import { layerDims } from "@/lib/substrata/shape-geometry";
 
 /**
  * Inspector module (modals pass) — the BODY only; the module box supplies the
@@ -131,7 +132,8 @@ export function InspectorBody() {
   if (isGroup(layer)) return <GroupInfo layer={layer} count={selectedIds.length} />;
 
   const KindIcon = KIND_ICON[layer.kind];
-  const nat = layer.kind === "raster" ? { w: layer.naturalWidth, h: layer.naturalHeight } : null;
+  const d = layerDims(layer);
+  const nat = d ? { w: d.width, h: d.height } : null;
   const t = layer.transform;
 
   const cells: {
@@ -145,21 +147,23 @@ export function InspectorBody() {
     { key: "x", label: "X", value: t.x, onCommit: (n) => setTransform(layer.id, { ...t, x: n }) },
     { key: "y", label: "Y", value: t.y, onCommit: (n) => setTransform(layer.id, { ...t, y: n }) },
   ];
-  if (nat) {
-    cells.push(
-      {
-        key: "w",
-        label: "W",
-        value: nat.w * t.scaleX,
-        onCommit: (n) => setTransform(layer.id, { ...t, scaleX: Math.max(1, n) / nat.w }),
-      },
-      {
-        key: "h",
-        label: "H",
-        value: nat.h * t.scaleY,
-        onCommit: (n) => setTransform(layer.id, { ...t, scaleY: Math.max(1, n) / nat.h }),
-      },
-    );
+  // Zero-extent axes (a line's height) get no field — editing it would divide
+  // by zero; the length edits through W like any width.
+  if (nat && nat.w > 0) {
+    cells.push({
+      key: "w",
+      label: "W",
+      value: nat.w * t.scaleX,
+      onCommit: (n) => setTransform(layer.id, { ...t, scaleX: Math.max(1, n) / nat.w }),
+    });
+  }
+  if (nat && nat.h > 0) {
+    cells.push({
+      key: "h",
+      label: "H",
+      value: nat.h * t.scaleY,
+      onCommit: (n) => setTransform(layer.id, { ...t, scaleY: Math.max(1, n) / nat.h }),
+    });
   }
   cells.push(
     { key: "angle", icon: RotateCw, unit: "°", value: t.angle, onCommit: (n) => setTransform(layer.id, { ...t, angle: n }) },

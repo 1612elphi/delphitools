@@ -14,8 +14,8 @@ import {
 import type { FabricObject, LayoutStrategyResult, StrictLayoutContext } from "fabric";
 import { getSnapshot, subscribe, setDoc, beginTransient, commitTransient } from "@/lib/substrata/doc-store";
 import { registerViewportController, reportZoom } from "@/lib/substrata/viewport";
-import { createEmptyDoc } from "@/lib/substrata/doc-model";
-import type { Artboard, SubstrataDoc, Transform } from "@/lib/substrata/doc-model";
+import { createEmptyDoc, createShapeLayer } from "@/lib/substrata/doc-model";
+import type { Artboard, ShapeLayer, SubstrataDoc, Transform } from "@/lib/substrata/doc-model";
 import { createReconcileState, reconcile, getLayerIdForObject } from "@/lib/substrata/sync";
 import { initSubstrataFilterBackend } from "@/lib/substrata/filter-backend";
 import { importImageFile } from "@/lib/substrata/import-raster";
@@ -37,7 +37,23 @@ import {
   getToolSettings,
   setTransformAsGroup,
   subscribeToolSettings,
+  updateToolSettings,
 } from "@/lib/substrata/tool-settings";
+import {
+  getActiveSubs,
+  getActiveTool,
+  setActiveSub,
+  setActiveTool,
+  subscribeTool,
+  type ToolId,
+} from "@/lib/substrata/tool";
+import {
+  buildDraggedShape,
+  SHAPE_NAMES,
+  strokeForNewShape,
+  upsertLayerTransient,
+  type Pt,
+} from "@/lib/substrata/draw-shape";
 import { buildSnapField, computeSnap, type SnapBox } from "@/lib/substrata/snap-engine";
 import { useFilePaste } from "@/hooks/use-file-paste";
 
@@ -334,12 +350,65 @@ export function FabricCanvas() {
       if (e.code === "Space") {
         spaceHeld = false;
         panning = false;
-        canvas.skipTargetFind = false;
-        setCanvasCursor("");
+        applyToolMode(); // restore the ACTIVE tool's targeting/cursor, not MOVE's
       }
     };
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
+
+    // ── tool modes ────────────────────────────────────────────────────────────
+    // PIECES+Primitives is a DRAWING mode: pointer drags author shapes instead
+    // of grabbing objects (skipTargetFind) or rubber-banding (selection=false).
+    // Every other tool keeps MOVE-style interaction (stub tools set state only).
+    const drawModeActive = () =>
+      getActiveTool() === "pieces" && getActiveSubs().pieces === "primitives";
+    const applyToolMode = () => {
+      const draw = drawModeActive();
+      canvas.skipTargetFind = draw || spaceHeld;
+      canvas.selection = !draw;
+      setCanvasCursor(draw ? "crosshair" : spaceHeld ? "grab" : "");
+    };
+    const unsubscribeTool = subscribeTool(applyToolMode);
+    applyToolMode();
+
+    // ── PIECES drag-to-draw (M2-7) ────────────────────────────────────────────
+    // One transient gesture per drag: the layer is created on the first move
+    // past the threshold, reshaped live, committed as ONE undo step on release.
+    // A click without a drag creates nothing (commitTransient sees no change).
+    let draft: { start: Pt; layer: ShapeLayer | null } | null = null;
+    canvas.on("mouse:down", (opt) => {
+      if (spaceHeld || panning || !drawModeActive()) return;
+      draft = { start: canvas.getScenePoint(opt.e), layer: null };
+      beginTransient();
+    });
+    canvas.on("mouse:move", (opt) => {
+      if (!draft) return;
+      const s = getToolSettings().pieces;
+      const built = buildDraggedShape(
+        s,
+        draft.start,
+        canvas.getScenePoint(opt.e),
+        (opt.e as MouseEvent).shiftKey,
+      );
+      if (!built) return;
+      draft.layer = draft.layer
+        ? { ...draft.layer, params: built.params, transform: built.transform }
+        : createShapeLayer({
+            name: SHAPE_NAMES[s.shape],
+            params: built.params,
+            fill: s.fill,
+            stroke: strokeForNewShape(s),
+            transform: built.transform,
+          });
+      upsertLayerTransient(draft.layer);
+    });
+    canvas.on("mouse:up", () => {
+      if (!draft) return;
+      const drawn = draft.layer;
+      draft = null;
+      commitTransient();
+      if (drawn) setSelection([drawn.id]);
+    });
     canvas.on("mouse:down", (opt) => {
       if (!spaceHeld) return;
       panning = true;
@@ -790,6 +859,13 @@ export function FabricCanvas() {
           addFx(layerId, "filters", type, params),
         fxParam: (layerId: string, fxId: string, key: string, value: number | string, transient?: boolean) =>
           setFxParam(layerId, "filters", fxId, key, value, { transient }),
+        // M2-7 PIECES QA: drive the tool + settings the drag-to-draw reads.
+        setTool: (tool: ToolId, sub?: string) => {
+          setActiveTool(tool);
+          if (sub) setActiveSub(tool, sub);
+        },
+        toolSettings: (tool: "move" | "select" | "text" | "pieces", patch: object) =>
+          updateToolSettings(tool, patch),
         // M3 effects QA: same pair over the effects[] stack.
         effect: (layerId: string, type: string, params?: Record<string, number | string>) =>
           addFx(layerId, "effects", type, params),
@@ -913,6 +989,7 @@ export function FabricCanvas() {
       unsubscribe();
       unsubscribeLuts();
       unsubscribeSelection();
+      unsubscribeTool();
       unsubscribeGuides();
       unsubscribeToolSettings();
       themeObserver.disconnect();

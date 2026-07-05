@@ -11,6 +11,8 @@
  * terms — functional chrome, not authored copy.
  */
 
+import type { PieceShape } from "./doc-model";
+
 export interface MoveSettings {
   /** arrow-key nudge step in scene px (⇧ multiplies ×10) */
   nudge: number;
@@ -32,10 +34,25 @@ export interface TextSettings {
   fontSize: number;
 }
 
-export type PieceShape = "rectangle" | "ellipse" | "line" | "polygon";
+/** The five primitives — re-exported so panel code keeps one import site;
+ *  the doc-model ShapeParams discriminant is the truth. */
+export type { PieceShape } from "./doc-model";
 
 export interface PiecesSettings {
   shape: PieceShape;
+  /** Next-shape fill; hex only here — gradient authoring arrives with the M4
+   *  picker sink (the doc model already stores gradients). */
+  fill: string;
+  /** null = no stroke. A line falls back to stroking with `fill` so it renders. */
+  stroke: { colour: string; width: number } | null;
+  /** rectangle */
+  cornerRadius: number;
+  /** polygon */
+  sides: number;
+  /** star */
+  starPoints: number;
+  /** star inner radius as a fraction of the outer (0–1) */
+  starInnerRatio: number;
 }
 
 export interface ToolSettings {
@@ -54,7 +71,15 @@ const DEFAULTS: ToolSettings = {
   move: { nudge: 1 },
   select: { mode: "touch", sensitivity: 50, tolerance: 32 },
   text: { fontFamily: "Inter", fontSize: 64 },
-  pieces: { shape: "rectangle" },
+  pieces: {
+    shape: "rectangle",
+    fill: "#3e6b33", // the house green — colour data, not copy; M4 wires the picker
+    stroke: null,
+    cornerRadius: 0,
+    sides: 6,
+    starPoints: 5,
+    starInnerRatio: 0.5,
+  },
 };
 
 let settings: ToolSettings = DEFAULTS;

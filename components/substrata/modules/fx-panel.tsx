@@ -99,8 +99,8 @@ import type {
  * grid-rows collapse animation, grip · chevron · name · reset · toss · switch.
  * Params render generically from the registries' ParamSpecs; continuous gestures
  * (slider / swatch drag) coalesce into ONE undo step via the transient path.
- * Tier-0 filters render live (filter-factory/filter-sync); Tier-1 + effects
- * are stored + undoable but move no pixels until their engines land.
+ * Both stacks render live (filter-factory/filter-sync · effect-render/
+ * effects-image) — raster layers only, hence the non-raster gate below.
  */
 export function FxBody() {
   const doc = useSyncExternalStore(subscribe, getSnapshot, () => null);
@@ -132,6 +132,22 @@ export function FxBody() {
             spec: ≤ 56 chars; group effects aren't available yet — select a
             layer inside the group; British spelling.
             sample: "Select a layer inside the group to add effects." */}
+        ∑CG
+      </div>
+    );
+  }
+
+  // Filters + effects move pixels through the raster pipeline only — on a
+  // shape/text layer they'd be dead data rendering nothing. The
+  // rasterize-for-effects affordance (M3-15) replaces this hint once
+  // non-raster kinds can bake.
+  if (layer.kind !== "raster") {
+    return (
+      <div className="p-4 text-center text-xs text-muted-foreground">
+        {/* ∑CG: FX hint when a non-raster layer (shape, later text) is selected
+            spec: ≤ 56 chars; effects/filters apply to image layers for now
+            (rasterize arrives later); British spelling.
+            sample: "Effects apply to image layers for now." */}
         ∑CG
       </div>
     );

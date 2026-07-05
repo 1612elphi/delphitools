@@ -18,7 +18,10 @@ lives in its own **LOOKS module** (sixth module; live-thumbnail gallery) with
 outer/inner glow, stroke incl. inner/centre, colour overlay) composite via
 Canvas2D inside Fabric's object cache (effect-render + effects-image) —
 30 headless pixel checks pass. M3 is CODE-COMPLETE; M3-15 (rasterize gate)
-deferred until non-raster layers exist.
+deferred until non-raster layers exist. **PIECES·Primitives is LIVE (M2-7,
+2026-07-05)**: the five ratified shapes draw by drag (ShapeLayer schema v2,
+shape→Fabric sync, real settings bloom, thumbnails/dims/FX-gating chrome) —
+28 headless checks pass.
 
 Route: `/editor` (sidebar-free, static-export, client-only via `dynamic ssr:false`).
 Dev: `npm run dev` → http://localhost:3000/editor. Gate: `npm run build` + `tsc --noEmit`.
@@ -146,13 +149,37 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
 ## File map (`lib/substrata/*` unless noted)
 
 **Document + render**
-- `doc-model.ts` — ratified schema v1: `SubstrataDoc`/`Artboard`/`Layer` union
-  (raster/text/shape/group), `Filter` (inside-only) vs `Effect` (outside-capable),
-  `Transform`; factories (`createEmptyDoc`, `createRasterLayer`), `DEFAULT_ARTBOARD`.
+- `doc-model.ts` — **SCHEMA_VERSION 2** (the ratified M2-1 shape model, landed
+  with PIECES): `SubstrataDoc`/`Artboard`/`Layer` union (raster/text/shape/
+  group), `Filter` (inside-only) vs `Effect` (outside-capable), `Transform`;
+  ShapeLayer = discriminated **ShapeParams** (rectangle/ellipse/line/polygon/
+  star, intrinsic geometry UNSCALED — the transform scales it) + `fill:
+  string | Gradient` (stops + relative 0–1 coords) + `stroke: ShapeStroke |
+  null`; factories (`createEmptyDoc`, `createRasterLayer`, `createShapeLayer`),
+  `DEFAULT_ARTBOARD`. Dexie `version(2)` is a no-op (doc JSON is a stored
+  value); `loadLatestProject` forward-stamps v1 docs (they contain no shapes).
+  Remaining ratified kinds (full text/path/freehand) land additively in v2.
 - `doc-store.ts` — observable doc + snapshot **history** (undo/redo/canUndo/canRedo).
 - `sync.ts` — one-way doc→Fabric **reconciler**; artboard (+ transparency checker
   Pattern) + raster layers (as `EffectsImage`, the effect-compositing
-  FabricImage subclass), clipPath, layer↔object id map (`getLayerIdForObject`).
+  FabricImage subclass) + **shape layers** (Rect/Ellipse/Line/Polygon;
+  in-place geometry updates verified against fabric 7.4.0 — Ellipse rx→width,
+  Line coord props, Polyline.setDimensions — so drag-to-draw never churns
+  objects; gradient fills map to fabric's "percentage" gradientUnits),
+  clipPath, layer↔object id map (`getLayerIdForObject`). Shape stroke scales
+  with the transform (Fabric default — consistent with "transform scales
+  geometry").
+- `shape-geometry.ts` (pure) — polygon/star vertex maths (first point up,
+  circumradius), `shapeDims` (intrinsic bbox of what renders; line height 0),
+  and **`layerDims`** — the ONE dims helper (raster natural size / shape
+  geometry / null for text+group) behind Inspector W/H, Arrange align/
+  distribute. Snap reads Fabric bboxes, so shapes joined it for free.
+- `draw-shape.ts` — drag-to-draw maths + gesture doc-write: what a drag MEANS
+  per primitive (rect/ellipse = dragged box, ⇧ square/circle start-anchored ·
+  line = start→cursor, ⇧ 45° snap, angle in the transform · polygon/star =
+  centre-out radius), `strokeForNewShape` (lines always stroke — fill
+  fallback), `upsertLayerTransient` (root-append/replace on the transient
+  path), SHAPE_NAMES (standard vocabulary = functional chrome).
 - `layer-tree.ts` — pure tree utils over nested layers (find/map/remove/
   leafRenderList/flattenForPanel) + the ratified v1 GROUP SEMANTICS header.
 - `layer-ops.ts` — TREE-AWARE doc mutations via `update()`: visibility, lock,
@@ -270,7 +297,8 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
 - `selection.ts` — active layer (SINGLE-select). `tool.ts` — active tool +
   active SUBTOOL per stack (`activeSubs`, remembered; `setActiveSub` selects
   both). `tool-settings.ts` — per-tool settings (move nudge · select mode/
-  sensitivity/tolerance · text font/size · pieces shape) + the SHARED
+  sensitivity/tolerance · text font/size · pieces shape/fill/stroke/
+  corner-sides-star params — the drag-to-draw reads these at draw time) + the SHARED
   **`transformAsGroup`** flag (Ruby: "move is also transform" — MOVE bloom
   toggle + SELECT chips bind to one flag; "Separate" makes multi-selection
   rotate/scale act about each layer's OWN centre via per-frame matrix
@@ -291,14 +319,18 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   (an early return leaves frozen stains). Dev builds expose a
   **`window.__substrata` debug rig** (selection/layers dumps, select,
   setSeparate, + M3: `fx`/`fxParam`/`effect`/`effectParam`/
-  `gesture.begin|commit`/`samplePixel`/`elementSizes`/`vt` for FX QA) and
-  `.repro-phantom.mjs` + `.verify-effects.mjs` (both untracked) drive /editor
-  headlessly via puppeteer-core (installed --no-save) + local Chrome —
-  reusable for canvas-interaction verification (Tier-0 was pixel-verified this
-  way: brightness/undo/temperature/stack-order + the preview→full-res cycle;
-  `.verify-effects.mjs` is the effects engine's 30-check regression harness:
-  every effect type, opacity maths, spread, undo, transient gesture = one
-  undo step, stacking isolation).
+  `gesture.begin|commit`/`samplePixel`/`elementSizes`/`vt`, + M2-7:
+  `setTool`/`toolSettings`) and `.repro-phantom.mjs` + `.verify-effects.mjs`
+  + `.verify-pieces.mjs` (all untracked) drive /editor headlessly via
+  puppeteer-core (installed --no-save) + local Chrome — reusable for
+  canvas-interaction verification (`.verify-effects.mjs` = the effects
+  engine's 30-check regression harness — every effect type, opacity maths,
+  spread, undo, one-undo-step gestures, stacking isolation;
+  `.verify-pieces.mjs` = the primitives' 28-check harness — real mouse-drag
+  draws for all five shapes, ⇧ modifiers, corner radius, one-undo-per-draw,
+  MOVE round-trip, no-draw-in-MOVE/no-layer-on-click; NOTE it deselects
+  before sampling — selection handles render on the LOWER canvas at rest and
+  land under edge-adjacent pixels).
   `viewport.ts` — zoom bridge + cycle. `dock-pref.ts` — omnibar edge, rail edge,
   per-module dock target. `pin-pref.ts` — open (pinned) modules (`MODULE_IDS`:
   effects/layers/inspector/colour/arrange). `toast.ts` — status toasts.
@@ -423,8 +455,22 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   drawn on the top context. **Rulers** toggle stores state but has NO renderer
   yet (needs the backdrop-sketch ruler design). Everything else in Workspace is
   live. Snap thresholds/feel + grid pitch await Ruby's QA.
-- **Tools**: only MOVE is behaviourally live; SELECT/TEXT/PIECES/ADJUST set state
-  only → **M2/M3**. **RULE (Ruby): a built tool ships its settings + chrome.**
+- **Tools**: MOVE and **PIECES·Primitives** are behaviourally live;
+  SELECT/TEXT/ADJUST set state only → **M2/M3**. PIECES ratifications (Ruby
+  2026-07-05): **Pieces head sub = a preset-shapes gallery, LATER** (placeholder
+  bloom until then; only the Primitives sub draws) · **Brush/Pencil = next
+  chunk** on **npm perfect-freehand ^1.2** (her M2-2 call — not the vendored
+  tldraw fork). Primitives ships per the built-tool rule: drag-to-draw all five
+  shapes (transient gesture = ONE undo step incl. creation; click draws
+  nothing; crosshair + skipTargetFind/selection-off while active, space-pan
+  composes), real settings bloom (shape chooser · fill swatch+hex · stroke
+  toggle/colour/width · per-shape params), live contextual chips (shape +
+  sides/points/corner), shape thumbnails in Layers, Inspector W/H + Arrange
+  align/distribute via `layerDims` (a line's 0-height axis gets no field).
+  Fill/stroke of an EXISTING shape isn't editable yet — settings describe the
+  NEXT shape; editing lands with the M4 picker sink. FX + LOOKS gate non-raster
+  layers with ∑CG hints (filters/effects are raster-pipeline; rasterize =
+  M3-15). **RULE (Ruby): a built tool ships its settings + chrome.**
   MOVE is complete per the rule: sketch-styled selection handles (8px square
   paper-fill/primary-border corners via shared `ownDefaults.controls`, circular
   rotate handle, theme-observed recolour — NOTE: Textbox needs its own control
@@ -544,14 +590,23 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
    opacity 35 %, glow double-stamp intensity curve, stroke ring quality at
    large widths, scene-px effect units (effects don't scale with the layer),
    scene-absolute shadow angles.
-1. **Next chunk options**: (a) **PIECES** (schema ratified, zero blockers).
-   (b) TEXT — blocked on the bundled-fonts call below.
+0d. **✅ PIECES·PRIMITIVES (M2-7, 2026-07-05).** All five ratified shapes
+   draw (see the Tools section + file map: doc-model v2 · shape-geometry ·
+   draw-shape · sync shapes). Ratified with it: freehand dep = **npm
+   perfect-freehand ^1.2** (M2-2 closed) · Pieces head sub = preset-shapes
+   gallery, later · primitives-first chunking. 28-check harness ALL PASS;
+   build + tsc green. **Awaiting Ruby's QA (taste)**: drag semantics
+   (centre-out polygon/star vs bbox), default fill green, star inner-ratio
+   default 0.5, stroke-scales-with-transform convention.
+1. **Next chunk options**: (a) **Brush/Pencil** (freehand — dep ratified,
+   FreehandLayer schema ratified, zero blockers). (b) TEXT — blocked on the
+   bundled-fonts call below. (c) Pieces preset-shape gallery (needs Ruby's
+   preset list).
 2. **Then M2 tools** — TEXT (still needs the bundled-fonts call, M2-3), SELECT
-   (needs M2-10 semantics), freehand dep (M2-2), text-on-path scope (M2-6),
-   rulers design, snap-feel QA, cross-parent layer drag + group transform
-   composition. Ruby's open decision queue: bundled fonts · SELECT
-   destructive-vs-extract · freehand dep · text-on-path (options laid out
-   2026-07-03, unanswered).
+   (needs M2-10 semantics), text-on-path scope (M2-6), rulers design,
+   snap-feel QA, cross-parent layer drag + group transform composition.
+   Ruby's open decision queue: bundled fonts · SELECT destructive-vs-extract ·
+   text-on-path (options laid out 2026-07-03, unanswered).
 3. **M4 colour** (fills for text/shapes — the colour picker's missing sink),
    **M5 persist** (project mgr + `.substrata`), **M6 export pipeline**,
    **M7 background removal** — per BUILD-PLAN.

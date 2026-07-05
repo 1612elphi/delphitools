@@ -48,7 +48,8 @@ import {
 import { getRaster } from "@/lib/substrata/raster-cache";
 import { importImageFile } from "@/lib/substrata/import-raster";
 import { BLEND_OPTIONS } from "@/components/substrata/modules/inspector-panel";
-import type { BlendMode, Layer } from "@/lib/substrata/doc-model";
+import type { BlendMode, Layer, ShapeParams } from "@/lib/substrata/doc-model";
+import { polygonPoints, shapeDims, starPoints } from "@/lib/substrata/shape-geometry";
 
 /**
  * Layers module — the BODY only; the module box supplies the header. Reads the
@@ -356,10 +357,41 @@ function LayerRow({
   );
 }
 
-/** Small live thumbnail drawn from the cached raster (raster layers only). */
+/** Draw a shape layer's geometry into a thumb context, centred on the origin. */
+function traceShape(ctx: CanvasRenderingContext2D, params: ShapeParams): void {
+  ctx.beginPath();
+  switch (params.shape) {
+    case "rectangle":
+      ctx.roundRect(-params.width / 2, -params.height / 2, params.width, params.height, params.cornerRadius);
+      break;
+    case "ellipse":
+      ctx.ellipse(0, 0, params.rx, params.ry, 0, 0, 2 * Math.PI);
+      break;
+    case "line":
+      ctx.moveTo(-params.length / 2, 0);
+      ctx.lineTo(params.length / 2, 0);
+      break;
+    case "polygon":
+    case "star": {
+      const pts =
+        params.shape === "polygon"
+          ? polygonPoints(params.sides, params.radius)
+          : starPoints(params.points, params.outerRadius, params.innerRadius);
+      pts.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
+      ctx.closePath();
+      break;
+    }
+  }
+}
+
+/** Small live thumbnail — the cached raster, or a shape's geometry mini-render. */
 function LayerThumb({ layer, inset }: { layer: Layer; inset: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const hash = layer.kind === "raster" ? layer.blobHash : null;
+  // Shape thumbs redraw on any params/fill/stroke change (cheap vector draw);
+  // the sig keeps redraws to content changes, not every doc emit.
+  const shapeSig =
+    layer.kind === "shape" ? JSON.stringify([layer.params, layer.fill, layer.stroke]) : null;
 
   useEffect(() => {
     const el = ref.current;
@@ -367,6 +399,27 @@ function LayerThumb({ layer, inset }: { layer: Layer; inset: boolean }) {
     const ctx = el.getContext("2d");
     if (!ctx) return;
     ctx.clearRect(0, 0, el.width, el.height);
+    if (layer.kind === "shape") {
+      const dims = shapeDims(layer.params);
+      const s = (el.width - 8) / Math.max(dims.width, dims.height, 1);
+      ctx.save();
+      ctx.translate(el.width / 2, el.height / 2);
+      ctx.scale(s, s);
+      traceShape(ctx, layer.params);
+      if (layer.params.shape !== "line") {
+        // A gradient previews as its first stop — a real ramp at 22px reads as noise.
+        ctx.fillStyle =
+          typeof layer.fill === "string" ? layer.fill : (layer.fill.stops[0]?.colour ?? "#888888");
+        ctx.fill();
+      }
+      if (layer.stroke) {
+        ctx.strokeStyle = layer.stroke.colour;
+        ctx.lineWidth = Math.max(layer.stroke.width, 1.5 / s); // hairlines stay visible at thumb scale
+        ctx.stroke();
+      }
+      ctx.restore();
+      return;
+    }
     if (!hash) return;
     const src = getRaster(hash);
     if (!src) return;
@@ -374,7 +427,10 @@ function LayerThumb({ layer, inset }: { layer: Layer; inset: boolean }) {
     const w = src.width * s;
     const h = src.height * s;
     ctx.drawImage(src, (el.width - w) / 2, (el.height - h) / 2, w, h);
-  }, [hash]);
+    // `layer` identity churns with every doc edit; hash/shapeSig pin redraws
+    // to actual content changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hash, shapeSig]);
 
   return (
     <canvas

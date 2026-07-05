@@ -14,7 +14,15 @@
  * own spelling.
  */
 
-export const SCHEMA_VERSION = 1 as const;
+/**
+ * v2 = the ratified M2-1 extension (2026-07-02): ShapeLayer gained its
+ * discriminated param union + Gradient/ShapeStroke fill model (landed with
+ * PIECES). The remaining ratified kinds (full TextLayer, PathLayer,
+ * FreehandLayer) land additively WITHIN v2 — restore defaults missing fields.
+ * v1 docs contain no shape layers (the kind was never instantiable), so
+ * loading one only needs the version stamp, no field migration.
+ */
+export const SCHEMA_VERSION = 2 as const;
 
 export type LayerId = string;
 
@@ -63,8 +71,8 @@ export interface Filter {
   enabled: boolean;
   /** colours are strings (Duotone/Vignette), numerics are numbers — value kinds
    *  follow the registry's ParamSpecs (hard validation is an M3 concern).
-   *  Widened additively from number-only — every v1 doc written before the
-   *  widening remains valid, so SCHEMA_VERSION stays 1. */
+   *  Widened additively from number-only — every doc written before the
+   *  widening remains valid, so that change alone didn't bump the schema. */
   params: Record<string, number | string>;
 }
 
@@ -133,13 +141,51 @@ export interface TextLayer extends BaseLayer {
   fill: string;
 }
 
+export interface GradientStop {
+  /** 0–1 along the gradient axis */
+  offset: number;
+  colour: string;
+}
+
+/**
+ * Gradient fill (ratified M2-1). Coords are RELATIVE (0–1) to the shape's
+ * intrinsic bounds, so the gradient tracks the shape through any transform.
+ * linear: the x1,y1 → x2,y2 line · radial: r1 (inner) / r2 (outer) circles.
+ */
+export interface Gradient {
+  type: "linear" | "radial";
+  stops: GradientStop[];
+  coords: { x1: number; y1: number; x2: number; y2: number; r1?: number; r2?: number };
+}
+
+/** Vector stroke on a shape — the stroke EFFECT (effects.ts) stays the
+ *  separate any-layer outline; this is the shape's own drawn stroke. */
+export interface ShapeStroke {
+  colour: string;
+  width: number;
+  dash?: number[];
+}
+
+/**
+ * Ratified M2-1 param union — intrinsic geometry UNSCALED (the transform
+ * scales it; centre-origin like every kind). Adding a shape = a new arm here
+ * + its geometry in shape-geometry.ts.
+ */
+export type ShapeParams =
+  | { shape: "rectangle"; width: number; height: number; cornerRadius: number }
+  | { shape: "ellipse"; rx: number; ry: number }
+  | { shape: "line"; length: number }
+  | { shape: "polygon"; sides: number; radius: number }
+  | { shape: "star"; points: number; outerRadius: number; innerRadius: number };
+
+export type PieceShape = ShapeParams["shape"];
+
 export interface ShapeLayer extends BaseLayer {
   kind: "shape";
-  /** v1 minimal; the shape param union is added additively in M2 (PIECES) */
-  shape: string;
-  fill: string;
-  stroke: string | null;
-  strokeWidth: number;
+  params: ShapeParams;
+  /** a line renders stroke-only and ignores fill */
+  fill: string | Gradient;
+  stroke: ShapeStroke | null;
 }
 
 export interface GroupLayer extends BaseLayer {
@@ -251,5 +297,29 @@ export function createRasterLayer(opts: {
     blobHash: opts.blobHash,
     naturalWidth: opts.naturalWidth,
     naturalHeight: opts.naturalHeight,
+  };
+}
+
+export function createShapeLayer(opts: {
+  name: string;
+  params: ShapeParams;
+  fill: string | Gradient;
+  stroke: ShapeStroke | null;
+  transform: Transform;
+}): ShapeLayer {
+  return {
+    kind: "shape",
+    id: newId(),
+    name: opts.name,
+    visible: true,
+    locked: false,
+    opacity: 1,
+    blendMode: "source-over",
+    transform: opts.transform,
+    filters: [],
+    effects: [],
+    params: opts.params,
+    fill: opts.fill,
+    stroke: opts.stroke,
   };
 }
