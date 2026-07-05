@@ -53,6 +53,9 @@ export interface PiecesSettings {
   starPoints: number;
   /** star inner radius as a fraction of the outer (0–1) */
   starInnerRatio: number;
+  /** brush / pencil stroke sizes (scene px) — the freehand subtools */
+  brushSize: number;
+  pencilSize: number;
 }
 
 export interface ToolSettings {
@@ -79,6 +82,8 @@ const DEFAULTS: ToolSettings = {
     sides: 6,
     starPoints: 5,
     starInnerRatio: 0.5,
+    brushSize: 24,
+    pencilSize: 6,
   },
 };
 

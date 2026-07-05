@@ -50,6 +50,7 @@ import { importImageFile } from "@/lib/substrata/import-raster";
 import { BLEND_OPTIONS } from "@/components/substrata/modules/inspector-panel";
 import type { BlendMode, Layer, ShapeParams } from "@/lib/substrata/doc-model";
 import { polygonPoints, shapeDims, starPoints } from "@/lib/substrata/shape-geometry";
+import { freehandDims, outlineToPathD, strokeOutline } from "@/lib/substrata/freehand";
 
 /**
  * Layers module — the BODY only; the module box supplies the header. Reads the
@@ -388,10 +389,15 @@ function traceShape(ctx: CanvasRenderingContext2D, params: ShapeParams): void {
 function LayerThumb({ layer, inset }: { layer: Layer; inset: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const hash = layer.kind === "raster" ? layer.blobHash : null;
-  // Shape thumbs redraw on any params/fill/stroke change (cheap vector draw);
-  // the sig keeps redraws to content changes, not every doc emit.
+  // Shape/freehand thumbs redraw on any content change (cheap vector draw);
+  // the sig keeps redraws to content changes, not every doc emit. Freehand
+  // points are immutable post-commit, so length + styling is identity enough.
   const shapeSig =
-    layer.kind === "shape" ? JSON.stringify([layer.params, layer.fill, layer.stroke]) : null;
+    layer.kind === "shape"
+      ? JSON.stringify([layer.params, layer.fill, layer.stroke])
+      : layer.kind === "freehand"
+        ? `${layer.rawPoints.length}|${layer.fill}|${layer.strokeOptions.size}`
+        : null;
 
   useEffect(() => {
     const el = ref.current;
@@ -399,6 +405,19 @@ function LayerThumb({ layer, inset }: { layer: Layer; inset: boolean }) {
     const ctx = el.getContext("2d");
     if (!ctx) return;
     ctx.clearRect(0, 0, el.width, el.height);
+    if (layer.kind === "freehand") {
+      const dims = freehandDims(layer.rawPoints, layer.strokeOptions);
+      const s = (el.width - 6) / Math.max(dims.width, dims.height, 1);
+      const d = outlineToPathD(strokeOutline(layer.rawPoints, layer.strokeOptions));
+      if (!d) return;
+      ctx.save();
+      ctx.translate(el.width / 2, el.height / 2);
+      ctx.scale(s, s);
+      ctx.fillStyle = layer.fill;
+      ctx.fill(new Path2D(d));
+      ctx.restore();
+      return;
+    }
     if (layer.kind === "shape") {
       const dims = shapeDims(layer.params);
       const s = (el.width - 8) / Math.max(dims.width, dims.height, 1);

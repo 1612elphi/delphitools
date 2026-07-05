@@ -35,6 +35,8 @@ import type { ToolId } from "@/lib/substrata/tool";
 export function ToolSettingsBody({ tool, sub, title }: { tool: ToolId; sub?: string; title: string }) {
   if (tool === "move") return <MoveSettings title={title} />;
   if (tool === "pieces" && sub === "primitives") return <PiecesSettings title={title} />;
+  if (tool === "pieces" && (sub === "brush" || sub === "pencil"))
+    return <FreehandSettings sub={sub} title={title} />;
   return <PlaceholderSettings title={title} />;
 }
 
@@ -279,7 +281,39 @@ function PiecesSettings({ title }: { title: string }) {
   );
 }
 
-/** Stub tools until their settings exist (M2 TEXT/SELECT · brush/pencil next). */
+/** Brush/Pencil size menus — a fat and a fine register (data, not copy). */
+const BRUSH_SIZES: PresetOption[] = [8, 16, 24, 48].map((v) => ({ value: v, label: String(v) }));
+const PENCIL_SIZES: PresetOption[] = [2, 4, 6, 12].map((v) => ({ value: v, label: String(v) }));
+
+/** PIECES ▸ Brush/Pencil (M2-2): the next stroke's colour + size. The stroke
+ *  body is a filled outline, so it shares the pieces `fill` setting. */
+function FreehandSettings({ sub, title }: { sub: "brush" | "pencil"; title: string }) {
+  const ts = useSyncExternalStore(subscribeToolSettings, getToolSettings, getToolSettings);
+  const p = ts.pieces;
+  const sizeKey = sub === "brush" ? ("brushSize" as const) : ("pencilSize" as const);
+
+  return (
+    <div className="w-[200px]">
+      <Head title={title} />
+      <Row label="Colour">
+        {/* ∑CG: aria-label for the stroke colour swatch. sample: "Stroke colour" */}
+        <ColourCell colour={p.fill} onChange={(fill) => updateToolSettings("pieces", { fill })} aria="∑CG" />
+      </Row>
+      <Row label="Size">
+        <PresetRow
+          options={sub === "brush" ? BRUSH_SIZES : PENCIL_SIZES}
+          value={p[sizeKey]}
+          onChange={(v) => updateToolSettings("pieces", { [sizeKey]: v })}
+          min={1}
+          max={200}
+          unit="px"
+        />
+      </Row>
+    </div>
+  );
+}
+
+/** Stub tools until their settings exist (M2 TEXT/SELECT). */
 function PlaceholderSettings({ title }: { title: string }) {
   return (
     <div className="w-[200px]">

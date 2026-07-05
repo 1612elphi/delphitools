@@ -14,7 +14,7 @@ import {
 import type { FabricObject, LayoutStrategyResult, StrictLayoutContext } from "fabric";
 import { getSnapshot, subscribe, setDoc, beginTransient, commitTransient } from "@/lib/substrata/doc-store";
 import { registerViewportController, reportZoom } from "@/lib/substrata/viewport";
-import { createEmptyDoc, createShapeLayer } from "@/lib/substrata/doc-model";
+import { createEmptyDoc, createFreehandLayer, createShapeLayer, identityTransform } from "@/lib/substrata/doc-model";
 import type { Artboard, ShapeLayer, SubstrataDoc, Transform } from "@/lib/substrata/doc-model";
 import { createReconcileState, reconcile, getLayerIdForObject } from "@/lib/substrata/sync";
 import { initSubstrataFilterBackend } from "@/lib/substrata/filter-backend";
@@ -48,12 +48,17 @@ import {
   type ToolId,
 } from "@/lib/substrata/tool";
 import {
+  appendLayer,
   buildDraggedShape,
+  FREEHAND_NAMES,
+  freehandOptions,
   SHAPE_NAMES,
   strokeForNewShape,
   upsertLayerTransient,
+  type FreehandSub,
   type Pt,
 } from "@/lib/substrata/draw-shape";
+import { centreRawPoints, outlineToPathD, strokeOutline, type RawPoint } from "@/lib/substrata/freehand";
 import { buildSnapField, computeSnap, type SnapBox } from "@/lib/substrata/snap-engine";
 import { useFilePaste } from "@/hooks/use-file-paste";
 
@@ -357,13 +362,18 @@ export function FabricCanvas() {
     window.addEventListener("keyup", onKeyUp);
 
     // ── tool modes ────────────────────────────────────────────────────────────
-    // PIECES+Primitives is a DRAWING mode: pointer drags author shapes instead
-    // of grabbing objects (skipTargetFind) or rubber-banding (selection=false).
-    // Every other tool keeps MOVE-style interaction (stub tools set state only).
-    const drawModeActive = () =>
+    // PIECES' Primitives/Brush/Pencil subs are DRAWING modes: pointer drags
+    // author layers instead of grabbing objects (skipTargetFind) or
+    // rubber-banding (selection=false). Every other tool keeps MOVE-style
+    // interaction (stub tools set state only).
+    const shapeModeActive = () =>
       getActiveTool() === "pieces" && getActiveSubs().pieces === "primitives";
+    const freehandSub = (): FreehandSub | null => {
+      const sub = getActiveSubs().pieces;
+      return getActiveTool() === "pieces" && (sub === "brush" || sub === "pencil") ? sub : null;
+    };
     const applyToolMode = () => {
-      const draw = drawModeActive();
+      const draw = shapeModeActive() || freehandSub() !== null;
       canvas.skipTargetFind = draw || spaceHeld;
       canvas.selection = !draw;
       setCanvasCursor(draw ? "crosshair" : spaceHeld ? "grab" : "");
@@ -377,7 +387,7 @@ export function FabricCanvas() {
     // A click without a drag creates nothing (commitTransient sees no change).
     let draft: { start: Pt; layer: ShapeLayer | null } | null = null;
     canvas.on("mouse:down", (opt) => {
-      if (spaceHeld || panning || !drawModeActive()) return;
+      if (spaceHeld || panning || !shapeModeActive()) return;
       draft = { start: canvas.getScenePoint(opt.e), layer: null };
       beginTransient();
     });
@@ -408,6 +418,58 @@ export function FabricCanvas() {
       draft = null;
       commitTransient();
       if (drawn) setSelection([drawn.id]);
+    });
+
+    // ── Brush/Pencil freehand (M2-2) ──────────────────────────────────────────
+    // The live stroke previews on the TOP CONTEXT (drawn in the after:render
+    // overlay below) and hits the doc exactly ONCE on release — no transient
+    // machinery, one undo step by construction. Raw points are collected from
+    // coalesced pointer events; real pressure only from a pen (SPEC §Pieces —
+    // Firefox reports pressure 0 on pointerup, so non-positive values fall
+    // back too).
+    const pressureOf = (e: Event): number => {
+      const pe = e as PointerEvent;
+      return pe.pointerType === "pen" && pe.pressure > 0 ? pe.pressure : 0.5;
+    };
+    let liveStroke: { sub: FreehandSub; pts: RawPoint[]; simulate: boolean } | null = null;
+    canvas.on("mouse:down", (opt) => {
+      const sub = freehandSub();
+      if (spaceHeld || panning || !sub) return;
+      const e = opt.e as PointerEvent;
+      const p = canvas.getScenePoint(opt.e);
+      liveStroke = { sub, simulate: e.pointerType !== "pen", pts: [[p.x, p.y, pressureOf(e)]] };
+    });
+    canvas.on("mouse:move", (opt) => {
+      if (!liveStroke) return;
+      const e = opt.e as PointerEvent;
+      const events: PointerEvent[] =
+        typeof e.getCoalescedEvents === "function" && e.getCoalescedEvents().length > 0
+          ? e.getCoalescedEvents()
+          : [e];
+      for (const ce of events) {
+        const p = canvas.getScenePoint(ce);
+        liveStroke.pts.push([p.x, p.y, pressureOf(ce)]);
+      }
+      canvas.requestRenderAll(); // preview renders in the after:render overlay
+    });
+    canvas.on("mouse:up", () => {
+      if (!liveStroke) return;
+      const { sub, pts, simulate } = liveStroke;
+      liveStroke = null;
+      canvas.requestRenderAll(); // clear the preview
+      if (pts.length < 2) return; // a tap draws nothing
+      const s = getToolSettings().pieces;
+      const options = freehandOptions(sub, s, simulate);
+      const { points, cx, cy } = centreRawPoints(pts, options);
+      const layer = createFreehandLayer({
+        name: FREEHAND_NAMES[sub],
+        rawPoints: points,
+        strokeOptions: options,
+        fill: s.fill,
+        transform: { ...identityTransform(), x: cx, y: cy },
+      });
+      appendLayer(layer);
+      setSelection([layer.id]);
     });
     canvas.on("mouse:down", (opt) => {
       if (!spaceHeld) return;
@@ -672,7 +734,7 @@ export function FabricCanvas() {
       // leaves the previous frame's chrome as a frozen stain on the top canvas
       // (member boxes that "don't move", accumulating per deselect).
       canvas.clearContext(ctx);
-      if (!showGrid && !activeGuides && !dragBadge && !sepMembers) return;
+      if (!showGrid && !activeGuides && !dragBadge && !sepMembers && !liveStroke) return;
       const doc = getSnapshot();
       if (!doc) return;
       const vt = canvas.viewportTransform;
@@ -680,6 +742,22 @@ export function FabricCanvas() {
       const sx = (x: number) => x * z + vt[4];
       const sy = (y: number) => y * z + vt[5];
       const css = getComputedStyle(document.documentElement);
+
+      // Live freehand stroke — the exact outline the commit will produce,
+      // filled in scene space under the viewport transform.
+      if (liveStroke) {
+        const s = getToolSettings().pieces;
+        const d = outlineToPathD(
+          strokeOutline(liveStroke.pts, freehandOptions(liveStroke.sub, s, liveStroke.simulate)),
+        );
+        if (d) {
+          ctx.save();
+          ctx.transform(z, 0, 0, z, vt[4], vt[5]);
+          ctx.fillStyle = s.fill;
+          ctx.fill(new Path2D(d));
+          ctx.restore();
+        }
+      }
 
       if (showGrid) {
         ctx.save();

@@ -455,12 +455,26 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   drawn on the top context. **Rulers** toggle stores state but has NO renderer
   yet (needs the backdrop-sketch ruler design). Everything else in Workspace is
   live. Snap thresholds/feel + grid pitch await Ruby's QA.
-- **Tools**: MOVE and **PIECES·Primitives** are behaviourally live;
-  SELECT/TEXT/ADJUST set state only → **M2/M3**. PIECES ratifications (Ruby
-  2026-07-05): **Pieces head sub = a preset-shapes gallery, LATER** (placeholder
-  bloom until then; only the Primitives sub draws) · **Brush/Pencil = next
-  chunk** on **npm perfect-freehand ^1.2** (her M2-2 call — not the vendored
-  tldraw fork). Primitives ships per the built-tool rule: drag-to-draw all five
+- **Tools**: MOVE, **PIECES·Primitives**, and **PIECES·Brush/Pencil** are
+  behaviourally live; SELECT/TEXT/ADJUST set state only → **M2/M3**. PIECES
+  ratifications (Ruby 2026-07-05): **Pieces head sub = a preset-shapes
+  gallery, LATER** (placeholder bloom until then) · Brush/Pencil on **npm
+  perfect-freehand ^1.2** (her M2-2 call — not the vendored tldraw fork;
+  SHIPPED 2026-07-06). **Freehand (M2-2)**: raw `[x,y,pressure]` points are
+  the doc truth (`FreehandLayer`, additive in schema v2; outline path never
+  persisted), strokeOptions persisted per stroke so old art never reflows;
+  `freehand.ts` (pure) wraps getStroke → outline → path-d + dims + the
+  centre-normalise commit helper; reconciler renders a fill-only fabric.Path
+  (reference-diffed rebuild); the LIVE stroke previews on the top-context
+  overlay (exact final outline) and hits the doc ONCE on pointerup — one undo
+  step by construction, taps draw nothing. Coalesced pointer events consumed;
+  real pressure only from `pointerType === "pen"` (Firefox pointerup-0
+  guarded), mouse/finger = simulatePressure. Brush = fat/pressure-expressive
+  (thinning 0.6), Pencil = thin/steady (thinning 0.15, streamline 0.65) —
+  taste numbers awaiting Ruby. Bloom = Colour + Size preset rows; chips show
+  the live size; Layers thumbs trace the outline; layerDims covers freehand
+  (outline bbox). 10-check harness `.verify-freehand.mjs` ALL PASS.
+  Primitives ships per the built-tool rule: drag-to-draw all five
   shapes (transient gesture = ONE undo step incl. creation; click draws
   nothing; crosshair + skipTargetFind/selection-off while active, space-pan
   composes), real settings bloom (shape chooser · fill swatch+hex · stroke
@@ -608,10 +622,14 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
    build + tsc green. **Awaiting Ruby's QA (taste)**: drag semantics
    (centre-out polygon/star vs bbox), default fill green, star inner-ratio
    default 0.5, stroke-scales-with-transform convention.
-1. **Next chunk options**: (a) **Brush/Pencil** (freehand — dep ratified,
-   FreehandLayer schema ratified, zero blockers). (b) TEXT — blocked on the
-   bundled-fonts call below. (c) Pieces preset-shape gallery (needs Ruby's
-   preset list).
+0e. **✅ BRUSH/PENCIL FREEHAND (M2-2, 2026-07-06).** See the Tools section.
+   PIECES is now fully live except the Pieces head sub (preset gallery —
+   needs Ruby's preset list).
+1. **Next chunk options**: (a) TEXT — blocked on the bundled-fonts call
+   below. (b) Pieces preset-shape gallery (needs Ruby's preset list).
+   (c) SELECT (needs M2-10 semantics + destructive-vs-extract call).
+   (d) M4 colour (fills for shapes/freehand now EXIST as sinks — the picker
+   could wire to them ahead of TEXT).
 2. **Then M2 tools** — TEXT (still needs the bundled-fonts call, M2-3), SELECT
    (needs M2-10 semantics), text-on-path scope (M2-6), rulers design,
    snap-feel QA, cross-parent layer drag + group transform composition.

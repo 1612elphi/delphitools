@@ -313,6 +313,8 @@ function readoutChips(tool: ToolId, sub: string, layer: Layer | null, ts: ToolSe
       return [ts.text.fontFamily, `${ts.text.fontSize} px`];
     case "pieces": {
       const p = ts.pieces;
+      if (sub === "brush") return [`${p.brushSize} px`];
+      if (sub === "pencil") return [`${p.pencilSize} px`];
       const extra =
         p.shape === "polygon"
           ? [`${p.sides} sides`]

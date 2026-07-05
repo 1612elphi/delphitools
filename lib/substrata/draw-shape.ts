@@ -13,9 +13,9 @@
  * dropped image; grouping is a later act).
  */
 
-import type { Layer, ShapeLayer, ShapeParams, Transform } from "./doc-model";
+import type { FreehandStrokeOptions, Layer, ShapeLayer, ShapeParams, Transform } from "./doc-model";
 import { identityTransform } from "./doc-model";
-import { updateTransient } from "./doc-store";
+import { update, updateTransient } from "./doc-store";
 import type { PiecesSettings } from "./tool-settings";
 
 export interface Pt {
@@ -109,6 +109,32 @@ export function buildDraggedShape(
 export function strokeForNewShape(s: PiecesSettings): ShapeLayer["stroke"] {
   if (s.stroke) return { colour: s.stroke.colour, width: s.stroke.width };
   return s.shape === "line" ? { colour: s.fill, width: 2 } : null;
+}
+
+/** Freehand subtool layer names — standard vocabulary, functional chrome. */
+export const FREEHAND_NAMES = { brush: "Brush", pencil: "Pencil" } as const;
+export type FreehandSub = keyof typeof FREEHAND_NAMES;
+
+/**
+ * The two freehand flavours (persisted per stroke so future default tweaks
+ * never reflow old art): Brush = fat and pressure-expressive; Pencil = thin
+ * and steady (higher streamline irons out jitter, minimal thinning).
+ * ponytail: taste numbers — Ruby's QA tunes them.
+ */
+export function freehandOptions(
+  sub: FreehandSub,
+  s: PiecesSettings,
+  simulatePressure: boolean,
+): FreehandStrokeOptions {
+  return sub === "brush"
+    ? { size: s.brushSize, thinning: 0.6, smoothing: 0.5, streamline: 0.5, simulatePressure }
+    : { size: s.pencilSize, thinning: 0.15, smoothing: 0.5, streamline: 0.65, simulatePressure };
+}
+
+/** Single-commit append (freehand release): root level, frontmost, ONE undo
+ *  step — the live stroke previews on the top context, never in the doc. */
+export function appendLayer(layer: Layer): void {
+  update((doc) => ({ ...doc, layers: [...doc.layers, layer], updatedAt: Date.now() }));
 }
 
 /** Live-gesture doc write: replace the in-flight layer or append it (root
