@@ -59,6 +59,8 @@ import {
   type Pt,
 } from "@/lib/substrata/draw-shape";
 import { centreRawPoints, outlineToPathD, strokeOutline, type RawPoint } from "@/lib/substrata/freehand";
+import { startColourSink } from "@/lib/substrata/colour-sink";
+import { setHex } from "@/lib/substrata/colour-store";
 import { buildSnapField, computeSnap, type SnapBox } from "@/lib/substrata/snap-engine";
 import { useFilePaste } from "@/hooks/use-file-paste";
 
@@ -876,6 +878,10 @@ export function FabricCanvas() {
     // guards on both sides keep this from looping with the events above.
     const unsubscribeSelection = subscribeSelection(applySelection);
 
+    // M4: picked colours flow to the pieces fill setting + the active
+    // shape/freehand layer's fill (one-way; see colour-sink.ts).
+    const stopColourSink = startColourSink();
+
     // Dev-only debug rig for selection-chrome bugs — console + automation.
     // window.__substrata.{selection, layers, select, setSeparate} (dev builds only).
     if (process.env.NODE_ENV !== "production") {
@@ -945,6 +951,8 @@ export function FabricCanvas() {
         toolSettings: (tool: "move" | "select" | "text" | "pieces", patch: object) =>
           updateToolSettings(tool, patch),
         shapeParams: setShapeParams,
+        // M4 colour QA: drive the picker store (flows through the sink).
+        colour: setHex,
         // M3 effects QA: same pair over the effects[] stack.
         effect: (layerId: string, type: string, params?: Record<string, number | string>) =>
           addFx(layerId, "effects", type, params),
@@ -1069,6 +1077,7 @@ export function FabricCanvas() {
       unsubscribeLuts();
       unsubscribeSelection();
       unsubscribeTool();
+      stopColourSink();
       unsubscribeGuides();
       unsubscribeToolSettings();
       themeObserver.disconnect();

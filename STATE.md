@@ -92,7 +92,21 @@ Dev: `npm run dev` → http://localhost:3000/editor. Gate: `npm run build` + `ts
 - **Colour** — 7 picker modes over one HSV-internal current-colour store: hue cube ·
   HSV triangle · RGB/HSL sliders · swatches wall · prism · **spectral EQ** · shade.
   Shared footer swatch/hex/eyedropper (uses `components/colour-field`); the omnibar
-  trigger shows the live colour. **No fill sink yet** (nothing consumes the colour → M4).
+  trigger shows the live colour. **The SINK is LIVE (M4, 2026-07-06)** —
+  `colour-sink.ts`: picked colours flow one-way to (a) the pieces fill setting
+  (next draws) and (b) the ACTIVE shape/freehand layer's fill ("select a
+  shape, pick a colour, it recolours"); picker drags bracket begin/commit
+  transient in `usePointerArea` (ALL seven modes share it) so a drag = ONE
+  undo step. v1 calls (doc'd in colour-sink.ts): fill only (vector stroke
+  recolours via its Inspector row) · a flat pick REPLACES a gradient fill ·
+  text joins in M2. The Inspector grew **Fill + Stroke rows** for shapes
+  (fill hidden for lines) and a Fill row for freehand strokes —
+  `setFill`/`setShapeStroke` in layer-ops (transient-aware), swatches via the
+  shared **`transient-colour.tsx`** (the FX ColourRow's OS-picker
+  settle-on-pause/blur/unmount mechanism, extracted; fx-panel now consumes
+  it too). Rig: `colour(hex)`; harness `.verify-colour-sink.mjs` (8 checks
+  ALL PASS: recolour, one-undo restore, next-draw seeding, no phantom
+  history on settings-only picks, freehand).
 - **Arrange** (merged Align + Rotate) — align-to-artboard (6) + rotate 90°/flip;
   distribute shown disabled (multi-select, M2).
 - **FX** (title "FX", module id `effects`) — holds ALL THREE layer-property
@@ -625,12 +639,16 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
    default 0.5, stroke-scales-with-transform convention.
 0e. **✅ BRUSH/PENCIL FREEHAND (M2-2, 2026-07-06).** See the Tools section.
    PIECES is now fully live except the Pieces head sub (preset gallery —
-   needs Ruby's preset list).
+   needs Ruby's preset list). Pencil streamline 0 ratified same day.
+0f. **✅ M4 COLOUR SINK (2026-07-06).** The picker's missing sink — see the
+   Colour module section. Remaining M4 surface: gradient authoring UI,
+   recent-colours/palette integration (post-v1 per BUILD-PLAN), text fills
+   (with TEXT).
 1. **Next chunk options**: (a) TEXT — blocked on the bundled-fonts call
-   below. (b) Pieces preset-shape gallery (needs Ruby's preset list).
-   (c) SELECT (needs M2-10 semantics + destructive-vs-extract call).
-   (d) M4 colour (fills for shapes/freehand now EXIST as sinks — the picker
-   could wire to them ahead of TEXT).
+   below. (b) M6 export pipeline (Export modal is a shell; zero blockers).
+   (c) Pieces preset-shape gallery (needs Ruby's preset list). (d) SELECT
+   (needs M2-10 semantics + destructive-vs-extract call). (e) M5 persist
+   (project manager + .substrata).
 2. **Then M2 tools** — TEXT (still needs the bundled-fonts call, M2-3), SELECT
    (needs M2-10 semantics), text-on-path scope (M2-6), rulers design,
    snap-feel QA, cross-parent layer drag + group transform composition.
