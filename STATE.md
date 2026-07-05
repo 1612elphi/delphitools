@@ -13,7 +13,12 @@ threshold, posterise, vignette, duotone, colour balance, film-sim grades) via
 filter-shaders — with preview-downscaled slider drags. The film-sim/LUT family
 lives in its own **LOOKS module** (sixth module; live-thumbnail gallery) with
 **8 authored grades + 8 real film LUTs** (RawTherapee collection, CC BY-SA,
-33³ strips + a GPU LUT sampler). Only `effects[]` still awaits its engine.
+33³ strips + a GPU LUT sampler). **The `effects[]` ENGINE is LIVE too
+(M3 effects, 2026-07-05)**: all six registry effects (drop/inner shadow,
+outer/inner glow, stroke incl. inner/centre, colour overlay) composite via
+Canvas2D inside Fabric's object cache (effect-render + effects-image) —
+30 headless pixel checks pass. M3 is CODE-COMPLETE; M3-15 (rasterize gate)
+deferred until non-raster layers exist.
 
 Route: `/editor` (sidebar-free, static-export, client-only via `dynamic ssr:false`).
 Dev: `npm run dev` → http://localhost:3000/editor. Gate: `npm run build` + `tsc --noEmit`.
@@ -108,9 +113,11 @@ Dev: `npm run dev` → http://localhost:3000/editor. Gate: `npm run build` + `ts
   on the pointer — Radix onValueCommit is unreliable in controlled mode).
   Effect + param labels are conventional graphics terms = functional chrome
   (Ruby's call, BLEND_OPTIONS precedent); voice-y microcopy + preset/category
-  names stay ∑CG. **Tier-0 filters RENDER (M3 Tier-0 pass)** — see
-  `filter-factory.ts`/`filter-sync.ts` below; Tier-1 customs + effects still
-  move no pixels.
+  names stay ∑CG. **EVERYTHING in the panel now moves pixels**: Tier-0/Tier-1
+  filters via `filter-factory.ts`/`filter-sync.ts`, effects via
+  `effect-render.ts`/`effects-image.ts` (below). Drop/inner shadow grew an
+  Opacity param (default 35% — the layer-styles convention; a 100% black
+  shadow is never what anyone wants).
 - **Export modal** — shell (format/scale/quality UI; Export is a no-op stub → M6).
   **Canvas size modal** — functional: dimension presets + W/H/resolution/background
   (+ transparent) committed via `setArtboard` (undoable). Both are blocking Radix
@@ -144,7 +151,8 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   `Transform`; factories (`createEmptyDoc`, `createRasterLayer`), `DEFAULT_ARTBOARD`.
 - `doc-store.ts` — observable doc + snapshot **history** (undo/redo/canUndo/canRedo).
 - `sync.ts` — one-way doc→Fabric **reconciler**; artboard (+ transparency checker
-  Pattern) + raster layers, clipPath, layer↔object id map (`getLayerIdForObject`).
+  Pattern) + raster layers (as `EffectsImage`, the effect-compositing
+  FabricImage subclass), clipPath, layer↔object id map (`getLayerIdForObject`).
 - `layer-tree.ts` — pure tree utils over nested layers (find/map/remove/
   leafRenderList/flattenForPanel) + the ratified v1 GROUP SEMANTICS header.
 - `layer-ops.ts` — TREE-AWARE doc mutations via `update()`: visibility, lock,
@@ -207,6 +215,31 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   AFTER adjustments — CST-last convention); fx-ops setFxOrder now takes subset
   reorders (unlisted entries sink below the listed — keeps the pin under the
   FX panel's sim-less drag list).
+- `effect-render.ts` (fabric-free) — **the M3 effects compositor**: pure
+  Canvas2D, paints `effects[]` around the rendered content in the ratified
+  order (outer behind → content+filters → inner masked to content alpha →
+  opacity/blend at the blit). ONE primitive — the canvas shadow trick (paint
+  the source at x−1e5 with shadowOffsetX pulled back: only the tinted/blurred
+  silhouette lands; no ctx.filter, Safari-safe, Fabric's own mechanism) —
+  composes everything: blur/tint stamps, 24-stamp ring dilation (shadow
+  spread, outer stroke) and destination-in erosion (inner/centre stroke),
+  carve fields (fill − blurred offset silhouette, masked to content = inner
+  shadow/glow). Array order = apply order = paint order (top block deepest,
+  the filters convention). Pixel-verified maths: 50 % shadow over white =
+  (255,127,127) exact. Taste knobs awaiting Ruby: glow double-stamp curve
+  (2a−a²), 35 % shadow default, 24-stamp ring facets at extreme width×zoom.
+- `effects-image.ts` — **EffectsImage (the reconciler's image class)**:
+  FabricImage subclass hooking the compositor into Fabric's object-cache
+  pipeline — `_getCacheCanvasDimensions` pads the cache by `effectsReach` so
+  outer effects draw outside the bounds (cacheTranslation centring absorbs
+  it; selection bbox stays content-only, artboard clip still crops), and
+  `drawObject` renders content to a device-space scratch then lets
+  paintEffects composite. Perf rides Fabric's cache: recomposite only when
+  dirty (fx edits, zoom), pans re-blit; `_limitCacheSize` bounds cost, so NO
+  preview proxy needed. Effect units are SCENE px (effects don't scale with
+  the layer — the PS convention; k = cacheZoom/objectScale). Shadow offsets
+  are scene-absolute (counter-rotated at bake; mid-drag rotation swings them
+  until commit — transient, by design).
 - `filter-sync.ts` — **M3-10**: reconciler-called `syncImageFilters` — per-image
   ENABLED-stack signature diff (cheap no-op per pass), **rAF-coalesced**
   `applyFilters`, **preview downscale** (transient gesture + source >1.5 MP →
@@ -217,7 +250,11 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   doc-store). **Stack order semantics (pixel-verified, RATIFIED by Ruby
   2026-07-03): array order = apply order, and fx-ops inserts at 0, so the
   panel's TOP block applies FIRST** (not Photoshop's top-applies-last —
-  "most people won't even use two effects at once").
+  "most people won't even use two effects at once"). Also home to
+  `syncImageEffects` (M3 effects): signature-diffs the enabled `effects[]` +
+  transform angle/flips (baked offsets counter-rotate, so a rotation alone
+  must recomposite), hands the stack to the EffectsImage, dirties its cache —
+  no rAF/backend machinery, compositing happens inside Fabric's cache render.
 
 **Assets + persistence**
 - `raster-cache.ts` — in-memory hash→`<canvas>` cache + `sha256Hex`.
@@ -251,11 +288,15 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   Also: the top-context overlay must clear UNCONDITIONALLY each after:render
   (an early return leaves frozen stains). Dev builds expose a
   **`window.__substrata` debug rig** (selection/layers dumps, select,
-  setSeparate, + M3: `fx`/`fxParam`/`gesture.begin|commit`/`samplePixel`/
-  `elementSizes` for filter QA) and `.repro-phantom.mjs` (untracked) drives
-  /editor headlessly via puppeteer-core (installed --no-save) + local Chrome —
+  setSeparate, + M3: `fx`/`fxParam`/`effect`/`effectParam`/
+  `gesture.begin|commit`/`samplePixel`/`elementSizes`/`vt` for FX QA) and
+  `.repro-phantom.mjs` + `.verify-effects.mjs` (both untracked) drive /editor
+  headlessly via puppeteer-core (installed --no-save) + local Chrome —
   reusable for canvas-interaction verification (Tier-0 was pixel-verified this
-  way: brightness/undo/temperature/stack-order + the preview→full-res cycle).
+  way: brightness/undo/temperature/stack-order + the preview→full-res cycle;
+  `.verify-effects.mjs` is the effects engine's 30-check regression harness:
+  every effect type, opacity maths, spread, undo, transient gesture = one
+  undo step, stacking isolation).
   `viewport.ts` — zoom bridge + cycle. `dock-pref.ts` — omnibar edge, rail edge,
   per-module dock target. `pin-pref.ts` — open (pinned) modules (`MODULE_IDS`:
   effects/layers/inspector/colour/arrange). `toast.ts` — status toasts.
@@ -356,9 +397,12 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   clicks select leaves (group selection via panel); only raster leaves have
   dims for align/distribute.
 - **Module contents**: all six modules (Layers · FX · Inspector · Colour ·
-  LOOKS · Arrange) are real. **FX: EVERY filter renders** (Tier-0 built-ins + the
-  seven Tier-1 customs; Tier-0 taste-QA'd by Ruby, Tier-1 grades/knobs await
-  her eyes). Still pixel-less: ONLY the `effects[]` stack (M3 effects engine).
+  LOOKS · Arrange) are real. **FX: EVERYTHING renders** — every filter (Tier-0
+  built-ins + the seven Tier-1 customs; Tier-0 taste-QA'd by Ruby, Tier-1
+  grades/knobs await her eyes) AND every effect (M3 effects engine,
+  2026-07-05; taste knobs — glow intensity curve, 35 % shadow default, stroke
+  ring quality — await her eyes too). NOTHING in the FX panel is pixel-less
+  any more.
   Panel niceties: paramless blocks (invert/greyscale/sepia/edge-detect) have
   no chevron/reset; duotone has the M3-9 preset-pair grid (pairs QUICK-SET
   both colours via `setFxParams`, one undo step; active pair is DERIVED from
@@ -486,10 +530,20 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
    None, mono Tri-X, intensity-0 identity, live thumbs ×24). Open: module
    title ∑CG (Ruby names the category), duotone pair NAMES still ∑CG (grant
    covered LUT looks only), 24-card shelf may want curation (Ruby's eyes).
-1. **Next chunk options**: (a) **M3 effects engine** — `effects[]` renders
-   (drop/inner shadow, glows, stroke, overlay via Fabric shadow + custom
-   compositing), rasterize-for-effects (M3-15), ADJUST omnibar wiring (M3-14).
-   (b) **PIECES** (schema ratified, zero blockers).
+0c. **✅ M3 EFFECTS ENGINE (2026-07-05).** `effects[]` renders — all six
+   registry types via the Canvas2D compositor inside Fabric's object cache
+   (`effect-render.ts` + `effects-image.ts` + `syncImageEffects`; design notes
+   in the file map). M3-14 was already live (ADJUST zone chips both stacks);
+   M3-15 (rasterize-for-effects) DEFERRED until text/shape layers exist —
+   today every layer is raster, so there is nothing to gate. Drop/inner
+   shadow grew an Opacity param (default 35 %). 30-check headless harness
+   `.verify-effects.mjs` ALL PASS; `npm run build` + `tsc --noEmit` green.
+   **Awaiting Ruby's visual QA (taste, not correctness)**: default shadow
+   opacity 35 %, glow double-stamp intensity curve, stroke ring quality at
+   large widths, scene-px effect units (effects don't scale with the layer),
+   scene-absolute shadow angles.
+1. **Next chunk options**: (a) **PIECES** (schema ratified, zero blockers).
+   (b) TEXT — blocked on the bundled-fonts call below.
 2. **Then M2 tools** — TEXT (still needs the bundled-fonts call, M2-3), SELECT
    (needs M2-10 semantics), freehand dep (M2-2), text-on-path scope (M2-6),
    rulers design, snap-feel QA, cross-parent layer drag + group transform

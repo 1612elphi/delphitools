@@ -16,11 +16,12 @@
  */
 
 import type { Canvas, FabricObject } from "fabric";
-import { FabricImage, Pattern, Rect } from "fabric";
+import { Pattern, Rect } from "fabric";
 import type { SubstrataDoc, Layer } from "./doc-model";
+import { EffectsImage } from "./effects-image";
 import { leafRenderList } from "./layer-tree";
 import { getRaster } from "./raster-cache";
-import { syncImageFilters } from "./filter-sync";
+import { syncImageEffects, syncImageFilters } from "./filter-sync";
 
 const ARTBOARD_KEY = "__artboard__";
 
@@ -145,10 +146,10 @@ function syncLayer(
   const src = getRaster(layer.blobHash);
   if (!src) return null; // not decoded yet — a later reconcile will pick it up
 
-  let obj = byId.get(layer.id) as FabricImage | undefined;
+  let obj = byId.get(layer.id) as EffectsImage | undefined;
   if (!obj) {
     // Content-addressed source is immutable per layer, so the element is set once.
-    obj = new FabricImage(src);
+    obj = new EffectsImage(src);
     byId.set(layer.id, obj);
     layerIdOf.set(obj, layer.id);
     canvas.add(obj);
@@ -174,8 +175,9 @@ function syncLayer(
     selectable: !locked,
     evented: !locked,
   });
-  // Filter stack (M3): signature-diffed inside, so this is cheap per pass.
+  // FX stacks (M3): both signature-diffed inside, so this is cheap per pass.
   syncImageFilters(obj, layer.filters);
+  syncImageEffects(obj, layer.effects, layer.transform);
   obj.setCoords();
   return obj;
 }

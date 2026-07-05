@@ -47,6 +47,7 @@ export const EFFECT_REGISTRY: Record<string, EffectDefinition> = {
     label: "Drop shadow",
     params: [
       colour("colour", "Colour", "#000000"),
+      { kind: "slider", key: "opacity", label: "Opacity", min: 0, max: 100, step: 1, default: 35, unit: "%" },
       { kind: "slider", key: "blur", label: "Blur", min: 0, max: 250, step: 1, default: 24, unit: "px" },
       offset("offsetX", "Offset X", 8),
       offset("offsetY", "Offset Y", 8),
@@ -92,6 +93,7 @@ export const EFFECT_REGISTRY: Record<string, EffectDefinition> = {
     label: "Inner shadow",
     params: [
       colour("colour", "Colour", "#000000"),
+      { kind: "slider", key: "opacity", label: "Opacity", min: 0, max: 100, step: 1, default: 35, unit: "%" },
       { kind: "slider", key: "blur", label: "Blur", min: 0, max: 250, step: 1, default: 18, unit: "px" },
       offset("offsetX", "Offset X", 6),
       offset("offsetY", "Offset Y", 6),
