@@ -470,8 +470,9 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   step by construction, taps draw nothing. Coalesced pointer events consumed;
   real pressure only from `pointerType === "pen"` (Firefox pointerup-0
   guarded), mouse/finger = simulatePressure. Brush = fat/pressure-expressive
-  (thinning 0.6), Pencil = thin/steady (thinning 0.15, streamline 0.65) —
-  taste numbers awaiting Ruby. Bloom = Colour + Size preset rows; chips show
+  (thinning 0.6, streamline 0.5 — Ruby-approved), Pencil = thin + faithful,
+  **streamline 0, NONE — ratified by Ruby 2026-07-06**; brush thinning is the
+  remaining taste knob. Bloom = Colour + Size preset rows; chips show
   the live size; Layers thumbs trace the outline; layerDims covers freehand
   (outline bbox). 10-check harness `.verify-freehand.mjs` ALL PASS.
   Primitives ships per the built-tool rule: drag-to-draw all five
