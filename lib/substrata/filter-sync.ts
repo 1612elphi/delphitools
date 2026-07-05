@@ -18,8 +18,10 @@
 
 import { getFilterBackend, WebGLFilterBackend } from "fabric";
 import type { FabricImage, StaticCanvas } from "fabric";
-import type { Filter } from "./doc-model";
+import type { Effect, Filter, Transform } from "./doc-model";
+import type { EffectsImage } from "./effects-image";
 import { buildFabricFilters } from "./filter-factory";
+import { getEffectDef } from "./effects";
 import { isGestureActive } from "./doc-store";
 import { isLutLook, lutEpoch } from "./lut-data";
 
@@ -73,6 +75,29 @@ export function syncImageFilters(img: FabricImage, stack: readonly Filter[]): vo
   img.filters = buildFabricFilters(stack, size);
   pending.set(img, preview);
   rafId ??= requestAnimationFrame(flush);
+}
+
+const appliedEffectsSig = new WeakMap<FabricImage, string>();
+
+/**
+ * Doc→Fabric effects sync (the reconciler calls this beside syncImageFilters):
+ * hand the ENABLED stack to the EffectsImage and dirty its cache so drawObject
+ * recomposites. No rAF/apply machinery needed — compositing happens inside
+ * Fabric's own cache render. The transform's angle/flips are in the signature
+ * because baked shadow offsets counter-rotate to stay scene-absolute: a
+ * rotation alone must recomposite even though Fabric wouldn't dirty the cache
+ * (mid-drag the shadow swings with the object; it settles on commit).
+ */
+export function syncImageEffects(img: EffectsImage, stack: readonly Effect[], t: Transform): void {
+  const enabled = stack.filter((e) => e.enabled && getEffectDef(e.type));
+  const sig =
+    enabled.length === 0
+      ? ""
+      : `${t.angle}|${t.flipX}|${t.flipY}|` + JSON.stringify(enabled.map((e) => [e.type, e.params]));
+  if (appliedEffectsSig.get(img) === sig) return;
+  appliedEffectsSig.set(img, sig);
+  img.effects = enabled;
+  img.set("dirty", true);
 }
 
 function flush(): void {

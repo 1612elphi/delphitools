@@ -775,6 +775,7 @@ export function FabricCanvas() {
         select: (ids: string[]) => setSelection(ids),
         setSeparate: (v: boolean) => setTransformAsGroup(!v),
         upperCanvasCount: () => document.querySelectorAll("canvas.upper-canvas").length,
+        vt: () => canvas.viewportTransform,
         menuState: () => getLayerMenu(),
         hitTest: (x: number, y: number) => {
           const info = canvas.findTarget(new MouseEvent("contextmenu", { clientX: x, clientY: y }));
@@ -789,6 +790,11 @@ export function FabricCanvas() {
           addFx(layerId, "filters", type, params),
         fxParam: (layerId: string, fxId: string, key: string, value: number | string, transient?: boolean) =>
           setFxParam(layerId, "filters", fxId, key, value, { transient }),
+        // M3 effects QA: same pair over the effects[] stack.
+        effect: (layerId: string, type: string, params?: Record<string, number | string>) =>
+          addFx(layerId, "effects", type, params),
+        effectParam: (layerId: string, fxId: string, key: string, value: number | string, transient?: boolean) =>
+          setFxParam(layerId, "effects", fxId, key, value, { transient }),
         gesture: { begin: beginTransient, commit: commitTransient },
         samplePixel: (sx: number, sy: number) => {
           const dpr = window.devicePixelRatio || 1;
