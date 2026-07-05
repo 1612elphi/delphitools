@@ -469,8 +469,28 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   drawn on the top context. **Rulers** toggle stores state but has NO renderer
   yet (needs the backdrop-sketch ruler design). Everything else in Workspace is
   live. Snap thresholds/feel + grid pitch await Ruby's QA.
-- **Tools**: MOVE, **PIECES·Primitives**, and **PIECES·Brush/Pencil** are
-  behaviourally live; SELECT/TEXT/ADJUST set state only → **M2/M3**. PIECES
+- **Tools**: MOVE, **PIECES·Primitives**, **PIECES·Brush/Pencil**, and
+  **TEXT·Text** are behaviourally live; SELECT/ADJUST + TEXT·Bezier set state
+  only → **M2/M3**. **TEXT (M2, 2026-07-06, Ruby's ratifications)**: fonts =
+  **Sans/Serif/Mono system STACKS + FontFace upload** (her call — NO bundled
+  woff2, so no fonts.ready gating; uploads are session-scoped, missing
+  families fall back to sans — `fonts.ts`); **text styles** = Regular ·
+  Outline · Pill · Rectangle (her list) as PRESETS quick-setting explicit
+  `fill/stroke/plate` fields, active state DERIVED (duotone pattern,
+  `text-style.ts`; plates carry auto contrast ink). Click empty canvas →
+  create + enter editing immediately (NO placeholder copy — the layer starts
+  empty; abandoning deletes it); `text:editing:exited` is the SECOND
+  controlled Fabric→doc path (commit text + content-derived layer name);
+  reconciler NEVER clobbers a live edit (isEditing skip).
+  `SubstrataText extends IText` draws the plate (cache padded, EffectsImage
+  precedent; selection bbox stays the text's — plate overhang isn't
+  clickable, accepted v1). Bloom = font segments + Upload + size/style
+  presets; Inspector Text section = font/size/style/accent; colour sink
+  recolours the layer's ACCENT (style re-expresses: plate + contrast ink /
+  stroke / fill). layerDims: null for text (W/H fields hidden; align skips —
+  measure-in-doc-space is a later nicety). 10-check harness
+  `.verify-text.mjs` ALL PASS (click-to-type, plates, sink accent, edit
+  round-trip, abandon). PIECES
   ratifications (Ruby 2026-07-05): **Pieces head sub = a preset-shapes
   gallery, LATER** (placeholder bloom until then) · Brush/Pencil on **npm
   perfect-freehand ^1.2** (her M2-2 call — not the vendored tldraw fork;
@@ -642,13 +662,18 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
    needs Ruby's preset list). Pencil streamline 0 ratified same day.
 0f. **✅ M4 COLOUR SINK (2026-07-06).** The picker's missing sink — see the
    Colour module section. Remaining M4 surface: gradient authoring UI,
-   recent-colours/palette integration (post-v1 per BUILD-PLAN), text fills
-   (with TEXT).
-1. **Next chunk options**: (a) TEXT — blocked on the bundled-fonts call
-   below. (b) M6 export pipeline (Export modal is a shell; zero blockers).
-   (c) Pieces preset-shape gallery (needs Ruby's preset list). (d) SELECT
-   (needs M2-10 semantics + destructive-vs-extract call). (e) M5 persist
-   (project manager + .substrata).
+   recent-colours/palette integration (post-v1 per BUILD-PLAN).
+0g. **✅ TEXT (M2, 2026-07-06).** See the Tools section. Ruby's calls baked
+   in: Sans/Serif/Mono system stacks + upload (M2-3 CLOSED — no bundled
+   files) · the four text styles. Open TEXT niceties (later, additive):
+   area/Textbox mode, align/line-height/per-range styles (ratified schema),
+   text-on-path (scope call still open), Bezier subtool (pen), text dims for
+   align/arrange, persisted uploaded fonts (M5).
+1. **Next chunk options**: (a) M6 export pipeline (Export modal is a shell;
+   zero blockers — and every layer kind now renders, so export captures the
+   whole story). (b) Pieces preset-shape gallery (needs Ruby's preset list).
+   (c) SELECT (needs M2-10 semantics + destructive-vs-extract call).
+   (d) M5 persist (project manager + .substrata).
 2. **Then M2 tools** — TEXT (still needs the bundled-fonts call, M2-3), SELECT
    (needs M2-10 semantics), text-on-path scope (M2-6), rulers design,
    snap-feel QA, cross-parent layer drag + group transform composition.

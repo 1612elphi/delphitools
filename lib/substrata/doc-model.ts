@@ -132,13 +132,29 @@ export interface RasterLayer extends BaseLayer {
   naturalHeight: number;
 }
 
+/** A background plate drawn behind the text — the "on a pill / on a rectangle"
+ *  text styles (Ruby 2026-07-06). Padding in scene px around the text bounds. */
+export interface TextPlate {
+  shape: "pill" | "rectangle";
+  colour: string;
+  padding: number;
+}
+
 export interface TextLayer extends BaseLayer {
   kind: "text";
-  /** v1 minimal; the full text model (per-range styles etc.) is added additively in M2 */
+  /** v1: point text + styles; the full ratified model (area mode, align,
+   *  per-range deltas…) is added additively within schema v2. */
   text: string;
+  /** a font-choice id (sans/serif/mono → system stacks via fonts.ts) or an
+   *  uploaded family name; unknown families fall back to the sans stack */
   fontFamily: string;
   fontSize: number;
   fill: string;
+  /** outline style — glyph stroke (null = none) */
+  stroke: { colour: string; width: number } | null;
+  /** pill/rectangle styles (null = none). Style PRESETS quick-set fill/stroke/
+   *  plate; the active preset is DERIVED from these fields (duotone precedent). */
+  plate: TextPlate | null;
 }
 
 export interface GradientStop {
@@ -321,6 +337,36 @@ export function createRasterLayer(opts: {
     blobHash: opts.blobHash,
     naturalWidth: opts.naturalWidth,
     naturalHeight: opts.naturalHeight,
+  };
+}
+
+export function createTextLayer(opts: {
+  name: string;
+  text: string;
+  fontFamily: string;
+  fontSize: number;
+  fill: string;
+  stroke: TextLayer["stroke"];
+  plate: TextPlate | null;
+  transform: Transform;
+}): TextLayer {
+  return {
+    kind: "text",
+    id: newId(),
+    name: opts.name,
+    visible: true,
+    locked: false,
+    opacity: 1,
+    blendMode: "source-over",
+    transform: opts.transform,
+    filters: [],
+    effects: [],
+    text: opts.text,
+    fontFamily: opts.fontFamily,
+    fontSize: opts.fontSize,
+    fill: opts.fill,
+    stroke: opts.stroke,
+    plate: opts.plate,
   };
 }
 

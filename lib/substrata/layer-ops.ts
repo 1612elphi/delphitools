@@ -22,7 +22,7 @@ import {
   siblingListOf,
 } from "./layer-tree";
 import { getSelectedLayerIds, pruneSelection, setActiveLayer, setSelection } from "./selection";
-import type { BlendMode, GroupLayer, Layer, ShapeParams, ShapeStroke, SubstrataDoc, Transform } from "./doc-model";
+import type { BlendMode, GroupLayer, Layer, ShapeParams, ShapeStroke, SubstrataDoc, TextLayer, Transform } from "./doc-model";
 
 /** Commit a layer transform (the one place a Fabric interaction writes back). */
 export function setTransform(id: string, transform: Transform): void {
@@ -86,6 +86,22 @@ export function setShapeStroke(
   const apply = (doc: SubstrataDoc): SubstrataDoc => ({
     ...doc,
     layers: mapLayerInTree(doc.layers, id, (l) => (l.kind === "shape" ? { ...l, stroke } : l)),
+    updatedAt: Date.now(),
+  });
+  if (opts?.transient) updateTransient(apply);
+  else update(apply);
+}
+
+/** Patch a text layer (content on editing-exit, font/size/style/accent from
+ *  the bloom + Inspector). Transient-aware for streamed colour picks. */
+export function setTextProps(
+  id: string,
+  patch: Partial<Pick<TextLayer, "text" | "fontFamily" | "fontSize" | "fill" | "stroke" | "plate" | "name">>,
+  opts?: { transient?: boolean },
+): void {
+  const apply = (doc: SubstrataDoc): SubstrataDoc => ({
+    ...doc,
+    layers: mapLayerInTree(doc.layers, id, (l) => (l.kind === "text" ? { ...l, ...patch } : l)),
     updatedAt: Date.now(),
   });
   if (opts?.transient) updateTransient(apply);

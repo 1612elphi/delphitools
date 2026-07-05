@@ -17,8 +17,10 @@
 
 import type { Canvas, FabricObject } from "fabric";
 import { Ellipse, Gradient as FabricGradient, Line, Path, Pattern, Polygon, Rect } from "fabric";
-import type { SubstrataDoc, FreehandLayer, Layer, ShapeLayer, ShapeParams, Gradient } from "./doc-model";
+import type { SubstrataDoc, FreehandLayer, Layer, ShapeLayer, ShapeParams, Gradient, TextLayer } from "./doc-model";
 import { EffectsImage } from "./effects-image";
+import { SubstrataText } from "./text-object";
+import { resolveFontCss } from "./fonts";
 import { leafRenderList } from "./layer-tree";
 import { getRaster } from "./raster-cache";
 import { outlineToPathD, strokeOutline } from "./freehand";
@@ -142,7 +144,7 @@ function syncLayer(
   locked: boolean,
   byId: Map<string, FabricObject>,
 ): FabricObject | null {
-  // Raster + shape + freehand render; text renders in M2 (TEXT tool).
+  // Every leaf kind renders (raster/shape/freehand/text); groups flatten.
   const obj =
     layer.kind === "raster"
       ? syncRasterContent(canvas, layer, byId)
@@ -150,8 +152,13 @@ function syncLayer(
         ? syncShapeContent(canvas, layer, byId)
         : layer.kind === "freehand"
           ? syncFreehandContent(canvas, layer, byId)
-          : null;
+          : layer.kind === "text"
+            ? syncTextContent(canvas, layer, byId)
+            : null;
   if (!obj) return null;
+  // Never clobber a live in-canvas edit — the doc catches up on
+  // editing:exited (the second controlled Fabric→doc path).
+  if (obj instanceof SubstrataText && obj.isEditing) return obj;
 
   const t = layer.transform;
   obj.set({
@@ -287,6 +294,39 @@ function syncFreehandContent(
     canvas.add(obj);
   }
   obj.set({ fill: layer.fill, stroke: null, strokeWidth: 0 });
+  return obj;
+}
+
+/** Text layer → SubstrataText (IText + style plate). Content props set every
+ *  pass (cheap — fabric no-ops unchanged values); the plate is compared so
+ *  its cache-pad/dirty only churn on real changes. */
+function syncTextContent(
+  canvas: Canvas,
+  layer: TextLayer,
+  byId: Map<string, FabricObject>,
+): FabricObject {
+  let obj = byId.get(layer.id) as SubstrataText | undefined;
+  if (!obj) {
+    obj = new SubstrataText(layer.text);
+    byId.set(layer.id, obj);
+    layerIdOf.set(obj, layer.id);
+    canvas.add(obj);
+  }
+  if (obj.isEditing) return obj; // syncLayer skips the rest too
+  obj.set({
+    text: layer.text,
+    fontFamily: resolveFontCss(layer.fontFamily),
+    fontSize: layer.fontSize,
+    fill: layer.fill,
+    stroke: layer.stroke?.colour ?? null,
+    strokeWidth: layer.stroke?.width ?? 0,
+    // outline style has a transparent fill — keep the editing caret visible
+    cursorColor: layer.stroke?.colour ?? layer.fill,
+  });
+  if (JSON.stringify(obj.plate) !== JSON.stringify(layer.plate)) {
+    obj.plate = layer.plate;
+    obj.set("dirty", true);
+  }
   return obj;
 }
 

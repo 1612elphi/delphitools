@@ -14,12 +14,14 @@ import {
 import type { FabricObject, LayoutStrategyResult, StrictLayoutContext } from "fabric";
 import { getSnapshot, subscribe, setDoc, beginTransient, commitTransient } from "@/lib/substrata/doc-store";
 import { registerViewportController, reportZoom } from "@/lib/substrata/viewport";
-import { createEmptyDoc, createFreehandLayer, createShapeLayer, identityTransform } from "@/lib/substrata/doc-model";
+import { createEmptyDoc, createFreehandLayer, createShapeLayer, createTextLayer, identityTransform } from "@/lib/substrata/doc-model";
 import type { Artboard, ShapeLayer, SubstrataDoc, Transform } from "@/lib/substrata/doc-model";
 import { createReconcileState, reconcile, getLayerIdForObject } from "@/lib/substrata/sync";
 import { initSubstrataFilterBackend } from "@/lib/substrata/filter-backend";
 import { importImageFile } from "@/lib/substrata/import-raster";
-import { setShapeParams, setTransform, setTransforms } from "@/lib/substrata/layer-ops";
+import { deleteLayers, setShapeParams, setTextProps, setTransform, setTransforms } from "@/lib/substrata/layer-ops";
+import { SubstrataText } from "@/lib/substrata/text-object";
+import { styleFields } from "@/lib/substrata/text-style";
 import { addFx, setFxParam } from "@/lib/substrata/fx-ops";
 import { collectIds, findLayer, leafLayers, leafRenderList } from "@/lib/substrata/layer-tree";
 import {
@@ -374,11 +376,14 @@ export function FabricCanvas() {
       const sub = getActiveSubs().pieces;
       return getActiveTool() === "pieces" && (sub === "brush" || sub === "pencil") ? sub : null;
     };
+    const textModeActive = () => getActiveTool() === "text" && getActiveSubs().text === "text";
     const applyToolMode = () => {
       const draw = shapeModeActive() || freehandSub() !== null;
       canvas.skipTargetFind = draw || spaceHeld;
       canvas.selection = !draw;
-      setCanvasCursor(draw ? "crosshair" : spaceHeld ? "grab" : "");
+      // TEXT keeps normal targeting (click selects, dbl-click edits) but an
+      // I-beam signals click-to-type on empty canvas.
+      setCanvasCursor(draw ? "crosshair" : spaceHeld ? "grab" : textModeActive() ? "text" : "");
     };
     const unsubscribeTool = subscribeTool(applyToolMode);
     applyToolMode();
@@ -420,6 +425,52 @@ export function FabricCanvas() {
       draft = null;
       commitTransient();
       if (drawn) setSelection([drawn.id]);
+    });
+
+    // ── TEXT (M2) ─────────────────────────────────────────────────────────────
+    // Click empty canvas → create a text layer (current settings + style
+    // preset, ONE undo step) and drop straight into editing — no placeholder
+    // wording ever renders (the layer starts empty; abandoning it deletes it).
+    // Clicking an object falls through to normal select / dbl-click edit.
+    canvas.on("mouse:down", (opt) => {
+      if (spaceHeld || panning || opt.target || !textModeActive()) return;
+      const p = canvas.getScenePoint(opt.e);
+      const ts = getToolSettings();
+      const style = styleFields(ts.text.style, ts.pieces.fill, ts.text.fontSize);
+      const layer = createTextLayer({
+        name: "Text", // standard vocabulary default — replaced by the typed content on exit
+        text: "",
+        fontFamily: ts.text.fontFamily,
+        fontSize: ts.text.fontSize,
+        ...style,
+        transform: { ...identityTransform(), x: p.x, y: p.y },
+      });
+      appendLayer(layer);
+      setSelection([layer.id]);
+      // enter editing once the reconciler has created the object
+      requestAnimationFrame(() => {
+        const obj = state.byId.get(layer.id);
+        if (obj instanceof SubstrataText) {
+          canvas.setActiveObject(obj);
+          obj.enterEditing();
+        }
+      });
+    });
+
+    // The second controlled Fabric→doc path (after object:modified): commit
+    // the typed text when in-canvas editing ends. Empty text = an abandoned
+    // layer — remove it. The layer NAME follows the content (data, not copy).
+    canvas.on("text:editing:exited", (e) => {
+      const obj = e.target;
+      if (!(obj instanceof SubstrataText)) return;
+      const id = getLayerIdForObject(obj);
+      if (!id) return;
+      const text = (obj.text ?? "").trim();
+      if (text === "") {
+        deleteLayers([id]);
+        return;
+      }
+      setTextProps(id, { text: obj.text, name: obj.text.slice(0, 24) });
     });
 
     // ── Brush/Pencil freehand (M2-2) ──────────────────────────────────────────
