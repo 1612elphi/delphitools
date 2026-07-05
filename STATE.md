@@ -470,7 +470,17 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   Fill/stroke of an EXISTING shape isn't editable yet — settings describe the
   NEXT shape; editing lands with the M4 picker sink. FX + LOOKS gate non-raster
   layers with ∑CG hints (filters/effects are raster-pipeline; rasterize =
-  M3-15). **RULE (Ruby): a built tool ships its settings + chrome.**
+  M3-15). **Params ARE editable after the fact (Ruby 2026-07-06)**: a selected
+  shape's Inspector grows a SHAPE section — corner/sides/points/inner as
+  **preset rows + a custom (…) stepper** ("simple editor for simple people";
+  `components/substrata/preset-row.tsx` = the shared PresetRow/Stepper/
+  CornerPresetIcon language, also used by the bloom's param rows now; corner
+  presets in the Inspector are SIZE-AWARE fractions of the min side, capped
+  at min/2; edits go through `setShapeParams` in layer-ops, one undo step,
+  in-place Fabric geometry update; the Inspector middle scrolls so the
+  appearance bar survives the rail's uniform height; header dims rounded —
+  shape bboxes are fractional). **RULE (Ruby): a built tool ships its
+  settings + chrome.**
   MOVE is complete per the rule: sketch-styled selection handles (8px square
   paper-fill/primary-border corners via shared `ownDefaults.controls`, circular
   rotate handle, theme-observed recolour — NOTE: Textbox needs its own control
