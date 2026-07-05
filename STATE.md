@@ -238,8 +238,8 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   dirty (fx edits, zoom), pans re-blit; `_limitCacheSize` bounds cost, so NO
   preview proxy needed. Effect units are SCENE px (effects don't scale with
   the layer — the PS convention; k = cacheZoom/objectScale). Shadow offsets
-  are scene-absolute (counter-rotated at bake; mid-drag rotation swings them
-  until commit — transient, by design).
+  are scene-absolute (counter-rotated at bake; an isCacheDirty pose check
+  recomposites on rotation/flip changes, so they hold even mid-rotation-drag).
 - `filter-sync.ts` — **M3-10**: reconciler-called `syncImageFilters` — per-image
   ENABLED-stack signature diff (cheap no-op per pass), **rAF-coalesced**
   `applyFilters`, **preview downscale** (transient gesture + source >1.5 MP →
@@ -251,10 +251,12 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   2026-07-03): array order = apply order, and fx-ops inserts at 0, so the
   panel's TOP block applies FIRST** (not Photoshop's top-applies-last —
   "most people won't even use two effects at once"). Also home to
-  `syncImageEffects` (M3 effects): signature-diffs the enabled `effects[]` +
-  transform angle/flips (baked offsets counter-rotate, so a rotation alone
-  must recomposite), hands the stack to the EffectsImage, dirties its cache —
-  no rAF/backend machinery, compositing happens inside Fabric's cache render.
+  `syncImageEffects` (M3 effects): reference early-out (immutable doc — an
+  unchanged stack ref exits before any work) → signature diff → hands the
+  enabled stack to the EffectsImage WITH registry defaults merged
+  (`defaultParams`, the filter-factory convention — renderer never guesses
+  its own) and dirties its cache. No rAF/backend machinery; rotation/flip
+  invalidation lives in EffectsImage.isCacheDirty, not here.
 
 **Assets + persistence**
 - `raster-cache.ts` — in-memory hash→`<canvas>` cache + `sha256Hex`.

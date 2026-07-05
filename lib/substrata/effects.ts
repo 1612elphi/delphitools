@@ -8,11 +8,13 @@
  * renders inner or outer, so the doc model needs neither two hard-coded arrays
  * nor a per-instance phase flag.
  *
- * The inner/outer classification is frozen (schema v1). `params` carries the
- * typed spec/defaults the FX panel renders (the additive upgrade promised for
- * the panel); render functions attach in M3, additively. Labels are standard
- * layer-style terms — functional chrome per Ruby's call (the BLEND_OPTIONS
- * precedent), not authored copy.
+ * The inner/outer classification is frozen (schema v1) and descriptive: the
+ * renderer (effect-render.ts) routes per type, with stroke split across both
+ * passes by its `position` param. `params` carries the typed spec/defaults the
+ * FX panel renders AND the renderer's defaults (syncImageEffects merges them
+ * into every instance — declared once here, never re-typed in the painters).
+ * Labels are standard layer-style terms — functional chrome per Ruby's call
+ * (the BLEND_OPTIONS precedent), not authored copy.
  */
 
 import type { EffectPhase } from "./doc-model";
@@ -121,15 +123,3 @@ export const EFFECT_REGISTRY: Record<string, EffectDefinition> = {
 };
 
 export const getEffectDef = (type: string): EffectDefinition | undefined => EFFECT_REGISTRY[type];
-
-export const effectPhase = (type: string): EffectPhase | undefined => EFFECT_REGISTRY[type]?.phase;
-
-/** Partition a layer's effects into render phases (outer behind, inner in front). */
-export function byPhase<T extends { type: string }>(effects: T[]): { outer: T[]; inner: T[] } {
-  const outer: T[] = [];
-  const inner: T[] = [];
-  for (const e of effects) {
-    (effectPhase(e.type) === "inner" ? inner : outer).push(e);
-  }
-  return { outer, inner };
-}

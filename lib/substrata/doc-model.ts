@@ -72,8 +72,9 @@ export interface Filter {
  * Where an effect composites relative to the layer's own pixels:
  *   - "outer": drawn BEHIND the layer (drop shadow, outer glow, outer stroke)
  *   - "inner": drawn IN FRONT, clipped to the layer's alpha (inner shadow/glow)
- * The phase per effect type is declared once in the effect registry
- * (lib/substrata/effects.ts) — the single, extensible source of truth.
+ * Declared per type in the effect registry (lib/substrata/effects.ts) as
+ * descriptive taxonomy; the renderer (effect-render.ts) routes per type —
+ * stroke straddles both phases via its `position` param.
  */
 export type EffectPhase = "outer" | "inner";
 
