@@ -2,16 +2,18 @@
 
 import { useEffect } from "react";
 import { undo, redo } from "@/lib/substrata/doc-store";
-import { nudgeSelection } from "@/lib/substrata/layer-ops";
+import { deleteLayers, nudgeSelection } from "@/lib/substrata/layer-ops";
+import { getSelectedLayerIds } from "@/lib/substrata/selection";
 import { getActiveTool } from "@/lib/substrata/tool";
 import { getToolSettings } from "@/lib/substrata/tool-settings";
 
 /**
  * Substrata keyboard map. ⌘/Ctrl+Z = undo, ⌘/Ctrl+Shift+Z or Ctrl+Y = redo.
- * Arrow keys nudge the selection while MOVE is the active tool (step = the
- * MOVE settings' nudge value, ⇧ ×10; one undo step per press). Ignored while
- * typing in a field. Mounted by the editor shell; the top-bar undo/redo
- * buttons call the same doc-store actions.
+ * Backspace/Delete removes the selected layers (same path as the layers-panel
+ * footer; one undo step). Arrow keys nudge the selection while MOVE is the
+ * active tool (step = the MOVE settings' nudge value, ⇧ ×10; one undo step per
+ * press). Ignored while typing in a field. Mounted by the editor shell; the
+ * top-bar undo/redo buttons call the same doc-store actions.
  */
 
 const ARROWS: Record<string, readonly [number, number]> = {
@@ -32,6 +34,12 @@ export function useEditorShortcuts(): void {
           target.tagName === "TEXTAREA" ||
           target.tagName === "SELECT")
       ) {
+        return;
+      }
+
+      if ((e.key === "Backspace" || e.key === "Delete") && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault(); // Backspace must never trigger browser back-navigation
+        deleteLayers(getSelectedLayerIds());
         return;
       }
 

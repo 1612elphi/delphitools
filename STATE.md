@@ -7,8 +7,13 @@ This file = what actually exists in the code right now.
 **Status:** M0 scaffold + M1 core + the full UI cockpit are complete. The **modals
 pass is DONE** — Layers, Inspector, Colour (7-mode picker incl. the spectral EQ),
 Arrange, and **FX** are real modules; Export + Canvas size are blocking modals.
-FX is **structural**: stacks are editable + undoable, but params move no pixels
-until the M3 render engine.
+**The ENTIRE filter story is LIVE (M3 Tier-0 + Tier-1)**: every registry type
+renders — Fabric built-ins via filter-factory, seven custom shaders (levels,
+threshold, posterise, vignette, duotone, colour balance, film-sim grades) via
+filter-shaders — with preview-downscaled slider drags. The film-sim/LUT family
+lives in its own **LOOKS module** (sixth module; live-thumbnail gallery) with
+**8 authored grades + 8 real film LUTs** (RawTherapee collection, CC BY-SA,
+33³ strips + a GPU LUT sampler). Only `effects[]` still awaits its engine.
 
 Route: `/editor` (sidebar-free, static-export, client-only via `dynamic ssr:false`).
 Dev: `npm run dev` → http://localhost:3000/editor. Gate: `npm run build` + `tsc --noEmit`.
@@ -48,7 +53,8 @@ Dev: `npm run dev` → http://localhost:3000/editor. Gate: `npm run build` + `ts
   its subtools (M2-8 keymap), and the contextual-zone icon/title + SELECT chips
   track the live subtool. **Canonical subtool names (Ruby-authored chrome, used
   as zone title / tooltip / aria):** Move·Crop / Select·Lasso·Wand /
-  Adjust·Filters·Colour / Text·Bezier / Pieces·Primitives·Brush·Pencil;
+  Adjust (NO subtools — Ruby 2026-07-03: the FILTERS/COLOUR split collapsed
+  once both families landed in one filters[] pipeline) / Text·Bezier / Pieces·Primitives·Brush·Pencil;
   **contextual
   settings zone** (Ruby's call: the middle reads the ACTIVE TOOL — icon + name
   + LIVE chips per tool: MOVE = selection X/Y from the doc; SELECT = subtool
@@ -102,7 +108,9 @@ Dev: `npm run dev` → http://localhost:3000/editor. Gate: `npm run build` + `ts
   on the pointer — Radix onValueCommit is unreliable in controlled mode).
   Effect + param labels are conventional graphics terms = functional chrome
   (Ruby's call, BLEND_OPTIONS precedent); voice-y microcopy + preset/category
-  names stay ∑CG. **Structural only**: no pixels move until M3.
+  names stay ∑CG. **Tier-0 filters RENDER (M3 Tier-0 pass)** — see
+  `filter-factory.ts`/`filter-sync.ts` below; Tier-1 customs + effects still
+  move no pixels.
 - **Export modal** — shell (format/scale/quality UI; Export is a no-op stub → M6).
   **Canvas size modal** — functional: dimension presets + W/H/resolution/background
   (+ transparent) committed via `setArtboard` (undoable). Both are blocking Radix
@@ -149,12 +157,67 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
 - `effects.ts` — effect registry (drop-shadow/glow/stroke/overlay → inner/outer
   phase) + labels + typed ParamSpecs/defaults.
 - `filters.ts` — filter registry (SPEC §9 Tier-0/Tier-1; `category:
-  "colour" | "filter"` = UI taxonomy only; colour-balance params await M3-7,
-  duotone presets M3-9; colour-overlay lives in effects.ts, not duplicated).
-  NOTE: `Filter.params` widened additively to `number | string` (Duotone/
-  Vignette colours); SCHEMA_VERSION stays 1.
+  "colour" | "filter"` = UI taxonomy only; colour-overlay lives in effects.ts,
+  not duplicated). Carries the look DATA beside the registry: **FILM_SIM_PRESETS
+  (names AUTHORED by Claude per Ruby's 2026-07-03 grant — the one sanctioned
+  no-copy exception; she may rename)** + **FILM_SIM_GRADES** (lift/gamma/gain+
+  sat per look, tuned beside its swatch) + **DUOTONE_PAIRS** (8 pairs, names
+  still ∑CG). NOTE: `Filter.params` widened additively to `number | string`
+  (Duotone/Vignette colours); SCHEMA_VERSION stays 1.
 - `fx-ops.ts` — undoable mutations over BOTH stacks (add/remove/toggle/reset/
   param(transient-aware)/reorder), one-per-type guard, insert-at-top.
+- `filter-factory.ts` — **M3-4 (Tier-0) + Tier-1 wiring**: doc-Filter → Fabric
+  filter instances, ALL unit scaling centralised here (verified vs installed
+  fabric 7.4.0 source; classes live under fabric's `filters` NAMESPACE, only
+  backends export flat). **Ruby taste-QA'd 2026-07-02: all Tier-0 types
+  approved** (brightness/contrast `/200`, exposure ±2 stops, temperature
+  ±0.25 R/B gain, blur `radius / (0.12 × min side)`, kernels). Post-QA adds:
+  sharpen/emboss Amount (lerps kernel identity→classic, default 100 = the
+  approved look); noise mono/colour Mode. Tier-1 customs get PRE-NORMALISED
+  props (0–1, vec3s) built from registry units + FILM_SIM_GRADES lookup.
+- `filter-shaders.ts` — **the custom-filter module**: ColourNoise + the seven
+  Tier-1 BaseFilter subclasses (SubstrataLevels/Threshold/Posterise/Vignette/
+  Duotone/ColourBalance/FilmSim) + **SubstrataLut** (packed-strip 3D LUT:
+  hardware bilinear in-slice + manual slice mix ≈ trilinear; strip uploads
+  once via the backend texture cache keyed `substrata_<preset>`, binds
+  TEXTURE1 — the BlendImage second-texture pattern), each with GLSL fragment +
+  `applyTo2d` Canvas2D fallback + isNeutralState. Contract lore
+  (source-verified): static `type` MUST be unique per class (WebGL program
+  cache keys on it — a duplicate silently reuses another shader);
+  uStepW/uStepH auto-sent by BaseFilter; constructor Object.assigns `defaults`
+  so instance fields must be `declare`d. Headless pixel-verified to exact
+  maths (duotone mid-grey within 1/255 of analytic; colour-balance = 0.3 ×
+  4l(1−l) weight exactly). Taste knobs: colour-balance STRENGTH 0.3, vignette
+  edge = midpoint×1.42 − feather/2, film-sim grade values (FILM_SIM_GRADES).
+- `lut-data.ts` (fabric-free) — the film-LUT shelf: **LUT_LOOKS** (8 stocks:
+  Portra 400 · Ektar 100 · Kodachrome 64 · Velvia 50 · Provia 100F · Pro 400H ·
+  Polaroid 690 · Tri-X 400 — the collection's informational stock names, not
+  authored copy), async strip loader (Image → RGBA table + GPU-ready canvas;
+  `lutEpoch`/`subscribeLuts` re-render as strips arrive), CPU trilinear
+  `applyLutToImageData` (Canvas2D fallback + thumbnails). Data:
+  `public/substrata/luts/*.png` — the **RawTherapee Film Simulation
+  Collection (CC BY-SA 4.0**, Pat David/Pavlov Dmitry/Michael Ezra →
+  ACKNOWLEDGEMENTS.md) downsampled HaldCLUT → 33³ packed strip (33 slices of
+  33×33 = 1089×33, blue picks the slice; ~50 KB each). Converter lived in the
+  session scratchpad — trivially re-writable (hald cbrt decode → trilinear
+  resample → strip re-pack in headless Chrome).
+- `look-ops.ts` — the LOOKS module's thin doc interface (getLook/setLook/
+  clearLook/setLookIntensity): a look is STILL the one film-sim entry in
+  `filters[]` (zero schema change), pinned to the stack END by fx-ops (grades
+  AFTER adjustments — CST-last convention); fx-ops setFxOrder now takes subset
+  reorders (unlisted entries sink below the listed — keeps the pin under the
+  FX panel's sim-less drag list).
+- `filter-sync.ts` — **M3-10**: reconciler-called `syncImageFilters` — per-image
+  ENABLED-stack signature diff (cheap no-op per pass), **rAF-coalesced**
+  `applyFilters`, **preview downscale** (transient gesture + source >1.5 MP →
+  chain runs on a cached proxy handed to Fabric via `_element` +
+  `_filterScaling`, own texture cacheKey — the WebGL backend caches source
+  textures BY KEY — evicted on settle; `commitTransient` now emits so the
+  full-res settle pass has a trigger; `isGestureActive()` exported from
+  doc-store). **Stack order semantics (pixel-verified, RATIFIED by Ruby
+  2026-07-03): array order = apply order, and fx-ops inserts at 0, so the
+  panel's TOP block applies FIRST** (not Photoshop's top-applies-last —
+  "most people won't even use two effects at once").
 
 **Assets + persistence**
 - `raster-cache.ts` — in-memory hash→`<canvas>` cache + `sha256Hex`.
@@ -188,9 +251,11 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   Also: the top-context overlay must clear UNCONDITIONALLY each after:render
   (an early return leaves frozen stains). Dev builds expose a
   **`window.__substrata` debug rig** (selection/layers dumps, select,
-  setSeparate) and `.repro-phantom.mjs` (untracked) drives /editor headlessly
-  via puppeteer-core (installed --no-save) + local Chrome — reusable for
-  canvas-interaction verification.
+  setSeparate, + M3: `fx`/`fxParam`/`gesture.begin|commit`/`samplePixel`/
+  `elementSizes` for filter QA) and `.repro-phantom.mjs` (untracked) drives
+  /editor headlessly via puppeteer-core (installed --no-save) + local Chrome —
+  reusable for canvas-interaction verification (Tier-0 was pixel-verified this
+  way: brightness/undo/temperature/stack-order + the preview→full-res cycle).
   `viewport.ts` — zoom bridge + cycle. `dock-pref.ts` — omnibar edge, rail edge,
   per-module dock target. `pin-pref.ts` — open (pinned) modules (`MODULE_IDS`:
   effects/layers/inspector/colour/arrange). `toast.ts` — status toasts.
@@ -219,7 +284,13 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   `ModuleBox` variants bloom/rail/dock) · `sidebar.tsx`.
 - `modules/layers-panel.tsx` (drag-reorder + footer), `modules/inspector-panel.tsx`
   (exports `BLEND_OPTIONS`), `modules/arrange-panel.tsx`, `modules/fx-panel.tsx`
-  (the FX pipeline module; exports `FxBody`/`FxSub`).
+  (the FX pipeline module; exports `FxBody`/`FxSub`; film-sim EXCLUDED — it
+  filters the visible list and its picker lost the preset cards),
+  `modules/looks-panel.tsx` (the LOOKS gallery: live thumbnails — the layer's
+  cover-cropped raster through every grade/LUT via the pure CPU paths — slim
+  None row, 2×8 card grid, pinned Intensity slider with the FX transient
+  gesture; bloom-capped `max-h min(560px, 100vh−140px)`; module TITLE is a
+  ∑CG gap — Ruby's unnamed category).
 - `modules/colour-panel.tsx` (tabbed shell + hue cube + footer) · `modules/
   colour-picker-kit.tsx` (shared `usePointerArea`/`Knob`) · `modules/colour-modes/*`
   (triangle · sliders · swatches · prism · spectrum · shade).
@@ -229,7 +300,28 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   footer, the Canvas size modal, AND `components/tools/gradient-genny.tsx` (DRY).
 - `toast-slot.tsx` · `persistence-toggle.tsx` · `secure-context-notice.tsx` (unmounted stub).
 - `app/editor/{layout,page}.tsx` — route (server layout w/ metadata + client page).
-- `hooks/use-editor-shortcuts.ts` — undo/redo keymap.
+- `hooks/use-editor-shortcuts.ts` — keymap: undo/redo, arrow nudge (MOVE-gated),
+  Backspace/Delete = delete selected layers (same path as the panel footer).
+- `lib/substrata/context-menu.ts` + `components/substrata/layer-context-menu.tsx`
+  — **right-click layer menu (Ruby 2026-07-03)**: ONE menu instance (shell-
+  mounted, Popover + virtual point anchor — portal/Escape/outside-dismiss/
+  collision-flip free, no new dep), opened by BOTH surfaces: the canvas via
+  **Fabric's own `contextmenu` canvas event** (a wrap DOM listener never
+  receives it — bind `canvas.on("contextmenu")`, it hands over the hit target)
+  and layers-panel rows. Hit inside the selection keeps it (menu acts on all);
+  other layers become the selection; native menu suppressed. LAYER items
+  (standard-vocabulary chrome): Duplicate · Group/Ungroup (panel-footer
+  same-sibling rule) · Bring to Front/Forward / Send Backward/to Back
+  (`reorderLayers` in layer-ops — block-aware stepping, subset-safe, one undo
+  step; `parentIdOf` added to layer-tree) · Hide/Show · Lock/Unlock · Delete.
+  **Blank space opens the CANVAS menu** (kind:"canvas" carries the scene
+  point): Paste (`importClipboardImage` — async clipboard, lands AT the
+  pointer, pixel-verified ≤1px; empty clipboard → "paste-empty" toast ∑CG) ·
+  Place Image… (file picker → `importImageFile({at})`) · Select All
+  (effectively visible+unlocked leaves) · Zoom to Fit/100% (viewport) ·
+  Grid/Snap check-toggles (stay open, guides-pref) · Canvas Size… (modal).
+  `importImageFile` grew an `{at}` placement option. Dev rig grew
+  `menuState`/`hitTest`.
 
 ---
 
@@ -263,11 +355,16 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   skew from scaling mixed-rotation selections is dropped on commit; canvas
   clicks select leaves (group selection via panel); only raster leaves have
   dims for align/distribute.
-- **Module contents**: all five modules (Layers · FX · Inspector · Colour ·
-  Arrange) are real. **FX is structural** — stacks/params edit + undo, but the
-  per-pixel render is M3 (registry render fns, Fabric filters[] sync, GLSL
-  customs). Colour-balance has no params yet (M3-7 model open); duotone preset
-  grid is M3-9; Threshold/Posterise carry the M3-5 ship/defer call. Export +
+- **Module contents**: all six modules (Layers · FX · Inspector · Colour ·
+  LOOKS · Arrange) are real. **FX: EVERY filter renders** (Tier-0 built-ins + the
+  seven Tier-1 customs; Tier-0 taste-QA'd by Ruby, Tier-1 grades/knobs await
+  her eyes). Still pixel-less: ONLY the `effects[]` stack (M3 effects engine).
+  Panel niceties: paramless blocks (invert/greyscale/sepia/edge-detect) have
+  no chevron/reset; duotone has the M3-9 preset-pair grid (pairs QUICK-SET
+  both colours via `setFxParams`, one undo step; active pair is DERIVED from
+  matching colours). Preview-downscale approximations (fine for a drag
+  preview): pixelate/convolute kernels are absolute-px so they read slightly
+  different at proxy scale; blur is relative so it matches. Export +
   Canvas size are **blocking modals** (Canvas size functional, Export a shell → M6).
 - **Top bar**: file ops (New/Open/Save/…) are no-ops (→ M5/M6); Edit history list
   is a static visual stub (real labelled history later); ACXV keypad no-op; Export
@@ -363,18 +460,42 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
   unscaled in params, transform scales it. SCHEMA_VERSION 1→2, Dexie
   version(2) no-op upgrade, v1 docs restore with defaulted fields.
 
-1. **Next chunk (recommended): M3 Tier-0 — FX moves pixels.** Wire the filter
-   registry to Fabric built-in filters, doc→Fabric `filters[]` sync + rAF
-   coalescing + preview downscale (`filter-backend.ts` scaffold). Zero pending
-   decisions. Tier-1 GLSL + film-sim LUTs after.
-2. **Then M2 tools** — PIECES (schema now ratified), TEXT (still needs the
-   bundled-fonts call, M2-3), SELECT (needs M2-10 semantics), freehand dep
-   (M2-2), text-on-path scope (M2-6), rulers design, snap-feel QA,
-   cross-parent layer drag + group transform composition.
-2. **M3 effects engine** — render fns onto the FX registries (additive), doc→Fabric
-   filters[] sync + preview-downscale, the four GLSL customs, colour-balance params
-   (M3-7), duotone presets (M3-9), Threshold/Posterise ship/defer (M3-5),
-   rasterize-for-effects (M3-15), ADJUST wiring (M3-14).
+0. **✅ M3 FILTERS COMPLETE (Tier-0 2026-07-02, Tier-1 2026-07-03).** Tier-0
+   shipped + Ruby-QA'd (her round applied: hue-rotate stepper→slider,
+   sharpen/emboss Amount, noise mono/colour Mode, paramless blocks lost the
+   dead chevron/reset; stack order ratified: top block applies first). Tier-1
+   shipped on her four ratifications (2026-07-03): **M3-5** threshold/posterise
+   ship as shaders · **M3-7** colour balance = three midtone-weighted sliders ·
+   **M3-9** duotone preset pairs + custom · film-sim looks inspired by popular
+   grades with **Claude-authored names** (her explicit grant; she may rename).
+   All seven customs headless-verified to exact maths. **Awaiting Ruby's
+   visual QA**: the eight film-sim grades, duotone pair colours, vignette
+   shape/feel, colour-balance strength (0.3).
+0b. **✅ LOOKS MODULE + FILM LUTs (2026-07-03, Ruby's ask).** The LUT/CST
+   family pulled OUT of FX into a bespoke sixth module (live-thumbnail
+   gallery, None row, intensity) — storage unchanged (film-sim entry in
+   filters[], pinned to stack END = grades after adjustments), FX panel/picker
+   exclude it, ADJUST omnibar button un-split (no more FILTERS/COLOUR subs).
+   16 REAL film LUTs as 33³ packed strips + the SubstrataLut GPU sampler
+   (async load pops in via lutEpoch): 8 from the RawTherapee collection
+   (CC BY-SA → ACKNOWLEDGEMENTS) + **8 GENERATED with spectral_film_lut (MIT,
+   Ruby-approved venv run)** — physically-modelled chains incl. Vision3
+   5207→2383, Eterna 500→3513DI, Gold 200→Supra Endura, Aerochrome IR, Instax;
+   generator preserved as `scripts/generate-film-luts.py` (venv +
+   `pip install spectral_film_lut`). Headless-verified (pin-to-end, retarget,
+   None, mono Tri-X, intensity-0 identity, live thumbs ×24). Open: module
+   title ∑CG (Ruby names the category), duotone pair NAMES still ∑CG (grant
+   covered LUT looks only), 24-card shelf may want curation (Ruby's eyes).
+1. **Next chunk options**: (a) **M3 effects engine** — `effects[]` renders
+   (drop/inner shadow, glows, stroke, overlay via Fabric shadow + custom
+   compositing), rasterize-for-effects (M3-15), ADJUST omnibar wiring (M3-14).
+   (b) **PIECES** (schema ratified, zero blockers).
+2. **Then M2 tools** — TEXT (still needs the bundled-fonts call, M2-3), SELECT
+   (needs M2-10 semantics), freehand dep (M2-2), text-on-path scope (M2-6),
+   rulers design, snap-feel QA, cross-parent layer drag + group transform
+   composition. Ruby's open decision queue: bundled fonts · SELECT
+   destructive-vs-extract · freehand dep · text-on-path (options laid out
+   2026-07-03, unanswered).
 3. **M4 colour** (fills for text/shapes — the colour picker's missing sink),
    **M5 persist** (project mgr + `.substrata`), **M6 export pipeline**,
    **M7 background removal** — per BUILD-PLAN.

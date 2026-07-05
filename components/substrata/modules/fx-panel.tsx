@@ -59,7 +59,7 @@ import { beginTransient, commitTransient, getSnapshot, subscribe } from "@/lib/s
 import { findLayer, isGroup } from "@/lib/substrata/layer-tree";
 import { getActiveLayerId, subscribeSelection } from "@/lib/substrata/selection";
 import { EFFECT_REGISTRY } from "@/lib/substrata/effects";
-import { FILM_SIM_PRESETS, FILTER_REGISTRY } from "@/lib/substrata/filters";
+import { FILTER_REGISTRY } from "@/lib/substrata/filters";
 import {
   addFx,
   fxDisplayLabel,
@@ -68,6 +68,7 @@ import {
   resetFx,
   setFxOrder,
   setFxParam,
+  setFxParams,
   toggleFx,
   type FxItem,
   type FxStack,
@@ -75,6 +76,7 @@ import {
 import type { Layer } from "@/lib/substrata/doc-model";
 import type {
   ColourParam,
+  PairsParam,
   ParamSpec,
   PresetsParam,
   SelectParam,
@@ -97,7 +99,8 @@ import type {
  * grid-rows collapse animation, grip · chevron · name · reset · toss · switch.
  * Params render generically from the registries' ParamSpecs; continuous gestures
  * (slider / swatch drag) coalesce into ONE undo step via the transient path.
- * Structural pass: edits are stored + undoable but move no pixels until M3.
+ * Tier-0 filters render live (filter-factory/filter-sync); Tier-1 + effects
+ * are stored + undoable but move no pixels until their engines land.
  */
 export function FxBody() {
   const doc = useSyncExternalStore(subscribe, getSnapshot, () => null);
@@ -135,13 +138,16 @@ export function FxBody() {
   }
 
   const toggleOpen = (id: string) => setOpenId((cur) => (cur === id ? null : id));
+  // The film-sim look lives in the LOOKS module (Ruby, 2026-07-03) — the FX
+  // pipeline never shows it (it stays pinned at the stack's end regardless).
+  const visibleFilters = layer.filters.filter((f) => f.type !== "film-sim");
 
   return (
     <div className="flex h-full flex-col overflow-hidden text-xs">
       <AddFxButton layer={layer} onAdded={setOpenId} />
       <div className="min-h-0 flex-1 overflow-auto">
         <FxZone layer={layer} stack="filters" openId={openId} onToggleOpen={toggleOpen} />
-        {layer.filters.length > 0 && layer.effects.length > 0 && (
+        {visibleFilters.length > 0 && layer.effects.length > 0 && (
           // the heavy pipeline divider between the filter chain and the effects
           <div aria-hidden className="h-1 shrink-0 bg-border" />
         )}
@@ -196,8 +202,8 @@ const FX_ICONS: Record<string, LucideIcon> = {
 };
 
 /** Typed-card picker groups: filters (zone 1) · effects (zone 2). The
- *  colour/film-sim family renders as its own PRESET-card section in the picker
- *  (its options are looks, not types — see AddFxButton). */
+ *  colour/film-sim family is NOT here — looks are picked in the LOOKS module
+ *  (Ruby, 2026-07-03). */
 const PICKER_GROUPS: { key: string; heading: string; stack: FxStack; types: string[] }[] = [
   {
     key: "filter",
@@ -226,21 +232,6 @@ function AddFxButton({ layer, onAdded }: { layer: Layer; onAdded: (id: string) =
     setOpen(false);
   };
 
-  // Film-sim presets add THE one film-sim type with the picked look; if the
-  // layer already carries a sim, picking a different preset retargets it
-  // (one-per-type), so preset cards never grey out — only the active one does.
-  const activeSim = layer.filters.find((f) => f.type === "film-sim");
-  const pickPreset = (presetId: string) => {
-    const id = addFx(layer.id, "filters", "film-sim", { preset: presetId });
-    if (id) {
-      if (activeSim && activeSim.params.preset !== presetId) {
-        setFxParam(layer.id, "filters", id, "preset", presetId);
-      }
-      onAdded(id);
-    }
-    setOpen(false);
-  };
-
   const has = (stack: FxStack, type: string) =>
     (stack === "effects" ? layer.effects : layer.filters).some((fx) => fx.type === type);
 
@@ -261,34 +252,8 @@ function AddFxButton({ layer, onAdded }: { layer: Layer; onAdded: (id: string) =
         sideOffset={0}
         className="max-h-[min(440px,var(--radix-popover-content-available-height))] w-[var(--radix-popover-trigger-width)] overflow-auto border-border p-0"
       >
-        {/* film sims / LUTs — preset cards (looks, not types) */}
-        <PickerHeading count={FILM_SIM_PRESETS.length}>
-          {/* ∑CG: add-picker heading for the film-sim/LUT family — Ruby hasn't
-              named this category yet. Sibling headings: "Filters", "Effects".
-              spec: ≤ 14 chars, noun, uppercase-styled group heading; British
-              spelling.
-              sample: "Film sims" */}
-          ∑CG
-        </PickerHeading>
-        <div className="segmented grid-cols-2 border-x-0">
-          {FILM_SIM_PRESETS.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              disabled={activeSim?.params.preset === p.id}
-              onClick={() => pickPreset(p.id)}
-              className="flex flex-col items-stretch gap-1 bg-popover p-1.5 hover:bg-primary/[0.09] focus-visible:z-10 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-30"
-            >
-              <span
-                aria-hidden
-                className="h-6 w-full border border-border/50"
-                style={{ background: presetGradient(p.swatch) }}
-              />
-              <span className="truncate text-center text-[9.5px] leading-[1.2]">{p.label}</span>
-            </button>
-          ))}
-        </div>
-
+        {/* film sims / LUTs live in the LOOKS module now — the picker holds
+            only the two type groups */}
         {PICKER_GROUPS.map((group, gi) => (
           <div key={group.key}>
             <PickerHeading count={group.types.length}>{group.heading}</PickerHeading>
@@ -362,7 +327,11 @@ function FxZone({
   openId: string | null;
   onToggleOpen: (id: string) => void;
 }) {
-  const list: FxItem[] = stack === "effects" ? layer.effects : layer.filters;
+  // filters zone hides the looks-module-owned film-sim; setFxOrder handles the
+  // subset (unlisted entries sink to the end — where the sim is pinned anyway)
+  const list: FxItem[] = (stack === "effects" ? layer.effects : layer.filters).filter(
+    (fx) => fx.type !== "film-sim",
+  );
   const ids = list.map((fx) => fx.id);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
@@ -421,6 +390,10 @@ function FxBlock({
   onToggle: () => void;
 }) {
   const def = getFxDef(stack, fx.type);
+  // Paramless blocks (invert, greyscale, sepia, edge-detect…) have nothing to
+  // open: no chevron, no toggle, no body, no reset (Ruby QA).
+  const expandable = (def?.params.length ?? 0) > 0;
+  const isOpen = expandable && open;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: fx.id,
   });
@@ -439,7 +412,7 @@ function FxBlock({
       {/* title bar — muted strip: grip · toggle button (chevron + name) · ctls.
           The toggle is a real <button> (keyboard path + aria-expanded); the ctls
           and switch sit OUTSIDE it, so they can never toggle the accordion. */}
-      <div className={cn("flex h-10 items-stretch bg-muted", open && "border-b border-border")}>
+      <div className={cn("flex h-10 items-stretch bg-muted", isOpen && "border-b border-border")}>
         <span
           {...attributes}
           {...listeners}
@@ -449,23 +422,30 @@ function FxBlock({
         >
           <GripVertical className="size-3.5" />
         </span>
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={open}
-          className="flex min-w-0 flex-1 items-center gap-1.5 pr-2.5 text-left outline-none"
-        >
-          <ChevronDown
-            aria-hidden
-            className={cn(
-              "size-3 shrink-0 text-muted-foreground transition-transform motion-reduce:transition-none",
-              !open && "-rotate-90",
-            )}
-          />
-          {/* preset-carrying blocks (film-sim) title themselves after their look */}
-          <span className="truncate font-semibold">{fxDisplayLabel(stack, fx)}</span>
-        </button>
-        {fx.enabled && (
+        {expandable ? (
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={isOpen}
+            className="flex min-w-0 flex-1 items-center gap-1.5 pr-2.5 text-left outline-none"
+          >
+            <ChevronDown
+              aria-hidden
+              className={cn(
+                "size-3 shrink-0 text-muted-foreground transition-transform motion-reduce:transition-none",
+                !isOpen && "-rotate-90",
+              )}
+            />
+            {/* preset-carrying blocks (film-sim) title themselves after their look */}
+            <span className="truncate font-semibold">{fxDisplayLabel(stack, fx)}</span>
+          </button>
+        ) : (
+          // pl-[18px] = chevron (12px) + gap (6px), so titles align down the stack
+          <span className="flex min-w-0 flex-1 items-center pl-[18px] pr-2.5">
+            <span className="truncate font-semibold">{fxDisplayLabel(stack, fx)}</span>
+          </span>
+        )}
+        {fx.enabled && expandable && (
           <CtlBtn
             icon={RotateCcw}
             onClick={() => resetFx(layerId, stack, fx.id)}
@@ -492,11 +472,12 @@ function FxBlock({
       {/* collapsible body — grid-rows 1fr↔0fr (the sketch's animation). `inert`
           when collapsed: the clip is visual-only, so without it the hidden
           sliders/fields would stay in the tab order and take invisible edits. */}
+      {expandable && (
       <div
-        inert={!open}
+        inert={!isOpen}
         className={cn(
           "grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none",
-          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+          isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
         )}
       >
         <div className="min-h-0 overflow-hidden">
@@ -504,6 +485,15 @@ function FxBlock({
             spec.kind === "presets" ? (
               // presets bleed edge-to-edge (the sketch's flush swatch grid)
               <PresetsGrid
+                key={spec.key}
+                spec={spec}
+                fx={fx}
+                layerId={layerId}
+                stack={stack}
+                bordered={i > 0}
+              />
+            ) : spec.kind === "pairs" ? (
+              <PairsGrid
                 key={spec.key}
                 spec={spec}
                 fx={fx}
@@ -522,6 +512,7 @@ function FxBlock({
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }
@@ -563,6 +554,7 @@ function FxParamRow({
     case "select":
       return <SelectRow spec={spec} fx={fx} layerId={layerId} stack={stack} />;
     case "presets":
+    case "pairs":
       return null; // rendered full-bleed by the block body, never as a padded row
   }
 }
@@ -611,6 +603,48 @@ function PresetsGrid({
             o.value === value && "shadow-[inset_0_0_0_2px_var(--primary)]",
           )}
           style={{ background: presetGradient(o.swatch) }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Duotone's preset pairs (M3-9): same flush grid as PresetsGrid, but a pair is
+ * a QUICK-SET — clicking writes its `writes` patch (both colours, one undo
+ * step via setFxParams) instead of storing a preset id. Active = the pair
+ * whose writes all match the current params (derived, so hand-picked colours
+ * simply light no pair up).
+ */
+function PairsGrid({
+  spec,
+  fx,
+  layerId,
+  stack,
+  bordered,
+}: {
+  spec: PairsParam;
+  fx: FxItem;
+  layerId: string;
+  stack: FxStack;
+  bordered: boolean;
+}) {
+  const isActive = (o: PairsParam["options"][number]) =>
+    Object.entries(o.writes).every(
+      ([key, v]) => String(fx.params[key] ?? "").toLowerCase() === v.toLowerCase(),
+    );
+  return (
+    <div className={cn("grid grid-cols-4 gap-px bg-border", bordered && "border-t border-border")}>
+      {spec.options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          onClick={() => !isActive(o) && setFxParams(layerId, stack, fx.id, o.writes)}
+          aria-label={o.label}
+          title={o.label}
+          className={cn("aspect-square", isActive(o) && "shadow-[inset_0_0_0_2px_var(--primary)]")}
+          // light→dark like the sim swatches: highlight leads, shadow trails
+          style={{ background: `linear-gradient(135deg, ${o.colours[1]}, ${o.colours[0]})` }}
         />
       ))}
     </div>

@@ -79,6 +79,12 @@ export function update(mutator: (doc: SubstrataDoc) => SubstrataDoc): void {
  */
 let transientBase: SubstrataDoc | null = null;
 
+/** True while a coalesced gesture is in flight — consumers may swap to cheaper
+ *  live rendering (e.g. the filter sync's preview downscale) until commit. */
+export function isGestureActive(): boolean {
+  return transientBase !== null;
+}
+
 export function beginTransient(): void {
   transientBase = state;
 }
@@ -92,6 +98,10 @@ export function updateTransient(mutator: (doc: SubstrataDoc) => SubstrataDoc): v
 export function commitTransient(): void {
   const base = transientBase;
   transientBase = null;
+  // Always emit: subscribers rendering a cheaper live form during the gesture
+  // (preview-downscaled filters) need one post-gesture pass to settle at full
+  // quality, even when the value ends where it started.
+  emit();
   if (!state || !base || state === base) return; // nothing actually changed
   undoStack.push(base);
   if (undoStack.length > HISTORY_LIMIT) undoStack.shift();

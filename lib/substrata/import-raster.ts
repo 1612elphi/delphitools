@@ -29,7 +29,13 @@ function placeOnArtboard(artboard: Artboard, w: number, h: number): Transform {
   };
 }
 
-export async function importImageFile(file: File): Promise<void> {
+export interface ImportOptions {
+  /** centre the new layer on this scene point instead of the artboard centre
+   *  (the context menu's paste/place-at-pointer) */
+  at?: { x: number; y: number };
+}
+
+export async function importImageFile(file: File, opts?: ImportOptions): Promise<void> {
   if (!file.type.startsWith("image/")) return;
 
   const buf = await file.arrayBuffer();
@@ -70,16 +76,43 @@ export async function importImageFile(file: File): Promise<void> {
   const artboard = getSnapshot()?.artboard;
   if (!artboard) return;
 
+  const transform = placeOnArtboard(artboard, w, h);
+  if (opts?.at) {
+    transform.x = opts.at.x;
+    transform.y = opts.at.y;
+  }
   const layer = createRasterLayer({
     name: file.name,
     blobHash: hash,
     naturalWidth: w,
     naturalHeight: h,
-    transform: placeOnArtboard(artboard, w, h),
+    transform,
   });
   // Select first so the reconcile triggered by `update` applies it the moment the
   // layer's Fabric object is created (avoids the post-update selection race).
   setActiveLayer(layer.id);
   update((doc) => ({ ...doc, layers: [...doc.layers, layer], updatedAt: Date.now() }));
   toast("image-added");
+}
+
+/**
+ * Import the first image on the async clipboard (the context menu's Paste —
+ * unlike the ⌘V event path, a menu click has no ClipboardEvent to read from).
+ * No image / permission denied → a status toast, never a throw.
+ */
+export async function importClipboardImage(opts?: ImportOptions): Promise<void> {
+  try {
+    const items = await navigator.clipboard.read();
+    for (const item of items) {
+      const type = item.types.find((t) => t.startsWith("image/"));
+      if (type) {
+        const blob = await item.getType(type);
+        await importImageFile(new File([blob], "clipboard", { type }), opts);
+        return;
+      }
+    }
+  } catch {
+    // fall through to the empty-clipboard toast
+  }
+  toast("paste-empty");
 }

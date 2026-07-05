@@ -12,7 +12,7 @@ import {
   util as fabricUtil,
 } from "fabric";
 import type { FabricObject, LayoutStrategyResult, StrictLayoutContext } from "fabric";
-import { getSnapshot, subscribe, setDoc } from "@/lib/substrata/doc-store";
+import { getSnapshot, subscribe, setDoc, beginTransient, commitTransient } from "@/lib/substrata/doc-store";
 import { registerViewportController, reportZoom } from "@/lib/substrata/viewport";
 import { createEmptyDoc } from "@/lib/substrata/doc-model";
 import type { Artboard, SubstrataDoc, Transform } from "@/lib/substrata/doc-model";
@@ -20,6 +20,7 @@ import { createReconcileState, reconcile, getLayerIdForObject } from "@/lib/subs
 import { initSubstrataFilterBackend } from "@/lib/substrata/filter-backend";
 import { importImageFile } from "@/lib/substrata/import-raster";
 import { setTransform, setTransforms } from "@/lib/substrata/layer-ops";
+import { addFx, setFxParam } from "@/lib/substrata/fx-ops";
 import { collectIds, findLayer, leafLayers, leafRenderList } from "@/lib/substrata/layer-tree";
 import {
   getSelectedLayerIds,
@@ -30,6 +31,8 @@ import {
 import { loadLatestProject, startAutosave, persistAll, clearPersistedData } from "@/lib/substrata/autosave";
 import { getPersistenceEnabled, subscribePersistence } from "@/lib/substrata/persistence-pref";
 import { GRID_SIZE, getGuides, subscribeGuides } from "@/lib/substrata/guides-pref";
+import { subscribeLuts } from "@/lib/substrata/lut-data";
+import { getLayerMenu, openCanvasMenu, openLayerMenu } from "@/lib/substrata/context-menu";
 import {
   getToolSettings,
   setTransformAsGroup,
@@ -765,16 +768,53 @@ export function FabricCanvas() {
               name: e.layer.name,
               scene: c && { x: c.x, y: c.y },
               screen: c && toScreen(c.x, c.y),
+              filters: e.layer.filters.map((f) => f.type),
             };
           });
         },
         select: (ids: string[]) => setSelection(ids),
         setSeparate: (v: boolean) => setTransformAsGroup(!v),
         upperCanvasCount: () => document.querySelectorAll("canvas.upper-canvas").length,
+        menuState: () => getLayerMenu(),
+        hitTest: (x: number, y: number) => {
+          const info = canvas.findTarget(new MouseEvent("contextmenu", { clientX: x, clientY: y }));
+          return {
+            target: info.target?.constructor.name ?? null,
+            layerId: info.target ? getLayerIdForObject(info.target) ?? null : null,
+          };
+        },
+        // M3 filter QA: add a filter to a layer's stack + sample a rendered
+        // pixel (screen-space px) off the lower canvas.
+        fx: (layerId: string, type: string, params?: Record<string, number | string>) =>
+          addFx(layerId, "filters", type, params),
+        fxParam: (layerId: string, fxId: string, key: string, value: number | string, transient?: boolean) =>
+          setFxParam(layerId, "filters", fxId, key, value, { transient }),
+        gesture: { begin: beginTransient, commit: commitTransient },
+        samplePixel: (sx: number, sy: number) => {
+          const dpr = window.devicePixelRatio || 1;
+          return Array.from(
+            canvas.getContext().getImageData(Math.round(sx * dpr), Math.round(sy * dpr), 1, 1).data,
+          );
+        },
+        // Preview-downscale probe: the rendered element's size vs the original's
+        // (they differ exactly while a filter gesture renders the ≤1.5 MP proxy).
+        elementSizes: (layerId: string) => {
+          const o = state.byId.get(layerId) as unknown as {
+            _element?: { width: number; height: number };
+            _originalElement?: { width: number; height: number };
+          };
+          return {
+            element: o?._element && [o._element.width, o._element.height],
+            original: o?._originalElement && [o._originalElement.width, o._originalElement.height],
+          };
+        },
       };
     }
 
     const unsubscribe = subscribe(render);
+    // LUT strips load async — re-render when one arrives so its look pops in
+    // (filter-sync's signature carries the epoch).
+    const unsubscribeLuts = subscribeLuts(render);
     render();
     fit();
 
@@ -831,11 +871,41 @@ export function FabricCanvas() {
     wrap.addEventListener("dragover", onDragOver);
     wrap.addEventListener("drop", onDrop);
 
+    // Right-click → context menu (Ruby 2026-07-03), via Fabric's own
+    // contextmenu canvas event (it hit-tests once and hands us the target). A
+    // hit inside the current selection keeps it (menu acts on all), any other
+    // layer becomes the selection; blank space opens the CANVAS menu with the
+    // scene point (paste/place land there). Native menu suppressed either way.
+    canvas.on("contextmenu", ({ e, target }) => {
+      e.preventDefault();
+      const me = e as MouseEvent;
+      if (!target) {
+        const scene = canvas.getScenePoint(me);
+        openCanvasMenu(me.clientX, me.clientY, { x: scene.x, y: scene.y });
+        return;
+      }
+      // a live multi-selection hit → menu on the whole selection
+      if (target === canvas.getActiveObject() && target instanceof ActiveSelection) {
+        openLayerMenu(me.clientX, me.clientY, getSelectedLayerIds());
+        return;
+      }
+      const layerId = getLayerIdForObject(target);
+      if (!layerId) return;
+      const ids = getSelectedLayerIds();
+      if (!ids.includes(layerId)) {
+        setSelection([layerId]);
+        openLayerMenu(me.clientX, me.clientY, [layerId]);
+      } else {
+        openLayerMenu(me.clientX, me.clientY, ids);
+      }
+    });
+
     return () => {
       cancelled = true;
       stopAutosave?.();
       unsubscribePersistence();
       unsubscribe();
+      unsubscribeLuts();
       unsubscribeSelection();
       unsubscribeGuides();
       unsubscribeToolSettings();

@@ -7,6 +7,7 @@ import { TopBar } from "@/components/substrata/top-bar";
 import { Omnibar } from "@/components/substrata/omnibar/omnibar";
 import { Sidebar } from "@/components/substrata/sidebar";
 import { ModalHost } from "@/components/substrata/modal-host";
+import { LayerContextMenu } from "@/components/substrata/layer-context-menu";
 import { useEditorShortcuts } from "@/hooks/use-editor-shortcuts";
 import { hydrateLayoutPrefs } from "@/lib/substrata/dock-pref";
 
@@ -58,6 +59,8 @@ export function SubstrataShell() {
         <Sidebar side="right" />
       </div>
       <ModalHost />
+      {/* right-click layer menu — ONE instance; canvas + layers panel open it */}
+      <LayerContextMenu />
     </div>
   );
 }

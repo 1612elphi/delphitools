@@ -25,6 +25,7 @@ import {
   subscribeSelection,
   toggleInSelection,
 } from "@/lib/substrata/selection";
+import { openLayerMenu } from "@/lib/substrata/context-menu";
 import {
   deleteLayers,
   duplicateLayers,
@@ -118,6 +119,18 @@ export function LayersBody() {
     setSiblingOrder(from.parentId, [...next].reverse()); // display top-first → doc order
   };
 
+  // Right-click → the shared layer context menu; a row inside the selection
+  // keeps it (menu acts on all), any other row becomes the selection.
+  const onRowContextMenu = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    if (selectedIds.includes(id)) {
+      openLayerMenu(e.clientX, e.clientY, selectedIds);
+    } else {
+      setActiveLayer(id);
+      openLayerMenu(e.clientX, e.clientY, [id]);
+    }
+  };
+
   const onRowClick = (e: React.MouseEvent, id: string) => {
     if (e.shiftKey) {
       const anchor = getSelectionAnchor();
@@ -164,6 +177,7 @@ export function LayersBody() {
                   primary={row.layer.id === activeId}
                   collapsed={collapsed.has(row.layer.id)}
                   onClick={(e) => onRowClick(e, row.layer.id)}
+                  onContextMenu={(e) => onRowContextMenu(e, row.layer.id)}
                 />
               ))}
             </SortableContext>
@@ -191,12 +205,14 @@ function LayerRow({
   primary,
   collapsed,
   onClick,
+  onContextMenu,
 }: {
   row: PanelRow;
   selected: boolean;
   primary: boolean;
   collapsed: boolean;
   onClick: (e: React.MouseEvent) => void;
+  onContextMenu: (e: React.MouseEvent) => void;
 }) {
   const { layer, depth, lastChild } = row;
   const group = isGroup(layer);
@@ -219,6 +235,7 @@ function LayerRow({
       {...attributes}
       {...listeners}
       onClick={onClick}
+      onContextMenu={onContextMenu}
       className={cn(
         "group relative flex h-[30px] cursor-default items-center gap-2 border-b border-border/60 pr-1.5 text-xs outline-none",
         selected ? "bg-accent" : "hover:bg-accent",

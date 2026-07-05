@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
-import { Undo2, Redo2, Maximize2, Check, Search, Copy, Download, Trash2, ImagePlus } from "lucide-react";
+import { Undo2, Redo2, Maximize2, Check, Search, ClipboardX, Copy, Download, Trash2, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { subscribe, undo, redo, canUndo, canRedo } from "@/lib/substrata/doc-store";
 import { getToast, subscribeToast, type ToastId } from "@/lib/substrata/toast";
@@ -33,6 +33,9 @@ const TOASTS: Record<ToastId, { icon: React.ReactNode; text: string }> = {
   // ∑CG: copied toast — ≤16 chars, confirms selection copied.
   //   sample: "Copied"
   copied: { icon: <Copy className={ICON} />, text: "∑CG" },
+  // ∑CG: paste-empty toast — ≤22 chars, the clipboard held no image to paste
+  //   (or reading it was blocked). sample: "Nothing to paste"
+  "paste-empty": { icon: <ClipboardX className={ICON} />, text: "∑CG" },
   // ∑CG: exported toast — ≤16 chars, confirms export finished.
   //   sample: "Exported"
   exported: { icon: <Download className={ICON} />, text: "∑CG" },

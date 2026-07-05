@@ -63,7 +63,19 @@ export interface PresetsParam extends BaseParam {
   options: { value: string; label: string; swatch: string[] }[];
 }
 
-export type ParamSpec = SliderParam | StepperParam | ColourParam | SelectParam | PresetsParam;
+/**
+ * A grid of two-colour looks that QUICK-SET other params rather than storing a
+ * value of their own (ratified M3-9, duotone): clicking a pair applies its
+ * `writes` patch in one undo step; the active pair is DERIVED (the option whose
+ * writes all match the current params), so hand-edited colours simply light no
+ * pair up. `key` is only a React key — defaultParams skips this kind.
+ */
+export interface PairsParam extends BaseParam {
+  kind: "pairs";
+  options: { value: string; label: string; colours: [string, string]; writes: Record<string, string> }[];
+}
+
+export type ParamSpec = SliderParam | StepperParam | ColourParam | SelectParam | PresetsParam | PairsParam;
 
 /**
  * The registry-entry shape both registries share, so the FX panel can render an
@@ -78,6 +90,9 @@ export interface FxDefinition {
 /** Seed a new instance's params from a spec list (the registry defaults). */
 export function defaultParams(specs: ParamSpec[]): Record<string, number | string> {
   const out: Record<string, number | string> = {};
-  for (const s of specs) out[s.key] = s.default;
+  for (const s of specs) {
+    if (s.kind === "pairs") continue; // virtual control — writes others, stores nothing
+    out[s.key] = s.default;
+  }
   return out;
 }

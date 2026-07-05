@@ -98,7 +98,12 @@ export function addFx(
   };
   update((d) => ({
     ...d,
-    layers: mapStack(d.layers, layerId, stack, (list) => [fx, ...list]),
+    // film-sim pins to the END: the look grades AFTER the adjustments (the
+    // CST-last convention) — it lives in the looks module, not the FX panel,
+    // so stack position must be right by construction, not by dragging.
+    layers: mapStack(d.layers, layerId, stack, (list) =>
+      type === "film-sim" ? [...list, fx] : [fx, ...list],
+    ),
     updatedAt: Date.now(),
   }));
   return fx.id;
@@ -163,17 +168,45 @@ export function setFxParam(
   else update(apply);
 }
 
-/** Reorder a stack to match `orderedIds` (index 0 = top of the pipeline). */
+/**
+ * Set several params at once as ONE undo step — the duotone preset pairs
+ * write both colours together (a pair click must not leave a half-applied
+ * look on the undo stack).
+ */
+export function setFxParams(
+  layerId: string,
+  stack: FxStack,
+  fxId: string,
+  patch: Record<string, number | string>,
+): void {
+  update((doc) => ({
+    ...doc,
+    layers: mapStack(doc.layers, layerId, stack, (list) =>
+      mapItem(list, fxId, (fx) => ({ ...fx, params: { ...fx.params, ...patch } })),
+    ),
+    updatedAt: Date.now(),
+  }));
+}
+
+/**
+ * Reorder a stack to match `orderedIds` (index 0 = top of the pipeline).
+ * `orderedIds` may be a SUBSET (the FX panel reorders the visible list, which
+ * excludes the looks-module-owned film-sim): unlisted items keep their
+ * relative order and sink below the listed ones — exactly the pin-to-end
+ * behaviour the film-sim needs.
+ */
 export function setFxOrder(layerId: string, stack: FxStack, orderedIds: string[]): void {
   update((doc) => {
     let changed = false;
     const layers = mapStack(doc.layers, layerId, stack, (list) => {
       const byId = new Map(list.map((fx) => [fx.id, fx]));
       const next = orderedIds.map((id) => byId.get(id)).filter((fx): fx is FxItem => fx !== undefined);
-      // Guard: if the id set didn't cover the whole stack, keep the original order.
-      if (next.length !== list.length) return list;
+      const listed = new Set(orderedIds);
+      const rest = list.filter((fx) => !listed.has(fx.id));
+      // Guard: ids must resolve cleanly (no unknowns dropped, no duplicates).
+      if (next.length + rest.length !== list.length) return list;
       changed = true;
-      return next;
+      return [...next, ...rest];
     });
     return changed ? { ...doc, layers, updatedAt: Date.now() } : doc;
   });
