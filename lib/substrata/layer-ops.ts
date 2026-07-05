@@ -22,7 +22,7 @@ import {
   siblingListOf,
 } from "./layer-tree";
 import { getSelectedLayerIds, pruneSelection, setActiveLayer, setSelection } from "./selection";
-import type { BlendMode, GroupLayer, Layer, SubstrataDoc, Transform } from "./doc-model";
+import type { BlendMode, GroupLayer, Layer, ShapeParams, SubstrataDoc, Transform } from "./doc-model";
 
 /** Commit a layer transform (the one place a Fabric interaction writes back). */
 export function setTransform(id: string, transform: Transform): void {
@@ -59,6 +59,17 @@ export function setOpacity(id: string, opacity: number, opts?: { transient?: boo
   });
   if (opts?.transient) updateTransient(apply);
   else update(apply);
+}
+
+/** Replace a shape layer's intrinsic params (Inspector after-the-fact edits —
+ *  corner radius, sides, star points/inner). One undo step per commit; the
+ *  reconciler updates the Fabric geometry in place. No-op on other kinds. */
+export function setShapeParams(id: string, params: ShapeParams): void {
+  update((doc) => ({
+    ...doc,
+    layers: mapLayerInTree(doc.layers, id, (l) => (l.kind === "shape" ? { ...l, params } : l)),
+    updatedAt: Date.now(),
+  }));
 }
 
 /** Set a layer's compositing blend mode. */

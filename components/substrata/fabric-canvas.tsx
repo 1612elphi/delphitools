@@ -19,7 +19,7 @@ import type { Artboard, ShapeLayer, SubstrataDoc, Transform } from "@/lib/substr
 import { createReconcileState, reconcile, getLayerIdForObject } from "@/lib/substrata/sync";
 import { initSubstrataFilterBackend } from "@/lib/substrata/filter-backend";
 import { importImageFile } from "@/lib/substrata/import-raster";
-import { setTransform, setTransforms } from "@/lib/substrata/layer-ops";
+import { setShapeParams, setTransform, setTransforms } from "@/lib/substrata/layer-ops";
 import { addFx, setFxParam } from "@/lib/substrata/fx-ops";
 import { collectIds, findLayer, leafLayers, leafRenderList } from "@/lib/substrata/layer-tree";
 import {
@@ -866,6 +866,7 @@ export function FabricCanvas() {
         },
         toolSettings: (tool: "move" | "select" | "text" | "pieces", patch: object) =>
           updateToolSettings(tool, patch),
+        shapeParams: setShapeParams,
         // M3 effects QA: same pair over the effects[] stack.
         effect: (layerId: string, type: string, params?: Record<string, number | string>) =>
           addFx(layerId, "effects", type, params),

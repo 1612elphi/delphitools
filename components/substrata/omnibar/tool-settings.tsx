@@ -5,6 +5,13 @@ import { ChevronDown, ChevronUp, Circle, Pentagon, Slash, Square, Star } from "l
 import type { LucideIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { ColourSwatchCell, DeferredHexInput } from "@/components/colour-field";
+import {
+  CornerPresetIcon,
+  PresetRow,
+  StepBtn,
+  Stepper,
+  type PresetOption,
+} from "@/components/substrata/preset-row";
 import { getGuides, subscribeGuides, toggleGuide } from "@/lib/substrata/guides-pref";
 import {
   getToolSettings,
@@ -118,71 +125,6 @@ function MoveSettings({ title }: { title: string }) {
   );
 }
 
-function StepBtn({
-  icon: Icon,
-  aria,
-  onClick,
-  disabled,
-}: {
-  icon: LucideIcon;
-  aria: string;
-  onClick: () => void;
-  disabled: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={aria}
-      className="grid h-6 w-[22px] place-items-center border-l border-border text-muted-foreground hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
-    >
-      <Icon className="size-3" />
-    </button>
-  );
-}
-
-/** Compact value + up/down stepper (the Nudge cell's pattern, generalised). */
-function Stepper({
-  value,
-  onChange,
-  min,
-  max,
-  step = 1,
-  unit,
-}: {
-  value: number;
-  onChange: (v: number) => void;
-  min: number;
-  max: number;
-  step?: number;
-  unit?: string;
-}) {
-  const set = (v: number) => onChange(Math.min(max, Math.max(min, v)));
-  return (
-    <span className="flex items-stretch border border-border">
-      <span className="grid h-6 min-w-[42px] place-items-center px-1 text-[11px] tabular-nums">
-        {value}
-        {unit ? ` ${unit}` : ""}
-      </span>
-      <StepBtn
-        icon={ChevronUp}
-        onClick={() => set(value + step)}
-        disabled={value >= max}
-        // ∑CG: aria-label for a stepper increment. sample: "Increase"
-        aria="∑CG"
-      />
-      <StepBtn
-        icon={ChevronDown}
-        onClick={() => set(value - step)}
-        disabled={value <= min}
-        // ∑CG: aria-label for a stepper decrement. sample: "Decrease"
-        aria="∑CG"
-      />
-    </span>
-  );
-}
-
 /** Swatch + hex pair used by the Fill and Stroke rows. */
 function ColourCell({ colour, onChange, aria }: { colour: string; onChange: (hex: string) => void; aria: string }) {
   return (
@@ -197,6 +139,22 @@ function ColourCell({ colour, onChange, aria }: { colour: string; onChange: (hex
     </span>
   );
 }
+
+/** Preset menus (Ruby, 2026-07-06: presets + a custom (…) escape hatch —
+ *  "a simple editor for simple people"). Values are data; the corner glyphs
+ *  are visual.
+ *  ∑CG: aria-labels for the four corner presets, sharpest → roundest.
+ *    spec: one or two words each, name the roundedness level; British spelling.
+ *    sample: "Sharp" · "Subtle" · "Round" · "Pill" */
+const CORNER_PX_PRESETS: PresetOption[] = [
+  { value: 0, icon: <CornerPresetIcon r={0} />, aria: "∑CG" },
+  { value: 16, icon: <CornerPresetIcon r={2} />, aria: "∑CG" },
+  { value: 48, icon: <CornerPresetIcon r={4.5} />, aria: "∑CG" },
+  { value: 120, icon: <CornerPresetIcon r={7} />, aria: "∑CG" },
+];
+const SIDES_PRESETS: PresetOption[] = [3, 4, 5, 6, 8].map((v) => ({ value: v, label: String(v) }));
+const POINTS_PRESETS: PresetOption[] = [4, 5, 6, 8].map((v) => ({ value: v, label: String(v) }));
+const INNER_PRESETS: PresetOption[] = [30, 50, 70].map((v) => ({ value: v, label: `${v}%` }));
 
 /** The five primitives — icon cells; labels are the standard shape vocabulary
  *  (functional chrome, the PIECE_LABEL/SHAPE_NAMES words). */
@@ -272,21 +230,41 @@ function PiecesSettings({ title }: { title: string }) {
       )}
       {p.shape === "rectangle" && (
         <Row label="Corner">
-          <Stepper value={p.cornerRadius} onChange={(cornerRadius) => patch({ cornerRadius })} min={0} max={250} unit="px" />
+          <PresetRow
+            options={CORNER_PX_PRESETS}
+            value={p.cornerRadius}
+            onChange={(cornerRadius) => patch({ cornerRadius })}
+            min={0}
+            max={250}
+            unit="px"
+          />
         </Row>
       )}
       {p.shape === "polygon" && (
         <Row label="Sides">
-          <Stepper value={p.sides} onChange={(sides) => patch({ sides })} min={3} max={12} />
+          <PresetRow
+            options={SIDES_PRESETS}
+            value={p.sides}
+            onChange={(sides) => patch({ sides })}
+            min={3}
+            max={12}
+          />
         </Row>
       )}
       {p.shape === "star" && (
         <>
           <Row label="Points">
-            <Stepper value={p.starPoints} onChange={(starPoints) => patch({ starPoints })} min={3} max={12} />
+            <PresetRow
+              options={POINTS_PRESETS}
+              value={p.starPoints}
+              onChange={(starPoints) => patch({ starPoints })}
+              min={3}
+              max={12}
+            />
           </Row>
           <Row label="Inner">
-            <Stepper
+            <PresetRow
+              options={INNER_PRESETS}
               value={Math.round(p.starInnerRatio * 100)}
               onChange={(v) => patch({ starInnerRatio: v / 100 })}
               min={10}

@@ -13,7 +13,8 @@ import {
 import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
 import { findLayer, isGroup, leafLayers } from "@/lib/substrata/layer-tree";
 import { getActiveLayerId, getSelectedLayerIds, subscribeSelection } from "@/lib/substrata/selection";
-import { setBlendMode, setOpacity, setTransform } from "@/lib/substrata/layer-ops";
+import { setBlendMode, setOpacity, setShapeParams, setTransform } from "@/lib/substrata/layer-ops";
+import { CornerPresetIcon, PresetRow, type PresetOption } from "@/components/substrata/preset-row";
 
 const EMPTY_IDS: readonly string[] = [];
 import { getPersistenceEnabled, subscribePersistence } from "@/lib/substrata/persistence-pref";
@@ -200,29 +201,36 @@ export function InspectorBody() {
           </span>
         )}
         {nat && (
+          // rounded — shape dims are fractional (polygon/star vertex bboxes)
           <span className="ml-auto shrink-0 text-[11px] tabular-nums text-muted-foreground">
-            {nat.w}×{nat.h}
+            {Math.round(nat.w)}×{Math.round(nat.h)}
           </span>
         )}
       </div>
 
       {/* Transform — the title breathes (padded); the value grid is a flush
           container that bleeds edge to edge (DESIGN.md §6/§7). Internal 1px
-          hairlines; a 2px major divider closes the section (§5). */}
-      <div className="px-3 pb-1.5 pt-2 text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">
-        Transform
-      </div>
-      <div className="segmented grid-cols-2 border-x-0 border-b-0">
-        {cells.map((c) => (
-          <NumField key={c.key} label={c.label} icon={c.icon} unit={c.unit} value={c.value} onCommit={c.onCommit} />
-        ))}
+          hairlines; a 2px major divider closes the section (§5). The middle
+          scrolls (min-h-0) so the Shape section can never push the appearance
+          bar past the rail box's uniform height. */}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="px-3 pb-1.5 pt-2 text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">
+          Transform
+        </div>
+        <div className="segmented grid-cols-2 border-x-0 border-b-0">
+          {cells.map((c) => (
+            <NumField key={c.key} label={c.label} icon={c.icon} unit={c.unit} value={c.value} onCommit={c.onCommit} />
+          ))}
+        </div>
+
+        {layer.kind === "shape" && <ShapeSection layer={layer} />}
       </div>
 
-      {/* Appearance — a flush action bar pinned to the BOTTOM of the card
-          (mt-auto), split off by the 2px major divider (DESIGN.md §5/§9/§11): the
+      {/* Appearance — a flush action bar pinned to the BOTTOM of the card,
+          split off by the 2px major divider (DESIGN.md §5/§9/§11): the
           blend mode fills, opacity is an equal-height cell behind a 1px hairline.
           Labels dropped so long mode names ("Colour Dodge") fit; % self-labels. */}
-      <div className="mt-auto flex h-9 items-stretch border-t-2 border-border">
+      <div className="flex h-9 shrink-0 items-stretch border-t-2 border-border">
         <Select value={layer.blendMode} onValueChange={(v) => setBlendMode(layer.id, v as BlendMode)}>
           <SelectTrigger
             className="h-full min-w-0 flex-1 gap-1 border-0 bg-card px-3 text-xs shadow-none hover:bg-accent focus-visible:ring-0 dark:bg-card dark:hover:bg-accent"
@@ -242,6 +250,102 @@ export function InspectorBody() {
         <OpacityField layerId={layer.id} opacity={layer.opacity} />
       </div>
     </div>
+  );
+}
+
+/** One shape-param row: bloom-density label + control (hairline separated). */
+function ShapeRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-8 items-center justify-between gap-3 border-b border-border px-3 py-1 text-[11px] last:border-b-0">
+      <span className="text-muted-foreground">{label}</span>
+      {children}
+    </div>
+  );
+}
+
+/**
+ * After-the-fact shape params (Ruby, 2026-07-06): the selected shape's
+ * corner/sides/points/inner surface here as presets + a custom (…) hatch —
+ * the same PresetRow language as the PIECES bloom. Corner presets are
+ * SIZE-AWARE (fractions of the min side, so "pill" is always a pill); the
+ * custom stepper caps at half the min side (beyond it the radius is a lie).
+ * Ellipse/line have no extra params — W/H already edit them.
+ */
+function ShapeSection({ layer }: { layer: Layer & { kind: "shape" } }) {
+  const p = layer.params;
+  if (p.shape === "ellipse" || p.shape === "line") return null;
+
+  return (
+    <>
+      <div className="px-3 pb-1.5 pt-2 text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">
+        Shape
+      </div>
+      <div className="border-t border-border">
+        {p.shape === "rectangle" && (() => {
+          const m = Math.min(p.width, p.height);
+          /* ∑CG: aria-labels for the four corner presets, sharpest → roundest.
+             spec: one or two words each, name the roundedness level; British
+             spelling. sample: "Sharp" · "Subtle" · "Round" · "Pill" */
+          const corners: PresetOption[] = [
+            { value: 0, icon: <CornerPresetIcon r={0} />, aria: "∑CG" },
+            { value: Math.round(m * 0.08), icon: <CornerPresetIcon r={2} />, aria: "∑CG" },
+            { value: Math.round(m * 0.25), icon: <CornerPresetIcon r={4.5} />, aria: "∑CG" },
+            { value: Math.round(m * 0.5), icon: <CornerPresetIcon r={7} />, aria: "∑CG" },
+          ];
+          return (
+            <ShapeRow label="Corner">
+              <PresetRow
+                options={corners}
+                value={p.cornerRadius}
+                onChange={(cornerRadius) => setShapeParams(layer.id, { ...p, cornerRadius })}
+                eps={1}
+                min={0}
+                max={Math.floor(m / 2)}
+                unit="px"
+              />
+            </ShapeRow>
+          );
+        })()}
+        {p.shape === "polygon" && (
+          <ShapeRow label="Sides">
+            <PresetRow
+              options={[3, 4, 5, 6, 8].map((v) => ({ value: v, label: String(v) }))}
+              value={p.sides}
+              onChange={(sides) => setShapeParams(layer.id, { ...p, sides })}
+              min={3}
+              max={12}
+            />
+          </ShapeRow>
+        )}
+        {p.shape === "star" && (
+          <>
+            <ShapeRow label="Points">
+              <PresetRow
+                options={[4, 5, 6, 8].map((v) => ({ value: v, label: String(v) }))}
+                value={p.points}
+                onChange={(points) => setShapeParams(layer.id, { ...p, points })}
+                min={3}
+                max={12}
+              />
+            </ShapeRow>
+            <ShapeRow label="Inner">
+              <PresetRow
+                options={[30, 50, 70].map((v) => ({ value: v, label: `${v}%` }))}
+                value={Math.round((p.innerRadius / p.outerRadius) * 100)}
+                onChange={(v) =>
+                  setShapeParams(layer.id, { ...p, innerRadius: (p.outerRadius * v) / 100 })
+                }
+                eps={1}
+                min={10}
+                max={90}
+                step={5}
+                unit="%"
+              />
+            </ShapeRow>
+          </>
+        )}
+      </div>
+    </>
   );
 }
 
