@@ -13,13 +13,15 @@ import {
 import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
 import { findLayer, isGroup, leafLayers } from "@/lib/substrata/layer-tree";
 import { getActiveLayerId, getSelectedLayerIds, subscribeSelection } from "@/lib/substrata/selection";
-import { setBlendMode, setOpacity, setShapeParams, setTransform } from "@/lib/substrata/layer-ops";
-import { CornerPresetIcon, PresetRow, type PresetOption } from "@/components/substrata/preset-row";
+import { setBlendMode, setFill, setOpacity, setShapeParams, setShapeStroke, setTransform } from "@/lib/substrata/layer-ops";
+import { CornerPresetIcon, PresetRow, Stepper, type PresetOption } from "@/components/substrata/preset-row";
+import { TransientColourCell } from "@/components/substrata/transient-colour";
+import { Switch } from "@/components/ui/switch";
 
 const EMPTY_IDS: readonly string[] = [];
 import { getPersistenceEnabled, subscribePersistence } from "@/lib/substrata/persistence-pref";
 import { openModal } from "@/lib/substrata/modal";
-import type { BlendMode, Layer, SubstrataDoc } from "@/lib/substrata/doc-model";
+import type { BlendMode, Gradient, Layer, SubstrataDoc } from "@/lib/substrata/doc-model";
 import { layerDims } from "@/lib/substrata/shape-geometry";
 
 /**
@@ -225,6 +227,14 @@ export function InspectorBody() {
         </div>
 
         {layer.kind === "shape" && <ShapeSection layer={layer} />}
+        {layer.kind === "freehand" && (
+          <>
+            <SectionTitle text="Shape" />
+            <div className="border-t border-border">
+              <FillRow layerId={layer.id} fill={layer.fill} />
+            </div>
+          </>
+        )}
       </div>
 
       {/* Appearance — a flush action bar pinned to the BOTTOM of the card,
@@ -264,6 +274,77 @@ function ShapeRow({ label, children }: { label: string; children: React.ReactNod
   );
 }
 
+function SectionTitle({ text }: { text: string }) {
+  return (
+    <div className="px-3 pb-1.5 pt-2 text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">
+      {text}
+    </div>
+  );
+}
+
+/** Fill editor for shape/freehand layers (M4 sink's sibling — the direct
+ *  after-the-fact row). A gradient fill previews as its first stop and a pick
+ *  replaces it with the flat colour (v1 call, doc'd in colour-sink.ts). */
+function FillRow({ layerId, fill }: { layerId: string; fill: string | Gradient }) {
+  const hex = typeof fill === "string" ? fill : (fill.stops[0]?.colour ?? "#888888");
+  return (
+    <ShapeRow label="Fill">
+      <TransientColourCell
+        value={hex}
+        onApply={(v, transient) => setFill(layerId, v, transient ? { transient } : undefined)}
+        // ∑CG: aria-label for the layer fill swatch. sample: "Fill colour"
+        swatchAria="∑CG"
+        // ∑CG: aria-label for the layer fill hex field. sample: "Fill hex"
+        hexAria="∑CG"
+      />
+    </ShapeRow>
+  );
+}
+
+/** Vector-stroke rows for a shape layer: on/off, colour, width. */
+function StrokeRows({ layer }: { layer: Layer & { kind: "shape" } }) {
+  const stroke = layer.stroke;
+  return (
+    <>
+      <ShapeRow label="Stroke">
+        <Switch
+          checked={stroke !== null}
+          onCheckedChange={(on) =>
+            setShapeStroke(layer.id, on ? { colour: "#1d1d1d", width: 2 } : null)
+          }
+          // ∑CG: aria-label for the stroke on/off toggle. sample: "Stroke"
+          aria-label="∑CG"
+        />
+      </ShapeRow>
+      {stroke && (
+        <>
+          <ShapeRow label="Colour">
+            <TransientColourCell
+              value={stroke.colour}
+              onApply={(v, transient) =>
+                setShapeStroke(layer.id, { ...stroke, colour: v }, transient ? { transient } : undefined)
+              }
+              // ∑CG: aria-label for the stroke colour swatch. sample: "Stroke colour"
+              swatchAria="∑CG"
+              // ∑CG: aria-label for the stroke hex field. sample: "Stroke hex"
+              hexAria="∑CG"
+            />
+          </ShapeRow>
+          <ShapeRow label="Width">
+            <Stepper
+              value={stroke.width}
+              onChange={(width) => setShapeStroke(layer.id, { ...stroke, width })}
+              min={1}
+              max={100}
+              unit="px"
+            />
+          </ShapeRow>
+        </>
+      )}
+    </>
+  );
+}
+
 /**
  * After-the-fact shape params (Ruby, 2026-07-06): the selected shape's
  * corner/sides/points/inner surface here as presets + a custom (…) hatch —
@@ -274,14 +355,13 @@ function ShapeRow({ label, children }: { label: string; children: React.ReactNod
  */
 function ShapeSection({ layer }: { layer: Layer & { kind: "shape" } }) {
   const p = layer.params;
-  if (p.shape === "ellipse" || p.shape === "line") return null;
 
   return (
     <>
-      <div className="px-3 pb-1.5 pt-2 text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">
-        Shape
-      </div>
+      <SectionTitle text="Shape" />
       <div className="border-t border-border">
+        {/* a line renders stroke-only — no fill row to offer */}
+        {p.shape !== "line" && <FillRow layerId={layer.id} fill={layer.fill} />}
         {p.shape === "rectangle" && (() => {
           const m = Math.min(p.width, p.height);
           /* ∑CG: aria-labels for the four corner presets, sharpest → roundest.
@@ -345,6 +425,7 @@ function ShapeSection({ layer }: { layer: Layer & { kind: "shape" } }) {
             </ShapeRow>
           </>
         )}
+        <StrokeRows layer={layer} />
       </div>
     </>
   );

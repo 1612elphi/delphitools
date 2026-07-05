@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import {
   Aperture,
   Binary,
@@ -54,7 +54,7 @@ import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { ColourSwatchCell, DeferredHexInput } from "@/components/colour-field";
+import { TransientColourCell } from "@/components/substrata/transient-colour";
 import { beginTransient, commitTransient, getSnapshot, subscribe } from "@/lib/substrata/doc-store";
 import { findLayer, isGroup } from "@/lib/substrata/layer-tree";
 import { getActiveLayerId, subscribeSelection } from "@/lib/substrata/selection";
@@ -803,16 +803,8 @@ function StepBtn({
   );
 }
 
-/**
- * Colour param: full-cell native swatch + deferred hex field. The native picker
- * can stream changes while dragging (Chrome) and offers no reliable close
- * signal — the input may keep focus after the OS picker closes, so blur alone
- * can leave the transient gesture open forever. The gesture therefore settles
- * on whichever comes first: a pause in changes (trailing timer), the input
- * blurring, or the row unmounting. A long pause inside the OS picker splits
- * into two undo steps — acceptable. The hex field commits once on blur/Enter
- * by itself.
- */
+/** Colour param — the shared transient swatch+hex cell (transient-colour.tsx
+ *  owns the OS-picker gesture-settling mechanism, extracted from here). */
 function ColourRow({
   spec,
   fx,
@@ -824,56 +816,20 @@ function ColourRow({
   layerId: string;
   stack: FxStack;
 }) {
-  const dragging = useRef(false);
-  const settleTimer = useRef<number | null>(null);
   const value = strValue(fx, spec);
-
-  const settle = () => {
-    if (settleTimer.current !== null) {
-      window.clearTimeout(settleTimer.current);
-      settleTimer.current = null;
-    }
-    if (!dragging.current) return;
-    commitTransient();
-    dragging.current = false;
-  };
-
-  // A still-open gesture must not outlive the row (deselect / remove mid-pick).
-  useEffect(() => {
-    return () => {
-      if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
-      if (dragging.current) {
-        commitTransient();
-        dragging.current = false;
-      }
-    };
-  }, []);
-
   return (
     <>
       <ParamLabel text={spec.label} />
-      <div className="ml-auto flex items-center gap-1.5" onBlur={settle}>
-        <ColourSwatchCell
-          colour={value}
-          onChange={(hex) => {
-            if (!dragging.current) {
-              dragging.current = true;
-              beginTransient();
-            }
-            setFxParam(layerId, stack, fx.id, spec.key, hex, { transient: true });
-            if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
-            settleTimer.current = window.setTimeout(settle, 600);
-          }}
-          className="h-6 w-9 shrink-0 border border-border"
-          // ∑CG: aria-label for a param colour swatch. sample: "Pick colour"
-          aria-label="∑CG"
-        />
-        <DeferredHexInput
+      <div className="ml-auto">
+        <TransientColourCell
           value={value}
-          onChange={(hex) => setFxParam(layerId, stack, fx.id, spec.key, hex)}
-          className="h-6 w-[76px] border-border bg-card px-1.5 text-[11px] tabular-nums shadow-none dark:bg-card md:text-[11px]"
+          onApply={(hex, transient) =>
+            setFxParam(layerId, stack, fx.id, spec.key, hex, transient ? { transient } : undefined)
+          }
+          // ∑CG: aria-label for a param colour swatch. sample: "Pick colour"
+          swatchAria="∑CG"
           // ∑CG: aria-label for a param hex field. sample: "Hex value"
-          aria-label="∑CG"
+          hexAria="∑CG"
         />
       </div>
     </>

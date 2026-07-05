@@ -22,7 +22,7 @@ import {
   siblingListOf,
 } from "./layer-tree";
 import { getSelectedLayerIds, pruneSelection, setActiveLayer, setSelection } from "./selection";
-import type { BlendMode, GroupLayer, Layer, ShapeParams, SubstrataDoc, Transform } from "./doc-model";
+import type { BlendMode, GroupLayer, Layer, ShapeParams, ShapeStroke, SubstrataDoc, Transform } from "./doc-model";
 
 /** Commit a layer transform (the one place a Fabric interaction writes back). */
 export function setTransform(id: string, transform: Transform): void {
@@ -55,6 +55,37 @@ export function setOpacity(id: string, opacity: number, opts?: { transient?: boo
   const apply = (doc: SubstrataDoc): SubstrataDoc => ({
     ...doc,
     layers: mapLayerInTree(doc.layers, id, (l) => ({ ...l, opacity })),
+    updatedAt: Date.now(),
+  });
+  if (opts?.transient) updateTransient(apply);
+  else update(apply);
+}
+
+/** Fill for shape/freehand layers — the M4 colour sink + the Inspector fill
+ *  row. A flat colour REPLACES a gradient fill (v1 call; gradient authoring
+ *  arrives with the picker's gradient tab). Transient-aware: picker drags
+ *  stream through the gesture path and settle to ONE undo step. */
+export function setFill(id: string, fill: string, opts?: { transient?: boolean }): void {
+  const apply = (doc: SubstrataDoc): SubstrataDoc => ({
+    ...doc,
+    layers: mapLayerInTree(doc.layers, id, (l) =>
+      l.kind === "shape" || l.kind === "freehand" ? { ...l, fill } : l,
+    ),
+    updatedAt: Date.now(),
+  });
+  if (opts?.transient) updateTransient(apply);
+  else update(apply);
+}
+
+/** A shape layer's vector stroke (Inspector rows). Transient-aware like setFill. */
+export function setShapeStroke(
+  id: string,
+  stroke: ShapeStroke | null,
+  opts?: { transient?: boolean },
+): void {
+  const apply = (doc: SubstrataDoc): SubstrataDoc => ({
+    ...doc,
+    layers: mapLayerInTree(doc.layers, id, (l) => (l.kind === "shape" ? { ...l, stroke } : l)),
     updatedAt: Date.now(),
   });
   if (opts?.transient) updateTransient(apply);

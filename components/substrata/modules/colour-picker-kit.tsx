@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef } from "react";
+import { beginTransient, commitTransient } from "@/lib/substrata/doc-store";
 
 /**
  * Shared primitives for the colour-picker modes (hue cube, HSV triangle, sliders,
@@ -44,6 +45,11 @@ export function usePointerArea(
       onPointerDown: (e) => {
         dragging.current = true;
         e.currentTarget.setPointerCapture(e.pointerId);
+        // Bracket the drag as ONE doc gesture: with the colour sink live (M4),
+        // every move streams a fill edit into the doc — begin/commit coalesce
+        // them into a single undo step. Harmless when nothing consumes the
+        // colour (commitTransient no-ops when the doc didn't change).
+        beginTransient();
         emit(e.clientX, e.clientY);
       },
       onPointerMove: (e) => {
@@ -52,6 +58,7 @@ export function usePointerArea(
       onPointerUp: (e) => {
         dragging.current = false;
         e.currentTarget.releasePointerCapture?.(e.pointerId);
+        commitTransient();
       },
     },
   ];
