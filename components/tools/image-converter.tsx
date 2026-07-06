@@ -12,6 +12,8 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useFilePaste } from "@/hooks/use-file-paste";
+import { formatBytes } from "@/lib/format-bytes";
+import { JXL_ENCODE_DEFAULTS } from "@/lib/jxl";
 
 type ImageFormat = "png" | "jpeg" | "webp" | "jxl" | "gif" | "bmp" | "tiff" | "ico" | "icns";
 
@@ -202,14 +204,8 @@ async function encodeJxl(canvas: HTMLCanvasElement, options: JxlOptions): Promis
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   // Option shape mirrors @jsquash/jxl's defaults; quality 100 == lossless.
   const result = mod.encode(imageData.data, imageData.width, imageData.height, {
-    effort: 7,
+    ...JXL_ENCODE_DEFAULTS,
     quality: options.lossless ? 100 : options.quality,
-    progressive: false,
-    epf: -1,
-    lossyPalette: false,
-    decodingSpeedTier: 0,
-    photonNoiseIso: 0,
-    lossyModular: false,
     lossless: options.lossless,
   });
   if (!result) throw new Error("JXL encoding failed");
@@ -474,12 +470,6 @@ export function ImageConverterTool() {
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
     setConverted([]);
-  };
-
-  const formatSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   const clearAll = () => {
@@ -1068,7 +1058,7 @@ export function ImageConverterTool() {
                 <div className="flex-1 min-w-0 flex flex-col justify-center px-4 py-2">
                   <p className="font-medium truncate">{file.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {formatSize(file.size)}
+                    {formatBytes(file.size)}
                   </p>
                 </div>
                 <button
@@ -1137,7 +1127,7 @@ export function ImageConverterTool() {
                 <div className="flex-1 min-w-0 flex flex-col justify-center px-4 py-2">
                   <p className="font-medium truncate">{img.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {formatSize(img.size)}
+                    {formatBytes(img.size)}
                   </p>
                 </div>
                 <Button

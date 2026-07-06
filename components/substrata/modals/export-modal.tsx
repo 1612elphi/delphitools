@@ -15,13 +15,13 @@ import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
 import { getActiveLayerId, subscribeSelection } from "@/lib/substrata/selection";
 import {
   EXPORT_FORMATS,
-  formatBytes,
   formatMeta,
   resolveExportDims,
   type ExportFormat,
   type ExportScale,
   type ExportScope,
 } from "@/lib/substrata/export-core";
+import { formatBytes } from "@/lib/format-bytes";
 import { jxlAvailable } from "@/lib/substrata/export-encode";
 import { estimateExportBytes, runExport } from "@/lib/substrata/export-run";
 
@@ -51,10 +51,9 @@ export function ExportModal() {
   const [failed, setFailed] = useState<string | null>(null);
   const [estimate, setEstimate] = useState<number | null>(null);
   // Workers need a secure context; over file:// the JXL encoder is unavailable.
-  const [jxlOk] = useState(jxlAvailable);
+  const jxlOk = jxlAvailable();
 
   const lossy = formatMeta(format).lossy;
-  // JPEG can't carry the alpha a layer-solo export needs.
   const layerScope = scope === "layer" && activeLayerId !== null;
   if (scope === "layer" && activeLayerId === null && !busy) setScope("artboard");
 
@@ -105,8 +104,8 @@ export function ExportModal() {
           </Label>
           <div className="segmented grid-cols-4 -mx-4 border-x-0">
             {EXPORT_FORMATS.map((f) => {
-              const disabled =
-                (f.id === "jxl" && !jxlOk) || (f.id === "jpeg" && layerScope);
+              // JXL needs the worker; a layer solo needs alpha the format can carry.
+              const disabled = (f.id === "jxl" && !jxlOk) || (!f.alpha && layerScope);
               return (
                 <Button
                   key={f.id}
@@ -165,8 +164,8 @@ export function ExportModal() {
               disabled={activeLayerId === null}
               onClick={() => {
                 setScope("layer");
-                // JPEG has no alpha; a solo export is transparent by contract.
-                if (format === "jpeg") setFormat("png");
+                // a solo export is transparent by contract — needs an alpha format
+                if (!formatMeta(format).alpha) setFormat("png");
               }}
             >
               Layer

@@ -52,6 +52,7 @@ import {
   type PandocFormat,
 } from "@/lib/pandoc/formats";
 import { downloadBlob, downloadText } from "@/lib/download";
+import { formatBytes } from "@/lib/format-bytes";
 import { injectPrintStyles, printHtmlInIframe } from "@/lib/print-pdf";
 
 const SCRATCHPAD_KEY = "delphitools-scratchpad";
@@ -69,12 +70,6 @@ function baseName(filename: string): string {
   const name = slash >= 0 ? filename.slice(slash + 1) : filename;
   const dot = name.lastIndexOf(".");
   return dot > 0 ? name.slice(0, dot) : name;
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function extractWarnings(res: PandocConvertResult): string[] {

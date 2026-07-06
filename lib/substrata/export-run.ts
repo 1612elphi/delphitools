@@ -6,7 +6,6 @@
  */
 
 import {
-  areaBudget,
   estimateBytes,
   exportFilename,
   formatMeta,
@@ -21,8 +20,8 @@ import { getActiveLayerId } from "./selection";
 import { leafRenderList } from "./layer-tree";
 import { downloadBlob } from "@/lib/download";
 
-/** JPEG can't carry alpha — a null artboard background flattens to white. */
-const JPEG_FLATTEN = "#ffffff";
+/** Alpha-less formats (JPEG) flatten a null artboard background to white. */
+const NO_ALPHA_FLATTEN = "#ffffff";
 /** Verify failed → re-render this much smaller, at most twice (SPEC §5). */
 const SHRINK_FACTOR = 0.7;
 const MAX_ATTEMPTS = 3;
@@ -47,8 +46,7 @@ function currentRenderPlan(options: ExportOptions) {
   return {
     doc,
     soloLayerId,
-    transparent: options.scope === "layer",
-    flattenBackground: options.format === "jpeg" ? JPEG_FLATTEN : undefined,
+    flattenBackground: formatMeta(options.format).alpha ? undefined : NO_ALPHA_FLATTEN,
   };
 }
 
@@ -73,7 +71,6 @@ export async function runExport(
     const canvas = renderForExport({
       scale,
       soloLayerId: plan.soloLayerId,
-      transparent: plan.transparent,
       flattenBackground: plan.flattenBackground,
     });
     if (!canvas) return { ok: false, reason: "not-ready" };
@@ -109,6 +106,17 @@ export async function runExport(
  *  enough that byte-per-pixel extrapolation is in the right ballpark. */
 const PROXY_AREA = 262_144;
 
+/** One-entry proxy-render cache: the quality slider is the most-dragged
+ *  control and quality doesn't touch pixels — only re-render when something
+ *  that does (doc identity, scale, solo target, flatten) changes. */
+let proxyCache: {
+  doc: object;
+  scale: number;
+  solo: string | null;
+  flatten: string | undefined;
+  canvas: HTMLCanvasElement;
+} | null = null;
+
 /** Approximate the output byte size by encoding a small proxy render with the
  *  live options and scaling by area. Null when the canvas isn't ready. */
 export async function estimateExportBytes(options: ExportOptions): Promise<number | null> {
@@ -116,18 +124,28 @@ export async function estimateExportBytes(options: ExportOptions): Promise<numbe
   if (!plan) return null;
   const { doc } = plan;
 
-  const dims = resolveExportDims(doc.artboard.width, doc.artboard.height, options.scale, areaBudget());
+  const dims = resolveExportDims(doc.artboard.width, doc.artboard.height, options.scale);
   const proxyScale = Math.min(
     dims.effectiveScale,
     Math.sqrt(PROXY_AREA / (doc.artboard.width * doc.artboard.height))
   );
-  const canvas = renderForExport({
-    scale: proxyScale,
-    soloLayerId: plan.soloLayerId,
-    transparent: plan.transparent,
-    flattenBackground: plan.flattenBackground,
-  });
-  if (!canvas) return null;
+  let canvas =
+    proxyCache &&
+    proxyCache.doc === doc &&
+    proxyCache.scale === proxyScale &&
+    proxyCache.solo === plan.soloLayerId &&
+    proxyCache.flatten === plan.flattenBackground
+      ? proxyCache.canvas
+      : null;
+  if (!canvas) {
+    canvas = renderForExport({
+      scale: proxyScale,
+      soloLayerId: plan.soloLayerId,
+      flattenBackground: plan.flattenBackground,
+    });
+    if (!canvas) return null;
+    proxyCache = { doc, scale: proxyScale, solo: plan.soloLayerId, flatten: plan.flattenBackground, canvas };
+  }
   try {
     const blob = await encodeCanvas(canvas, options.format, options.quality);
     return estimateBytes(blob.size, canvas.width * canvas.height, dims.outW * dims.outH);

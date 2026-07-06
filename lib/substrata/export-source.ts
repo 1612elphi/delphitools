@@ -10,9 +10,7 @@ export interface ExportRenderOptions {
   scale: number;
   /** render ONLY this layer (a group renders its leaves), transparent offscreen */
   soloLayerId?: string | null;
-  /** hide the artboard background entirely (solo export / transparent artboard) */
-  transparent?: boolean;
-  /** fill a null artboard background with this colour (JPEG has no alpha) */
+  /** fill a null artboard background with this colour (alpha-less formats) */
   flattenBackground?: string;
 }
 

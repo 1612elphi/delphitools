@@ -12,9 +12,12 @@
 let modulePromise = null;
 
 function getModule() {
-  modulePromise ??= import("./jxl_enc.js").then(({ default: factory }) =>
-    factory({ noInitialRun: true, locateFile: (path) => `/jxl/${path}` })
-  );
+  modulePromise ??= import("./jxl_enc.js")
+    .then(({ default: factory }) => factory({ noInitialRun: true, locateFile: (path) => `/jxl/${path}` }))
+    .catch((err) => {
+      modulePromise = null; // don't poison future encodes on a transient fetch failure
+      throw err;
+    });
   return modulePromise;
 }
 
