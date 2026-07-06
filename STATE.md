@@ -21,7 +21,11 @@ Canvas2D inside Fabric's object cache (effect-render + effects-image) —
 deferred until non-raster layers exist. **PIECES·Primitives is LIVE (M2-7,
 2026-07-05)**: the five ratified shapes draw by drag (ShapeLayer schema v2,
 shape→Fabric sync, real settings bloom, thumbnails/dims/FX-gating chrome) —
-28 headless checks pass.
+28 headless checks pass. **M6 EXPORT is LIVE (2026-07-06)**: PNG/JPEG/WebP
+native + **JXL** (Ruby's call — JXL replaced AVIF upstream; vendored libjxl
+WASM in a /public module worker), 1×/2×/3×, artboard/layer-solo scopes,
+area-clamp + verify + shrink-retry, live size estimate — 25 headless checks
+pass.
 
 Route: `/editor` (sidebar-free, static-export, client-only via `dynamic ssr:false`).
 Dev: `npm run dev` → http://localhost:3000/editor. Gate: `npm run build` + `tsc --noEmit`.
@@ -135,7 +139,15 @@ Dev: `npm run dev` → http://localhost:3000/editor. Gate: `npm run build` + `ts
   `effect-render.ts`/`effects-image.ts` (below). Drop/inner shadow grew an
   Opacity param (default 35% — the layer-styles convention; a 100% black
   shadow is never what anyone wants).
-- **Export modal** — shell (format/scale/quality UI; Export is a no-op stub → M6).
+- **Export modal — LIVE (M6, 2026-07-06)**: format segmented (PNG/JPEG/WebP/
+  **JXL** — JXL replaced AVIF per Ruby, mirroring main's image-converter swap;
+  disabled sans Worker) · 1×/2×/3× · **scope** Artboard / Layer (solo,
+  transparent offscreen; needs a selection; JPEG disabled in layer scope — no
+  alpha) · quality slider (lossy only) · Output strip = **clamped** dims +
+  debounced **~size estimate** (proxy render + encode, area-scaled) ·
+  downscale + failure notices (∑CG). Export runs the M6 orchestrator and
+  downloads via `lib/download`. Ruby's M6 ratifications: JXL-not-AVIF ·
+  **social presets SKIPPED for v1** · batch-zip skipped (SPEC post-v1).
   **Canvas size modal** — functional: dimension presets + W/H/resolution/background
   (+ transparent) committed via `setArtboard` (undoable). Both are blocking Radix
   dialogs (`ModalHost` + `lib/substrata/modal`), NOT dock modules.
@@ -299,6 +311,33 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   its own) and dirties its cache. No rAF/backend machinery; rotation/flip
   invalidation lives in EffectsImage.isCacheDirty, not here.
 
+**Export (M6)**
+- `export-core.ts` (pure) — format metadata (mime/ext/lossy/decodable),
+  `resolveExportDims` (AREA budget: iOS 16.7M px sniffed vs 16384² desktop;
+  downscale-to-fit + effectiveScale, NO tiling — ponytail: tile+stitch is the
+  upgrade path, SPEC allows either), `verifyExportBlob` (SPEC §5 Safari
+  silent-blank guard: size + decode-probe for decodable formats; size-only for
+  JXL — no browser decodes it), estimate scaling, filename builder.
+- `export-encode.ts` — png/jpeg/webp via native `toBlob` (mislabelled-format
+  guard on blob.type); **JXL via `public/jxl/jxl-worker.js`** (module worker in
+  /public — NEVER bundled, the Turbopack-deadlock lesson; imports the vendored
+  `jxl_enc.js` glue relative to itself, ImageData in / bytes out, id-matched
+  promises, dead-worker respawn). Options mirror image-converter's encodeJxl.
+- `export-source.ts` — fabric-free renderer registry (viewport.ts pattern);
+  fabric-canvas registers, orchestrator calls `renderForExport`.
+- `sync.ts › renderExport` — fabric-side: `toCanvasElement` aimed at the
+  artboard THROUGH the live viewportTransform (crop box is viewport-space,
+  multiplier composes with zoom — verified vs installed 7.4.0 source; no vpt
+  mutation, controls skipped, live ActiveSelection safe). Solo = hide all
+  other leaves (target forced visible, flags INSIDE a soloed group still
+  apply); checker never exports (null bg → hidden rect = real alpha; JPEG
+  flattens white); everything snapshotted + restored, then requestRenderAll
+  (the export-vpt after:render overlay repaint).
+- `export-run.ts` — the orchestrator: resolve dims → render → encode →
+  verify → shrink-retry (×0.7, ≤2) → `downloadBlob`; `estimateExportBytes`
+  (≈0.26 MP proxy render + encode, byte-per-pixel extrapolation). An empty
+  transparent artboard sets expectContent=false so verify doesn't false-fail.
+
 **Assets + persistence**
 - `raster-cache.ts` — in-memory hash→`<canvas>` cache + `sha256Hex`.
 - `import-raster.ts` — decode/clamp/cache/append-layer (drop/paste).
@@ -458,9 +497,9 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   preview): pixelate/convolute kernels are absolute-px so they read slightly
   different at proxy scale; blur is relative so it matches. Export +
   Canvas size are **blocking modals** (Canvas size functional, Export a shell → M6).
-- **Top bar**: file ops (New/Open/Save/…) are no-ops (→ M5/M6); Edit history list
-  is a static visual stub (real labelled history later); ACXV keypad no-op; Export
-  no-op (→ M6).
+- **Top bar**: file ops (New/Open/Save/…) are no-ops (→ M5); Edit history list
+  is a static visual stub (real labelled history later); ACXV keypad no-op.
+  **Export is LIVE** (button + Scene menu open the working Export modal).
 - **Workspace**: Guides row — **Grid + Snap are LIVE** (M2-12): `guides-pref.ts`
   store (localStorage, snap defaults on), pure `snap-engine.ts` (artboard
   edges/centre + sibling bbox edges/centres + grid pitch `GRID_SIZE` 50,
@@ -674,11 +713,21 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
    area/Textbox mode, align/line-height/per-range styles (ratified schema),
    text-on-path (scope call still open), Bezier subtool (pen), text dims for
    align/arrange, persisted uploaded fonts (M5).
-1. **Next chunk options**: (a) M6 export pipeline (Export modal is a shell;
-   zero blockers — and every layer kind now renders, so export captures the
-   whole story). (b) Pieces preset-shape gallery (needs Ruby's preset list).
-   (c) SELECT (needs M2-10 semantics + destructive-vs-extract call).
-   (d) M5 persist (project manager + .substrata).
+0h. **✅ M6 EXPORT (2026-07-06).** The full pipeline — see the Export modal
+   section + file map. Ruby's ratifications baked in: **JXL replaces AVIF**
+   (vendored libjxl reused from main via merge; /public module worker) ·
+   **no social presets in v1** · no batch-zip (SPEC post-v1). Deliberate v1
+   ceilings: no tile+stitch — area clamp downscales instead (`ponytail:`
+   note in export-core names the upgrade path); JPEG-flatten branch not
+   harness-covered (2 lines; solo covers the hide-rect path). 25-check harness `.verify-export.mjs`
+   ALL PASS; build + tsc green; worker/wasm MIME-verified out of `out/`.
+   **Awaiting Ruby's eyes (taste + real Safari/iOS)**: modal layout, estimate
+   accuracy feel, verify-guard behaviour on actual iOS Safari (the silent
+   blank-canvas failure isn't reproducible in Chromium), slopsieve for the
+   two new ∑CG gaps (downscale + failure notices).
+1. **Next chunk options**: (a) Pieces preset-shape gallery (needs Ruby's
+   preset list). (b) SELECT (needs M2-10 semantics + destructive-vs-extract
+   call). (c) M5 persist (project manager + .substrata).
 2. **Then M2 tools** — TEXT (still needs the bundled-fonts call, M2-3), SELECT
    (needs M2-10 semantics), text-on-path scope (M2-6), rulers design,
    snap-feel QA, cross-parent layer drag + group transform composition.

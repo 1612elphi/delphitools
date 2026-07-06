@@ -16,7 +16,10 @@ import { getSnapshot, subscribe, setDoc, beginTransient, commitTransient } from 
 import { registerViewportController, reportZoom } from "@/lib/substrata/viewport";
 import { createEmptyDoc, createFreehandLayer, createShapeLayer, createTextLayer, identityTransform } from "@/lib/substrata/doc-model";
 import type { Artboard, ShapeLayer, SubstrataDoc, Transform } from "@/lib/substrata/doc-model";
-import { createReconcileState, reconcile, getLayerIdForObject } from "@/lib/substrata/sync";
+import { createReconcileState, reconcile, getLayerIdForObject, renderExport } from "@/lib/substrata/sync";
+import { registerExportRenderer } from "@/lib/substrata/export-source";
+import { runExport, type ExportOutcome } from "@/lib/substrata/export-run";
+import { resolveExportDims, type ExportOptions } from "@/lib/substrata/export-core";
 import { initSubstrataFilterBackend } from "@/lib/substrata/filter-backend";
 import { importImageFile } from "@/lib/substrata/import-raster";
 import { deleteLayers, setShapeParams, setTextProps, setTransform, setTransforms } from "@/lib/substrata/layer-ops";
@@ -321,6 +324,13 @@ export function FabricCanvas() {
         }
         reportZoom(canvas.getZoom());
       },
+    });
+
+    // M6: export renders through the reconciler's fabric scene (export-source
+    // bridge — the orchestrator/estimate call renderForExport, we own fabric).
+    registerExportRenderer((opts) => {
+      const doc = getSnapshot();
+      return doc ? renderExport(canvas, state, doc, opts) : null;
     });
 
     // Wheel: ⌘/Ctrl (or trackpad pinch) zooms to the cursor; plain wheel pans.
@@ -1021,6 +1031,45 @@ export function FabricCanvas() {
         effectParam: (layerId: string, fxId: string, key: string, value: number | string, transient?: boolean) =>
           setFxParam(layerId, "effects", fxId, key, value, { transient }),
         gesture: { begin: beginTransient, commit: commitTransient },
+        // M6 export QA: the pure clamp maths + run the full pipeline headlessly
+        // (no download) and report the blob's vitals + a decoded pixel probe.
+        resolveDims: resolveExportDims,
+        exportBlob: async (opts?: Partial<ExportOptions>, probeAt?: [number, number][]) => {
+          const outcome: ExportOutcome = await runExport(
+            { format: "png", scale: 1, quality: 90, scope: "artboard", ...opts },
+            { download: false },
+          );
+          if (!outcome.ok) return { ok: false, reason: outcome.reason };
+          // decode the produced blob and sample RGBA at fractional coords
+          const probe: number[][] = [];
+          try {
+            const bitmap = await createImageBitmap(outcome.blob);
+            const c = document.createElement("canvas");
+            c.width = bitmap.width;
+            c.height = bitmap.height;
+            const ctx = c.getContext("2d", { willReadFrequently: true })!;
+            ctx.drawImage(bitmap, 0, 0);
+            bitmap.close();
+            for (const [fx, fy] of probeAt ?? [[0.005, 0.005], [0.5, 0.5]]) {
+              const x = Math.round(fx * (c.width - 1));
+              const y = Math.round(fy * (c.height - 1));
+              probe.push(Array.from(ctx.getImageData(x, y, 1, 1).data));
+            }
+          } catch {
+            // jxl blobs aren't browser-decodable — vitals only
+          }
+          return {
+            ok: true,
+            size: outcome.blob.size,
+            type: outcome.blob.type,
+            width: outcome.width,
+            height: outcome.height,
+            effectiveScale: outcome.effectiveScale,
+            downscaled: outcome.downscaled,
+            filename: outcome.filename,
+            probe,
+          };
+        },
         samplePixel: (sx: number, sy: number) => {
           const dpr = window.devicePixelRatio || 1;
           return Array.from(
@@ -1145,6 +1194,7 @@ export function FabricCanvas() {
       themeObserver.disconnect();
       delete (window as unknown as Record<string, unknown>).__substrata;
       registerViewportController(null);
+      registerExportRenderer(null);
       ro.disconnect();
       wrap.removeEventListener("dragover", onDragOver);
       wrap.removeEventListener("wheel", onWheel);
