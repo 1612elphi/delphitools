@@ -16,9 +16,15 @@ function hasIDB(): boolean {
   return typeof indexedDB !== "undefined";
 }
 
-function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
+/** Promisified `canvas.toBlob`. `quality` is 1–100 (lossy mime types only).
+ *  Shared with the export encoder (export-encode.ts). */
+export function canvasToBlob(canvas: HTMLCanvasElement, mime = "image/png", quality?: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("toBlob failed"))), "image/png");
+    canvas.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error("toBlob failed"))),
+      mime,
+      quality !== undefined ? quality / 100 : undefined,
+    );
   });
 }
 

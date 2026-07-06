@@ -7,16 +7,8 @@
  */
 
 import { formatMeta, type ExportFormat } from "./export-core";
-
-function canvasToBlob(canvas: HTMLCanvasElement, mime: string, quality?: number): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error("Canvas toBlob failed"))),
-      mime,
-      quality !== undefined ? quality / 100 : undefined
-    );
-  });
-}
+import { canvasToBlob } from "./blobs";
+import { JXL_ENCODE_DEFAULTS } from "@/lib/jxl";
 
 // ── JXL worker bridge ────────────────────────────────────────────────────────
 
@@ -68,25 +60,8 @@ function encodeJxl(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
   const id = ++seq;
   return new Promise<Blob>((resolve, reject) => {
     pending.set(id, { resolve, reject });
-    // Option shape mirrors image-converter's encodeJxl (@jsquash/jxl defaults).
     getJxlWorker().postMessage(
-      {
-        id,
-        data,
-        width,
-        height,
-        options: {
-          effort: 7,
-          quality,
-          progressive: false,
-          epf: -1,
-          lossyPalette: false,
-          decodingSpeedTier: 0,
-          photonNoiseIso: 0,
-          lossyModular: false,
-          lossless: quality >= 100,
-        },
-      },
+      { id, data, width, height, options: { ...JXL_ENCODE_DEFAULTS, quality, lossless: quality >= 100 } },
       [data.buffer]
     );
   });

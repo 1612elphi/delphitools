@@ -24,18 +24,20 @@ export interface FormatMeta {
   mime: string;
   ext: string;
   lossy: boolean;
+  /** carries an alpha channel — gates layer-solo export + background flatten */
+  alpha: boolean;
   /** browsers can decode it back — gates the pixel-probe in verify */
   decodable: boolean;
 }
 
 export const EXPORT_FORMATS: FormatMeta[] = [
-  { id: "png", label: "PNG", mime: "image/png", ext: "png", lossy: false, decodable: true },
-  { id: "jpeg", label: "JPEG", mime: "image/jpeg", ext: "jpg", lossy: true, decodable: true },
-  { id: "webp", label: "WebP", mime: "image/webp", ext: "webp", lossy: true, decodable: true },
+  { id: "png", label: "PNG", mime: "image/png", ext: "png", lossy: false, alpha: true, decodable: true },
+  { id: "jpeg", label: "JPEG", mime: "image/jpeg", ext: "jpg", lossy: true, alpha: false, decodable: true },
+  { id: "webp", label: "WebP", mime: "image/webp", ext: "webp", lossy: true, alpha: true, decodable: true },
   // JXL replaces AVIF (Ruby 2026-07-06, mirroring the image-converter swap on
   // main). Encoded via the vendored libjxl WASM; no browser decodes it back,
   // so verify is size-only for jxl.
-  { id: "jxl", label: "JXL", mime: "image/jxl", ext: "jxl", lossy: true, decodable: false },
+  { id: "jxl", label: "JXL", mime: "image/jxl", ext: "jxl", lossy: true, alpha: true, decodable: false },
 ];
 
 export function formatMeta(id: ExportFormat): FormatMeta {
@@ -52,8 +54,8 @@ export function formatMeta(id: ExportFormat): FormatMeta {
  * downscales to fit and reports it. Tile+stitch is the upgrade path if
  * full-res oversize exports are ever demanded (SPEC allows either).
  */
-export const IOS_AREA_BUDGET = 16_777_216;
-export const DESKTOP_AREA_BUDGET = 268_435_456; // 16384², the common engine cap
+const IOS_AREA_BUDGET = 16_777_216;
+const DESKTOP_AREA_BUDGET = 268_435_456; // 16384², the common engine cap
 
 function isIOSLike(): boolean {
   if (typeof navigator === "undefined") return false;
@@ -88,8 +90,7 @@ export function resolveExportDims(
   budget: number = areaBudget()
 ): ResolvedDims {
   const area = width * height * scale * scale;
-  const fit = area > budget ? Math.sqrt(budget / (width * height)) : scale;
-  const effectiveScale = Math.min(scale, fit);
+  const effectiveScale = area > budget ? Math.sqrt(budget / (width * height)) : scale;
   return {
     outW: Math.max(1, Math.round(width * effectiveScale)),
     outH: Math.max(1, Math.round(height * effectiveScale)),
@@ -106,9 +107,13 @@ const MIN_PLAUSIBLE_BYTES = 100;
 /**
  * Catch Safari's silent transparent-canvas export failure: the encode
  * "succeeds" but the blob is empty/header-only or decodes to all-transparent
- * pixels. For formats the browser can decode we re-decode and probe an 8×8
- * downsample; for JXL (encode-only) the size check is all we have. Returns
- * true when the blob looks like a real image.
+ * pixels. For formats the browser can decode we re-decode at NATURAL size and
+ * scan the alpha channel — a downsampled probe point-samples and misses
+ * content smaller than its stride (a logo-sized layer solo'd on a big
+ * artboard would false-fail). Early-exits on the first opaque pixel; the
+ * all-transparent worst case scans ≤ the area budget once, at export time
+ * only. For JXL (encode-only) the size check is all we have. Returns true
+ * when the blob looks like a real image.
  */
 export async function verifyExportBlob(blob: Blob, expectContent: boolean): Promise<boolean> {
   if (blob.size < MIN_PLAUSIBLE_BYTES) return false;
@@ -117,12 +122,12 @@ export async function verifyExportBlob(blob: Blob, expectContent: boolean): Prom
   try {
     const bitmap = await createImageBitmap(blob);
     const probe = document.createElement("canvas");
-    probe.width = 8;
-    probe.height = 8;
+    probe.width = bitmap.width;
+    probe.height = bitmap.height;
     const ctx = probe.getContext("2d", { willReadFrequently: true })!;
-    ctx.drawImage(bitmap, 0, 0, 8, 8);
+    ctx.drawImage(bitmap, 0, 0);
     bitmap.close();
-    const { data } = ctx.getImageData(0, 0, 8, 8);
+    const { data } = ctx.getImageData(0, 0, probe.width, probe.height);
     for (let i = 3; i < data.length; i += 4) {
       if (data[i] > 0) return true; // any non-transparent pixel = content
     }
@@ -139,12 +144,6 @@ export async function verifyExportBlob(blob: Blob, expectContent: boolean): Prom
 export function estimateBytes(proxyBytes: number, proxyArea: number, fullArea: number): number {
   if (proxyArea <= 0) return 0;
   return Math.round(proxyBytes * (fullArea / proxyArea));
-}
-
-export function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 /** `<scene>-1080x1350.png` — scene name + dims + extension, all factual. */

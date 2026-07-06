@@ -24,7 +24,7 @@ shape→Fabric sync, real settings bloom, thumbnails/dims/FX-gating chrome) —
 28 headless checks pass. **M6 EXPORT is LIVE (2026-07-06)**: PNG/JPEG/WebP
 native + **JXL** (Ruby's call — JXL replaced AVIF upstream; vendored libjxl
 WASM in a /public module worker), 1×/2×/3×, artboard/layer-solo scopes,
-area-clamp + verify + shrink-retry, live size estimate — 25 headless checks
+area-clamp + verify + shrink-retry, live size estimate — 28 headless checks
 pass.
 
 Route: `/editor` (sidebar-free, static-export, client-only via `dynamic ssr:false`).
@@ -719,7 +719,11 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
    **no social presets in v1** · no batch-zip (SPEC post-v1). Deliberate v1
    ceilings: no tile+stitch — area clamp downscales instead (`ponytail:`
    note in export-core names the upgrade path); JPEG-flatten branch not
-   harness-covered (2 lines; solo covers the hide-rect path). 25-check harness `.verify-export.mjs`
+   harness-covered (2 lines; solo covers the hide-rect path). Post-review
+   hardening: verify decodes at NATURAL size and scans the full alpha channel
+   (an 8×8 probe point-sampled small solo'd layers into false "Safari
+   failures" — caught by review, regression-checked); the JXL worker no
+   longer caches a failed module fetch. 28-check harness `.verify-export.mjs`
    ALL PASS; build + tsc green; worker/wasm MIME-verified out of `out/`.
    **Awaiting Ruby's eyes (taste + real Safari/iOS)**: modal layout, estimate
    accuracy feel, verify-guard behaviour on actual iOS Safari (the silent

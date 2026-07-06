@@ -388,7 +388,6 @@ export function renderExport(
   opts: {
     scale: number;
     soloLayerId?: string | null;
-    transparent?: boolean;
     flattenBackground?: string;
   },
 ): HTMLCanvasElement {
@@ -415,10 +414,11 @@ export function renderExport(
 
   const savedArtboardVisible = artboardObj?.visible;
   const savedArtboardFill = artboardObj?.fill;
-  // Never export the transparency checker: a null background is real alpha in
-  // the file — unless the format can't carry alpha (JPEG → flatten colour).
+  // Never export the transparency checker: a solo export is transparent
+  // offscreen by contract, and a null background is real alpha in the file —
+  // unless the format can't carry alpha (flatten colour).
   if (artboardObj) {
-    if (opts.transparent) artboardObj.visible = false;
+    if (opts.soloLayerId) artboardObj.visible = false;
     else if (doc.artboard.background === null) {
       if (opts.flattenBackground) artboardObj.set("fill", opts.flattenBackground);
       else artboardObj.visible = false;
