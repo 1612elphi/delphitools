@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
@@ -12,51 +12,77 @@ import {
 } from "@/components/ui/dialog";
 import { closeModal } from "@/lib/substrata/modal";
 import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
+import { getActiveLayerId, subscribeSelection } from "@/lib/substrata/selection";
+import {
+  EXPORT_FORMATS,
+  formatBytes,
+  formatMeta,
+  resolveExportDims,
+  type ExportFormat,
+  type ExportScale,
+  type ExportScope,
+} from "@/lib/substrata/export-core";
+import { jxlAvailable } from "@/lib/substrata/export-encode";
+import { estimateExportBytes, runExport } from "@/lib/substrata/export-run";
 
 /**
- * Export modal (SHELL — M5 chrome only). Lets the user pick a raster format,
- * pixel scale, and (for lossy formats) quality, and previews the resulting
- * output dimensions read off the live artboard. The actual encode/download
- * pipeline is NOT wired here — see `handleExport` (lands in M6).
+ * Export modal (M6 — LIVE). Format / scale / scope / quality over the export
+ * orchestrator (export-run): render → encode → verify → shrink-retry →
+ * download. The Output strip previews the CLAMPED dimensions (area budget,
+ * export-core) plus a debounced background size estimate off a proxy render.
  *
  * Renders its own <DialogContent>; the host (`ModalHost`) supplies the Radix
  * <Dialog> wrapper (overlay, focus trap, Esc/✕ close). Dense/flush styling per
- * DESIGN.md: title + labels breathe, the option groups + footer bleed flush to
- * the frame, hairline dividers, tabular-nums for numbers.
- *
- * Copy is functional chrome only (Export · Format · Scale · Quality · PNG …);
- * a11y description is opted out via aria-describedby={undefined} since the title
- * is self-describing.
+ * DESIGN.md. Copy: format acronyms + chrome words (Export · Format · Scale ·
+ * Artboard · Layer) are functional chrome; the downscale warning and failure
+ * notice are ∑CG gaps.
  */
 
-type FormatId = "png" | "jpeg" | "webp";
-type Scale = 1 | 2 | 3;
-
-// `lossy` gates the Quality slider (PNG is lossless → no quality control).
-const FORMATS: { id: FormatId; label: string; lossy: boolean }[] = [
-  { id: "png", label: "PNG", lossy: false },
-  { id: "jpeg", label: "JPEG", lossy: true },
-  { id: "webp", label: "WebP", lossy: true },
-];
-
-const SCALES: Scale[] = [1, 2, 3];
+const SCALES: ExportScale[] = [1, 2, 3];
 
 export function ExportModal() {
   const doc = useSyncExternalStore(subscribe, getSnapshot, () => null);
-  const [format, setFormat] = useState<FormatId>("png");
-  const [scale, setScale] = useState<Scale>(1);
+  const activeLayerId = useSyncExternalStore(subscribeSelection, getActiveLayerId, () => null);
+  const [format, setFormat] = useState<ExportFormat>("png");
+  const [scale, setScale] = useState<ExportScale>(1);
   const [quality, setQuality] = useState(90);
+  const [scope, setScope] = useState<ExportScope>("artboard");
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
+  const [estimate, setEstimate] = useState<number | null>(null);
+  // Workers need a secure context; over file:// the JXL encoder is unavailable.
+  const [jxlOk] = useState(jxlAvailable);
 
-  const lossy = FORMATS.find((f) => f.id === format)?.lossy ?? false;
+  const lossy = formatMeta(format).lossy;
+  // JPEG can't carry the alpha a layer-solo export needs.
+  const layerScope = scope === "layer" && activeLayerId !== null;
+  if (scope === "layer" && activeLayerId === null && !busy) setScope("artboard");
 
   const ab = doc?.artboard;
-  const outDims = ab ? `${ab.width * scale} × ${ab.height * scale} px` : "—";
+  const dims = ab ? resolveExportDims(ab.width, ab.height, scale) : null;
 
-  function handleExport() {
-    // STUB — no export pipeline yet. Encoding the artboard to PNG/JPEG/WebP at
-    // the chosen scale/quality and triggering the download lands in M6. Until
-    // then this only dismisses the modal; it does NOT produce a file.
-    closeModal();
+  // Debounced live size estimate — proxy render + encode with the live options.
+  useEffect(() => {
+    let stale = false;
+    const t = setTimeout(() => {
+      setEstimate(null);
+      void estimateExportBytes({ format, scale, quality, scope }).then((bytes) => {
+        if (!stale) setEstimate(bytes);
+      });
+    }, 250);
+    return () => {
+      stale = true;
+      clearTimeout(t);
+    };
+  }, [format, scale, quality, scope, doc]);
+
+  async function handleExport() {
+    setBusy(true);
+    setFailed(null);
+    const outcome = await runExport({ format, scale, quality, scope });
+    setBusy(false);
+    if (outcome.ok) closeModal();
+    else setFailed(outcome.reason);
   }
 
   return (
@@ -77,18 +103,23 @@ export function ExportModal() {
           <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
             Format
           </Label>
-          <div className="segmented grid-cols-3 -mx-4 border-x-0">
-            {FORMATS.map((f) => (
-              <Button
-                key={f.id}
-                type="button"
-                size="sm"
-                variant={format === f.id ? "default" : "outline"}
-                onClick={() => setFormat(f.id)}
-              >
-                {f.label}
-              </Button>
-            ))}
+          <div className="segmented grid-cols-4 -mx-4 border-x-0">
+            {EXPORT_FORMATS.map((f) => {
+              const disabled =
+                (f.id === "jxl" && !jxlOk) || (f.id === "jpeg" && layerScope);
+              return (
+                <Button
+                  key={f.id}
+                  type="button"
+                  size="sm"
+                  variant={format === f.id ? "default" : "outline"}
+                  disabled={disabled}
+                  onClick={() => setFormat(f.id)}
+                >
+                  {f.label}
+                </Button>
+              );
+            })}
           </div>
         </div>
 
@@ -113,6 +144,36 @@ export function ExportModal() {
           </div>
         </div>
 
+        {/* Scope — whole artboard vs the selected layer soloed (transparent). */}
+        <div className="space-y-2">
+          <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            Scope
+          </Label>
+          <div className="segmented grid-cols-2 -mx-4 border-x-0">
+            <Button
+              type="button"
+              size="sm"
+              variant={scope === "artboard" ? "default" : "outline"}
+              onClick={() => setScope("artboard")}
+            >
+              Artboard
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={scope === "layer" ? "default" : "outline"}
+              disabled={activeLayerId === null}
+              onClick={() => {
+                setScope("layer");
+                // JPEG has no alpha; a solo export is transparent by contract.
+                if (format === "jpeg") setFormat("png");
+              }}
+            >
+              Layer
+            </Button>
+          </div>
+        </div>
+
         {/* Quality — lossy formats only (PNG has none). */}
         {lossy && (
           <div className="space-y-2">
@@ -127,18 +188,42 @@ export function ExportModal() {
             <Slider
               value={[quality]}
               onValueChange={([v]) => setQuality(v)}
-              min={0}
+              min={1}
               max={100}
               step={1}
             />
           </div>
         )}
 
-        {/* Output dimensions readout (data) — flush status strip meeting the
-            footer divider; artboard dims × scale. */}
+        {/* Downscale notice — the area budget reduced the requested scale. */}
+        {dims?.downscaled && (
+          <div className="-mx-4 border-t border-border bg-muted px-4 py-2 text-xs text-muted-foreground">
+            {/* ∑CG: warning that the requested scale exceeded the safe canvas
+                area budget and the export will render smaller. One short line;
+                the real numbers are in the Output row below.
+                sample: "Reduced to fit device limits" */}
+            ∑CG
+          </div>
+        )}
+
+        {/* Failure notice — encode/verify gave up (rare; SPEC §5 guard). */}
+        {failed && (
+          <div className="-mx-4 border-t border-border bg-muted px-4 py-2 text-xs text-destructive">
+            {/* ∑CG: export-failed notice shown above the Output strip. One
+                short line; the mono suffix is the internal reason code (data).
+                sample: "Export failed — try a smaller scale" */}
+            ∑CG <span className="font-mono">({failed})</span>
+          </div>
+        )}
+
+        {/* Output dimensions + live size estimate (data) — flush status strip
+            meeting the footer divider; clamped dims × scale. */}
         <div className="-mx-4 -mb-4 flex items-center justify-between gap-4 border-t border-border bg-muted px-4 py-2.5 text-xs">
           <span className="text-muted-foreground">Output</span>
-          <span className="tabular-nums">{outDims}</span>
+          <span className="tabular-nums">
+            {dims ? `${dims.outW} × ${dims.outH} px` : "—"}
+            {estimate !== null && ` · ~${formatBytes(estimate)}`}
+          </span>
         </div>
       </div>
 
@@ -157,6 +242,7 @@ export function ExportModal() {
           <Button
             type="button"
             onClick={handleExport}
+            disabled={busy || !doc}
             className="col-span-2 h-12 text-sm font-bold"
           >
             Export

@@ -21,7 +21,7 @@ import type { SubstrataDoc, FreehandLayer, Layer, ShapeLayer, ShapeParams, Gradi
 import { EffectsImage } from "./effects-image";
 import { SubstrataText } from "./text-object";
 import { resolveFontCss } from "./fonts";
-import { leafRenderList } from "./layer-tree";
+import { findLayer, leafRenderList } from "./layer-tree";
 import { getRaster } from "./raster-cache";
 import { outlineToPathD, strokeOutline } from "./freehand";
 import { polygonPoints, starPoints } from "./shape-geometry";
@@ -366,4 +366,82 @@ function syncShapeContent(
     strokeDashArray: layer.stroke?.dash ?? null,
   });
   return obj;
+}
+
+// ── export render (M6) ───────────────────────────────────────────────────────
+
+/**
+ * Render the artboard (or one layer soloed) to a fresh canvas at an exact
+ * pixel multiplier, independent of the live pan/zoom. Uses Fabric's
+ * toCanvasElement — its crop box is in VIEWPORT coordinates and its multiplier
+ * composes with the current zoom (verified against installed 7.4.0 source), so
+ * we aim it at the artboard through the live viewportTransform instead of
+ * mutating it. Controls are skipped by toCanvasElement (skipControlsDrawing);
+ * a live ActiveSelection is safe — children render through their full composed
+ * transform in the static path. Everything mutated here (solo visibility, the
+ * artboard rect's checker fill) is snapshotted and restored.
+ */
+export function renderExport(
+  canvas: Canvas,
+  state: ReconcileState,
+  doc: SubstrataDoc,
+  opts: {
+    scale: number;
+    soloLayerId?: string | null;
+    transparent?: boolean;
+    flattenBackground?: string;
+  },
+): HTMLCanvasElement {
+  const artboardObj = state.byId.get(ARTBOARD_KEY);
+  const savedVisible = new Map<FabricObject, boolean>();
+
+  // Solo: show only the target's leaves. The target itself is forced visible
+  // (soloing a hidden layer means "show me this layer"), but flags INSIDE the
+  // subtree still apply — a hidden child of a soloed group stays hidden.
+  if (opts.soloLayerId) {
+    const target = findLayer(doc.layers, opts.soloLayerId);
+    const keep = new Set<string>();
+    if (target) {
+      for (const entry of leafRenderList([{ ...target, visible: true } as Layer])) {
+        if (entry.visible) keep.add(entry.layer.id);
+      }
+    }
+    for (const [key, obj] of state.byId) {
+      if (key === ARTBOARD_KEY) continue;
+      savedVisible.set(obj, obj.visible);
+      obj.visible = keep.has(key);
+    }
+  }
+
+  const savedArtboardVisible = artboardObj?.visible;
+  const savedArtboardFill = artboardObj?.fill;
+  // Never export the transparency checker: a null background is real alpha in
+  // the file — unless the format can't carry alpha (JPEG → flatten colour).
+  if (artboardObj) {
+    if (opts.transparent) artboardObj.visible = false;
+    else if (doc.artboard.background === null) {
+      if (opts.flattenBackground) artboardObj.set("fill", opts.flattenBackground);
+      else artboardObj.visible = false;
+    }
+  }
+
+  const vp = canvas.viewportTransform;
+  const zoom = canvas.getZoom();
+  const el = canvas.toCanvasElement(opts.scale / zoom, {
+    left: vp[4],
+    top: vp[5],
+    width: doc.artboard.width * zoom,
+    height: doc.artboard.height * zoom,
+  });
+
+  for (const [obj, visible] of savedVisible) obj.visible = visible;
+  if (artboardObj) {
+    if (savedArtboardVisible !== undefined) artboardObj.visible = savedArtboardVisible;
+    artboardObj.set("fill", savedArtboardFill ?? null);
+  }
+  // toCanvasElement fired after:render under the export viewport — the
+  // top-context overlay (grid/guides) may have redrawn at export zoom; queue a
+  // real frame so it repaints against the live viewport.
+  canvas.requestRenderAll();
+  return el;
 }
