@@ -150,6 +150,7 @@ export function FabricCanvas() {
     });
     initSubstrataFilterBackend();
     const state = createReconcileState();
+    let maskDocId: string | null = null;
 
     // ── selection chrome (backdrop-sketch parity) ─────────────────────────────
     // Square 8px paper-filled handles with a primary 1.5px border, primary
@@ -285,11 +286,18 @@ export function FabricCanvas() {
       // Drop selected ids whose layers are gone (e.g. undoing an import).
       pruneSelection(new Set(collectIds(doc.layers)));
       // A pixel mask is scene-space at artboard resolution — a resized
-      // artboard invalidates it (stale-domain guard).
+      // artboard OR a different document invalidates it (undo/redo keeps the
+      // doc id, so masks correctly survive history moves).
       const pxSel = getPixelSelection();
-      if (pxSel && (pxSel.mask.width !== doc.artboard.width || pxSel.mask.height !== doc.artboard.height)) {
+      if (
+        pxSel &&
+        (pxSel.mask.width !== doc.artboard.width ||
+          pxSel.mask.height !== doc.artboard.height ||
+          doc.id !== maskDocId)
+      ) {
         clearPixelSelection();
       }
+      maskDocId = doc.id;
       applySelection();
     };
 
@@ -685,10 +693,13 @@ export function FabricCanvas() {
           return true;
         }
         const s = getToolSettings().select;
+        // pixels cover [i, i+1) and the mask fns floor their seed — rounding
+        // here would shift right/bottom-half clicks into the NEXT pixel and
+        // push edge clicks out of bounds (review-caught)
         const mask =
           s.wandMode === "global"
-            ? globalMask(img, Math.round(p.x), Math.round(p.y), s.tolerance)
-            : floodMask(img, Math.round(p.x), Math.round(p.y), s.tolerance);
+            ? globalMask(img, p.x, p.y, s.tolerance)
+            : floodMask(img, p.x, p.y, s.tolerance);
         setPixelSelectionMask(mask);
       }
       canvas.requestRenderAll();
@@ -696,6 +707,13 @@ export function FabricCanvas() {
     };
     const selectPointerMove = (px: number, py: number): void => {
       if (!marqueeDraft && !lassoDraft) return;
+      if (!selectSub()) {
+        // tool switched mid-drag (keyboard) — the gesture dies with it
+        marqueeDraft = null;
+        lassoDraft = null;
+        canvas.requestRenderAll();
+        return;
+      }
       const p = sceneXY(px, py);
       if (marqueeDraft) marqueeDraft = { ...marqueeDraft, x1: p.x, y1: p.y };
       else if (lassoDraft) lassoDraft.pts.push(snapLassoPt(lassoDraft.field, p));
@@ -703,6 +721,12 @@ export function FabricCanvas() {
     };
     const selectPointerUp = (): void => {
       if (!marqueeDraft && !lassoDraft) return;
+      if (!selectSub()) {
+        marqueeDraft = null;
+        lassoDraft = null;
+        canvas.requestRenderAll();
+        return;
+      }
       const doc = getSnapshot();
       if (marqueeDraft) {
         const d = marqueeDraft;
@@ -747,6 +771,7 @@ export function FabricCanvas() {
       syncAntTimer();
       canvas.requestRenderAll();
     });
+    syncAntTimer(); // the store outlives the component — a remount must resume the crawl
 
     // Canvas → store: reflect the user's canvas selection (leaf ids — clicking
     // the canvas selects layers, not their groups; group selection comes from
@@ -1251,7 +1276,7 @@ export function FabricCanvas() {
           const b = pixelSel.bounds;
           reportSelectionAnchor(
             Math.min(Math.max(sx(b.x + b.w / 2), 60), canvas.getWidth() - 60),
-            Math.min(sy(b.y + b.h) + 10, canvas.getHeight() - 44),
+            Math.min(Math.max(sy(b.y + b.h) + 10, 30), canvas.getHeight() - 44),
           );
         }
       }

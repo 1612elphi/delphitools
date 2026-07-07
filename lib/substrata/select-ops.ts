@@ -224,12 +224,23 @@ async function bakeExtractedLayer(): Promise<ExtractBake | null> {
   return { source, sourceCanvas, layerMask, bounds, newLayer };
 }
 
-/** The doc may have moved under the bake's awaits — only write if the source
- *  layer still exists (insertAfter would silently no-op otherwise, leaving a
- *  phantom history entry + a selection pointing nowhere). */
-function sourceStillLive(sourceId: string): boolean {
+/** One bake at a time: extract/cut cross real await windows (encode + hash),
+ *  and a second click / Enter auto-repeat mid-flight would stack duplicate
+ *  baked layers (review-caught). Callers no-op while a bake is in flight. */
+let bakeInFlight = false;
+
+/** The doc may have moved under the bake's awaits (undo mid-encode is one
+ *  keypress away) — only write if the source layer still exists AND still has
+ *  the pose+pixels the bake was computed from; otherwise the committed hole/
+ *  copy would be projected through a stale transform (review-caught). */
+function sourceStillMatches(source: RasterLayer): boolean {
   const doc = getSnapshot();
-  return doc !== null && findLayer(doc.layers, sourceId) !== null;
+  const live = doc ? findLayer(doc.layers, source.id) : null;
+  if (!live || live.kind !== "raster") return false;
+  return (
+    live.blobHash === source.blobHash &&
+    JSON.stringify(live.transform) === JSON.stringify(source.transform)
+  );
 }
 
 // ── the bakes ────────────────────────────────────────────────────────────────
@@ -242,8 +253,18 @@ function sourceStillLive(sourceId: string): boolean {
  * new layer's id, or null when the gate fails / the selection misses.
  */
 export async function extractSelection(): Promise<string | null> {
+  if (bakeInFlight) return null;
+  bakeInFlight = true;
+  try {
+    return await extractSelectionInner();
+  } finally {
+    bakeInFlight = false;
+  }
+}
+
+async function extractSelectionInner(): Promise<string | null> {
   const baked = await bakeExtractedLayer();
-  if (!baked || !sourceStillLive(baked.source.id)) return null;
+  if (!baked || !sourceStillMatches(baked.source)) return null;
   const { source, newLayer } = baked;
   // Select BEFORE the update so the reconcile applies it the moment the
   // Fabric object exists (import-raster's post-update selection race).
@@ -266,6 +287,16 @@ export async function extractSelection(): Promise<string | null> {
  * undo snapshots that reference it keep rendering (STATE contract).
  */
 export async function cutSelection(): Promise<string | null> {
+  if (bakeInFlight) return null;
+  bakeInFlight = true;
+  try {
+    return await cutSelectionInner();
+  } finally {
+    bakeInFlight = false;
+  }
+}
+
+async function cutSelectionInner(): Promise<string | null> {
   const baked = await bakeExtractedLayer();
   if (!baked) return null;
   const { source, sourceCanvas, layerMask, newLayer } = baked;
@@ -280,7 +311,7 @@ export async function cutSelection(): Promise<string | null> {
   ctx.drawImage(layerMask, 0, 0);
   const holeHash = await bakeCanvas(holed);
 
-  if (!sourceStillLive(source.id)) return null;
+  if (!sourceStillMatches(source)) return null;
   setSelection([newLayer.id]); // before the update — the extract rationale
   update((doc) => {
     const layers = mapLayerInTree(insertAfter(doc.layers, source.id, newLayer), source.id, (l) =>
