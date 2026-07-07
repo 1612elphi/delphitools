@@ -14,9 +14,10 @@ import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
 import { findLayer, isGroup, leafLayers } from "@/lib/substrata/layer-tree";
 import { getActiveLayerId, getSelectedLayerIds, subscribeSelection } from "@/lib/substrata/selection";
 import { setBlendMode, setFill, setOpacity, setShapeParams, setShapeStroke, setTextProps, setTransform } from "@/lib/substrata/layer-ops";
-import { deriveTextStyle, styleFields, textAccent } from "@/lib/substrata/text-style";
+import { deriveTextStyle, styleFields, textAccent, DEFAULT_TEXT_PROPS } from "@/lib/substrata/text-style";
 import { FontSelect, TextAlignRow, TextStyleRow } from "@/components/substrata/text-style-row";
 import { cn } from "@/lib/utils";
+import { segCellClass } from "@/components/substrata/preset-row";
 import { CornerPresetIcon, PresetRow, Stepper, type PresetOption } from "@/components/substrata/preset-row";
 import { ShapeFillRows } from "@/components/substrata/gradient-row";
 import { TransientColourCell } from "@/components/substrata/transient-colour";
@@ -468,13 +469,13 @@ function TextSection({ layer }: { layer: Layer & { kind: "text" } }) {
         </ShapeRow>
         <ShapeRow label="Align">
           <TextAlignRow
-            value={layer.align ?? "left"}
+            value={layer.align ?? DEFAULT_TEXT_PROPS.align}
             onPick={(align) => setTextProps(layer.id, { align })}
           />
         </ShapeRow>
         <ShapeRow label="Line height">
           <Stepper
-            value={layer.lineHeight ?? 1.16}
+            value={layer.lineHeight ?? DEFAULT_TEXT_PROPS.lineHeight}
             onChange={(v) => setTextProps(layer.id, { lineHeight: Math.round(v * 100) / 100 })}
             min={0.5}
             max={3}
@@ -483,7 +484,7 @@ function TextSection({ layer }: { layer: Layer & { kind: "text" } }) {
         </ShapeRow>
         <ShapeRow label="Spacing">
           <Stepper
-            value={layer.charSpacing ?? 0}
+            value={layer.charSpacing ?? DEFAULT_TEXT_PROPS.charSpacing}
             onChange={(charSpacing) => setTextProps(layer.id, { charSpacing })}
             min={-200}
             max={800}
@@ -500,9 +501,7 @@ function TextSection({ layer }: { layer: Layer & { kind: "text" } }) {
                 onClick={() => setTextProps(layer.id, { direction: d })}
                 className={cn(
                   "h-6 px-2 text-[10.5px] uppercase",
-                  (layer.direction ?? "ltr") === d
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
+                  segCellClass((layer.direction ?? DEFAULT_TEXT_PROPS.direction) === d),
                 )}
               >
                 {d}

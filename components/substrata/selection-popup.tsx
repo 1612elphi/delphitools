@@ -117,11 +117,7 @@ export function SelectionPopup() {
         <Scissors className={ICON} />
       </ActionBtn>
       <div className="w-px bg-border" />
-      <ActionBtn
-        action="invert"
-        label="Invert"
-        onClick={() => invertSelection(doc.artboard.width, doc.artboard.height)}
-      >
+      <ActionBtn action="invert" label="Invert" onClick={invertSelection}>
         <SquareSlash className={ICON} />
       </ActionBtn>
       <ActionBtn action="grow" label="Grow" onClick={() => growSelection()}>

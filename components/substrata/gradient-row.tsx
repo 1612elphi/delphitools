@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { segCellClass } from "@/components/substrata/preset-row";
+import { angleToCoords, coordsToAngle } from "@/lib/substrata/gradient-geometry";
 import { StepBtn, Stepper } from "@/components/substrata/preset-row";
 import { TransientColourCell } from "@/components/substrata/transient-colour";
 import { setFill } from "@/lib/substrata/layer-ops";
@@ -26,30 +28,6 @@ import type { Gradient, GradientStop } from "@/lib/substrata/doc-model";
 
 const MAX_STOPS = 6;
 
-/**
- * Linear coords from an angle through the unit box: 0° = left→right,
- * 90° = top→bottom (clockwise, y-down screen space). The line passes through
- * the centre (0.5, 0.5) along (cos θ, sin θ) and spans the box's full
- * projection onto it (len = |cos| + |sin|, the CSS-gradient convention), so
- * 45° runs corner to corner instead of stopping short. Endpoints poke ≤ ~0.11
- * outside 0–1 at oblique angles — canvas/fabric gradients accept that (the
- * 0–1 coords are a relative basis, not a clamp).
- * Mirrored by the scratch check .check-gradient-coords.mjs — keep in step.
- */
-export function angleToCoords(deg: number): Gradient["coords"] {
-  const t = (deg * Math.PI) / 180;
-  const dx = Math.cos(t);
-  const dy = Math.sin(t);
-  const half = (Math.abs(dx) + Math.abs(dy)) / 2;
-  const r = (v: number) => Math.round(v * 1000) / 1000 + 0; // + 0 folds −0 → 0
-  return { x1: r(0.5 - dx * half), y1: r(0.5 - dy * half), x2: r(0.5 + dx * half), y2: r(0.5 + dy * half) };
-}
-
-/** Inverse for display: the stored line's direction, degrees 0–359. */
-export function coordsToAngle(c: Gradient["coords"]): number {
-  const deg = (Math.atan2(c.y2 - c.y1, c.x2 - c.x1) * 180) / Math.PI;
-  return Math.round((deg + 360) % 360) % 360;
-}
 
 /** Centred radial default — inner point at the middle, outer radius to the
  *  edge midpoints. Focal/centre editing is deferred (v1). */
@@ -104,9 +82,7 @@ function ModePair<T extends string>({
           onClick={() => onPick(o)}
           className={cn(
             "h-6 px-2 text-[10.5px] capitalize",
-            value === o
-              ? "bg-primary text-primary-foreground"
-              : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
+            segCellClass(value === o),
           )}
         >
           {o}

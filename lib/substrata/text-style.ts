@@ -69,3 +69,13 @@ export function deriveTextStyle(layer: Pick<TextLayer, "stroke" | "plate">): Tex
 export function textAccent(layer: Pick<TextLayer, "fill" | "stroke" | "plate">): string {
   return layer.plate?.colour ?? layer.stroke?.colour ?? layer.fill;
 }
+
+/** Defaults for the additive object-level typography fields (M2-1) — the ONE
+ *  place the legacy-doc fallbacks live (reconciler + Inspector consume; the
+ *  1.16 line-height is fabric's own default, still awaiting Ruby's QA). */
+export const DEFAULT_TEXT_PROPS = {
+  align: "left",
+  lineHeight: 1.16,
+  charSpacing: 0,
+  direction: "ltr",
+} as const;

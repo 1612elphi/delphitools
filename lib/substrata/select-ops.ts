@@ -29,8 +29,8 @@ import { getSnapshot, update } from "./doc-store";
 import { findLayer, mapLayerInTree } from "./layer-tree";
 import { insertAfter } from "./layer-ops";
 import { getActiveLayerId, setSelection } from "./selection";
-import { getRaster, putRaster, sha256Hex } from "./raster-cache";
-import { canvasToBlob, persistRaster } from "./blobs";
+import { getRaster } from "./raster-cache";
+import { bakeCanvasToHash } from "./blobs";
 import { getPixelSelection, getSelectionAlphaCanvas, setPixelSelectionMask } from "./pixel-selection";
 import type { MaskBounds, PixelMask } from "./select-mask";
 import { growMask, invertMask, maskBounds, shrinkMask } from "./select-mask";
@@ -44,19 +44,13 @@ import { growMask, invertMask, maskBounds, shrinkMask } from "./select-mask";
  * inversion covers the artboard that exists NOW. An inverted full-artboard
  * selection comes out empty and clears (the store's empty-mask rule).
  */
-export function invertSelection(artboardW: number, artboardH: number): void {
+export function invertSelection(): void {
+  // The mask's domain always matches the artboard here: the reconciler clears
+  // any dims-mismatched (or different-doc) mask on every doc emit, before the
+  // popup/keymap could reach this op — no re-domaining needed.
   const sel = getPixelSelection();
   if (!sel) return;
-  let mask = sel.mask;
-  if (mask.width !== artboardW || mask.height !== artboardH) {
-    const data = new Uint8Array(artboardW * artboardH);
-    const cols = Math.min(mask.width, artboardW);
-    for (let y = 0; y < Math.min(mask.height, artboardH); y++) {
-      data.set(mask.data.subarray(y * mask.width, y * mask.width + cols), y * artboardW);
-    }
-    mask = { data, width: artboardW, height: artboardH };
-  }
-  setPixelSelectionMask(invertMask(mask));
+  setPixelSelectionMask(invertMask(sel.mask));
 }
 
 /** Dilate the selection by `step` px (artboard px — the mask's own domain). */
@@ -90,16 +84,6 @@ export function canOperateOnActive(): boolean {
 }
 
 // ── bake plumbing ────────────────────────────────────────────────────────────
-
-/** import-raster's bake flow, verbatim: encode → content-address the encoded
- *  bytes → cache under the hash → persist (best-effort, opt-in gated). */
-async function bakeCanvas(canvas: HTMLCanvasElement): Promise<string> {
-  const blob = await canvasToBlob(canvas);
-  const hash = await sha256Hex(await blob.arrayBuffer());
-  putRaster(hash, canvas);
-  void persistRaster(hash);
-  return hash;
-}
 
 /**
  * Rasterise the scene-space selection alpha into LAYER space (the source's
@@ -203,7 +187,7 @@ async function bakeExtractedLayer(): Promise<ExtractBake | null> {
   const dy = (bounds.y + bounds.h / 2 - source.naturalHeight / 2) * sy;
   const rad = (t.angle * Math.PI) / 180;
 
-  const hash = await bakeCanvas(crop);
+  const hash = await bakeCanvasToHash(crop);
   const newLayer: RasterLayer = {
     ...createRasterLayer({
       name: source.name, // layer names are data (the duplicate precedent), not copy
@@ -252,14 +236,16 @@ function sourceStillMatches(source: RasterLayer): boolean {
  * keeps offering the other ops). ONE update() = ONE undo step. Returns the
  * new layer's id, or null when the gate fails / the selection misses.
  */
-export async function extractSelection(): Promise<string | null> {
-  if (bakeInFlight) return null;
+function withBakeGuard(fn: () => Promise<string | null>): Promise<string | null> {
+  if (bakeInFlight) return Promise.resolve(null);
   bakeInFlight = true;
-  try {
-    return await extractSelectionInner();
-  } finally {
+  return fn().finally(() => {
     bakeInFlight = false;
-  }
+  });
+}
+
+export function extractSelection(): Promise<string | null> {
+  return withBakeGuard(extractSelectionInner);
 }
 
 async function extractSelectionInner(): Promise<string | null> {
@@ -286,14 +272,8 @@ async function extractSelectionInner(): Promise<string | null> {
  * canvas is natural-size) and its OLD hash stays in the raster cache, so
  * undo snapshots that reference it keep rendering (STATE contract).
  */
-export async function cutSelection(): Promise<string | null> {
-  if (bakeInFlight) return null;
-  bakeInFlight = true;
-  try {
-    return await cutSelectionInner();
-  } finally {
-    bakeInFlight = false;
-  }
+export function cutSelection(): Promise<string | null> {
+  return withBakeGuard(cutSelectionInner);
 }
 
 async function cutSelectionInner(): Promise<string | null> {
@@ -309,7 +289,7 @@ async function cutSelectionInner(): Promise<string | null> {
   ctx.drawImage(sourceCanvas, 0, 0);
   ctx.globalCompositeOperation = "destination-out";
   ctx.drawImage(layerMask, 0, 0);
-  const holeHash = await bakeCanvas(holed);
+  const holeHash = await bakeCanvasToHash(holed);
 
   if (!sourceStillMatches(source)) return null;
   setSelection([newLayer.id]); // before the update — the extract rationale

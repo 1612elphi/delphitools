@@ -42,6 +42,10 @@ const TOASTS: Record<ToastId, { icon: React.ReactNode; text: string }> = {
   // ∑CG: wand-needs-layer toast — ≤24 chars, the wand needs an active layer
   //   to sample pixels from. sample: "Select a layer first"
   "wand-needs-layer": { icon: <ImagePlus className={ICON} />, text: "∑CG" },
+  // ∑CG: open-failed toast — ≤24 chars, the picked .substrata file couldn't
+  //   be read (corrupt/not a scene). The current scene is untouched.
+  //   sample: "Couldn't open that file"
+  "open-failed": { icon: <ClipboardX className={ICON} />, text: "∑CG" },
 };
 
 export function ToastSlot() {

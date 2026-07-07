@@ -21,6 +21,7 @@ import type { SubstrataDoc, FreehandLayer, Layer, ShapeLayer, ShapeParams, Gradi
 import { EffectsImage } from "./effects-image";
 import { SubstrataText } from "./text-object";
 import { resolveFontCss } from "./fonts";
+import { DEFAULT_TEXT_PROPS } from "./text-style";
 import { findLayer, leafRenderList } from "./layer-tree";
 import { getRaster } from "./raster-cache";
 import { outlineToPathD, strokeOutline } from "./freehand";
@@ -283,12 +284,22 @@ function toFabricFill(fill: ShapeLayer["fill"]): string | FabricGradient<unknown
   });
 }
 
+/** Parsed+simplified command lists per symbol id — static content, parsed
+ *  once (reconcile calls symbolPath on EVERY pass for every symbol layer;
+ *  re-tokenizing SVG strings per frame-ish is waste). transformPath maps to
+ *  fresh arrays (verified pure), so sharing the simplified source is safe. */
+const simplifiedSymbolCache = new Map<string, ReturnType<typeof fabricPathUtil.makePathSimpler>>();
+
 /** A preset symbol's path commands, its 256 GRID scaled onto width×height
  *  (grid mapping keeps proportions consistent across symbols; arcs survive
  *  because makePathSimpler lowers everything to line/curve commands first). */
 function symbolPath(symbolId: string, width: number, height: number) {
-  const preset = presetShape(symbolId);
-  const simple = fabricPathUtil.makePathSimpler(fabricPathUtil.parsePath(preset?.d ?? "M0,0"));
+  let simple = simplifiedSymbolCache.get(symbolId);
+  if (!simple) {
+    const preset = presetShape(symbolId);
+    simple = fabricPathUtil.makePathSimpler(fabricPathUtil.parsePath(preset?.d ?? "M0,0"));
+    simplifiedSymbolCache.set(symbolId, simple);
+  }
   return fabricPathUtil.transformPath(
     simple,
     [width / SYMBOL_GRID, 0, 0, height / SYMBOL_GRID, 0, 0],
@@ -406,10 +417,10 @@ function syncTextContent(
     strokeWidth: layer.stroke?.width ?? 0,
     // object-level typography (M2-1) — optional fields default here so
     // pre-existing docs render unchanged; applies mid-edit like font/size
-    textAlign: layer.align ?? "left",
-    lineHeight: layer.lineHeight ?? 1.16,
-    charSpacing: layer.charSpacing ?? 0,
-    direction: layer.direction ?? "ltr",
+    textAlign: layer.align ?? DEFAULT_TEXT_PROPS.align,
+    lineHeight: layer.lineHeight ?? DEFAULT_TEXT_PROPS.lineHeight,
+    charSpacing: layer.charSpacing ?? DEFAULT_TEXT_PROPS.charSpacing,
+    direction: layer.direction ?? DEFAULT_TEXT_PROPS.direction,
     // outline style has a transparent fill — keep the editing caret visible
     cursorColor: layer.stroke?.colour ?? layer.fill,
   });
