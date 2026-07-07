@@ -729,14 +729,26 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
    accuracy feel, verify-guard behaviour on actual iOS Safari (the silent
    blank-canvas failure isn't reproducible in Chromium), slopsieve for the
    two new ∑CG gaps (downscale + failure notices).
-1. **Next chunk options**: (a) Pieces preset-shape gallery (needs Ruby's
-   preset list). (b) SELECT (needs M2-10 semantics + destructive-vs-extract
-   call). (c) M5 persist (project manager + .substrata).
-2. **Then M2 tools** — TEXT (still needs the bundled-fonts call, M2-3), SELECT
-   (needs M2-10 semantics), text-on-path scope (M2-6), rulers design,
-   snap-feel QA, cross-parent layer drag + group transform composition.
-   Ruby's open decision queue: bundled fonts · SELECT destructive-vs-extract ·
-   text-on-path (options laid out 2026-07-03, unanswered).
-3. **M4 colour** (fills for text/shapes — the colour picker's missing sink),
-   **M5 persist** (project mgr + `.substrata`), **M6 export pipeline**,
-   **M7 background removal** — per BUILD-PLAN.
+1. **✅ DECISION QUEUE CLEARED (Ruby, 2026-07-07)** — build against these:
+   - **SELECT v1 (M2-10)**: Marquee · Lasso · Wand. Magnetic is a LASSO
+     OPTION (setting, not a subtool). "Superflood" = the wand's global
+     colour-select mode (non-contiguous; same threshold maths, no flood).
+   - **Pixel-selection semantics**: BOTH extract-to-layer AND destructive
+     ops, **extract is the default**. While pixel data is selected a
+     CONTEXTUAL POPUP offers: extract (default action) · cut (destructive) ·
+     invert · deselect · grow · shrink. Destructive edits bake a NEW
+     content-addressed raster (old hash stays cached → undo snapshots keep
+     working).
+   - **Text-on-path: CUT** (M2-6 closed — not v1, not post-v1).
+   - **Pieces preset gallery**: arrows + simple symbols (heart, cross, cog,
+     cloud, …). Source path data from a free permissively-licensed library
+     (vendor the paths as data + attribution; no new runtime dep).
+   - **M5 tuning ratified**: IDB-only v1 (no OPFS) · snapshot retention ~20
+     on the existing autosave debounce · `browser-fs-access` dep accepted.
+   - **Rulers: IN, with drag-out GUIDELINES** — the guides are the point
+     (Ruby uses them constantly); renderer + guide model needed.
+2. **Build order**: rulers+guides → SELECT → Pieces gallery → M5 persist.
+   Still open after that: cross-parent layer drag + group transform
+   composition, snap-feel QA, TEXT niceties (area mode, per-range styles).
+3. **M7 background removal** — per BUILD-PLAN (model-hosting decisions
+   still open: ~115 MB vs Cloudflare 25 MiB/file, transformers v3→v4 bump).
