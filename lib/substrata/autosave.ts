@@ -10,7 +10,7 @@
 
 import { getDB } from "./db";
 import { getSnapshot, subscribe } from "./doc-store";
-import { SCHEMA_VERSION, type Layer, type SubstrataDoc } from "./doc-model";
+import { newId, stampLoadedDoc, type Layer, type SubstrataDoc } from "./doc-model";
 import { hydrateRaster, persistRaster } from "./blobs";
 import { getPersistenceEnabled } from "./persistence-pref";
 
@@ -34,7 +34,7 @@ export async function saveProject(doc: SubstrataDoc): Promise<void> {
   });
 }
 
-function rasterHashes(layers: Layer[]): string[] {
+export function rasterHashes(layers: Layer[]): string[] {
   const out: string[] = [];
   for (const l of layers) {
     if (l.kind === "raster") out.push(l.blobHash);
@@ -50,10 +50,7 @@ export async function loadLatestProject(): Promise<SubstrataDoc | null> {
   const rec = await getDB().projects.orderBy("updatedAt").last();
   if (!rec) return null;
   await Promise.all(rasterHashes(rec.doc.layers).map((h) => hydrateRaster(h)));
-  // Forward-stamp older docs: v1 predates shape layers, so the shape alone is
-  // already valid v2 — no field migration (doc-model SCHEMA_VERSION notes).
-  // `guides` landed additively within v2 — default it for docs saved before.
-  return { ...rec.doc, guides: rec.doc.guides ?? [], schemaVersion: SCHEMA_VERSION };
+  return stampLoadedDoc(rec.doc);
 }
 
 /** On opt-in: persist the current scene + all its rasters so a reload restores. */
@@ -70,13 +67,31 @@ export async function clearPersistedData(): Promise<void> {
   await Promise.all([db.projects.clear(), db.blobs.clear(), db.snapshots.clear()]);
 }
 
+/** Recovery snapshots (M5, ratified 2026-07-07: retention ~20 on the same
+ *  debounce). Insurance against a corrupted latest-project write — no UI yet
+ *  (ponytail: recovery surface is a later nicety; the data is what matters). */
+const SNAPSHOT_KEEP = 20;
+
+async function saveSnapshot(doc: SubstrataDoc): Promise<void> {
+  if (!canPersist()) return;
+  const db = getDB();
+  await db.snapshots.add({ id: newId(), projectId: doc.id, doc, createdAt: Date.now() });
+  const all = await db.snapshots.where("projectId").equals(doc.id).sortBy("createdAt");
+  if (all.length > SNAPSHOT_KEEP) {
+    await db.snapshots.bulkDelete(all.slice(0, all.length - SNAPSHOT_KEEP).map((r) => r.id));
+  }
+}
+
 /** Subscribe to the doc store and persist (debounced). Returns a stop fn. */
 export function startAutosave(debounceMs = 800): () => void {
   let timer: ReturnType<typeof setTimeout> | null = null;
   const flush = () => {
     timer = null;
     const doc = getSnapshot();
-    if (doc) void saveProject(doc);
+    if (doc) {
+      void saveProject(doc);
+      void saveSnapshot(doc);
+    }
   };
   const unsubscribe = subscribe(() => {
     if (timer) clearTimeout(timer);
