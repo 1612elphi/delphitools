@@ -16,7 +16,7 @@ import { getSnapshot, subscribe, setDoc, beginTransient, commitTransient } from 
 import { registerViewportController, reportZoom } from "@/lib/substrata/viewport";
 import { createEmptyDoc, createFreehandLayer, createShapeLayer, createTextLayer, identityTransform } from "@/lib/substrata/doc-model";
 import type { Artboard, ShapeLayer, SubstrataDoc, Transform } from "@/lib/substrata/doc-model";
-import { createReconcileState, reconcile, getLayerIdForObject, renderExport } from "@/lib/substrata/sync";
+import { bakeLayerObject, createReconcileState, reconcile, getLayerIdForObject, renderExport } from "@/lib/substrata/sync";
 import { registerExportRenderer } from "@/lib/substrata/export-source";
 import { runExport, type ExportOutcome } from "@/lib/substrata/export-run";
 import { resolveExportDims, type ExportOptions } from "@/lib/substrata/export-core";
@@ -40,6 +40,7 @@ import { GRID_SIZE, getGuides, subscribeGuides, toggleGuide } from "@/lib/substr
 import { addGuide, removeGuide, setGuidePos } from "@/lib/substrata/guide-ops";
 import { presetShape } from "@/lib/substrata/preset-shapes";
 import { packSubstrata, unpackSubstrata } from "@/lib/substrata/substrata-file";
+import { registerLayerBaker, rasterizeLayer } from "@/lib/substrata/rasterize-ops";
 import {
   floodMask,
   globalMask,
@@ -367,6 +368,12 @@ export function FabricCanvas() {
     registerExportRenderer((opts) => {
       const doc = getSnapshot();
       return doc ? renderExport(canvas, state, doc, opts) : null;
+    });
+    // M3-15: rasterize bakes through the reconciler's live objects
+    registerLayerBaker((id) => {
+      const doc = getSnapshot();
+      const layer = doc ? findLayer(doc.layers, id) : null;
+      return layer ? bakeLayerObject(state, layer) : null;
     });
 
     // Wheel: ⌘/Ctrl (or trackpad pinch) zooms to the cursor; plain wheel pans.
@@ -1515,6 +1522,7 @@ export function FabricCanvas() {
             const c = obj?.getCenterPoint();
             return {
               id: e.layer.id,
+              kind: e.layer.kind,
               name: e.layer.name,
               parent: parentIdOf(doc.layers, e.layer.id) ?? null, // layers-tree QA: shows nesting
               scene: c && { x: c.x, y: c.y },
@@ -1594,6 +1602,8 @@ export function FabricCanvas() {
           );
           await importImageFile(new File([blob], "test.png", { type: "image/png" }), at ? { at } : undefined);
         },
+        // M3-15 QA: rasterize a layer through the real bake pipeline
+        rasterize: rasterizeLayer,
         // M5 QA: .substrata round-trip without file pickers (bytes in/out)
         packScene: async () => {
           const doc = getSnapshot();
@@ -1795,6 +1805,7 @@ export function FabricCanvas() {
       delete (window as unknown as Record<string, unknown>).__substrata;
       registerViewportController(null);
       registerExportRenderer(null);
+      registerLayerBaker(null);
       ro.disconnect();
       // an unmount mid guide-move must not leak the open transient — commit it
       // (still one undo step) so isGestureActive() can't stay true forever

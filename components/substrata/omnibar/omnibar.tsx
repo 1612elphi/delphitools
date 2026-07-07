@@ -11,7 +11,6 @@ import {
   Wand2,
   SlidersHorizontal,
   Type,
-  PenTool,
   Shapes,
   Square,
   Pencil,
@@ -98,7 +97,8 @@ const TOOLS: ToolDef[] = [
     key: "T",
     subs: [
       { id: "text", label: "Text", icon: <Type className={ICON} /> },
-      { id: "bezier", label: "Bezier", icon: <PenTool className={ICON} /> },
+      // Bezier/pen CUT from v1 (Ruby 2026-07-07) — PathLayer stays ratified
+      // schema for later; text-on-path (its main consumer) was already cut.
     ],
   },
   {

@@ -16,7 +16,7 @@
  */
 
 import type { Canvas, FabricObject } from "fabric";
-import { Ellipse, Gradient as FabricGradient, Line, Path, Pattern, Point, Polygon, Rect, util as fabricPathUtil } from "fabric";
+import { Ellipse, Gradient as FabricGradient, Line, Path, Pattern, Point, Polygon, Rect, Shadow, util as fabricPathUtil } from "fabric";
 import type { SubstrataDoc, FreehandLayer, Layer, ShapeLayer, ShapeParams, Gradient, TextLayer } from "./doc-model";
 import { EffectsImage } from "./effects-image";
 import { SubstrataText } from "./text-object";
@@ -497,5 +497,40 @@ export function renderExport(
   // top-context overlay (grid/guides) may have redrawn at export zoom; queue a
   // real frame so it repaints against the live viewport.
   canvas.requestRenderAll();
+  return el;
+}
+
+// ── rasterize bake (M3-15) ───────────────────────────────────────────────────
+
+/**
+ * Render ONE layer's content to a tight standalone canvas for rasterize:
+ * angle temporarily zeroed (it survives on the layer transform — never baked),
+ * opacity forced to 1 (it stays a live layer property; baking it would
+ * double-apply). Uses FabricObject.toCanvasElement, which sizes by
+ * boundingRect + shadow allowance — text PLATES draw outside the text bbox
+ * (cache-padded), so they get an INVISIBLE shadow whose blur inflates the
+ * bake canvas symmetrically (fabric's own bounds mechanism; the shadow paints
+ * nothing at alpha 0).
+ */
+export function bakeLayerObject(state: ReconcileState, layer: Layer): HTMLCanvasElement | null {
+  const obj = state.byId.get(layer.id);
+  if (!obj) return null;
+  const saved = {
+    angle: obj.angle,
+    visible: obj.visible,
+    opacity: obj.opacity,
+    shadow: obj.shadow,
+  };
+  obj.set({ angle: 0, visible: true, opacity: 1 });
+  if (layer.kind === "text" && layer.plate) {
+    obj.set(
+      "shadow",
+      new Shadow({ color: "rgba(0,0,0,0)", blur: layer.plate.padding + 8, offsetX: 0, offsetY: 0 }),
+    );
+  }
+  obj.setCoords();
+  const el = obj.toCanvasElement({ enableRetinaScaling: false });
+  obj.set(saved);
+  obj.setCoords();
   return el;
 }

@@ -17,8 +17,14 @@ lives in its own **LOOKS module** (sixth module; live-thumbnail gallery) with
 (M3 effects, 2026-07-05)**: all six registry effects (drop/inner shadow,
 outer/inner glow, stroke incl. inner/centre, colour overlay) composite via
 Canvas2D inside Fabric's object cache (effect-render + effects-image) —
-30 headless pixel checks pass. M3 is CODE-COMPLETE; M3-15 (rasterize gate)
-deferred until non-raster layers exist. **PIECES·Primitives is LIVE (M2-7,
+30 headless pixel checks pass. M3 is CODE-COMPLETE incl. **M3-15
+RASTERIZE (2026-07-07)**: context-menu Rasterize bakes shape/freehand/text
+into a RasterLayer (same id, one undo step restores the vector) — content
+bakes at current scale with flips folded in, angle stays live on the
+transform, opacity stays a layer property; text plates bake via an
+invisible-shadow bounds inflation (fabric's own mechanism). Unlocks
+filters/effects + SELECT cut on every layer kind. 12-check
+`.verify-rasterize.mjs` ALL PASS. **PIECES·Primitives is LIVE (M2-7,
 2026-07-05)**: the five ratified shapes draw by drag (ShapeLayer schema v2,
 shape→Fabric sync, real settings bloom, thumbnails/dims/FX-gating chrome) —
 28 headless checks pass. **M6 EXPORT is LIVE (2026-07-06)**: PNG/JPEG/WebP
@@ -66,7 +72,8 @@ Dev: `npm run dev` → http://localhost:3000/editor. Gate: `npm run build` + `ts
   track the live subtool. **Canonical subtool names (Ruby-authored chrome, used
   as zone title / tooltip / aria):** Move·Crop / Select·Lasso·Wand /
   Adjust (NO subtools — Ruby 2026-07-03: the FILTERS/COLOUR split collapsed
-  once both families landed in one filters[] pipeline) / Text·Bezier / Pieces·Primitives·Brush·Pencil;
+  once both families landed in one filters[] pipeline) / Text (Bezier/pen CUT from v1, Ruby 2026-07-07) /
+  Pieces·Primitives·Brush·Pencil;
   **contextual
   settings zone** (Ruby's call: the middle reads the ACTIVE TOOL — icon + name
   + LIVE chips per tool: MOVE = selection X/Y from the doc; SELECT = subtool
