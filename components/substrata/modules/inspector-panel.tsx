@@ -15,7 +15,8 @@ import { findLayer, isGroup, leafLayers } from "@/lib/substrata/layer-tree";
 import { getActiveLayerId, getSelectedLayerIds, subscribeSelection } from "@/lib/substrata/selection";
 import { setBlendMode, setFill, setOpacity, setShapeParams, setShapeStroke, setTextProps, setTransform } from "@/lib/substrata/layer-ops";
 import { deriveTextStyle, styleFields, textAccent } from "@/lib/substrata/text-style";
-import { FontSelect, TextStyleRow } from "@/components/substrata/text-style-row";
+import { FontSelect, TextAlignRow, TextStyleRow } from "@/components/substrata/text-style-row";
+import { cn } from "@/lib/utils";
 import { CornerPresetIcon, PresetRow, Stepper, type PresetOption } from "@/components/substrata/preset-row";
 import { TransientColourCell } from "@/components/substrata/transient-colour";
 import { Switch } from "@/components/ui/switch";
@@ -464,6 +465,50 @@ function TextSection({ layer }: { layer: Layer & { kind: "text" } }) {
             max={400}
             unit="px"
           />
+        </ShapeRow>
+        <ShapeRow label="Align">
+          <TextAlignRow
+            value={layer.align ?? "left"}
+            onPick={(align) => setTextProps(layer.id, { align })}
+          />
+        </ShapeRow>
+        <ShapeRow label="Line height">
+          <Stepper
+            value={layer.lineHeight ?? 1.16}
+            onChange={(v) => setTextProps(layer.id, { lineHeight: Math.round(v * 100) / 100 })}
+            min={0.5}
+            max={3}
+            step={0.1}
+          />
+        </ShapeRow>
+        <ShapeRow label="Spacing">
+          <Stepper
+            value={layer.charSpacing ?? 0}
+            onChange={(charSpacing) => setTextProps(layer.id, { charSpacing })}
+            min={-200}
+            max={800}
+            step={10}
+          />
+        </ShapeRow>
+        <ShapeRow label="Direction">
+          {/* LTR/RTL — standard writing-direction vocabulary (functional chrome) */}
+          <span className="segmented grid-cols-2">
+            {(["ltr", "rtl"] as const).map((d) => (
+              <button
+                key={d}
+                type="button"
+                onClick={() => setTextProps(layer.id, { direction: d })}
+                className={cn(
+                  "h-6 px-2 text-[10.5px] uppercase",
+                  (layer.direction ?? "ltr") === d
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
+                )}
+              >
+                {d}
+              </button>
+            ))}
+          </span>
         </ShapeRow>
         <ShapeRow label="Style">
           <TextStyleRow

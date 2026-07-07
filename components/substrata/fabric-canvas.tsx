@@ -22,11 +22,11 @@ import { runExport, type ExportOutcome } from "@/lib/substrata/export-run";
 import { resolveExportDims, type ExportOptions } from "@/lib/substrata/export-core";
 import { initSubstrataFilterBackend } from "@/lib/substrata/filter-backend";
 import { importImageFile } from "@/lib/substrata/import-raster";
-import { deleteLayers, setShapeParams, setTextProps, setTransform, setTransforms } from "@/lib/substrata/layer-ops";
+import { deleteLayers, groupLayers, moveLayer, setOpacity, setShapeParams, setTextProps, setTransform, setTransforms } from "@/lib/substrata/layer-ops";
 import { SubstrataText } from "@/lib/substrata/text-object";
 import { styleFields } from "@/lib/substrata/text-style";
 import { addFx, setFxParam } from "@/lib/substrata/fx-ops";
-import { collectIds, findLayer, leafLayers, leafRenderList } from "@/lib/substrata/layer-tree";
+import { collectIds, findLayer, leafLayers, leafRenderList, parentIdOf } from "@/lib/substrata/layer-tree";
 import {
   getActiveLayerId,
   getSelectedLayerIds,
@@ -520,6 +520,7 @@ export function FabricCanvas() {
         fontFamily: ts.text.fontFamily,
         fontSize: ts.text.fontSize,
         ...style,
+        align: ts.text.align,
         transform: { ...identityTransform(), x: p.x, y: p.y },
       });
       appendLayer(layer);
@@ -1515,6 +1516,7 @@ export function FabricCanvas() {
             return {
               id: e.layer.id,
               name: e.layer.name,
+              parent: parentIdOf(doc.layers, e.layer.id) ?? null, // layers-tree QA: shows nesting
               scene: c && { x: c.x, y: c.y },
               screen: c && toScreen(c.x, c.y),
               filters: e.layer.filters.map((f) => f.type),
@@ -1548,6 +1550,18 @@ export function FabricCanvas() {
           updateToolSettings(tool, patch),
         shapeParams: setShapeParams,
         textProps: setTextProps,
+        // layers-tree QA: drive reparenting/grouping/opacity ops directly
+        moveLayer,
+        groupLayers,
+        setOpacity,
+        // text-props QA: raw object-level typography off the doc (absent = default)
+        textDump: (id: string) => {
+          const doc = getSnapshot();
+          const l = doc ? findLayer(doc.layers, id) : null;
+          return l && l.kind === "text"
+            ? { align: l.align, lineHeight: l.lineHeight, charSpacing: l.charSpacing, direction: l.direction }
+            : null;
+        },
         // M4 colour QA: drive the picker store (flows through the sink).
         colour: setHex,
         // M3 effects QA: same pair over the effects[] stack.

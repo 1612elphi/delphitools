@@ -1,6 +1,8 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { AlignCenter, AlignJustify, AlignLeft, AlignRight } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -8,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { TextAlign } from "@/lib/substrata/doc-model";
 import { FONT_CHOICES, getUploadedFonts, subscribeFonts } from "@/lib/substrata/fonts";
 import { TEXT_STYLE_PRESETS, type TextStylePreset } from "@/lib/substrata/text-style";
 import { cn } from "@/lib/utils";
@@ -107,6 +110,46 @@ function StyleGlyph({ preset }: { preset: TextStylePreset }) {
         </svg>
       );
   }
+}
+
+/** Object-level alignment (ratified M2-1) as a flush segmented strip — the
+ *  TextStyleRow language. Shared by the TEXT bloom and the Inspector.
+ *  Alignment words are standard type vocabulary (functional chrome). */
+const ALIGN_OPTIONS: Array<{ id: TextAlign; label: string; icon: LucideIcon }> = [
+  { id: "left", label: "Left", icon: AlignLeft },
+  { id: "center", label: "Centre", icon: AlignCenter },
+  { id: "right", label: "Right", icon: AlignRight },
+  { id: "justify", label: "Justify", icon: AlignJustify },
+];
+
+export function TextAlignRow({
+  value,
+  onPick,
+}: {
+  value: TextAlign;
+  onPick: (align: TextAlign) => void;
+}) {
+  return (
+    <span className="segmented grid-cols-4">
+      {ALIGN_OPTIONS.map(({ id, label, icon: Icon }) => (
+        <button
+          key={id}
+          type="button"
+          aria-label={label}
+          title={label}
+          onClick={() => onPick(id)}
+          className={cn(
+            "grid h-7 min-w-[30px] place-items-center px-1.5",
+            value === id
+              ? "bg-primary text-primary-foreground"
+              : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
+          )}
+        >
+          <Icon className="size-3.5" aria-hidden />
+        </button>
+      ))}
+    </span>
+  );
 }
 
 export function TextStyleRow({

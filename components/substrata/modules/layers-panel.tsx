@@ -11,7 +11,7 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { restrictToParentElement, restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -30,9 +30,9 @@ import {
   deleteLayers,
   duplicateLayers,
   groupLayers,
+  moveLayer,
   setBlendMode,
   setOpacity,
-  setSiblingOrder,
   toggleLock,
   toggleVisibility,
   ungroupLayer,
@@ -68,9 +68,9 @@ import { resolveFontCss } from "@/lib/substrata/fonts";
  * highlight; the primary (last-selected) carries the arrow and drives the
  * footer's blend/opacity. Group = the selection when it shares one sibling
  * list; a single selected group offers Ungroup. Toss deletes the whole
- * selection as one undo step. Drag-reorder is constrained to a row's own
- * sibling list (cross-parent drag is a later refinement; while dragging a
- * group row its children don't visually follow — the drop result is correct).
+ * selection as one undo step. Drag-reorder works ACROSS parents (into/out of
+ * groups; see onDragEnd's resolution rule); while dragging a group row its
+ * children don't visually follow — the drop result is correct.
  */
 
 // Collapsed-group ids — tiny module-level store so the state survives the
@@ -110,17 +110,41 @@ export function LayersBody() {
   const onDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
     if (!over || active.id === over.id) return;
-    const from = rows.find((r) => r.layer.id === String(active.id));
-    const to = rows.find((r) => r.layer.id === String(over.id));
-    // reorder is scoped to ONE sibling list; cross-parent drops are ignored
-    if (!from || !to || from.parentId !== to.parentId) return;
-    const siblings = rows.filter((r) => r.parentId === from.parentId).map((r) => r.layer.id);
-    const fi = siblings.indexOf(from.layer.id);
-    const ti = siblings.indexOf(to.layer.id);
-    if (fi === -1 || ti === -1) return;
-    const next = [...siblings];
-    next.splice(ti, 0, next.splice(fi, 1)[0]);
-    setSiblingOrder(from.parentId, [...next].reverse()); // display top-first → doc order
+    const activeIndex = rows.findIndex((r) => r.layer.id === String(active.id));
+    const overIndex = rows.findIndex((r) => r.layer.id === String(over.id));
+    if (activeIndex === -1 || overIndex === -1) return;
+    const from = rows[activeIndex];
+    const overLayer = rows[overIndex].layer;
+
+    // Dropping ON a collapsed group appends INTO it (folder-drop; its child
+    // rows aren't visible, so "between them" can't be expressed). Doc-order
+    // append ⇒ the group's topmost child.
+    if (isGroup(overLayer) && collapsed.has(overLayer.id)) {
+      moveLayer(from.layer.id, overLayer.id, overLayer.children.length);
+      return;
+    }
+
+    // CROSS-PARENT DROP RESOLUTION: project the flattened display list after
+    // the move (exactly what the sortable shift previewed), then adopt the
+    // parent of the row now BELOW the dragged row (else the row above, else
+    // root). In a flattened tree that neighbour is always a valid anchor: the
+    // row below any position is a first child, a sibling, or an ancestor's
+    // sibling — so its parent is a legal parent at this spot. Same-parent
+    // reorders fall out of the same rule. moveLayer guards the cycle case
+    // (dropping a group over its own descendant rows no-ops).
+    // ponytail: no horizontal-drag depth choice (Notion-style) — the
+    // neighbour's parent wins, so "very last child of a group" at the group's
+    // bottom boundary isn't expressible; drop between its children or onto it
+    // collapsed instead.
+    const projected = arrayMove([...rows], activeIndex, overIndex);
+    const parentId =
+      projected[overIndex + 1]?.parentId ?? projected[overIndex - 1]?.parentId ?? null;
+    // display position among the target's child rows → doc index (display is
+    // top-first, doc bottom-first, so the doc index counts from the end)
+    const isSibling = (r: PanelRow) => r.parentId === parentId && r.layer.id !== from.layer.id;
+    const siblingCount = projected.filter(isSibling).length;
+    const before = projected.slice(0, overIndex).filter(isSibling).length;
+    moveLayer(from.layer.id, parentId, siblingCount - before);
   };
 
   // Right-click → the shared layer context menu; a row inside the selection
@@ -517,8 +541,11 @@ function Footer({
   };
 
   // Group when the multi-selection shares ONE sibling list; a single selected
-  // group flips the button to Ungroup. (Group blend/opacity are v1-deferred —
-  // the footer controls disable when the primary is a group.)
+  // group flips the button to Ungroup. Group OPACITY is live (composes
+  // multiplicatively down the tree via leafRenderList, like visibility).
+  // ponytail: group BLEND + FX stay deferred — they need isolated group
+  // compositing (a real render target), not a per-leaf flag; the select
+  // disables for group primaries until that lands.
   const snapshot = getSnapshot();
   const canGroup =
     doc &&
@@ -556,10 +583,7 @@ function Footer({
             ))}
           </SelectContent>
         </Select>
-        <OpacityField
-          layerId={activeLayer && !primaryIsGroup ? activeLayer.id : null}
-          opacity={activeLayer?.opacity ?? 1}
-        />
+        <OpacityField layerId={activeLayer?.id ?? null} opacity={activeLayer?.opacity ?? 1} />
       </div>
 
       {/* action bar: big Upload primary + group/ungroup · duplicate · toss */}

@@ -140,9 +140,11 @@ export interface TextPlate {
   padding: number;
 }
 
+export type TextAlign = "left" | "center" | "right" | "justify";
+
 export interface TextLayer extends BaseLayer {
   kind: "text";
-  /** v1: point text + styles; the full ratified model (area mode, align,
+  /** v1: point text + styles; the full ratified model (area mode,
    *  per-range deltas…) is added additively within schema v2. */
   text: string;
   /** a font-choice id (sans/serif/mono → system stacks via fonts.ts) or an
@@ -155,6 +157,15 @@ export interface TextLayer extends BaseLayer {
   /** pill/rectangle styles (null = none). Style PRESETS quick-set fill/stroke/
    *  plate; the active preset is DERIVED from these fields (duotone precedent). */
   plate: TextPlate | null;
+  /** Object-level typography (ratified M2-1), additive within schema v2 —
+   *  optional with defaults at the consumers so pre-existing docs restore
+   *  untouched (the Filter.params widening precedent; no schema bump). */
+  align?: TextAlign; // default "left"
+  /** multiple of the font size (fabric's lineHeight; default 1.16) */
+  lineHeight?: number;
+  /** tracking in fabric units — 1/1000 em (default 0) */
+  charSpacing?: number;
+  direction?: "ltr" | "rtl"; // default "ltr"
 }
 
 export interface GradientStop {
@@ -371,6 +382,7 @@ export function createTextLayer(opts: {
   fill: string;
   stroke: TextLayer["stroke"];
   plate: TextPlate | null;
+  align?: TextAlign;
   transform: Transform;
 }): TextLayer {
   return {
@@ -390,6 +402,7 @@ export function createTextLayer(opts: {
     fill: opts.fill,
     stroke: opts.stroke,
     plate: opts.plate,
+    align: opts.align,
   };
 }
 

@@ -11,7 +11,7 @@
  * terms — functional chrome, not authored copy.
  */
 
-import type { PieceShape } from "./doc-model";
+import type { PieceShape, TextAlign } from "./doc-model";
 import type { TextStylePreset } from "./text-style";
 
 export interface MoveSettings {
@@ -40,6 +40,8 @@ export interface TextSettings {
   fontSize: number;
   /** style preset applied to NEW text (text-style.ts quick-set fields) */
   style: TextStylePreset;
+  /** object-level alignment applied to NEW text (M2-1) */
+  align: TextAlign;
 }
 
 /** The five primitives — re-exported so panel code keeps one import site;
@@ -83,7 +85,7 @@ const DEFAULTS: ToolSettings = {
   transformAsGroup: true,
   move: { nudge: 1 },
   select: { mode: "touch", sensitivity: 50, tolerance: 32, magnetic: false, wandMode: "flood" },
-  text: { fontFamily: "sans", fontSize: 64, style: "regular" },
+  text: { fontFamily: "sans", fontSize: 64, style: "regular", align: "left" },
   pieces: {
     shape: "rectangle",
     symbolId: "arrow-right",

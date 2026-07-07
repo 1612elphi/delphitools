@@ -466,12 +466,20 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   live ActiveSelection down before reconciling (children hold selection-
   relative coords — reconcile must never write into them). **Groups are LIVE
   as folders** (`layer-tree.ts` semantics: group transform stays identity;
-  children scene-absolute; visibility/lock compose EFFECTIVELY; group opacity/
-  blend/fx deferred — footer disables them for group primaries). Layers panel:
+  children scene-absolute; visibility/lock compose EFFECTIVELY; **group OPACITY
+  composes multiplicatively down the tree (2026-07-07)** — leafRenderList
+  entries carry effective opacity like visibility, reconciler applies it,
+  footer opacity live for group primaries (per-leaf approximation: overlapping
+  children show through — isolated compositing is the upgrade); group
+  blend/fx stay deferred, footer-disabled). 10-check `.verify-layers-tree.mjs`
+  ALL PASS. Layers panel:
   ⌘/ctrl-toggle + shift-range over visible rows, group rows (folder thumb ·
   bold name · collapse chevron in the lock slot · ∑CG placeholder for unnamed),
-  tree-elbow gutters, drag scoped to ONE sibling list (group-row drags don't
-  visually carry children mid-drag; drop is correct; cross-parent drag ignored),
+  tree-elbow gutters, **cross-parent drag LIVE (2026-07-07)** — rows move between
+  sibling lists (into/out of groups; drop on a collapsed group appends into
+  it; flattened-neighbour parent-resolution rule doc'd in-code; a group can
+  never enter its own subtree) via `moveLayer(id, parent, index)` in
+  layer-ops, ONE undo step;
   Group/Ungroup + delete-selection + **duplicate-selection** footer (copies
   nudge +24 — group copies nudge their leaves — and become the selection, one
   undo step). Arrange: align/rotate/flip act on ALL selected leaves,
@@ -595,7 +603,14 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   `text` stays fabric's until exit), and fabric anchors the LEFT edge while
   typing by mutating `left` — the exit commit adopts the visual centre into
   the transform or the text snaps back to the click point. layerDims: null for text (W/H fields hidden; align skips —
-  measure-in-doc-space is a later nicety). 10-check harness
+  measure-in-doc-space is a later nicety). **Object-level typography LIVE
+  (2026-07-07)**: align (incl. justify) / lineHeight / charSpacing /
+  direction (LTR/RTL) — additive optional TextLayer fields defaulted at
+  consumers (no schema bump), applied mid-edit like font/size; Inspector
+  grew Align segmented + Line height/Spacing steppers + LTR/RTL (shared
+  `TextAlignRow` in text-style-row); TEXT bloom grew Align (writes
+  tool-settings, new layers adopt it). 8-check `.verify-text-props.mjs`
+  ALL PASS. Area mode + per-range deltas remain the deferred tail. 10-check harness
   `.verify-text.mjs` ALL PASS (click-to-type, plates, sink accent, edit
   round-trip, abandon). PIECES
   ratifications (Ruby 2026-07-05): **Pieces head sub = the preset-shapes
@@ -830,7 +845,10 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
    ignored mid-transient-gesture (doc-store root guard — also fixes the
    freehand hazard), drag-out auto-shows hidden guides, legacy guides-pref
    migrates rulers ON.
-   Still open after that: cross-parent layer drag + group transform
-   composition, snap-feel QA, TEXT niceties (area mode, per-range styles).
+   Mid-size sweep (2026-07-07 PM): ✅ text typography props · ✅ cross-parent
+   drag + group opacity · rasterize/gap-pills/gradient UI in flight. Ratified
+   same day: **pen tool CUT from v1** (Bezier stub removed) · **crop =
+   NON-DESTRUCTIVE layer crop** (stored crop rect, to build). Still open:
+   snap-feel QA, TEXT area mode + per-range styles.
 3. **M7 background removal** — per BUILD-PLAN (model-hosting decisions
    still open: ~115 MB vs Cloudflare 25 MiB/file, transformers v3→v4 bump).
