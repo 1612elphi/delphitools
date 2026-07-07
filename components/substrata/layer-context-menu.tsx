@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import {
   ArrowDown,
+  Grid2x2,
   ArrowDownToLine,
   ArrowUp,
   ArrowUpToLine,
@@ -28,6 +29,7 @@ import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
+import { canRasterize, rasterizeLayer } from "@/lib/substrata/rasterize-ops";
 import {
   closeLayerMenu,
   getLayerMenu,
@@ -110,6 +112,22 @@ function LayerMenuBody({ menu, doc }: { menu: Extract<MenuState, { kind: "layer"
   return (
     <>
       <Item icon={Copy} label="Duplicate" onClick={run(() => duplicateLayers(ids))} />
+      {/* Rasterize (M3-15): bake vector/text content so the raster pipelines
+          (filters/effects, SELECT cut) apply. Standard vocabulary chrome. */}
+      <Item
+        icon={Grid2x2}
+        label="Rasterize"
+        disabled={!ids.some((id) => {
+          const l = doc ? findLayer(doc.layers, id) : null;
+          return l !== null && canRasterize(l);
+        })}
+        onClick={run(() => {
+          for (const id of ids) {
+            const l = doc ? findLayer(doc.layers, id) : null;
+            if (l && canRasterize(l)) void rasterizeLayer(id);
+          }
+        })}
+      />
       {canUngroup ? (
         <Item icon={Ungroup} label="Ungroup" onClick={run(() => ungroupLayer(primary.id))} />
       ) : (
