@@ -16,7 +16,7 @@
  */
 
 import type { Canvas, FabricObject } from "fabric";
-import { Ellipse, Gradient as FabricGradient, Line, Path, Pattern, Polygon, Rect } from "fabric";
+import { Ellipse, Gradient as FabricGradient, Line, Path, Pattern, Point, Polygon, Rect, util as fabricPathUtil } from "fabric";
 import type { SubstrataDoc, FreehandLayer, Layer, ShapeLayer, ShapeParams, Gradient, TextLayer } from "./doc-model";
 import { EffectsImage } from "./effects-image";
 import { SubstrataText } from "./text-object";
@@ -25,6 +25,7 @@ import { findLayer, leafRenderList } from "./layer-tree";
 import { getRaster } from "./raster-cache";
 import { outlineToPathD, strokeOutline } from "./freehand";
 import { polygonPoints, starPoints } from "./shape-geometry";
+import { presetShape, SYMBOL_GRID } from "./preset-shapes";
 import { syncImageEffects, syncImageFilters } from "./filter-sync";
 
 const ARTBOARD_KEY = "__artboard__";
@@ -233,6 +234,19 @@ function toFabricFill(fill: ShapeLayer["fill"]): string | FabricGradient<unknown
   });
 }
 
+/** A preset symbol's path commands, its 256 GRID scaled onto width×height
+ *  (grid mapping keeps proportions consistent across symbols; arcs survive
+ *  because makePathSimpler lowers everything to line/curve commands first). */
+function symbolPath(symbolId: string, width: number, height: number) {
+  const preset = presetShape(symbolId);
+  const simple = fabricPathUtil.makePathSimpler(fabricPathUtil.parsePath(preset?.d ?? "M0,0"));
+  return fabricPathUtil.transformPath(
+    simple,
+    [width / SYMBOL_GRID, 0, 0, height / SYMBOL_GRID, 0, 0],
+    new Point(0, 0),
+  );
+}
+
 function buildShapeObject(p: ShapeParams): FabricObject {
   switch (p.shape) {
     case "rectangle":
@@ -245,6 +259,8 @@ function buildShapeObject(p: ShapeParams): FabricObject {
       return new Polygon(polygonPoints(p.sides, p.radius));
     case "star":
       return new Polygon(starPoints(p.points, p.outerRadius, p.innerRadius));
+    case "symbol":
+      return new Path(symbolPath(p.symbolId, p.width, p.height));
   }
 }
 
@@ -268,6 +284,11 @@ function updateShapeGeometry(obj: FabricObject, p: ShapeParams): void {
       const poly = obj as Polygon;
       poly.points = p.shape === "polygon" ? polygonPoints(p.sides, p.radius) : starPoints(p.points, p.outerRadius, p.innerRadius);
       poly.setDimensions();
+      break;
+    }
+    case "symbol": {
+      // in-place path swap (drag-to-draw reshapes every move — no churn)
+      (obj as Path)._setPath(symbolPath(p.symbolId, p.width, p.height), true);
       break;
     }
   }

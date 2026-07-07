@@ -20,6 +20,7 @@ import {
   type PresetOption,
 } from "@/components/substrata/preset-row";
 import { getGuides, subscribeGuides, toggleGuide } from "@/lib/substrata/guides-pref";
+import { PRESET_SHAPES } from "@/lib/substrata/preset-shapes";
 import {
   getToolSettings,
   setTransformAsGroup,
@@ -47,6 +48,7 @@ export function ToolSettingsBody({ tool, sub, title }: { tool: ToolId; sub?: str
   if (tool === "text" && sub === "text") return <TextToolSettings title={title} />;
   if (tool === "select" && (sub === "lasso" || sub === "wand"))
     return <SelectToolSettings sub={sub} title={title} />;
+  if (tool === "pieces" && sub === "pieces") return <PiecesGallerySettings title={title} />;
   // marquee has no real settings yet (feather/boolean combine are post-v1) —
   // it keeps the placeholder like other settings-less modes
   return <PlaceholderSettings title={title} />;
@@ -134,6 +136,50 @@ function MoveSettings({ title }: { title: string }) {
             aria="∑CG"
           />
         </span>
+      </Row>
+    </div>
+  );
+}
+
+/** The Pieces HEAD sub = the preset-shapes gallery (ratified 2026-07-07):
+ *  a grid of vendored Phosphor-fill symbols; picking one arms drag-to-draw
+ *  with that symbol. Fill mirrors the primitives bloom's next-shape fill.
+ *  Symbol names = standard vocabulary chrome (SHAPE_NAMES precedent). */
+function PiecesGallerySettings({ title }: { title: string }) {
+  const ts = useSyncExternalStore(subscribeToolSettings, getToolSettings, getToolSettings);
+  const s = ts.pieces;
+
+  return (
+    <div className="w-[224px]">
+      <Head title={title} />
+      <div className="grid grid-cols-5 gap-px border-b border-border bg-border">
+        {PRESET_SHAPES.map((shape) => (
+          <button
+            key={shape.id}
+            type="button"
+            title={shape.name}
+            aria-label={shape.name}
+            onClick={() => updateToolSettings("pieces", { shape: "symbol", symbolId: shape.id })}
+            className={cn(
+              "grid aspect-square place-items-center",
+              s.symbolId === shape.id
+                ? "bg-primary text-primary-foreground"
+                : "bg-card text-foreground hover:bg-accent",
+            )}
+          >
+            <svg viewBox="0 0 256 256" className="h-6 w-6" aria-hidden>
+              <path d={shape.d} fill="currentColor" />
+            </svg>
+          </button>
+        ))}
+      </div>
+      <Row label="Fill">
+        <ColourCell
+          colour={s.fill}
+          onChange={(hex) => updateToolSettings("pieces", { fill: hex })}
+          // ∑CG: aria-label for the gallery fill swatch. sample: "Fill colour"
+          aria="∑CG"
+        />
       </Row>
     </div>
   );

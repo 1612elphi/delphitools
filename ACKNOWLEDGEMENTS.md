@@ -29,6 +29,10 @@ delphitools is built on the shoulders of many excellent open source projects. Th
 
 - **[BRIA AI RMBG-1.4](https://huggingface.co/briaai/RMBG-1.4)** - Background removal model, licensed under [Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International](https://creativecommons.org/licenses/by-nc-nd/4.0/)
 
+## Shape Data
+
+- **[Phosphor Icons](https://phosphoricons.com/)** (v2.1.1, "fill" weight) - the Substrata preset-shape gallery vendors SVG path data from selected icons into `lib/substrata/preset-shapes.ts`, licensed under the [MIT License](https://github.com/phosphor-icons/core/blob/main/LICENSE) (Copyright (c) 2023 Phosphor Icons).
+
 ## Film Simulation Data
 
 - **[RawTherapee Film Simulation Collection](https://rawpedia.rawtherapee.com/Film_Simulation)** by Pat David, Pavlov Dmitry and Michael Ezra - part of the film-emulation LUTs bundled in `public/substrata/luts/` are downsampled (HaldCLUT → 33³ packed strip) from this collection, licensed under [Creative Commons Attribution-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/); the derived files remain CC BY-SA 4.0. Film stock names appear for informational purposes only, per the collection's trademark disclaimer.

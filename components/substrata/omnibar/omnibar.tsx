@@ -281,6 +281,7 @@ const PIECE_LABEL: Record<PieceShape, string> = {
   line: "Line",
   polygon: "Polygon",
   star: "Star",
+  symbol: "Symbol", // chip shows the generic kind; the layer names the preset
 };
 
 /**

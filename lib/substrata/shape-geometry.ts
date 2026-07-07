@@ -69,6 +69,9 @@ export function shapeDims(params: ShapeParams): { width: number; height: number 
       return pointsBounds(polygonPoints(params.sides, params.radius));
     case "star":
       return pointsBounds(starPoints(params.points, params.outerRadius, params.innerRadius));
+    case "symbol":
+      // the 256 grid maps onto the dragged box, so the box IS the intrinsic size
+      return { width: params.width, height: params.height };
   }
 }
 

@@ -192,7 +192,10 @@ export type ShapeParams =
   | { shape: "ellipse"; rx: number; ry: number }
   | { shape: "line"; length: number }
   | { shape: "polygon"; sides: number; radius: number }
-  | { shape: "star"; points: number; outerRadius: number; innerRadius: number };
+  | { shape: "star"; points: number; outerRadius: number; innerRadius: number }
+  // preset-gallery symbol (2026-07-07, additive within v2): a vendored path
+  // (preset-shapes.ts) whose 256-grid maps onto width×height
+  | { shape: "symbol"; symbolId: string; width: number; height: number };
 
 export type PieceShape = ShapeParams["shape"];
 
