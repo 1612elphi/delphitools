@@ -46,9 +46,12 @@ export function rectMask(
 ): PixelMask {
   const data = new Uint8Array(width * height);
   const xa = Math.max(0, Math.round(Math.min(x0, x1)));
-  const xb = Math.min(width, Math.round(Math.max(x0, x1)));
+  // clamp BOTH ways: a rect entirely outside the artboard must go empty — a
+  // negative fill end is length-relative in TypedArray.fill and would select
+  // nearly the whole mask (review-caught)
+  const xb = Math.max(xa, Math.min(width, Math.round(Math.max(x0, x1))));
   const ya = Math.max(0, Math.round(Math.min(y0, y1)));
-  const yb = Math.min(height, Math.round(Math.max(y0, y1)));
+  const yb = Math.max(ya, Math.min(height, Math.round(Math.max(y0, y1))));
   for (let y = ya; y < yb; y++) data.fill(255, y * width + xa, y * width + xb);
   return { data, width, height };
 }

@@ -407,12 +407,14 @@ function syncShapeContent(
  * Render the artboard (or one layer soloed) to a fresh canvas at an exact
  * pixel multiplier, independent of the live pan/zoom. Uses Fabric's
  * toCanvasElement — its crop box is in VIEWPORT coordinates and its multiplier
- * composes with the current zoom (verified against installed 7.4.0 source), so
- * we aim it at the artboard through the live viewportTransform instead of
- * mutating it. Controls are skipped by toCanvasElement (skipControlsDrawing);
- * a live ActiveSelection is safe — children render through their full composed
- * transform in the static path. Everything mutated here (solo visibility, the
- * artboard rect's checker fill) is snapshotted and restored.
+ * composes with the current zoom (verified against installed 7.4.0 source) —
+ * under a temporarily-identity viewportTransform, so the output dims are the
+ * exact integer product artboard×scale (aiming through the live vpt floors a
+ * float product one pixel short at many zooms). Controls are skipped by
+ * toCanvasElement (skipControlsDrawing); a live ActiveSelection is safe —
+ * children render through their full composed transform in the static path.
+ * Everything mutated here (vpt, solo visibility, the artboard rect's checker
+ * fill) is snapshotted and restored.
  */
 export function renderExport(
   canvas: Canvas,
@@ -458,14 +460,25 @@ export function renderExport(
     }
   }
 
-  const vp = canvas.viewportTransform;
-  const zoom = canvas.getZoom();
-  const el = canvas.toCanvasElement(opts.scale / zoom, {
-    left: vp[4],
-    top: vp[5],
-    width: doc.artboard.width * zoom,
-    height: doc.artboard.height * zoom,
-  });
+  // Render under an IDENTITY viewport so the output dims are the exact
+  // integer product artboard×scale — aiming through the live transform made
+  // fabric floor (W·zoom)·(scale/zoom), which lands one pixel short at many
+  // zooms (review-caught: the wand's mask domain must equal the artboard).
+  // toCanvasElement restores the vpt it reads at entry; we restore the real
+  // one right after, and the requestRenderAll below repaints against it.
+  const savedVpt = canvas.viewportTransform;
+  canvas.viewportTransform = [1, 0, 0, 1, 0, 0];
+  let el: HTMLCanvasElement;
+  try {
+    el = canvas.toCanvasElement(opts.scale, {
+      left: 0,
+      top: 0,
+      width: doc.artboard.width,
+      height: doc.artboard.height,
+    });
+  } finally {
+    canvas.viewportTransform = savedVpt;
+  }
 
   for (const [obj, visible] of savedVisible) obj.visible = visible;
   if (artboardObj) {

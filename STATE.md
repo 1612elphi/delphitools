@@ -561,8 +561,19 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   placeholder (feather/combine are post-v1). v1 ceilings (`ponytail:` in
   code): binary mask (no AA/feather) · no ⇧/⌥ boolean combine · wand samples
   the active layer only · extract clips to the artboard · greedy magnetic
-  (live-wire is the upgrade). 22-check harness `.verify-select.mjs` ALL PASS
-  (incl. magnetic edge-hug, cut hole punch + undo restore, popup gating). **TEXT (M2, 2026-07-06, Ruby's ratifications)**: fonts =
+  (live-wire is the upgrade). **Adversarial review (9 confirmed, all fixed
+  2026-07-07)**: rectMask clamps both ways (a gutter drag used to select the
+  whole artboard via TypedArray negative-end fill) · extract/cut serialize on
+  a bake-in-flight gate AND revalidate the source's blobHash+transform after
+  the awaits (undo-mid-bake committed stale-pose cuts) · wand seeds are
+  unrounded (round shifted right/bottom-half clicks a pixel; edge clicks
+  silently deselected) · renderExport renders under an identity vpt so output
+  dims are the exact artboard×scale product (float floor shorted the mask
+  domain) · mid-drag tool switch kills drafts · ant timer resumes on remount ·
+  mask invalidates on doc-identity change (survives undo/redo) · popup anchor
+  clamps the top edge. 23-check harness `.verify-select.mjs` ALL PASS (incl.
+  magnetic edge-hug, gutter-drag regression, cut hole punch + undo restore,
+  popup gating). **TEXT (M2, 2026-07-06, Ruby's ratifications)**: fonts =
   **Sans/Serif/Mono system STACKS + FontFace upload** (her call — NO bundled
   woff2, so no fonts.ready gating; uploads are session-scoped, missing
   families fall back to sans — `fonts.ts`); **text styles** = Regular ·
