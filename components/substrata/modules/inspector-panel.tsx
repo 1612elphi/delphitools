@@ -18,13 +18,14 @@ import { deriveTextStyle, styleFields, textAccent } from "@/lib/substrata/text-s
 import { FontSelect, TextAlignRow, TextStyleRow } from "@/components/substrata/text-style-row";
 import { cn } from "@/lib/utils";
 import { CornerPresetIcon, PresetRow, Stepper, type PresetOption } from "@/components/substrata/preset-row";
+import { ShapeFillRows } from "@/components/substrata/gradient-row";
 import { TransientColourCell } from "@/components/substrata/transient-colour";
 import { Switch } from "@/components/ui/switch";
 
 const EMPTY_IDS: readonly string[] = [];
 import { getPersistenceEnabled, subscribePersistence } from "@/lib/substrata/persistence-pref";
 import { openModal } from "@/lib/substrata/modal";
-import type { BlendMode, Gradient, Layer, SubstrataDoc } from "@/lib/substrata/doc-model";
+import type { BlendMode, Layer, SubstrataDoc } from "@/lib/substrata/doc-model";
 import { layerDims } from "@/lib/substrata/shape-geometry";
 
 /**
@@ -286,15 +287,13 @@ function SectionTitle({ text }: { text: string }) {
   );
 }
 
-/** Fill editor for shape/freehand layers (M4 sink's sibling — the direct
- *  after-the-fact row). A gradient fill previews as its first stop and a pick
- *  replaces it with the flat colour (v1 call, doc'd in colour-sink.ts). */
-function FillRow({ layerId, fill }: { layerId: string; fill: string | Gradient }) {
-  const hex = typeof fill === "string" ? fill : (fill.stops[0]?.colour ?? "#888888");
+/** Solid-only fill row for FREEHAND layers (their fill is string-typed).
+ *  Shapes get the fuller ShapeFillRows (gradient-row.tsx) instead. */
+function FillRow({ layerId, fill }: { layerId: string; fill: string }) {
   return (
     <ShapeRow label="Fill">
       <TransientColourCell
-        value={hex}
+        value={fill}
         onApply={(v, transient) => setFill(layerId, v, transient ? { transient } : undefined)}
         // ∑CG: aria-label for the layer fill swatch. sample: "Fill colour"
         swatchAria="∑CG"
@@ -364,8 +363,9 @@ function ShapeSection({ layer }: { layer: Layer & { kind: "shape" } }) {
     <>
       <SectionTitle text="Shape" />
       <div className="border-t border-border">
-        {/* a line renders stroke-only — no fill row to offer */}
-        {p.shape !== "line" && <FillRow layerId={layer.id} fill={layer.fill} />}
+        {/* a line renders stroke-only — no fill row to offer. Keyed by layer
+            so the gradient editor's stop selection resets per shape. */}
+        {p.shape !== "line" && <ShapeFillRows key={layer.id} layerId={layer.id} fill={layer.fill} />}
         {p.shape === "rectangle" && (() => {
           const m = Math.min(p.width, p.height);
           /* ∑CG: aria-labels for the four corner presets, sharpest → roundest.
