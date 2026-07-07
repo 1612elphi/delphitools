@@ -1025,7 +1025,8 @@ export function FabricCanvas() {
     };
     // id === null → a new guide being dragged out (doc write happens on drop);
     // id set → an existing guide moving via the transient path (ONE undo step).
-    let guideDrag: { id: string | null; axis: "x" | "y"; pos: number } | null = null;
+    // `cross` = the pointer's OTHER-axis wrap px — the gap-pills ride it.
+    let guideDrag: { id: string | null; axis: "x" | "y"; pos: number; cross: number } | null = null;
     let guideHover = false;
 
     const wrapPoint = (e: PointerEvent) => {
@@ -1065,7 +1066,7 @@ export function FabricCanvas() {
       if (g.rulers && (inH || inV)) {
         if (inH && inV) return; // corner box: no drag origin
         const axis: "x" | "y" = inV ? "x" : "y";
-        guideDrag = { id: null, axis, pos: scenePos(axis, px, py) };
+        guideDrag = { id: null, axis, pos: scenePos(axis, px, py), cross: axis === "x" ? py : px };
       } else if (selectSub()) {
         // pixel-SELECT gestures claim here too — Fabric's own mousedown would
         // discard the active object (the layer the wand/extract path needs)
@@ -1078,7 +1079,7 @@ export function FabricCanvas() {
       } else if (getActiveTool() === "move") {
         const hit = guideAt(px, py);
         if (!hit) return;
-        guideDrag = { id: hit.id, axis: hit.axis, pos: 0 };
+        guideDrag = { id: hit.id, axis: hit.axis, pos: 0, cross: hit.axis === "x" ? py : px };
         beginTransient();
       } else {
         return;
@@ -1101,8 +1102,8 @@ export function FabricCanvas() {
         if (guideDrag) {
           const { px, py } = wrapPoint(e);
           const pos = scenePos(guideDrag.axis, px, py);
-          if (guideDrag.id === null) guideDrag = { ...guideDrag, pos };
-          else setGuidePos(guideDrag.id, pos, { transient: true });
+          guideDrag = { ...guideDrag, pos, cross: guideDrag.axis === "x" ? py : px };
+          if (guideDrag.id !== null) setGuidePos(guideDrag.id, pos, { transient: true });
           canvas.requestRenderAll();
         }
         return;
@@ -1317,6 +1318,44 @@ export function FabricCanvas() {
           ctx.stroke();
         }
         ctx.restore();
+
+        // Gap-pills (backdrop sketch): while a guide drags, unit-less px
+        // distances to its nearest neighbours (same-axis guides + artboard
+        // edges) ride the pointer's cross-axis position — solid destructive
+        // pills, white 9.5px bold tabular numerals (numbers = data).
+        if (guideDrag) {
+          const axis = guideDrag.axis;
+          const pos = Math.round(guideDrag.pos);
+          const extent = axis === "x" ? doc.artboard.width : doc.artboard.height;
+          const cands = [0, extent, ...doc.guides.filter((gd) => gd.axis === axis && gd.id !== guideDrag?.id).map((gd) => gd.pos)];
+          const below = Math.max(...cands.filter((c) => c < pos), -Infinity);
+          const above = Math.min(...cands.filter((c) => c > pos), Infinity);
+          const toScreen = axis === "x" ? sx : sy;
+          const cross = Math.min(
+            Math.max(guideDrag.cross, RULER_PX + 16),
+            (axis === "x" ? canvas.getHeight() : canvas.getWidth()) - 16,
+          );
+          ctx.save();
+          ctx.font = 'bold 9.5px "iA Writer Quattro", ui-monospace, monospace';
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          for (const neighbour of [below, above]) {
+            if (!Number.isFinite(neighbour)) continue;
+            const gap = Math.abs(pos - neighbour);
+            if (gap < 1) continue;
+            const text = String(gap);
+            const mid = (toScreen(pos) + toScreen(neighbour)) / 2;
+            const w = ctx.measureText(text).width + 10;
+            const h = 14;
+            const bx = axis === "x" ? mid : cross;
+            const by = axis === "x" ? cross : mid;
+            ctx.fillStyle = css.getPropertyValue("--destructive").trim() || "#c33";
+            ctx.fillRect(bx - w / 2, by - h / 2, w, h);
+            ctx.fillStyle = "#ffffff";
+            ctx.fillText(text, bx, by + 0.5);
+          }
+          ctx.restore();
+        }
       }
 
       if (activeGuides) {
