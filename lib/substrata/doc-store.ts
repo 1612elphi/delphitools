@@ -117,14 +117,18 @@ export function canRedo(): boolean {
 }
 
 export function undo(): void {
-  if (!state || undoStack.length === 0) return;
+  // The transient contract assumes gestures are atomic — an undo landing
+  // MID-gesture (⌘Z reflex while a drag is down) pops history under the open
+  // transient base, and the commit then pushes that stale base as a bogus
+  // step (undo starts re-ADDING content). Ignore history jumps until commit.
+  if (!state || undoStack.length === 0 || isGestureActive()) return;
   redoStack.push(state);
   state = undoStack.pop()!;
   emit();
 }
 
 export function redo(): void {
-  if (!state || redoStack.length === 0) return;
+  if (!state || redoStack.length === 0 || isGestureActive()) return;
   undoStack.push(state);
   state = redoStack.pop()!;
   emit();

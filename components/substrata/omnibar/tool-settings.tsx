@@ -45,6 +45,10 @@ export function ToolSettingsBody({ tool, sub, title }: { tool: ToolId; sub?: str
   if (tool === "pieces" && (sub === "brush" || sub === "pencil"))
     return <FreehandSettings sub={sub} title={title} />;
   if (tool === "text" && sub === "text") return <TextToolSettings title={title} />;
+  if (tool === "select" && (sub === "lasso" || sub === "wand"))
+    return <SelectToolSettings sub={sub} title={title} />;
+  // marquee has no real settings yet (feather/boolean combine are post-v1) —
+  // it keeps the placeholder like other settings-less modes
   return <PlaceholderSettings title={title} />;
 }
 
@@ -131,6 +135,101 @@ function MoveSettings({ title }: { title: string }) {
           />
         </span>
       </Row>
+    </div>
+  );
+}
+
+/** SELECT subtool settings (M2-10): lasso = magnetic switch + edge
+ *  sensitivity; wand = contiguous/global mode + tolerance. Mode words are
+ *  standard graphics vocabulary = functional chrome. */
+function SelectToolSettings({ sub, title }: { sub: "lasso" | "wand"; title: string }) {
+  const ts = useSyncExternalStore(subscribeToolSettings, getToolSettings, getToolSettings);
+  const s = ts.select;
+
+  return (
+    <div className="w-[200px]">
+      <Head title={title} />
+      {sub === "lasso" ? (
+        <>
+          <Row label="Magnetic">
+            {/* ∑CG: aria-label for the magnetic-lasso toggle. sample: "Snap to edges" */}
+            <Switch
+              checked={s.magnetic}
+              onCheckedChange={(v) => updateToolSettings("select", { magnetic: v })}
+              aria-label="∑CG"
+            />
+          </Row>
+          <Row label="Sensitivity">
+            <span className="flex items-stretch border border-border">
+              <span className="grid h-6 min-w-[42px] place-items-center px-1 text-[11px] tabular-nums">
+                {s.sensitivity}
+              </span>
+              <StepBtn
+                icon={ChevronUp}
+                onClick={() => updateToolSettings("select", { sensitivity: Math.min(100, s.sensitivity + 10) })}
+                disabled={!s.magnetic || s.sensitivity >= 100}
+                // ∑CG: aria-label for sensitivity increment. sample: "Increase"
+                aria="∑CG"
+              />
+              <StepBtn
+                icon={ChevronDown}
+                onClick={() => updateToolSettings("select", { sensitivity: Math.max(0, s.sensitivity - 10) })}
+                disabled={!s.magnetic || s.sensitivity <= 0}
+                // ∑CG: aria-label for sensitivity decrement. sample: "Decrease"
+                aria="∑CG"
+              />
+            </span>
+          </Row>
+        </>
+      ) : (
+        <>
+          <Row label="Mode">
+            <span className="segmented grid-cols-2">
+              {(
+                [
+                  ["Contiguous", "flood"],
+                  ["Global", "global"],
+                ] as const
+              ).map(([label, mode]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => updateToolSettings("select", { wandMode: mode })}
+                  className={cn(
+                    "h-6 px-2 text-[10.5px]",
+                    s.wandMode === mode
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </span>
+          </Row>
+          <Row label="Tolerance">
+            <span className="flex items-stretch border border-border">
+              <span className="grid h-6 min-w-[42px] place-items-center px-1 text-[11px] tabular-nums">
+                {s.tolerance}
+              </span>
+              <StepBtn
+                icon={ChevronUp}
+                onClick={() => updateToolSettings("select", { tolerance: Math.min(255, s.tolerance + 8) })}
+                disabled={s.tolerance >= 255}
+                // ∑CG: aria-label for tolerance increment. sample: "Increase"
+                aria="∑CG"
+              />
+              <StepBtn
+                icon={ChevronDown}
+                onClick={() => updateToolSettings("select", { tolerance: Math.max(0, s.tolerance - 8) })}
+                disabled={s.tolerance <= 0}
+                // ∑CG: aria-label for tolerance decrement. sample: "Decrease"
+                aria="∑CG"
+              />
+            </span>
+          </Row>
+        </>
+      )}
     </div>
   );
 }

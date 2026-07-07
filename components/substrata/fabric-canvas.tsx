@@ -28,6 +28,7 @@ import { styleFields } from "@/lib/substrata/text-style";
 import { addFx, setFxParam } from "@/lib/substrata/fx-ops";
 import { collectIds, findLayer, leafLayers, leafRenderList } from "@/lib/substrata/layer-tree";
 import {
+  getActiveLayerId,
   getSelectedLayerIds,
   pruneSelection,
   setSelection,
@@ -37,6 +38,24 @@ import { loadLatestProject, startAutosave, persistAll, clearPersistedData } from
 import { getPersistenceEnabled, subscribePersistence } from "@/lib/substrata/persistence-pref";
 import { GRID_SIZE, getGuides, subscribeGuides, toggleGuide } from "@/lib/substrata/guides-pref";
 import { addGuide, removeGuide, setGuidePos } from "@/lib/substrata/guide-ops";
+import {
+  floodMask,
+  globalMask,
+  maskArea,
+  polygonMask,
+  rectMask,
+  snapToEdge,
+  sobelField,
+} from "@/lib/substrata/select-mask";
+import {
+  clearPixelSelection,
+  getPixelSelection,
+  setPixelSelectionMask,
+  subscribePixelSelection,
+} from "@/lib/substrata/pixel-selection";
+import { cutSelection, extractSelection, growSelection, invertSelection, shrinkSelection } from "@/lib/substrata/select-ops";
+import { reportSelectionAnchor } from "@/components/substrata/selection-popup";
+import { toast } from "@/lib/substrata/toast";
 import { subscribeLuts } from "@/lib/substrata/lut-data";
 import { getLayerMenu, openCanvasMenu, openLayerMenu } from "@/lib/substrata/context-menu";
 import {
@@ -263,6 +282,12 @@ export function FabricCanvas() {
       reconcile(canvas, doc, state);
       // Drop selected ids whose layers are gone (e.g. undoing an import).
       pruneSelection(new Set(collectIds(doc.layers)));
+      // A pixel mask is scene-space at artboard resolution — a resized
+      // artboard invalidates it (stale-domain guard).
+      const pxSel = getPixelSelection();
+      if (pxSel && (pxSel.mask.width !== doc.artboard.width || pxSel.mask.height !== doc.artboard.height)) {
+        clearPixelSelection();
+      }
       applySelection();
     };
 
@@ -365,6 +390,17 @@ export function FabricCanvas() {
         setCanvasCursor("grab");
         e.preventDefault();
       }
+      // pixel selection: Escape deselects, Enter fires the DEFAULT action
+      // (extract — the ratified popup default)
+      if (!isInteractive(e.target) && getPixelSelection()) {
+        if (e.code === "Escape") {
+          clearPixelSelection();
+          e.preventDefault();
+        } else if (e.code === "Enter") {
+          void extractSelection();
+          e.preventDefault();
+        }
+      }
     };
     const onKeyUp = (e: KeyboardEvent) => {
       if (e.code === "Space") {
@@ -388,8 +424,17 @@ export function FabricCanvas() {
       return getActiveTool() === "pieces" && (sub === "brush" || sub === "pencil") ? sub : null;
     };
     const textModeActive = () => getActiveTool() === "text" && getActiveSubs().text === "text";
+    const selectSub = (): "select" | "lasso" | "wand" | null => {
+      const sub = getActiveSubs().select;
+      return getActiveTool() === "select" && (sub === "select" || sub === "lasso" || sub === "wand")
+        ? sub
+        : null;
+    };
     const applyToolMode = () => {
-      const draw = shapeModeActive() || freehandSub() !== null;
+      // pixel-SELECT subtools are drawing-style modes too: gestures author a
+      // mask, never grab objects. Leaving SELECT drops the selection (v1).
+      if (getActiveTool() !== "select" && getPixelSelection()) clearPixelSelection();
+      const draw = shapeModeActive() || freehandSub() !== null || selectSub() !== null;
       canvas.skipTargetFind = draw || spaceHeld;
       canvas.selection = !draw;
       // TEXT keeps normal targeting (click selects, dbl-click edits) but an
@@ -563,6 +608,131 @@ export function FabricCanvas() {
     canvas.on("mouse:up", () => {
       panning = false;
       if (spaceHeld) setCanvasCursor("grab");
+    });
+
+    // ── SELECT: pixel selections (M2-10, ratified 2026-07-07) ─────────────────
+    // Marquee drags a rect, lasso collects a polygon (optionally edge-snapped),
+    // wand click flood-fills the ACTIVE layer's solo render (global mode =
+    // "superflood" colour select). Gestures author a scene-space mask into the
+    // transient pixel-selection store; the ants + drafts draw in after:render.
+    let marqueeDraft: { x0: number; y0: number; x1: number; y1: number } | null = null;
+    let lassoDraft: {
+      pts: { x: number; y: number }[];
+      field: ReturnType<typeof sobelField> | null;
+    } | null = null;
+
+    // wrap-relative screen px → scene coords (unrounded)
+    const sceneXY = (px: number, py: number): { x: number; y: number } => {
+      const vpt = canvas.viewportTransform;
+      return { x: (px - vpt[4]) / vpt[0], y: (py - vpt[5]) / vpt[3] };
+    };
+    // Solo-render the active layer at artboard scale for pixel sampling (the
+    // M6 renderExport path — filters/effects included, checker excluded).
+    const sampleActiveLayer = (): ImageData | null => {
+      const doc = getSnapshot();
+      const id = getActiveLayerId();
+      if (!doc || !id) return null;
+      const el = renderExport(canvas, state, doc, { scale: 1, soloLayerId: id });
+      const c = el.getContext("2d", { willReadFrequently: true });
+      return c ? c.getImageData(0, 0, el.width, el.height) : null;
+    };
+    const snapLassoPt = (
+      field: ReturnType<typeof sobelField> | null,
+      p: { x: number; y: number },
+    ): { x: number; y: number } => {
+      if (!field) return { x: p.x, y: p.y };
+      const s = getToolSettings().select;
+      // search radius scales with the sensitivity setting (4–20 scene px)
+      return snapToEdge(field, p.x, p.y, 4 + (s.sensitivity / 100) * 16);
+    };
+
+    // SELECT gestures are claimed at DOM CAPTURE phase (the guides pattern,
+    // wired into the same wrap listeners below): Fabric's own mousedown-on-
+    // empty DISCARDS the active object before canvas events fire, which would
+    // drop the layer selection the wand samples and the extract/cut gate reads
+    // — pixel selections must never disturb the layer selection (PS semantics).
+    const selectPointerDown = (px: number, py: number): boolean => {
+      const sub = selectSub();
+      if (!sub) return false;
+      const p = sceneXY(px, py);
+      if (sub === "select") {
+        marqueeDraft = { x0: p.x, y0: p.y, x1: p.x, y1: p.y };
+      } else if (sub === "lasso") {
+        const s = getToolSettings().select;
+        // magnetic: one Sobel field per gesture, over the active layer's pixels
+        const field = s.magnetic ? ((img) => (img ? sobelField(img) : null))(sampleActiveLayer()) : null;
+        lassoDraft = { pts: [snapLassoPt(field, p)], field };
+      } else {
+        // wand: click selects — no drag phase
+        const doc = getSnapshot();
+        if (!doc) return true;
+        const img = sampleActiveLayer();
+        if (!img) {
+          toast("wand-needs-layer");
+          return true;
+        }
+        const s = getToolSettings().select;
+        const mask =
+          s.wandMode === "global"
+            ? globalMask(img, Math.round(p.x), Math.round(p.y), s.tolerance)
+            : floodMask(img, Math.round(p.x), Math.round(p.y), s.tolerance);
+        setPixelSelectionMask(mask);
+      }
+      canvas.requestRenderAll();
+      return true;
+    };
+    const selectPointerMove = (px: number, py: number): void => {
+      if (!marqueeDraft && !lassoDraft) return;
+      const p = sceneXY(px, py);
+      if (marqueeDraft) marqueeDraft = { ...marqueeDraft, x1: p.x, y1: p.y };
+      else if (lassoDraft) lassoDraft.pts.push(snapLassoPt(lassoDraft.field, p));
+      canvas.requestRenderAll();
+    };
+    const selectPointerUp = (): void => {
+      if (!marqueeDraft && !lassoDraft) return;
+      const doc = getSnapshot();
+      if (marqueeDraft) {
+        const d = marqueeDraft;
+        marqueeDraft = null;
+        if (doc) {
+          // a bare click (no meaningful drag) clears instead of selecting dust
+          if (Math.abs(d.x1 - d.x0) < 2 || Math.abs(d.y1 - d.y0) < 2) clearPixelSelection();
+          else {
+            setPixelSelectionMask(
+              rectMask(doc.artboard.width, doc.artboard.height, d.x0, d.y0, d.x1, d.y1),
+            );
+          }
+        }
+      } else if (lassoDraft) {
+        const d = lassoDraft;
+        lassoDraft = null;
+        if (doc) {
+          if (d.pts.length < 3) clearPixelSelection();
+          else setPixelSelectionMask(polygonMask(doc.artboard.width, doc.artboard.height, d.pts));
+        }
+      }
+      canvas.requestRenderAll();
+    };
+
+    // Marching-ant crawl: a slow phase tick that only runs while a selection
+    // exists (the after:render pass draws the dashes with this offset).
+    let antPhase = 0;
+    let antTimer: number | null = null;
+    const syncAntTimer = () => {
+      const has = getPixelSelection() !== null;
+      if (has && antTimer === null) {
+        antTimer = window.setInterval(() => {
+          antPhase = (antPhase + 1) % 8;
+          canvas.requestRenderAll();
+        }, 100);
+      } else if (!has && antTimer !== null) {
+        window.clearInterval(antTimer);
+        antTimer = null;
+      }
+    };
+    const unsubscribePixelSelection = subscribePixelSelection(() => {
+      syncAntTimer();
+      canvas.requestRenderAll();
     });
 
     // Canvas → store: reflect the user's canvas selection (leaf ids — clicking
@@ -835,8 +1005,13 @@ export function FabricCanvas() {
       return null;
     };
 
+    // One pointer owns a claimed gesture at a time (review-hardened): a second
+    // touch can't overwrite an in-flight drag, moves/ups from other pointers
+    // are ignored, and pointercancel (touch handoff to scroll/pinch, pen out
+    // of range) ends the gesture instead of gluing it to a buttonless pointer.
+    let claimedPointerId: number | null = null;
     const onGuidePointerDown = (e: PointerEvent) => {
-      if (e.button !== 0 || spaceHeld || panning) return;
+      if (e.button !== 0 || spaceHeld || panning || claimedPointerId !== null) return;
       const { px, py } = wrapPoint(e);
       const g = getGuides();
       const inH = py < RULER_PX; // top band → horizontal guide (axis "y")
@@ -845,6 +1020,15 @@ export function FabricCanvas() {
         if (inH && inV) return; // corner box: no drag origin
         const axis: "x" | "y" = inV ? "x" : "y";
         guideDrag = { id: null, axis, pos: scenePos(axis, px, py) };
+      } else if (selectSub()) {
+        // pixel-SELECT gestures claim here too — Fabric's own mousedown would
+        // discard the active object (the layer the wand/extract path needs)
+        if (selectPointerDown(px, py)) {
+          claimedPointerId = e.pointerId;
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        return;
       } else if (getActiveTool() === "move") {
         const hit = guideAt(px, py);
         if (!hit) return;
@@ -853,18 +1037,28 @@ export function FabricCanvas() {
       } else {
         return;
       }
+      claimedPointerId = e.pointerId;
+      guideHover = false; // the drag cursor owns the affordance now
       e.preventDefault();
       e.stopPropagation(); // Fabric never sees this press
       setCanvasCursor(guideDrag.axis === "x" ? "ew-resize" : "ns-resize");
       canvas.requestRenderAll();
     };
     const onGuidePointerMove = (e: PointerEvent) => {
-      if (guideDrag) {
-        const { px, py } = wrapPoint(e);
-        const pos = scenePos(guideDrag.axis, px, py);
-        if (guideDrag.id === null) guideDrag = { ...guideDrag, pos };
-        else setGuidePos(guideDrag.id, pos, { transient: true });
-        canvas.requestRenderAll();
+      if (claimedPointerId !== null) {
+        if (e.pointerId !== claimedPointerId) return;
+        if (marqueeDraft || lassoDraft) {
+          const { px, py } = wrapPoint(e);
+          selectPointerMove(px, py);
+          return;
+        }
+        if (guideDrag) {
+          const { px, py } = wrapPoint(e);
+          const pos = scenePos(guideDrag.axis, px, py);
+          if (guideDrag.id === null) guideDrag = { ...guideDrag, pos };
+          else setGuidePos(guideDrag.id, pos, { transient: true });
+          canvas.requestRenderAll();
+        }
         return;
       }
       // hover affordance: resize cursor near a grabbable guide (MOVE tool)
@@ -880,14 +1074,25 @@ export function FabricCanvas() {
       }
     };
     const onGuidePointerUp = (e: PointerEvent) => {
-      if (!guideDrag) return;
+      if (e.pointerId !== claimedPointerId) return;
+      claimedPointerId = null;
+      if (marqueeDraft || lassoDraft) {
+        selectPointerUp();
+        return;
+      }
+      if (!guideDrag) return; // wand click: claimed, no drag phase
       const drag = guideDrag;
       guideDrag = null;
       const { px, py } = wrapPoint(e);
       // dropping back onto the origin ruler (or its parallel band) deletes
       const inBand = drag.axis === "x" ? px < RULER_PX : py < RULER_PX;
       if (drag.id === null) {
-        if (!inBand) addGuide(drag.axis, scenePos(drag.axis, px, py)); // one undo step
+        if (!inBand) {
+          addGuide(drag.axis, scenePos(drag.axis, px, py)); // one undo step
+          // dragging a guide out while guides are hidden would write invisible
+          // doc content — auto-show them instead (the PS convention)
+          if (!getGuides().guides) toggleGuide("guides");
+        }
       } else {
         if (inBand) removeGuide(drag.id, { transient: true });
         commitTransient(); // one undo step for the whole move (or removal)
@@ -895,9 +1100,24 @@ export function FabricCanvas() {
       applyToolMode();
       canvas.requestRenderAll();
     };
+    const onGuidePointerCancel = (e: PointerEvent) => {
+      if (e.pointerId !== claimedPointerId) return;
+      claimedPointerId = null;
+      marqueeDraft = null;
+      lassoDraft = null;
+      if (guideDrag) {
+        const wasMove = guideDrag.id !== null;
+        guideDrag = null;
+        // keep the position the move reached — still exactly one undo step
+        if (wasMove) commitTransient();
+      }
+      applyToolMode();
+      canvas.requestRenderAll();
+    };
     wrap.addEventListener("pointerdown", onGuidePointerDown, { capture: true });
     window.addEventListener("pointermove", onGuidePointerMove);
     window.addEventListener("pointerup", onGuidePointerUp);
+    window.addEventListener("pointercancel", onGuidePointerCancel);
 
     // Draw pass: grid (when on) + the matched smart guides, in viewport space
     // on the top context. Skipped entirely when there's nothing to draw so the
@@ -921,6 +1141,7 @@ export function FabricCanvas() {
       const doc = getSnapshot();
       const showRulers = g.rulers;
       const userGuides = doc && g.guides ? doc.guides : [];
+      const pixelSel = getPixelSelection();
       if (
         !showGrid &&
         !activeGuides &&
@@ -929,7 +1150,10 @@ export function FabricCanvas() {
         !liveStroke &&
         !showRulers &&
         !userGuides.length &&
-        !guideDrag
+        !guideDrag &&
+        !pixelSel &&
+        !marqueeDraft &&
+        !lassoDraft
       ) {
         return;
       }
@@ -972,6 +1196,51 @@ export function FabricCanvas() {
         }
         ctx.stroke();
         ctx.restore();
+      }
+
+      // Pixel selection: marching ants (white underlay + crawling black dash)
+      // and the live marquee/lasso drafts, all in scene space under the
+      // viewport transform so they track pan/zoom exactly.
+      if (pixelSel || marqueeDraft || lassoDraft) {
+        ctx.save();
+        ctx.transform(z, 0, 0, z, vt[4], vt[5]);
+        ctx.lineWidth = 1 / z;
+        if (pixelSel) {
+          ctx.strokeStyle = "#ffffff";
+          ctx.stroke(pixelSel.outline);
+          ctx.strokeStyle = "#000000";
+          ctx.setLineDash([4 / z, 4 / z]);
+          ctx.lineDashOffset = -antPhase / z;
+          ctx.stroke(pixelSel.outline);
+          ctx.setLineDash([]);
+        }
+        if (marqueeDraft || lassoDraft) {
+          ctx.strokeStyle = css.getPropertyValue("--primary").trim() || "#3a7";
+          ctx.setLineDash([4 / z, 4 / z]);
+          if (marqueeDraft) {
+            ctx.strokeRect(
+              Math.min(marqueeDraft.x0, marqueeDraft.x1),
+              Math.min(marqueeDraft.y0, marqueeDraft.y1),
+              Math.abs(marqueeDraft.x1 - marqueeDraft.x0),
+              Math.abs(marqueeDraft.y1 - marqueeDraft.y0),
+            );
+          }
+          if (lassoDraft && lassoDraft.pts.length > 1) {
+            ctx.beginPath();
+            ctx.moveTo(lassoDraft.pts[0].x, lassoDraft.pts[0].y);
+            for (const pt of lassoDraft.pts) ctx.lineTo(pt.x, pt.y);
+            ctx.stroke();
+          }
+        }
+        ctx.restore();
+        // anchor the contextual popup under the selection bbox (wrap-relative)
+        if (pixelSel) {
+          const b = pixelSel.bounds;
+          reportSelectionAnchor(
+            Math.min(Math.max(sx(b.x + b.w / 2), 60), canvas.getWidth() - 60),
+            Math.min(sy(b.y + b.h) + 10, canvas.getHeight() - 44),
+          );
+        }
       }
 
       // User guidelines — solid primary, full viewport span (smart guides stay
@@ -1251,6 +1520,44 @@ export function FabricCanvas() {
         gesture: { begin: beginTransient, commit: commitTransient },
         // rulers pass QA: dump the doc's guides + flip the workspace prefs
         toggleGuidePref: toggleGuide,
+        // SELECT QA: author a raster layer through the real import pipeline
+        // (drawn rects in one canvas → File → importImageFile) so extract/cut
+        // have a raster to act on headlessly
+        addRaster: async (
+          w: number,
+          h: number,
+          rects: { x: number; y: number; w: number; h: number; colour: string }[],
+          at?: { x: number; y: number },
+        ) => {
+          const c = document.createElement("canvas");
+          c.width = w;
+          c.height = h;
+          const cctx = c.getContext("2d")!;
+          for (const r of rects) {
+            cctx.fillStyle = r.colour;
+            cctx.fillRect(r.x, r.y, r.w, r.h);
+          }
+          const blob = await new Promise<Blob>((res, rej) =>
+            c.toBlob((b) => (b ? res(b) : rej(new Error("toBlob failed"))), "image/png"),
+          );
+          await importImageFile(new File([blob], "test.png", { type: "image/png" }), at ? { at } : undefined);
+        },
+        // SELECT QA: dump the pixel selection + drive the ops directly
+        pixelSelection: () => {
+          const s = getPixelSelection();
+          return s && { epoch: s.epoch, bounds: s.bounds, area: maskArea(s.mask) };
+        },
+        selectOps: {
+          invert: () => {
+            const doc = getSnapshot();
+            if (doc) invertSelection(doc.artboard.width, doc.artboard.height);
+          },
+          grow: () => growSelection(),
+          shrink: () => shrinkSelection(),
+          extract: () => extractSelection(),
+          cut: () => cutSelection(),
+          deselect: () => clearPixelSelection(),
+        },
         guides: () => getSnapshot()?.guides ?? [],
         // sample a top-context (overlay) pixel — rulers/guides draw there,
         // not on the lower canvas samplePixel reads
@@ -1421,13 +1728,20 @@ export function FabricCanvas() {
       unsubscribeGuides();
       unsubscribeToolSettings();
       themeObserver.disconnect();
+      if (antTimer !== null) window.clearInterval(antTimer);
+      unsubscribePixelSelection();
       delete (window as unknown as Record<string, unknown>).__substrata;
       registerViewportController(null);
       registerExportRenderer(null);
       ro.disconnect();
+      // an unmount mid guide-move must not leak the open transient — commit it
+      // (still one undo step) so isGestureActive() can't stay true forever
+      if (guideDrag?.id) commitTransient();
+      guideDrag = null;
       wrap.removeEventListener("pointerdown", onGuidePointerDown, { capture: true });
       window.removeEventListener("pointermove", onGuidePointerMove);
       window.removeEventListener("pointerup", onGuidePointerUp);
+      window.removeEventListener("pointercancel", onGuidePointerCancel);
       wrap.removeEventListener("dragover", onDragOver);
       wrap.removeEventListener("wheel", onWheel);
       window.removeEventListener("keydown", onKeyDown);

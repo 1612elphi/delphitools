@@ -13,7 +13,8 @@ export type ToastId =
   | "zoom-100"
   | "copied"
   | "paste-empty"
-  | "exported";
+  | "exported"
+  | "wand-needs-layer";
 
 export interface ToastState {
   id: ToastId;

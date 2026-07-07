@@ -28,6 +28,11 @@ function load(): GuidesPref {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return DEFAULTS;
     const parsed = JSON.parse(raw) as Partial<GuidesPref>;
+    // Prefs stored BEFORE the rulers pass (no `guides` key yet) pinned
+    // rulers:false from the old default — the ratified rulers-ON default
+    // would never reach existing users. The missing key doubles as the
+    // version marker: migrate rulers to ON once.
+    if (parsed.guides === undefined) parsed.rulers = true;
     return { ...DEFAULTS, ...parsed };
   } catch {
     return DEFAULTS;

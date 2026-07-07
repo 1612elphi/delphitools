@@ -39,6 +39,9 @@ const TOASTS: Record<ToastId, { icon: React.ReactNode; text: string }> = {
   // ∑CG: exported toast — ≤16 chars, confirms export finished.
   //   sample: "Exported"
   exported: { icon: <Download className={ICON} />, text: "∑CG" },
+  // ∑CG: wand-needs-layer toast — ≤24 chars, the wand needs an active layer
+  //   to sample pixels from. sample: "Select a layer first"
+  "wand-needs-layer": { icon: <ImagePlus className={ICON} />, text: "∑CG" },
 };
 
 export function ToastSlot() {

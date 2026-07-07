@@ -519,9 +519,39 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   in Workspace ▸ Guides (guides-pref; rulers now default ON). 18-check
   harness `.verify-guides.mjs` ALL PASS. Everything else in Workspace is
   live. Snap thresholds/feel + grid pitch await Ruby's QA.
-- **Tools**: MOVE, **PIECES·Primitives**, **PIECES·Brush/Pencil**, and
-  **TEXT·Text** are behaviourally live; SELECT/ADJUST + TEXT·Bezier set state
-  only → **M2/M3**. **TEXT (M2, 2026-07-06, Ruby's ratifications)**: fonts =
+- **Tools**: MOVE, **SELECT (all three subs)**, **PIECES·Primitives**,
+  **PIECES·Brush/Pencil**, and **TEXT·Text** are behaviourally live; ADJUST +
+  TEXT·Bezier set state only. **SELECT is LIVE (M2-10, 2026-07-07, Ruby's
+  ratifications)**: Marquee · Lasso (magnetic = a lasso OPTION: per-gesture
+  Sobel field + greedy edge snap, radius 4–20px by sensitivity) · Wand
+  (contiguous scanline flood / "Global" = superflood colour-select; both
+  sample the ACTIVE layer's solo render via the M6 renderExport path,
+  tolerance = max per-channel RGBA Δ). Pixel mask = transient store
+  (`pixel-selection.ts`, scene-space Uint8Array at artboard res, NOT doc) +
+  pure maths in `select-mask.ts` (rect/polygon/flood/global/morphology 16-facet
+  ring stamps/marching-squares traceOutline/sobel) + ops in `select-ops.ts`.
+  **Contextual popup** (`selection-popup.tsx`, shell-mounted, anchored by the
+  canvas per frame): extract (DEFAULT, also Enter) · cut · invert · grow ·
+  shrink · deselect (also Escape); extract/cut gate on a raster active layer
+  (∑CG-free: standard vocabulary chrome). **Extract** bakes the masked crop
+  layer-space (source resolution preserved, filters/effects deep-copied,
+  lands pixel-exact via centre-offset transform maths) → new content-addressed
+  raster inserted above the source, ONE update(). **Cut** additionally bakes a
+  destination-out hole into a NEW hash for the source — same single update()
+  = one undo step; the reconciler now REBUILDS a fabric image when its layer's
+  blobHash repoints (the immutable-per-layer assumption died with cut).
+  Gestures are claimed at DOM CAPTURE phase (the guides pattern — Fabric's
+  mousedown-on-empty would discard the active object the wand/extract need;
+  pixel selections never disturb layer selection, PS semantics). Marching
+  ants: cached Path2D outline, white underlay + crawling black dash on the
+  overlay, 100ms phase timer only while a selection exists. Selection clears
+  on tool-leave/artboard-resize/Escape. Lasso/wand settings blooms (magnetic
+  switch + sensitivity, contiguous/global + tolerance); marquee keeps the
+  placeholder (feather/combine are post-v1). v1 ceilings (`ponytail:` in
+  code): binary mask (no AA/feather) · no ⇧/⌥ boolean combine · wand samples
+  the active layer only · extract clips to the artboard · greedy magnetic
+  (live-wire is the upgrade). 22-check harness `.verify-select.mjs` ALL PASS
+  (incl. magnetic edge-hug, cut hole punch + undo restore, popup gating). **TEXT (M2, 2026-07-06, Ruby's ratifications)**: fonts =
   **Sans/Serif/Mono system STACKS + FontFace upload** (her call — NO bundled
   woff2, so no fonts.ready gating; uploads are session-scoped, missing
   families fall back to sans — `fonts.ts`); **text styles** = Regular ·
@@ -758,10 +788,13 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
      on the existing autosave debounce · `browser-fs-access` dep accepted.
    - **Rulers: IN, with drag-out GUIDELINES** — the guides are the point
      (Ruby uses them constantly); renderer + guide model needed.
-2. **Build order**: ✅ rulers+guides (2026-07-07) → SELECT → Pieces gallery →
-   M5 persist. SELECT architecture plan is drafted (4 stages, magnetic lasso
-   last/cuttable; pixel-selection store + select-mask maths + select-ops bake
-   pipeline + contextual popup).
+2. **Build order**: ✅ rulers+guides → ✅ SELECT (both 2026-07-07) → Pieces
+   gallery (Phosphor fill ratified: MIT, all single-path 256-grid — vendor
+   ~16 paths + ACKNOWLEDGEMENTS entry) → M5 persist. Review-hardening landed
+   with SELECT: pointerId-claimed gestures + pointercancel recovery, undo/redo
+   ignored mid-transient-gesture (doc-store root guard — also fixes the
+   freehand hazard), drag-out auto-shows hidden guides, legacy guides-pref
+   migrates rulers ON.
    Still open after that: cross-parent layer drag + group transform
    composition, snap-feel QA, TEXT niceties (area mode, per-range styles).
 3. **M7 background removal** — per BUILD-PLAN (model-hosting decisions
