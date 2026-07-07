@@ -116,7 +116,7 @@ export function reconcile(canvas: Canvas, doc: SubstrataDoc, state: ReconcileSta
 
   // Leaf layers in document order (groups flatten; flags compose down the tree).
   for (const entry of leafRenderList(doc.layers)) {
-    const obj = syncLayer(canvas, entry.layer, entry.visible, entry.locked, byId);
+    const obj = syncLayer(canvas, entry.layer, entry.visible, entry.locked, entry.opacity, byId);
     if (obj) {
       desired.push(obj);
       seen.add(entry.layer.id);
@@ -143,6 +143,8 @@ function syncLayer(
   /** effective flags — the layer's own composed with its group ancestors' */
   visible: boolean,
   locked: boolean,
+  /** effective opacity — layer.opacity × its group ancestors' (leafRenderList) */
+  opacity: number,
   byId: Map<string, FabricObject>,
 ): FabricObject | null {
   // Every leaf kind renders (raster/shape/freehand/text); groups flatten.
@@ -170,7 +172,7 @@ function syncLayer(
     angle: t.angle,
     flipX: t.flipX,
     flipY: t.flipY,
-    opacity: layer.opacity,
+    opacity,
     visible,
     globalCompositeOperation: layer.blendMode,
     originX: "center",
@@ -355,6 +357,12 @@ function syncTextContent(
     fill: layer.fill,
     stroke: layer.stroke?.colour ?? null,
     strokeWidth: layer.stroke?.width ?? 0,
+    // object-level typography (M2-1) — optional fields default here so
+    // pre-existing docs render unchanged; applies mid-edit like font/size
+    textAlign: layer.align ?? "left",
+    lineHeight: layer.lineHeight ?? 1.16,
+    charSpacing: layer.charSpacing ?? 0,
+    direction: layer.direction ?? "ltr",
     // outline style has a transparent fill — keep the editing caret visible
     cursorColor: layer.stroke?.colour ?? layer.fill,
   });

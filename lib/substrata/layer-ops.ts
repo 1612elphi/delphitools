@@ -97,7 +97,21 @@ export function setShapeStroke(
 export function setTextProps(
   id: string,
   patch: Partial<
-    Pick<TextLayer, "text" | "fontFamily" | "fontSize" | "fill" | "stroke" | "plate" | "name" | "transform">
+    Pick<
+      TextLayer,
+      | "text"
+      | "fontFamily"
+      | "fontSize"
+      | "fill"
+      | "stroke"
+      | "plate"
+      | "name"
+      | "transform"
+      | "align"
+      | "lineHeight"
+      | "charSpacing"
+      | "direction"
+    >
   >,
   opts?: { transient?: boolean },
 ): void {
@@ -366,6 +380,50 @@ export function nudgeSelection(dx: number, dy: number): void {
   setTransforms(entries);
 }
 
+/**
+ * Move ONE layer (a group moves as a whole block) into `newParentId`'s
+ * children (null = the root list) at doc-order `index` — its FINAL position in
+ * the destination list (0 = bottom of the stack). The panel's cross-parent
+ * drag lands here; a single update() ⇒ one undo step. No-ops when the layer or
+ * target is missing, the target isn't a group, or the target sits inside the
+ * moved subtree (a group must never become its own descendant).
+ */
+export function moveLayer(id: string, newParentId: string | null, index: number): void {
+  const doc = getSnapshot();
+  if (!doc) return;
+  const node = findLayer(doc.layers, id);
+  if (!node) return;
+  if (newParentId !== null) {
+    const target = findLayer(doc.layers, newParentId);
+    if (!target || !isGroup(target) || collectIds([node]).includes(newParentId)) return;
+  }
+  // same-slot drop → no doc change, no history step
+  const curList = siblingListOf(doc.layers, id);
+  if (
+    curList &&
+    (parentIdOf(doc.layers, id) ?? null) === newParentId &&
+    curList.findIndex((l) => l.id === id) === Math.min(index, curList.length - 1)
+  ) {
+    return;
+  }
+  update((d) => {
+    const { layers: without, removed } = removeLayers(d.layers, new Set([id]));
+    if (removed.length !== 1) return d;
+    const insert = (list: Layer[]): Layer[] => {
+      const out = [...list];
+      out.splice(Math.max(0, Math.min(index, out.length)), 0, removed[0]);
+      return out;
+    };
+    const layers =
+      newParentId === null
+        ? insert(without)
+        : mapLayerInTree(without, newParentId, (g) =>
+            isGroup(g) ? { ...g, children: insert(g.children) } : g,
+          );
+    return { ...d, layers, updatedAt: Date.now() };
+  });
+}
+
 export type ReorderDirection = "front" | "forward" | "backward" | "back";
 
 /**
@@ -373,7 +431,7 @@ export type ReorderDirection = "front" | "forward" | "backward" | "back";
  * menu's Bring/Send actions. Doc order is bottom→top, so "front" moves ids to
  * the END. forward/backward step each selected item one slot, skipping over
  * other selected items so a block moves as a block. No-op when the ids span
- * different sibling lists (cross-parent restack is v1-out, like panel drag).
+ * different sibling lists (cross-parent moves go through moveLayer/panel drag).
  */
 export function reorderLayers(ids: readonly string[], dir: ReorderDirection): void {
   const doc = getSnapshot();

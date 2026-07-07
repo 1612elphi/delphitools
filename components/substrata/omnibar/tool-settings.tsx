@@ -4,7 +4,7 @@ import { useRef, useSyncExternalStore } from "react";
 import { ChevronDown, ChevronUp, Circle, Pentagon, Slash, Square, Star, Upload } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { uploadLocalFont } from "@/lib/substrata/fonts";
-import { FontSelect, TextStyleRow } from "@/components/substrata/text-style-row";
+import { FontSelect, TextAlignRow, TextStyleRow } from "@/components/substrata/text-style-row";
 import { getActiveLayerId } from "@/lib/substrata/selection";
 import { getSnapshot } from "@/lib/substrata/doc-store";
 import { findLayer } from "@/lib/substrata/layer-tree";
@@ -29,6 +29,7 @@ import {
   type PieceShape,
 } from "@/lib/substrata/tool-settings";
 import { cn } from "@/lib/utils";
+import type { TextAlign } from "@/lib/substrata/doc-model";
 import type { ToolId } from "@/lib/substrata/tool";
 
 /**
@@ -479,7 +480,9 @@ function TextToolSettings({ title }: { title: string }) {
   const t = ts.text;
 
   /** patch the selected text layer too, so the bloom edits what you see */
-  const applyLive = (patch: { fontFamily?: string; fontSize?: number } | { style: TextStylePreset }) => {
+  const applyLive = (
+    patch: { fontFamily?: string; fontSize?: number; align?: TextAlign } | { style: TextStylePreset },
+  ) => {
     const id = getActiveLayerId();
     const doc = getSnapshot();
     const layer = doc && id ? findLayer(doc.layers, id) : null;
@@ -535,6 +538,15 @@ function TextToolSettings({ title }: { title: string }) {
           min={6}
           max={400}
           unit="px"
+        />
+      </Row>
+      <Row label="Align">
+        <TextAlignRow
+          value={t.align}
+          onPick={(align) => {
+            updateToolSettings("text", { align });
+            applyLive({ align });
+          }}
         />
       </Row>
       <Row label="Style">

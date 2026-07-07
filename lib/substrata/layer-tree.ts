@@ -10,10 +10,12 @@
  *     rotating a group as a unit happens through the canvas multi-selection,
  *     which writes each child's absolute transform. Real group-transform
  *     composition is deferred (M3+ render work).
- *   - Group visibility/lock apply to descendants EFFECTIVELY (composed at
- *     render/hit time via `leafRenderList`), without rewriting children.
- *   - Group opacity/blend/filters/effects are NOT applied in v1 (they need a
- *     real group render target) — the panel doesn't offer them on group rows.
+ *   - Group visibility/lock/OPACITY apply to descendants EFFECTIVELY (composed
+ *     at render/hit time via `leafRenderList`), without rewriting children.
+ *     Opacity multiplies down the tree — an approximation of isolated group
+ *     compositing (overlapping children show through each other), fine for v1.
+ *   - Group blend/filters/effects are NOT applied in v1 (they need a real
+ *     group render target) — the panel doesn't offer them on group rows.
  */
 
 import type { GroupLayer, Layer } from "./doc-model";
@@ -139,21 +141,26 @@ export interface LeafRenderEntry {
   visible: boolean;
   /** self || any ancestor locked */
   locked: boolean;
+  /** self × every ancestor's opacity — the FINAL value the renderer applies */
+  opacity: number;
 }
 
-/** Doc-order leaf list with effective visibility/lock — what the reconciler
- *  renders (groups flatten away; children are scene-absolute, see header). */
+/** Doc-order leaf list with effective visibility/lock/opacity — what the
+ *  reconciler renders (groups flatten away; children are scene-absolute, see
+ *  header). */
 export function leafRenderList(
   layers: readonly Layer[],
   into: LeafRenderEntry[] = [],
   visible = true,
   locked = false,
+  opacity = 1,
 ): LeafRenderEntry[] {
   for (const l of layers) {
     const v = visible && l.visible;
     const k = locked || l.locked;
-    if (isGroup(l)) leafRenderList(l.children, into, v, k);
-    else into.push({ layer: l, visible: v, locked: k });
+    const o = opacity * l.opacity;
+    if (isGroup(l)) leafRenderList(l.children, into, v, k, o);
+    else into.push({ layer: l, visible: v, locked: k, opacity: o });
   }
   return into;
 }
