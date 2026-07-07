@@ -35,7 +35,8 @@ import {
 } from "@/lib/substrata/selection";
 import { loadLatestProject, startAutosave, persistAll, clearPersistedData } from "@/lib/substrata/autosave";
 import { getPersistenceEnabled, subscribePersistence } from "@/lib/substrata/persistence-pref";
-import { GRID_SIZE, getGuides, subscribeGuides } from "@/lib/substrata/guides-pref";
+import { GRID_SIZE, getGuides, subscribeGuides, toggleGuide } from "@/lib/substrata/guides-pref";
+import { addGuide, removeGuide, setGuidePos } from "@/lib/substrata/guide-ops";
 import { subscribeLuts } from "@/lib/substrata/lut-data";
 import { getLayerMenu, openCanvasMenu, openLayerMenu } from "@/lib/substrata/context-menu";
 import {
@@ -764,6 +765,10 @@ export function FabricCanvas() {
       const field = g.snap
         ? buildSnapField(doc.artboard, others)
         : { v: [] as number[], h: [] as number[] };
+      // dragged-out guidelines are first-class snap targets (when visible)
+      if (g.snap && g.guides) {
+        for (const gd of doc.guides) (gd.axis === "x" ? field.v : field.h).push(gd.pos);
+      }
       const res = computeSnap(
         boxOf(target),
         field,
@@ -788,6 +793,112 @@ export function FabricCanvas() {
     };
     canvas.on("mouse:up", clearGuides);
 
+    // ── rulers + drag-out guides (2026-07-07 ratification) ────────────────────
+    // Rulers are 22px screen-space bands (backdrop sketch) drawn at the END of
+    // the after:render pass; guides are DOC content (doc.guides) drawn with the
+    // overlay. Gestures are claimed with a CAPTURE-phase pointerdown on the
+    // wrap div — it runs before Fabric's own upper-canvas listeners, so ruler
+    // drag-outs and guide grabs never fight tool guards or object targeting.
+    const RULER_PX = 22;
+    const GUIDE_GRAB_PX = 4; // screen-px slop for grabbing an existing guide
+    // Pick a "nice" scene step (1/2/5 × 10^n) at least `min` scene units wide.
+    const niceStep = (min: number): number => {
+      const pow = 10 ** Math.floor(Math.log10(min));
+      for (const m of [1, 2, 5]) if (m * pow >= min) return m * pow;
+      return 10 * pow;
+    };
+    // id === null → a new guide being dragged out (doc write happens on drop);
+    // id set → an existing guide moving via the transient path (ONE undo step).
+    let guideDrag: { id: string | null; axis: "x" | "y"; pos: number } | null = null;
+    let guideHover = false;
+
+    const wrapPoint = (e: PointerEvent) => {
+      const r = wrap.getBoundingClientRect();
+      return { px: e.clientX - r.left, py: e.clientY - r.top };
+    };
+    const scenePos = (axis: "x" | "y", px: number, py: number): number => {
+      const vt = canvas.viewportTransform;
+      return Math.round(axis === "x" ? (px - vt[4]) / vt[0] : (py - vt[5]) / vt[3]);
+    };
+    const guideAt = (px: number, py: number): { id: string; axis: "x" | "y" } | null => {
+      const doc = getSnapshot();
+      if (!doc || !getGuides().guides) return null;
+      const vt = canvas.viewportTransform;
+      // last added wins (drawn on top)
+      for (let i = doc.guides.length - 1; i >= 0; i--) {
+        const g = doc.guides[i];
+        const screen = g.axis === "x" ? g.pos * vt[0] + vt[4] : g.pos * vt[3] + vt[5];
+        if (Math.abs(screen - (g.axis === "x" ? px : py)) <= GUIDE_GRAB_PX) {
+          return { id: g.id, axis: g.axis };
+        }
+      }
+      return null;
+    };
+
+    const onGuidePointerDown = (e: PointerEvent) => {
+      if (e.button !== 0 || spaceHeld || panning) return;
+      const { px, py } = wrapPoint(e);
+      const g = getGuides();
+      const inH = py < RULER_PX; // top band → horizontal guide (axis "y")
+      const inV = px < RULER_PX; // left band → vertical guide (axis "x")
+      if (g.rulers && (inH || inV)) {
+        if (inH && inV) return; // corner box: no drag origin
+        const axis: "x" | "y" = inV ? "x" : "y";
+        guideDrag = { id: null, axis, pos: scenePos(axis, px, py) };
+      } else if (getActiveTool() === "move") {
+        const hit = guideAt(px, py);
+        if (!hit) return;
+        guideDrag = { id: hit.id, axis: hit.axis, pos: 0 };
+        beginTransient();
+      } else {
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation(); // Fabric never sees this press
+      setCanvasCursor(guideDrag.axis === "x" ? "ew-resize" : "ns-resize");
+      canvas.requestRenderAll();
+    };
+    const onGuidePointerMove = (e: PointerEvent) => {
+      if (guideDrag) {
+        const { px, py } = wrapPoint(e);
+        const pos = scenePos(guideDrag.axis, px, py);
+        if (guideDrag.id === null) guideDrag = { ...guideDrag, pos };
+        else setGuidePos(guideDrag.id, pos, { transient: true });
+        canvas.requestRenderAll();
+        return;
+      }
+      // hover affordance: resize cursor near a grabbable guide (MOVE tool)
+      if (getActiveTool() !== "move" || spaceHeld || panning) return;
+      const { px, py } = wrapPoint(e);
+      const hit = px >= RULER_PX || py >= RULER_PX ? guideAt(px, py) : null;
+      if (hit && !guideHover) {
+        guideHover = true;
+        setCanvasCursor(hit.axis === "x" ? "ew-resize" : "ns-resize");
+      } else if (!hit && guideHover) {
+        guideHover = false;
+        applyToolMode(); // restores the tool's cursor + targeting state
+      }
+    };
+    const onGuidePointerUp = (e: PointerEvent) => {
+      if (!guideDrag) return;
+      const drag = guideDrag;
+      guideDrag = null;
+      const { px, py } = wrapPoint(e);
+      // dropping back onto the origin ruler (or its parallel band) deletes
+      const inBand = drag.axis === "x" ? px < RULER_PX : py < RULER_PX;
+      if (drag.id === null) {
+        if (!inBand) addGuide(drag.axis, scenePos(drag.axis, px, py)); // one undo step
+      } else {
+        if (inBand) removeGuide(drag.id, { transient: true });
+        commitTransient(); // one undo step for the whole move (or removal)
+      }
+      applyToolMode();
+      canvas.requestRenderAll();
+    };
+    wrap.addEventListener("pointerdown", onGuidePointerDown, { capture: true });
+    window.addEventListener("pointermove", onGuidePointerMove);
+    window.addEventListener("pointerup", onGuidePointerUp);
+
     // Draw pass: grid (when on) + the matched smart guides, in viewport space
     // on the top context. Skipped entirely when there's nothing to draw so the
     // top context stays fabric's own (rubber-band selector etc.).
@@ -807,8 +918,21 @@ export function FabricCanvas() {
       // leaves the previous frame's chrome as a frozen stain on the top canvas
       // (member boxes that "don't move", accumulating per deselect).
       canvas.clearContext(ctx);
-      if (!showGrid && !activeGuides && !dragBadge && !sepMembers && !liveStroke) return;
       const doc = getSnapshot();
+      const showRulers = g.rulers;
+      const userGuides = doc && g.guides ? doc.guides : [];
+      if (
+        !showGrid &&
+        !activeGuides &&
+        !dragBadge &&
+        !sepMembers &&
+        !liveStroke &&
+        !showRulers &&
+        !userGuides.length &&
+        !guideDrag
+      ) {
+        return;
+      }
       if (!doc) return;
       const vt = canvas.viewportTransform;
       const z = vt[0];
@@ -847,6 +971,36 @@ export function FabricCanvas() {
           ctx.lineTo(sx(doc.artboard.width), sy(y));
         }
         ctx.stroke();
+        ctx.restore();
+      }
+
+      // User guidelines — solid primary, full viewport span (smart guides stay
+      // dashed-destructive so the two never read as the same thing). A guide
+      // mid-drag over its delete band (the origin ruler) dims to signal it.
+      if (userGuides.length || guideDrag) {
+        const lines: { axis: "x" | "y"; pos: number; dragging: boolean }[] = userGuides.map(
+          (gd) => ({ axis: gd.axis, pos: gd.pos, dragging: guideDrag?.id === gd.id }),
+        );
+        if (guideDrag && guideDrag.id === null) {
+          lines.push({ axis: guideDrag.axis, pos: guideDrag.pos, dragging: true });
+        }
+        ctx.save();
+        ctx.strokeStyle = css.getPropertyValue("--primary").trim() || "#3a7";
+        ctx.lineWidth = 1;
+        for (const line of lines) {
+          const screen = Math.round(line.axis === "x" ? sx(line.pos) : sy(line.pos)) + 0.5;
+          const overBand = line.dragging && screen < RULER_PX + GUIDE_GRAB_PX;
+          ctx.globalAlpha = overBand ? 0.35 : line.dragging ? 0.8 : 1;
+          ctx.beginPath();
+          if (line.axis === "x") {
+            ctx.moveTo(screen, 0);
+            ctx.lineTo(screen, canvas.getHeight());
+          } else {
+            ctx.moveTo(0, screen);
+            ctx.lineTo(canvas.getWidth(), screen);
+          }
+          ctx.stroke();
+        }
         ctx.restore();
       }
 
@@ -933,6 +1087,70 @@ export function FabricCanvas() {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(text, bx + w / 2, by + h / 2 + 1);
+        ctx.restore();
+      }
+
+      // Rulers — LAST so they overpaint guide/grid ends. 22px cream bands with
+      // hairline inner edges (backdrop sketch); ticks + labels are scene units
+      // through the live viewport (nice 1/2/5 steps, majors labelled). The
+      // sketch's static strip has no labels; muted 9px Quattro tabular-nums is
+      // its documented headroom convention.
+      if (showRulers) {
+        const W = canvas.getWidth();
+        const H = canvas.getHeight();
+        const bg = css.getPropertyValue("--background").trim() || "#fff";
+        const border = css.getPropertyValue("--border").trim() || "#ccc";
+        const muted = css.getPropertyValue("--muted-foreground").trim() || "#888";
+        ctx.save();
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, RULER_PX);
+        ctx.fillRect(0, 0, RULER_PX, H);
+        const major = niceStep(60 / z);
+        const minor = major / 5;
+        ctx.strokeStyle = border;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        // horizontal ruler (scene x): ticks grow up from the band's inner edge
+        const iX0 = Math.ceil((RULER_PX - vt[4]) / z / minor);
+        const iX1 = Math.floor((W - vt[4]) / z / minor);
+        for (let i = iX0; i <= iX1; i++) {
+          const px = Math.round(sx(i * minor)) + 0.5;
+          const isMajor = i % 5 === 0;
+          ctx.moveTo(px, RULER_PX);
+          ctx.lineTo(px, RULER_PX - (isMajor ? 12 : 6));
+        }
+        // vertical ruler (scene y)
+        const iY0 = Math.ceil((RULER_PX - vt[5]) / z / minor);
+        const iY1 = Math.floor((H - vt[5]) / z / minor);
+        for (let i = iY0; i <= iY1; i++) {
+          const py = Math.round(sy(i * minor)) + 0.5;
+          const isMajor = i % 5 === 0;
+          ctx.moveTo(RULER_PX, py);
+          ctx.lineTo(RULER_PX - (isMajor ? 12 : 6), py);
+        }
+        // inner hairlines + corner box
+        ctx.moveTo(0, RULER_PX - 0.5);
+        ctx.lineTo(W, RULER_PX - 0.5);
+        ctx.moveTo(RULER_PX - 0.5, 0);
+        ctx.lineTo(RULER_PX - 0.5, H);
+        ctx.stroke();
+        // labels on majors (numbers = data, not copy)
+        ctx.fillStyle = muted;
+        ctx.font = '9px "iA Writer Quattro", ui-monospace, monospace';
+        ctx.textBaseline = "top";
+        ctx.textAlign = "left";
+        // majors are integer multiples of `major` — round away i*minor float dust
+        for (let i = Math.ceil(iX0 / 5) * 5; i <= iX1; i += 5) {
+          ctx.fillText(String(Math.round(i * minor)), Math.round(sx(i * minor)) + 3, 2);
+        }
+        for (let i = Math.ceil(iY0 / 5) * 5; i <= iY1; i += 5) {
+          const py = Math.round(sy(i * minor));
+          ctx.save();
+          ctx.translate(2, py - 3);
+          ctx.rotate(-Math.PI / 2);
+          ctx.fillText(String(Math.round(i * minor)), 0, 0);
+          ctx.restore();
+        }
         ctx.restore();
       }
     });
@@ -1031,6 +1249,17 @@ export function FabricCanvas() {
         effectParam: (layerId: string, fxId: string, key: string, value: number | string, transient?: boolean) =>
           setFxParam(layerId, "effects", fxId, key, value, { transient }),
         gesture: { begin: beginTransient, commit: commitTransient },
+        // rulers pass QA: dump the doc's guides + flip the workspace prefs
+        toggleGuidePref: toggleGuide,
+        guides: () => getSnapshot()?.guides ?? [],
+        // sample a top-context (overlay) pixel — rulers/guides draw there,
+        // not on the lower canvas samplePixel reads
+        sampleTop: (sxp: number, syp: number) => {
+          const dpr = window.devicePixelRatio || 1;
+          return Array.from(
+            canvas.contextTop.getImageData(Math.round(sxp * dpr), Math.round(syp * dpr), 1, 1).data,
+          );
+        },
         // M6 export QA: the pure clamp maths + run the full pipeline headlessly
         // (no download) and report the blob's vitals + a decoded pixel probe.
         resolveDims: resolveExportDims,
@@ -1196,6 +1425,9 @@ export function FabricCanvas() {
       registerViewportController(null);
       registerExportRenderer(null);
       ro.disconnect();
+      wrap.removeEventListener("pointerdown", onGuidePointerDown, { capture: true });
+      window.removeEventListener("pointermove", onGuidePointerMove);
+      window.removeEventListener("pointerup", onGuidePointerUp);
       wrap.removeEventListener("dragover", onDragOver);
       wrap.removeEventListener("wheel", onWheel);
       window.removeEventListener("keydown", onKeyDown);
