@@ -169,7 +169,7 @@ function cloneLayer(src: Layer): Layer {
 
 /** Insert `node` right after `targetId` within its sibling list (anywhere in
  *  the tree). Returns the original list when the target is missing. */
-function insertAfter(layers: Layer[], targetId: string, node: Layer): Layer[] {
+export function insertAfter(layers: Layer[], targetId: string, node: Layer): Layer[] {
   const idx = layers.findIndex((l) => l.id === targetId);
   if (idx !== -1) {
     const out = [...layers];

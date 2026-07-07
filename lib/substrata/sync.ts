@@ -189,6 +189,11 @@ function syncLayer(
   return obj;
 }
 
+/** The hash each fabric image was built from — a raster layer's content is
+ *  immutable PER HASH, but ops may repoint the layer to a NEW hash (SELECT's
+ *  destructive cut bakes a holed copy). WeakMap so disposed objects GC. */
+const rasterHashOf = new WeakMap<FabricObject, string>();
+
 function syncRasterContent(
   canvas: Canvas,
   layer: Layer & { kind: "raster" },
@@ -198,9 +203,16 @@ function syncRasterContent(
   if (!src) return null; // not decoded yet — a later reconcile will pick it up
 
   let obj = byId.get(layer.id) as EffectsImage | undefined;
+  if (obj && rasterHashOf.get(obj) !== layer.blobHash) {
+    // hash repointed (cut/bake) — rebuild like a shape-kind change so filters/
+    // effects re-sync against the new pixels from a clean slate
+    canvas.remove(obj);
+    byId.delete(layer.id);
+    obj = undefined;
+  }
   if (!obj) {
-    // Content-addressed source is immutable per layer, so the element is set once.
     obj = new EffectsImage(src);
+    rasterHashOf.set(obj, layer.blobHash);
     byId.set(layer.id, obj);
     layerIdOf.set(obj, layer.id);
     canvas.add(obj);

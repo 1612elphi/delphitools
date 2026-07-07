@@ -8,6 +8,7 @@ import { Omnibar } from "@/components/substrata/omnibar/omnibar";
 import { Sidebar } from "@/components/substrata/sidebar";
 import { ModalHost } from "@/components/substrata/modal-host";
 import { LayerContextMenu } from "@/components/substrata/layer-context-menu";
+import { SelectionPopup } from "@/components/substrata/selection-popup";
 import { useEditorShortcuts } from "@/hooks/use-editor-shortcuts";
 import { hydrateLayoutPrefs } from "@/lib/substrata/dock-pref";
 
@@ -55,6 +56,8 @@ export function SubstrataShell() {
         <div className="relative flex min-h-0 flex-1">
           <FabricCanvas />
           <Omnibar />
+          {/* pixel-selection action strip — anchored by the canvas per frame */}
+          <SelectionPopup />
         </div>
         <Sidebar side="right" />
       </div>

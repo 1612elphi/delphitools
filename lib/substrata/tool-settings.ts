@@ -27,6 +27,10 @@ export interface SelectSettings {
   sensitivity: number;
   /** colour-range / magic-wand tolerance, 0–255 */
   tolerance: number;
+  /** lasso OPTION (Ruby 2026-07-07): snap lasso points to nearby edges */
+  magnetic: boolean;
+  /** wand mode: contiguous flood vs global colour-select ("superflood") */
+  wandMode: "flood" | "global";
 }
 
 export interface TextSettings {
@@ -76,7 +80,7 @@ export interface ToolSettings {
 const DEFAULTS: ToolSettings = {
   transformAsGroup: true,
   move: { nudge: 1 },
-  select: { mode: "touch", sensitivity: 50, tolerance: 32 },
+  select: { mode: "touch", sensitivity: 50, tolerance: 32, magnetic: false, wandMode: "flood" },
   text: { fontFamily: "sans", fontSize: 64, style: "regular" },
   pieces: {
     shape: "rectangle",
