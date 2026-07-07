@@ -50,6 +50,7 @@ import { importImageFile } from "@/lib/substrata/import-raster";
 import { BLEND_OPTIONS } from "@/components/substrata/modules/inspector-panel";
 import type { BlendMode, Layer, ShapeParams } from "@/lib/substrata/doc-model";
 import { polygonPoints, shapeDims, starPoints } from "@/lib/substrata/shape-geometry";
+import { presetShape, SYMBOL_GRID } from "@/lib/substrata/preset-shapes";
 import { freehandDims, outlineToPathD, strokeOutline } from "@/lib/substrata/freehand";
 import { resolveFontCss } from "@/lib/substrata/fonts";
 
@@ -359,8 +360,19 @@ function LayerRow({
   );
 }
 
-/** Draw a shape layer's geometry into a thumb context, centred on the origin. */
-function traceShape(ctx: CanvasRenderingContext2D, params: ShapeParams): void {
+/** Draw a shape layer's geometry into a thumb context, centred on the origin.
+ *  Path-based shapes (symbols) return a Path2D the caller fills/strokes
+ *  instead of the ctx's current path. */
+function traceShape(ctx: CanvasRenderingContext2D, params: ShapeParams): Path2D | null {
+  if (params.shape === "symbol") {
+    const preset = presetShape(params.symbolId);
+    const path = new Path2D();
+    const m = new DOMMatrix()
+      .translate(-params.width / 2, -params.height / 2)
+      .scale(params.width / SYMBOL_GRID, params.height / SYMBOL_GRID);
+    path.addPath(new Path2D(preset?.d ?? ""), m);
+    return path;
+  }
   ctx.beginPath();
   switch (params.shape) {
     case "rectangle":
@@ -384,6 +396,7 @@ function traceShape(ctx: CanvasRenderingContext2D, params: ShapeParams): void {
       break;
     }
   }
+  return null;
 }
 
 /** Small live thumbnail — the cached raster, or a shape's geometry mini-render. */
@@ -444,17 +457,19 @@ function LayerThumb({ layer, inset }: { layer: Layer; inset: boolean }) {
       ctx.save();
       ctx.translate(el.width / 2, el.height / 2);
       ctx.scale(s, s);
-      traceShape(ctx, layer.params);
+      const symbolPath = traceShape(ctx, layer.params);
       if (layer.params.shape !== "line") {
         // A gradient previews as its first stop — a real ramp at 22px reads as noise.
         ctx.fillStyle =
           typeof layer.fill === "string" ? layer.fill : (layer.fill.stops[0]?.colour ?? "#888888");
-        ctx.fill();
+        if (symbolPath) ctx.fill(symbolPath);
+        else ctx.fill();
       }
       if (layer.stroke) {
         ctx.strokeStyle = layer.stroke.colour;
         ctx.lineWidth = Math.max(layer.stroke.width, 1.5 / s); // hairlines stay visible at thumb scale
-        ctx.stroke();
+        if (symbolPath) ctx.stroke(symbolPath);
+        else ctx.stroke();
       }
       ctx.restore();
       return;

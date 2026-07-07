@@ -34,6 +34,7 @@ export const SHAPE_NAMES: Record<ShapeParams["shape"], string> = {
   line: "Line",
   polygon: "Polygon",
   star: "Star",
+  symbol: "Symbol", // fallback — symbol layers name themselves after their preset
 };
 
 export function buildDraggedShape(
@@ -56,7 +57,8 @@ export function buildDraggedShape(
   const midY = start.y + dy / 2;
 
   switch (s.shape) {
-    case "rectangle": {
+    case "rectangle":
+    case "symbol": {
       const w = shift ? Math.max(Math.abs(dx), Math.abs(dy)) : Math.abs(dx);
       const h = shift ? w : Math.abs(dy);
       // ⇧-square still anchors at the start corner: centre sits half a side
@@ -64,7 +66,10 @@ export function buildDraggedShape(
       const cx = shift ? start.x + (Math.sign(dx) || 1) * (w / 2) : midX;
       const cy = shift ? start.y + (Math.sign(dy) || 1) * (h / 2) : midY;
       return {
-        params: { shape: "rectangle", width: w, height: h, cornerRadius: s.cornerRadius },
+        params:
+          s.shape === "symbol"
+            ? { shape: "symbol", symbolId: s.symbolId, width: w, height: h }
+            : { shape: "rectangle", width: w, height: h, cornerRadius: s.cornerRadius },
         transform: at(cx, cy),
       };
     }

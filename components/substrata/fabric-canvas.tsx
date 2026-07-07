@@ -38,6 +38,7 @@ import { loadLatestProject, startAutosave, persistAll, clearPersistedData } from
 import { getPersistenceEnabled, subscribePersistence } from "@/lib/substrata/persistence-pref";
 import { GRID_SIZE, getGuides, subscribeGuides, toggleGuide } from "@/lib/substrata/guides-pref";
 import { addGuide, removeGuide, setGuidePos } from "@/lib/substrata/guide-ops";
+import { presetShape } from "@/lib/substrata/preset-shapes";
 import {
   floodMask,
   globalMask,
@@ -418,7 +419,14 @@ export function FabricCanvas() {
     // rubber-banding (selection=false). Every other tool keeps MOVE-style
     // interaction (stub tools set state only).
     const shapeModeActive = () =>
-      getActiveTool() === "pieces" && getActiveSubs().pieces === "primitives";
+      getActiveTool() === "pieces" &&
+      (getActiveSubs().pieces === "primitives" || getActiveSubs().pieces === "pieces");
+    // the Pieces HEAD sub is the preset-shapes gallery — it always draws the
+    // picked symbol, whatever the primitives bloom last set shape to
+    const effectivePieces = () => {
+      const s = getToolSettings().pieces;
+      return getActiveSubs().pieces === "pieces" ? { ...s, shape: "symbol" as const } : s;
+    };
     const freehandSub = (): FreehandSub | null => {
       const sub = getActiveSubs().pieces;
       return getActiveTool() === "pieces" && (sub === "brush" || sub === "pencil") ? sub : null;
@@ -456,7 +464,7 @@ export function FabricCanvas() {
     });
     canvas.on("mouse:move", (opt) => {
       if (!draft) return;
-      const s = getToolSettings().pieces;
+      const s = effectivePieces();
       const built = buildDraggedShape(
         s,
         draft.start,
@@ -467,7 +475,11 @@ export function FabricCanvas() {
       draft.layer = draft.layer
         ? { ...draft.layer, params: built.params, transform: built.transform }
         : createShapeLayer({
-            name: SHAPE_NAMES[s.shape],
+            // symbol layers name themselves after their preset (Heart, Cog, …)
+            name:
+              built.params.shape === "symbol"
+                ? (presetShape(built.params.symbolId)?.name ?? SHAPE_NAMES.symbol)
+                : SHAPE_NAMES[s.shape],
             params: built.params,
             fill: s.fill,
             stroke: strokeForNewShape(s),

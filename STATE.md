@@ -576,8 +576,19 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   measure-in-doc-space is a later nicety). 10-check harness
   `.verify-text.mjs` ALL PASS (click-to-type, plates, sink accent, edit
   round-trip, abandon). PIECES
-  ratifications (Ruby 2026-07-05): **Pieces head sub = a preset-shapes
-  gallery, LATER** (placeholder bloom until then) · Brush/Pencil on **npm
+  ratifications (Ruby 2026-07-05): **Pieces head sub = the preset-shapes
+  GALLERY — LIVE (2026-07-07)**: 19 symbols (4+1 arrows · heart · cross ·
+  cog · cloud · lightning · sun · moon · speech bubble · check · X · pin ·
+  flag · drop · star) vendored from **Phosphor Icons v2.1.1 fill (MIT →
+  ACKNOWLEDGEMENTS)** as single-path 256-grid data in `preset-shapes.ts`;
+  ShapeParams grew an additive `symbol {symbolId, width, height}` variant
+  (the 256 GRID maps onto the dragged box; nonzero winding — holes work);
+  reconciler renders via parsePath→makePathSimpler→transformPath into a
+  fabric.Path, in-place `_setPath` on reshape (no drag churn); gallery bloom
+  = 5-col symbol grid + fill row; head-sub drags ALWAYS draw the picked
+  symbol (primitives sub untouched); layers thumbs render symbol Path2Ds;
+  symbol layers name themselves after their preset. 9-check harness
+  `.verify-gallery.mjs` ALL PASS. Also ratified then: Brush/Pencil on **npm
   perfect-freehand ^1.2** (her M2-2 call — not the vendored tldraw fork;
   SHIPPED 2026-07-06). **Freehand (M2-2)**: raw `[x,y,pressure]` points are
   the doc truth (`FreehandLayer`, additive in schema v2; outline path never
@@ -788,9 +799,8 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
      on the existing autosave debounce · `browser-fs-access` dep accepted.
    - **Rulers: IN, with drag-out GUIDELINES** — the guides are the point
      (Ruby uses them constantly); renderer + guide model needed.
-2. **Build order**: ✅ rulers+guides → ✅ SELECT (both 2026-07-07) → Pieces
-   gallery (Phosphor fill ratified: MIT, all single-path 256-grid — vendor
-   ~16 paths + ACKNOWLEDGEMENTS entry) → M5 persist. Review-hardening landed
+2. **Build order**: ✅ rulers+guides → ✅ SELECT → ✅ Pieces gallery (all
+   2026-07-07) → M5 persist (IN PROGRESS). Review-hardening landed
    with SELECT: pointerId-claimed gestures + pointercancel recovery, undo/redo
    ignored mid-transient-gesture (doc-store root guard — also fixes the
    freehand hazard), drag-out auto-shows hidden guides, legacy guides-pref

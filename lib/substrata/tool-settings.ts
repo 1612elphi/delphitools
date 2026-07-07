@@ -48,6 +48,8 @@ export type { PieceShape } from "./doc-model";
 
 export interface PiecesSettings {
   shape: PieceShape;
+  /** preset-gallery pick (preset-shapes.ts id) — drawn when shape = "symbol" */
+  symbolId: string;
   /** Next-shape fill; hex only here — gradient authoring arrives with the M4
    *  picker sink (the doc model already stores gradients). */
   fill: string;
@@ -84,6 +86,7 @@ const DEFAULTS: ToolSettings = {
   text: { fontFamily: "sans", fontSize: 64, style: "regular" },
   pieces: {
     shape: "rectangle",
+    symbolId: "arrow-right",
     fill: "#3e6b33", // the house green — colour data, not copy; M4 wires the picker
     stroke: null,
     cornerRadius: 0,
