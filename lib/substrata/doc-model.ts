@@ -276,12 +276,23 @@ export interface ArtboardPreset {
   resolution: number;
 }
 
+/** A ruler guideline (2026-07-07 ratification: rulers ship with drag-out
+ *  guides). `axis:"x"` = a VERTICAL line at scene x = pos; `axis:"y"` = a
+ *  horizontal line at scene y = pos. Document content (per-scene, undoable,
+ *  autosaved) — additive within v2; older docs restore with `guides: []`. */
+export interface Guide {
+  id: string;
+  axis: "x" | "y";
+  pos: number;
+}
+
 export interface SubstrataDoc {
   id: string;
   schemaVersion: typeof SCHEMA_VERSION;
   name: string;
   artboard: Artboard;
   layers: Layer[];
+  guides: Guide[];
   createdAt: number;
   updatedAt: number;
 }
@@ -311,6 +322,7 @@ export function createEmptyDoc(name = ""): SubstrataDoc {
     name,
     artboard: { ...DEFAULT_ARTBOARD },
     layers: [],
+    guides: [],
     createdAt: now,
     updatedAt: now,
   };

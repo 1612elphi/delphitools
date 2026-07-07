@@ -1,14 +1,17 @@
 /**
- * Guides preferences (Workspace ▸ Guides, M2-12): rulers / grid / snap
- * toggles. Transient workspace ergonomics, NOT document content — persisted to
- * localStorage like the dock/pin layout (layout-storage rationale), never
- * gated on the storage opt-in. Snap defaults ON (the mockup's resting state);
- * grid/rulers default off. RULERS have no renderer yet — the toggle stores
- * state for the upcoming rulers pass.
+ * Guides preferences (Workspace ▸ Guides, M2-12 + rulers pass 2026-07-07):
+ * rulers / guides / grid / snap toggles. Transient workspace ergonomics, NOT
+ * document content — persisted to localStorage like the dock/pin layout
+ * (layout-storage rationale), never gated on the storage opt-in. Rulers +
+ * snap default ON (the mockup's resting state); grid defaults off. `guides`
+ * is VISIBILITY of the dragged-out guidelines — their positions are document
+ * content (doc-model `guides: Guide[]`), the same split as rulers-vs-layers.
  */
 
 export interface GuidesPref {
   rulers: boolean;
+  /** show (and snap to) the document's dragged-out guidelines */
+  guides: boolean;
   grid: boolean;
   snap: boolean;
 }
@@ -17,7 +20,7 @@ export interface GuidesPref {
 export const GRID_SIZE = 50;
 
 const KEY = "substrata:guides";
-const DEFAULTS: GuidesPref = { rulers: false, grid: false, snap: true };
+const DEFAULTS: GuidesPref = { rulers: true, guides: true, grid: false, snap: true };
 
 function load(): GuidesPref {
   if (typeof window === "undefined") return DEFAULTS;

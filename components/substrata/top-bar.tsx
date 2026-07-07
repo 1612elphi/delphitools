@@ -530,14 +530,18 @@ function WorkspaceMenu() {
         }}
         render={renderSeg}
       />
-      {/* Rulers stores state only (renderer pending); Grid + Snap are live (M2-12). */}
+      {/* All four are live: Rulers draw + drag out Guides (2026-07-07);
+          Grid + Snap since M2-12. "Guides" = visibility of dragged guidelines. */}
       <WRow
         label="Guides"
-        seg={["Rulers", "Grid", "Snap"]}
-        on={[guides.rulers && "Rulers", guides.grid && "Grid", guides.snap && "Snap"].filter(
-          (s): s is string => typeof s === "string",
-        )}
-        onSelect={(s) => toggleGuide(s.toLowerCase() as "rulers" | "grid" | "snap")}
+        seg={["Rulers", "Guides", "Grid", "Snap"]}
+        on={[
+          guides.rulers && "Rulers",
+          guides.guides && "Guides",
+          guides.grid && "Grid",
+          guides.snap && "Snap",
+        ].filter((s): s is string => typeof s === "string")}
+        onSelect={(s) => toggleGuide(s.toLowerCase() as "rulers" | "guides" | "grid" | "snap")}
         render={renderSeg}
       />
       <Sep />

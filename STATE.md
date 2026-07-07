@@ -213,6 +213,8 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   aware), blend, duplicate (deep-clone, groups too), **deleteLayers /
   groupLayers / ungroupLayer / setSiblingOrder** (all undoable).
 - `artboard-ops.ts` — `setArtboard(patch)` (Canvas size modal; undoable).
+- `guide-ops.ts` — guide mutations (add/setPos/remove, transient-aware) over
+  `doc.guides` (`Guide {id, axis:"x"|"y", pos}` — axis "x" = vertical line).
 - `param-spec.ts` — shared ParamSpec system (slider/stepper/colour/select +
   `defaultParams`) both FX registries and the panel consume.
 - `effects.ts` — effect registry (drop-shadow/glow/stroke/overlay → inner/outer
@@ -505,8 +507,17 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   edges/centre + sibling bbox edges/centres + grid pitch `GRID_SIZE` 50,
   6-screen-px threshold ÷ zoom, unrotated-bbox approximation), wired to
   `object:moving` with primary-coloured smart-guide lines + a 12%-alpha grid
-  drawn on the top context. **Rulers** toggle stores state but has NO renderer
-  yet (needs the backdrop-sketch ruler design). Everything else in Workspace is
+  drawn on the top context. **RULERS + GUIDES are LIVE
+  (2026-07-07)**: 22px cream ruler bands per the backdrop sketch (scene-unit
+  ticks via nice 1/2/5 steps, 9px Quattro major labels, corner box), drawn at
+  the END of the after:render overlay pass; **drag-out guidelines** = doc
+  content (`doc.guides`, additive in v2, undoable + autosaved) — drag from a
+  ruler creates one (any tool; a capture-phase pointerdown on the wrap claims
+  the gesture before Fabric sees it), MOVE-tool drag moves it (transient =
+  ONE undo step), drop on a ruler deletes, guides join the snap field (green
+  solid lines; smart guides stay red dashed). New `guides` VISIBILITY toggle
+  in Workspace ▸ Guides (guides-pref; rulers now default ON). 18-check
+  harness `.verify-guides.mjs` ALL PASS. Everything else in Workspace is
   live. Snap thresholds/feel + grid pitch await Ruby's QA.
 - **Tools**: MOVE, **PIECES·Primitives**, **PIECES·Brush/Pencil**, and
   **TEXT·Text** are behaviourally live; SELECT/ADJUST + TEXT·Bezier set state
@@ -747,7 +758,10 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
      on the existing autosave debounce · `browser-fs-access` dep accepted.
    - **Rulers: IN, with drag-out GUIDELINES** — the guides are the point
      (Ruby uses them constantly); renderer + guide model needed.
-2. **Build order**: rulers+guides → SELECT → Pieces gallery → M5 persist.
+2. **Build order**: ✅ rulers+guides (2026-07-07) → SELECT → Pieces gallery →
+   M5 persist. SELECT architecture plan is drafted (4 stages, magnetic lasso
+   last/cuttable; pixel-selection store + select-mask maths + select-ops bake
+   pipeline + contextual popup).
    Still open after that: cross-parent layer drag + group transform
    composition, snap-feel QA, TEXT niceties (area mode, per-range styles).
 3. **M7 background removal** — per BUILD-PLAN (model-hosting decisions

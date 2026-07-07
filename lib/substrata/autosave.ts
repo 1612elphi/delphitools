@@ -52,7 +52,8 @@ export async function loadLatestProject(): Promise<SubstrataDoc | null> {
   await Promise.all(rasterHashes(rec.doc.layers).map((h) => hydrateRaster(h)));
   // Forward-stamp older docs: v1 predates shape layers, so the shape alone is
   // already valid v2 — no field migration (doc-model SCHEMA_VERSION notes).
-  return { ...rec.doc, schemaVersion: SCHEMA_VERSION };
+  // `guides` landed additively within v2 — default it for docs saved before.
+  return { ...rec.doc, guides: rec.doc.guides ?? [], schemaVersion: SCHEMA_VERSION };
 }
 
 /** On opt-in: persist the current scene + all its rasters so a reload restores. */
