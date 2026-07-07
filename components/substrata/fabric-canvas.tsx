@@ -39,6 +39,7 @@ import { getPersistenceEnabled, subscribePersistence } from "@/lib/substrata/per
 import { GRID_SIZE, getGuides, subscribeGuides, toggleGuide } from "@/lib/substrata/guides-pref";
 import { addGuide, removeGuide, setGuidePos } from "@/lib/substrata/guide-ops";
 import { presetShape } from "@/lib/substrata/preset-shapes";
+import { packSubstrata, unpackSubstrata } from "@/lib/substrata/substrata-file";
 import {
   floodMask,
   globalMask,
@@ -1553,6 +1554,16 @@ export function FabricCanvas() {
             c.toBlob((b) => (b ? res(b) : rej(new Error("toBlob failed"))), "image/png"),
           );
           await importImageFile(new File([blob], "test.png", { type: "image/png" }), at ? { at } : undefined);
+        },
+        // M5 QA: .substrata round-trip without file pickers (bytes in/out)
+        packScene: async () => {
+          const doc = getSnapshot();
+          if (!doc) return null;
+          const blob = await packSubstrata(doc);
+          return Array.from(new Uint8Array(await blob.arrayBuffer()));
+        },
+        unpackScene: async (bytes: number[]) => {
+          setDoc(await unpackSubstrata(new Uint8Array(bytes).buffer));
         },
         // SELECT QA: dump the pixel selection + drive the ops directly
         pixelSelection: () => {

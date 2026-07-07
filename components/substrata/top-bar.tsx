@@ -53,6 +53,7 @@ import { getGuides, subscribeGuides, toggleGuide } from "@/lib/substrata/guides-
 import { getZoom, subscribeViewport, viewport } from "@/lib/substrata/viewport";
 import { toast } from "@/lib/substrata/toast";
 import { importImageFile } from "@/lib/substrata/import-raster";
+import { newScene, openScene, saveScene } from "@/lib/substrata/file-ops";
 import { PersistenceToggle } from "@/components/substrata/persistence-toggle";
 import { ToastSlot } from "@/components/substrata/toast-slot";
 
@@ -267,8 +268,22 @@ function SceneMenu({
     <div className="min-w-[224px] space-y-2">
       <Box>
         <div className="py-1">
-          <Item label="New scene" hint="⌘N" onClick={onClose} />
-          <Item label="Open…" hint="⌘O" onClick={onClose} />
+          <Item
+            label="New scene"
+            hint="⌘N"
+            onClick={() => {
+              onClose();
+              newScene();
+            }}
+          />
+          <Item
+            label="Open…"
+            hint="⌘O"
+            onClick={() => {
+              onClose();
+              void openScene();
+            }}
+          />
           <Item label="Open recent" hint="›" />
           <Item label="Import image…" hint="⌘I" onClick={onImport} />
           <Item
@@ -279,8 +294,22 @@ function SceneMenu({
             }}
           />
           <Sep />
-          <Item label="Save" hint="⌘S" onClick={onClose} />
-          <Item label="Save a copy…" hint="⇧⌘S" onClick={onClose} />
+          <Item
+            label="Save"
+            hint="⌘S"
+            onClick={() => {
+              onClose();
+              void saveScene();
+            }}
+          />
+          <Item
+            label="Save a copy…"
+            hint="⇧⌘S"
+            onClick={() => {
+              onClose();
+              void saveScene(true);
+            }}
+          />
           <Item
             label="Export…"
             hint="⌘E"

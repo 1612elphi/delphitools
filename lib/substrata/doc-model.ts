@@ -300,6 +300,14 @@ export interface SubstrataDoc {
   updatedAt: number;
 }
 
+/** Forward-stamp a doc loaded from ANY persistence surface (Dexie autosave,
+ *  a .substrata file): v1 predates shape layers so the shape alone is already
+ *  valid v2; `guides` landed additively within v2 — default it for docs saved
+ *  before. One stamp point so the surfaces can't drift. */
+export function stampLoadedDoc(doc: SubstrataDoc): SubstrataDoc {
+  return { ...doc, guides: doc.guides ?? [], schemaVersion: SCHEMA_VERSION };
+}
+
 // ── factories ────────────────────────────────────────────────────────────────
 // Client-only (crypto.randomUUID / Date.now); never called during prerender.
 

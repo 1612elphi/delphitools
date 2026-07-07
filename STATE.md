@@ -499,9 +499,20 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   preview): pixelate/convolute kernels are absolute-px so they read slightly
   different at proxy scale; blur is relative so it matches. Export +
   Canvas size are **blocking modals** (Canvas size functional, Export a shell → M6).
-- **Top bar**: file ops (New/Open/Save/…) are no-ops (→ M5); Edit history list
-  is a static visual stub (real labelled history later); ACXV keypad no-op.
-  **Export is LIVE** (button + Scene menu open the working Export modal).
+- **Top bar**: **file ops are LIVE (M5, 2026-07-07)** — New scene (confirm
+  ∑CG when work would be lost) / Open… / Save (⌘S, re-saves into the held
+  FS-Access handle) / Save a copy… (⇧⌘S) over the **`.substrata` format**
+  (`substrata-file.ts`: fflate STORE zip of manifest.json + blobs/<sha256>
+  PNGs, hash-verified on open, forward-stamped via the shared
+  `stampLoadedDoc`); delivered by **browser-fs-access** (ratified dep;
+  picker on Chromium, download/input fallback). Open adopts the scene into
+  opted-in storage (persistAll). Autosave now also writes **recovery
+  snapshots** (retention 20, same debounce; no UI yet — ponytail). "Open
+  recent" stays a stub (project manager = SPEC post-v1 Should). Edit history
+  list is a static visual stub; ACXV keypad no-op. **Export is LIVE**
+  (button + Scene menu open the working Export modal). 9-check harness
+  `.verify-persist.mjs` ALL PASS (pack/unpack round-trip incl. rasters,
+  symbol, guide, fresh history).
 - **Workspace**: Guides row — **Grid + Snap are LIVE** (M2-12): `guides-pref.ts`
   store (localStorage, snap defaults on), pure `snap-engine.ts` (artboard
   edges/centre + sibling bbox edges/centres + grid pitch `GRID_SIZE` 50,
@@ -799,8 +810,11 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
      on the existing autosave debounce · `browser-fs-access` dep accepted.
    - **Rulers: IN, with drag-out GUIDELINES** — the guides are the point
      (Ruby uses them constantly); renderer + guide model needed.
-2. **Build order**: ✅ rulers+guides → ✅ SELECT → ✅ Pieces gallery (all
-   2026-07-07) → M5 persist (IN PROGRESS). Review-hardening landed
+2. **Build order**: ✅ rulers+guides → ✅ SELECT → ✅ Pieces gallery →
+   ✅ M5 persist core (ALL 2026-07-07 — the full ratified decision queue is
+   BUILT). M5 deliberate cuts: project-manager UI + Open-recent (SPEC
+   post-v1 Should), OPFS (ratified out), handle persistence, zip worker
+   (STORE = memcpy; ponytail notes in code). Review-hardening landed
    with SELECT: pointerId-claimed gestures + pointercancel recovery, undo/redo
    ignored mid-transient-gesture (doc-store root guard — also fixes the
    freehand hazard), drag-out auto-shows hidden guides, legacy guides-pref

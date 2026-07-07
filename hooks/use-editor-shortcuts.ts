@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { undo, redo } from "@/lib/substrata/doc-store";
+import { openScene, saveScene } from "@/lib/substrata/file-ops";
 import { deleteLayers, nudgeSelection } from "@/lib/substrata/layer-ops";
 import { getSelectedLayerIds } from "@/lib/substrata/selection";
 import { getActiveTool } from "@/lib/substrata/tool";
@@ -60,6 +61,13 @@ export function useEditorShortcuts(): void {
       } else if (key === "y") {
         e.preventDefault();
         redo();
+      } else if (key === "s") {
+        // ⌘S save · ⇧⌘S save a copy (M5 — matches the Scene menu hints)
+        e.preventDefault();
+        void saveScene(e.shiftKey);
+      } else if (key === "o") {
+        e.preventDefault();
+        void openScene();
       }
     };
 
