@@ -24,7 +24,7 @@ import { resolveFontCss } from "./fonts";
 import { findLayer, leafRenderList } from "./layer-tree";
 import { getRaster } from "./raster-cache";
 import { outlineToPathD, strokeOutline } from "./freehand";
-import { polygonPoints, starPoints } from "./shape-geometry";
+import { layerDims, polygonPoints, starPoints } from "./shape-geometry";
 import { presetShape, SYMBOL_GRID } from "./preset-shapes";
 import { syncImageEffects, syncImageFilters } from "./filter-sync";
 
@@ -188,8 +188,55 @@ function syncLayer(
     syncImageFilters(obj as EffectsImage, layer.filters);
     syncImageEffects(obj as EffectsImage, layer.effects);
   }
+  syncCropClip(obj, layer);
   obj.setCoords();
   return obj;
+}
+
+/** One clip Rect per object, updated in place (the rasterHashOf pattern) so
+ *  reconcile passes never churn instances. */
+const cropRectOf = new WeakMap<FabricObject, Rect>();
+
+/**
+ * Non-destructive layer crop (MOVE·Crop): layer.crop → an object clipPath
+ * Rect. Fabric positions an object's clipPath in the OBJECT's own coordinate
+ * plane — centre-origin, INTRINSIC units (verified against installed 7.4.0:
+ * createClipPathLayer applies clipPath.transform(ctx) on the cache ctx where
+ * _render draws geometry centred at the origin; needsItsOwnCache returns true
+ * for any clipPath, so caching is guaranteed) — so the crop rect, whose doc
+ * origin is the content's top-left, shifts by −dims/2. Crop is only
+ * meaningful where layerDims is non-null (raster/shape/freehand).
+ * ponytail: the selection bbox intentionally stays the full uncropped bounds —
+ * bbox-shrinking crop is the upgrade.
+ */
+function syncCropClip(obj: FabricObject, layer: Layer): void {
+  const crop = layer.crop;
+  const dims = crop ? layerDims(layer) : null;
+  if (!crop || !dims) {
+    if (obj.clipPath) {
+      obj.clipPath = undefined;
+      obj.set("dirty", true);
+    }
+    return;
+  }
+  let rect = cropRectOf.get(obj);
+  if (!rect) {
+    rect = new Rect({ originX: "left", originY: "top" });
+    cropRectOf.set(obj, rect);
+  }
+  const left = crop.x - dims.width / 2;
+  const top = crop.y - dims.height / 2;
+  if (
+    obj.clipPath !== rect ||
+    rect.left !== left ||
+    rect.top !== top ||
+    rect.width !== crop.w ||
+    rect.height !== crop.h
+  ) {
+    rect.set({ left, top, width: crop.w, height: crop.h });
+    obj.clipPath = rect;
+    obj.set("dirty", true);
+  }
 }
 
 /** The hash each fabric image was built from — a raster layer's content is

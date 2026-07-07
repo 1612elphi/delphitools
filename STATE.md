@@ -670,7 +670,18 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   appearance bar survives the rail's uniform height; header dims rounded —
   shape bboxes are fractional). **RULE (Ruby): a built tool ships its
   settings + chrome.**
-  MOVE is complete per the rule: sketch-styled selection handles (8px square
+  **MOVE·Crop is LIVE (2026-07-07, ratified: NON-DESTRUCTIVE)** —
+  `BaseLayer.crop?: CropRect` (layer-space, additive in v2) renders as an
+  object-plane clipPath (one Rect per object, WeakMap-cached; verified vs
+  fabric 7.4.0 source — effects hug the CROPPED silhouette); `setCrop` in
+  layer-ops (transient-aware); the crop sub shows a four-rect dimmed veil +
+  1px primary border + 8 handles on the overlay, drags claim at the shared
+  capture listener (one undo step incl. pointercancel/unmount), clamp
+  [0,dims] min 8×8, Escape returns to plain move. v1 ceilings (`ponytail:`):
+  rotated layers skip crop editing (oriented maths later) · selection bbox
+  stays the uncropped bounds · text has no dims → no crop. Rasterize bakes
+  cropped pixels and drops the field (visual identity holds). 10-check
+  `.verify-crop.mjs` ALL PASS. MOVE is otherwise complete per the rule: sketch-styled selection handles (8px square
   paper-fill/primary-border corners via shared `ownDefaults.controls`, circular
   rotate handle, theme-observed recolour — NOTE: Textbox needs its own control
   set in M2), smart guides now dashed-DESTRUCTIVE per the sketch, live
@@ -862,10 +873,11 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
    ignored mid-transient-gesture (doc-store root guard — also fixes the
    freehand hazard), drag-out auto-shows hidden guides, legacy guides-pref
    migrates rulers ON.
-   Mid-size sweep (2026-07-07 PM): ✅ text typography props · ✅ cross-parent
-   drag + group opacity · rasterize/gap-pills/gradient UI in flight. Ratified
-   same day: **pen tool CUT from v1** (Bezier stub removed) · **crop =
-   NON-DESTRUCTIVE layer crop** (stored crop rect, to build). Still open:
-   snap-feel QA, TEXT area mode + per-range styles.
+   Mid-size sweep COMPLETE (2026-07-07 PM): ✅ text typography props ·
+   ✅ cross-parent drag + group opacity · ✅ rasterize (M3-15) · ✅ pen cut ·
+   ✅ guide gap-pills · ✅ gradient authoring UI · ✅ MOVE·Crop
+   (non-destructive, ratified). Still open: M7 smarts (decisions first),
+   snap-feel QA, TEXT area mode + per-range styles, project manager
+   (post-v1), Ruby's taste-QA backlog + slopsieve pass.
 3. **M7 background removal** — per BUILD-PLAN (model-hosting decisions
    still open: ~115 MB vs Cloudflare 25 MiB/file, transformers v3→v4 bump).

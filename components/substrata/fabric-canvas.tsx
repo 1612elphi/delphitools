@@ -15,14 +15,15 @@ import type { FabricObject, LayoutStrategyResult, StrictLayoutContext } from "fa
 import { getSnapshot, subscribe, setDoc, beginTransient, commitTransient } from "@/lib/substrata/doc-store";
 import { registerViewportController, reportZoom } from "@/lib/substrata/viewport";
 import { createEmptyDoc, createFreehandLayer, createShapeLayer, createTextLayer, identityTransform } from "@/lib/substrata/doc-model";
-import type { Artboard, ShapeLayer, SubstrataDoc, Transform } from "@/lib/substrata/doc-model";
+import type { Artboard, CropRect, ShapeLayer, SubstrataDoc, Transform } from "@/lib/substrata/doc-model";
 import { bakeLayerObject, createReconcileState, reconcile, getLayerIdForObject, renderExport } from "@/lib/substrata/sync";
 import { registerExportRenderer } from "@/lib/substrata/export-source";
 import { runExport, type ExportOutcome } from "@/lib/substrata/export-run";
 import { resolveExportDims, type ExportOptions } from "@/lib/substrata/export-core";
 import { initSubstrataFilterBackend } from "@/lib/substrata/filter-backend";
 import { importImageFile } from "@/lib/substrata/import-raster";
-import { deleteLayers, groupLayers, moveLayer, setOpacity, setShapeParams, setTextProps, setTransform, setTransforms } from "@/lib/substrata/layer-ops";
+import { deleteLayers, groupLayers, moveLayer, setCrop, setOpacity, setShapeParams, setTextProps, setTransform, setTransforms } from "@/lib/substrata/layer-ops";
+import { layerDims } from "@/lib/substrata/shape-geometry";
 import { SubstrataText } from "@/lib/substrata/text-object";
 import { styleFields } from "@/lib/substrata/text-style";
 import { addFx, setFxParam } from "@/lib/substrata/fx-ops";
@@ -407,6 +408,12 @@ export function FabricCanvas() {
         setCanvasCursor("grab");
         e.preventDefault();
       }
+      // crop mode: Escape returns to the plain MOVE sub (the crop persists —
+      // it's doc content; only the editing mode ends)
+      if (e.code === "Escape" && !isInteractive(e.target) && cropModeActive()) {
+        setActiveSub("move", "move");
+        e.preventDefault();
+      }
       // pixel selection: Escape deselects, Enter fires the DEFAULT action
       // (extract — the ratified popup default)
       if (!isInteractive(e.target) && getPixelSelection()) {
@@ -465,7 +472,10 @@ export function FabricCanvas() {
       // I-beam signals click-to-type on empty canvas.
       setCanvasCursor(draw ? "crosshair" : spaceHeld ? "grab" : textModeActive() ? "text" : "");
     };
-    const unsubscribeTool = subscribeTool(applyToolMode);
+    const unsubscribeTool = subscribeTool(() => {
+      applyToolMode();
+      canvas.requestRenderAll(); // crop-mode chrome shows/hides with the subtool
+    });
     applyToolMode();
 
     // ── PIECES drag-to-draw (M2-7) ────────────────────────────────────────────
@@ -1052,6 +1062,126 @@ export function FabricCanvas() {
       return null;
     };
 
+    // ── MOVE·Crop (ratified 2026-07-07: NON-DESTRUCTIVE layer crop) ──────────
+    // A stored crop rect on the layer (doc truth, layer space); the reconciler
+    // clips what renders via an object clipPath. Handle drags claim at the DOM
+    // capture listener below (the guides pattern) so Fabric never fights them;
+    // plain clicks fall through — layer targeting stays live in crop mode.
+    const CROP_GRAB_PX = 6;
+    const CROP_MIN = 8; // layer px
+    const cropModeActive = () => getActiveTool() === "move" && getActiveSubs().move === "crop";
+    type CropTarget = {
+      id: string;
+      dims: { width: number; height: number };
+      t: Transform;
+      crop: CropRect;
+    };
+    /** The single selected layer crop can edit: intrinsic dims (raster/shape/
+     *  freehand; a line's 0-height axis disqualifies it) and NO rotation.
+     *  ponytail: axis-aligned crop UI on a rotated layer needs oriented
+     *  maths — v1 skips crop editing there entirely. */
+    const cropTarget = (): CropTarget | null => {
+      const doc = getSnapshot();
+      const ids = getSelectedLayerIds();
+      if (!doc || ids.length !== 1) return null;
+      const layer = findLayer(doc.layers, ids[0]);
+      if (!layer) return null;
+      const dims = layerDims(layer);
+      if (!dims || dims.width <= 0 || dims.height <= 0) return null;
+      if (layer.transform.angle !== 0) return null;
+      return {
+        id: layer.id,
+        dims,
+        t: layer.transform,
+        crop: layer.crop ?? { x: 0, y: 0, w: dims.width, h: dims.height },
+      };
+    };
+    /** Layer-space (origin = content top-left) → screen, axis-aligned (crop
+     *  skips rotated layers). Flips negate the effective scale, so projected
+     *  edges can come out swapped — consumers normalise with min/max. */
+    const cropProject = (tgt: CropTarget) => {
+      const vt = canvas.viewportTransform;
+      const ex = tgt.t.scaleX * (tgt.t.flipX ? -1 : 1);
+      const ey = tgt.t.scaleY * (tgt.t.flipY ? -1 : 1);
+      return {
+        ex,
+        ey,
+        px: (lx: number) => (tgt.t.x + (lx - tgt.dims.width / 2) * ex) * vt[0] + vt[4],
+        py: (ly: number) => (tgt.t.y + (ly - tgt.dims.height / 2) * ey) * vt[3] + vt[5],
+      };
+    };
+    // hx/hy ∈ −1|0|1: which crop edges the grabbed handle drives (layer-space
+    // left/right, top/bottom); the 8 handles are corners + edge midpoints.
+    let cropDrag: { id: string; hx: number; hy: number; start: CropRect; dims: CropTarget["dims"]; t: Transform } | null = null;
+    /** Hit-test the 8 handles; on a hit, open the transient gesture and set
+     *  cropDrag (returns true so the capture listener claims the pointer). */
+    const cropClaim = (px: number, py: number): boolean => {
+      const tgt = cropTarget();
+      if (!tgt) return false;
+      const m = cropProject(tgt);
+      for (const fx of [0, 0.5, 1]) {
+        for (const fy of [0, 0.5, 1]) {
+          if (fx === 0.5 && fy === 0.5) continue;
+          const hpx = m.px(tgt.crop.x + fx * tgt.crop.w);
+          const hpy = m.py(tgt.crop.y + fy * tgt.crop.h);
+          if (Math.abs(px - hpx) <= CROP_GRAB_PX && Math.abs(py - hpy) <= CROP_GRAB_PX) {
+            cropDrag = { id: tgt.id, hx: fx * 2 - 1, hy: fy * 2 - 1, start: tgt.crop, dims: tgt.dims, t: tgt.t };
+            beginTransient();
+            setCanvasCursor(
+              cropDrag.hx && cropDrag.hy
+                ? cropDrag.hx * cropDrag.hy > 0
+                  ? "nwse-resize"
+                  : "nesw-resize"
+                : cropDrag.hx
+                  ? "ew-resize"
+                  : "ns-resize",
+            );
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+    const cropDragMove = (px: number, py: number): void => {
+      if (!cropDrag) return;
+      if (!cropModeActive()) {
+        // subtool switched mid-drag — end the gesture, keep what it reached
+        cropDrag = null;
+        commitTransient();
+        claimedPointerId = null;
+        applyToolMode();
+        return;
+      }
+      const { start, dims, t, hx, hy } = cropDrag;
+      const p = sceneXY(px, py);
+      const lx = (p.x - t.x) / ((t.scaleX * (t.flipX ? -1 : 1)) || 1) + dims.width / 2;
+      const ly = (p.y - t.y) / ((t.scaleY * (t.flipY ? -1 : 1)) || 1) + dims.height / 2;
+      let { x, y, w, h } = start;
+      if (hx === -1) {
+        const right = start.x + start.w;
+        x = Math.min(Math.max(lx, 0), Math.max(0, right - CROP_MIN));
+        w = right - x;
+      } else if (hx === 1) {
+        w = Math.min(Math.max(lx, start.x + CROP_MIN), dims.width) - start.x;
+      }
+      if (hy === -1) {
+        const bottom = start.y + start.h;
+        y = Math.min(Math.max(ly, 0), Math.max(0, bottom - CROP_MIN));
+        h = bottom - y;
+      } else if (hy === 1) {
+        h = Math.min(Math.max(ly, start.y + CROP_MIN), dims.height) - start.y;
+      }
+      // round EDGES, not extents — rounding x and w independently can push
+      // the far edge one px past dims (x 100.5→101 while w 299.5→300)
+      const rx = Math.round(x);
+      const ry = Math.round(y);
+      setCrop(
+        cropDrag.id,
+        { x: rx, y: ry, w: Math.round(x + w) - rx, h: Math.round(y + h) - ry },
+        { transient: true },
+      );
+    };
+
     // One pointer owns a claimed gesture at a time (review-hardened): a second
     // touch can't overwrite an in-flight drag, moves/ups from other pointers
     // are ignored, and pointercancel (touch handoff to scroll/pinch, pen out
@@ -1076,6 +1206,14 @@ export function FabricCanvas() {
           e.stopPropagation();
         }
         return;
+      } else if (cropModeActive() && cropClaim(px, py)) {
+        // MOVE·Crop handle drag — claimed before Fabric (cursor set inside
+        // cropClaim); a miss falls through to guide grab, then Fabric.
+        claimedPointerId = e.pointerId;
+        e.preventDefault();
+        e.stopPropagation();
+        canvas.requestRenderAll();
+        return;
       } else if (getActiveTool() === "move") {
         const hit = guideAt(px, py);
         if (!hit) return;
@@ -1097,6 +1235,11 @@ export function FabricCanvas() {
         if (marqueeDraft || lassoDraft) {
           const { px, py } = wrapPoint(e);
           selectPointerMove(px, py);
+          return;
+        }
+        if (cropDrag) {
+          const { px, py } = wrapPoint(e);
+          cropDragMove(px, py);
           return;
         }
         if (guideDrag) {
@@ -1127,6 +1270,13 @@ export function FabricCanvas() {
         selectPointerUp();
         return;
       }
+      if (cropDrag) {
+        cropDrag = null;
+        commitTransient(); // ONE undo step for the whole handle drag
+        applyToolMode();
+        canvas.requestRenderAll();
+        return;
+      }
       if (!guideDrag) return; // wand click: claimed, no drag phase
       const drag = guideDrag;
       guideDrag = null;
@@ -1152,6 +1302,11 @@ export function FabricCanvas() {
       claimedPointerId = null;
       marqueeDraft = null;
       lassoDraft = null;
+      if (cropDrag) {
+        cropDrag = null;
+        // keep the crop the drag reached — still exactly one undo step
+        commitTransient();
+      }
       if (guideDrag) {
         const wasMove = guideDrag.id !== null;
         guideDrag = null;
@@ -1189,6 +1344,7 @@ export function FabricCanvas() {
       const showRulers = g.rulers;
       const userGuides = doc && g.guides ? doc.guides : [];
       const pixelSel = getPixelSelection();
+      const cropInfo = cropModeActive() ? cropTarget() : null;
       if (
         !showGrid &&
         !activeGuides &&
@@ -1200,7 +1356,8 @@ export function FabricCanvas() {
         !guideDrag &&
         !pixelSel &&
         !marqueeDraft &&
-        !lassoDraft
+        !lassoDraft &&
+        !cropInfo
       ) {
         return;
       }
@@ -1414,6 +1571,45 @@ export function FabricCanvas() {
         ctx.restore();
       }
 
+      // MOVE·Crop chrome: dimmed veil over the layer's cropped-away regions
+      // (four rects covering bounds-minus-crop — a full veil would darken
+      // OTHER layers), crop border, 8 handles (6px paper/primary squares, the
+      // MOVE handle look). Axis-aligned by construction — crop editing skips
+      // rotated layers (cropTarget) — and flips just swap projected corners,
+      // hence the min/max normalising. No eligible selection ⇒ nothing draws.
+      if (cropInfo) {
+        const { dims, crop } = cropInfo;
+        const m = cropProject(cropInfo);
+        const bx0 = Math.min(m.px(0), m.px(dims.width));
+        const bx1 = Math.max(m.px(0), m.px(dims.width));
+        const by0 = Math.min(m.py(0), m.py(dims.height));
+        const by1 = Math.max(m.py(0), m.py(dims.height));
+        const cx0 = Math.min(m.px(crop.x), m.px(crop.x + crop.w));
+        const cx1 = Math.max(m.px(crop.x), m.px(crop.x + crop.w));
+        const cy0 = Math.min(m.py(crop.y), m.py(crop.y + crop.h));
+        const cy1 = Math.max(m.py(crop.y), m.py(crop.y + crop.h));
+        ctx.save();
+        ctx.fillStyle = "rgba(0,0,0,0.35)";
+        if (cy0 > by0) ctx.fillRect(bx0, by0, bx1 - bx0, cy0 - by0); // above
+        if (by1 > cy1) ctx.fillRect(bx0, cy1, bx1 - bx0, by1 - cy1); // below
+        if (cx0 > bx0) ctx.fillRect(bx0, cy0, cx0 - bx0, cy1 - cy0); // left
+        if (bx1 > cx1) ctx.fillRect(cx1, cy0, bx1 - cx1, cy1 - cy0); // right
+        ctx.strokeStyle = css.getPropertyValue("--primary").trim() || "#3a7";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(cx0, cy0, cx1 - cx0, cy1 - cy0);
+        ctx.fillStyle = css.getPropertyValue("--background").trim() || "#fff";
+        for (const fx of [0, 0.5, 1]) {
+          for (const fy of [0, 0.5, 1]) {
+            if (fx === 0.5 && fy === 0.5) continue;
+            const hx = m.px(crop.x + fx * crop.w);
+            const hy = m.py(crop.y + fy * crop.h);
+            ctx.fillRect(hx - 3, hy - 3, 6, 6);
+            ctx.strokeRect(hx - 3, hy - 3, 6, 6);
+          }
+        }
+        ctx.restore();
+      }
+
       if (dragBadge) {
         // the sketch's dimbadge as a cursor-following pill (offset below-right,
         // flipping inside the viewport at the edges)
@@ -1567,6 +1763,7 @@ export function FabricCanvas() {
               scene: c && { x: c.x, y: c.y },
               screen: c && toScreen(c.x, c.y),
               filters: e.layer.filters.map((f) => f.type),
+              crop: e.layer.crop ?? null, // crop QA
             };
           });
         },
@@ -1601,6 +1798,8 @@ export function FabricCanvas() {
         moveLayer,
         groupLayers,
         setOpacity,
+        setCrop, // crop QA
+
         // text-props QA: raw object-level typography off the doc (absent = default)
         textDump: (id: string) => {
           const doc = getSnapshot();
@@ -1846,10 +2045,11 @@ export function FabricCanvas() {
       registerExportRenderer(null);
       registerLayerBaker(null);
       ro.disconnect();
-      // an unmount mid guide-move must not leak the open transient — commit it
-      // (still one undo step) so isGestureActive() can't stay true forever
-      if (guideDrag?.id) commitTransient();
+      // an unmount mid guide-move/crop-drag must not leak the open transient —
+      // commit it (still one undo step) so isGestureActive() can't stay true
+      if (guideDrag?.id || cropDrag) commitTransient();
       guideDrag = null;
+      cropDrag = null;
       wrap.removeEventListener("pointerdown", onGuidePointerDown, { capture: true });
       window.removeEventListener("pointermove", onGuidePointerMove);
       window.removeEventListener("pointerup", onGuidePointerUp);
