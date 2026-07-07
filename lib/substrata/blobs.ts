@@ -9,7 +9,7 @@
  */
 
 import { getDB } from "./db";
-import { getRaster, hasRaster, putRaster } from "./raster-cache";
+import { getRaster, hasRaster, putRaster, sha256Hex } from "./raster-cache";
 import { getPersistenceEnabled } from "./persistence-pref";
 
 function hasIDB(): boolean {
@@ -26,6 +26,17 @@ export function canvasToBlob(canvas: HTMLCanvasElement, mime = "image/png", qual
       quality !== undefined ? quality / 100 : undefined,
     );
   });
+}
+
+/** Bake a canvas into the content-addressed raster world: encode → hash the
+ *  encoded bytes → cache under the hash → persist (best-effort, opt-in
+ *  gated). The one bake idiom SELECT extract/cut and Rasterize share. */
+export async function bakeCanvasToHash(canvas: HTMLCanvasElement): Promise<string> {
+  const blob = await canvasToBlob(canvas);
+  const hash = await sha256Hex(await blob.arrayBuffer());
+  putRaster(hash, canvas);
+  void persistRaster(hash);
+  return hash;
 }
 
 /** Persist a cached raster (deduped by hash). No-op if persistence is off or

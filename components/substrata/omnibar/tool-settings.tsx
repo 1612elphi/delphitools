@@ -29,6 +29,7 @@ import {
   type PieceShape,
 } from "@/lib/substrata/tool-settings";
 import { cn } from "@/lib/utils";
+import { segCellClass } from "@/components/substrata/preset-row";
 import type { TextAlign } from "@/lib/substrata/doc-model";
 import type { ToolId } from "@/lib/substrata/tool";
 
@@ -98,9 +99,7 @@ function MoveSettings({ title }: { title: string }) {
               onClick={() => setTransformAsGroup(asGroup)}
               className={cn(
                 "h-6 px-2 text-[10.5px]",
-                ts.transformAsGroup === asGroup
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
+                segCellClass(ts.transformAsGroup === asGroup),
               )}
             >
               {label}
@@ -244,9 +243,7 @@ function SelectToolSettings({ sub, title }: { sub: "lasso" | "wand"; title: stri
                   onClick={() => updateToolSettings("select", { wandMode: mode })}
                   className={cn(
                     "h-6 px-2 text-[10.5px]",
-                    s.wandMode === mode
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
+                    segCellClass(s.wandMode === mode),
                   )}
                 >
                   {label}
@@ -342,9 +339,7 @@ function PiecesSettings({ title }: { title: string }) {
             onClick={() => patch({ shape })}
             className={cn(
               "grid h-7 place-items-center",
-              p.shape === shape
-                ? "bg-primary text-primary-foreground"
-                : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
+              segCellClass(p.shape === shape),
             )}
           >
             <Icon className="size-3.5" />

@@ -146,8 +146,12 @@ export function estimateBytes(proxyBytes: number, proxyArea: number, fullArea: n
   return Math.round(proxyBytes * (fullArea / proxyArea));
 }
 
+/** Scene name → filesystem-safe slug (shared with .substrata saves). */
+export function slugifySceneName(name: string): string {
+  return name.trim().replace(/[^\w-]+/g, "-").replace(/^-+|-+$/g, "") || "substrata";
+}
+
 /** `<scene>-1080x1350.png` — scene name + dims + extension, all factual. */
 export function exportFilename(sceneName: string, w: number, h: number, ext: string): string {
-  const base = sceneName.trim().replace(/[^\w-]+/g, "-").replace(/^-+|-+$/g, "") || "substrata";
-  return `${base}-${w}x${h}.${ext}`;
+  return `${slugifySceneName(sceneName)}-${w}x${h}.${ext}`;
 }

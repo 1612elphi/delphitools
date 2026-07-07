@@ -166,3 +166,13 @@ export function PresetRow({
     </div>
   );
 }
+
+/** The segmented-cell active/inactive class pair — ONE source so the four
+ *  hand-rolled segmented groups (gradient ModePair, TextAlignRow, LTR/RTL,
+ *  wand mode) can't drift. A full generic SegmentedGroup is the upgrade if a
+ *  fifth site appears. */
+export function segCellClass(active: boolean): string {
+  return active
+    ? "bg-primary text-primary-foreground"
+    : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground";
+}

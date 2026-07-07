@@ -14,6 +14,7 @@ import type { TextAlign } from "@/lib/substrata/doc-model";
 import { FONT_CHOICES, getUploadedFonts, subscribeFonts } from "@/lib/substrata/fonts";
 import { TEXT_STYLE_PRESETS, type TextStylePreset } from "@/lib/substrata/text-style";
 import { cn } from "@/lib/utils";
+import { segCellClass } from "@/components/substrata/preset-row";
 
 /** Font dropdown (Ruby 2026-07-06: dropdown, not buttons) — the three system
  *  stacks + session uploads, each previewed in its own face. Shared by the
@@ -140,9 +141,7 @@ export function TextAlignRow({
           onClick={() => onPick(id)}
           className={cn(
             "grid h-7 min-w-[30px] place-items-center px-1.5",
-            value === id
-              ? "bg-primary text-primary-foreground"
-              : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
+            segCellClass(value === id),
           )}
         >
           <Icon className="size-3.5" aria-hidden />
@@ -170,9 +169,7 @@ export function TextStyleRow({
           onClick={() => onPick(id)}
           className={cn(
             "grid h-7 min-w-[30px] place-items-center px-1.5",
-            value === id
-              ? "bg-primary text-primary-foreground"
-              : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
+            segCellClass(value === id),
           )}
         >
           <StyleGlyph preset={id} />

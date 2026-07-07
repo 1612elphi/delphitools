@@ -114,20 +114,22 @@ function LayerMenuBody({ menu, doc }: { menu: Extract<MenuState, { kind: "layer"
       <Item icon={Copy} label="Duplicate" onClick={run(() => duplicateLayers(ids))} />
       {/* Rasterize (M3-15): bake vector/text content so the raster pipelines
           (filters/effects, SELECT cut) apply. Standard vocabulary chrome. */}
-      <Item
-        icon={Grid2x2}
-        label="Rasterize"
-        disabled={!ids.some((id) => {
-          const l = doc ? findLayer(doc.layers, id) : null;
-          return l !== null && canRasterize(l);
-        })}
-        onClick={run(() => {
-          for (const id of ids) {
-            const l = doc ? findLayer(doc.layers, id) : null;
-            if (l && canRasterize(l)) void rasterizeLayer(id);
-          }
-        })}
-      />
+      {(() => {
+        const rasterizable = doc
+          ? ids.filter((id) => {
+              const l = findLayer(doc.layers, id);
+              return l !== null && canRasterize(l);
+            })
+          : [];
+        return (
+          <Item
+            icon={Grid2x2}
+            label="Rasterize"
+            disabled={rasterizable.length === 0}
+            onClick={run(() => rasterizable.forEach((id) => void rasterizeLayer(id)))}
+          />
+        );
+      })()}
       {canUngroup ? (
         <Item icon={Ungroup} label="Ungroup" onClick={run(() => ungroupLayer(primary.id))} />
       ) : (

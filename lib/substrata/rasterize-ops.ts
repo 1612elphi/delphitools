@@ -17,8 +17,7 @@
 import { update, getSnapshot } from "./doc-store";
 import { findLayer, mapLayerInTree } from "./layer-tree";
 import type { Layer } from "./doc-model";
-import { putRaster, sha256Hex } from "./raster-cache";
-import { canvasToBlob, persistRaster } from "./blobs";
+import { bakeCanvasToHash } from "./blobs";
 
 let baker: ((layerId: string) => HTMLCanvasElement | null) | null = null;
 
@@ -37,10 +36,7 @@ export async function rasterizeLayer(id: string): Promise<boolean> {
   const el = baker(id);
   if (!el || el.width === 0 || el.height === 0) return false;
 
-  const blob = await canvasToBlob(el);
-  const hash = await sha256Hex(await blob.arrayBuffer());
-  putRaster(hash, el);
-  void persistRaster(hash); // opt-in gated inside
+  const hash = await bakeCanvasToHash(el);
 
   // revalidate after the awaits: the layer must still exist as the same kind
   const now = getSnapshot();

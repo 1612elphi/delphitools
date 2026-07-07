@@ -10,10 +10,11 @@
  * it (db.handles) is a later nicety.
  */
 
-import { fileOpen, fileSave, supported as fsAccessSupported } from "browser-fs-access";
+import { fileOpen, fileSave } from "browser-fs-access";
 import { createEmptyDoc, type SubstrataDoc } from "./doc-model";
 import { getSnapshot, setDoc } from "./doc-store";
 import { packSubstrata, unpackSubstrata } from "./substrata-file";
+import { slugifySceneName } from "./export-core";
 import { persistAll } from "./autosave";
 import { getPersistenceEnabled } from "./persistence-pref";
 import { toast } from "./toast";
@@ -21,8 +22,7 @@ import { toast } from "./toast";
 let handle: FileSystemFileHandle | null = null;
 
 function sceneFileName(doc: SubstrataDoc): string {
-  const base = doc.name.trim().replace(/[^\w-]+/g, "-").replace(/^-+|-+$/g, "") || "substrata";
-  return `${base}.substrata`;
+  return `${slugifySceneName(doc.name)}.substrata`;
 }
 
 /** Guard destructive scene swaps: the doc-store history dies with the doc. */
@@ -49,7 +49,14 @@ export async function openScene(): Promise<void> {
   } catch {
     return; // picker dismissed
   }
-  const doc = await unpackSubstrata(await file.arrayBuffer());
+  let doc: SubstrataDoc;
+  try {
+    doc = await unpackSubstrata(await file.arrayBuffer());
+  } catch {
+    // corrupt / not a .substrata — the current scene is untouched
+    toast("open-failed");
+    return;
+  }
   handle = file.handle ?? null;
   setDoc(doc);
   // opted-in browser storage adopts the opened scene (rasters included)
@@ -71,9 +78,4 @@ export async function saveScene(asCopy = false): Promise<void> {
   } catch {
     // picker dismissed — not an error
   }
-}
-
-/** Chromium-only niceties (re-save into the same file) degrade silently. */
-export function fsAccessAvailable(): boolean {
-  return fsAccessSupported;
 }

@@ -14,7 +14,8 @@ export type ToastId =
   | "copied"
   | "paste-empty"
   | "exported"
-  | "wand-needs-layer";
+  | "wand-needs-layer"
+  | "open-failed";
 
 export interface ToastState {
   id: ToastId;

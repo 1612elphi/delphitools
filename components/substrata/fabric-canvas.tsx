@@ -186,7 +186,35 @@ export function FabricCanvas() {
       canvas.requestRenderAll();
     };
     applySelectionChrome();
-    const themeObserver = new MutationObserver(applySelectionChrome);
+    // Overlay ink cache: the after:render pass runs every frame (rulers are
+    // on by default), and getComputedStyle forces a style resolve — resolve
+    // the CSS-var palette once and invalidate on theme flips only.
+    let themeInk: {
+      foreground: string;
+      primary: string;
+      primaryFg: string;
+      destructive: string;
+      background: string;
+      border: string;
+      mutedFg: string;
+    } | null = null;
+    const readThemeInk = () => {
+      const css = getComputedStyle(document.documentElement);
+      const v = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback;
+      return {
+        foreground: v("--foreground", "#000"),
+        primary: v("--primary", "#3a7"),
+        primaryFg: v("--primary-foreground", "#fff"),
+        destructive: v("--destructive", "#c33"),
+        background: v("--background", "#fff"),
+        border: v("--border", "#ccc"),
+        mutedFg: v("--muted-foreground", "#888"),
+      };
+    };
+    const themeObserver = new MutationObserver(() => {
+      themeInk = null;
+      applySelectionChrome();
+    });
     themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
 
     // Suppresses the canvas→store echo while WE drive the canvas selection
@@ -699,7 +727,8 @@ export function FabricCanvas() {
       } else if (sub === "lasso") {
         const s = getToolSettings().select;
         // magnetic: one Sobel field per gesture, over the active layer's pixels
-        const field = s.magnetic ? ((img) => (img ? sobelField(img) : null))(sampleActiveLayer()) : null;
+        const img = s.magnetic ? sampleActiveLayer() : null;
+        const field = img ? sobelField(img) : null;
         lassoDraft = { pts: [snapLassoPt(field, p)], field };
       } else {
         // wand: click selects — no drag phase
@@ -1039,14 +1068,19 @@ export function FabricCanvas() {
     let guideDrag: { id: string | null; axis: "x" | "y"; pos: number; cross: number } | null = null;
     let guideHover = false;
 
+    // The wrap rect is stable mid-gesture — cache it per claimed drag instead
+    // of forcing layout geometry on every pointermove (cleared on release).
+    let claimRect: DOMRect | null = null;
     const wrapPoint = (e: PointerEvent) => {
-      const r = wrap.getBoundingClientRect();
+      // the cache only applies while a gesture owns the pointer — hover paths
+      // (no claim) always measure fresh
+      const r = claimedPointerId !== null && claimRect ? claimRect : wrap.getBoundingClientRect();
       return { px: e.clientX - r.left, py: e.clientY - r.top };
     };
-    const scenePos = (axis: "x" | "y", px: number, py: number): number => {
-      const vt = canvas.viewportTransform;
-      return Math.round(axis === "x" ? (px - vt[4]) / vt[0] : (py - vt[5]) / vt[3]);
-    };
+    // one inverse (sceneXY, defined with the SELECT gestures) serves all
+    // screen→scene needs; guides round because guide positions are integers
+    const scenePos = (axis: "x" | "y", px: number, py: number): number =>
+      Math.round(axis === "x" ? sceneXY(px, py).x : sceneXY(px, py).y);
     const guideAt = (px: number, py: number): { id: string; axis: "x" | "y" } | null => {
       const doc = getSnapshot();
       if (!doc || !getGuides().guides) return null;
@@ -1189,6 +1223,7 @@ export function FabricCanvas() {
     let claimedPointerId: number | null = null;
     const onGuidePointerDown = (e: PointerEvent) => {
       if (e.button !== 0 || spaceHeld || panning || claimedPointerId !== null) return;
+      claimRect = wrap.getBoundingClientRect();
       const { px, py } = wrapPoint(e);
       const g = getGuides();
       const inH = py < RULER_PX; // top band → horizontal guide (axis "y")
@@ -1217,8 +1252,16 @@ export function FabricCanvas() {
       } else if (getActiveTool() === "move") {
         const hit = guideAt(px, py);
         if (!hit) return;
-        guideDrag = { id: hit.id, axis: hit.axis, pos: 0, cross: hit.axis === "x" ? py : px };
-        beginTransient();
+        // position tracks LOCALLY during the drag (reconcile never reads
+        // doc.guides, so per-move transient doc writes were pure waste); the
+        // overlay prefers guideDrag.pos and the doc is written once on drop
+        const current = getSnapshot()?.guides.find((gd) => gd.id === hit.id);
+        guideDrag = {
+          id: hit.id,
+          axis: hit.axis,
+          pos: current?.pos ?? 0,
+          cross: hit.axis === "x" ? py : px,
+        };
       } else {
         return;
       }
@@ -1246,7 +1289,6 @@ export function FabricCanvas() {
           const { px, py } = wrapPoint(e);
           const pos = scenePos(guideDrag.axis, px, py);
           guideDrag = { ...guideDrag, pos, cross: guideDrag.axis === "x" ? py : px };
-          if (guideDrag.id !== null) setGuidePos(guideDrag.id, pos, { transient: true });
           canvas.requestRenderAll();
         }
         return;
@@ -1266,6 +1308,7 @@ export function FabricCanvas() {
     const onGuidePointerUp = (e: PointerEvent) => {
       if (e.pointerId !== claimedPointerId) return;
       claimedPointerId = null;
+      claimRect = null;
       if (marqueeDraft || lassoDraft) {
         selectPointerUp();
         return;
@@ -1291,8 +1334,9 @@ export function FabricCanvas() {
           if (!getGuides().guides) toggleGuide("guides");
         }
       } else {
-        if (inBand) removeGuide(drag.id, { transient: true });
-        commitTransient(); // one undo step for the whole move (or removal)
+        // the whole move (or ruler-drop removal) is one plain op = one undo step
+        if (inBand) removeGuide(drag.id);
+        else setGuidePos(drag.id, scenePos(drag.axis, px, py));
       }
       applyToolMode();
       canvas.requestRenderAll();
@@ -1300,6 +1344,7 @@ export function FabricCanvas() {
     const onGuidePointerCancel = (e: PointerEvent) => {
       if (e.pointerId !== claimedPointerId) return;
       claimedPointerId = null;
+      claimRect = null;
       marqueeDraft = null;
       lassoDraft = null;
       if (cropDrag) {
@@ -1307,12 +1352,8 @@ export function FabricCanvas() {
         // keep the crop the drag reached — still exactly one undo step
         commitTransient();
       }
-      if (guideDrag) {
-        const wasMove = guideDrag.id !== null;
-        guideDrag = null;
-        // keep the position the move reached — still exactly one undo step
-        if (wasMove) commitTransient();
-      }
+      // a cancelled guide move wrote nothing — the guide simply stays put
+      guideDrag = null;
       applyToolMode();
       canvas.requestRenderAll();
     };
@@ -1366,7 +1407,7 @@ export function FabricCanvas() {
       const z = vt[0];
       const sx = (x: number) => x * z + vt[4];
       const sy = (y: number) => y * z + vt[5];
-      const css = getComputedStyle(document.documentElement);
+      const ink = (themeInk ??= readThemeInk());
 
       // Live freehand stroke — the exact outline the commit will produce,
       // filled in scene space under the viewport transform.
@@ -1386,7 +1427,7 @@ export function FabricCanvas() {
 
       if (showGrid) {
         ctx.save();
-        ctx.strokeStyle = css.getPropertyValue("--foreground").trim() || "#000";
+        ctx.strokeStyle = ink.foreground;
         ctx.globalAlpha = 0.12;
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -1419,7 +1460,7 @@ export function FabricCanvas() {
           ctx.setLineDash([]);
         }
         if (marqueeDraft || lassoDraft) {
-          ctx.strokeStyle = css.getPropertyValue("--primary").trim() || "#3a7";
+          ctx.strokeStyle = ink.primary;
           ctx.setLineDash([4 / z, 4 / z]);
           if (marqueeDraft) {
             ctx.strokeRect(
@@ -1452,13 +1493,16 @@ export function FabricCanvas() {
       // mid-drag over its delete band (the origin ruler) dims to signal it.
       if (userGuides.length || guideDrag) {
         const lines: { axis: "x" | "y"; pos: number; dragging: boolean }[] = userGuides.map(
-          (gd) => ({ axis: gd.axis, pos: gd.pos, dragging: guideDrag?.id === gd.id }),
+          (gd) =>
+            guideDrag?.id === gd.id
+              ? { axis: gd.axis, pos: guideDrag.pos, dragging: true }
+              : { axis: gd.axis, pos: gd.pos, dragging: false },
         );
         if (guideDrag && guideDrag.id === null) {
           lines.push({ axis: guideDrag.axis, pos: guideDrag.pos, dragging: true });
         }
         ctx.save();
-        ctx.strokeStyle = css.getPropertyValue("--primary").trim() || "#3a7";
+        ctx.strokeStyle = ink.primary;
         ctx.lineWidth = 1;
         for (const line of lines) {
           const screen = Math.round(line.axis === "x" ? sx(line.pos) : sy(line.pos)) + 0.5;
@@ -1506,7 +1550,7 @@ export function FabricCanvas() {
             const h = 14;
             const bx = axis === "x" ? mid : cross;
             const by = axis === "x" ? cross : mid;
-            ctx.fillStyle = css.getPropertyValue("--destructive").trim() || "#c33";
+            ctx.fillStyle = ink.destructive;
             ctx.fillRect(bx - w / 2, by - h / 2, w, h);
             ctx.fillStyle = "#ffffff";
             ctx.fillText(text, bx, by + 0.5);
@@ -1518,7 +1562,7 @@ export function FabricCanvas() {
       if (activeGuides) {
         // smart guides read dashed-destructive per the backdrop sketch
         ctx.save();
-        ctx.strokeStyle = css.getPropertyValue("--destructive").trim() || "#c33";
+        ctx.strokeStyle = ink.destructive;
         ctx.setLineDash([4, 4]);
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -1543,7 +1587,7 @@ export function FabricCanvas() {
         // origin-anchored phantoms.
         const selMatrix = (activeObj as ActiveSelection).calcTransformMatrix();
         ctx.save();
-        ctx.strokeStyle = css.getPropertyValue("--primary").trim() || "#3a7";
+        ctx.strokeStyle = ink.primary;
         ctx.lineWidth = 1;
         for (const child of sepMembers) {
           const c = child.calcACoords();
@@ -1594,10 +1638,10 @@ export function FabricCanvas() {
         if (by1 > cy1) ctx.fillRect(bx0, cy1, bx1 - bx0, by1 - cy1); // below
         if (cx0 > bx0) ctx.fillRect(bx0, cy0, cx0 - bx0, cy1 - cy0); // left
         if (bx1 > cx1) ctx.fillRect(cx1, cy0, bx1 - cx1, cy1 - cy0); // right
-        ctx.strokeStyle = css.getPropertyValue("--primary").trim() || "#3a7";
+        ctx.strokeStyle = ink.primary;
         ctx.lineWidth = 1;
         ctx.strokeRect(cx0, cy0, cx1 - cx0, cy1 - cy0);
-        ctx.fillStyle = css.getPropertyValue("--background").trim() || "#fff";
+        ctx.fillStyle = ink.background;
         for (const fx of [0, 0.5, 1]) {
           for (const fy of [0, 0.5, 1]) {
             if (fx === 0.5 && fy === 0.5) continue;
@@ -1631,9 +1675,9 @@ export function FabricCanvas() {
         let by = dragBadge.py + 18;
         if (bx + w > canvas.getWidth() - 2) bx = dragBadge.px - 14 - w;
         if (by + h > canvas.getHeight() - 2) by = dragBadge.py - 18 - h;
-        ctx.fillStyle = css.getPropertyValue("--primary").trim() || "#3a7";
+        ctx.fillStyle = ink.primary;
         ctx.fillRect(bx, by, w, h);
-        ctx.fillStyle = css.getPropertyValue("--primary-foreground").trim() || "#fff";
+        ctx.fillStyle = ink.primaryFg;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(text, bx + w / 2, by + h / 2 + 1);
@@ -1648,9 +1692,9 @@ export function FabricCanvas() {
       if (showRulers) {
         const W = canvas.getWidth();
         const H = canvas.getHeight();
-        const bg = css.getPropertyValue("--background").trim() || "#fff";
-        const border = css.getPropertyValue("--border").trim() || "#ccc";
-        const muted = css.getPropertyValue("--muted-foreground").trim() || "#888";
+        const bg = ink.background;
+        const border = ink.border;
+        const muted = ink.mutedFg;
         ctx.save();
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, W, RULER_PX);
@@ -1858,10 +1902,7 @@ export function FabricCanvas() {
           return s && { epoch: s.epoch, bounds: s.bounds, area: maskArea(s.mask) };
         },
         selectOps: {
-          invert: () => {
-            const doc = getSnapshot();
-            if (doc) invertSelection(doc.artboard.width, doc.artboard.height);
-          },
+          invert: () => invertSelection(),
           grow: () => growSelection(),
           shrink: () => shrinkSelection(),
           extract: () => extractSelection(),
@@ -2045,9 +2086,10 @@ export function FabricCanvas() {
       registerExportRenderer(null);
       registerLayerBaker(null);
       ro.disconnect();
-      // an unmount mid guide-move/crop-drag must not leak the open transient —
-      // commit it (still one undo step) so isGestureActive() can't stay true
-      if (guideDrag?.id || cropDrag) commitTransient();
+      // an unmount mid crop-drag must not leak the open transient — commit it
+      // (still one undo step) so isGestureActive() can't stay true forever;
+      // guide moves are local-until-drop and write nothing until release
+      if (cropDrag) commitTransient();
       guideDrag = null;
       cropDrag = null;
       wrap.removeEventListener("pointerdown", onGuidePointerDown, { capture: true });
