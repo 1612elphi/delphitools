@@ -101,6 +101,18 @@ export interface Effect {
   params: Record<string, number | string>;
 }
 
+/** Non-destructive layer crop (MOVE·Crop, ratified 2026-07-07): a stored rect
+ *  in LAYER space — intrinsic, unscaled, origin = the content's top-left
+ *  (centre − dims/2); the transform scales it (the ShapeParams convention).
+ *  Only meaningful for layers with intrinsic dims (layerDims non-null:
+ *  raster/shape/freehand); the reconciler ignores it elsewhere. */
+export interface CropRect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
 interface BaseLayer {
   id: LayerId;
   name: string;
@@ -110,6 +122,9 @@ interface BaseLayer {
   opacity: number;
   blendMode: BlendMode;
   transform: Transform;
+  /** Non-destructive crop — null/absent = uncropped. Additive optional within
+   *  schema v2 (the Filter.params widening precedent; no schema bump). */
+  crop?: CropRect | null;
   /**
    * Per-layer non-destructive stack, composited in order:
    *   outer effects → (layer content + filters) → inner effects

@@ -22,7 +22,7 @@ import {
   siblingListOf,
 } from "./layer-tree";
 import { getSelectedLayerIds, pruneSelection, setActiveLayer, setSelection } from "./selection";
-import type { BlendMode, GroupLayer, Layer, ShapeParams, ShapeStroke, SubstrataDoc, TextLayer, Transform } from "./doc-model";
+import type { BlendMode, CropRect, Gradient, GroupLayer, Layer, ShapeParams, ShapeStroke, SubstrataDoc, TextLayer, Transform } from "./doc-model";
 
 /** Commit a layer transform (the one place a Fabric interaction writes back). */
 export function setTransform(id: string, transform: Transform): void {
@@ -61,16 +61,32 @@ export function setOpacity(id: string, opacity: number, opts?: { transient?: boo
   else update(apply);
 }
 
-/** Fill for shape/freehand layers — the M4 colour sink + the Inspector fill
- *  row. A flat colour REPLACES a gradient fill (v1 call; gradient authoring
- *  arrives with the picker's gradient tab). Transient-aware: picker drags
- *  stream through the gesture path and settle to ONE undo step. */
-export function setFill(id: string, fill: string, opts?: { transient?: boolean }): void {
+/** Non-destructive layer crop (MOVE·Crop) — a CropRect in layer space, null
+ *  clears it. Transient-aware like setOpacity: handle drags stream through
+ *  the gesture path and settle to ONE undo step on release. */
+export function setCrop(id: string, crop: CropRect | null, opts?: { transient?: boolean }): void {
   const apply = (doc: SubstrataDoc): SubstrataDoc => ({
     ...doc,
-    layers: mapLayerInTree(doc.layers, id, (l) =>
-      l.kind === "shape" || l.kind === "freehand" ? { ...l, fill } : l,
-    ),
+    layers: mapLayerInTree(doc.layers, id, (l) => ({ ...l, crop })),
+    updatedAt: Date.now(),
+  });
+  if (opts?.transient) updateTransient(apply);
+  else update(apply);
+}
+
+/** Fill for shape/freehand layers — the M4 colour sink + the Inspector fill
+ *  rows (incl. gradient authoring, shapes only: a freehand fill is
+ *  string-typed, so a Gradient no-ops there). A flat colour REPLACES a
+ *  gradient fill (v1 call — colour-sink.ts). Transient-aware: picker drags
+ *  stream through the gesture path and settle to ONE undo step. */
+export function setFill(id: string, fill: string | Gradient, opts?: { transient?: boolean }): void {
+  const apply = (doc: SubstrataDoc): SubstrataDoc => ({
+    ...doc,
+    layers: mapLayerInTree(doc.layers, id, (l) => {
+      if (l.kind === "shape") return { ...l, fill };
+      if (l.kind === "freehand" && typeof fill === "string") return { ...l, fill };
+      return l;
+    }),
     updatedAt: Date.now(),
   });
   if (opts?.transient) updateTransient(apply);

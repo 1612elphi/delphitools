@@ -801,7 +801,17 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
    PIECES is now fully live except the Pieces head sub (preset gallery —
    needs Ruby's preset list). Pencil streamline 0 ratified same day.
 0f. **✅ M4 COLOUR SINK (2026-07-06).** The picker's missing sink — see the
-   Colour module section. Remaining M4 surface: gradient authoring UI,
+   Colour module section. **Gradient authoring UI LIVE (2026-07-07)** —
+   `gradient-row.tsx`: shape Fill row grows Solid/Gradient segmented; editor =
+   Linear/Radial · preview strip w/ clickable stop markers · stop colour
+   (transient mechanism, drags = one undo step) + offset stepper · add/remove
+   (2–6) · angle stepper (CSS convention, corner-exact at 45°; maths doc'd +
+   scratch-checked). setFill widened to string|Gradient (freehand guarded at
+   the choke point); flat sink pick still replaces a gradient (ratified call).
+   20-check `.verify-gradient.mjs` ALL PASS (headless UI via pinned
+   Inspector). Taste for Ruby: solid→gradient far stop = ±0.18 OKLCH nudge ·
+   marker DRAG skipped (steppers; ponytail) · radial renders elliptical on
+   non-square shapes (pre-existing). Remaining M4 surface:
    recent-colours/palette integration (post-v1 per BUILD-PLAN).
 0g. **✅ TEXT (M2, 2026-07-06).** See the Tools section. Ruby's calls baked
    in: Sans/Serif/Mono system stacks + upload (M2-3 CLOSED — no bundled
