@@ -1056,7 +1056,12 @@ Copy in the sketches is illustrative; real strings stay `\u2211CG` (see Conventi
     module shape is the KEEPER). Four units stay: [tools] [settings ⚙]
     [panels/more] [colour], all uniformly high. Harness: uniform-height +
     pin-check assertions; 16 checks ALL PASS + both regressions;
-    tsc/lint/build green.
+    tsc/lint/build green. **Amended same night (Ruby): the middle unit is
+    the CONTEXTUAL TRIGGER, not a bare ⚙ button** — active subtool's icon +
+    name + up to two live readout chips (X/Y · tolerance · font+size ·
+    shape…, the resurrected readoutChips/Tag) at a glance; hover peeks the
+    TOOL module, click pins it; icon-only when docked vertically. Harness
+    asserts the label + live X/Y chips (18 checks ALL PASS).
 11. **⏳ NEXT (Ruby, 2026-07-08): PANELS OVERHAUL, ROUND 3.** Ruby: "we
     gotta overhaul the panels one more time." Scope TBD with her — candidate
     threads from today's passes: panel hover-peek vs click (the hover-gap
