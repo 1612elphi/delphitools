@@ -1033,3 +1033,18 @@ Copy in the sketches is illustrative; real strings stay `\u2211CG` (see Conventi
    tooltips). Taste QA for Ruby: flat-bar width on small screens, tool
    module w-auto slack in sidebars (ponytail), zone placement when the
    omnibar docks left/right.
+9. **✅ OMNIBAR FOUR-UNIT LAYOUT (2026-07-08 night, Ruby's follow-up).**
+   The bar split into FOUR separated floating units with space between:
+   [tools] [tool settings — INLINE, always visible, header names the active
+   subtool] [panels/more + overflow] [colour]. Selections are FLUSH: tool
+   cells are full-bar-height (h-12×w-10 horizontal, w-12×h-10 vertical) with
+   zero padding halo — a selected tool's highlight touches the bar edges.
+   Panel triggers went flush to match. The hour-old "tool" MODULE was
+   REMOVED again (settings being always-inline made it a duplicate
+   surface); Zone/Panels building blocks deleted. Units cross-align to the
+   docked edge (settings grows away from it). Harness reworked (15 checks
+   ALL PASS incl. flush-fill + inline-settings assertions + both drags);
+   review-fixes + M7 regressions ALL PASS; tsc/lint/build green. Taste QA:
+   total row width (tools+settings+panels+colour ≈ wider than before),
+   settings-unit height jumping between tools, placeholder settings body
+   for settings-less subtools.

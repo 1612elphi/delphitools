@@ -9,7 +9,6 @@
 import { loadLayout, saveLayout } from "./layout-storage";
 
 export type ModuleId =
-  | "tool"
   | "effects"
   | "layers"
   | "inspector"
@@ -22,7 +21,6 @@ export type ModuleId =
  *  Align + Rotate are consolidated into "arrange". "looks" = the film-sim/LUT
  *  gallery (pulled out of FX — Ruby, 2026-07-03). */
 export const MODULE_IDS: readonly ModuleId[] = [
-  "tool",
   "effects",
   "layers",
   "inspector",
