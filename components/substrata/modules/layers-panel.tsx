@@ -14,6 +14,7 @@ import { restrictToParentElement, restrictToVerticalAxis } from "@dnd-kit/modifi
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
+import { hint } from "@/lib/substrata/hint";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
 import {
@@ -184,10 +185,7 @@ export function LayersBody() {
       <div className="min-h-0 flex-1 overflow-auto">
         {rows.length === 0 ? (
           <div className="flex items-center justify-center p-4 text-center text-xs text-muted-foreground">
-            {/* ∑CG: empty-state hint when no layers exist
-                spec: ≤ 60 chars, drop/paste/upload an image to start; British spelling.
-                sample: "Drop, paste, or upload an image to begin." */}
-            ∑CG
+            Drop, paste, or upload an image to begin
           </div>
         ) : (
           <DndContext
@@ -318,9 +316,7 @@ function LayerRow({
         title={layer.name || undefined}
       >
         {layer.name || (
-          // ∑CG: display name for an unnamed group row
-          //   spec: ≤ 12 chars, noun; British spelling. sample: "Group"
-          <span className="font-normal text-muted-foreground">∑CG</span>
+          <span className="font-normal text-muted-foreground">Group</span>
         )}
       </span>
 
@@ -333,8 +329,7 @@ function LayerRow({
             stop(e);
             toggleCollapsed(layer.id);
           }}
-          // ∑CG: aria-label for the group expand/collapse toggle. sample: "Collapse group"
-          aria-label="∑CG"
+          {...hint("Collapse group")}
           className="relative z-[1] grid size-4 shrink-0 place-items-center text-muted-foreground hover:text-foreground"
         >
           <ChevronDown
@@ -350,8 +345,7 @@ function LayerRow({
             stop(e);
             toggleLock(layer.id);
           }}
-          // ∑CG: aria-label for the layer lock toggle. sample: "Lock layer"
-          aria-label="∑CG"
+          {...hint("Lock layer")}
           className={cn(
             "relative z-[1] grid size-4 shrink-0 place-items-center transition-opacity",
             layer.locked
@@ -371,8 +365,7 @@ function LayerRow({
           stop(e);
           toggleVisibility(layer.id);
         }}
-        // ∑CG: aria-label for the layer show/hide toggle. sample: "Toggle visibility"
-        aria-label="∑CG"
+        {...hint("Toggle vis")}
         className={cn(
           "relative z-[1] grid size-4 shrink-0 place-items-center text-muted-foreground transition-opacity hover:text-foreground",
           layer.visible ? "opacity-0 group-hover:opacity-100" : "opacity-100",
@@ -570,8 +563,7 @@ function Footer({
           <SelectTrigger
             size="sm"
             className="h-7 min-w-0 flex-1 gap-1 border-0 bg-card px-2 text-xs shadow-none hover:bg-accent focus-visible:ring-0 disabled:opacity-50 dark:bg-card dark:hover:bg-accent"
-            // ∑CG: aria-label for the blend-mode dropdown. sample: "Blend mode"
-            aria-label="∑CG"
+            {...hint("Blend mode")}
           >
             <SelectValue />
           </SelectTrigger>
@@ -602,31 +594,27 @@ function Footer({
           <ActionBtn
             icon={FolderMinus}
             onClick={() => ungroupLayer(soleGroup.id)}
-            // ∑CG: aria-label for ungroup. sample: "Ungroup"
-            aria="∑CG"
+            aria="Ungroup"
           />
         ) : (
           <ActionBtn
             icon={FolderPlus}
             disabled={!canGroup}
             onClick={() => canGroup && groupLayers(selectedIds)}
-            // ∑CG: aria-label for group-selected-layers. sample: "Group layers"
-            aria="∑CG"
+            aria="Group layers"
           />
         )}
         <ActionBtn
           icon={Copy}
           disabled={selectedIds.length === 0}
           onClick={() => duplicateLayers(selectedIds)}
-          // ∑CG: aria-label for duplicate selected layer(s). sample: "Duplicate layers"
-          aria="∑CG"
+          aria="Dupe layers"
         />
         <ActionBtn
           icon={Trash2}
           disabled={selectedIds.length === 0}
           onClick={() => deleteLayers(selectedIds)}
-          // ∑CG: aria-label for delete selected layer(s). sample: "Delete layers"
-          aria="∑CG"
+          aria="Delete layers"
         />
       </div>
     </div>
@@ -650,6 +638,7 @@ function ActionBtn({
       onClick={onClick}
       disabled={disabled}
       aria-label={aria}
+      title={aria}
       className="grid w-[42px] shrink-0 place-items-center border-l border-border text-muted-foreground hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
     >
       <Icon className="size-4" />
@@ -677,8 +666,7 @@ function OpacityField({ layerId, opacity }: { layerId: string | null; opacity: n
         value={shown}
         disabled={!layerId}
         inputMode="numeric"
-        // ∑CG: aria-label for the primary layer's opacity field. sample: "Opacity"
-        aria-label="∑CG"
+        {...hint("Opacity")}
         onChange={(e) => setDraft(e.currentTarget.value)}
         onFocus={(e) => e.currentTarget.select()}
         onBlur={commit}

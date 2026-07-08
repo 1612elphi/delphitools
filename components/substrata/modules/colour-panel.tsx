@@ -4,6 +4,7 @@ import { useState, useSyncExternalStore } from "react";
 import { AudioLines, Grid3x3, Palette, Pipette, Rainbow, SlidersHorizontal, Square, Triangle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { hint } from "@/lib/substrata/hint";
 import { getColourName } from "@/lib/colour-names";
 import {
   getColour,
@@ -31,7 +32,7 @@ import type { ColourSnapshot } from "@/lib/substrata/colour-store";
  *
  * All maths lives in colour-convert / colour-hsv / colour-prism; this file is
  * pure UI + pointer handling. Copy is functional chrome (mode labels are icons);
- * the only ∑CG here is aria text.
+ * the only \u2211CG here is aria text.
  */
 
 type ModeId = "cube" | "triangle" | "sliders" | "swatches" | "prism" | "spectrum" | "shade";
@@ -81,8 +82,7 @@ export function ColourBody() {
               key={m.id}
               type="button"
               onClick={() => setMode(m.id)}
-              // ∑CG: aria-label per picker mode (e.g. "Hue cube", "Prism"). sample: mode name
-              aria-label="∑CG"
+              {...hint("mode name")}
               className={cn(
                 "grid h-8 cursor-default place-items-center",
                 active ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -192,23 +192,20 @@ function Footer({ hex, alpha }: { hex: string; alpha: number }) {
           onChange={(h) => void setHex(h)}
           className="size-full"
           style={{ opacity: alpha }}
-          // ∑CG: aria-label for the current-colour swatch (opens the OS picker). sample: "Current colour"
-          aria-label="∑CG"
+          {...hint("Current colour")}
         />
       </div>
       <DeferredHexInput
         value={hex}
         onChange={(h) => void setHex(h)}
-        // ∑CG: aria-label for the hex colour field. sample: "Hex colour value"
-        aria-label="∑CG"
+        {...hint("Hex value")}
         className="h-9 min-w-0 flex-1 rounded-none border-0 bg-card font-mono text-xs uppercase tabular-nums shadow-none focus-visible:ring-0"
       />
       {hasEyeDropper && (
         <button
           type="button"
           onClick={pick}
-          // ∑CG: eyedropper button aria-label. sample: "Pick colour from screen"
-          aria-label="∑CG"
+          {...hint("Pick from screen")}
           className="grid w-9 shrink-0 place-items-center border-l border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           <Pipette className="size-3.5" />

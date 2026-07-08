@@ -44,12 +44,7 @@ export function LooksBody() {
   if (!layer || layer.kind !== "raster") {
     return (
       <div className="p-4 text-center text-xs text-muted-foreground">
-        {/* ∑CG: LOOKS empty-state hint (no selection, a group, or a non-raster
-            layer selected)
-            spec: ≤ 48 chars; tells the user to select an image layer to pick
-            a look; British spelling.
-            sample: "Select an image layer to pick a look." */}
-        ∑CG
+        To pick a look, first pick an image layer
       </div>
     );
   }

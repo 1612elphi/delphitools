@@ -24,6 +24,7 @@
 import { FabricImage } from "fabric";
 import type { Effect } from "./doc-model";
 import { effectsReach, getScratch, paintEffects } from "./effect-render";
+import { ensureMatte, getMatte, matteEpoch } from "./bg-removal";
 
 type DrawContext = Parameters<FabricImage["drawObject"]>[2];
 
@@ -31,6 +32,19 @@ export class EffectsImage extends FabricImage {
   /** ENABLED effects only (registry defaults merged), in apply order — set by
    *  filter-sync's syncImageEffects (which also dirties the cache on change). */
   effects: Effect[] = [];
+
+  /** Content blobHash of the source raster — set by the reconciler at build
+   *  time (the object is REBUILT on a hash repoint, so this never goes stale).
+   *  Keys the bg-removal matte cache. */
+  sourceHash = "";
+
+  /** matteEpoch the cache was last composited under (cutout layers only). */
+  private _matteEpochSeen = -1;
+
+  /** effects[] holds enabled instances only, so presence = switched on. */
+  private hasCutout(): boolean {
+    return this.effects.some((e) => e.type === "remove-background");
+  }
 
   /** effectsReach memo — _getCacheCanvasDimensions runs every rendered frame
    *  (pans included), but the stack only changes when sync assigns it. */
@@ -52,6 +66,9 @@ export class EffectsImage extends FabricImage {
    *  drags recomposite each frame and stay correct throughout. */
   override isCacheDirty(skipCanvas?: boolean): boolean {
     if (this.effects.length > 0 && this.pose() !== this._composedPose) this.dirty = true;
+    // A matte arriving bumps the global epoch (bg-removal.ts) — recomposite so
+    // the cutout pops in without a doc edit (the lutEpoch convention).
+    if (this.hasCutout() && this._matteEpochSeen !== matteEpoch()) this.dirty = true;
     return super.isCacheDirty(skipCanvas);
   }
 
@@ -92,6 +109,21 @@ export class EffectsImage extends FabricImage {
     const content = getScratch(0, ctx.canvas.width, ctx.canvas.height);
     content.setTransform(t);
     super.drawObject(content, forClipping, context);
+    if (this.hasCutout()) {
+      const matte = getMatte(this.sourceHash);
+      if (matte) {
+        // Alpha-multiply the matte over the SAME intrinsic rect the element was
+        // painted into (destination-in: dst.a × src.a; the scratch is empty
+        // outside it) — before paintEffects, so outer effects stamp the CUTOUT
+        // silhouette, not the original.
+        content.globalCompositeOperation = "destination-in";
+        content.drawImage(matte, -this.width / 2, -this.height / 2, this.width, this.height);
+        content.globalCompositeOperation = "source-over";
+      } else {
+        ensureMatte(this.sourceHash); // async bake; matteEpoch pops it in
+      }
+      this._matteEpochSeen = matteEpoch();
+    }
     paintEffects(ctx, content.canvas, this.effects, {
       kx: t.a / (Math.abs(this.scaleX) || 1),
       ky: t.d / (Math.abs(this.scaleY) || 1),

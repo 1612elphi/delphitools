@@ -12,7 +12,7 @@ import {
   util as fabricUtil,
 } from "fabric";
 import type { FabricObject, LayoutStrategyResult, StrictLayoutContext } from "fabric";
-import { getSnapshot, subscribe, setDoc, beginTransient, commitTransient } from "@/lib/substrata/doc-store";
+import { getSnapshot, subscribe, setDoc, beginTransient, commitTransient, canUndo } from "@/lib/substrata/doc-store";
 import { registerViewportController, reportZoom } from "@/lib/substrata/viewport";
 import { createEmptyDoc, createFreehandLayer, createShapeLayer, createTextLayer, identityTransform } from "@/lib/substrata/doc-model";
 import type { Artboard, CropRect, ShapeLayer, SubstrataDoc, Transform } from "@/lib/substrata/doc-model";
@@ -61,6 +61,8 @@ import { cutSelection, extractSelection, growSelection, invertSelection, shrinkS
 import { reportSelectionAnchor } from "@/components/substrata/selection-popup";
 import { toast } from "@/lib/substrata/toast";
 import { subscribeLuts } from "@/lib/substrata/lut-data";
+import { getMatte, getMatteStatus, putMatte, subscribeMattes } from "@/lib/substrata/bg-removal";
+import { resizeArtboardReflow } from "@/lib/substrata/artboard-ops";
 import { getLayerMenu, openCanvasMenu, openLayerMenu } from "@/lib/substrata/context-menu";
 import {
   getToolSettings,
@@ -136,6 +138,7 @@ function fitView(canvas: Canvas, artboard: Artboard): void {
 export function FabricCanvas() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const elRef = useRef<HTMLCanvasElement>(null);
+  const dropHintRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -1975,6 +1978,30 @@ export function FabricCanvas() {
             original: o?._originalElement && [o._originalElement.width, o._originalElement.height],
           };
         },
+        // bg-removal test seam (M7): inject a synthetic matte for a raster
+        // layer — rects (natural-pixel coords) are the OPAQUE regions,
+        // everything else goes transparent. Lets the harness verify the
+        // composite/toggle/undo wiring without downloading the model.
+        setMatte: (layerId: string, rects: { x: number; y: number; w: number; h: number }[]) => {
+          const doc = getSnapshot();
+          const l = doc && findLayer(doc.layers, layerId);
+          if (!l || l.kind !== "raster") return false;
+          const c = document.createElement("canvas");
+          c.width = l.naturalWidth;
+          c.height = l.naturalHeight;
+          const mctx = c.getContext("2d")!;
+          for (const r of rects) mctx.fillRect(r.x, r.y, r.w, r.h);
+          putMatte(l.blobHash, c);
+          return true;
+        },
+        matte: (layerId: string) => {
+          const doc = getSnapshot();
+          const l = doc && findLayer(doc.layers, layerId);
+          if (!l || l.kind !== "raster") return null;
+          return { loaded: !!getMatte(l.blobHash), status: getMatteStatus(l.blobHash) ?? null };
+        },
+        // magic-resize (M7-8) — the op the Canvas size modal's reflow path calls
+        resizeReflow: (w: number, h: number) => resizeArtboardReflow({ width: w, height: h }),
       };
     }
 
@@ -1982,6 +2009,8 @@ export function FabricCanvas() {
     // LUT strips load async — re-render when one arrives so its look pops in
     // (filter-sync's signature carries the epoch).
     const unsubscribeLuts = subscribeLuts(render);
+    // Same for bg-removal mattes — EffectsImage's isCacheDirty carries the epoch.
+    const unsubscribeMattes = subscribeMattes(render);
     render();
     fit();
 
@@ -2026,9 +2055,19 @@ export function FabricCanvas() {
     const ro = new ResizeObserver(fit);
     ro.observe(wrap);
 
-    const onDragOver = (e: DragEvent) => e.preventDefault();
+    // Drop-to-import, with a visible drop-target highlight while files hover
+    // (the affordance the clarity review flagged — drop worked but was mute).
+    const setDropHint = (on: boolean) => dropHintRef.current?.classList.toggle("hidden", !on);
+    const onDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      if (e.dataTransfer?.types.includes("Files")) setDropHint(true);
+    };
+    const onDragLeave = (e: DragEvent) => {
+      if (!wrap.contains(e.relatedTarget as Node | null)) setDropHint(false);
+    };
     const onDrop = (e: DragEvent) => {
       e.preventDefault();
+      setDropHint(false);
       const files = e.dataTransfer?.files;
       if (!files) return;
       for (const f of Array.from(files)) {
@@ -2036,7 +2075,16 @@ export function FabricCanvas() {
       }
     };
     wrap.addEventListener("dragover", onDragOver);
+    wrap.addEventListener("dragleave", onDragLeave);
     wrap.addEventListener("drop", onDrop);
+
+    // Unsaved-work guard: with local storage opted OUT, closing/reloading the
+    // tab silently discards the session — the one unrecoverable path a casual
+    // user hits. (Opted in, the debounced autosave covers it.)
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (canUndo() && !getPersistenceEnabled()) e.preventDefault();
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
 
     // Right-click → context menu (Ruby 2026-07-03), via Fabric's own
     // contextmenu canvas event (it hit-tests once and hands us the target). A
@@ -2073,6 +2121,7 @@ export function FabricCanvas() {
       unsubscribePersistence();
       unsubscribe();
       unsubscribeLuts();
+      unsubscribeMattes();
       unsubscribeSelection();
       unsubscribeTool();
       stopColourSink();
@@ -2097,6 +2146,8 @@ export function FabricCanvas() {
       window.removeEventListener("pointerup", onGuidePointerUp);
       window.removeEventListener("pointercancel", onGuidePointerCancel);
       wrap.removeEventListener("dragover", onDragOver);
+      wrap.removeEventListener("dragleave", onDragLeave);
+      window.removeEventListener("beforeunload", onBeforeUnload);
       wrap.removeEventListener("wheel", onWheel);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
@@ -2110,6 +2161,12 @@ export function FabricCanvas() {
   return (
     <div ref={wrapRef} className="relative flex-1 overflow-hidden bg-muted">
       <canvas ref={elRef} />
+      {/* drop-target highlight — toggled imperatively while files hover */}
+      <div
+        ref={dropHintRef}
+        aria-hidden
+        className="pointer-events-none absolute inset-1 hidden border-2 border-dashed border-primary bg-primary/5"
+      />
     </div>
   );
 }

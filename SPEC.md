@@ -177,7 +177,7 @@ opentype.js, AVIF WASM) — never on landing-page weight.
   usable canvas — no wizard, no template wall. **Default = 2000×1500** (72 ppi,
   white), no prompt; a **new-scene preset panel** (Scene ▸ New scene) offers
   other sizes for those who want them. Preset list (social/print/device/…) is
-  TBD; labels are `∑CG`. (Multi-artboard = later.) Layers may be positioned
+  TBD; labels are `\u2211CG`. (Multi-artboard = later.) Layers may be positioned
   freely past the edge; **the artboard clips the rendered + exported view** — it's
   the frame. Selection handles still draw outside it (`controlsAboveOverlay`) so an
   off-canvas layer stays grabbable.
@@ -214,7 +214,7 @@ tool surface, not "unfinished".
 
 - **Left:** delphitools logo (→ home/tools) · **Substrata** · menu bar.
 - **Centre:** editable file name (`Untitled scene`) + **local save status** — must
-  read as *in this browser* (`∑CG`: e.g. `Saved in browser` / `Saving…` /
+  read as *in this browser* (`\u2211CG`: e.g. `Saved in browser` / `Saving…` /
   `Unsaved changes`).
 - **Right:** undo/redo · zoom (− % + / fit) · **Export** · theme toggle. The
   undo/redo control is a **status slot**: when a transient toast fires (see below)
@@ -237,7 +237,7 @@ tool surface, not "unfinished".
 **Right-click on the canvas** → context menu (ACXV + bring/send + select-all) —
 a second surface for editing, kept for power users.
 
-File-noun = **"Scene"** (`∑CG`-revisitable: Drop / Set / Plate / Board).
+File-noun = **"Scene"** (`\u2211CG`-revisitable: Drop / Set / Plate / Board).
 Deliberately absent: account/avatar, Share/collaborators, cloud-sync, template
 gallery, upgrade/paywall.
 
@@ -268,13 +268,13 @@ cream/forest-green/amber; 2px major / 1px nested dividers; `.segmented` groups;
 - **Colour picker** = one card, three tabs:
   - **Swatches** (default) — draggable hue×tone wall.
   - **Prism** — wavelength spectroscope (nm + band), shaped by `WATTS` (intensity)
-    and `NTU` (haze). `∑CG` names.
+    and `NTU` (haze). `\u2211CG` names.
   - **Shade** — 24-hue reel → 5 named tonal shades.
 - **Status toasts** — tiny transient confirmations that occupy the top-bar
   undo/redo **status slot** (buttons swap out for the toast, then back;
   auto-clears ~1.8s; reduced-motion respected). Fired by a **semantic key**
   (`toast("canvas-fit")`), never a literal string — the slot maps key → icon +
-  `∑CG` text (`lib/substrata/toast.ts`, `components/substrata/toast-slot.tsx`).
+  `\u2211CG` text (`lib/substrata/toast.ts`, `components/substrata/toast-slot.tsx`).
   Reserve for lightweight action confirmations that lack other feedback (fit,
   saved, storage-off, image-added, copied, exported…), NOT for errors or anything
   needing user action. One at a time; re-firing a key re-triggers the animation.
@@ -385,9 +385,9 @@ stock/icon/font store · no silent project-format migration that breaks saved fi
 
 ---
 
-## 14. Copy gaps (∑CG)
+## 14. Copy gaps (\u2211CG)
 
-All user-facing strings are `∑CG` gaps with commented spec/sample, filled via
+All user-facing strings are `\u2211CG` gaps with commented spec/sample, filled via
 **slopsieve**. Known: colour-picker names (Prism / WATTS / NTU + shade families),
 the cutout/effect gating body, the **local save-status** text, the Edit history
 hint, Clip mode descriptions (if reinstated), empty-state/onboarding microcopy,

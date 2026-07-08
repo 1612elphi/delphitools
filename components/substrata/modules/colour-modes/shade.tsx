@@ -128,10 +128,7 @@ export function ShadeMode({ colour }: { colour: ColourSnapshot }) {
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           role="group"
-          // ∑CG: aria-label for the drag/scroll 24-hue reel — spec: ≤ 40 chars,
-          //   describes a scrollable strip of hues centred to pick a family.
-          //   sample: "Hue reel"
-          aria-label="∑CG"
+          aria-label="Hue reel"
           className={cn(
             "flex h-12 cursor-grab touch-none select-none overflow-x-auto overflow-y-hidden overscroll-x-contain snap-x snap-mandatory active:cursor-grabbing",
             "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",

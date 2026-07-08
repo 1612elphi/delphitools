@@ -116,10 +116,8 @@ export function ShapeFillRows({ layerId, fill }: { layerId: string; fill: string
             <TransientColourCell
               value={fill as string}
               onApply={(v, transient) => setFill(layerId, v, transient ? { transient } : undefined)}
-              // ∑CG: aria-label for the layer fill swatch. sample: "Fill colour"
-              swatchAria="∑CG"
-              // ∑CG: aria-label for the layer fill hex field. sample: "Fill hex"
-              hexAria="∑CG"
+              swatchAria="Fill colour"
+              hexAria="Fill hex"
             />
           )}
         </div>
@@ -196,10 +194,7 @@ function GradientEditor({
               key={i}
               type="button"
               onClick={() => setSel(i)}
-              /* ∑CG: aria-label for a gradient stop marker (the ×N pattern —
-                 the visible content is its colour). spec: identifies stop
-                 i+1 of stops.length. sample: "Stop 2 of 3" */
-              aria-label="∑CG"
+              aria-label="Stop"
               className={cn(
                 "absolute top-0 h-full w-2.5 -translate-x-1/2 border",
                 i === selIdx ? "z-10 border-primary ring-1 ring-primary" : "border-border",
@@ -218,15 +213,13 @@ function GradientEditor({
             icon={Plus}
             onClick={addStop}
             disabled={stops.length >= MAX_STOPS}
-            // ∑CG: aria-label for the add-stop button. sample: "Add stop"
-            aria="∑CG"
+            aria="Add stop"
           />
           <StepBtn
             icon={Minus}
             onClick={removeStop}
             disabled={stops.length <= 2}
-            // ∑CG: aria-label for the remove-stop button. sample: "Remove stop"
-            aria="∑CG"
+            aria="Remove stop"
           />
         </span>
       </Row>
@@ -234,10 +227,8 @@ function GradientEditor({
         <TransientColourCell
           value={stops[selIdx]?.colour ?? "#888888"}
           onApply={(hex, transient) => patchStop({ colour: hex }, transient)}
-          // ∑CG: aria-label for the selected stop's colour swatch. sample: "Stop colour"
-          swatchAria="∑CG"
-          // ∑CG: aria-label for the selected stop's hex field. sample: "Stop hex"
-          hexAria="∑CG"
+          swatchAria="Stop colour"
+          hexAria="Stop hex"
         />
       </Row>
       <Row label="Offset">

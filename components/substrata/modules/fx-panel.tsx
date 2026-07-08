@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   Aperture,
   Binary,
@@ -27,6 +27,7 @@ import {
   RotateCcw,
   Scale,
   ScanLine,
+  Scissors,
   SlidersHorizontal,
   Sparkle,
   Spline,
@@ -58,6 +59,13 @@ import { TransientColourCell } from "@/components/substrata/transient-colour";
 import { beginTransient, commitTransient, getSnapshot, subscribe } from "@/lib/substrata/doc-store";
 import { findLayer, isGroup } from "@/lib/substrata/layer-tree";
 import { getActiveLayerId, subscribeSelection } from "@/lib/substrata/selection";
+import {
+  ensureMatte,
+  getMatteStatus,
+  retryMatte,
+  subscribeMattes,
+} from "@/lib/substrata/bg-removal";
+import { hint } from "@/lib/substrata/hint";
 import { EFFECT_REGISTRY } from "@/lib/substrata/effects";
 import { FILTER_REGISTRY } from "@/lib/substrata/filters";
 import {
@@ -113,11 +121,7 @@ export function FxBody() {
   if (!layer) {
     return (
       <div className="p-4 text-center text-xs text-muted-foreground">
-        {/* ∑CG: FX empty-state hint (no selection)
-            spec: ≤ 48 chars; tells the user to select a layer to edit its
-            effects/filters; British spelling.
-            sample: "Select a layer to add effects." */}
-        ∑CG
+        Select a layer to add effects...
       </div>
     );
   }
@@ -128,11 +132,7 @@ export function FxBody() {
   if (isGroup(layer)) {
     return (
       <div className="p-4 text-center text-xs text-muted-foreground">
-        {/* ∑CG: FX hint when a GROUP is selected (group effects arrive later)
-            spec: ≤ 56 chars; group effects aren't available yet — select a
-            layer inside the group; British spelling.
-            sample: "Select a layer inside the group to add effects." */}
-        ∑CG
+        Select a layer inside the group to add effects...
       </div>
     );
   }
@@ -144,11 +144,7 @@ export function FxBody() {
   if (layer.kind !== "raster") {
     return (
       <div className="p-4 text-center text-xs text-muted-foreground">
-        {/* ∑CG: FX hint when a non-raster layer (shape, later text) is selected
-            spec: ≤ 56 chars; effects/filters apply to image layers for now
-            (rasterize arrives later); British spelling.
-            sample: "Effects apply to image layers for now." */}
-        ∑CG
+        Effects apply to image layers for now.
       </div>
     );
   }
@@ -215,6 +211,7 @@ const FX_ICONS: Record<string, LucideIcon> = {
   "inner-shadow": SquareSquare,
   "inner-glow": Sparkle,
   "colour-overlay": PaintBucket,
+  "remove-background": Scissors,
 };
 
 /** Typed-card picker groups: filters (zone 1) · effects (zone 2). The
@@ -406,9 +403,12 @@ function FxBlock({
   onToggle: () => void;
 }) {
   const def = getFxDef(stack, fx.type);
+  // Remove Background is paramless but NOT bodiless — its body is the async
+  // bake status (download %, device, error/retry), not registry params.
+  const matteBlock = stack === "effects" && fx.type === "remove-background";
   // Paramless blocks (invert, greyscale, sepia, edge-detect…) have nothing to
   // open: no chevron, no toggle, no body, no reset (Ruby QA).
-  const expandable = (def?.params.length ?? 0) > 0;
+  const expandable = matteBlock || (def?.params.length ?? 0) > 0;
   const isOpen = expandable && open;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: fx.id,
@@ -433,8 +433,7 @@ function FxBlock({
           {...attributes}
           {...listeners}
           className="grid w-7 shrink-0 cursor-grab place-items-center self-stretch text-muted-foreground outline-none"
-          // ∑CG: aria-label for the drag-reorder grip. sample: "Reorder"
-          aria-label="∑CG"
+          {...hint("Reorder")}
         >
           <GripVertical className="size-3.5" />
         </span>
@@ -461,26 +460,23 @@ function FxBlock({
             <span className="truncate font-semibold">{fxDisplayLabel(stack, fx)}</span>
           </span>
         )}
-        {fx.enabled && expandable && (
+        {fx.enabled && expandable && !matteBlock && (
           <CtlBtn
             icon={RotateCcw}
             onClick={() => resetFx(layerId, stack, fx.id)}
-            // ∑CG: aria-label/tooltip for reset-params-to-defaults. sample: "Reset"
-            aria="∑CG"
+            aria="Reset"
           />
         )}
         <CtlBtn
           icon={Trash2}
           onClick={() => removeFx(layerId, stack, fx.id)}
-          // ∑CG: aria-label/tooltip for remove-from-stack. sample: "Remove"
-          aria="∑CG"
+          aria="Remove"
         />
         <div className="grid place-items-center border-l border-border px-2.5">
           <Switch
             checked={fx.enabled}
             onCheckedChange={() => toggleFx(layerId, stack, fx.id)}
-            // ∑CG: aria-label for the enable/disable switch. sample: "Enabled"
-            aria-label="∑CG"
+            {...hint("Enabled")}
           />
         </div>
       </div>
@@ -497,7 +493,8 @@ function FxBlock({
         )}
       >
         <div className="min-h-0 overflow-hidden">
-          {def?.params.map((spec, i) =>
+          {matteBlock && <MatteBody layerId={layerId} />}
+          {!matteBlock && def?.params.map((spec, i) =>
             spec.kind === "presets" ? (
               // presets bleed edge-to-edge (the sketch's flush swatch grid)
               <PresetsGrid
@@ -540,10 +537,95 @@ function CtlBtn({ icon: Icon, aria, onClick }: { icon: LucideIcon; aria: string;
       type="button"
       onClick={onClick}
       aria-label={aria}
+      title={aria}
       className="grid w-9 shrink-0 place-items-center border-l border-border text-muted-foreground hover:bg-accent hover:text-foreground"
     >
       <Icon className="size-3.5" />
     </button>
+  );
+}
+
+// ── Remove Background status body (M7) ────────────────────────────────────────
+
+/** The async-bake body: kicks the bake (idempotent — the canvas composite kicks
+ *  too) and surfaces the model lifecycle: download %, inference, device (with a
+ *  slower-notice when the WASM fallback ran), sticky errors with retry. The
+ *  block-header switch owns on/off; a finished matte is cached (memory +
+ *  IndexedDB under the persistence opt-in) so toggling is instant. */
+function MatteBody({ layerId }: { layerId: string }) {
+  const doc = useSyncExternalStore(subscribe, getSnapshot, () => null);
+  const layer = doc ? findLayer(doc.layers, layerId) : null;
+  const hash = layer?.kind === "raster" ? layer.blobHash : null;
+  const st = useSyncExternalStore(
+    subscribeMattes,
+    () => (hash ? (getMatteStatus(hash) ?? null) : null),
+    () => null,
+  );
+  useEffect(() => {
+    if (hash) ensureMatte(hash);
+  }, [hash]);
+  if (!hash) return null;
+
+  const state = st?.state ?? "queued";
+  const progress = st?.progress ?? 0;
+  return (
+    <div className="space-y-1.5 px-2.5 py-2 text-[10.5px] text-muted-foreground">
+      {state === "queued" && (
+        <div>
+          Preparing…
+        </div>
+      )}
+      {state === "downloading" && (
+        <>
+          <div className="flex items-center justify-between gap-2">
+            <span className="truncate">
+              Downloading model...
+            </span>
+            <span className="shrink-0 tabular-nums">{progress}%</span>
+          </div>
+          <div className="h-1 w-full bg-muted">
+            <div
+              className="h-full bg-primary transition-[width] duration-300 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </>
+      )}
+      {state === "processing" && (
+        <>
+          <div>
+            Removing background...
+          </div>
+          <div className="h-1 w-full animate-pulse bg-primary/60" />
+        </>
+      )}
+      {state === "done" && (
+        <div className="truncate">
+          Cutout ready
+        </div>
+      )}
+      {state === "done" && st?.device === "wasm" && (
+        <div>
+          No graphics chip available, bear with me
+        </div>
+      )}
+      {state === "error" && (
+        <>
+          {/* raw Error.message stays off-screen — hover the label to see it
+              (clarity review: naked developer strings scare this persona) */}
+          <div className="text-destructive" title={st?.detail}>
+            {"Couldn't process"}
+          </div>
+          <button
+            type="button"
+            onClick={() => retryMatte(hash)}
+            className="h-6 border border-border bg-card px-2 text-[10.5px] hover:bg-accent hover:text-foreground"
+          >
+            Retry
+          </button>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -764,15 +846,13 @@ function StepperRow({
           icon={ChevronUp}
           onClick={() => nudge(1)}
           disabled={value >= spec.max}
-          // ∑CG: aria-label for the stepper's increment button. sample: "Increase"
-          aria="∑CG"
+          aria="Increase"
         />
         <StepBtn
           icon={ChevronDown}
           onClick={() => nudge(-1)}
           disabled={value <= spec.min}
-          // ∑CG: aria-label for the stepper's decrement button. sample: "Decrease"
-          aria="∑CG"
+          aria="Decrease"
         />
       </div>
     </>
@@ -826,10 +906,8 @@ function ColourRow({
           onApply={(hex, transient) =>
             setFxParam(layerId, stack, fx.id, spec.key, hex, transient ? { transient } : undefined)
           }
-          // ∑CG: aria-label for a param colour swatch. sample: "Pick colour"
-          swatchAria="∑CG"
-          // ∑CG: aria-label for a param hex field. sample: "Hex value"
-          hexAria="∑CG"
+          swatchAria="Pick colour"
+          hexAria="Hex value"
         />
       </div>
     </>

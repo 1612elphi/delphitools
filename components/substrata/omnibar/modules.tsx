@@ -1,8 +1,10 @@
 "use client";
 
-import { X } from "lucide-react";
+import { GripVertical, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { togglePin, type ModuleId } from "@/lib/substrata/pin-pref";
+import { beginDockDragFromPointer } from "@/lib/substrata/drag-dock";
+import { hint } from "@/lib/substrata/hint";
 import { LayersBody, LayersCount } from "@/components/substrata/modules/layers-panel";
 import { InspectorBody } from "@/components/substrata/modules/inspector-panel";
 import { ColourBody, ColourName } from "@/components/substrata/modules/colour-panel";
@@ -16,7 +18,7 @@ import { LooksBody, LooksSub } from "@/components/substrata/modules/looks-panel"
  * box supplies the header (title · sub · unpin-when-pinned). All six modules
  * are real. Titles = mockup/omnibar words ("FX" matches its omnibar trigger —
  * the module holds adjustments + effects; the film-sim/LUT family lives in
- * LOOKS, whose category Ruby hasn't named yet → its title is the ∑CG gap).
+ * LOOKS, whose category Ruby hasn't named yet → its title is the \u2211CG gap).
  */
 
 export interface ModuleDef {
@@ -32,11 +34,7 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
   effects: { id: "effects", title: "FX", width: "w-[296px]", body: <FxBody />, sub: <FxSub /> },
   inspector: { id: "inspector", title: "Inspector", width: "w-[236px]", body: <InspectorBody /> },
   colour: { id: "colour", title: "Colour", width: "w-[236px]", body: <ColourBody />, sub: <ColourName /> },
-  // ∑CG: module title for the film-sim/LUT gallery — Ruby's unnamed third
-  //   family ("LUTs, CSTs, don't have a good name for this yet").
-  //   spec: ≤ 10 chars, noun, renders uppercase in the header; British
-  //   spelling. sample: "Looks"
-  looks: { id: "looks", title: "∑CG", width: "w-[312px]", body: <LooksBody />, sub: <LooksSub /> },
+  looks: { id: "looks", title: "Looks", width: "w-[312px]", body: <LooksBody />, sub: <LooksSub /> },
   arrange: { id: "arrange", title: "Arrange", width: "w-[224px]", body: <ArrangeBody /> },
 };
 
@@ -62,17 +60,30 @@ export function ModuleBox({ id, variant = "bloom" }: { id: ModuleId; variant?: M
     >
       <div
         className={cn(
-          "flex h-[30px] items-center gap-2 border-b border-border bg-card pl-[11px] pr-[7px]",
+          "flex h-[30px] items-center gap-1.5 border-b border-border bg-card pl-1 pr-[7px]",
           variant === "rail" && "sticky top-0 z-[2]",
         )}
       >
+        {/* drag-to-dock grip — the visible affordance that replaced the
+            Workspace-menu dock rows; works from the bloom too (drop pins) */}
+        <span
+          onPointerDown={(e) => {
+            e.preventDefault();
+            beginDockDragFromPointer(e, { kind: "module", id });
+          }}
+          className="grid h-full w-4 shrink-0 cursor-grab touch-none place-items-center text-muted-foreground/60 hover:text-foreground"
+          // ∑CG: aria-label + tooltip for the module drag-to-dock grip
+          //   sample: "Drag to dock"
+          {...hint("∑CG")}
+        >
+          <GripVertical className="size-3" />
+        </span>
         <span className="text-[10.5px] font-bold uppercase tracking-wide">{def.title}</span>
         {def.sub != null && <span className="ml-auto text-[10px] text-muted-foreground">{def.sub}</span>}
         {closable && (
           <button
             onClick={() => togglePin(id)}
-            // ∑CG: close/unpin button aria-label. sample: "Close panel"
-            aria-label="∑CG"
+            aria-label="Close panel"
             className={cn(
               "grid size-[22px] place-items-center text-muted-foreground hover:bg-accent hover:text-foreground",
               def.sub == null && "ml-auto",

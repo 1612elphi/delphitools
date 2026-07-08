@@ -9,7 +9,7 @@
  * pipeline. "filter" = every adjustment, spatial AND colour (brightness, blur,
  * levels…). "colour" = the film-sim/LUT family (Ruby's third layer-property
  * type, category name TBD): whole-image looks picked from PRESETS named after
- * film stocks and movies — the preset names are authored copy → ∑CG gaps.
+ * film stocks and movies — the preset names are authored copy → \u2211CG gaps.
  * Both live in the SAME doc array (layer.filters) and composite in array
  * order; the doc model doesn't know the difference.
  *
@@ -36,7 +36,7 @@ export interface FilterDefinition extends FxDefinition {
  * colour group and a swatch in the film-sim block's preset grid. `swatch` is a
  * representative placeholder gradient (visual data — replaced by real
  * LUT-derived looks in M3); `label` is a film-stock/movie-inspired NAME =
- * authored copy, so every one is a ∑CG gap for slopsieve.
+ * authored copy, so every one is a \u2211CG gap for slopsieve.
  * The shelf size (8, matching the sketch's presets grid) is a placeholder count.
  */
 export interface FilmSimPreset {
@@ -122,21 +122,18 @@ export const FILM_SIM_GRADES: Record<string, FilmSimGrade> = {
   "sim-08": { lift: [0.025, 0.005, 0], gain: [1.1, 0.97, 0.88], gamma: [0.97, 1.04, 1.1], sat: 1.18 },
 };
 
-// ∑CG (×8): duotone preset-pair names (title/aria on the pair swatches).
-//   spec: each ≤ 14 chars, evocative two-colour look name; Title Case; British
-//   spelling; all eight distinct. The pair next to each is shadow → highlight.
-//   samples: navy/cream "Heritage" · black/cyan "Xerox" · purple/yellow
-//   "Nightclub" · forest/mint "Botanic" · crimson/peach "Darkroom" ·
-//   charcoal/orange "Furnace" · indigo/rose "Dusk" · teal/sand "Lagoon".
+// Duotone preset-pair names (title/aria on the pair swatches): each ≤ 14 chars,
+// an evocative two-colour look name; Title Case; British spelling; all eight
+// distinct. Each pair reads shadow → highlight.
 export const DUOTONE_PAIRS: { id: string; label: string; shadow: string; highlight: string }[] = [
-  { id: "duo-01", label: "∑CG", shadow: "#1a2456", highlight: "#f5e9d0" },
-  { id: "duo-02", label: "∑CG", shadow: "#000000", highlight: "#00c2d1" },
-  { id: "duo-03", label: "∑CG", shadow: "#3b1f5e", highlight: "#ffd166" },
-  { id: "duo-04", label: "∑CG", shadow: "#16351f", highlight: "#baf2c5" },
-  { id: "duo-05", label: "∑CG", shadow: "#641220", highlight: "#ffc49b" },
-  { id: "duo-06", label: "∑CG", shadow: "#232323", highlight: "#ff7f2a" },
-  { id: "duo-07", label: "∑CG", shadow: "#2d1b69", highlight: "#ff9ecd" },
-  { id: "duo-08", label: "∑CG", shadow: "#0f4c4c", highlight: "#e8d5a3" },
+  { id: "duo-01", label: "Heritage", shadow: "#1a2456", highlight: "#f5e9d0" },
+  { id: "duo-02", label: "Xerox", shadow: "#000000", highlight: "#00c2d1" },
+  { id: "duo-03", label: "Nightclub", shadow: "#3b1f5e", highlight: "#ffd166" },
+  { id: "duo-04", label: "Botanic", shadow: "#16351f", highlight: "#baf2c5" },
+  { id: "duo-05", label: "Darkroom", shadow: "#641220", highlight: "#ffc49b" },
+  { id: "duo-06", label: "Furnace", shadow: "#232323", highlight: "#ff7f2a" },
+  { id: "duo-07", label: "Dusk", shadow: "#2d1b69", highlight: "#ff9ecd" },
+  { id: "duo-08", label: "Lagoon", shadow: "#0f4c4c", highlight: "#e8d5a3" },
 ];
 
 const amount = (def = 0): ParamSpec => ({
@@ -342,11 +339,7 @@ export const FILTER_REGISTRY: Record<string, FilterDefinition> = {
     type: "film-sim",
     category: "colour",
     tier: 1,
-    // ∑CG: type-level block-header fallback name for the film-sim/LUT family —
-    //   the category itself is still unnamed (Ruby). Shown only when a preset
-    //   label is missing; the block header normally shows the preset's name.
-    //   spec: ≤ 12 chars, noun; British spelling. sample: "Film sim"
-    label: "∑CG",
+    label: "Film sim",
     params: [
       {
         kind: "presets",

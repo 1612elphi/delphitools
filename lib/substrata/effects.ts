@@ -120,6 +120,17 @@ export const EFFECT_REGISTRY: Record<string, EffectDefinition> = {
       { kind: "slider", key: "opacity", label: "Opacity", min: 0, max: 100, step: 1, default: 100, unit: "%" },
     ],
   },
+  // Remove Background (M7) — an async ML bake, not a painted style: EffectsImage
+  // alpha-multiplies the cached BiRefNet matte (bg-removal.ts, keyed by the
+  // layer's blobHash) into the content BEFORE the painted effects, so shadows/
+  // glows stamp the cutout silhouette. Paramless — the FX panel renders a
+  // bespoke status body for this type, and effect-render's switches ignore it.
+  "remove-background": {
+    type: "remove-background",
+    phase: "inner",
+    label: "Remove background",
+    params: [],
+  },
 };
 
 export const getEffectDef = (type: string): EffectDefinition | undefined => EFFECT_REGISTRY[type];

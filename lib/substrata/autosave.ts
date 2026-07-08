@@ -43,14 +43,38 @@ export function rasterHashes(layers: Layer[]): string[] {
   return out;
 }
 
+/** Rehydrate a stored doc's rasters and forward-stamp it. */
+async function hydrateProject(doc: SubstrataDoc): Promise<SubstrataDoc> {
+  await Promise.all(rasterHashes(doc.layers).map((h) => hydrateRaster(h)));
+  return stampLoadedDoc(doc);
+}
+
 /** Load the most-recently-updated project + rehydrate its rasters, or null.
  *  Only when the user has opted into local storage. */
 export async function loadLatestProject(): Promise<SubstrataDoc | null> {
   if (!canPersist()) return null;
   const rec = await getDB().projects.orderBy("updatedAt").last();
-  if (!rec) return null;
-  await Promise.all(rasterHashes(rec.doc.layers).map((h) => hydrateRaster(h)));
-  return stampLoadedDoc(rec.doc);
+  return rec ? hydrateProject(rec.doc) : null;
+}
+
+export interface RecentProject {
+  id: string;
+  name: string;
+  updatedAt: number;
+}
+
+/** Newest-first project rows for the Scene ▸ Open-recent list. */
+export async function listRecentProjects(limit = 6): Promise<RecentProject[]> {
+  if (!canPersist()) return [];
+  const recs = await getDB().projects.orderBy("updatedAt").reverse().limit(limit).toArray();
+  return recs.map((r) => ({ id: r.id, name: r.name, updatedAt: r.updatedAt }));
+}
+
+/** Load one stored project by id (rasters rehydrated), or null. */
+export async function loadProject(id: string): Promise<SubstrataDoc | null> {
+  if (!canPersist()) return null;
+  const rec = await getDB().projects.get(id);
+  return rec ? hydrateProject(rec.doc) : null;
 }
 
 /** On opt-in: persist the current scene + all its rasters so a reload restores. */
@@ -64,7 +88,7 @@ export async function persistAll(doc: SubstrataDoc): Promise<void> {
 export async function clearPersistedData(): Promise<void> {
   if (!hasIDB()) return;
   const db = getDB();
-  await Promise.all([db.projects.clear(), db.blobs.clear(), db.snapshots.clear()]);
+  await Promise.all([db.projects.clear(), db.blobs.clear(), db.snapshots.clear(), db.mattes.clear()]);
 }
 
 /** Recovery snapshots (M5, ratified 2026-07-07: retention ~20 on the same

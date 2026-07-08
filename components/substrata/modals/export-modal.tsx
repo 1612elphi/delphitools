@@ -35,7 +35,7 @@ import { estimateExportBytes, runExport } from "@/lib/substrata/export-run";
  * <Dialog> wrapper (overlay, focus trap, Esc/✕ close). Dense/flush styling per
  * DESIGN.md. Copy: format acronyms + chrome words (Export · Format · Scale ·
  * Artboard · Layer) are functional chrome; the downscale warning and failure
- * notice are ∑CG gaps.
+ * notice are \u2211CG gaps.
  */
 
 const SCALES: ExportScale[] = [1, 2, 3];
@@ -197,21 +197,14 @@ export function ExportModal() {
         {/* Downscale notice — the area budget reduced the requested scale. */}
         {dims?.downscaled && (
           <div className="-mx-4 border-t border-border bg-muted px-4 py-2 text-xs text-muted-foreground">
-            {/* ∑CG: warning that the requested scale exceeded the safe canvas
-                area budget and the export will render smaller. One short line;
-                the real numbers are in the Output row below.
-                sample: "Reduced to fit device limits" */}
-            ∑CG
+            Reduced, this is a device limitation
           </div>
         )}
 
         {/* Failure notice — encode/verify gave up (rare; SPEC §5 guard). */}
         {failed && (
           <div className="-mx-4 border-t border-border bg-muted px-4 py-2 text-xs text-destructive">
-            {/* ∑CG: export-failed notice shown above the Output strip. One
-                short line; the mono suffix is the internal reason code (data).
-                sample: "Export failed — try a smaller scale" */}
-            ∑CG <span className="font-mono">({failed})</span>
+            Export failed. Try a smaller scale? <span className="font-mono">({failed})</span>
           </div>
         )}
 

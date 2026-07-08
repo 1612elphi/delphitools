@@ -223,9 +223,7 @@ export function TriangleMode({ colour }: { colour: ColourSnapshot }) {
       <div
         className="relative size-[156px] touch-none"
         role="group"
-        // ∑CG: aria-label for the hue-ring + SV-triangle picker surface
-        //   spec: ≤ 40 chars, names the control; no period. sample: "Hue ring and saturation/value triangle"
-        aria-label="∑CG"
+        aria-label="HSV triangle"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}

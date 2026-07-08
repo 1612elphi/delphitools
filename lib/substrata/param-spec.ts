@@ -55,7 +55,7 @@ export interface SelectParam extends BaseParam {
  * (modals.html `.presets`) — used by the film-sim/LUT family (and duotone
  * pairs in M3-9). `swatch` is a representative gradient (placeholder visual
  * data until the real looks exist in M3); labels are named looks = authored
- * copy → ∑CG gaps in the registry.
+ * copy → \u2211CG gaps in the registry.
  */
 export interface PresetsParam extends BaseParam {
   kind: "presets";

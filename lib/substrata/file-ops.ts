@@ -15,7 +15,7 @@ import { createEmptyDoc, type SubstrataDoc } from "./doc-model";
 import { getSnapshot, setDoc } from "./doc-store";
 import { packSubstrata, unpackSubstrata } from "./substrata-file";
 import { slugifySceneName } from "./export-core";
-import { persistAll } from "./autosave";
+import { loadProject, persistAll } from "./autosave";
 import { getPersistenceEnabled } from "./persistence-pref";
 import { toast } from "./toast";
 
@@ -29,16 +29,28 @@ function sceneFileName(doc: SubstrataDoc): string {
 function confirmDiscard(): boolean {
   const doc = getSnapshot();
   if (!doc || (doc.layers.length === 0 && doc.guides.length === 0)) return true;
-  // ∑CG: native confirm before New/Open replaces the current scene — warn
-  //   that unsaved work is lost (autosave only covers opted-in storage).
-  //   One sentence. sample: "Replace the current scene? Unsaved work is lost."
-  return window.confirm("∑CG");
+  return window.confirm("Replace this? Unsaved work is lost.");
 }
 
 export function newScene(): void {
   if (!confirmDiscard()) return;
   handle = null;
   setDoc(createEmptyDoc());
+}
+
+/** Scene ▸ Open recent: swap to a stored project (same discard guard as
+ *  New/Open — the doc-store history dies with the doc). */
+export async function openRecent(id: string): Promise<void> {
+  const current = getSnapshot();
+  if (current?.id === id) return;
+  if (!confirmDiscard()) return;
+  const doc = await loadProject(id);
+  if (!doc) {
+    toast("open-failed");
+    return;
+  }
+  handle = null;
+  setDoc(doc);
 }
 
 export async function openScene(): Promise<void> {

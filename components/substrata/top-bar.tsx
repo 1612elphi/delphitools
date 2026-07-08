@@ -9,22 +9,13 @@ import {
   Download,
   ChevronDown,
   Plus,
-  Image as ImageIcon,
-  Move,
-  Type,
-  Sparkles,
   Scissors,
   Copy,
   ClipboardPaste,
   CopyPlus,
   Trash2,
   BoxSelect,
-  PanelTop,
-  PanelBottom,
-  PanelLeft,
-  PanelRight,
-  CornerDownRight,
-  Dock,
+  Frame,
   Minus,
   Ruler,
   Grid3x3,
@@ -36,31 +27,22 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { subscribe, getSnapshot, undo, redo, canUndo, canRedo } from "@/lib/substrata/doc-store";
 import { getPersistenceEnabled, subscribePersistence } from "@/lib/substrata/persistence-pref";
 import { openModal } from "@/lib/substrata/modal";
-import {
-  getOmnibarEdge,
-  setOmnibarEdge,
-  getRailEdge,
-  setRailEdge,
-  getModuleDockAll,
-  setModuleDock,
-  subscribeDock,
-  type Edge,
-  type RailEdge,
-  type DockTarget,
-} from "@/lib/substrata/dock-pref";
-import { setPinned, type ModuleId } from "@/lib/substrata/pin-pref";
 import { getGuides, subscribeGuides, toggleGuide } from "@/lib/substrata/guides-pref";
 import { getZoom, subscribeViewport, viewport } from "@/lib/substrata/viewport";
 import { toast } from "@/lib/substrata/toast";
 import { importImageFile } from "@/lib/substrata/import-raster";
-import { newScene, openScene, saveScene } from "@/lib/substrata/file-ops";
+import { newScene, openRecent, openScene, saveScene } from "@/lib/substrata/file-ops";
+import { listRecentProjects, type RecentProject } from "@/lib/substrata/autosave";
+import { duplicateLayers, deleteLayers } from "@/lib/substrata/layer-ops";
+import { getSelectedLayerIds, setSelection, subscribeSelection } from "@/lib/substrata/selection";
+import { hint } from "@/lib/substrata/hint";
 import { PersistenceToggle } from "@/components/substrata/persistence-toggle";
 import { ToastSlot } from "@/components/substrata/toast-slot";
 
 /**
  * Top bar (§7) — parity with sketches/mockup.html. Functional chrome labels use
  * the mockup's words; voice-y microcopy (scene name placeholder, save status)
- * stays ∑CG. Wired: undo/redo, theme, import, the Scene-info inspector, and the
+ * stays \u2211CG. Wired: undo/redo, theme, import, the Scene-info inspector, and the
  * persistence-aware status dot. Stubbed (visual only, no-op): zoom, export,
  * file ops (New/Open/Save/…), the Edit history list, the ACXV keypad, and the
  * Workspace docking toggles — those land with M5/M6 and the docking system.
@@ -111,9 +93,7 @@ export function TopBar() {
       {/* Left: home · wordmark · menubar */}
       <Link
         href="/"
-        // ∑CG: home/back-to-tools affordance tooltip
-        //   spec: ≤24 chars; "back to delphitools tools". sample: "delphitools — all tools"
-        aria-label="∑CG"
+        aria-label="back to delphitools"
         className="grid size-[30px] place-items-center"
       >
         <img
@@ -144,17 +124,25 @@ export function TopBar() {
       {/* Centre: scene name + save status */}
       <div className="absolute left-1/2 flex -translate-x-1/2 items-center gap-2.5">
         <span className="flex cursor-pointer items-center gap-1.5 px-2 py-1 text-[12.5px] font-medium hover:bg-accent">
-          {/* ∑CG: scene-name placeholder when unnamed
-              spec: ≤18 chars; the default scene title. sample: "Untitled scene" */}
-          {doc?.name?.trim() ? doc.name : "∑CG"}
+          {doc?.name?.trim() ? doc.name : "Untitled scene"}
           <ChevronDown className="size-3" />
         </span>
         <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <span className={cn("size-[7px] rounded-full", persistOn ? "bg-primary" : "bg-muted-foreground/40")} />
-          {/* ∑CG: local save status — must read as stored in THIS browser, not the cloud
-              spec: ≤22 chars; saved / saving / unsaved / off. British spelling.
-              sample: "Saved in browser" · "Saving…" · "Off" */}
-          ∑CG
+          {/* Three-state dot: stored locally (primary) · edits at risk — storage
+              off with undoable work (amber) · idle with storage off (muted). */}
+          <span
+            className={cn(
+              "size-[7px] rounded-full",
+              persistOn ? "bg-primary" : undoable ? "bg-amber-500" : "bg-muted-foreground/40",
+            )}
+          />
+          {persistOn ? (
+            <>Saved in browser</>
+          ) : undoable ? (
+            <>Not saved</>
+          ) : (
+            <>Storage off</>
+          )}
         </span>
       </div>
 
@@ -163,17 +151,17 @@ export function TopBar() {
         <ToastSlot />
         <span className="mx-1 h-[18px] w-px bg-border" />
         <div className="flex items-center border border-border">
-          <button onClick={() => viewport.zoomOut()} className="grid size-[26px] place-items-center text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="∑CG">−</button>
-          <button onClick={() => viewport.cycle()} className="grid h-[26px] min-w-[46px] place-items-center border-x border-border text-[11.5px] tabular-nums hover:bg-accent" aria-label="∑CG">
+          <button onClick={() => viewport.zoomOut()} className="grid size-[26px] place-items-center text-muted-foreground hover:bg-accent hover:text-foreground" {...hint("Zoom out")}>−</button>
+          <button onClick={() => viewport.cycle()} className="grid h-[26px] min-w-[46px] place-items-center border-x border-border text-[11.5px] tabular-nums hover:bg-accent" {...hint("Cycle zoom")}>
             {Math.round(zoom * 100)}%
           </button>
-          <button onClick={() => viewport.zoomIn()} className="grid size-[26px] place-items-center text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="∑CG">+</button>
+          <button onClick={() => viewport.zoomIn()} className="grid size-[26px] place-items-center text-muted-foreground hover:bg-accent hover:text-foreground" {...hint("Zoom in")}>+</button>
         </div>
         <Button
           variant="ghost"
           size="icon"
           className="size-7"
-          aria-label="∑CG"
+          {...hint("Fit to view")}
           onClick={() => {
             viewport.fit();
             toast("canvas-fit");
@@ -233,15 +221,34 @@ function Box({ className, children }: { className?: string; children: React.Reac
   return <div className={cn("border border-border bg-background shadow-lg", className)}>{children}</div>;
 }
 
-/** A plain menu item row with optional shortcut hint. */
-function Item({ label, hint, onClick }: { label: string; hint?: string; onClick?: () => void }) {
+/** A plain menu item row with optional shortcut hint. `disabled` greys the row
+ *  and drops the handler — a visibly-dead item never reads as a broken one
+ *  (the clarity review's "menus that lie" finding). */
+function Item({
+  label,
+  hint,
+  onClick,
+  disabled,
+  className,
+}: {
+  label: string;
+  hint?: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+}) {
   return (
     <div
-      onClick={onClick}
-      className="flex cursor-default items-center justify-between gap-6 whitespace-nowrap px-3 py-1.5 text-xs hover:bg-accent"
+      onClick={disabled ? undefined : onClick}
+      aria-disabled={disabled || undefined}
+      className={cn(
+        "flex cursor-default items-center justify-between gap-6 whitespace-nowrap px-3 py-1.5 text-xs",
+        disabled ? "opacity-40" : "hover:bg-accent",
+        className,
+      )}
     >
-      <span>{label}</span>
-      {hint && <span className="text-[10.5px] text-muted-foreground">{hint}</span>}
+      <span className="truncate">{label}</span>
+      {hint && <span className="shrink-0 text-[10.5px] text-muted-foreground">{hint}</span>}
     </div>
   );
 }
@@ -264,13 +271,20 @@ function SceneMenu({
   onClose: () => void;
 }) {
   const ab = doc?.artboard;
+  // Recents load once per menu open (SceneMenu remounts with the dropdown);
+  // gated on the persistence opt-in like every other IndexedDB read.
+  const [recents, setRecents] = useState<RecentProject[]>([]);
+  useEffect(() => {
+    if (persistOn) void listRecentProjects().then(setRecents);
+  }, [persistOn]);
+  const others = recents.filter((r) => r.id !== doc?.id);
   return (
     <div className="min-w-[224px] space-y-2">
       <Box>
         <div className="py-1">
+          {/* no ⌘N hint — browsers reserve it; a shortcut we can't deliver is a lie */}
           <Item
             label="New scene"
-            hint="⌘N"
             onClick={() => {
               onClose();
               newScene();
@@ -284,7 +298,22 @@ function SceneMenu({
               void openScene();
             }}
           />
-          <Item label="Open recent" hint="›" />
+          <Item label="Open recent" disabled={others.length === 0} className={others.length > 0 ? "text-muted-foreground" : undefined} />
+          {others.map((r) => (
+            <Item
+              key={r.id}
+              label={
+                r.name.trim() ||
+                "Untitled scene"
+              }
+              hint={new Date(r.updatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+              className="pl-6"
+              onClick={() => {
+                onClose();
+                void openRecent(r.id);
+              }}
+            />
+          ))}
           <Item label="Import image…" hint="⌘I" onClick={onImport} />
           <Item
             label="Canvas size…"
@@ -319,9 +348,11 @@ function SceneMenu({
             }}
           />
           <Sep />
-          <Item label="Rename" onClick={onClose} />
-          <Item label="Duplicate" onClick={onClose} />
-          <Item label="Delete" onClick={onClose} />
+          {/* project-manager actions — disabled until it lands (post-v1) so a
+              dead click never reads as breakage */}
+          <Item label="Rename" disabled />
+          <Item label="Duplicate" disabled />
+          <Item label="Delete" disabled />
           <Sep />
           <Link href="/" className="block">
             <Item label="Back to delphitools" />
@@ -366,38 +397,62 @@ function EditMenu({
   redoable: boolean;
   onClose: () => void;
 }) {
+  const doc = useSyncExternalStore(subscribe, getSnapshot, () => null);
+  const selectedIds = useSyncExternalStore(subscribeSelection, getSelectedLayerIds, () => EMPTY_IDS);
+  const hasSelection = selectedIds.length > 0;
+  const hasLayers = (doc?.layers.length ?? 0) > 0;
+  // The mockup's fake history list is GONE (clarity review: a history that
+  // never reflects real actions poisons trust in the whole menu). Labelled
+  // history needs command labels the snapshot store doesn't carry — later.
   return (
     <div className="min-w-[240px] space-y-2">
       <Box>
-        <div className="flex border-b border-border">
+        <div className="flex">
           <UrButton icon={<Undo2 className="size-[15px]" />} label="Undo" hint="⌘Z" disabled={!undoable} onClick={() => undo()} />
           <UrButton icon={<Redo2 className="size-[15px]" />} label="Redo" hint="⇧⌘Z" disabled={!redoable} onClick={() => redo()} className="border-l border-border" />
-        </div>
-        {/* Visual stub — real labelled history wiring is a follow-up (current
-            history is unlabelled snapshots). Parity with the mockup for now. */}
-        <div className="max-h-[148px] overflow-y-auto">
-          <HRow icon={<Plus className="size-3" />} label="New" />
-          <HRow icon={<ImageIcon className="size-3" />} label="Photo" />
-          <HRow icon={<Move className="size-3" />} label="Move" />
-          <HRow icon={<Type className="size-3" />} label="Text" />
-          <HRow icon={<Sparkles className="size-3" />} label="Bokeh" current />
-          <HRow icon={<Maximize2 className="size-3" />} label="Resize" future />
-          <HRow icon={<Sparkles className="size-3" />} label="Blur" future />
         </div>
       </Box>
       <Box>
         <div className="segmented grid-cols-3">
-          <Ab icon={<Scissors className="size-[15px]" />} label="Cut" onClick={onClose} />
-          <Ab icon={<Copy className="size-[15px]" />} label="Copy" onClick={onClose} />
-          <Ab icon={<ClipboardPaste className="size-[15px]" />} label="Paste" onClick={onClose} />
-          <Ab icon={<CopyPlus className="size-[15px]" />} label="Duplicate" onClick={onClose} />
-          <Ab icon={<Trash2 className="size-[15px]" />} label="Delete" onClick={onClose} />
-          <Ab icon={<BoxSelect className="size-[15px]" />} label="Select all" onClick={onClose} />
+          {/* Cut/Copy/Paste need a layer clipboard that doesn't exist yet —
+              disabled, not silently inert */}
+          <Ab icon={<Scissors className="size-[15px]" />} label="Cut" disabled />
+          <Ab icon={<Copy className="size-[15px]" />} label="Copy" disabled />
+          <Ab icon={<ClipboardPaste className="size-[15px]" />} label="Paste" disabled />
+          <Ab
+            icon={<CopyPlus className="size-[15px]" />}
+            label="Duplicate"
+            disabled={!hasSelection}
+            onClick={() => {
+              duplicateLayers(selectedIds);
+              onClose();
+            }}
+          />
+          <Ab
+            icon={<Trash2 className="size-[15px]" />}
+            label="Delete"
+            disabled={!hasSelection}
+            onClick={() => {
+              deleteLayers(selectedIds);
+              onClose();
+            }}
+          />
+          <Ab
+            icon={<BoxSelect className="size-[15px]" />}
+            label="Select all"
+            disabled={!hasLayers}
+            onClick={() => {
+              setSelection(doc!.layers.map((l) => l.id));
+              onClose();
+            }}
+          />
         </div>
       </Box>
     </div>
   );
 }
+
+const EMPTY_IDS: readonly string[] = [];
 
 function UrButton({
   icon,
@@ -430,39 +485,22 @@ function UrButton({
   );
 }
 
-function HRow({
+function Ab({
   icon,
   label,
-  current,
-  future,
+  onClick,
+  disabled,
 }: {
   icon: React.ReactNode;
   label: string;
-  current?: boolean;
-  future?: boolean;
+  onClick?: () => void;
+  disabled?: boolean;
 }) {
-  return (
-    <div
-      className={cn(
-        "flex h-7 cursor-default items-center gap-2.5 px-[11px] text-xs",
-        current && "bg-primary/10 font-semibold text-primary",
-        future ? "text-muted-foreground opacity-55" : "hover:bg-accent",
-      )}
-    >
-      <span className={current ? "text-primary" : "text-muted-foreground"}>{icon}</span>
-      {label}
-      {current && (
-        <span className="ml-auto text-[8px] font-bold uppercase tracking-wide text-primary">now</span>
-      )}
-    </div>
-  );
-}
-
-function Ab({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick?: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="flex h-[50px] cursor-default flex-col items-center justify-center gap-1.5 bg-background text-[10px] hover:bg-accent"
+      disabled={disabled}
+      className="flex h-[50px] cursor-default flex-col items-center justify-center gap-1.5 bg-background text-[10px] hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
     >
       {icon}
       {label}
@@ -472,80 +510,31 @@ function Ab({ icon, label, onClick }: { icon: React.ReactNode; label: string; on
 
 /* ── Workspace: docking + guides (visual stubs) ──────────────────────────────── */
 
-const EDGE_TO_LETTER: Record<Edge, string> = { top: "T", bottom: "B", left: "L", right: "R" };
-const LETTER_TO_EDGE: Record<string, Edge> = { T: "top", B: "bottom", L: "left", R: "right" };
-
 const SEG_ICON_CLS = "size-3.5";
 /** Shared seg-key → icon map. Keys are consistent across rows (L = dock-left
  *  everywhere, etc.); a key with no icon (e.g. "67%") falls back to its text. */
 const SEG_ICON: Record<string, React.ReactNode> = {
-  "↳": <CornerDownRight className={SEG_ICON_CLS} />,
-  T: <PanelTop className={SEG_ICON_CLS} />,
-  B: <PanelBottom className={SEG_ICON_CLS} />,
-  L: <PanelLeft className={SEG_ICON_CLS} />,
-  R: <PanelRight className={SEG_ICON_CLS} />,
-  Rail: <Dock className={SEG_ICON_CLS} />,
   "−": <Minus className={SEG_ICON_CLS} />,
   "+": <Plus className={SEG_ICON_CLS} />,
   Fit: <Maximize2 className={SEG_ICON_CLS} />,
   Rulers: <Ruler className={SEG_ICON_CLS} />,
+  Guides: <Frame className={SEG_ICON_CLS} />,
   Grid: <Grid3x3 className={SEG_ICON_CLS} />,
   Snap: <Magnet className={SEG_ICON_CLS} />,
 };
 const renderSeg = (s: string): React.ReactNode => SEG_ICON[s] ?? s;
 
-const DOCK_TO_LETTER: Record<DockTarget, string> = { left: "L", right: "R", rail: "Rail" };
-const LETTER_TO_DOCK: Record<string, DockTarget> = { L: "left", R: "right", Rail: "rail" };
-const RAIL_TO_LETTER: Record<RailEdge, string> = { follow: "↳", top: "T", bottom: "B", left: "L", right: "R" };
-const LETTER_TO_RAIL: Record<string, RailEdge> = { "↳": "follow", T: "top", B: "bottom", L: "left", R: "right" };
-
-function DockRow({ label, id, docks }: { label: string; id: ModuleId; docks: Record<ModuleId, DockTarget> }) {
-  return (
-    <WRow
-      label={label}
-      seg={["L", "R", "Rail"]}
-      active={DOCK_TO_LETTER[docks[id]]}
-      onSelect={(s) => {
-        setModuleDock(id, LETTER_TO_DOCK[s]);
-        setPinned(id, true); // placing a module also shows it
-      }}
-      render={renderSeg}
-    />
-  );
-}
-
 function WorkspaceMenu() {
-  const edge = useSyncExternalStore(subscribeDock, getOmnibarEdge, () => "bottom" as Edge);
   const guides = useSyncExternalStore(subscribeGuides, getGuides, getGuides);
-  const rail = useSyncExternalStore(subscribeDock, getRailEdge, () => "follow" as RailEdge);
-  const docks = useSyncExternalStore(subscribeDock, getModuleDockAll, getModuleDockAll);
   const zoom = useSyncExternalStore(subscribeViewport, getZoom, () => 1);
   const pct = `${Math.round(zoom * 100)}%`;
+  // Docking left this menu (Ruby, 2026-07-08): the omnibar and every module
+  // header now carry a drag grip — drag onto the left/right/rail drop zones
+  // (dock-zones.tsx). The old letter-segmented rows weren't discoverable.
+  // ponytail: the rail-edge pref lost its UI (rail follows the omnibar now);
+  // re-surface a control if anyone misses it.
   return (
     <Box className="min-w-[254px] py-1">
-      <WRow
-        label="Omnibar"
-        seg={["T", "B", "L", "R"]}
-        active={EDGE_TO_LETTER[edge]}
-        onSelect={(s) => setOmnibarEdge(LETTER_TO_EDGE[s])}
-        render={renderSeg}
-      />
-      <WRow
-        label="Rail"
-        seg={["↳", "T", "B", "L", "R"]}
-        active={RAIL_TO_LETTER[rail]}
-        onSelect={(s) => setRailEdge(LETTER_TO_RAIL[s])}
-        render={renderSeg}
-      />
-      <Sep />
-      <div className="px-3 pb-0.5 pt-1.5 text-[9.5px] uppercase tracking-wide text-muted-foreground">
-        Dock modules
-      </div>
-      <DockRow label="Layers" id="layers" docks={docks} />
-      <DockRow label="Effects" id="effects" docks={docks} />
-      <DockRow label="Inspector" id="inspector" docks={docks} />
-      <DockRow label="Colour" id="colour" docks={docks} />
-      <Sep />
       <WRow
         label="Zoom"
         seg={["−", pct, "+", "Fit"]}
@@ -633,9 +622,11 @@ function WRow({
 function HelpMenu() {
   return (
     <Box className="min-w-[218px] py-1">
-      <Item label="Keyboard shortcuts" hint="?" />
-      <Item label="About Substrata" />
-      <Item label="About delphitools" />
+      {/* disabled until the shortcuts sheet / about panes exist — a dead click
+          must read as "not yet", not "broken" */}
+      <Item label="Keyboard shortcuts" disabled />
+      <Item label="About Substrata" disabled />
+      <Item label="About delphitools" disabled />
       <a href="https://github.com/1612elphi/delphitools" target="_blank" rel="noopener noreferrer" className="block">
         <Item label="Source · GitHub" />
       </a>

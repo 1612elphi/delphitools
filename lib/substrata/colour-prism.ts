@@ -10,7 +10,7 @@
  * Approximate by design — a perceptual toy, not a colorimetric CMF integral.
  *
  * Pure + framework-free. Picker UI display names (WATTS/NTU + band labels) are
- * ∑CG copy and live in the component, not here.
+ * \u2211CG copy and live in the component, not here.
  */
 
 /** Usable wavelength span for the Prism reel (nm). */
@@ -26,7 +26,7 @@ export type SpectralBand =
   | "orange"
   | "red";
 
-/** Coarse band a wavelength falls into (drives the ∑CG band label in the UI). */
+/** Coarse band a wavelength falls into (drives the \u2211CG band label in the UI). */
 export function band(wl: number): SpectralBand {
   return wl < 450
     ? "violet"

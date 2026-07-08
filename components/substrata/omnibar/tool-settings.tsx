@@ -29,6 +29,7 @@ import {
   type PieceShape,
 } from "@/lib/substrata/tool-settings";
 import { cn } from "@/lib/utils";
+import { hint } from "@/lib/substrata/hint";
 import { segCellClass } from "@/components/substrata/preset-row";
 import type { TextAlign } from "@/lib/substrata/doc-model";
 import type { ToolId } from "@/lib/substrata/tool";
@@ -39,7 +40,7 @@ import type { ToolId } from "@/lib/substrata/tool";
  * same switches as Workspace ▸ Guides) + the arrow-key nudge step
  * (tool-settings). PIECES·Primitives is real — shape / fill / stroke / shape
  * params (M2-7); the Pieces head (preset gallery to come) and Brush/Pencil
- * (freehand, next chunk) keep the ∑CG placeholder, as do the other stub tools.
+ * (freehand, next chunk) keep the \u2211CG placeholder, as do the other stub tools.
  * The Bloom supplies the box chrome; bodies render header + rows.
  */
 export function ToolSettingsBody({ tool, sub, title }: { tool: ToolId; sub?: string; title: string }) {
@@ -109,12 +110,10 @@ function MoveSettings({ title }: { title: string }) {
       </Row>
       {/* Snap/Grid mirror Workspace ▸ Guides (same store, same words) */}
       <Row label="Snap">
-        {/* ∑CG: aria-label for the snap toggle. sample: "Snap to guides" */}
-        <Switch checked={guides.snap} onCheckedChange={() => toggleGuide("snap")} aria-label="∑CG" />
+        <Switch checked={guides.snap} onCheckedChange={() => toggleGuide("snap")} aria-label="Snap to guidelines" />
       </Row>
       <Row label="Grid">
-        {/* ∑CG: aria-label for the grid toggle. sample: "Show grid" */}
-        <Switch checked={guides.grid} onCheckedChange={() => toggleGuide("grid")} aria-label="∑CG" />
+        <Switch checked={guides.grid} onCheckedChange={() => toggleGuide("grid")} aria-label="Show grid" />
       </Row>
       <Row label="Nudge">
         <span className="flex items-stretch border border-border">
@@ -125,15 +124,13 @@ function MoveSettings({ title }: { title: string }) {
             icon={ChevronUp}
             onClick={() => setNudge(nudge + 1)}
             disabled={nudge >= 100}
-            // ∑CG: aria-label for nudge-step increment. sample: "Increase"
-            aria="∑CG"
+            aria="Increase"
           />
           <StepBtn
             icon={ChevronDown}
             onClick={() => setNudge(nudge - 1)}
             disabled={nudge <= 1}
-            // ∑CG: aria-label for nudge-step decrement. sample: "Decrease"
-            aria="∑CG"
+            aria="Decrease"
           />
         </span>
       </Row>
@@ -177,8 +174,7 @@ function PiecesGallerySettings({ title }: { title: string }) {
         <ColourCell
           colour={s.fill}
           onChange={(hex) => updateToolSettings("pieces", { fill: hex })}
-          // ∑CG: aria-label for the gallery fill swatch. sample: "Fill colour"
-          aria="∑CG"
+          aria="Fill colour"
         />
       </Row>
     </div>
@@ -198,11 +194,10 @@ function SelectToolSettings({ sub, title }: { sub: "lasso" | "wand"; title: stri
       {sub === "lasso" ? (
         <>
           <Row label="Magnetic">
-            {/* ∑CG: aria-label for the magnetic-lasso toggle. sample: "Snap to edges" */}
             <Switch
               checked={s.magnetic}
               onCheckedChange={(v) => updateToolSettings("select", { magnetic: v })}
-              aria-label="∑CG"
+              aria-label="Snap to edges"
             />
           </Row>
           <Row label="Sensitivity">
@@ -214,15 +209,13 @@ function SelectToolSettings({ sub, title }: { sub: "lasso" | "wand"; title: stri
                 icon={ChevronUp}
                 onClick={() => updateToolSettings("select", { sensitivity: Math.min(100, s.sensitivity + 10) })}
                 disabled={!s.magnetic || s.sensitivity >= 100}
-                // ∑CG: aria-label for sensitivity increment. sample: "Increase"
-                aria="∑CG"
+                aria="Increase"
               />
               <StepBtn
                 icon={ChevronDown}
                 onClick={() => updateToolSettings("select", { sensitivity: Math.max(0, s.sensitivity - 10) })}
                 disabled={!s.magnetic || s.sensitivity <= 0}
-                // ∑CG: aria-label for sensitivity decrement. sample: "Decrease"
-                aria="∑CG"
+                aria="Decrease"
               />
             </span>
           </Row>
@@ -260,15 +253,13 @@ function SelectToolSettings({ sub, title }: { sub: "lasso" | "wand"; title: stri
                 icon={ChevronUp}
                 onClick={() => updateToolSettings("select", { tolerance: Math.min(255, s.tolerance + 8) })}
                 disabled={s.tolerance >= 255}
-                // ∑CG: aria-label for tolerance increment. sample: "Increase"
-                aria="∑CG"
+                aria="Increase"
               />
               <StepBtn
                 icon={ChevronDown}
                 onClick={() => updateToolSettings("select", { tolerance: Math.max(0, s.tolerance - 8) })}
                 disabled={s.tolerance <= 0}
-                // ∑CG: aria-label for tolerance decrement. sample: "Decrease"
-                aria="∑CG"
+                aria="Decrease"
               />
             </span>
           </Row>
@@ -296,14 +287,13 @@ function ColourCell({ colour, onChange, aria }: { colour: string; onChange: (hex
 /** Preset menus (Ruby, 2026-07-06: presets + a custom (…) escape hatch —
  *  "a simple editor for simple people"). Values are data; the corner glyphs
  *  are visual.
- *  ∑CG: aria-labels for the four corner presets, sharpest → roundest.
- *    spec: one or two words each, name the roundedness level; British spelling.
- *    sample: "Sharp" · "Subtle" · "Round" · "Pill" */
+ *  Corner-preset arias: one or two words each, name the roundedness level,
+ *  sharpest → roundest; British spelling. */
 const CORNER_PX_PRESETS: PresetOption[] = [
-  { value: 0, icon: <CornerPresetIcon r={0} />, aria: "∑CG" },
-  { value: 16, icon: <CornerPresetIcon r={2} />, aria: "∑CG" },
-  { value: 48, icon: <CornerPresetIcon r={4.5} />, aria: "∑CG" },
-  { value: 120, icon: <CornerPresetIcon r={7} />, aria: "∑CG" },
+  { value: 0, icon: <CornerPresetIcon r={0} />, aria: "Sharp" },
+  { value: 16, icon: <CornerPresetIcon r={2} />, aria: "Subtle" },
+  { value: 48, icon: <CornerPresetIcon r={4.5} />, aria: "Round" },
+  { value: 120, icon: <CornerPresetIcon r={7} />, aria: "Pill" },
 ];
 const SIDES_PRESETS: PresetOption[] = [3, 4, 5, 6, 8].map((v) => ({ value: v, label: String(v) }));
 const POINTS_PRESETS: PresetOption[] = [4, 5, 6, 8].map((v) => ({ value: v, label: String(v) }));
@@ -347,25 +337,22 @@ function PiecesSettings({ title }: { title: string }) {
         ))}
       </div>
       <Row label="Fill">
-        {/* ∑CG: aria-label for the next-shape fill swatch. sample: "Fill colour" */}
-        <ColourCell colour={p.fill} onChange={(fill) => patch({ fill })} aria="∑CG" />
+        <ColourCell colour={p.fill} onChange={(fill) => patch({ fill })} aria="Fill colour" />
       </Row>
       <Row label="Stroke">
         <Switch
           checked={p.stroke !== null}
           onCheckedChange={(on) => patch({ stroke: on ? { colour: "#1d1d1d", width: 2 } : null })}
-          // ∑CG: aria-label for the stroke on/off toggle. sample: "Stroke"
-          aria-label="∑CG"
+          aria-label="Stroke"
         />
       </Row>
       {p.stroke && (
         <>
           <Row label="Colour">
-            {/* ∑CG: aria-label for the stroke colour swatch. sample: "Stroke colour" */}
             <ColourCell
               colour={p.stroke.colour}
               onChange={(colour) => patch({ stroke: { ...p.stroke!, colour } })}
-              aria="∑CG"
+              aria="Stroke colour"
             />
           </Row>
           <Row label="Width">
@@ -445,8 +432,7 @@ function FreehandSettings({ sub, title }: { sub: "brush" | "pencil"; title: stri
     <div className="w-[200px]">
       <Head title={title} />
       <Row label="Colour">
-        {/* ∑CG: aria-label for the stroke colour swatch. sample: "Stroke colour" */}
-        <ColourCell colour={p.fill} onChange={(fill) => updateToolSettings("pieces", { fill })} aria="∑CG" />
+        <ColourCell colour={p.fill} onChange={(fill) => updateToolSettings("pieces", { fill })} aria="Stroke colour" />
       </Row>
       <Row label="Size">
         <PresetRow
@@ -499,9 +485,7 @@ function TextToolSettings({ title }: { title: string }) {
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            // ∑CG: aria-label for the font upload button. sample: "Upload font"
-            aria-label="∑CG"
-            title="∑CG"
+            {...hint("Upload font")}
             className="grid h-6 w-7 place-items-center border border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground"
           >
             <Upload className="size-3" aria-hidden />
@@ -511,8 +495,7 @@ function TextToolSettings({ title }: { title: string }) {
             type="file"
             accept=".woff2,.woff,.ttf,.otf"
             className="hidden"
-            // ∑CG: aria-label for the font-file input. sample: "Upload a font file"
-            aria-label="∑CG"
+            aria-label="Upload a custom font file"
             onChange={async (e) => {
               const file = e.currentTarget.files?.[0];
               e.currentTarget.value = "";
@@ -563,11 +546,7 @@ function PlaceholderSettings({ title }: { title: string }) {
     <div className="w-[200px]">
       <Head title={title} />
       <div className="p-3 text-center text-[11px] text-muted-foreground">
-        {/* ∑CG: placeholder hint inside a stub tool's settings bloom
-            spec: ≤ 48 chars; says this tool's settings arrive with the tool;
-            British spelling.
-            sample: "Settings arrive with this tool." */}
-        ∑CG
+        Settings arrive with this tool
       </div>
     </div>
   );

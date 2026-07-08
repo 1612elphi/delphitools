@@ -30,22 +30,15 @@ const TICK_OVERLAY =
   "repeating-linear-gradient(to right,rgba(0,0,0,.28) 0 1px,transparent 1px 11px)";
 
 // band() returns a semantic key; the human-facing family word for each band is
-// ∑CG copy (do NOT hardcode "Green" etc. — these are display labels).
+// \u2211CG copy (do NOT hardcode "Green" etc. — these are display labels).
 const BAND_LABELS: Record<SpectralBand, string> = {
-  // ∑CG: violet band family label — spec: single word, uppercase display, ≤ 10 chars. sample: "Violet"
-  violet: "∑CG",
-  // ∑CG: blue band family label — spec: single word, uppercase display, ≤ 10 chars. sample: "Blue"
-  blue: "∑CG",
-  // ∑CG: cyan band family label — spec: single word, uppercase display, ≤ 10 chars. sample: "Cyan"
-  cyan: "∑CG",
-  // ∑CG: green band family label — spec: single word, uppercase display, ≤ 10 chars. sample: "Green"
-  green: "∑CG",
-  // ∑CG: yellow band family label — spec: single word, uppercase display, ≤ 10 chars. sample: "Yellow"
-  yellow: "∑CG",
-  // ∑CG: orange band family label — spec: single word, uppercase display, ≤ 10 chars. sample: "Orange"
-  orange: "∑CG",
-  // ∑CG: red band family label — spec: single word, uppercase display, ≤ 10 chars. sample: "Red"
-  red: "∑CG",
+  violet: "Violet",
+  blue: "Blue",
+  cyan: "Cyan",
+  green: "Greenw",
+  yellow: "Yellow",
+  orange: "Orange",
+  red: "Red",
 };
 
 export function PrismMode({ colour }: { colour: ColourSnapshot }) {
@@ -85,8 +78,7 @@ export function PrismMode({ colour }: { colour: ColourSnapshot }) {
       <div
         ref={specRef}
         {...specBind}
-        // ∑CG: aria-label for the draggable spectrum bar — spec: names the wavelength control. sample: "Wavelength"
-        aria-label="∑CG"
+        aria-label="Wavelength"
         className="relative min-h-[52px] flex-1 cursor-ew-resize touch-none border-b border-border"
         style={{ background: SPECTRUM_GRADIENT }}
       >
@@ -122,10 +114,8 @@ export function PrismMode({ colour }: { colour: ColourSnapshot }) {
 
       {/* WATTS */}
       <ParamRow
-        // ∑CG: WATTS param name — spec: scientific unit, light intensity black→full, ≤ 8 chars, uppercase. sample: "WATTS"
-        label="∑CG"
-        // ∑CG: aria-label for the WATTS slider — spec: names the intensity control. sample: "Light intensity"
-        ariaLabel="∑CG"
+        label="WATTS"
+        ariaLabel="VIBRO"
         value={watts}
         trackRef={wattsRef}
         bind={wattsBind}
@@ -133,10 +123,8 @@ export function PrismMode({ colour }: { colour: ColourSnapshot }) {
 
       {/* NTU */}
       <ParamRow
-        // ∑CG: NTU param name — spec: scientific unit, haze/turbidity pure→milky, ≤ 8 chars, uppercase. sample: "NTU"
-        label="∑CG"
-        // ∑CG: aria-label for the NTU slider — spec: names the haze control. sample: "Haze"
-        ariaLabel="∑CG"
+        label="NTU"
+        ariaLabel="Haze"
         value={ntu}
         trackRef={ntuRef}
         bind={ntuBind}

@@ -26,7 +26,7 @@ export function TransientColourCell({
   value: string;
   /** transient=true while the OS picker streams; false = a single committed set */
   onApply: (hex: string, transient: boolean) => void;
-  /** ∑CG at call sites */
+  /** \u2211CG at call sites */
   swatchAria: string;
   hexAria: string;
   swatchClassName?: string;

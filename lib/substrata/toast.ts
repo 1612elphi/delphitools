@@ -1,7 +1,7 @@
 /**
  * Tiny top-bar status toasts. A toast is fired by a semantic KEY (an identifier,
  * not copy); the display string + icon live in the toast slot's registry and are
- * ∑CG (filled via slopsieve). One toast at a time; it auto-clears, and firing the
+ * \u2211CG (filled via slopsieve). One toast at a time; it auto-clears, and firing the
  * same key again re-triggers the animation via a bumped `seq`. Client-only.
  */
 

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
+import { fileOpen } from "browser-fs-access";
 import { undo, redo } from "@/lib/substrata/doc-store";
+import { importImageFile } from "@/lib/substrata/import-raster";
 import { openScene, saveScene } from "@/lib/substrata/file-ops";
 import { deleteLayers, nudgeSelection } from "@/lib/substrata/layer-ops";
 import { getSelectedLayerIds } from "@/lib/substrata/selection";
@@ -68,6 +70,17 @@ export function useEditorShortcuts(): void {
       } else if (key === "o") {
         e.preventDefault();
         void openScene();
+      } else if (key === "i") {
+        // ⌘I import — the Scene-menu hint promised this; deliver it
+        e.preventDefault();
+        void (async () => {
+          try {
+            const files = await fileOpen({ mimeTypes: ["image/*"], multiple: true });
+            for (const f of Array.isArray(files) ? files : [files]) void importImageFile(f);
+          } catch {
+            // picker dismissed
+          }
+        })();
       }
     };
 

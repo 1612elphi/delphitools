@@ -39,15 +39,13 @@ export function Stepper({
         icon={ChevronUp}
         onClick={() => set(value + step)}
         disabled={value >= max}
-        // ∑CG: aria-label for a stepper increment. sample: "Increase"
-        aria="∑CG"
+        aria="Increase"
       />
       <StepBtn
         icon={ChevronDown}
         onClick={() => set(value - step)}
         disabled={value <= min}
-        // ∑CG: aria-label for a stepper decrement. sample: "Decrease"
-        aria="∑CG"
+        aria="Decrease"
       />
     </span>
   );
@@ -70,6 +68,7 @@ export function StepBtn({
       onClick={onClick}
       disabled={disabled}
       aria-label={aria}
+      title={aria}
       className="grid h-6 w-[22px] place-items-center border-l border-border text-muted-foreground hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
     >
       <Icon className="size-3" />
@@ -91,7 +90,7 @@ export interface PresetOption {
   /** number-ish text (self-labelling data) — or supply an icon instead */
   label?: string;
   icon?: React.ReactNode;
-  /** required with icon-only options; ∑CG at call sites */
+  /** required with icon-only options; \u2211CG at call sites */
   aria?: string;
 }
 
@@ -149,8 +148,7 @@ export function PresetRow({
         })}
         <button
           type="button"
-          // ∑CG: aria-label for the custom-value (…) toggle. sample: "Custom"
-          aria-label="∑CG"
+          aria-label="Custom"
           onClick={() => setOpen((v) => !v)}
           className={cn(
             "grid h-6 min-w-[26px] place-items-center px-1.5",

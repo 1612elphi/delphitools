@@ -36,8 +36,7 @@ export function FontSelect({
           "gap-1 rounded-none border-border bg-card px-2 text-[11px] shadow-none focus-visible:ring-0 dark:bg-card [&>svg]:size-3",
           className,
         )}
-        // ∑CG: aria-label for the font dropdown. sample: "Font"
-        aria-label="∑CG"
+        aria-label="Font"
       >
         <SelectValue />
       </SelectTrigger>
