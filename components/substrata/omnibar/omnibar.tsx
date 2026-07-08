@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { Fragment, useEffect, useState, useSyncExternalStore } from "react";
 import {
   Move,
   Crop,
@@ -9,7 +9,9 @@ import {
   Film,
   Lasso,
   Wand2,
+  Settings2,
   SlidersHorizontal,
+  Sparkles,
   Type,
   Shapes,
   Square,
@@ -20,6 +22,7 @@ import {
   MoreHorizontal,
   AlignHorizontalDistributeCenter,
 } from "lucide-react";
+import { useDraggable } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
 import {
   getActiveSubs,
@@ -32,37 +35,25 @@ import {
 import { getOmnibarEdge, getRailEdge, subscribeDock, type Edge, type RailEdge } from "@/lib/substrata/dock-pref";
 import { getPinned, subscribePins, togglePin, type ModuleId } from "@/lib/substrata/pin-pref";
 import { getColour, subscribeColour } from "@/lib/substrata/colour-store";
-import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
-import { findLayer } from "@/lib/substrata/layer-tree";
-import { getActiveLayerId, subscribeSelection } from "@/lib/substrata/selection";
-import { fxDisplayLabel } from "@/lib/substrata/fx-ops";
-import { fontLabel } from "@/lib/substrata/fonts";
-import {
-  getToolSettings,
-  subscribeToolSettings,
-  type PieceShape,
-  type ToolSettings,
-} from "@/lib/substrata/tool-settings";
-import type { Layer } from "@/lib/substrata/doc-model";
 import { ModuleBox, MODULES } from "@/components/substrata/omnibar/modules";
-import { beginDockDragFromPointer } from "@/lib/substrata/drag-dock";
 import { hint } from "@/lib/substrata/hint";
 import { Rail } from "@/components/substrata/omnibar/rail";
-import { ToolSettingsBody } from "@/components/substrata/omnibar/tool-settings";
 
 /**
- * Omnibar (§8) — floating tool + panel cockpit, dockable to any edge. Tools
- * cockpit + settings + panel triggers; each panel/effects trigger peeks on hover
- * and pins to the rail on click (the rail renders the same module content at
- * uniform height). Top/bottom horizontal, left/right vertical. Copy \u2211CG.
+ * Omnibar (§8) — floating tool + panel cockpit, dockable to any edge (drag the
+ * grip). UX pass (Ruby, 2026-07-08): every subtool is a VISIBLE flat button —
+ * no hover fans (undiscoverable, touch-hostile); the old contextual middle
+ * zone is gone — tool settings are a regular module (TOOL panel button), FX
+ * got its own panel button, and the colour trigger is a full-height swatch.
+ * Panel triggers peek on hover and pin on click. Copy \u2211CG.
  */
 
 interface ToolDef {
   id: ToolId;
   key: string;
-  /** the stack's subtools; [0] is the head/default. Ids are internal (tool.ts
-   *  activeSubs vocabulary — lasso/wand key the contextual read-out); labels
-   *  are Ruby's canonical subtool names (authored chrome, not \u2211CG). */
+  /** the tool's subtools, all rendered flat; [0] is the default (carries the
+   *  key badge). Ids are internal (tool.ts activeSubs vocabulary); labels are
+   *  Ruby's canonical subtool names (authored chrome, not \u2211CG). */
   subs: { id: string; label: string; icon: React.ReactNode }[];
 }
 
@@ -174,48 +165,59 @@ export function Omnibar() {
   const barrowEl = (
     <div className={cn("pointer-events-none flex items-start gap-2.5", vertical ? "flex-col" : "flex-row")}>
       <div className={bar}>
-        {/* drag-to-dock grip — drag the whole bar to any edge (replaces the
-            Workspace-menu Omnibar row) */}
-        <span
-          onPointerDown={(e) => {
-            e.preventDefault();
-            beginDockDragFromPointer(e, { kind: "omnibar" });
-          }}
-          className={cn(
-            "grid shrink-0 cursor-grab touch-none place-items-center text-muted-foreground/50 hover:text-foreground",
-            vertical ? "h-4" : "w-4",
-          )}
-          // ∑CG: aria-label + tooltip for the omnibar drag grip (drag to any edge)
-          //   sample: "Move toolbar"
-          {...hint("∑CG")}
-        >
-          <GripVertical className={cn("size-3", vertical && "rotate-90")} />
-        </span>
-        {/* tools */}
+        <OmnibarGrip vertical={vertical} />
+        {/* tools — every subtool visible (flat: no hover fans, touch-safe);
+            thin dividers separate the five stacks */}
         <Zone vertical={vertical}>
-          {TOOLS.map((tool) => (
-            <ToolStack
-              key={tool.id}
-              tool={tool}
-              selected={activeTool === tool.id}
-              activeSub={activeSubs[tool.id]}
-              vertical={vertical}
-              onSelectSub={(sub) => setActiveSub(tool.id, sub)}
-            />
+          {TOOLS.map((tool, ti) => (
+            <Fragment key={tool.id}>
+              {ti > 0 && (
+                <span
+                  aria-hidden
+                  className={cn("shrink-0 bg-border", vertical ? "mx-auto my-0.5 h-px w-6" : "mx-0.5 my-auto h-6 w-px")}
+                />
+              )}
+              {tool.subs.map((sub, si) => {
+                const active = activeTool === tool.id && activeSubs[tool.id] === sub.id;
+                return (
+                  <button
+                    key={sub.id}
+                    onClick={() => setActiveSub(tool.id, sub.id)}
+                    title={sub.label}
+                    aria-label={sub.label}
+                    aria-pressed={active}
+                    className={cn(
+                      "relative grid size-9 shrink-0 place-items-center",
+                      active
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                    )}
+                  >
+                    {sub.icon}
+                    {si === 0 && (
+                      <span className={cn("absolute bottom-px right-0.5 text-[8px] font-bold", active ? "opacity-80" : "opacity-50")}>
+                        {tool.key}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </Fragment>
           ))}
         </Zone>
 
-        {/* contextual settings zone — the middle reads the ACTIVE TOOL (Ruby's
-            call), not a fixed FX strip */}
-        <ContextZone activeTool={activeTool} vertical={vertical} edge={edge} pinned={isPinned("effects")} />
-
-        {/* panels */}
+        {/* panels — tool settings + FX are regular modules now (the middle
+            ContextZone is gone) */}
         <Panels vertical={vertical}>
+          <PanelButton id="tool" icon={<Settings2 className={ICON} />} edge={edge} pinned={isPinned("tool")} />
+          <PanelButton id="effects" icon={<Sparkles className={ICON} />} edge={edge} pinned={isPinned("effects")} />
           <PanelButton id="layers" icon={<Layers className={ICON} />} edge={edge} pinned={isPinned("layers")} />
           <PanelButton id="inspector" icon={<BoxIcon className={ICON} />} edge={edge} pinned={isPinned("inspector")} />
-          <PanelButton id="colour" edge={edge} pinned={isPinned("colour")} icon={<ColourSwatchIcon />} />
           <PanelButton id="looks" icon={<Film className={ICON} />} edge={edge} pinned={isPinned("looks")} />
         </Panels>
+
+        {/* colour — full-height swatch, the bar's one BIG target (Ruby's call) */}
+        <ColourButton edge={edge} vertical={vertical} pinned={isPinned("colour")} />
 
         {/* overflow */}
         <Zone vertical={vertical}>
@@ -286,243 +288,55 @@ function Panels({ vertical, children }: { vertical: boolean; children: React.Rea
   );
 }
 
-function Tag({ children }: { children: React.ReactNode }) {
+/** Omnibar drag grip (dnd-kit) — drag the whole bar onto an edge drop zone. */
+function OmnibarGrip({ vertical }: { vertical: boolean }) {
+  const { attributes, listeners, setNodeRef } = useDraggable({
+    id: "dock-omnibar",
+    data: { kind: "omnibar" },
+  });
   return (
-    <span className="whitespace-nowrap border border-border bg-card px-[7px] py-px text-[10.5px] text-muted-foreground">
-      {children}
+    <span
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      className={cn(
+        "grid shrink-0 cursor-grab touch-none place-items-center text-muted-foreground/50 outline-none hover:text-foreground",
+        vertical ? "h-4" : "w-4",
+      )}
+      // ∑CG: aria-label + tooltip for the omnibar drag grip (drag to any edge)
+      //   sample: "Move toolbar"
+      {...hint("∑CG")}
+    >
+      <GripVertical className={cn("size-3", vertical && "rotate-90")} />
     </span>
   );
 }
 
-const PIECE_LABEL: Record<PieceShape, string> = {
-  rectangle: "Rectangle",
-  ellipse: "Ellipse",
-  line: "Line",
-  polygon: "Polygon",
-  star: "Star",
-  symbol: "Symbol", // chip shows the generic kind; the layer names the preset
-};
-
-/**
- * Live read-out chips per tool (Ruby's spec): MOVE = the selection's X/Y ·
- * SELECT = the active subtool's mode settings (marquee touch/cover +
- * group/separate, lasso sensitivity, wand tolerance) · ADJUST = the layer's
- * stack labels · TEXT = font + size · PIECES = the chosen shape. All live —
- * doc/selection chips track the stores; the rest read tool-settings, so they
- * update the moment the M2 tools start writing it.
- */
-function readoutChips(tool: ToolId, sub: string, layer: Layer | null, ts: ToolSettings): string[] {
-  switch (tool) {
-    case "move":
-      return layer
-        ? [`X ${Math.round(layer.transform.x)}`, `Y ${Math.round(layer.transform.y)}`]
-        : [];
-    case "select": {
-      const s = ts.select;
-      if (sub === "lasso") return [`Sensitivity ${s.sensitivity}%`];
-      if (sub === "wand") return [`Tolerance ${s.tolerance}`];
-      return [s.mode === "touch" ? "Touch" : "Cover", ts.transformAsGroup ? "Group" : "Separate"];
-    }
-    case "adjust":
-      return layer
-        ? [
-            ...layer.filters.map((f) => fxDisplayLabel("filters", f)),
-            ...layer.effects.map((f) => fxDisplayLabel("effects", f)),
-          ]
-        : [];
-    case "text":
-      return [fontLabel(ts.text.fontFamily), `${ts.text.fontSize} px`];
-    case "pieces": {
-      const p = ts.pieces;
-      if (sub === "brush") return [`${p.brushSize} px`];
-      if (sub === "pencil") return [`${p.pencilSize} px`];
-      const extra =
-        p.shape === "polygon"
-          ? [`${p.sides} sides`]
-          : p.shape === "star"
-            ? [`${p.starPoints} points`]
-            : p.shape === "rectangle" && p.cornerRadius > 0
-              ? [`R ${p.cornerRadius}`]
-              : [];
-      return [PIECE_LABEL[p.shape], ...extra];
-    }
-  }
-}
-
-/**
- * The contextual settings zone (Ruby's call): the omnibar's middle reads the
- * ACTIVE TOOL — icon, name, and live chips summarising its state — and its
- * bloom opens that tool's settings. ADJUST is the FX mode: the bloom/pin
- * target is the FX module. Stub tools peek a placeholder settings bloom and
- * aren't pinnable until their real settings exist (M2 TEXT/PIECES/SELECT).
- */
-function ContextZone({
-  activeTool,
-  vertical,
-  edge,
-  pinned,
-}: {
-  activeTool: ToolId;
-  vertical: boolean;
-  edge: Edge;
-  pinned: boolean;
-}) {
-  const doc = useSyncExternalStore(subscribe, getSnapshot, () => null);
-  const layerId = useSyncExternalStore(subscribeSelection, getActiveLayerId, () => null);
-  const toolSettings = useSyncExternalStore(subscribeToolSettings, getToolSettings, getToolSettings);
-  const activeSubs = useSyncExternalStore(subscribeTool, getActiveSubs, getActiveSubs);
-  const isAdjust = activeTool === "adjust";
-  const layer = doc && layerId ? findLayer(doc.layers, layerId) : null;
-  const sub = activeSubs[activeTool];
-  const chips = readoutChips(activeTool, sub, layer, toolSettings).slice(0, 2);
-  const tool = TOOLS.find((t) => t.id === activeTool);
-  const subDef = tool?.subs.find((s) => s.id === sub) ?? tool?.subs[0];
-  const hot = isAdjust && pinned;
-
+/** The colour trigger — a full-height live swatch (the bar's one big target).
+ *  Same peek/pin semantics as every PanelButton, just louder. */
+function ColourButton({ edge, vertical, pinned }: { edge: Edge; vertical: boolean; pinned: boolean }) {
+  const colour = useSyncExternalStore(subscribeColour, getColour, getColour);
   return (
-    <div
-      onClick={isAdjust ? () => togglePin("effects") : undefined}
-      className={cn(
-        "group/trigger relative flex flex-1 select-none items-center hover:bg-accent",
-        isAdjust ? "cursor-pointer" : "cursor-default",
-        vertical ? "justify-center py-2" : "gap-2 px-3",
-        hot ? "text-primary shadow-[inset_0_-2px_0_var(--primary)]" : "text-muted-foreground",
-      )}
-    >
-      {/* icon + title track the ACTIVE SUBTOOL, not just the stack head */}
-      <span className={hot ? "text-primary" : "text-foreground"}>{subDef?.icon}</span>
-      {!vertical && (
-        <span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
-          <span
-            className={cn(
-              "text-[10px] font-bold uppercase tracking-wide",
-              hot ? "text-primary" : "text-foreground",
-            )}
-          >
-            {subDef?.label}
-          </span>
-          {chips.map((c, i) => (
-            <Tag key={i}>{c}</Tag>
-          ))}
-        </span>
-      )}
-      {isAdjust ? (
-        !pinned && (
-          <Bloom edge={edge} cross="center">
-            {/* the FX module is interactive and this bloom lives INSIDE the
-                trigger's click target — keep its clicks from toggling the pin */}
-            <div onClick={(e) => e.stopPropagation()}>
-              <ModuleBox id="effects" />
-            </div>
-          </Bloom>
-        )
-      ) : (
-        <Bloom edge={edge} cross="center">
-          <ToolSettingsBody tool={activeTool} sub={sub} title={subDef?.label ?? ""} />
+    <div className={cn("group/trigger relative shrink-0", vertical ? "border-t" : "border-l", "border-border")}>
+      <button
+        onClick={() => togglePin("colour")}
+        {...hint(MODULES.colour.title)}
+        className={cn(
+          "grid size-12 place-items-center",
+          pinned ? "bg-primary/10 ring-1 ring-inset ring-primary" : "hover:bg-accent",
+        )}
+      >
+        <span
+          className="size-[26px] border border-foreground/35"
+          style={{ backgroundColor: colour.hex, boxShadow: "inset 0 0 0 1px rgba(255,255,255,.4)" }}
+        />
+      </button>
+      {!pinned && (
+        <Bloom edge={edge} cross="end">
+          <ModuleBox id="colour" />
         </Bloom>
       )}
     </div>
-  );
-}
-
-/**
- * One tool stack: head + subtool fan. Subtools select like main tools (Ruby's
- * call): clicking one activates it (bg-primary), and while a NON-default
- * subtool is live the fan stays expanded — no hover needed — until another
- * tool is picked. The head is subs[0]; when a fan subtool is active the head
- * drops to the soft stack-active look so exactly one cell reads "current".
- */
-function ToolStack({
-  tool,
-  selected,
-  activeSub,
-  vertical,
-  onSelectSub,
-}: {
-  tool: ToolDef;
-  selected: boolean;
-  activeSub: string;
-  vertical: boolean;
-  onSelectSub: (sub: string) => void;
-}) {
-  const [head, ...rest] = tool.subs;
-  const headActive = selected && activeSub === head.id;
-  const fanPinned = selected && activeSub !== head.id;
-  // Tap-to-expand (clarity review, touch): hover never fires on a touchscreen,
-  // which locked every subtool away. Re-tapping the head of the already-active
-  // stack now toggles the fan open; picking a subtool (or leaving the tool)
-  // closes it again. Desktop hover behaviour is unchanged.
-  const [fanOpen, setFanOpen] = useState(false);
-  const fanShown = selected && (fanPinned || fanOpen);
-
-  return (
-    <div className="group/tool relative flex items-center">
-      <div className={cn("flex items-center gap-0.5", vertical ? "flex-col" : "flex-row")}>
-        <button
-          onClick={() => {
-            if (headActive && rest.length > 0) setFanOpen((o) => !o);
-            else {
-              onSelectSub(head.id);
-              setFanOpen(false);
-            }
-          }}
-          title={head.label}
-          aria-label={head.label}
-          className={cn(
-            "relative grid size-9 place-items-center",
-            headActive
-              ? "bg-primary text-primary-foreground"
-              : fanPinned
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-          )}
-        >
-          {head.icon}
-          {rest.length > 0 && (
-            <span className="absolute right-0.5 top-[3px] size-0 border-l-[3.5px] border-t-[3.5px] border-l-transparent border-t-current opacity-45" />
-          )}
-          <span className="absolute bottom-px right-0.5 text-[8px] font-bold opacity-65">{tool.key}</span>
-        </button>
-        {rest.map((sub) => {
-          const subActive = selected && activeSub === sub.id;
-          return (
-            <button
-              key={sub.id}
-              onClick={() => {
-                onSelectSub(sub.id);
-                setFanOpen(false);
-              }}
-              title={sub.label}
-              aria-label={sub.label}
-              className={cn(
-                "grid size-9 place-items-center overflow-hidden opacity-0 transition-all",
-                subActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-                vertical ? "h-0" : "w-0",
-                selected && (vertical ? "group-hover/tool:h-[34px]" : "group-hover/tool:w-[34px]"),
-                selected && "group-hover/tool:opacity-100",
-                fanShown && (vertical ? "h-[34px]" : "w-[34px]"),
-                fanShown && "opacity-100",
-              )}
-            >
-              {sub.icon}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/** Colour panel trigger icon — a live swatch of the current picker colour. */
-function ColourSwatchIcon() {
-  const colour = useSyncExternalStore(subscribeColour, getColour, getColour);
-  return (
-    <span
-      className="size-[18px] border border-foreground/35"
-      style={{ backgroundColor: colour.hex, boxShadow: "inset 0 0 0 1px rgba(255,255,255,.4)" }}
-    />
   );
 }
 

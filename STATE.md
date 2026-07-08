@@ -1008,3 +1008,28 @@ Copy in the sketches is illustrative; real strings stay `\u2211CG` (see Conventi
      session; `substrata:forceWasm` localStorage flag = QA escape hatch.
    Ruby's manual QA still owed: real cutout quality on her image, iOS
    Safari.
+8. **✅ OMNIBAR UX PASS (2026-07-08 night, Ruby's asks).**
+   - **Flat tools**: all 11 subtools always visible (thin dividers between
+     the five stacks, key badge on each default); the hover-fan, its corner
+     triangle, and the tap-to-expand touch workaround are all DELETED —
+     flat buttons need none of it. Key-cycling kept.
+   - **ContextZone deleted** (the middle "reads the active tool" strip +
+     readout chips). Tool settings are now a REGULAR module (`tool` id):
+     bloom/pin/rail/dock/drag like every panel, trigger = Settings2 button;
+     body = ToolSettingsBody for the active subtool (bodies lost their
+     internal Head — the module box supplies chrome; sub slot names the
+     subtool). FX got its own panel button (Sparkles) — it was only
+     reachable through the ContextZone before.
+   - **Big colour**: full-height (48px) flush swatch cell at the panels'
+     end, same peek/pin semantics, 26px live swatch.
+   - **Drag-to-dock rebuilt on @dnd-kit** (already a dep): shell-level
+     DndContext (pointerWithin, 4px activation), module grips + omnibar
+     grip are useDraggable, dock zones useDroppable, DragOverlay ghost
+     chip. Hand-rolled pointer tracking/hit-testing deleted from
+     drag-dock.ts (now just the "what's dragging" broadcast store).
+   12-check `.verify-workspace.mjs` + review-fixes + M7 harnesses ALL PASS
+   (drag e2e: module→right sidebar, omnibar→left edge); tsc/lint/build
+   green. slopsieve: 3 gaps open (tool-module title + the two grip
+   tooltips). Taste QA for Ruby: flat-bar width on small screens, tool
+   module w-auto slack in sidebars (ponytail), zone placement when the
+   omnibar docks left/right.

@@ -2,6 +2,15 @@
 
 import { useEffect } from "react";
 import dynamic from "next/dynamic";
+import {
+  DndContext,
+  PointerSensor,
+  pointerWithin,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
 
 import { TopBar } from "@/components/substrata/top-bar";
 import { Omnibar } from "@/components/substrata/omnibar/omnibar";
@@ -13,7 +22,9 @@ import { SecureContextNotice } from "@/components/substrata/secure-context-notic
 import { EmptyHint } from "@/components/substrata/empty-hint";
 import { DockZones } from "@/components/substrata/dock-zones";
 import { useEditorShortcuts } from "@/hooks/use-editor-shortcuts";
-import { hydrateLayoutPrefs } from "@/lib/substrata/dock-pref";
+import { hydrateLayoutPrefs, setModuleDock, setOmnibarEdge, type DockTarget, type Edge } from "@/lib/substrata/dock-pref";
+import { setPinned } from "@/lib/substrata/pin-pref";
+import { endDockDrag, startDockDrag, type DockDrag } from "@/lib/substrata/drag-dock";
 
 // The Fabric canvas is loaded only on the client: ssr:false keeps the heavy,
 // browser-only Fabric module out of the static-export prerender. Everything
@@ -48,14 +59,46 @@ export function SubstrataShell() {
     hydrateLayoutPrefs();
   }, []);
 
+  // Drag-to-dock (dnd-kit): grips in module headers + the omnibar are the
+  // draggables, dock-zones.tsx renders the droppables while a drag is live,
+  // and the drop dispatches into the SAME persisted prefs the old Workspace
+  // menu wrote. pointerWithin: the pointer picks the zone, not the grip rect;
+  // the 4px activation keeps grip clicks inert.
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const onDragStart = (e: DragStartEvent) => {
+    const drag = e.active.data.current as DockDrag | undefined;
+    if (drag) startDockDrag(drag);
+  };
+  const onDragEnd = (e: DragEndEvent) => {
+    const drag = e.active.data.current as DockDrag | undefined;
+    const over = e.over?.id;
+    if (drag && typeof over === "string") {
+      if (drag.kind === "module") {
+        setModuleDock(drag.id, over as DockTarget);
+        setPinned(drag.id, true); // dropping a module also shows it
+      } else {
+        setOmnibarEdge(over as Edge);
+      }
+    }
+    endDockDrag();
+  };
+
   return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={pointerWithin}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragCancel={() => endDockDrag()}
+    >
     <div className="flex h-full w-full flex-col overflow-hidden">
       <TopBar />
       {/* degraded-context banner — renders null on https/localhost */}
       <SecureContextNotice />
       {/* Body: left sidebar · canvas area · right sidebar. Modules dock to a
-          sidebar or the rail (Workspace ▸ Dock modules); sidebars appear only when
-          they hold a module. The omnibar + rail float over the canvas area. */}
+          sidebar or the rail (drag a module's grip onto a drop zone); sidebars
+          appear only when they hold a module. The omnibar + rail float over
+          the canvas area. */}
       <div className="flex min-h-0 flex-1">
         <Sidebar side="left" />
         <div className="relative flex min-h-0 flex-1">
@@ -74,5 +117,6 @@ export function SubstrataShell() {
       {/* right-click layer menu — ONE instance; canvas + layers panel open it */}
       <LayerContextMenu />
     </div>
+    </DndContext>
   );
 }

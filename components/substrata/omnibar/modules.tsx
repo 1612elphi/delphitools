@@ -3,7 +3,7 @@
 import { GripVertical, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { togglePin, type ModuleId } from "@/lib/substrata/pin-pref";
-import { beginDockDragFromPointer } from "@/lib/substrata/drag-dock";
+import { useDraggable } from "@dnd-kit/core";
 import { hint } from "@/lib/substrata/hint";
 import { LayersBody, LayersCount } from "@/components/substrata/modules/layers-panel";
 import { InspectorBody } from "@/components/substrata/modules/inspector-panel";
@@ -11,6 +11,7 @@ import { ColourBody, ColourName } from "@/components/substrata/modules/colour-pa
 import { ArrangeBody } from "@/components/substrata/modules/arrange-panel";
 import { FxBody, FxSub } from "@/components/substrata/modules/fx-panel";
 import { LooksBody, LooksSub } from "@/components/substrata/modules/looks-panel";
+import { ToolModuleBody, ToolModuleSub } from "@/components/substrata/omnibar/tool-settings";
 
 /**
  * Module registry + box wrapper. One definition per omnibar module; the SAME
@@ -30,6 +31,10 @@ export interface ModuleDef {
 }
 
 export const MODULES: Record<ModuleId, ModuleDef> = {
+  // ∑CG: tool-settings module title (the active tool's settings panel);
+  //   renders uppercase in the header. spec: ≤ 10 chars; British spelling.
+  //   sample: "Tool"
+  tool: { id: "tool", title: "∑CG", width: "w-auto", body: <ToolModuleBody />, sub: <ToolModuleSub /> },
   layers: { id: "layers", title: "Layers", width: "w-[224px]", body: <LayersBody />, sub: <LayersCount /> },
   effects: { id: "effects", title: "FX", width: "w-[296px]", body: <FxBody />, sub: <FxSub /> },
   inspector: { id: "inspector", title: "Inspector", width: "w-[236px]", body: <InspectorBody /> },
@@ -64,20 +69,7 @@ export function ModuleBox({ id, variant = "bloom" }: { id: ModuleId; variant?: M
           variant === "rail" && "sticky top-0 z-[2]",
         )}
       >
-        {/* drag-to-dock grip — the visible affordance that replaced the
-            Workspace-menu dock rows; works from the bloom too (drop pins) */}
-        <span
-          onPointerDown={(e) => {
-            e.preventDefault();
-            beginDockDragFromPointer(e, { kind: "module", id });
-          }}
-          className="grid h-full w-4 shrink-0 cursor-grab touch-none place-items-center text-muted-foreground/60 hover:text-foreground"
-          // ∑CG: aria-label + tooltip for the module drag-to-dock grip
-          //   sample: "Drag to dock"
-          {...hint("∑CG")}
-        >
-          <GripVertical className="size-3" />
-        </span>
+        <ModuleGrip id={id} />
         <span className="text-[10.5px] font-bold uppercase tracking-wide">{def.title}</span>
         {def.sub != null && <span className="ml-auto text-[10px] text-muted-foreground">{def.sub}</span>}
         {closable && (
@@ -95,5 +87,28 @@ export function ModuleBox({ id, variant = "bloom" }: { id: ModuleId; variant?: M
       </div>
       <div className={cn(variant === "rail" && "min-h-0 flex-1 overflow-auto")}>{def.body}</div>
     </div>
+  );
+}
+
+/** Drag-to-dock grip (dnd-kit draggable) — the visible affordance that
+ *  replaced the Workspace-menu dock rows; works from the bloom too (a drop
+ *  also pins). The shell's DndContext owns sensors + the drop dispatch. */
+function ModuleGrip({ id }: { id: ModuleId }) {
+  const { attributes, listeners, setNodeRef } = useDraggable({
+    id: `dock-module-${id}`,
+    data: { kind: "module", id },
+  });
+  return (
+    <span
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      className="grid h-full w-4 shrink-0 cursor-grab touch-none place-items-center text-muted-foreground/60 outline-none hover:text-foreground"
+      // ∑CG: aria-label + tooltip for the module drag-to-dock grip
+      //   sample: "Drag to dock"
+      {...hint("∑CG")}
+    >
+      <GripVertical className="size-3" />
+    </span>
   );
 }
