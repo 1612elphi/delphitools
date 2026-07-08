@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils";
 import { hint } from "@/lib/substrata/hint";
 import { segCellClass } from "@/components/substrata/preset-row";
 import type { TextAlign } from "@/lib/substrata/doc-model";
-import { getActiveSubs, getActiveTool, subscribeTool, type ToolId } from "@/lib/substrata/tool";
+import { getActiveSubs, getActiveTool, setActiveSub, subscribeTool, type ToolId } from "@/lib/substrata/tool";
 
 /**
  * Per-tool settings blooms for the omnibar's contextual zone (Ruby's rule: a
@@ -162,33 +162,45 @@ function MoveSettings() {
  *  a grid of vendored Phosphor-fill symbols; picking one arms drag-to-draw
  *  with that symbol. Fill mirrors the primitives bloom's next-shape fill.
  *  Symbol names = standard vocabulary chrome (SHAPE_NAMES precedent). */
+function PiecesGalleryGrid({ bordered }: { bordered?: boolean }) {
+  const ts = useSyncExternalStore(subscribeToolSettings, getToolSettings, getToolSettings);
+  const s = ts.pieces;
+  return (
+    <div className={cn("grid grid-cols-5 gap-px bg-border", bordered && "border-b border-border")}>
+      {PRESET_SHAPES.map((shape) => (
+        <button
+          key={shape.id}
+          type="button"
+          title={shape.name}
+          aria-label={shape.name}
+          aria-pressed={s.symbolId === shape.id}
+          onClick={() => {
+            updateToolSettings("pieces", { shape: "symbol", symbolId: shape.id });
+            setActiveSub("pieces", "pieces"); // picking a piece arms the tool
+          }}
+          className={cn(
+            "grid aspect-square place-items-center",
+            s.symbolId === shape.id
+              ? "bg-primary text-primary-foreground"
+              : "bg-card text-foreground hover:bg-accent",
+          )}
+        >
+          <svg viewBox="0 0 256 256" className="h-6 w-6" aria-hidden>
+            <path d={shape.d} fill="currentColor" />
+          </svg>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function PiecesGallerySettings() {
   const ts = useSyncExternalStore(subscribeToolSettings, getToolSettings, getToolSettings);
   const s = ts.pieces;
 
   return (
     <div className="w-[224px]">
-      <div className="grid grid-cols-5 gap-px border-b border-border bg-border">
-        {PRESET_SHAPES.map((shape) => (
-          <button
-            key={shape.id}
-            type="button"
-            title={shape.name}
-            aria-label={shape.name}
-            onClick={() => updateToolSettings("pieces", { shape: "symbol", symbolId: shape.id })}
-            className={cn(
-              "grid aspect-square place-items-center",
-              s.symbolId === shape.id
-                ? "bg-primary text-primary-foreground"
-                : "bg-card text-foreground hover:bg-accent",
-            )}
-          >
-            <svg viewBox="0 0 256 256" className="h-6 w-6" aria-hidden>
-              <path d={shape.d} fill="currentColor" />
-            </svg>
-          </button>
-        ))}
-      </div>
+      <PiecesGalleryGrid bordered />
       <Row label="Fill">
         <ColourCell
           colour={s.fill}
@@ -196,6 +208,48 @@ function PiecesGallerySettings() {
           aria="Fill colour"
         />
       </Row>
+    </div>
+  );
+}
+
+/** Floating shape menu on the PIECES tool button — the piece selector IS
+ *  subtool selection (Ruby), so it hangs off the tool itself. */
+export function PiecesFlyout() {
+  return (
+    <div className="w-[224px]">
+      <PiecesGalleryGrid />
+    </div>
+  );
+}
+
+/** Floating shape menu on the PRIMITIVES tool button — pick a shape, the
+ *  subtool arms itself. Full params stay in the tool-settings module. */
+export function PrimitivesFlyout() {
+  const ts = useSyncExternalStore(subscribeToolSettings, getToolSettings, getToolSettings);
+  const s = ts.pieces;
+  return (
+    <div className="flex">
+      {SHAPE_CELLS.map(({ shape, label, icon: Icon }) => (
+        <button
+          key={shape}
+          type="button"
+          title={label}
+          aria-label={label}
+          aria-pressed={s.shape === shape}
+          onClick={() => {
+            updateToolSettings("pieces", { shape });
+            setActiveSub("pieces", "primitives");
+          }}
+          className={cn(
+            "grid size-10 place-items-center",
+            s.shape === shape
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:bg-accent hover:text-foreground",
+          )}
+        >
+          <Icon className="size-[15px]" />
+        </button>
+      ))}
     </div>
   );
 }

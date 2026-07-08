@@ -31,10 +31,7 @@ export interface ModuleDef {
 }
 
 export const MODULES: Record<ModuleId, ModuleDef> = {
-  // ∑CG: tool-settings module title (the active tool's settings panel);
-  //   renders uppercase in the header. spec: ≤ 10 chars; British spelling.
-  //   sample: "Tool"
-  tool: { id: "tool", title: "∑CG", width: "w-auto", body: <ToolModuleBody />, sub: <ToolModuleSub /> },
+  tool: { id: "tool", title: "Tool Settings", width: "w-auto", body: <ToolModuleBody />, sub: <ToolModuleSub /> },
   layers: { id: "layers", title: "Layers", width: "w-[224px]", body: <LayersBody />, sub: <LayersCount /> },
   effects: { id: "effects", title: "FX", width: "w-[296px]", body: <FxBody />, sub: <FxSub /> },
   inspector: { id: "inspector", title: "Inspector", width: "w-[236px]", body: <InspectorBody /> },
@@ -104,9 +101,7 @@ function ModuleGrip({ id }: { id: ModuleId }) {
       {...attributes}
       {...listeners}
       className="grid h-full w-4 shrink-0 cursor-grab touch-none place-items-center text-muted-foreground/60 outline-none hover:text-foreground"
-      // ∑CG: aria-label + tooltip for the module drag-to-dock grip
-      //   sample: "Drag to dock"
-      {...hint("∑CG")}
+      {...hint("Drag to dock")}
     >
       <GripVertical className="size-3" />
     </span>
