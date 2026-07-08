@@ -49,11 +49,20 @@ export interface SnapshotRecord {
   createdAt: number;
 }
 
+export interface MatteRecord {
+  /** the SOURCE raster's content hash (BlobRecord.hash) the matte was baked from */
+  hash: string;
+  /** PNG whose ALPHA channel is the matte */
+  blob: Blob;
+  createdAt: number;
+}
+
 export class SubstrataDB extends Dexie {
   projects!: Table<ProjectRecord, string>;
   blobs!: Table<BlobRecord, string>;
   handles!: Table<HandleRecord, string>;
   snapshots!: Table<SnapshotRecord, string>;
+  mattes!: Table<MatteRecord, string>;
 
   constructor() {
     super("substrata");
@@ -69,6 +78,11 @@ export class SubstrataDB extends Dexie {
     // indexes; the doc JSON is a stored value, so no upgrade step (loadLatest
     // stamps the version — v1 docs contain no shape layers).
     this.version(2).stores({});
+    // v3 — M7 Remove Background: derived alpha mattes keyed by SOURCE blob
+    // hash. A rebuildable cache (the model re-runs on a miss), so loss is
+    // harmless and no upgrade step is needed; purged with the rest on
+    // persistence opt-out.
+    this.version(3).stores({ mattes: "hash" });
   }
 }
 

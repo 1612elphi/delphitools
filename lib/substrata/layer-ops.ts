@@ -282,7 +282,7 @@ export function deleteLayer(id: string): void {
  * Group layers: all ids must share ONE sibling list (top-level or the same
  * group) — the panel only enables Group when that holds. The new group takes
  * the topmost member's slot; members keep doc order as its children. The
- * group's own name starts empty (the panel renders the ∑CG placeholder) and
+ * group's own name starts empty (the panel renders the \u2211CG placeholder) and
  * its transform stays identity (folder semantics, layer-tree.ts).
  */
 export function groupLayers(ids: readonly string[]): string | null {
@@ -299,7 +299,7 @@ export function groupLayers(ids: readonly string[]): string | null {
   const group: GroupLayer = {
     kind: "group",
     id: newId(),
-    // empty ⇒ the panel renders its ∑CG placeholder (the doc-name precedent)
+    // empty ⇒ the panel renders its \u2211CG placeholder (the doc-name precedent)
     name: "",
     visible: true,
     locked: false,

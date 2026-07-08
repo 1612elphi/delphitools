@@ -263,6 +263,7 @@ function syncRasterContent(
   }
   if (!obj) {
     obj = new EffectsImage(src);
+    obj.sourceHash = layer.blobHash; // keys the bg-removal matte cache (M7)
     rasterHashOf.set(obj, layer.blobHash);
     byId.set(layer.id, obj);
     layerIdOf.set(obj, layer.id);

@@ -106,9 +106,7 @@ export function SwatchesMode({ colour }: { colour: ColourSnapshot }) {
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       role="group"
-      // ∑CG: aria-label for the drag-scroll colour swatch wall — spec: ≤ 40 chars,
-      //   describes a scrollable grid of pickable colours. sample: "Colour swatch wall"
-      aria-label="∑CG"
+      aria-label="Colour swatch wall"
       className={cn(
         // Fills the panel; the 11-row wall is taller than the slot, so it scrolls
         // in both axes (drag to roam) rather than resizing the panel.

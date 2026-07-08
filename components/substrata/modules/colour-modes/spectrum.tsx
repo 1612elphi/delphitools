@@ -73,10 +73,7 @@ export function SpectrumMode({ colour }: { colour: ColourSnapshot }) {
       <div
         ref={eqRef}
         {...eqBind}
-        // ∑CG: aria-label for the spectral-EQ sculpt surface
-        //   spec: names the control; ≤ 40 chars; conveys drag-to-shape a light spectrum
-        //   sample: "Spectral power distribution"
-        aria-label="∑CG"
+        aria-label="Spectral power distribution"
         className="flex min-h-0 flex-1 touch-none cursor-crosshair gap-px border-b border-border bg-border"
       >
         {bands.map((v, i) => (

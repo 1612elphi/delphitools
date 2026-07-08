@@ -17,6 +17,7 @@ import { setBlendMode, setFill, setOpacity, setShapeParams, setShapeStroke, setT
 import { deriveTextStyle, styleFields, textAccent, DEFAULT_TEXT_PROPS } from "@/lib/substrata/text-style";
 import { FontSelect, TextAlignRow, TextStyleRow } from "@/components/substrata/text-style-row";
 import { cn } from "@/lib/utils";
+import { hint } from "@/lib/substrata/hint";
 import { segCellClass } from "@/components/substrata/preset-row";
 import { CornerPresetIcon, PresetRow, Stepper, type PresetOption } from "@/components/substrata/preset-row";
 import { ShapeFillRows } from "@/components/substrata/gradient-row";
@@ -46,7 +47,7 @@ import { layerDims } from "@/lib/substrata/shape-geometry";
  *
  * Section titles + field labels are functional chrome (mockup words, per Ruby's
  * call). Blend-mode names are standard compositing terms (British spelling), same
- * category. Empty-state hint stays ∑CG.
+ * category. Empty-state hint stays \u2211CG.
  */
 
 /** Apply a binary op; divide-by-zero is a no-op (keeps the left operand). */
@@ -150,6 +151,8 @@ export function InspectorBody() {
     label?: string;
     icon?: LucideIcon;
     unit?: string;
+    /** tooltip + aria for icon-only cells (X/Y/W/H self-label) */
+    title?: string;
     value: number;
     onCommit: (n: number) => void;
   }[] = [
@@ -175,11 +178,19 @@ export function InspectorBody() {
     });
   }
   cells.push(
-    { key: "angle", icon: RotateCw, unit: "°", value: t.angle, onCommit: (n) => setTransform(layer.id, { ...t, angle: n }) },
+    {
+      key: "angle",
+      icon: RotateCw,
+      unit: "°",
+      title: "Rotation",
+      value: t.angle,
+      onCommit: (n) => setTransform(layer.id, { ...t, angle: n }),
+    },
     {
       key: "scale",
       icon: Scaling,
       unit: "%",
+      title: "Scale",
       value: t.scaleX * 100,
       onCommit: (n) => {
         const s = Math.max(1, n) / 100;
@@ -199,10 +210,9 @@ export function InspectorBody() {
           {layer.name}
         </span>
         {selectedIds.length > 1 && (
-          /* multi-selection marker — the fields below edit the PRIMARY layer.
-             ∑CG: aria-label for the ×N count. sample: "Layers selected" */
+          /* multi-selection marker — the fields below edit the PRIMARY layer */
           <span
-            aria-label="∑CG"
+            aria-label="Layers selected"
             className="shrink-0 border border-border bg-card px-1 text-[10px] tabular-nums text-muted-foreground"
           >
             ×{selectedIds.length}
@@ -227,7 +237,7 @@ export function InspectorBody() {
         </div>
         <div className="segmented grid-cols-2 border-x-0 border-b-0">
           {cells.map((c) => (
-            <NumField key={c.key} label={c.label} icon={c.icon} unit={c.unit} value={c.value} onCommit={c.onCommit} />
+            <NumField key={c.key} label={c.label} icon={c.icon} unit={c.unit} title={c.title} value={c.value} onCommit={c.onCommit} />
           ))}
         </div>
 
@@ -251,8 +261,7 @@ export function InspectorBody() {
         <Select value={layer.blendMode} onValueChange={(v) => setBlendMode(layer.id, v as BlendMode)}>
           <SelectTrigger
             className="h-full min-w-0 flex-1 gap-1 border-0 bg-card px-3 text-xs shadow-none hover:bg-accent focus-visible:ring-0 dark:bg-card dark:hover:bg-accent"
-            // ∑CG: aria-label for the blend-mode dropdown. sample: "Blend mode"
-            aria-label="∑CG"
+            {...hint("Blend mode")}
           >
             <SelectValue />
           </SelectTrigger>
@@ -296,10 +305,8 @@ function FillRow({ layerId, fill }: { layerId: string; fill: string }) {
       <TransientColourCell
         value={fill}
         onApply={(v, transient) => setFill(layerId, v, transient ? { transient } : undefined)}
-        // ∑CG: aria-label for the layer fill swatch. sample: "Fill colour"
-        swatchAria="∑CG"
-        // ∑CG: aria-label for the layer fill hex field. sample: "Fill hex"
-        hexAria="∑CG"
+        swatchAria="Fill colour"
+        hexAria="Fill hex"
       />
     </ShapeRow>
   );
@@ -316,8 +323,7 @@ function StrokeRows({ layer }: { layer: Layer & { kind: "shape" } }) {
           onCheckedChange={(on) =>
             setShapeStroke(layer.id, on ? { colour: "#1d1d1d", width: 2 } : null)
           }
-          // ∑CG: aria-label for the stroke on/off toggle. sample: "Stroke"
-          aria-label="∑CG"
+          aria-label="Stroke"
         />
       </ShapeRow>
       {stroke && (
@@ -328,10 +334,8 @@ function StrokeRows({ layer }: { layer: Layer & { kind: "shape" } }) {
               onApply={(v, transient) =>
                 setShapeStroke(layer.id, { ...stroke, colour: v }, transient ? { transient } : undefined)
               }
-              // ∑CG: aria-label for the stroke colour swatch. sample: "Stroke colour"
-              swatchAria="∑CG"
-              // ∑CG: aria-label for the stroke hex field. sample: "Stroke hex"
-              hexAria="∑CG"
+              swatchAria="Stroke colour"
+              hexAria="Stroke hex"
             />
           </ShapeRow>
           <ShapeRow label="Width">
@@ -369,14 +373,13 @@ function ShapeSection({ layer }: { layer: Layer & { kind: "shape" } }) {
         {p.shape !== "line" && <ShapeFillRows key={layer.id} layerId={layer.id} fill={layer.fill} />}
         {p.shape === "rectangle" && (() => {
           const m = Math.min(p.width, p.height);
-          /* ∑CG: aria-labels for the four corner presets, sharpest → roundest.
-             spec: one or two words each, name the roundedness level; British
-             spelling. sample: "Sharp" · "Subtle" · "Round" · "Pill" */
+          /* corner-preset arias: one or two words each, name the roundedness
+             level, sharpest → roundest; British spelling */
           const corners: PresetOption[] = [
-            { value: 0, icon: <CornerPresetIcon r={0} />, aria: "∑CG" },
-            { value: Math.round(m * 0.08), icon: <CornerPresetIcon r={2} />, aria: "∑CG" },
-            { value: Math.round(m * 0.25), icon: <CornerPresetIcon r={4.5} />, aria: "∑CG" },
-            { value: Math.round(m * 0.5), icon: <CornerPresetIcon r={7} />, aria: "∑CG" },
+            { value: 0, icon: <CornerPresetIcon r={0} />, aria: "Sharp" },
+            { value: Math.round(m * 0.08), icon: <CornerPresetIcon r={2} />, aria: "Subtle" },
+            { value: Math.round(m * 0.25), icon: <CornerPresetIcon r={4.5} />, aria: "Round" },
+            { value: Math.round(m * 0.5), icon: <CornerPresetIcon r={7} />, aria: "Pill" },
           ];
           return (
             <ShapeRow label="Corner">
@@ -525,10 +528,8 @@ function TextSection({ layer }: { layer: Layer & { kind: "text" } }) {
                 transient ? { transient } : undefined,
               )
             }
-            // ∑CG: aria-label for the text accent swatch. sample: "Text colour"
-            swatchAria="∑CG"
-            // ∑CG: aria-label for the text accent hex field. sample: "Text hex"
-            hexAria="∑CG"
+            swatchAria="Text colour"
+            hexAria="Text hex"
           />
         </ShapeRow>
       </div>
@@ -570,18 +571,20 @@ function NumField({
   label,
   icon: Icon,
   unit,
+  title,
   value,
   onCommit,
 }: {
   label?: string;
   icon?: LucideIcon;
   unit?: string;
+  title?: string;
   value: number;
   onCommit: (n: number) => void;
 }) {
   const field = useNumberField(value, onCommit);
   return (
-    <label className="flex h-7 items-center gap-1.5 bg-card px-2.5">
+    <label title={title} className="flex h-7 items-center gap-1.5 bg-card px-2.5">
       {(Icon || label) && (
         <span className="grid w-3.5 shrink-0 place-items-center text-[11px] text-muted-foreground">
           {Icon ? <Icon className="size-3" aria-hidden /> : label}
@@ -617,15 +620,12 @@ function GroupInfo({ layer, count }: { layer: Layer; count: number }) {
         </span>
         <span className="truncate font-semibold text-accent-foreground" title={layer.name || undefined}>
           {layer.name || (
-            // ∑CG: display name for an unnamed group (matches the Layers panel gap)
-            //   spec: ≤ 12 chars, noun; British spelling. sample: "Group"
-            <span className="font-normal text-accent-foreground/70">∑CG</span>
+            <span className="font-normal text-accent-foreground/70">Group</span>
           )}
         </span>
         {count > 1 && (
-          /* ∑CG: aria-label for the ×N count. sample: "Layers selected" */
           <span
-            aria-label="∑CG"
+            aria-label="Layers selected"
             className="ml-auto shrink-0 border border-border bg-card px-1 text-[10px] tabular-nums text-muted-foreground"
           >
             ×{count}
@@ -659,9 +659,7 @@ function CanvasInfo({ doc }: { doc: SubstrataDoc | null }) {
           {doc?.name?.trim() ? (
             doc.name
           ) : (
-            // ∑CG: placeholder name for an unsaved/untitled scene (≤ 24 chars; British spelling).
-            //   sample: "Untitled scene"
-            <span className="text-accent-foreground/70">∑CG</span>
+            <span className="text-accent-foreground/70">Untitled scene</span>
           )}
         </span>
         {ab && (

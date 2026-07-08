@@ -294,7 +294,7 @@ export const DEFAULT_ARTBOARD: Artboard = {
 
 /**
  * A selectable size for the new-scene preset panel (planned UI — Scene ▸ New
- * scene). `label` is ∑CG user-facing copy; WHICH presets to ship (social, print,
+ * scene). `label` is \u2211CG user-facing copy; WHICH presets to ship (social, print,
  * device, …) is a product decision still open. Dimensions are data, not copy.
  */
 export interface ArtboardPreset {
@@ -348,7 +348,7 @@ export function identityTransform(): Transform {
 
 /**
  * A new, empty scene at the default artboard. `name` is document data; the UI
- * supplies the ∑CG placeholder ("Untitled scene") when it is blank — we don't
+ * supplies the \u2211CG placeholder ("Untitled scene") when it is blank — we don't
  * author copy here.
  */
 export function createEmptyDoc(name = ""): SubstrataDoc {

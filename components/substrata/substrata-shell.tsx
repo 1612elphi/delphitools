@@ -9,6 +9,9 @@ import { Sidebar } from "@/components/substrata/sidebar";
 import { ModalHost } from "@/components/substrata/modal-host";
 import { LayerContextMenu } from "@/components/substrata/layer-context-menu";
 import { SelectionPopup } from "@/components/substrata/selection-popup";
+import { SecureContextNotice } from "@/components/substrata/secure-context-notice";
+import { EmptyHint } from "@/components/substrata/empty-hint";
+import { DockZones } from "@/components/substrata/dock-zones";
 import { useEditorShortcuts } from "@/hooks/use-editor-shortcuts";
 import { hydrateLayoutPrefs } from "@/lib/substrata/dock-pref";
 
@@ -19,7 +22,7 @@ const FabricCanvas = dynamic(
   () => import("@/components/substrata/fabric-canvas").then((m) => m.FabricCanvas),
   {
     ssr: false,
-    // Inert loading placeholder — no user-facing copy (∑CG everywhere).
+    // Inert loading placeholder — no user-facing copy (\u2211CG everywhere).
     loading: () => <div className="flex-1 bg-muted" aria-hidden />,
   },
 );
@@ -34,7 +37,7 @@ const FabricCanvas = dynamic(
  *                         scene name + save status, undo/redo, zoom, Export, theme  (M0-4/M0-5)
  *   - window-shell regions  dock for the omnibar + utility rail                     (M0-6)
  *   - <Omnibar/> / <Rail/>  the modular tool + panel surfaces                       (M1-10+)
- * All visible strings in those surfaces are ∑CG gaps to be filled via slopsieve.
+ * All visible strings in those surfaces are \u2211CG gaps to be filled via slopsieve.
  */
 export function SubstrataShell() {
   useEditorShortcuts();
@@ -48,6 +51,8 @@ export function SubstrataShell() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <TopBar />
+      {/* degraded-context banner — renders null on https/localhost */}
+      <SecureContextNotice />
       {/* Body: left sidebar · canvas area · right sidebar. Modules dock to a
           sidebar or the rail (Workspace ▸ Dock modules); sidebars appear only when
           they hold a module. The omnibar + rail float over the canvas area. */}
@@ -58,6 +63,10 @@ export function SubstrataShell() {
           <Omnibar />
           {/* pixel-selection action strip — anchored by the canvas per frame */}
           <SelectionPopup />
+          {/* starter card while the scene is empty */}
+          <EmptyHint />
+          {/* drag-to-dock drop targets — render only mid-drag */}
+          <DockZones />
         </div>
         <Sidebar side="right" />
       </div>

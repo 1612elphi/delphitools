@@ -217,8 +217,7 @@ function ChannelInput({
       value={shown}
       inputMode="numeric"
       spellCheck={false}
-      // ∑CG: numeric channel input aria-label — spec: ≤ 24 chars, names the channel; a {label} token would suit. sample: "Red channel value"
-      aria-label="∑CG"
+      aria-label="Red channel"
       onChange={(e) => setDraft(e.currentTarget.value)}
       onFocus={(e) => e.currentTarget.select()}
       onBlur={commit}

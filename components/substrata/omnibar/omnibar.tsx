@@ -16,6 +16,7 @@ import {
   Pencil,
   Layers,
   Box as BoxIcon,
+  GripVertical,
   MoreHorizontal,
   AlignHorizontalDistributeCenter,
 } from "lucide-react";
@@ -43,7 +44,9 @@ import {
   type ToolSettings,
 } from "@/lib/substrata/tool-settings";
 import type { Layer } from "@/lib/substrata/doc-model";
-import { ModuleBox } from "@/components/substrata/omnibar/modules";
+import { ModuleBox, MODULES } from "@/components/substrata/omnibar/modules";
+import { beginDockDragFromPointer } from "@/lib/substrata/drag-dock";
+import { hint } from "@/lib/substrata/hint";
 import { Rail } from "@/components/substrata/omnibar/rail";
 import { ToolSettingsBody } from "@/components/substrata/omnibar/tool-settings";
 
@@ -51,7 +54,7 @@ import { ToolSettingsBody } from "@/components/substrata/omnibar/tool-settings";
  * Omnibar (§8) — floating tool + panel cockpit, dockable to any edge. Tools
  * cockpit + settings + panel triggers; each panel/effects trigger peeks on hover
  * and pins to the rail on click (the rail renders the same module content at
- * uniform height). Top/bottom horizontal, left/right vertical. Copy ∑CG.
+ * uniform height). Top/bottom horizontal, left/right vertical. Copy \u2211CG.
  */
 
 interface ToolDef {
@@ -59,7 +62,7 @@ interface ToolDef {
   key: string;
   /** the stack's subtools; [0] is the head/default. Ids are internal (tool.ts
    *  activeSubs vocabulary — lasso/wand key the contextual read-out); labels
-   *  are Ruby's canonical subtool names (authored chrome, not ∑CG). */
+   *  are Ruby's canonical subtool names (authored chrome, not \u2211CG). */
   subs: { id: string; label: string; icon: React.ReactNode }[];
 }
 
@@ -171,6 +174,23 @@ export function Omnibar() {
   const barrowEl = (
     <div className={cn("pointer-events-none flex items-start gap-2.5", vertical ? "flex-col" : "flex-row")}>
       <div className={bar}>
+        {/* drag-to-dock grip — drag the whole bar to any edge (replaces the
+            Workspace-menu Omnibar row) */}
+        <span
+          onPointerDown={(e) => {
+            e.preventDefault();
+            beginDockDragFromPointer(e, { kind: "omnibar" });
+          }}
+          className={cn(
+            "grid shrink-0 cursor-grab touch-none place-items-center text-muted-foreground/50 hover:text-foreground",
+            vertical ? "h-4" : "w-4",
+          )}
+          // ∑CG: aria-label + tooltip for the omnibar drag grip (drag to any edge)
+          //   sample: "Move toolbar"
+          {...hint("∑CG")}
+        >
+          <GripVertical className={cn("size-3", vertical && "rotate-90")} />
+        </span>
         {/* tools */}
         <Zone vertical={vertical}>
           {TOOLS.map((tool) => (
@@ -201,8 +221,7 @@ export function Omnibar() {
         <Zone vertical={vertical}>
           <button
             onClick={() => setOverflow((v) => !v)}
-            // ∑CG: overflow toggle tooltip — sample: "More tools"
-            aria-label="∑CG"
+            {...hint("More tools")}
             className={cn(
               "grid size-9 place-items-center",
               overflow ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -429,12 +448,24 @@ function ToolStack({
   const [head, ...rest] = tool.subs;
   const headActive = selected && activeSub === head.id;
   const fanPinned = selected && activeSub !== head.id;
+  // Tap-to-expand (clarity review, touch): hover never fires on a touchscreen,
+  // which locked every subtool away. Re-tapping the head of the already-active
+  // stack now toggles the fan open; picking a subtool (or leaving the tool)
+  // closes it again. Desktop hover behaviour is unchanged.
+  const [fanOpen, setFanOpen] = useState(false);
+  const fanShown = selected && (fanPinned || fanOpen);
 
   return (
     <div className="group/tool relative flex items-center">
       <div className={cn("flex items-center gap-0.5", vertical ? "flex-col" : "flex-row")}>
         <button
-          onClick={() => onSelectSub(head.id)}
+          onClick={() => {
+            if (headActive && rest.length > 0) setFanOpen((o) => !o);
+            else {
+              onSelectSub(head.id);
+              setFanOpen(false);
+            }
+          }}
           title={head.label}
           aria-label={head.label}
           className={cn(
@@ -457,7 +488,10 @@ function ToolStack({
           return (
             <button
               key={sub.id}
-              onClick={() => onSelectSub(sub.id)}
+              onClick={() => {
+                onSelectSub(sub.id);
+                setFanOpen(false);
+              }}
               title={sub.label}
               aria-label={sub.label}
               className={cn(
@@ -468,8 +502,8 @@ function ToolStack({
                 vertical ? "h-0" : "w-0",
                 selected && (vertical ? "group-hover/tool:h-[34px]" : "group-hover/tool:w-[34px]"),
                 selected && "group-hover/tool:opacity-100",
-                fanPinned && (vertical ? "h-[34px]" : "w-[34px]"),
-                fanPinned && "opacity-100",
+                fanShown && (vertical ? "h-[34px]" : "w-[34px]"),
+                fanShown && "opacity-100",
               )}
             >
               {sub.icon}
@@ -509,7 +543,9 @@ function PanelButton({
     <div className="group/trigger relative">
       <button
         onClick={() => togglePin(id)}
-        aria-label={id}
+        // module title doubles as the hover tooltip (raw ids told a mouse
+        // user nothing — clarity review #6)
+        {...hint(MODULES[id].title)}
         className={cn(
           "grid size-9 place-items-center",
           pinned

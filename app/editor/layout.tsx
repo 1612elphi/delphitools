@@ -14,7 +14,7 @@ import type { Metadata } from "next";
  */
 export const metadata: Metadata = {
   // "Substrata" is Ruby's chosen product name (an identifier she set), not
-  // authored copy. Any descriptive tagline appended here would be ∑CG.
+  // authored copy. Any descriptive tagline appended here would be \u2211CG.
   title: "Substrata",
 };
 

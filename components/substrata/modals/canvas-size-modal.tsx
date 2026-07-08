@@ -10,10 +10,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ColourSwatchCell, DeferredHexInput, normalizeHex } from "@/components/colour-field";
+import { Switch } from "@/components/ui/switch";
 import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
-import { setArtboard } from "@/lib/substrata/artboard-ops";
+import { resizeArtboardReflow, setArtboard } from "@/lib/substrata/artboard-ops";
 import { closeModal } from "@/lib/substrata/modal";
 import { DEFAULT_ARTBOARD } from "@/lib/substrata/doc-model";
+import { viewport } from "@/lib/substrata/viewport";
 
 /**
  * Canvas size modal (blocking, §7) — edits the document artboard. Reads the
@@ -52,6 +54,9 @@ export function CanvasSizeModal() {
   const [resolution, setResolution] = useState(() => String(ab.resolution));
   const [colour, setColour] = useState(() => normalizeHex(ab.background ?? "") ?? "#ffffff");
   const [transparent, setTransparent] = useState(() => ab.background === null);
+  // Magic resize (M7-8/9): reflow layers with the artboard. Off by default —
+  // a plain canvas-size edit stays a plain canvas-size edit.
+  const [reflow, setReflow] = useState(false);
 
   // Picking any colour implies an opaque background.
   const pickColour = (hex: string) => {
@@ -68,7 +73,13 @@ export function CanvasSizeModal() {
     const w = Math.max(1, Math.round(Number(width) || DEFAULT_ARTBOARD.width));
     const h = Math.max(1, Math.round(Number(height) || DEFAULT_ARTBOARD.height));
     const res = Math.max(1, Math.round(Number(resolution) || DEFAULT_ARTBOARD.resolution));
-    setArtboard({ width: w, height: h, resolution: res, background: transparent ? null : colour });
+    const artboard = { width: w, height: h, resolution: res, background: transparent ? null : colour };
+    if (reflow && (w !== ab.width || h !== ab.height)) {
+      resizeArtboardReflow(artboard); // one undoable step: artboard + layer reflow
+      viewport.fit(); // aspect jumps reframe — the reconciler never refits itself
+    } else {
+      setArtboard(artboard);
+    }
     closeModal();
   };
 
@@ -133,6 +144,19 @@ export function CanvasSizeModal() {
           </div>
         </section>
 
+        {/* Magic resize (M7): when on, Apply re-anchors + proportionally scales
+            every layer with the artboard (anchor+proportional, ratified). */}
+        <section className="-mx-4 flex items-center justify-between gap-3 border-y border-border bg-card px-4 py-2.5">
+          <span className="text-xs">
+            Reflow layers to fit
+          </span>
+          <Switch
+            checked={reflow}
+            onCheckedChange={setReflow}
+            aria-label="Reflow layers to fit"
+          />
+        </section>
+
         {/* Background — swatch + hex, plus a Transparent toggle (→ background null). */}
         <section className="space-y-2">
           <div className="text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">
@@ -145,19 +169,13 @@ export function CanvasSizeModal() {
                 onChange={pickColour}
                 className="size-full"
                 style={transparent ? { opacity: 0 } : undefined}
-                // ∑CG: aria-label for the artboard background swatch (opens the OS picker).
-                //   spec: ≤ 24 chars, names the control; British spelling ("colour").
-                //   sample: "Background colour"
-                aria-label="∑CG"
+                aria-label="Background colour"
               />
             </div>
             <DeferredHexInput
               value={colour}
               onChange={pickColour}
-              // ∑CG: aria-label for the background hex field.
-              //   spec: ≤ 24 chars, names the field; British spelling.
-              //   sample: "Background hex value"
-              aria-label="∑CG"
+              aria-label="Background hex value"
               className={cn(
                 "h-11 min-w-0 flex-1 rounded-none border-0 bg-card font-mono text-xs uppercase tabular-nums shadow-none focus-visible:ring-0",
                 transparent && "opacity-50",

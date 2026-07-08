@@ -11,12 +11,10 @@ const getInsecure = () => typeof window !== "undefined" && window.isSecureContex
 const getServerInsecure = () => false;
 
 /**
- * Render-gated degraded-context banner (M0-7 stub). Returns null in a normal
+ * Render-gated degraded-context banner (M0-7). Returns null in a normal
  * secure context (https/localhost); only appears when Substrata is opened over
  * file:// or another insecure origin where Workers/OPFS/FS-Access/crypto.subtle/
- * WebGPU are unavailable.
- *
- * Not yet mounted in the shell — wiring + styling is gated UI work.
+ * WebGPU are unavailable. Mounted in the shell under the top bar.
  */
 export function SecureContextNotice() {
   const insecure = useSyncExternalStore(noopSubscribe, getInsecure, getServerInsecure);
@@ -25,13 +23,7 @@ export function SecureContextNotice() {
 
   return (
     <div role="alert" className="border-b border-border bg-muted px-3 py-2 text-xs text-foreground">
-      {/* ∑CG: degraded secure-context banner body
-          spec: ≤140 chars, one plain non-alarming sentence; tells the user that
-                saving/exporting/effects need a secure (https or localhost)
-                context and that opening from a local file disables them; British
-                spelling; no exclamation marks.
-          sample: "Heads up — open Substrata over https or localhost; from a local file, saving and effects are switched off." */}
-      ∑CG
+      {"This needs a secure context. If your browser doesn't support HTTPS, you can't save. Sorry!"}
     </div>
   );
 }

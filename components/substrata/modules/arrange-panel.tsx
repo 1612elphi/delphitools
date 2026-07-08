@@ -48,10 +48,7 @@ export function ArrangeBody() {
   if (!doc || !primary) {
     return (
       <div className="p-4 text-center text-xs text-muted-foreground">
-        {/* ∑CG: arrange empty-state hint (no selection)
-            spec: ≤ 48 chars; tells the user to select a layer to arrange it; British spelling.
-            sample: "Select a layer to arrange it." */}
-        ∑CG
+        Select a layer to arrange it...
       </div>
     );
   }
@@ -108,38 +105,34 @@ export function ArrangeBody() {
     <div className="text-xs">
       {/* Align (to the artboard) */}
       <Section title="Align">
-        {/* ∑CG: aria-labels for the six align actions, in order — align left, centre
-            horizontally, align right, align top, centre vertically, align bottom.
-            spec: each ≤ 24 chars, names the action; British spelling ("centre"). */}
+        {/* Six align actions; each aria/tooltip ≤ 24 chars, names the action, British spelling ("centre"). */}
         <div className="segmented grid-cols-6 border-x-0">
-          <IconBtn icon={AlignStartVertical} aria="∑CG" disabled={!canAlign} onClick={() => alignAll((d) => ({ x: d.w / 2 }))} />
-          <IconBtn icon={AlignCenterVertical} aria="∑CG" disabled={!canAlign} onClick={() => alignAll(() => ({ x: ab.width / 2 }))} />
-          <IconBtn icon={AlignEndVertical} aria="∑CG" disabled={!canAlign} onClick={() => alignAll((d) => ({ x: ab.width - d.w / 2 }))} />
-          <IconBtn icon={AlignStartHorizontal} aria="∑CG" disabled={!canAlign} onClick={() => alignAll((d) => ({ y: d.h / 2 }))} />
-          <IconBtn icon={AlignCenterHorizontal} aria="∑CG" disabled={!canAlign} onClick={() => alignAll(() => ({ y: ab.height / 2 }))} />
-          <IconBtn icon={AlignEndHorizontal} aria="∑CG" disabled={!canAlign} onClick={() => alignAll((d) => ({ y: ab.height - d.h / 2 }))} />
+          <IconBtn icon={AlignStartVertical} aria="Left align" disabled={!canAlign} onClick={() => alignAll((d) => ({ x: d.w / 2 }))} />
+          <IconBtn icon={AlignCenterVertical} aria="Centre align (hor)" disabled={!canAlign} onClick={() => alignAll(() => ({ x: ab.width / 2 }))} />
+          <IconBtn icon={AlignEndVertical} aria="Right align" disabled={!canAlign} onClick={() => alignAll((d) => ({ x: ab.width - d.w / 2 }))} />
+          <IconBtn icon={AlignStartHorizontal} aria="Top align" disabled={!canAlign} onClick={() => alignAll((d) => ({ y: d.h / 2 }))} />
+          <IconBtn icon={AlignCenterHorizontal} aria="Centre align (ver)" disabled={!canAlign} onClick={() => alignAll(() => ({ y: ab.height / 2 }))} />
+          <IconBtn icon={AlignEndHorizontal} aria="Bottom align" disabled={!canAlign} onClick={() => alignAll((d) => ({ y: ab.height - d.h / 2 }))} />
         </div>
       </Section>
 
       {/* Distribute — spreads ≥3 selected layers' centres evenly. */}
       <Section title="Distribute">
-        {/* ∑CG: aria-labels for the two distribute actions — distribute horizontally,
-            distribute vertically. spec: each ≤ 28 chars; British spelling. */}
+        {/* Two distribute actions; each aria/tooltip ≤ 28 chars, British spelling. */}
         <div className="segmented grid-cols-2 border-x-0">
-          <IconBtn icon={AlignHorizontalDistributeCenter} aria="∑CG" disabled={!canDistribute} onClick={() => distribute("x")} />
-          <IconBtn icon={AlignVerticalDistributeCenter} aria="∑CG" disabled={!canDistribute} onClick={() => distribute("y")} />
+          <IconBtn icon={AlignHorizontalDistributeCenter} aria="Distribute horizontally" disabled={!canDistribute} onClick={() => distribute("x")} />
+          <IconBtn icon={AlignVerticalDistributeCenter} aria="Distribute vertically" disabled={!canDistribute} onClick={() => distribute("y")} />
         </div>
       </Section>
 
       {/* Rotate & flip */}
       <Section title="Rotate & flip">
-        {/* ∑CG: aria-labels for — rotate 90° left, rotate 90° right, flip horizontal,
-            flip vertical. spec: each ≤ 28 chars; British spelling. */}
+        {/* Four rotate/flip actions; each aria/tooltip ≤ 28 chars, British spelling. */}
         <div className="segmented grid-cols-4 border-x-0">
-          <IconBtn icon={RotateCcw} aria="∑CG" onClick={() => rotate(-90)} />
-          <IconBtn icon={RotateCw} aria="∑CG" onClick={() => rotate(90)} />
-          <IconBtn icon={FlipHorizontal2} aria="∑CG" active={t.flipX} onClick={() => flip("flipX")} />
-          <IconBtn icon={FlipVertical2} aria="∑CG" active={t.flipY} onClick={() => flip("flipY")} />
+          <IconBtn icon={RotateCcw} aria="Rotate left" onClick={() => rotate(-90)} />
+          <IconBtn icon={RotateCw} aria="Rotate right" onClick={() => rotate(90)} />
+          <IconBtn icon={FlipHorizontal2} aria="Flip horizontal" active={t.flipX} onClick={() => flip("flipX")} />
+          <IconBtn icon={FlipVertical2} aria="Flip vertical" active={t.flipY} onClick={() => flip("flipY")} />
         </div>
       </Section>
     </div>
@@ -178,6 +171,7 @@ function IconBtn({
       onClick={onClick}
       disabled={disabled}
       aria-label={aria}
+      title={aria}
       className={cn(
         "grid h-9 cursor-default place-items-center bg-card",
         active

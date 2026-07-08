@@ -81,7 +81,7 @@ Dev: `npm run dev` → http://localhost:3000/editor. Gate: `npm run build` + `ts
   tolerance); ADJUST = the layer's stack labels via `fxDisplayLabel`, bloom/pin
   targets the FX module; TEXT = font + size; PIECES = shape. Non-doc chips read
   the new **`tool-settings.ts` store** — defaults now, the M2 tools write it
-  later; stub tools peek a placeholder settings bloom (∑CG) and aren't pinnable
+  later; stub tools peek a placeholder settings bloom (\u2211CG) and aren't pinnable
   until their settings exist); panel triggers with hover-peek blooms; overflow
   bar in line.
 - **Docking system** — modules peek (hover) or pin; dock target per module
@@ -124,7 +124,7 @@ Dev: `npm run dev` → http://localhost:3000/editor. Gate: `npm run build` + `ts
   families (Ruby's call): **filters** = ALL adjustments, colour AND spatial
   (brightness…levels/duotone/blur), in `filters[]`; **colour** = the
   **film-sim/LUT family** (one `film-sim` type, also `filters[]`) picked from
-  PRESETS named after film stocks/movies (names = ∑CG; 8 placeholder looks in
+  PRESETS named after film stocks/movies (names = \u2211CG; 8 placeholder looks in
   `FILM_SIM_PRESETS`, swatch gradients are placeholder visuals → real LUT looks
   in M3); effects (shadow/glow/stroke/overlay) in `effects[]`. ONE pipeline,
   two zones (filter chain incl. sims on top, effects below, 4px divider),
@@ -141,7 +141,7 @@ Dev: `npm run dev` → http://localhost:3000/editor. Gate: `npm run build` + `ts
   on the pointer — Radix onValueCommit is unreliable in controlled mode).
   Effect + param labels are conventional graphics terms = functional chrome
   (Ruby's call, BLEND_OPTIONS precedent); voice-y microcopy + preset/category
-  names stay ∑CG. **EVERYTHING in the panel now moves pixels**: Tier-0/Tier-1
+  names stay \u2211CG. **EVERYTHING in the panel now moves pixels**: Tier-0/Tier-1
   filters via `filter-factory.ts`/`filter-sync.ts`, effects via
   `effect-render.ts`/`effects-image.ts` (below). Drop/inner shadow grew an
   Opacity param (default 35% — the layer-styles convention; a 100% black
@@ -152,7 +152,7 @@ Dev: `npm run dev` → http://localhost:3000/editor. Gate: `npm run build` + `ts
   transparent offscreen; needs a selection; JPEG disabled in layer scope — no
   alpha) · quality slider (lossy only) · Output strip = **clamped** dims +
   debounced **~size estimate** (proxy render + encode, area-scaled) ·
-  downscale + failure notices (∑CG). Export runs the M6 orchestrator and
+  downscale + failure notices (\u2211CG). Export runs the M6 orchestrator and
   downloads via `lib/download`. Ruby's M6 ratifications: JXL-not-AVIF ·
   **social presets SKIPPED for v1** · batch-zip skipped (SPEC post-v1).
   **Canvas size modal** — functional: dimension presets + W/H/resolution/background
@@ -232,7 +232,7 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   (names AUTHORED by Claude per Ruby's 2026-07-03 grant — the one sanctioned
   no-copy exception; she may rename)** + **FILM_SIM_GRADES** (lift/gamma/gain+
   sat per look, tuned beside its swatch) + **DUOTONE_PAIRS** (8 pairs, names
-  still ∑CG). NOTE: `Filter.params` widened additively to `number | string`
+  still \u2211CG). NOTE: `Filter.params` widened additively to `number | string`
   (Duotone/Vignette colours); SCHEMA_VERSION stays 1.
 - `fx-ops.ts` — undoable mutations over BOTH stacks (add/remove/toggle/reset/
   param(transient-aware)/reorder), one-per-type guard, insert-at-top.
@@ -427,7 +427,7 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   cover-cropped raster through every grade/LUT via the pure CPU paths — slim
   None row, 2×8 card grid, pinned Intensity slider with the FX transient
   gesture; bloom-capped `max-h min(560px, 100vh−140px)`; module TITLE is a
-  ∑CG gap — Ruby's unnamed category).
+  \u2211CG gap — Ruby's unnamed category).
 - `modules/colour-panel.tsx` (tabbed shell + hue cube + footer) · `modules/
   colour-picker-kit.tsx` (shared `usePointerArea`/`Knob`) · `modules/colour-modes/*`
   (triangle · sliders · swatches · prism · spectrum · shade).
@@ -453,7 +453,7 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   step; `parentIdOf` added to layer-tree) · Hide/Show · Lock/Unlock · Delete.
   **Blank space opens the CANVAS menu** (kind:"canvas" carries the scene
   point): Paste (`importClipboardImage` — async clipboard, lands AT the
-  pointer, pixel-verified ≤1px; empty clipboard → "paste-empty" toast ∑CG) ·
+  pointer, pixel-verified ≤1px; empty clipboard → "paste-empty" toast \u2211CG) ·
   Place Image… (file picker → `importImageFile({at})`) · Select All
   (effectively visible+unlocked leaves) · Zoom to Fit/100% (viewport) ·
   Grid/Snap check-toggles (stay open, guides-pref) · Canvas Size… (modal).
@@ -481,7 +481,7 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   blend/fx stay deferred, footer-disabled). 10-check `.verify-layers-tree.mjs`
   ALL PASS. Layers panel:
   ⌘/ctrl-toggle + shift-range over visible rows, group rows (folder thumb ·
-  bold name · collapse chevron in the lock slot · ∑CG placeholder for unnamed),
+  bold name · collapse chevron in the lock slot · \u2211CG placeholder for unnamed),
   tree-elbow gutters, **cross-parent drag LIVE (2026-07-07)** — rows move between
   sibling lists (into/out of groups; drop on a collapsed group appends into
   it; flattened-neighbour parent-resolution rule doc'd in-code; a group can
@@ -515,7 +515,7 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   different at proxy scale; blur is relative so it matches. Export +
   Canvas size are **blocking modals** (Canvas size functional, Export a shell → M6).
 - **Top bar**: **file ops are LIVE (M5, 2026-07-07)** — New scene (confirm
-  ∑CG when work would be lost) / Open… / Save (⌘S, re-saves into the held
+  \u2211CG when work would be lost) / Open… / Save (⌘S, re-saves into the held
   FS-Access handle) / Save a copy… (⇧⌘S) over the **`.substrata` format**
   (`substrata-file.ts`: fflate STORE zip of manifest.json + blobs/<sha256>
   PNGs, hash-verified on open, forward-stamped via the shared
@@ -559,7 +559,7 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   **Contextual popup** (`selection-popup.tsx`, shell-mounted, anchored by the
   canvas per frame): extract (DEFAULT, also Enter) · cut · invert · grow ·
   shrink · deselect (also Escape); extract/cut gate on a raster active layer
-  (∑CG-free: standard vocabulary chrome). **Extract** bakes the masked crop
+  (\u2211CG-free: standard vocabulary chrome). **Extract** bakes the masked crop
   layer-space (source resolution preserved, filters/effects deep-copied,
   lands pixel-exact via centre-offset transform maths) → new content-addressed
   raster inserted above the source, ONE update(). **Cut** additionally bakes a
@@ -658,7 +658,7 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   align/distribute via `layerDims` (a line's 0-height axis gets no field).
   Fill/stroke of an EXISTING shape isn't editable yet — settings describe the
   NEXT shape; editing lands with the M4 picker sink. FX + LOOKS gate non-raster
-  layers with ∑CG hints (filters/effects are raster-pipeline; rasterize =
+  layers with \u2211CG hints (filters/effects are raster-pipeline; rasterize =
   M3-15). **Params ARE editable after the fact (Ruby 2026-07-06)**: a selected
   shape's Inspector grows a SHAPE section — corner/sides/points/inner as
   **preset rows + a custom (…) stepper** ("simple editor for simple people";
@@ -691,8 +691,8 @@ Data flow: `doc-store.update(mutator)` → emit → (a) reconciler renders Fabri
   settings bloom** (`omnibar/tool-settings.tsx`: Snap/Grid switches sharing
   guides-pref + the nudge stepper). Other tools keep placeholder blooms until
   they land. Sketch extras still open: guide gap-pills, rulers renderer.
-- **Copy**: all user-facing strings are `∑CG` (functional chrome labels use the
-  mockup's words per Ruby's call; voice-y microcopy + toast text stay `∑CG`).
+- **Copy**: all user-facing strings are `\u2211CG` (functional chrome labels use the
+  mockup's words per Ruby's call; voice-y microcopy + toast text stay `\u2211CG`).
   Fill via **slopsieve**.
 - Rail last-unpin exit skips its animation (rail unmounts to avoid a phantom gap).
 
@@ -720,7 +720,7 @@ live. What each covers:
 - **`pickers-fun.html`** — FUN colour pickers: swatches wall, prism (WATTS/NTU),
   shade reel. (Prism maths ported to `colour-prism.ts`.)
 
-Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions).
+Copy in the sketches is illustrative; real strings stay `\u2211CG` (see Conventions).
 
 ---
 
@@ -729,7 +729,7 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
 - Doc model is truth; Fabric never authoritative; one-way sync + single write-back.
 - Fabric imported only behind the `ssr:false` boundary (fabric-canvas + sync +
   filter-backend). Never server-eval it (static export).
-- No user-facing copy authored — `∑CG` gaps with spec/sample. British spelling.
+- No user-facing copy authored — `\u2211CG` gaps with spec/sample. British spelling.
 - Persistence strictly opt-in; secure-context APIs guarded; raster-only export.
 - New UI state → an external store bound via `useSyncExternalStore`.
 - DRY on root `components/ui/*` shadcn primitives; Lucide icons; parity with
@@ -786,7 +786,7 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
    generator preserved as `scripts/generate-film-luts.py` (venv +
    `pip install spectral_film_lut`). Headless-verified (pin-to-end, retarget,
    None, mono Tri-X, intensity-0 identity, live thumbs ×24). Open: module
-   title ∑CG (Ruby names the category), duotone pair NAMES still ∑CG (grant
+   title \u2211CG (Ruby names the category), duotone pair NAMES still \u2211CG (grant
    covered LUT looks only), 24-card shelf may want curation (Ruby's eyes).
 0c. **✅ M3 EFFECTS ENGINE (2026-07-05).** `effects[]` renders — all six
    registry types via the Canvas2D compositor inside Fabric's object cache
@@ -845,7 +845,7 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
    **Awaiting Ruby's eyes (taste + real Safari/iOS)**: modal layout, estimate
    accuracy feel, verify-guard behaviour on actual iOS Safari (the silent
    blank-canvas failure isn't reproducible in Chromium), slopsieve for the
-   two new ∑CG gaps (downscale + failure notices).
+   two new \u2211CG gaps (downscale + failure notices).
 1. **✅ DECISION QUEUE CLEARED (Ruby, 2026-07-07)** — build against these:
    - **SELECT v1 (M2-10)**: Marquee · Lasso · Wand. Magnetic is a LASSO
      OPTION (setting, not a subtool). "Superflood" = the wand's global
@@ -876,8 +876,113 @@ Copy in the sketches is illustrative; real strings stay `∑CG` (see Conventions
    Mid-size sweep COMPLETE (2026-07-07 PM): ✅ text typography props ·
    ✅ cross-parent drag + group opacity · ✅ rasterize (M3-15) · ✅ pen cut ·
    ✅ guide gap-pills · ✅ gradient authoring UI · ✅ MOVE·Crop
-   (non-destructive, ratified). Still open: M7 smarts (decisions first),
-   snap-feel QA, TEXT area mode + per-range styles, project manager
-   (post-v1), Ruby's taste-QA backlog + slopsieve pass.
-3. **M7 background removal** — per BUILD-PLAN (model-hosting decisions
-   still open: ~115 MB vs Cloudflare 25 MiB/file, transformers v3→v4 bump).
+   (non-destructive, ratified). Still open: snap-feel QA, TEXT area mode +
+   per-range styles, project manager (post-v1), Ruby's taste-QA backlog +
+   slopsieve pass.
+3. **✅ M7 SMARTS (2026-07-08) — the last BUILD-PLAN milestone.** Ruby's
+   ratifications, all baked in:
+   - **Model hosting**: reuse the background-remover tool's system — runtime
+     fetch from the HF hub via the browser HTTP cache (`allowLocalModels=false`,
+     `useBrowserCache=false`); NO self-hosted weights, the Cloudflare
+     25 MiB/file problem evaporates. Model switched to MIT
+     `onnx-community/BiRefNet_lite-ONNX` (BRIA dropped per licence).
+   - **transformers v3→v4**: PIN BOTH — npm alias
+     `@huggingface/transformers-v4` (^4.2.0) for the editor;
+     /tools/background-remover keeps ^3.8.1 untouched.
+     `serverExternalPackages` keeps v4's node build out of the SSR bundle
+     (its `new URL()` asset refs break Turbopack).
+   - **Magic-resize reflow**: ANCHOR + PROPORTIONAL — each leaf scales by the
+     smaller axis factor and keeps its (scaled) offset from its nearest
+     artboard anchor (corners/edge-midpoints/centre, per-axis ¼-span bands);
+     guides rescale proportionally; one `update()` = one undo step.
+   Built: `bg-removal.ts` (matte service on the lutEpoch pattern: serial
+   main-thread bakes — ponytail, worker is the upgrade path; WebGPU fp16 →
+   WASM fp32 fallback; sticky errors + retry; Dexie v3 `mattes` table keyed
+   by SOURCE blobHash, persistence-gated, purged on opt-out) ·
+   `remove-background` effect (paramless registry entry; EffectsImage
+   `destination-in`s the matte over the content scratch BEFORE paintEffects,
+   so shadows stamp the cutout silhouette; matteEpoch in isCacheDirty pops
+   arrivals in; add = auto-bake, switch = instant toggle, hash repoint =
+   auto re-bake) · FX-panel MatteBody (progress %, device chip, wasm-slower
+   notice, retry — all \u2211CG) · `resizeArtboardReflow` + Canvas-size-modal
+   reflow Switch (off by default; reflow path calls `viewport.fit()`).
+   M7-6/7 align/distribute + M7-10 preset lib were ALREADY BUILT (arrange
+   panel / lib/social-presets.ts) — only verified, not rebuilt. Deliberate
+   cuts: no platform-labelled presets in the modal (dimension grid already
+   covers the social staples; social-presets stays aspect-ratio data for the
+   cropper) · no worker · crop/angle ride along in reflow (documented
+   approximation). 15-check `.verify-m7.mjs` ALL PASS (synthetic-matte test
+   seam `setMatte`/`matte`/`resizeReflow` on the rig — no model download in
+   the harness); build + tsc green, routes smoke 200.
+   **Awaiting Ruby's eyes**: the REAL model run (WebGPU fp16 quality, WASM
+   fallback speed, iOS Safari) — unverifiable headlessly; reflow feel across
+   presets; slopsieve for the new \u2211CG gaps (modal reflow label + switch,
+   MatteBody's six status strings).
+4. **✅ CLARITY-REVIEW FIXES (2026-07-08 PM).** Two-agent persona review
+   (non-technical Canva-happy creator) → full report in chat; the FIX tier
+   landed same day:
+   - **Unsaved-work guard**: `beforeunload` warns when undoable work exists
+     with persistence OFF (the silent-loss default path); status dot goes
+     three-state (stored / AT-RISK amber / idle) with three \u2211CG labels.
+   - **Empty-scene starter card** (`empty-hint.tsx`): import + text CTAs +
+     drop/paste hint line (all \u2211CG), shown only while `layers.length === 0`;
+     drag-over now shows a dashed drop-target highlight (was mute).
+   - **Menus no longer lie**: fake Edit history REMOVED; Duplicate/Delete/
+     Select-all wired for real; Cut/Copy/Paste + Scene Rename/Duplicate/
+     Delete + Help items visibly disabled; ⌘N hint dropped (browsers reserve
+     it); ⌘I import shortcut now actually works; **Scene ▸ Open recent is
+     LIVE** (new `listRecentProjects`/`loadProject` in autosave.ts +
+     `openRecent` in file-ops.ts, persistence-gated, same discard guard).
+   - **Undo/redo stay put** — toast pill floats beside them instead of
+     replacing them for 1.8s.
+   - **Touch fan**: re-tapping the active tool head toggles the subtool fan
+     (hover-only reveal locked touch users out of Crop/Lasso/Wand/shapes).
+   - **Tooltips**: new `lib/substrata/hint.ts` (one string → aria-label +
+     title); applied across omnibar panel buttons (module titles), layers
+     panel, colour panel, FX controls, inspector transform fields, steppers,
+     zoom/undo/redo. ~85 titled controls, verified.
+   - **SecureContextNotice finally mounted**; MatteBody no longer leaks the
+     raw device token / error string (detail moved to a hover title).
+   14-check `.verify-review-fixes.mjs` ALL PASS; tsc green, no new lint
+   errors. NOT built (feature tier, needs Ruby's call): named size presets,
+   text role presets, emoji insert, clipboard export, recent colours,
+   artboard gradients, raster PDF, rounded crop, QR insert — ranked list in
+   the chat report. **slopsieve pass needed**: empty-state card (3), status
+   dot (3), Open-recent placeholder, zoom/undo/redo tooltips, inspector
+   rotation/scale tooltips.
+5. **✅ COPY-GAP MARKER HYGIENE (2026-07-08 eve, Ruby's call).** slopsieve
+   choked on marker misuse. Fixed repo-wide against gap.rs's ACTUAL parse
+   rules (now documented in ~/GitRepos/slopsieve/CLAUDE.md + the global
+   CLAUDE.md "Marker discipline" section):
+   - ~150 prose mentions of the literal token de-tokenised to the escaped
+     spelling \u2211CG (BUILD-PLAN/STATE/SPEC + ~25 code doc-comments + the
+     verify scripts, which now build the token at runtime).
+   - 20 split gaps (free-text wrap lines broke the annotation gather) and
+     ~35 orphan placeholders (group annotations, comment-above-JSX-element,
+     double markers) restructured: one annotation per placeholder, spec on
+     one line, sample on its own line, block-comment terminators on their
+     own line, annotations inside JSX prop lists.
+   - `slopsieve --list`: 161 gaps, all real, zero .md noise (was ~290 with
+     ~125 bogus). Gap-lint checker mimicking group_gaps: 0 HEADERONLY,
+     0 ORPHAN, 0 PROSE. tsc green; both verify harnesses ALL PASS.
+   Improvement ideas for the tool itself left in slopsieve's CLAUDE.md
+   (parse header-line spec/sample, trim terminators, --lint mode).
+6. **✅ WORKSPACE POLISH — drag-to-dock (2026-07-08 night, Ruby's call).**
+   The Workspace menu's Omnibar/Rail edge rows + "Dock modules" letter grids
+   were undiscoverable → replaced with direct manipulation:
+   - Every module header (bloom, rail, dock) grows a visible GripVertical
+     drag grip; dragging shows left/right/rail drop zones over the canvas
+     (`dock-zones.tsx` overlay + `drag-dock.ts` transient store); dropping
+     calls the SAME setModuleDock/setPinned prefs as before.
+   - The omnibar has its own grip — drag the bar to any of four edge zones
+     (replaces the T/B/L/R row). 4px threshold so clicks stay clicks;
+     geometric hit-testing (overlay stays pointer-events-none); drag ghost
+     chip names the module in hand.
+   - Workspace menu now: Zoom · Guides · Theme only, and the Guides seg
+     finally has an icon (lucide Frame). ponytail: the rail-edge pref lost
+     its UI (rail follows the omnibar); re-surface if missed.
+   Ruby's slopsieve pass landed in parallel (2 gaps left repo-wide); two of
+   her fills hit react/no-unescaped-entities — wrapped verbatim in JSX
+   string expressions, wording untouched. 10-check `.verify-workspace.mjs`
+   ALL PASS + review-fixes harness regression ALL PASS; tsc green, lint at
+   baseline.
