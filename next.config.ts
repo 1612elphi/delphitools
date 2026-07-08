@@ -38,12 +38,6 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  // transformers v4's node build (the `node` exports condition, which the
-  // Client-Component-SSR pass resolves) carries `new URL(...)` asset refs
-  // Turbopack can't bundle. The import is browser-only and dynamic
-  // (lib/substrata/bg-removal.ts), so keep it out of the server bundle —
-  // it never executes during the static-export prerender.
-  serverExternalPackages: ["@huggingface/transformers-v4"],
   env: {
     NEXT_PUBLIC_COMMIT_SHA: commitSha(),
     NEXT_PUBLIC_PRIDE: prideEnabled(),

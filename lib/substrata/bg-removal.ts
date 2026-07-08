@@ -1,8 +1,8 @@
 /**
- * Remove Background (M7) — an async, non-destructive bake. BiRefNet-lite
- * (MIT, onnx-community/BiRefNet_lite-ONNX) via @huggingface/transformers v4
- * produces a grayscale matte per raster SOURCE, keyed by the layer's content
- * blobHash: same pixels ⇒ same matte, a destructive edit repoints the hash
+ * Remove Background (M7) — an async, non-destructive bake. RMBG-1.4 (the
+ * background-remover tool's proven model — see the MODEL_ID note) via
+ * @huggingface/transformers v4 produces a grayscale matte per raster SOURCE,
+ * keyed by the layer's content blobHash: same pixels ⇒ same matte, a destructive edit repoints the hash
  * and re-bakes automatically, and undo snapshots keep rendering off the old
  * cached matte. The matte lives in a canvas's ALPHA channel so EffectsImage
  * can `destination-in` it onto the layer content at composite time — the
@@ -11,9 +11,11 @@
  * Hosting is Ruby's ratified call (2026-07-08): reuse the background-remover
  * tool's system — runtime fetch from the HF hub through the browser HTTP
  * cache (no self-hosted weights; Cache API off, it's unreliable on iOS
- * Safari). The v3→v4 transformers bump is pinned SEPARATELY as the npm alias
- * `@huggingface/transformers-v4`, so /tools/background-remover keeps v3
- * untouched. WebGPU fp16 first, single-thread WASM fp32 fallback.
+ * Safari), on the SAME transformers v3 the tool uses (v4 dropped RMBG-1.4's
+ * model class from image-segmentation, and v4's only draw — BiRefNet — is
+ * unrunnable in-browser; the v4 alias came and went 2026-07-08). WebGPU fp32
+ * first; single-thread WASM fp32 fallback, engaged at LOAD time or at RUN
+ * time (a pipeline can compile yet fail inside OrtRun).
  *
  * Store shape follows lut-data.ts: matteEpoch() bumps only when a matte
  * ARRIVES (EffectsImage mixes it into its cache-dirty check so cutouts pop
@@ -31,7 +33,15 @@ import { getRaster } from "./raster-cache";
 import { canvasToBlob } from "./blobs";
 import { getPersistenceEnabled } from "./persistence-pref";
 
-const MODEL_ID = "onnx-community/BiRefNet_lite-ONNX";
+// RMBG-1.4 — the SAME model the standalone background-remover tool ships
+// (proven on webgpu AND wasm in this stack; the browser HTTP cache is shared
+// between tool and editor since both fetch the same hub files). Licence:
+// CC BY-NC-ND, acknowledged in ACKNOWLEDGEMENTS.md — Ruby's 2026-07-08 call.
+// BiRefNet-lite was tried first and is unrunnable in-browser today: WebGPU
+// trips maxStorageBuffersPerShaderStage (11 > 10 on Apple silicon) and its
+// static-1024² graph exhausts the wasm heap (std::bad_alloc, fp32 AND fp16,
+// ORT 1.26-dev and 1.27 alike).
+const MODEL_ID = "briaai/RMBG-1.4";
 
 export type MatteDevice = "webgpu" | "wasm";
 
@@ -121,10 +131,16 @@ let chain: Promise<void> = Promise.resolve();
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let pipePromise: Promise<{ pipe: any; device: MatteDevice }> | null = null;
 
+/** Set after a WebGPU RUNTIME failure — WebGPU pipelines can compile fine yet
+ *  fail inside OrtRun (BiRefNet-lite trips maxStorageBuffersPerShaderStage,
+ *  11 > 10, on real adapters). Sticky for the session so every later bake
+ *  goes straight to WASM instead of failing the same way. */
+let forceWasm = false;
+
 function loadPipeline(): NonNullable<typeof pipePromise> {
   if (!pipePromise) {
     pipePromise = (async () => {
-      const { pipeline, env } = await import("@huggingface/transformers-v4");
+      const { pipeline, env } = await import("@huggingface/transformers");
       env.allowLocalModels = false;
       // Browser HTTP cache instead of the Cache API — unreliable on iOS
       // Safari (the background-remover call, carried over).
@@ -137,27 +153,42 @@ function loadPipeline(): NonNullable<typeof pipePromise> {
         lastProgress = pct;
         for (const h of waitingDownload) setStatus(h, { state: "downloading", progress: pct });
       };
-      try {
-        const pipe = await pipeline("image-segmentation", MODEL_ID, {
-          device: "webgpu",
-          dtype: "fp16",
-          progress_callback: onProgress,
-        });
-        return { pipe, device: "webgpu" as const };
-      } catch {
-        const pipe = await pipeline("image-segmentation", MODEL_ID, {
-          device: "wasm",
-          dtype: "fp32",
-          progress_callback: onProgress,
-        });
-        return { pipe, device: "wasm" as const };
+      // fp32 on both devices — mirrors the v3 tool's field-proven config.
+      // The localStorage flag is a QA escape hatch to force the CPU path.
+      const forced = forceWasm || !!localStorage.getItem("substrata:forceWasm");
+      if (!forced) {
+        try {
+          const pipe = await pipeline("image-segmentation", MODEL_ID, {
+            device: "webgpu",
+            dtype: "fp32",
+            progress_callback: onProgress,
+          });
+          return { pipe, device: "webgpu" as const };
+        } catch {
+          // load-time WebGPU failure — fall through to WASM below
+        }
       }
+      const pipe = await pipeline("image-segmentation", MODEL_ID, {
+        device: "wasm",
+        dtype: "fp32",
+        progress_callback: onProgress,
+      });
+      return { pipe, device: "wasm" as const };
     })().catch((err) => {
       pipePromise = null; // a failed load may be transient (offline) — retry can rebuild
       throw err;
     });
   }
   return pipePromise;
+}
+
+/** Tear down the (broken) WebGPU pipeline and rebuild on WASM. */
+async function rebuildPipelineAsWasm(): Promise<{ pipe: unknown; device: MatteDevice }> {
+  forceWasm = true;
+  const old = await pipePromise?.catch(() => null);
+  void (old?.pipe as { dispose?: () => Promise<void> } | undefined)?.dispose?.();
+  pipePromise = null;
+  return loadPipeline();
 }
 
 async function bake(hash: string): Promise<void> {
@@ -176,13 +207,26 @@ async function bake(hash: string): Promise<void> {
     }
     waitingDownload.add(hash);
     setStatus(hash, { state: "downloading", progress: 0 });
-    const { pipe, device } = await loadPipeline();
+    let { pipe, device } = await loadPipeline();
     waitingDownload.delete(hash);
     setStatus(hash, { state: "processing", device });
     const url = URL.createObjectURL(await canvasToBlob(src));
     let result: unknown;
     try {
-      result = await pipe(url);
+      try {
+        result = await pipe(url);
+      } catch (runErr) {
+        if (device === "wasm") throw runErr;
+        // WebGPU ran aground at inference time (shader storage-buffer limits
+        // etc.) — rebuild on WASM (fp32 weights re-fetch shows as download)
+        // and retry this bake once.
+        waitingDownload.add(hash);
+        setStatus(hash, { state: "downloading", progress: 0 });
+        ({ pipe, device } = await rebuildPipelineAsWasm());
+        waitingDownload.delete(hash);
+        setStatus(hash, { state: "processing", device });
+        result = await pipe(url);
+      }
     } finally {
       URL.revokeObjectURL(url);
     }

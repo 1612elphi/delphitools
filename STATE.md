@@ -986,3 +986,25 @@ Copy in the sketches is illustrative; real strings stay `\u2211CG` (see Conventi
    string expressions, wording untouched. 10-check `.verify-workspace.mjs`
    ALL PASS + review-fixes harness regression ALL PASS; tsc green, lint at
    baseline.
+7. **✅ BG-REMOVAL MODEL SAGA (2026-07-08 late).** Ruby's real-browser run
+   failed; empirical probes (headless Chrome, real model runs) established:
+   - **BiRefNet-lite is unrunnable in-browser today.** WebGPU: OrtRun trips
+     maxStorageBuffersPerShaderStage (shader needs 11; Apple-silicon
+     adapters hard-cap at 10 — verified via requestAdapter().limits; ORT
+     1.27 does NOT fix it). WASM: static-1024² graph exhausts the heap
+     (std::bad_alloc; fp32 AND fp16; processor-size override rejected —
+     static input dims). BiRefNet_512x512-ONNX (full net, MIT) DOES run
+     webgpu in ~6 s but is a 473 MB download.
+   - **Ratified pivot (Ruby): briaai/RMBG-1.4** — the licence affordance
+     already exists (ACKNOWLEDGEMENTS.md CC BY-NC-ND entry from the
+     standalone tool), the model is field-proven on BOTH backends in this
+     stack, and the hub files are shared with the tool's browser cache.
+   - **transformers v4 alias REMOVED** (came and went same day): v4 dropped
+     RMBG-1.4's SegformerForSemanticSegmentation from image-segmentation,
+     and v4's only draw was BiRefNet. Editor now imports the SAME v3 the
+     tool uses; serverExternalPackages workaround deleted from next.config.
+   - Hardening kept: WebGPU→WASM fallback now also engages on RUN-time
+     failures (pipelines can compile yet fail inside OrtRun), sticky per
+     session; `substrata:forceWasm` localStorage flag = QA escape hatch.
+   Ruby's manual QA still owed: real cutout quality on her image, iOS
+   Safari.
