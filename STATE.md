@@ -1048,3 +1048,19 @@ Copy in the sketches is illustrative; real strings stay `\u2211CG` (see Conventi
    total row width (tools+settings+panels+colour ≈ wider than before),
    settings-unit height jumping between tools, placeholder settings body
    for settings-less subtools.
+10. **✅ SETTINGS BACK TO A BUTTON (2026-07-08 night, Ruby).** The inline
+    settings body made the bar non-uniform in height → the middle unit is
+    now a single Settings2 trigger reusing the PanelButton peek/pin
+    pattern; the `tool` MODULE is restored (registry + pin-pref id,
+    ToolModuleBody/Sub — third flip of this surface today, the button+
+    module shape is the KEEPER). Four units stay: [tools] [settings ⚙]
+    [panels/more] [colour], all uniformly high. Harness: uniform-height +
+    pin-check assertions; 16 checks ALL PASS + both regressions;
+    tsc/lint/build green.
+11. **⏳ NEXT (Ruby, 2026-07-08): PANELS OVERHAUL, ROUND 3.** Ruby: "we
+    gotta overhaul the panels one more time." Scope TBD with her — candidate
+    threads from today's passes: panel hover-peek vs click (the hover-gap
+    complaint from the clarity review), rail vs sidebar defaults, module
+    widths (tool module w-auto slack in sidebars), the layers-panel
+    affordances (drag grip, hidden-state text, first-run hint), and the
+    flat bar's total width on small screens. Decisions first.
