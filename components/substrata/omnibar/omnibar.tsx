@@ -10,6 +10,7 @@ import {
   Lasso,
   Wand2,
   SlidersHorizontal,
+  Settings2,
   Sparkles,
   Type,
   Shapes,
@@ -37,7 +38,6 @@ import { getColour, subscribeColour } from "@/lib/substrata/colour-store";
 import { ModuleBox, MODULES } from "@/components/substrata/omnibar/modules";
 import { hint } from "@/lib/substrata/hint";
 import { Rail } from "@/components/substrata/omnibar/rail";
-import { ToolModuleBody, ToolModuleSub } from "@/components/substrata/omnibar/tool-settings";
 
 /**
  * Omnibar (§8) — floating tool + panel cockpit, dockable to any edge (drag the
@@ -211,15 +211,10 @@ export function Omnibar() {
         ))}
       </div>
 
-      {/* 2 · tool settings — inline and always visible (Ruby: "the tool
-          settings are important"); grows away from the docked edge */}
-      <div className={cn("pointer-events-auto flex flex-col border border-border bg-background shadow-lg")}>
-        <div className="flex h-[26px] items-center border-b border-border bg-card px-2.5">
-          <span className="text-[10px] font-bold uppercase tracking-wide">
-            <ToolModuleSub />
-          </span>
-        </div>
-        <ToolModuleBody />
+      {/* 2 · tool settings — its own unit, but a BUTTON (peek/pin like every
+          panel): an inline body made the bar non-uniform in height (Ruby) */}
+      <div className={box}>
+        <PanelButton id="tool" icon={<Settings2 className={ICON} />} edge={edge} vertical={vertical} cross="center" pinned={isPinned("tool")} />
       </div>
 
       {/* 3 · panels ("more") — flush triggers + the overflow toggle */}
