@@ -121,7 +121,7 @@ export const EFFECT_REGISTRY: Record<string, EffectDefinition> = {
     ],
   },
   // Remove Background (M7) — an async ML bake, not a painted style: EffectsImage
-  // alpha-multiplies the cached BiRefNet matte (bg-removal.ts, keyed by the
+  // alpha-multiplies the cached ML matte (bg-removal.ts, keyed by the
   // layer's blobHash) into the content BEFORE the painted effects, so shadows/
   // glows stamp the cutout silhouette. Paramless — the FX panel renders a
   // bespoke status body for this type, and effect-render's switches ignore it.
