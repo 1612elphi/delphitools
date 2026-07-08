@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useState, useSyncExternalStore } from "react";
+import { Fragment, useEffect, useSyncExternalStore } from "react";
 import {
   Move,
   Crop,
@@ -18,7 +18,6 @@ import {
   Layers,
   Box as BoxIcon,
   GripVertical,
-  MoreHorizontal,
   AlignHorizontalDistributeCenter,
 } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
@@ -49,6 +48,7 @@ import type { Layer } from "@/lib/substrata/doc-model";
 import { ModuleBox, MODULES } from "@/components/substrata/omnibar/modules";
 import { hint } from "@/lib/substrata/hint";
 import { Rail } from "@/components/substrata/omnibar/rail";
+import { PiecesFlyout, PrimitivesFlyout } from "@/components/substrata/omnibar/tool-settings";
 
 /**
  * Omnibar (§8) — floating tool + panel cockpit, dockable to any edge (drag the
@@ -62,59 +62,57 @@ import { Rail } from "@/components/substrata/omnibar/rail";
 
 interface ToolDef {
   id: ToolId;
-  key: string;
-  /** the tool's subtools, all rendered flat; [0] is the default (carries the
-   *  key badge). Ids are internal (tool.ts activeSubs vocabulary); labels are
-   *  Ruby's canonical subtool names (authored chrome, not \u2211CG). */
-  subs: { id: string; label: string; icon: React.ReactNode }[];
+  /** the tool's subtools, all rendered flat, each with its OWN shortcut key
+   *  (badged on the button). Ids are internal (tool.ts activeSubs
+   *  vocabulary); labels are Ruby's canonical subtool names (authored
+   *  chrome, not \u2211CG). */
+  subs: { id: string; label: string; key: string; icon: React.ReactNode }[];
 }
 
 const ICON = "size-[15px]";
 const EMPTY_PINS: readonly ModuleId[] = [];
 
+// Every subtool has a direct key (Ruby, 2026-07-08) — Photoshop-adjacent
+// letters where they exist (V move · C crop · M marquee · L lasso · W wand ·
+// U shapes · B brush). Plain keypresses, ignored while typing.
 const TOOLS: ToolDef[] = [
   {
     id: "move",
-    key: "V",
     subs: [
-      { id: "move", label: "Move", icon: <Move className={ICON} /> },
-      { id: "crop", label: "Crop", icon: <Crop className={ICON} /> },
+      { id: "move", label: "Move", key: "V", icon: <Move className={ICON} /> },
+      { id: "crop", label: "Crop", key: "C", icon: <Crop className={ICON} /> },
     ],
   },
   {
     id: "select",
-    key: "M",
     subs: [
-      { id: "select", label: "Select", icon: <BoxSelect className={ICON} /> },
-      { id: "lasso", label: "Lasso", icon: <Lasso className={ICON} /> },
-      { id: "wand", label: "Wand", icon: <Wand2 className={ICON} /> },
+      { id: "select", label: "Select", key: "M", icon: <BoxSelect className={ICON} /> },
+      { id: "lasso", label: "Lasso", key: "L", icon: <Lasso className={ICON} /> },
+      { id: "wand", label: "Wand", key: "W", icon: <Wand2 className={ICON} /> },
     ],
   },
   {
     id: "adjust",
-    key: "A",
     // No subtools (Ruby, 2026-07-03): the planned FILTERS/COLOUR split
     // collapsed once both families landed in the ONE filters[] pipeline —
     // a single ADJUST button fronts the whole FX mode.
-    subs: [{ id: "adjust", label: "Adjust", icon: <SlidersHorizontal className={ICON} /> }],
+    subs: [{ id: "adjust", label: "Adjust", key: "A", icon: <SlidersHorizontal className={ICON} /> }],
   },
   {
     id: "text",
-    key: "T",
     subs: [
-      { id: "text", label: "Text", icon: <Type className={ICON} /> },
+      { id: "text", label: "Text", key: "T", icon: <Type className={ICON} /> },
       // Bezier/pen CUT from v1 (Ruby 2026-07-07) — PathLayer stays ratified
       // schema for later; text-on-path (its main consumer) was already cut.
     ],
   },
   {
     id: "pieces",
-    key: "P",
     subs: [
-      { id: "pieces", label: "Pieces", icon: <Shapes className={ICON} /> },
-      { id: "primitives", label: "Primitives", icon: <Square className={ICON} /> },
-      { id: "brush", label: "Brush", icon: <Brush className={ICON} /> },
-      { id: "pencil", label: "Pencil", icon: <Pencil className={ICON} /> },
+      { id: "pieces", label: "Pieces", key: "P", icon: <Shapes className={ICON} /> },
+      { id: "primitives", label: "Primitives", key: "U", icon: <Square className={ICON} /> },
+      { id: "brush", label: "Brush", key: "B", icon: <Brush className={ICON} /> },
+      { id: "pencil", label: "Pencil", key: "N", icon: <Pencil className={ICON} /> },
     ],
   },
 ];
@@ -131,7 +129,6 @@ export function Omnibar() {
   const activeSubs = useSyncExternalStore(subscribeTool, getActiveSubs, getActiveSubs);
   const edge = useSyncExternalStore(subscribeDock, getOmnibarEdge, () => "bottom" as Edge);
   const pinned = useSyncExternalStore(subscribePins, getPinned, () => EMPTY_PINS);
-  const [overflow, setOverflow] = useState(false);
 
   const railEdge = useSyncExternalStore(subscribeDock, getRailEdge, () => "follow" as RailEdge);
   const vertical = edge === "left" || edge === "right";
@@ -151,16 +148,12 @@ export function Omnibar() {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const t = e.target as HTMLElement | null;
       if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
-      const hit = TOOLS.find((tool) => tool.key.toLowerCase() === e.key.toLowerCase());
-      if (hit) {
-        e.preventDefault();
-        // re-firing the active tool's key cycles its subtools (M2-8 keymap)
-        if (hit.id === getActiveTool()) {
-          const ids = hit.subs.map((s) => s.id);
-          const next = ids[(ids.indexOf(getActiveSubs()[hit.id]) + 1) % ids.length];
-          setActiveSub(hit.id, next);
-        } else {
-          setActiveTool(hit.id);
+      for (const tool of TOOLS) {
+        const sub = tool.subs.find((x) => x.key.toLowerCase() === e.key.toLowerCase());
+        if (sub) {
+          e.preventDefault();
+          setActiveSub(tool.id, sub.id);
+          return;
         }
       }
     };
@@ -192,11 +185,15 @@ export function Omnibar() {
         {TOOLS.map((tool, ti) => (
           <Fragment key={tool.id}>
             {ti > 0 && <span aria-hidden className={cn("shrink-0 bg-border", vertical ? "h-px w-full" : "w-px self-stretch")} />}
-            {tool.subs.map((sub, si) => {
+            {tool.subs.map((sub) => {
               const active = activeTool === tool.id && activeSubs[tool.id] === sub.id;
-              return (
+              // pieces/primitives carry a floating shape menu — the shape
+              // choice IS subtool selection (Ruby)
+              const flyout =
+                sub.id === "primitives" ? <PrimitivesFlyout /> : sub.id === "pieces" ? <PiecesFlyout /> : null;
+              const btn = (
                 <button
-                  key={sub.id}
+                  key={flyout ? undefined : sub.id}
                   onClick={() => setActiveSub(tool.id, sub.id)}
                   title={sub.label}
                   aria-label={sub.label}
@@ -210,12 +207,18 @@ export function Omnibar() {
                   )}
                 >
                   {sub.icon}
-                  {si === 0 && (
-                    <span className={cn("absolute bottom-0.5 right-1 text-[8px] font-bold", active ? "opacity-80" : "opacity-50")}>
-                      {tool.key}
-                    </span>
-                  )}
+                  <span className={cn("absolute bottom-0.5 right-1 text-[8px] font-bold", active ? "opacity-80" : "opacity-50")}>
+                    {sub.key}
+                  </span>
                 </button>
+              );
+              return flyout ? (
+                <div key={sub.id} className="group/trigger relative shrink-0">
+                  {btn}
+                  <Bloom edge={edge} cross="center">{flyout}</Bloom>
+                </div>
+              ) : (
+                btn
               );
             })}
           </Fragment>
@@ -233,26 +236,9 @@ export function Omnibar() {
         <PanelButton id="layers" icon={<Layers className={ICON} />} edge={edge} vertical={vertical} pinned={isPinned("layers")} />
         <PanelButton id="inspector" icon={<BoxIcon className={ICON} />} edge={edge} vertical={vertical} pinned={isPinned("inspector")} />
         <PanelButton id="looks" icon={<Film className={ICON} />} edge={edge} vertical={vertical} pinned={isPinned("looks")} />
-        <span aria-hidden className={cn("shrink-0 bg-border", vertical ? "h-px w-full" : "w-px self-stretch")} />
-        <button
-          onClick={() => setOverflow((v) => !v)}
-          {...hint("More tools")}
-          className={cn(
-            "grid shrink-0 place-items-center",
-            vertical ? "h-10 w-12" : "h-12 w-10",
-            overflow ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-          )}
-        >
-          <MoreHorizontal className={cn(ICON, "transition-transform", overflow && "rotate-180")} />
-        </button>
+        {/* arrange was the overflow bar's only occupant — pulled in (Ruby) */}
+        <PanelButton id="arrange" icon={<AlignHorizontalDistributeCenter className={ICON} />} edge={edge} vertical={vertical} pinned={isPinned("arrange")} />
       </div>
-
-      {/* overflow unit — appears beside the panels unit */}
-      {overflow && (
-        <div className={box}>
-          <PanelButton id="arrange" icon={<AlignHorizontalDistributeCenter className={ICON} />} edge={edge} vertical={vertical} cross="center" pinned={isPinned("arrange")} />
-        </div>
-      )}
 
       {/* 4 · colour — one big full-height swatch, its own unit */}
       <ColourButton edge={edge} vertical={vertical} pinned={isPinned("colour")} />
@@ -417,9 +403,7 @@ function OmnibarGrip({ vertical }: { vertical: boolean }) {
         "grid shrink-0 cursor-grab touch-none place-items-center text-muted-foreground/50 outline-none hover:text-foreground",
         vertical ? "h-4" : "w-4",
       )}
-      // ∑CG: aria-label + tooltip for the omnibar drag grip (drag to any edge)
-      //   sample: "Move toolbar"
-      {...hint("∑CG")}
+      {...hint("Move toolbar")}
     >
       <GripVertical className={cn("size-3", vertical && "rotate-90")} />
     </span>

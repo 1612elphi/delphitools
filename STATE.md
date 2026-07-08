@@ -1062,6 +1062,22 @@ Copy in the sketches is illustrative; real strings stay `\u2211CG` (see Conventi
     shape…, the resurrected readoutChips/Tag) at a glance; hover peeks the
     TOOL module, click pins it; icon-only when docked vertically. Harness
     asserts the label + live X/Y chips (18 checks ALL PASS).
+12. **✅ OMNIBAR ROUND-OUT (2026-07-08 late night, Ruby).**
+    - **Overflow toggle DELETED** — Arrange (its only occupant) sits in the
+      panels unit directly; the second bar + More button are gone.
+    - **Shape flyouts**: the Pieces gallery and the Primitives shape row
+      bloom off their OWN tool buttons (the shape choice IS subtool
+      selection — Ruby); picking a shape also arms the subtool. Gallery
+      grid extracted (`PiecesGalleryGrid`) and shared with the settings
+      body; full params stay in the TOOL module.
+    - **Per-subtool shortcuts**: every subtool has a direct key, badged on
+      its button — V move · C crop · M select · L lasso · W wand ·
+      A adjust · T text · P pieces · U primitives · B brush · N pencil
+      (Photoshop-adjacent). Stack-key cycling replaced by direct
+      activation.
+    Harness grew keys/flyout/arrange checks (24 ALL PASS; one probe
+    hardened: collapsed blooms keep layout, filter by computed
+    pointer-events). review-fixes + M7 ALL PASS; tsc/lint/build green.
 11. **⏳ NEXT (Ruby, 2026-07-08): PANELS OVERHAUL, ROUND 3.** Ruby: "we
     gotta overhaul the panels one more time." Scope TBD with her — candidate
     threads from today's passes: panel hover-peek vs click (the hover-gap
