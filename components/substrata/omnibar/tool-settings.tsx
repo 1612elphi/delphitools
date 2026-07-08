@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils";
 import { hint } from "@/lib/substrata/hint";
 import { segCellClass } from "@/components/substrata/preset-row";
 import type { TextAlign } from "@/lib/substrata/doc-model";
-import type { ToolId } from "@/lib/substrata/tool";
+import { getActiveSubs, getActiveTool, subscribeTool, type ToolId } from "@/lib/substrata/tool";
 
 /**
  * Per-tool settings blooms for the omnibar's contextual zone (Ruby's rule: a
@@ -43,26 +43,47 @@ import type { ToolId } from "@/lib/substrata/tool";
  * (freehand, next chunk) keep the \u2211CG placeholder, as do the other stub tools.
  * The Bloom supplies the box chrome; bodies render header + rows.
  */
-export function ToolSettingsBody({ tool, sub, title }: { tool: ToolId; sub?: string; title: string }) {
-  if (tool === "move") return <MoveSettings title={title} />;
-  if (tool === "pieces" && sub === "primitives") return <PiecesSettings title={title} />;
-  if (tool === "pieces" && (sub === "brush" || sub === "pencil"))
-    return <FreehandSettings sub={sub} title={title} />;
-  if (tool === "text" && sub === "text") return <TextToolSettings title={title} />;
-  if (tool === "select" && (sub === "lasso" || sub === "wand"))
-    return <SelectToolSettings sub={sub} title={title} />;
-  if (tool === "pieces" && sub === "pieces") return <PiecesGallerySettings title={title} />;
+export function ToolSettingsBody({ tool, sub }: { tool: ToolId; sub?: string }) {
+  if (tool === "move") return <MoveSettings />;
+  if (tool === "pieces" && sub === "primitives") return <PiecesSettings />;
+  if (tool === "pieces" && (sub === "brush" || sub === "pencil")) return <FreehandSettings sub={sub} />;
+  if (tool === "text" && sub === "text") return <TextToolSettings />;
+  if (tool === "select" && (sub === "lasso" || sub === "wand")) return <SelectToolSettings sub={sub} />;
+  if (tool === "pieces" && sub === "pieces") return <PiecesGallerySettings />;
   // marquee has no real settings yet (feather/boolean combine are post-v1) —
   // it keeps the placeholder like other settings-less modes
-  return <PlaceholderSettings title={title} />;
+  return <PlaceholderSettings />;
 }
 
-function Head({ title }: { title: string }) {
-  return (
-    <div className="flex h-[30px] items-center border-b border-border bg-card px-[11px]">
-      <span className="text-[10.5px] font-bold uppercase tracking-wide">{title}</span>
-    </div>
-  );
+/** The active subtool's display label (module `sub` slot). Ids are globally
+ *  unique across tools; labels are Ruby's canonical subtool names. */
+const SUB_LABELS: Record<string, string> = {
+  move: "Move",
+  crop: "Crop",
+  select: "Select",
+  lasso: "Lasso",
+  wand: "Wand",
+  adjust: "Adjust",
+  text: "Text",
+  pieces: "Pieces",
+  primitives: "Primitives",
+  brush: "Brush",
+  pencil: "Pencil",
+};
+
+/** TOOL module body — the active tool's settings as a regular module (bloom /
+ *  pin / rail / dock / drag-to-dock), replacing the omnibar's ContextZone. */
+export function ToolModuleBody() {
+  const activeTool = useSyncExternalStore(subscribeTool, getActiveTool, () => "move" as ToolId);
+  const activeSubs = useSyncExternalStore(subscribeTool, getActiveSubs, getActiveSubs);
+  return <ToolSettingsBody tool={activeTool} sub={activeSubs[activeTool]} />;
+}
+
+/** Module-header sub slot: names the subtool the body is configuring. */
+export function ToolModuleSub() {
+  const activeTool = useSyncExternalStore(subscribeTool, getActiveTool, () => "move" as ToolId);
+  const activeSubs = useSyncExternalStore(subscribeTool, getActiveSubs, getActiveSubs);
+  return <>{SUB_LABELS[activeSubs[activeTool]] ?? null}</>;
 }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
@@ -74,7 +95,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-function MoveSettings({ title }: { title: string }) {
+function MoveSettings() {
   const guides = useSyncExternalStore(subscribeGuides, getGuides, getGuides);
   const ts = useSyncExternalStore(subscribeToolSettings, getToolSettings, getToolSettings);
   const nudge = ts.move.nudge;
@@ -83,7 +104,6 @@ function MoveSettings({ title }: { title: string }) {
 
   return (
     <div className="w-[200px]">
-      <Head title={title} />
       {/* Group/Separate: how a multi-selection rotates/scales — shared with
           SELECT (one flag, Ruby's words as the cell labels). */}
       <Row label="Transform">
@@ -142,13 +162,12 @@ function MoveSettings({ title }: { title: string }) {
  *  a grid of vendored Phosphor-fill symbols; picking one arms drag-to-draw
  *  with that symbol. Fill mirrors the primitives bloom's next-shape fill.
  *  Symbol names = standard vocabulary chrome (SHAPE_NAMES precedent). */
-function PiecesGallerySettings({ title }: { title: string }) {
+function PiecesGallerySettings() {
   const ts = useSyncExternalStore(subscribeToolSettings, getToolSettings, getToolSettings);
   const s = ts.pieces;
 
   return (
     <div className="w-[224px]">
-      <Head title={title} />
       <div className="grid grid-cols-5 gap-px border-b border-border bg-border">
         {PRESET_SHAPES.map((shape) => (
           <button
@@ -184,13 +203,12 @@ function PiecesGallerySettings({ title }: { title: string }) {
 /** SELECT subtool settings (M2-10): lasso = magnetic switch + edge
  *  sensitivity; wand = contiguous/global mode + tolerance. Mode words are
  *  standard graphics vocabulary = functional chrome. */
-function SelectToolSettings({ sub, title }: { sub: "lasso" | "wand"; title: string }) {
+function SelectToolSettings({ sub }: { sub: "lasso" | "wand" }) {
   const ts = useSyncExternalStore(subscribeToolSettings, getToolSettings, getToolSettings);
   const s = ts.select;
 
   return (
     <div className="w-[200px]">
-      <Head title={title} />
       {sub === "lasso" ? (
         <>
           <Row label="Magnetic">
@@ -311,14 +329,13 @@ const SHAPE_CELLS: Array<{ shape: PieceShape; label: string; icon: LucideIcon }>
 
 /** PIECES ▸ Primitives (M2-7): what the next drag draws. Writes tool-settings;
  *  the drag-to-draw gesture (fabric-canvas) reads it at draw time. */
-function PiecesSettings({ title }: { title: string }) {
+function PiecesSettings() {
   const ts = useSyncExternalStore(subscribeToolSettings, getToolSettings, getToolSettings);
   const p = ts.pieces;
   const patch = (v: Partial<typeof p>) => updateToolSettings("pieces", v);
 
   return (
     <div className="w-[200px]">
-      <Head title={title} />
       <div className="segmented grid-cols-5 m-[11px] mb-2">
         {SHAPE_CELLS.map(({ shape, label, icon: Icon }) => (
           <button
@@ -423,14 +440,13 @@ const PENCIL_SIZES: PresetOption[] = [2, 4, 6, 12].map((v) => ({ value: v, label
 
 /** PIECES ▸ Brush/Pencil (M2-2): the next stroke's colour + size. The stroke
  *  body is a filled outline, so it shares the pieces `fill` setting. */
-function FreehandSettings({ sub, title }: { sub: "brush" | "pencil"; title: string }) {
+function FreehandSettings({ sub }: { sub: "brush" | "pencil" }) {
   const ts = useSyncExternalStore(subscribeToolSettings, getToolSettings, getToolSettings);
   const p = ts.pieces;
   const sizeKey = sub === "brush" ? ("brushSize" as const) : ("pencilSize" as const);
 
   return (
     <div className="w-[200px]">
-      <Head title={title} />
       <Row label="Colour">
         <ColourCell colour={p.fill} onChange={(fill) => updateToolSettings("pieces", { fill })} aria="Stroke colour" />
       </Row>
@@ -455,7 +471,7 @@ const TEXT_SIZES: PresetOption[] = [16, 24, 48, 96].map((v) => ({ value: v, labe
  *  presets. Colour rides the shared current-colour sink. Settings describe
  *  the NEXT text AND live-apply to the active text layer — a font click must
  *  restyle the text you're editing (Ruby, same day). */
-function TextToolSettings({ title }: { title: string }) {
+function TextToolSettings() {
   const ts = useSyncExternalStore(subscribeToolSettings, getToolSettings, getToolSettings);
   const fileRef = useRef<HTMLInputElement>(null);
   const t = ts.text;
@@ -478,7 +494,6 @@ function TextToolSettings({ title }: { title: string }) {
 
   return (
     <div className="w-[200px]">
-      <Head title={title} />
       <Row label="Font">
         <span className="flex items-stretch gap-1">
           <FontSelect value={t.fontFamily} onChange={setFont} className="h-6 w-[104px]" />
@@ -541,10 +556,9 @@ function TextToolSettings({ title }: { title: string }) {
 }
 
 /** Stub tools until their settings exist (M2 SELECT). */
-function PlaceholderSettings({ title }: { title: string }) {
+function PlaceholderSettings() {
   return (
     <div className="w-[200px]">
-      <Head title={title} />
       <div className="p-3 text-center text-[11px] text-muted-foreground">
         Settings arrive with this tool
       </div>
