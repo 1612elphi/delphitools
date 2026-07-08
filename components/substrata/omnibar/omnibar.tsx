@@ -109,8 +109,8 @@ const TOOLS: ToolDef[] = [
   {
     id: "pieces",
     subs: [
-      { id: "pieces", label: "Pieces", key: "P", icon: <Shapes className={ICON} /> },
       { id: "primitives", label: "Primitives", key: "U", icon: <Square className={ICON} /> },
+      { id: "pieces", label: "Pieces", key: "P", icon: <Shapes className={ICON} /> },
       { id: "brush", label: "Brush", key: "B", icon: <Brush className={ICON} /> },
       { id: "pencil", label: "Pencil", key: "N", icon: <Pencil className={ICON} /> },
     ],
