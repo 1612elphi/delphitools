@@ -11,7 +11,6 @@ import { ColourBody, ColourName } from "@/components/substrata/modules/colour-pa
 import { ArrangeBody } from "@/components/substrata/modules/arrange-panel";
 import { FxBody, FxSub } from "@/components/substrata/modules/fx-panel";
 import { LooksBody, LooksSub } from "@/components/substrata/modules/looks-panel";
-import { ToolModuleBody, ToolModuleSub } from "@/components/substrata/omnibar/tool-settings";
 
 /**
  * Module registry + box wrapper. One definition per omnibar module; the SAME
@@ -31,10 +30,6 @@ export interface ModuleDef {
 }
 
 export const MODULES: Record<ModuleId, ModuleDef> = {
-  // ∑CG: tool-settings module title (the active tool's settings panel);
-  //   renders uppercase in the header. spec: ≤ 10 chars; British spelling.
-  //   sample: "Tool"
-  tool: { id: "tool", title: "∑CG", width: "w-auto", body: <ToolModuleBody />, sub: <ToolModuleSub /> },
   layers: { id: "layers", title: "Layers", width: "w-[224px]", body: <LayersBody />, sub: <LayersCount /> },
   effects: { id: "effects", title: "FX", width: "w-[296px]", body: <FxBody />, sub: <FxSub /> },
   inspector: { id: "inspector", title: "Inspector", width: "w-[236px]", body: <InspectorBody /> },

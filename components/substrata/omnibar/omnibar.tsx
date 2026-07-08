@@ -9,7 +9,6 @@ import {
   Film,
   Lasso,
   Wand2,
-  Settings2,
   SlidersHorizontal,
   Sparkles,
   Type,
@@ -38,14 +37,16 @@ import { getColour, subscribeColour } from "@/lib/substrata/colour-store";
 import { ModuleBox, MODULES } from "@/components/substrata/omnibar/modules";
 import { hint } from "@/lib/substrata/hint";
 import { Rail } from "@/components/substrata/omnibar/rail";
+import { ToolModuleBody, ToolModuleSub } from "@/components/substrata/omnibar/tool-settings";
 
 /**
  * Omnibar (§8) — floating tool + panel cockpit, dockable to any edge (drag the
- * grip). UX pass (Ruby, 2026-07-08): every subtool is a VISIBLE flat button —
- * no hover fans (undiscoverable, touch-hostile); the old contextual middle
- * zone is gone — tool settings are a regular module (TOOL panel button), FX
- * got its own panel button, and the colour trigger is a full-height swatch.
- * Panel triggers peek on hover and pin on click. Copy \u2211CG.
+ * grip). UX pass (Ruby, 2026-07-08): FOUR separated units with space between —
+ * [tools] [tool settings, inline + always visible] [panels/more] [colour].
+ * Every subtool is a flat, FLUSH full-height button (a selected tool's
+ * highlight touches the bar edges — no padding halo); no hover fans. Panel
+ * triggers peek on hover and pin on click; the colour unit is one big
+ * full-height swatch. Copy \u2211CG.
  */
 
 interface ToolDef {
@@ -156,92 +157,100 @@ export function Omnibar() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const bar = cn(
+  const box = cn(
     "pointer-events-auto flex items-stretch border border-border bg-background shadow-lg",
-    vertical ? "w-12 flex-col" : "h-12 flex-row",
+    vertical ? "flex-col" : "flex-row",
   );
+  // units of different sizes align to the DOCKED edge (settings grows away
+  // from it) — bottom/right docks align end, top/left align start
+  const alignEdge = vertical
+    ? edge === "right"
+      ? "items-end"
+      : "items-start"
+    : edge === "bottom"
+      ? "items-end"
+      : "items-start";
 
   const railEl = <Rail vertical={railVertical} />;
   const barrowEl = (
-    <div className={cn("pointer-events-none flex items-start gap-2.5", vertical ? "flex-col" : "flex-row")}>
-      <div className={bar}>
+    <div className={cn("pointer-events-none flex gap-2.5", vertical ? "flex-col" : "flex-row", alignEdge)}>
+      {/* 1 · tools — flat, flush: a selected tool fills the bar's full cross
+          section (no padding halo) */}
+      <div className={box}>
         <OmnibarGrip vertical={vertical} />
-        {/* tools — every subtool visible (flat: no hover fans, touch-safe);
-            thin dividers separate the five stacks */}
-        <Zone vertical={vertical}>
-          {TOOLS.map((tool, ti) => (
-            <Fragment key={tool.id}>
-              {ti > 0 && (
-                <span
-                  aria-hidden
-                  className={cn("shrink-0 bg-border", vertical ? "mx-auto my-0.5 h-px w-6" : "mx-0.5 my-auto h-6 w-px")}
-                />
-              )}
-              {tool.subs.map((sub, si) => {
-                const active = activeTool === tool.id && activeSubs[tool.id] === sub.id;
-                return (
-                  <button
-                    key={sub.id}
-                    onClick={() => setActiveSub(tool.id, sub.id)}
-                    title={sub.label}
-                    aria-label={sub.label}
-                    aria-pressed={active}
-                    className={cn(
-                      "relative grid size-9 shrink-0 place-items-center",
-                      active
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-                    )}
-                  >
-                    {sub.icon}
-                    {si === 0 && (
-                      <span className={cn("absolute bottom-px right-0.5 text-[8px] font-bold", active ? "opacity-80" : "opacity-50")}>
-                        {tool.key}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </Fragment>
-          ))}
-        </Zone>
-
-        {/* panels — tool settings + FX are regular modules now (the middle
-            ContextZone is gone) */}
-        <Panels vertical={vertical}>
-          <PanelButton id="tool" icon={<Settings2 className={ICON} />} edge={edge} pinned={isPinned("tool")} />
-          <PanelButton id="effects" icon={<Sparkles className={ICON} />} edge={edge} pinned={isPinned("effects")} />
-          <PanelButton id="layers" icon={<Layers className={ICON} />} edge={edge} pinned={isPinned("layers")} />
-          <PanelButton id="inspector" icon={<BoxIcon className={ICON} />} edge={edge} pinned={isPinned("inspector")} />
-          <PanelButton id="looks" icon={<Film className={ICON} />} edge={edge} pinned={isPinned("looks")} />
-        </Panels>
-
-        {/* colour — full-height swatch, the bar's one BIG target (Ruby's call) */}
-        <ColourButton edge={edge} vertical={vertical} pinned={isPinned("colour")} />
-
-        {/* overflow */}
-        <Zone vertical={vertical}>
-          <button
-            onClick={() => setOverflow((v) => !v)}
-            {...hint("More tools")}
-            className={cn(
-              "grid size-9 place-items-center",
-              overflow ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-            )}
-          >
-            <MoreHorizontal className={cn(ICON, "transition-transform", overflow && "rotate-180")} />
-          </button>
-        </Zone>
+        {TOOLS.map((tool, ti) => (
+          <Fragment key={tool.id}>
+            {ti > 0 && <span aria-hidden className={cn("shrink-0 bg-border", vertical ? "h-px w-full" : "w-px self-stretch")} />}
+            {tool.subs.map((sub, si) => {
+              const active = activeTool === tool.id && activeSubs[tool.id] === sub.id;
+              return (
+                <button
+                  key={sub.id}
+                  onClick={() => setActiveSub(tool.id, sub.id)}
+                  title={sub.label}
+                  aria-label={sub.label}
+                  aria-pressed={active}
+                  className={cn(
+                    "relative grid shrink-0 place-items-center",
+                    vertical ? "h-10 w-12" : "h-12 w-10",
+                    active
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                  )}
+                >
+                  {sub.icon}
+                  {si === 0 && (
+                    <span className={cn("absolute bottom-0.5 right-1 text-[8px] font-bold", active ? "opacity-80" : "opacity-50")}>
+                      {tool.key}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </Fragment>
+        ))}
       </div>
 
-      {/* overflow bar — in line, beside the main bar */}
+      {/* 2 · tool settings — inline and always visible (Ruby: "the tool
+          settings are important"); grows away from the docked edge */}
+      <div className={cn("pointer-events-auto flex flex-col border border-border bg-background shadow-lg")}>
+        <div className="flex h-[26px] items-center border-b border-border bg-card px-2.5">
+          <span className="text-[10px] font-bold uppercase tracking-wide">
+            <ToolModuleSub />
+          </span>
+        </div>
+        <ToolModuleBody />
+      </div>
+
+      {/* 3 · panels ("more") — flush triggers + the overflow toggle */}
+      <div className={box}>
+        <PanelButton id="effects" icon={<Sparkles className={ICON} />} edge={edge} vertical={vertical} pinned={isPinned("effects")} />
+        <PanelButton id="layers" icon={<Layers className={ICON} />} edge={edge} vertical={vertical} pinned={isPinned("layers")} />
+        <PanelButton id="inspector" icon={<BoxIcon className={ICON} />} edge={edge} vertical={vertical} pinned={isPinned("inspector")} />
+        <PanelButton id="looks" icon={<Film className={ICON} />} edge={edge} vertical={vertical} pinned={isPinned("looks")} />
+        <span aria-hidden className={cn("shrink-0 bg-border", vertical ? "h-px w-full" : "w-px self-stretch")} />
+        <button
+          onClick={() => setOverflow((v) => !v)}
+          {...hint("More tools")}
+          className={cn(
+            "grid shrink-0 place-items-center",
+            vertical ? "h-10 w-12" : "h-12 w-10",
+            overflow ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+          )}
+        >
+          <MoreHorizontal className={cn(ICON, "transition-transform", overflow && "rotate-180")} />
+        </button>
+      </div>
+
+      {/* overflow unit — appears beside the panels unit */}
       {overflow && (
-        <div className={bar}>
-          <Panels vertical={vertical}>
-            <PanelButton id="arrange" icon={<AlignHorizontalDistributeCenter className={ICON} />} edge={edge} cross="center" pinned={isPinned("arrange")} />
-          </Panels>
+        <div className={box}>
+          <PanelButton id="arrange" icon={<AlignHorizontalDistributeCenter className={ICON} />} edge={edge} vertical={vertical} cross="center" pinned={isPinned("arrange")} />
         </div>
       )}
+
+      {/* 4 · colour — one big full-height swatch, its own unit */}
+      <ColourButton edge={edge} vertical={vertical} pinned={isPinned("colour")} />
     </div>
   );
 
@@ -272,22 +281,6 @@ export function Omnibar() {
 
 /* ── building blocks ─────────────────────────────────────────────────────────── */
 
-function Zone({ vertical, children }: { vertical: boolean; children: React.ReactNode }) {
-  return (
-    <div className={cn("flex items-center gap-0.5 border-border p-1.5", vertical ? "flex-col [&+&]:border-t" : "[&+&]:border-l")}>
-      {children}
-    </div>
-  );
-}
-
-function Panels({ vertical, children }: { vertical: boolean; children: React.ReactNode }) {
-  return (
-    <div className={cn("flex items-center gap-0.5 border-border p-1.5", vertical ? "flex-col border-t" : "border-l")}>
-      {children}
-    </div>
-  );
-}
-
 /** Omnibar drag grip (dnd-kit) — drag the whole bar onto an edge drop zone. */
 function OmnibarGrip({ vertical }: { vertical: boolean }) {
   const { attributes, listeners, setNodeRef } = useDraggable({
@@ -312,12 +305,12 @@ function OmnibarGrip({ vertical }: { vertical: boolean }) {
   );
 }
 
-/** The colour trigger — a full-height live swatch (the bar's one big target).
+/** The colour trigger — its own UNIT: one big full-height live swatch.
  *  Same peek/pin semantics as every PanelButton, just louder. */
-function ColourButton({ edge, vertical, pinned }: { edge: Edge; vertical: boolean; pinned: boolean }) {
+function ColourButton({ edge, pinned }: { edge: Edge; vertical?: boolean; pinned: boolean }) {
   const colour = useSyncExternalStore(subscribeColour, getColour, getColour);
   return (
-    <div className={cn("group/trigger relative shrink-0", vertical ? "border-t" : "border-l", "border-border")}>
+    <div className="group/trigger pointer-events-auto relative shrink-0 border border-border bg-background shadow-lg">
       <button
         onClick={() => togglePin("colour")}
         {...hint(MODULES.colour.title)}
@@ -344,24 +337,27 @@ function PanelButton({
   id,
   icon,
   edge,
+  vertical,
   pinned,
   cross = "end",
 }: {
   id: ModuleId;
   icon: React.ReactNode;
   edge: Edge;
+  vertical: boolean;
   pinned: boolean;
   cross?: "center" | "end";
 }) {
   return (
-    <div className="group/trigger relative">
+    <div className="group/trigger relative shrink-0">
       <button
         onClick={() => togglePin(id)}
         // module title doubles as the hover tooltip (raw ids told a mouse
         // user nothing — clarity review #6)
         {...hint(MODULES[id].title)}
         className={cn(
-          "grid size-9 place-items-center",
+          "grid place-items-center",
+          vertical ? "h-10 w-12" : "h-12 w-10",
           pinned
             ? "bg-primary/10 text-primary ring-1 ring-inset ring-primary"
             : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
