@@ -10,7 +10,6 @@ import {
   Lasso,
   Wand2,
   SlidersHorizontal,
-  Settings2,
   Sparkles,
   Type,
   Shapes,
@@ -35,6 +34,18 @@ import {
 import { getOmnibarEdge, getRailEdge, subscribeDock, type Edge, type RailEdge } from "@/lib/substrata/dock-pref";
 import { getPinned, subscribePins, togglePin, type ModuleId } from "@/lib/substrata/pin-pref";
 import { getColour, subscribeColour } from "@/lib/substrata/colour-store";
+import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
+import { findLayer } from "@/lib/substrata/layer-tree";
+import { getActiveLayerId, subscribeSelection } from "@/lib/substrata/selection";
+import { fxDisplayLabel } from "@/lib/substrata/fx-ops";
+import { fontLabel } from "@/lib/substrata/fonts";
+import {
+  getToolSettings,
+  subscribeToolSettings,
+  type PieceShape,
+  type ToolSettings,
+} from "@/lib/substrata/tool-settings";
+import type { Layer } from "@/lib/substrata/doc-model";
 import { ModuleBox, MODULES } from "@/components/substrata/omnibar/modules";
 import { hint } from "@/lib/substrata/hint";
 import { Rail } from "@/components/substrata/omnibar/rail";
@@ -211,11 +222,10 @@ export function Omnibar() {
         ))}
       </div>
 
-      {/* 2 · tool settings — its own unit, but a BUTTON (peek/pin like every
-          panel): an inline body made the bar non-uniform in height (Ruby) */}
-      <div className={box}>
-        <PanelButton id="tool" icon={<Settings2 className={ICON} />} edge={edge} vertical={vertical} cross="center" pinned={isPinned("tool")} />
-      </div>
+      {/* 2 · tool settings — the contextual trigger (Ruby's keeper shape):
+          active subtool's icon + name + a couple of live setting chips at a
+          glance; peeks/pins the TOOL module like every panel trigger */}
+      <ToolSettingsUnit edge={edge} vertical={vertical} pinned={isPinned("tool")} />
 
       {/* 3 · panels ("more") — flush triggers + the overflow toggle */}
       <div className={box}>
@@ -275,6 +285,122 @@ export function Omnibar() {
 }
 
 /* ── building blocks ─────────────────────────────────────────────────────────── */
+
+function Tag({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="whitespace-nowrap border border-border bg-card px-[7px] py-px text-[10.5px] text-muted-foreground">
+      {children}
+    </span>
+  );
+}
+
+const PIECE_LABEL: Record<PieceShape, string> = {
+  rectangle: "Rectangle",
+  ellipse: "Ellipse",
+  line: "Line",
+  polygon: "Polygon",
+  star: "Star",
+  symbol: "Symbol", // chip shows the generic kind; the layer names the preset
+};
+
+/**
+ * Live read-out chips per tool (Ruby's spec): MOVE = the selection's X/Y ·
+ * SELECT = the active subtool's mode settings (marquee touch/cover +
+ * group/separate, lasso sensitivity, wand tolerance) · ADJUST = the layer's
+ * stack labels · TEXT = font + size · PIECES = the chosen shape. All live —
+ * doc/selection chips track the stores; the rest read tool-settings, so they
+ * update the moment the M2 tools start writing it.
+ */
+function readoutChips(tool: ToolId, sub: string, layer: Layer | null, ts: ToolSettings): string[] {
+  switch (tool) {
+    case "move":
+      return layer
+        ? [`X ${Math.round(layer.transform.x)}`, `Y ${Math.round(layer.transform.y)}`]
+        : [];
+    case "select": {
+      const s = ts.select;
+      if (sub === "lasso") return [`Sensitivity ${s.sensitivity}%`];
+      if (sub === "wand") return [`Tolerance ${s.tolerance}`];
+      return [s.mode === "touch" ? "Touch" : "Cover", ts.transformAsGroup ? "Group" : "Separate"];
+    }
+    case "adjust":
+      return layer
+        ? [
+            ...layer.filters.map((f) => fxDisplayLabel("filters", f)),
+            ...layer.effects.map((f) => fxDisplayLabel("effects", f)),
+          ]
+        : [];
+    case "text":
+      return [fontLabel(ts.text.fontFamily), `${ts.text.fontSize} px`];
+    case "pieces": {
+      const p = ts.pieces;
+      if (sub === "brush") return [`${p.brushSize} px`];
+      if (sub === "pencil") return [`${p.pencilSize} px`];
+      const extra =
+        p.shape === "polygon"
+          ? [`${p.sides} sides`]
+          : p.shape === "star"
+            ? [`${p.starPoints} points`]
+            : p.shape === "rectangle" && p.cornerRadius > 0
+              ? [`R ${p.cornerRadius}`]
+              : [];
+      return [PIECE_LABEL[p.shape], ...extra];
+    }
+  }
+}
+
+/**
+ * The tool-settings UNIT — the contextual trigger: the active subtool's icon,
+ * name, and up to two live chips summarising its settings at a glance. Hover
+ * peeks the TOOL module (the full settings body); click pins it. Uniform bar
+ * height; vertical docks show the icon only.
+ */
+function ToolSettingsUnit({ edge, vertical, pinned }: { edge: Edge; vertical: boolean; pinned: boolean }) {
+  const doc = useSyncExternalStore(subscribe, getSnapshot, () => null);
+  const layerId = useSyncExternalStore(subscribeSelection, getActiveLayerId, () => null);
+  const toolSettings = useSyncExternalStore(subscribeToolSettings, getToolSettings, getToolSettings);
+  const activeTool = useSyncExternalStore(subscribeTool, getActiveTool, () => "move" as ToolId);
+  const activeSubs = useSyncExternalStore(subscribeTool, getActiveSubs, getActiveSubs);
+  const layer = doc && layerId ? findLayer(doc.layers, layerId) : null;
+  const sub = activeSubs[activeTool];
+  const chips = readoutChips(activeTool, sub, layer, toolSettings).slice(0, 2);
+  const tool = TOOLS.find((t) => t.id === activeTool);
+  const subDef = tool?.subs.find((x) => x.id === sub) ?? tool?.subs[0];
+
+  return (
+    <div className="group/trigger pointer-events-auto relative shrink-0 border border-border bg-background shadow-lg">
+      <button
+        data-tool-unit
+        onClick={() => togglePin("tool")}
+        {...hint(MODULES.tool.title)}
+        className={cn(
+          "flex items-center",
+          vertical ? "w-12 flex-col justify-center gap-1 py-3" : "h-12 gap-2 px-3",
+          pinned
+            ? "bg-primary/10 text-primary ring-1 ring-inset ring-primary"
+            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+        )}
+      >
+        <span className={pinned ? "text-primary" : "text-foreground"}>{subDef?.icon}</span>
+        {!vertical && (
+          <span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+            <span className={cn("text-[10px] font-bold uppercase tracking-wide", pinned ? "text-primary" : "text-foreground")}>
+              {subDef?.label}
+            </span>
+            {chips.map((c, i) => (
+              <Tag key={i}>{c}</Tag>
+            ))}
+          </span>
+        )}
+      </button>
+      {!pinned && (
+        <Bloom edge={edge} cross="center">
+          <ModuleBox id="tool" />
+        </Bloom>
+      )}
+    </div>
+  );
+}
 
 /** Omnibar drag grip (dnd-kit) — drag the whole bar onto an edge drop zone. */
 function OmnibarGrip({ vertical }: { vertical: boolean }) {
