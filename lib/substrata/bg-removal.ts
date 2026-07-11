@@ -155,6 +155,9 @@ function loadPipeline(): NonNullable<typeof pipePromise> {
       };
       // fp32 on both devices — mirrors the v3 tool's field-proven config.
       // The localStorage flag is a QA escape hatch to force the CPU path.
+      // logSeverityLevel 3 = errors only: ORT's W-level EP-assignment notes
+      // otherwise land on console.error and trip the Next dev overlay.
+      const session_options = { logSeverityLevel: 3 } as const;
       const forced = forceWasm || !!localStorage.getItem("substrata:forceWasm");
       if (!forced) {
         try {
@@ -162,6 +165,7 @@ function loadPipeline(): NonNullable<typeof pipePromise> {
             device: "webgpu",
             dtype: "fp32",
             progress_callback: onProgress,
+            session_options,
           });
           return { pipe, device: "webgpu" as const };
         } catch {
@@ -172,6 +176,7 @@ function loadPipeline(): NonNullable<typeof pipePromise> {
         device: "wasm",
         dtype: "fp32",
         progress_callback: onProgress,
+        session_options,
       });
       return { pipe, device: "wasm" as const };
     })().catch((err) => {
