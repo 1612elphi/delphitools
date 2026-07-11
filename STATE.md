@@ -1085,3 +1085,44 @@ Copy in the sketches is illustrative; real strings stay `\u2211CG` (see Conventi
     widths (tool module w-auto slack in sidebars), the layers-panel
     affordances (drag grip, hidden-state text, first-run hint), and the
     flat bar's total width on small screens. Decisions first.
+13. **✅ iPAD TOUCH PASS, ROUND 1 (2026-07-11, Ruby's on-device loop).**
+    Real-model bake verified headlessly first (WebGPU 12s e2e + forced-WASM
+    17s, real RMBG-1.4 from the hub — `.verify-real-matte.mjs`), plus a
+    static-export smoke (`.verify-static-smoke.mjs`, 16 checks: all routes,
+    prod /editor boot, drag-drop import, vendored JXL worker). Then the
+    iPad session (dev server over tailscale-serve HTTPS — plain LAN http is
+    a trap: no crypto.subtle, import dies):
+    - **PERF SAGA — canvas drags/strokes ran 13fps.** Hunted with the new
+      dev-only **`?hud` overlay** (raf/input-pipeline/render/evcost/busy
+      meters, in fabric-canvas) + a blank probe page + `?bare`/`?pe`/
+      `?coalesce` experiment flags (all since deleted; `?dpr1` KEPT for
+      triage). Verdict: iPad WebKit paces rendering updates against canvas
+      PAINT VOLUME — two ~5MP retina backings under a 120Hz touch stream
+      downshift rAF to 13; JS was ~idle (evcost 1%). Chrome, desktop
+      Safari/WebKit all 60fps — device-only, input-independent.
+      **Fix (shipped): touch-gesture resolution drop** — retina at rest,
+      1× backing while a touch/pen gesture MOVES (armed on down, tripped by
+      movement so taps never soften), restore 180ms after release. 43fps on
+      device, Ruby-accepted. Mouse never triggers it. 7-check
+      `.verify-resdrop.mjs` (emulated touch) ALL PASS. ponytail: binary
+      retina↔1×; fractional pixel-budget cap + panel-slider coverage =
+      upgrade path. Also: ORT W-level EP notes silenced via
+      `session_options.logSeverityLevel 3` (bg-removal) — they tripped the
+      dev overlay on every bake.
+    - **TWO-FINGER TOUCH NAVIGATION (pan + pinch zoom)** — Procreate
+      convention: one finger/pencil = the active tool, a second finger =
+      navigation until all lift; pens never navigate. In-flight gestures
+      are CANCELLED, not committed: claimed wrap gestures via their
+      pointercancel path, freehand draft dropped, shape draft via new
+      `rollbackTransient()` (doc-store — the cancel counterpart to
+      commitTransient), empty just-created text exits editing (deletes),
+      fabric transforms restore `transform.original` + actionPerformed
+      false, fabric's touch gesture ends by a synthetic `_onTouchEnd`.
+      Nav listeners register BEFORE the claim listeners (same node/phase,
+      stopImmediatePropagation). Zoom = existing zoomToPoint at centroid,
+      clamped; pan = relativePan. ponytail: no inertia / double-tap zoom.
+      6-check `.verify-touchnav.mjs` (CDP multi-touch: pinch, pan, cancel
+      exactness, no stray strokes, single-finger regressions) ALL PASS;
+      all gesture harnesses + tsc/lint green.
+    Still open for iPad: coarse-pointer target sizing (8px handles), IText
+    on-screen-keyboard QA, 43→60 chase if wanted.

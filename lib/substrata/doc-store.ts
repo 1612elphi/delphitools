@@ -95,6 +95,16 @@ export function updateTransient(mutator: (doc: SubstrataDoc) => SubstrataDoc): v
   emit();
 }
 
+/** Abandon the open transient gesture: restore the pre-gesture doc and record
+ *  nothing — the cancel counterpart to commitTransient. Used when two-finger
+ *  navigation takes over a half-drawn gesture. */
+export function rollbackTransient(): void {
+  if (transientBase === null) return;
+  state = transientBase;
+  transientBase = null;
+  emit();
+}
+
 export function commitTransient(): void {
   const base = transientBase;
   transientBase = null;
