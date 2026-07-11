@@ -117,7 +117,7 @@ export function TopBar() {
           <WorkspaceMenu />
         </Menu>
         <Menu id="help" label="Help" open={open} onToggle={toggle}>
-          <HelpMenu />
+          <HelpMenu onClose={close} />
         </Menu>
       </nav>
 
@@ -619,14 +619,16 @@ function WRow({
 
 /* ── Help ────────────────────────────────────────────────────────────────────── */
 
-function HelpMenu() {
+function HelpMenu({ onClose }: { onClose: () => void }) {
+  const show = (id: "shortcuts" | "about-substrata" | "about-delphitools") => () => {
+    openModal(id);
+    onClose();
+  };
   return (
     <Box className="min-w-[218px] py-1">
-      {/* disabled until the shortcuts sheet / about panes exist — a dead click
-          must read as "not yet", not "broken" */}
-      <Item label="Keyboard shortcuts" disabled />
-      <Item label="About Substrata" disabled />
-      <Item label="About delphitools" disabled />
+      <Item label="Keyboard shortcuts" onClick={show("shortcuts")} />
+      <Item label="About Substrata" onClick={show("about-substrata")} />
+      <Item label="About delphitools" onClick={show("about-delphitools")} />
       <a href="https://github.com/1612elphi/delphitools" target="_blank" rel="noopener noreferrer" className="block">
         <Item label="Source · GitHub" />
       </a>

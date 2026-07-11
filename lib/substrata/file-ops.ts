@@ -11,8 +11,9 @@
  */
 
 import { fileOpen, fileSave } from "browser-fs-access";
-import { createEmptyDoc, type SubstrataDoc } from "./doc-model";
+import { createEmptyDoc, type Artboard, type SubstrataDoc } from "./doc-model";
 import { getSnapshot, setDoc } from "./doc-store";
+import { openModal } from "./modal";
 import { packSubstrata, unpackSubstrata } from "./substrata-file";
 import { slugifySceneName } from "./export-core";
 import { loadProject, persistAll } from "./autosave";
@@ -34,8 +35,14 @@ function confirmDiscard(): boolean {
 
 export function newScene(): void {
   if (!confirmDiscard()) return;
+  // dimensions come from the New-scene dialog; createScene() lands the doc
+  openModal("new-scene");
+}
+
+/** New-scene dialog apply: fresh doc at the chosen artboard, history reset. */
+export function createScene(artboard: Artboard): void {
   handle = null;
-  setDoc(createEmptyDoc());
+  setDoc(createEmptyDoc("", artboard));
 }
 
 /** Scene ▸ Open recent: swap to a stored project (same discard guard as

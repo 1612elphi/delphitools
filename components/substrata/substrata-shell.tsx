@@ -20,6 +20,7 @@ import { LayerContextMenu } from "@/components/substrata/layer-context-menu";
 import { SelectionPopup } from "@/components/substrata/selection-popup";
 import { SecureContextNotice } from "@/components/substrata/secure-context-notice";
 import { EmptyHint } from "@/components/substrata/empty-hint";
+import { StorageIntro } from "@/components/substrata/storage-intro";
 import { DockZones } from "@/components/substrata/dock-zones";
 import { useEditorShortcuts } from "@/hooks/use-editor-shortcuts";
 import { hydrateLayoutPrefs, setModuleDock, setOmnibarEdge, type DockTarget, type Edge } from "@/lib/substrata/dock-pref";
@@ -108,6 +109,8 @@ export function SubstrataShell() {
           <SelectionPopup />
           {/* starter card while the scene is empty */}
           <EmptyHint />
+          {/* first-visit storage opt-in card (bottom-right, dismissible) */}
+          <StorageIntro />
           {/* drag-to-dock drop targets — render only mid-drag */}
           <DockZones />
         </div>
