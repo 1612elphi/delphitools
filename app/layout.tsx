@@ -5,6 +5,7 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppHeader } from "@/components/app-header";
 import { ColourNotationProvider } from "@/components/colour-notation-provider";
+import { FavourBanner } from "@/components/favour-banner";
 import SkipLink from "@/components/ui/skip-link";
 
 export const metadata: Metadata = {
@@ -39,6 +40,7 @@ export default function RootLayout({
             <AppSidebar />
             <SidebarInset>
               <AppHeader />
+              <FavourBanner />
               <main
                 className="flex-1 overflow-auto"
                 id="main-content"
