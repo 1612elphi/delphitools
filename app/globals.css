@@ -466,6 +466,32 @@
   }
 }
 
+/* ── "Delphi needs a favour" ticker ─────────────────────────────────────
+   Slim bottom banner that rises ~2s after load; the body text scrolls
+   right-to-left on a loop.
+   ponytail: single-span marquee — reliable while the text is wider than the
+   bar (lorem is). If the ask ever gets short, duplicate the span for a
+   seamless loop. */
+.favour-banner {
+  animation: favour-rise 0.4s ease-out;
+}
+.favour-marquee {
+  animation: favour-marquee 32s linear infinite;
+  will-change: transform;
+}
+@keyframes favour-rise {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
+@keyframes favour-marquee {
+  from { transform: translateX(100%); }
+  to { transform: translateX(-100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .favour-banner { animation: none; }
+  .favour-marquee { animation: none; transform: none; }
+}
+
 /* Forced-colors / high-contrast: drop the gradient-text trick so the brand
    stays visible in the system palette. */
 @media (forced-colors: active) {
