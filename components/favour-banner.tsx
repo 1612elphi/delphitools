@@ -52,8 +52,8 @@ export function FavourBanner() {
           <span className="shrink-0 font-semibold tracking-wide text-foreground underline underline-offset-4">
             {FAVOUR_LABEL}
           </span>
-          <div className="min-w-0 flex-1 overflow-hidden">
-            <div className="favour-marquee w-max whitespace-nowrap text-muted-foreground motion-reduce:w-full motion-reduce:truncate">
+          <div className="relative h-4 min-w-0 flex-1 overflow-hidden">
+            <div className="favour-marquee absolute left-0 top-0 whitespace-nowrap leading-4 text-muted-foreground">
               {FAVOUR_TICKER}
             </div>
           </div>
