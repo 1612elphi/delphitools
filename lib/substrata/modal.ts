@@ -7,7 +7,13 @@
 
 type Listener = () => void;
 
-export type ModalId = "export" | "canvas-size";
+export type ModalId =
+  | "export"
+  | "canvas-size"
+  | "new-scene"
+  | "shortcuts"
+  | "about-substrata"
+  | "about-delphitools";
 
 let open: ModalId | null = null;
 const listeners = new Set<Listener>();

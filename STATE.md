@@ -1126,3 +1126,32 @@ Copy in the sketches is illustrative; real strings stay `\u2211CG` (see Conventi
       all gesture harnesses + tsc/lint green.
     Still open for iPad: coarse-pointer target sizing (8px handles), IText
     on-screen-keyboard QA, 43→60 chase if wanted.
+14. **✅ QOL FOUR-PACK (2026-07-11 eve, Ruby's list).**
+    - **One-shot tools (Ruby ratified: "Revert to Move")** — a committed
+      shape/symbol or a closed text edit hands the tool back to MOVE, so
+      the next empty tap deselects instead of re-arming (Figma convention).
+      Brush/Pencil still chain (a tap draws nothing there — no empty-tap
+      problem; flagged for Ruby's veto). Every drawing harness gained
+      re-arm lines; two MORE harness crashes turned out to be the
+      empty-scene-card vintage bug (text-props' creation click + nothing
+      else) — same fix as the lasso, coords moved off-centre.
+    - **New-scene dialog** — the Canvas-size modal grew a `mode="new"`:
+      same presets/fields, no reflow row, Apply (label = ∑CG gap) lands a
+      FRESH doc via `createScene` (file-ops; history reset) + fit. Opens on
+      any fresh session with nothing restored (suppressed under
+      `navigator.webdriver` — every headless harness boots that state) and
+      from Scene ▸ New scene (discard guard first). Escape keeps the
+      default artboard. `createEmptyDoc` grew an optional artboard param.
+    - **Storage intro card** (`storage-intro.tsx`) — tiny dismissible
+      bottom-right card embedding the SHIPPED PersistenceToggle; shown
+      until dismissed or storage goes on, seen-flag in localStorage (the
+      layout-pref precedent). Title/body/dismiss aria = ∑CG gaps.
+    - **Help menu wired** — Keyboard shortcuts (grouped keymap sheet:
+      subtool keys, edit/scene combos, view gestures incl. two-finger
+      touch), About Substrata, About delphitools (version from
+      package.json, delphitools + GitHub links; body text = ∑CG gaps) as
+      blocking modals via the ModalHost/modal-store pattern.
+    slopsieve: 6 gaps open (the four-pack's strings), all parse-clean.
+    Full 17-harness suite ALL PASS; tsc green; lint at baseline; build
+    green. `.verify-effects.mjs` note: its default URL is :3010 — run with
+    EDITOR_URL=http://localhost:3000/editor.

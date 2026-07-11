@@ -13,6 +13,7 @@ import { ColourSwatchCell, DeferredHexInput, normalizeHex } from "@/components/c
 import { Switch } from "@/components/ui/switch";
 import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
 import { resizeArtboardReflow, setArtboard } from "@/lib/substrata/artboard-ops";
+import { createScene } from "@/lib/substrata/file-ops";
 import { closeModal } from "@/lib/substrata/modal";
 import { DEFAULT_ARTBOARD } from "@/lib/substrata/doc-model";
 import { viewport } from "@/lib/substrata/viewport";
@@ -44,16 +45,20 @@ function gcd(a: number, b: number): number {
   return b === 0 ? a : gcd(b, a % b);
 }
 
-export function CanvasSizeModal() {
+export function CanvasSizeModal({ mode = "resize" }: { mode?: "resize" | "new" }) {
   const doc = useSyncExternalStore(subscribe, getSnapshot, () => null);
   const ab = doc?.artboard ?? DEFAULT_ARTBOARD;
+  // "new" mode (the New-scene dialog) drafts a FRESH scene: seeded from the
+  // default artboard, Apply lands a new doc via createScene instead of
+  // resizing the current one. Same fields, presets and chrome otherwise.
+  const seed = mode === "new" ? DEFAULT_ARTBOARD : ab;
 
-  // Draft, seeded from the current artboard on first render only (see doc block).
-  const [width, setWidth] = useState(() => String(ab.width));
-  const [height, setHeight] = useState(() => String(ab.height));
-  const [resolution, setResolution] = useState(() => String(ab.resolution));
-  const [colour, setColour] = useState(() => normalizeHex(ab.background ?? "") ?? "#ffffff");
-  const [transparent, setTransparent] = useState(() => ab.background === null);
+  // Draft, seeded on first render only (see doc block).
+  const [width, setWidth] = useState(() => String(seed.width));
+  const [height, setHeight] = useState(() => String(seed.height));
+  const [resolution, setResolution] = useState(() => String(seed.resolution));
+  const [colour, setColour] = useState(() => normalizeHex(seed.background ?? "") ?? "#ffffff");
+  const [transparent, setTransparent] = useState(() => seed.background === null);
   // Magic resize (M7-8/9): reflow layers with the artboard. Off by default —
   // a plain canvas-size edit stays a plain canvas-size edit.
   const [reflow, setReflow] = useState(false);
@@ -74,7 +79,11 @@ export function CanvasSizeModal() {
     const h = Math.max(1, Math.round(Number(height) || DEFAULT_ARTBOARD.height));
     const res = Math.max(1, Math.round(Number(resolution) || DEFAULT_ARTBOARD.resolution));
     const artboard = { width: w, height: h, resolution: res, background: transparent ? null : colour };
-    if (reflow && (w !== ab.width || h !== ab.height)) {
+    if (mode === "new") {
+      // bitDepth/colourMode ride the defaults — the dialog only drafts dims + background
+      createScene({ ...DEFAULT_ARTBOARD, ...artboard }); // fresh doc, history reset
+      viewport.fit();
+    } else if (reflow && (w !== ab.width || h !== ab.height)) {
       resizeArtboardReflow(artboard); // one undoable step: artboard + layer reflow
       viewport.fit(); // aspect jumps reframe — the reconciler never refits itself
     } else {
@@ -96,7 +105,8 @@ export function CanvasSizeModal() {
     >
       <DialogHeader className="border-b-2 border-border px-4 py-3 text-left">
         <DialogTitle className="pr-8 text-sm font-bold uppercase tracking-wide">
-          Canvas size
+          {/* "New scene" reuses the Scene-menu item's shipped label */}
+          {mode === "new" ? "New scene" : "Canvas size"}
         </DialogTitle>
       </DialogHeader>
 
@@ -145,17 +155,20 @@ export function CanvasSizeModal() {
         </section>
 
         {/* Magic resize (M7): when on, Apply re-anchors + proportionally scales
-            every layer with the artboard (anchor+proportional, ratified). */}
-        <section className="-mx-4 flex items-center justify-between gap-3 border-y border-border bg-card px-4 py-2.5">
-          <span className="text-xs">
-            Reflow layers to fit
-          </span>
-          <Switch
-            checked={reflow}
-            onCheckedChange={setReflow}
-            aria-label="Reflow layers to fit"
-          />
-        </section>
+            every layer with the artboard (anchor+proportional, ratified).
+            Hidden in "new" mode — a fresh scene has no layers to reflow. */}
+        {mode !== "new" && (
+          <section className="-mx-4 flex items-center justify-between gap-3 border-y border-border bg-card px-4 py-2.5">
+            <span className="text-xs">
+              Reflow layers to fit
+            </span>
+            <Switch
+              checked={reflow}
+              onCheckedChange={setReflow}
+              aria-label="Reflow layers to fit"
+            />
+          </section>
+        )}
 
         {/* Background — swatch + hex, plus a Transparent toggle (→ background null). */}
         <section className="space-y-2">
@@ -214,7 +227,17 @@ export function CanvasSizeModal() {
           onClick={apply}
           className="h-12 flex-[2] rounded-none text-sm font-semibold"
         >
-          Apply
+          {mode === "new" ? (
+            <>
+              {/* ∑CG: New-scene dialog primary action button
+                  spec: one word, imperative, confirms creating the fresh scene at the chosen size; pairs with the shipped "Cancel"; ≤ 10 chars
+                  sample: "Create"
+              */}
+              {"∑CG"}
+            </>
+          ) : (
+            "Apply"
+          )}
         </Button>
       </DialogFooter>
     </DialogContent>

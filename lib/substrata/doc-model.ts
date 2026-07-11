@@ -351,13 +351,13 @@ export function identityTransform(): Transform {
  * supplies the \u2211CG placeholder ("Untitled scene") when it is blank — we don't
  * author copy here.
  */
-export function createEmptyDoc(name = ""): SubstrataDoc {
+export function createEmptyDoc(name = "", artboard?: Artboard): SubstrataDoc {
   const now = Date.now();
   return {
     id: newId(),
     schemaVersion: SCHEMA_VERSION,
     name,
-    artboard: { ...DEFAULT_ARTBOARD },
+    artboard: { ...(artboard ?? DEFAULT_ARTBOARD) },
     layers: [],
     guides: [],
     createdAt: now,

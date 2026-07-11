@@ -63,6 +63,7 @@ import { toast } from "@/lib/substrata/toast";
 import { subscribeLuts } from "@/lib/substrata/lut-data";
 import { getMatte, getMatteStatus, putMatte, subscribeMattes } from "@/lib/substrata/bg-removal";
 import { resizeArtboardReflow } from "@/lib/substrata/artboard-ops";
+import { openModal } from "@/lib/substrata/modal";
 import { getLayerMenu, openCanvasMenu, openLayerMenu } from "@/lib/substrata/context-menu";
 import {
   getToolSettings,
@@ -611,7 +612,14 @@ export function FabricCanvas() {
       const drawn = draft.layer;
       draft = null;
       commitTransient();
-      if (drawn) setSelection([drawn.id]);
+      if (drawn) {
+        setSelection([drawn.id]);
+        // one-shot tools (Figma convention, Ruby 2026-07-11): a committed
+        // shape hands back to MOVE, so the next empty tap deselects instead
+        // of arming another draw. Brush/Pencil chain — a tap draws nothing
+        // there, so they have no empty-tap problem to fix.
+        setActiveSub("move", "move");
+      }
     });
 
     // ── TEXT (M2) ─────────────────────────────────────────────────────────────
@@ -659,6 +667,10 @@ export function FabricCanvas() {
       const id = getLayerIdForObject(obj);
       if (!id) return;
       const text = (obj.text ?? "").trim();
+      // one-shot (Figma convention, Ruby 2026-07-11): leaving a text edit —
+      // committed or abandoned — hands back to MOVE, so the next empty tap
+      // deselects instead of spawning another text layer.
+      if (getActiveTool() === "text") setActiveSub("move", "move");
       if (text === "") {
         deleteLayers([id]);
         return;
@@ -2358,6 +2370,11 @@ export function FabricCanvas() {
       if (cancelled || getSnapshot()) return;
       setDoc(doc ?? createEmptyDoc());
       fit();
+      // Nothing restored → offer dimensions up front instead of silently
+      // adopting the hardcoded default artboard (Ruby 2026-07-11). Escape
+      // keeps the default. Skipped under automation: every headless harness
+      // boots exactly this state and would deadlock behind the overlay.
+      if (!doc && !navigator.webdriver) openModal("new-scene");
     })();
 
     // Autosave lifecycle follows the opt-in preference: enabling persists the
