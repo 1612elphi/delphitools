@@ -12,7 +12,7 @@ import {
   util as fabricUtil,
 } from "fabric";
 import type { FabricObject, LayoutStrategyResult, StrictLayoutContext } from "fabric";
-import { getSnapshot, subscribe, setDoc, beginTransient, commitTransient, canUndo } from "@/lib/substrata/doc-store";
+import { getSnapshot, subscribe, setDoc, beginTransient, commitTransient, rollbackTransient, canUndo } from "@/lib/substrata/doc-store";
 import { registerViewportController, reportZoom } from "@/lib/substrata/viewport";
 import { createEmptyDoc, createFreehandLayer, createShapeLayer, createTextLayer, identityTransform } from "@/lib/substrata/doc-model";
 import type { Artboard, CropRect, ShapeLayer, SubstrataDoc, Transform } from "@/lib/substrata/doc-model";
@@ -414,6 +414,10 @@ export function FabricCanvas() {
     };
 
     // ── viewport: zoom + pan ──────────────────────────────────────────────────
+    // True while two-finger touch navigation owns the pointer stream (the nav
+    // block below, after the gesture handlers it has to defuse). Hoisted so
+    // every tool gesture can refuse to start under it.
+    let navActive = false;
     const ZMIN = 0.02;
     const ZMAX = 64;
     const clampZoom = (z: number) => Math.max(ZMIN, Math.min(ZMAX, z));
@@ -573,7 +577,7 @@ export function FabricCanvas() {
     // A click without a drag creates nothing (commitTransient sees no change).
     let draft: { start: Pt; layer: ShapeLayer | null } | null = null;
     canvas.on("mouse:down", (opt) => {
-      if (spaceHeld || panning || !shapeModeActive()) return;
+      if (spaceHeld || panning || navActive || !shapeModeActive()) return;
       draft = { start: canvas.getScenePoint(opt.e), layer: null };
       beginTransient();
     });
@@ -616,7 +620,7 @@ export function FabricCanvas() {
     // wording ever renders (the layer starts empty; abandoning it deletes it).
     // Clicking an object falls through to normal select / dbl-click edit.
     canvas.on("mouse:down", (opt) => {
-      if (spaceHeld || panning || opt.target || !textModeActive()) return;
+      if (spaceHeld || panning || navActive || opt.target || !textModeActive()) return;
       const p = canvas.getScenePoint(opt.e);
       const ts = getToolSettings();
       const style = styleFields(ts.text.style, ts.pieces.fill, ts.text.fontSize);
@@ -633,6 +637,11 @@ export function FabricCanvas() {
       setSelection([layer.id]);
       // enter editing once the reconciler has created the object
       requestAnimationFrame(() => {
+        // a second finger turned this tap into navigation — abandon the layer
+        if (navActive) {
+          deleteLayers([layer.id]);
+          return;
+        }
         const obj = state.byId.get(layer.id);
         if (obj instanceof SubstrataText) {
           canvas.setActiveObject(obj);
@@ -681,7 +690,7 @@ export function FabricCanvas() {
     let liveStroke: { sub: FreehandSub; pts: RawPoint[]; simulate: boolean } | null = null;
     canvas.on("mouse:down", (opt) => {
       const sub = freehandSub();
-      if (spaceHeld || panning || !sub) return;
+      if (spaceHeld || panning || navActive || !sub) return;
       const e = opt.e as PointerEvent;
       const p = canvas.getScenePoint(opt.e);
       liveStroke = { sub, simulate: e.pointerType !== "pen", pts: [[p.x, p.y, pressureOf(e)]] };
@@ -1418,6 +1427,125 @@ export function FabricCanvas() {
       applyToolMode();
       canvas.requestRenderAll();
     };
+
+    // ── two-finger touch navigation: pan + pinch zoom ─────────────────────────
+    // Procreate convention: one finger (or pencil) is always the active tool;
+    // the moment a SECOND finger lands on the canvas, navigation owns the
+    // gesture until every finger lifts. Whatever the first finger started is
+    // CANCELLED, not committed — claimed wrap gestures through their existing
+    // pointercancel path, drawing drafts by discard/rollback, an in-flight
+    // fabric transform by restoring its own `original` pose, and fabric's
+    // touch gesture via a synthetic touchend (its documented lifecycle end).
+    // Pens never navigate: pencil + one finger keeps drawing.
+    // Registered BEFORE the guide/SELECT claim listeners on the same node so
+    // stopImmediatePropagation can keep the second finger from claiming.
+    // ponytail: no inertia, no double-tap zoom — upgrade path if missed.
+    const navTouches = new Map<number, { x: number; y: number }>();
+    let navPrev: { cx: number; cy: number; dist: number } | null = null;
+    const cancelInFlightGestures = () => {
+      if (claimedPointerId !== null) {
+        onGuidePointerCancel(new PointerEvent("pointercancel", { pointerId: claimedPointerId }));
+      }
+      liveStroke = null; // freehand draft never touched the doc — drop it
+      if (draft) {
+        draft = null;
+        rollbackTransient(); // half-drawn shape: restore the pre-gesture doc
+      }
+      // a text tap that just entered editing: exiting empty deletes the layer
+      const active = canvas.getActiveObject();
+      if (active instanceof SubstrataText && active.isEditing && (active.text ?? "") === "") {
+        active.exitEditing();
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const anyCanvas = canvas as any;
+      const transform = anyCanvas._currentTransform;
+      if (transform?.target) {
+        // restore the pose fabric snapshotted at gesture start and suppress
+        // the object:modified commit — the nudge never happened. originX/Y are
+        // gesture bookkeeping, not object pose — setting them would re-anchor.
+        const pose = { ...(transform.original ?? {}) } as Record<string, unknown>;
+        delete pose.originX;
+        delete pose.originY;
+        transform.target.set(pose);
+        transform.target.setCoords();
+        transform.actionPerformed = false;
+      }
+      if (anyCanvas.mainTouchId !== undefined) {
+        // end fabric's touch gesture through its own lifecycle: __onMouseUp,
+        // doc-listener teardown, mainTouchId cleared. Plain object — fabric
+        // only reads changedTouches/touches plus the noop methods below.
+        const pos = [...navTouches.values()][0] ?? { x: 0, y: 0 };
+        anyCanvas._onTouchEnd({
+          type: "touchend",
+          touches: [],
+          changedTouches: [
+            { identifier: anyCanvas.mainTouchId, clientX: pos.x, clientY: pos.y, target: canvas.upperCanvasEl },
+          ],
+          target: canvas.upperCanvasEl,
+          preventDefault: () => {},
+          stopPropagation: () => {},
+        } as unknown as TouchEvent);
+      }
+      canvas.requestRenderAll();
+    };
+    const onNavPointerDown = (e: PointerEvent) => {
+      if (e.pointerType !== "touch") return;
+      navTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (navTouches.size === 2 && !navActive) {
+        cancelInFlightGestures();
+        navActive = true;
+        navPrev = null;
+      }
+      if (navActive) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    };
+    // fabric's touchstart listener sits on the upper canvas — swallow new
+    // touch starts while navigating so it can't open a fresh gesture
+    const onNavTouchStart = (e: TouchEvent) => {
+      if (!navActive) return;
+      if (e.cancelable) e.preventDefault();
+      e.stopImmediatePropagation();
+    };
+    const onNavPointerMove = (e: PointerEvent) => {
+      if (!navActive || !navTouches.has(e.pointerId)) return;
+      navTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (navTouches.size >= 2) {
+        const [a, b] = [...navTouches.values()];
+        const cx = (a.x + b.x) / 2;
+        const cy = (a.y + b.y) / 2;
+        const dist = Math.hypot(a.x - b.x, a.y - b.y);
+        if (navPrev) {
+          canvas.relativePan(new Point(cx - navPrev.cx, cy - navPrev.cy));
+          if (navPrev.dist > 0 && dist > 0) {
+            resetCycle();
+            const r = wrap.getBoundingClientRect();
+            canvas.zoomToPoint(
+              new Point(cx - r.left, cy - r.top),
+              clampZoom(canvas.getZoom() * (dist / navPrev.dist)),
+            );
+          }
+          reportZoom(canvas.getZoom());
+        }
+        navPrev = { cx, cy, dist };
+      }
+      if (e.cancelable) e.preventDefault();
+      e.stopImmediatePropagation();
+    };
+    const onNavPointerEnd = (e: PointerEvent) => {
+      if (!navTouches.delete(e.pointerId)) return;
+      if (!navActive) return;
+      e.stopImmediatePropagation();
+      navPrev = null; // a remaining finger re-anchors on its next move
+      if (navTouches.size === 0) navActive = false;
+    };
+    wrap.addEventListener("pointerdown", onNavPointerDown, { capture: true });
+    wrap.addEventListener("touchstart", onNavTouchStart, { capture: true, passive: false });
+    window.addEventListener("pointermove", onNavPointerMove, { capture: true, passive: false });
+    window.addEventListener("pointerup", onNavPointerEnd, { capture: true });
+    window.addEventListener("pointercancel", onNavPointerEnd, { capture: true });
+
     wrap.addEventListener("pointerdown", onGuidePointerDown, { capture: true });
     window.addEventListener("pointermove", onGuidePointerMove);
     window.addEventListener("pointerup", onGuidePointerUp);
@@ -2345,6 +2473,11 @@ export function FabricCanvas() {
       window.removeEventListener("pointermove", onGuidePointerMove);
       window.removeEventListener("pointerup", onGuidePointerUp);
       window.removeEventListener("pointercancel", onGuidePointerCancel);
+      wrap.removeEventListener("pointerdown", onNavPointerDown, { capture: true });
+      wrap.removeEventListener("touchstart", onNavTouchStart, { capture: true });
+      window.removeEventListener("pointermove", onNavPointerMove, { capture: true });
+      window.removeEventListener("pointerup", onNavPointerEnd, { capture: true });
+      window.removeEventListener("pointercancel", onNavPointerEnd, { capture: true });
       if (resDropEnabled) {
         window.clearTimeout(restoreTimer);
         wrap.removeEventListener("pointerdown", onResPointerDown, { capture: true });
