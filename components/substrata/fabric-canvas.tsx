@@ -152,6 +152,13 @@ export function FabricCanvas() {
       // Draw selection controls AFTER the artboard clipPath so a layer's handles
       // stay visible even when its content is dragged off the canvas (clipped).
       controlsAboveOverlay: true,
+      // Dev diagnostic (?dpr1): render at CSS resolution — the discriminator
+      // that caught iPad WebKit's paint-volume rendering-update downshift
+      // (2026-07-11); kept for device-perf triage alongside the ?hud overlay.
+      ...(process.env.NODE_ENV !== "production" &&
+      new URLSearchParams(window.location.search).has("dpr1")
+        ? { enableRetinaScaling: false }
+        : {}),
     });
     initSubstrataFilterBackend();
     const state = createReconcileState();
@@ -349,6 +356,57 @@ export function FabricCanvas() {
       resetCycle();
       reportZoom(canvas.getZoom());
     };
+
+    // ── Touch-gesture resolution drop ────────────────────────────────────────
+    // iPad Safari paces its rendering updates against canvas backing volume:
+    // two retina canvases hold rAF at ~13fps under a 120Hz touch stream; the
+    // same canvases at 1× run ~43fps (device-probed 2026-07-11, rafprobe +
+    // HUD). So: full resolution at rest, 1× while a touch/pen gesture MOVES,
+    // crisp restore shortly after release. Armed on touch-down but tripped
+    // only by movement, so taps never flash a soft frame. Mouse input never
+    // triggers it — desktop presents retina at 60fps just fine.
+    // ponytail: binary retina↔1× and canvas-area gestures only; a fractional
+    // pixel-budget cap and panel-slider coverage are the upgrade path.
+    const retinaAtRest = canvas.enableRetinaScaling;
+    const resDropEnabled =
+      navigator.maxTouchPoints > 1 && retinaAtRest && (window.devicePixelRatio || 1) > 1;
+    let touchPointersDown = 0;
+    let resDropped = false;
+    let restoreTimer = 0;
+    const applyBacking = () => {
+      canvas.setDimensions({ width: wrap.clientWidth, height: wrap.clientHeight });
+      canvas.requestRenderAll();
+    };
+    const onResPointerDown = (e: PointerEvent) => {
+      if (e.pointerType === "mouse") return;
+      touchPointersDown++;
+      window.clearTimeout(restoreTimer);
+    };
+    const onResPointerMove = (e: PointerEvent) => {
+      if (resDropped || touchPointersDown === 0 || e.pointerType === "mouse") return;
+      resDropped = true;
+      canvas.enableRetinaScaling = false;
+      applyBacking();
+    };
+    const onResPointerEnd = (e: PointerEvent) => {
+      if (e.pointerType === "mouse") return;
+      touchPointersDown = Math.max(0, touchPointersDown - 1);
+      if (touchPointersDown === 0 && resDropped) {
+        window.clearTimeout(restoreTimer);
+        // brief grace so consecutive strokes don't thrash the backing store
+        restoreTimer = window.setTimeout(() => {
+          resDropped = false;
+          canvas.enableRetinaScaling = retinaAtRest;
+          applyBacking();
+        }, 180);
+      }
+    };
+    if (resDropEnabled) {
+      wrap.addEventListener("pointerdown", onResPointerDown, { capture: true, passive: true });
+      window.addEventListener("pointermove", onResPointerMove, { capture: true, passive: true });
+      window.addEventListener("pointerup", onResPointerEnd, { capture: true, passive: true });
+      window.addEventListener("pointercancel", onResPointerEnd, { capture: true, passive: true });
+    }
 
     const setCanvasCursor = (c: string) => {
       canvas.defaultCursor = c || "default";
@@ -1770,6 +1828,7 @@ export function FabricCanvas() {
 
     // Dev-only debug rig for selection-chrome bugs — console + automation.
     // window.__substrata.{selection, layers, select, setSeparate} (dev builds only).
+    let stopPerfHud: (() => void) | null = null;
     if (process.env.NODE_ENV !== "production") {
       const toScreen = (x: number, y: number) => {
         const vt = canvas.viewportTransform;
@@ -2003,6 +2062,146 @@ export function FabricCanvas() {
         // magic-resize (M7-8) — the op the Canvas size modal's reflow path calls
         resizeReflow: (w: number, h: number) => resizeArtboardReflow({ width: w, height: h }),
       };
+
+      // On-device perf HUD (?hud): the four numbers that separate "the browser
+      // throttles rAF" from "pointer events arrive late" from "rendering is
+      // genuinely expensive here". DOM overlay (not canvas) so it stays
+      // legible even while the canvas janks. Debug chrome, dev builds only.
+      if (new URLSearchParams(window.location.search).has("hud")) {
+        const hud = document.createElement("div");
+        hud.style.cssText =
+          "position:fixed;top:56px;right:8px;z-index:9999;background:rgba(0,0,0,.75);color:#4ade80;" +
+          "font:11px/1.6 ui-monospace,monospace;padding:6px 9px;pointer-events:none;white-space:pre";
+        document.body.appendChild(hud);
+        let frames = 0;
+        let renders = 0;
+        let renderMs = 0;
+        let renderT0 = 0;
+        let moves = 0;
+        let coalesced = 0;
+        let lastMoveTs = 0;
+        let latencyMs = 0;
+        let latencyN = 0;
+        // pipeline-stage counters: where does the 120/s input rate drop?
+        let touchMoves = 0;
+        let objMoving = 0;
+        let rraCalls = 0;
+        // true per-event cost of fabric's move processing — the work suspected
+        // of starving WebKit's rendering updates at 120Hz input
+        let evMs = 0;
+        let evN = 0;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const anyCanvasHud = canvas as any;
+        const origOnMouseMoveHud = anyCanvasHud._onMouseMove;
+        anyCanvasHud._onMouseMove = (e: Event) => {
+          const t0 = performance.now();
+          origOnMouseMoveHud(e);
+          evMs += performance.now() - t0;
+          evN++;
+        };
+        const onHudTouchMove = () => {
+          touchMoves++;
+        };
+        window.addEventListener("touchmove", onHudTouchMove, { passive: true, capture: true });
+        const onObjMoving = () => {
+          objMoving++;
+        };
+        canvas.on("object:moving", onObjMoving);
+        const origRra = canvas.requestRenderAll.bind(canvas);
+        canvas.requestRenderAll = () => {
+          rraCalls++;
+          return origRra();
+        };
+        const onBeforeRender = () => {
+          renderT0 = performance.now();
+        };
+        const onAfterRender = () => {
+          const now = performance.now();
+          renders++;
+          renderMs += now - renderT0;
+          if (lastMoveTs) {
+            latencyMs += now - lastMoveTs;
+            latencyN++;
+            lastMoveTs = 0;
+          }
+        };
+        canvas.on("before:render", onBeforeRender);
+        canvas.on("after:render", onAfterRender);
+        const onHudMove = (e: PointerEvent) => {
+          moves++;
+          coalesced += e.getCoalescedEvents?.().length ?? 1;
+          lastMoveTs = e.timeStamp; // same clock as performance.now()
+        };
+        window.addEventListener("pointermove", onHudMove, { passive: true });
+        // main-thread busy meter: longtask coverage where supported, plus a
+        // 4ms setTimeout-chain drift sampler (Safari lacks longtask) — lateness
+        // beyond the nested-timer clamp ≈ time the thread was busy that turn
+        let busyMs = 0;
+        let ltMs = 0;
+        let ltSupported = false;
+        let po: PerformanceObserver | null = null;
+        try {
+          po = new PerformanceObserver((list) => {
+            for (const entry of list.getEntries()) ltMs += entry.duration;
+          });
+          po.observe({ type: "longtask" });
+          ltSupported = true;
+        } catch {
+          po = null;
+        }
+        let lastTurn = performance.now();
+        let pumpId = 0;
+        const pump = () => {
+          const now = performance.now();
+          const drift = now - lastTurn - 4;
+          if (drift > 0) busyMs += drift;
+          lastTurn = now;
+          pumpId = window.setTimeout(pump, 4);
+        };
+        pumpId = window.setTimeout(pump, 4);
+        let rafId = 0;
+        let winT0 = performance.now();
+        const tick = () => {
+          frames++;
+          const now = performance.now();
+          if (now - winT0 >= 1000) {
+            const s = (now - winT0) / 1000;
+            hud.textContent =
+              `raf    ${(frames / s).toFixed(0)} fps\n` +
+              `moves  ${(moves / s).toFixed(0)}/s (${(coalesced / s).toFixed(0)} coalesced)\n` +
+              `touch  ${(touchMoves / s).toFixed(0)}/s\n` +
+              `objmov ${(objMoving / s).toFixed(0)}/s  rra ${(rraCalls / s).toFixed(0)}/s\n` +
+              `render ${renders ? (renderMs / renders).toFixed(1) : "-"} ms × ${(renders / s).toFixed(0)}/s\n` +
+              `evcost ${evN ? (evMs / evN).toFixed(2) : "-"} ms × ${(evN / s).toFixed(0)}/s = ${((evMs / (s * 1000)) * 100).toFixed(0)}%\n` +
+              `busy   ~${((busyMs / (s * 1000)) * 100).toFixed(0)}%${ltSupported ? `  lt ${((ltMs / (s * 1000)) * 100).toFixed(0)}%` : ""}\n` +
+              `input→paint ${latencyN ? (latencyMs / latencyN).toFixed(0) : "-"} ms\n` +
+              `backing ${document.querySelector<HTMLCanvasElement>("canvas.lower-canvas")?.width ?? "-"}px`;
+            frames = moves = coalesced = renders = 0;
+            renderMs = latencyMs = 0;
+            touchMoves = objMoving = rraCalls = 0;
+            evMs = evN = 0;
+            busyMs = ltMs = 0;
+            latencyN = 0;
+            winT0 = now;
+          }
+          rafId = requestAnimationFrame(tick);
+        };
+        rafId = requestAnimationFrame(tick);
+        stopPerfHud = () => {
+          cancelAnimationFrame(rafId);
+          window.clearTimeout(pumpId);
+          po?.disconnect();
+          window.removeEventListener("pointermove", onHudMove);
+          window.removeEventListener("touchmove", onHudTouchMove, { capture: true });
+          canvas.off("object:moving", onObjMoving);
+          canvas.requestRenderAll = origRra;
+          anyCanvasHud._onMouseMove = origOnMouseMoveHud;
+          canvas.off("before:render", onBeforeRender);
+          canvas.off("after:render", onAfterRender);
+          hud.remove();
+        };
+      }
+
     }
 
     const unsubscribe = subscribe(render);
@@ -2131,6 +2330,7 @@ export function FabricCanvas() {
       if (antTimer !== null) window.clearInterval(antTimer);
       unsubscribePixelSelection();
       delete (window as unknown as Record<string, unknown>).__substrata;
+      stopPerfHud?.();
       registerViewportController(null);
       registerExportRenderer(null);
       registerLayerBaker(null);
@@ -2145,6 +2345,13 @@ export function FabricCanvas() {
       window.removeEventListener("pointermove", onGuidePointerMove);
       window.removeEventListener("pointerup", onGuidePointerUp);
       window.removeEventListener("pointercancel", onGuidePointerCancel);
+      if (resDropEnabled) {
+        window.clearTimeout(restoreTimer);
+        wrap.removeEventListener("pointerdown", onResPointerDown, { capture: true });
+        window.removeEventListener("pointermove", onResPointerMove, { capture: true });
+        window.removeEventListener("pointerup", onResPointerEnd, { capture: true });
+        window.removeEventListener("pointercancel", onResPointerEnd, { capture: true });
+      }
       wrap.removeEventListener("dragover", onDragOver);
       wrap.removeEventListener("dragleave", onDragLeave);
       window.removeEventListener("beforeunload", onBeforeUnload);
