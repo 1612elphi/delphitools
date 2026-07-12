@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import { useEffect, useRef, type Ref } from "react";
 
 import { toolCategories, featuredTools, type Tool } from "@/lib/tools";
@@ -30,6 +31,8 @@ function BespokeIcon({
 }
 
 function ToolCell({ tool, featured = false }: { tool: Tool; featured?: boolean }) {
+  // external entries (App Store, GitHub) render a plain anchor in a new tab
+  const Cmp: React.ElementType = tool.external ? "a" : Link;
   const handleRef = useRef<AnimatedIconHandle>(null);
   const staticRef = useRef<HTMLSpanElement>(null);
   const Animated = ANIMATED_ICONS.get(tool.icon);
@@ -55,8 +58,9 @@ function ToolCell({ tool, featured = false }: { tool: Tool; featured?: boolean }
   );
 
   return (
-    <Link
+    <Cmp
       href={tool.href}
+      {...(tool.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
       onMouseEnter={Animated ? start : undefined}
       onMouseLeave={Animated ? stop : undefined}
       onFocus={Animated ? start : undefined}
@@ -95,12 +99,18 @@ function ToolCell({ tool, featured = false }: { tool: Tool; featured?: boolean }
               New
             </Badge>
           )}
+          {tool.external && (
+            <>
+              <ExternalLink aria-hidden className="size-3 shrink-0 text-muted-foreground/70" />
+              <span className="sr-only"> (opens in new tab)</span>
+            </>
+          )}
         </span>
         <span className="line-clamp-2 text-[0.66rem] leading-[1.32] text-muted-foreground">
           {tool.description}
         </span>
       </span>
-    </Link>
+    </Cmp>
   );
 }
 
