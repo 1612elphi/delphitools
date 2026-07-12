@@ -11,6 +11,7 @@ export type ModalId =
   | "export"
   | "canvas-size"
   | "new-scene"
+  | "onboarding"
   | "shortcuts"
   | "about-substrata"
   | "about-delphitools";

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AboutDelphitoolsBody } from "@/components/about-delphitools";
 import pkg from "@/package.json";
 
 /**
@@ -52,32 +53,20 @@ export function AboutSubstrataModal() {
 }
 
 export function AboutDelphitoolsModal() {
+  // same body as the main site's sidebar About dialog (single source of truth)
   return (
-    <AboutShell title="About delphitools">
-      <div className="flex items-baseline justify-between">
-        <span className="text-sm font-bold">delphitools</span>
-        <span className="font-mono text-[11px] tabular-nums text-muted-foreground">v{pkg.version}</span>
+    <DialogContent
+      className="max-h-[80vh] max-w-lg gap-0 overflow-y-auto border-2 border-border p-0"
+      aria-describedby={undefined}
+    >
+      <DialogHeader className="border-b-2 border-border px-4 py-3 text-left">
+        <DialogTitle className="pr-8 text-sm font-bold uppercase tracking-wide">
+          About delphitools
+        </DialogTitle>
+      </DialogHeader>
+      <div className="px-4 py-4">
+        <AboutDelphitoolsBody />
       </div>
-      <p className="leading-relaxed text-muted-foreground">
-        {/* ∑CG: About-delphitools body — the catalogue's one-breath pitch
-            spec: 1–2 sentences shown in the Help ▸ About delphitools dialog; privacy-first browser tools, no accounts, no uploads; ≤ 200 chars
-            sample: "A collection of browser tools that work entirely on your device — no accounts, no uploads, no tracking."
-        */}
-        {"∑CG"}
-      </p>
-      <div className="flex gap-4 border-t border-border pt-2 text-[11px] text-muted-foreground">
-        <Link href="/" className="underline underline-offset-2 hover:text-foreground">
-          delphitools
-        </Link>
-        <a
-          href="https://github.com/1612elphi/delphitools"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline underline-offset-2 hover:text-foreground"
-        >
-          GitHub
-        </a>
-      </div>
-    </AboutShell>
+    </DialogContent>
   );
 }

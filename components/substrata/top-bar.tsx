@@ -6,6 +6,7 @@ import {
   Undo2,
   Redo2,
   Maximize2,
+  MessageSquarePlus,
   Download,
   ChevronDown,
   Plus,
@@ -170,6 +171,14 @@ export function TopBar() {
           <Maximize2 className="size-[15px]" />
         </Button>
         <span className="mx-1 h-[18px] w-px bg-border" />
+        {/* beta feedback — the bug-report mailto Ruby specced (subject prefilled) */}
+        <a
+          href="mailto:tools@rmv.fyi?subject=substrata%20bug%20report"
+          className="flex h-[30px] items-center gap-1.5 border border-border px-3 text-[12.5px] text-muted-foreground hover:bg-accent hover:text-foreground"
+        >
+          <MessageSquarePlus className="size-[15px]" />
+          Feedback
+        </a>
         <button
           type="button"
           onClick={() => openModal("export")}
