@@ -60,19 +60,29 @@ export function OnboardingModal() {
       <img
         src="/substrata/onboarding/workshop.png"
         alt=""
-        width={982}
+        width={999}
         height={1000}
-        className="mx-auto -mt-1 h-auto max-h-[300px] w-auto"
+        className="mx-auto -mt-1 h-auto max-h-100 w-auto"
       />
       <p className="leading-relaxed">
-        Hi, this is Substrata, the delphitools image editor. It does effects, layers, filters, .
+        Hi, this is Substrata, the delphitools image editor. It does effects, layers, filters, film sims, cropping, text and more.
       </p>
-      <p className="leading-relaxed">We&rsquo;re still in beta — let me show you around.</p>
+      <p className="leading-relaxed">It's still in early access, so calibrate your excitement.</p>
     </div>,
-    <p key="local" className="leading-relaxed">
-      Everything is local, everything runs on your browser. This means that it might be slow on
-      low-end machines.
-    </p>,
+    <div key="local" className="space-y-3">
+      {/* eslint-disable-next-line @next/next/no-img-element -- static export, unoptimized anyway */}
+      <img
+        src="/substrata/onboarding/local.png"
+        alt=""
+        width={1000}
+        height={731}
+        className="mx-auto -mt-1 h-auto max-h-100 w-auto"
+      />
+      <p className="leading-relaxed">
+        Everything is local, everything runs on your browser. This means that it might be slow
+        on low-end machines.
+      </p>
+    </div>,
     <div key="private" className="space-y-3">
       <p className="leading-relaxed">
         Because this is in your browser, it&rsquo;s entirely private by design. Nothing of your
