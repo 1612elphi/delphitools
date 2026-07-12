@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { closeModal, getOpenModal, subscribeModal } from "@/lib/substrata/modal";
+import { ensureScene } from "@/lib/substrata/file-ops";
 import { finishOnboarding } from "@/lib/substrata/onboarding-pref";
 import { ExportModal } from "@/components/substrata/modals/export-modal";
 import { CanvasSizeModal } from "@/components/substrata/modals/canvas-size-modal";
@@ -27,8 +28,14 @@ export function ModalHost() {
         if (next) return;
         // Esc/overlay-close of the onboarding still counts as "seen" and
         // hands over to the New-scene dialog — same path as its final button
-        if (open === "onboarding") finishOnboarding();
-        else closeModal();
+        if (open === "onboarding") {
+          finishOnboarding();
+          return;
+        }
+        closeModal();
+        // fresh boots are doc-less until the New-scene dialog lands one —
+        // Esc/overlay-dismiss falls back to a default blank scene
+        if (open === "new-scene") ensureScene();
       }}
     >
       {open === "export" && <ExportModal />}

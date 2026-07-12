@@ -48,5 +48,7 @@ export function finishOnboarding(): void {
   markOnboardingSeen();
   const doc = getSnapshot();
   closeModal();
-  if (doc && doc.layers.length === 0) openModal("new-scene");
+  // fresh boots are doc-LESS until the New-scene dialog lands one — hand
+  // over whenever the session hasn't got real content yet
+  if (!doc || doc.layers.length === 0) openModal("new-scene");
 }

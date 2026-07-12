@@ -2369,17 +2369,25 @@ export function FabricCanvas() {
         }
       }
       if (cancelled || getSnapshot()) return;
-      setDoc(doc ?? createEmptyDoc());
-      fit();
-      // Nothing restored → first visit gets the onboarding flow (it hands
-      // over to the New-scene dialog on close); return visits go straight to
-      // New-scene instead of silently adopting the hardcoded default artboard
-      // (Ruby 2026-07-11/12). Escape keeps the default. Skipped under
-      // automation: every headless harness boots exactly this state and
-      // would deadlock behind the overlay.
-      if (!doc && !navigator.webdriver) {
-        openModal(isOnboardingSeen() ? "new-scene" : "onboarding");
+      if (doc) {
+        setDoc(doc);
+        fit();
+        return;
       }
+      // Nothing restored → the session starts EMPTY (no document, no canvas)
+      // and the New-scene dialog is the way in: blank at chosen dims, or a
+      // scene built from an uploaded image (Ruby 2026-07-12). First visits
+      // see the onboarding flow first (it hands over on close). Dismissing
+      // without choosing falls back to a default blank via ensureScene().
+      // Under automation the default doc lands immediately instead — every
+      // headless harness boots exactly this state and would deadlock
+      // behind the overlay.
+      if (navigator.webdriver) {
+        setDoc(createEmptyDoc());
+        fit();
+        return;
+      }
+      openModal(isOnboardingSeen() ? "new-scene" : "onboarding");
     })();
 
     // Autosave lifecycle follows the opt-in preference: enabling persists the

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
+import { ImagePlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +14,8 @@ import { ColourSwatchCell, DeferredHexInput, normalizeHex } from "@/components/c
 import { Switch } from "@/components/ui/switch";
 import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
 import { resizeArtboardReflow, setArtboard } from "@/lib/substrata/artboard-ops";
-import { createScene } from "@/lib/substrata/file-ops";
+import { createScene, ensureScene } from "@/lib/substrata/file-ops";
+import { importImageFile } from "@/lib/substrata/import-raster";
 import { closeModal } from "@/lib/substrata/modal";
 import { DEFAULT_ARTBOARD } from "@/lib/substrata/doc-model";
 import { viewport } from "@/lib/substrata/viewport";
@@ -62,6 +64,27 @@ export function CanvasSizeModal({ mode = "resize" }: { mode?: "resize" | "new" }
   // Magic resize (M7-8/9): reflow layers with the artboard. Off by default —
   // a plain canvas-size edit stays a plain canvas-size edit.
   const [reflow, setReflow] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  // "new" mode's second door: a scene built FROM an image — artboard sized to
+  // the picture, the file imported as its first layer (placeOnArtboard lands
+  // it full-bleed; a GPU-clamped decode scales to fit the same frame).
+  const fromImage = async (file: File) => {
+    let w = DEFAULT_ARTBOARD.width;
+    let h = DEFAULT_ARTBOARD.height;
+    try {
+      const bmp = await createImageBitmap(file);
+      w = bmp.width;
+      h = bmp.height;
+      bmp.close();
+    } catch {
+      return; // undecodable file — leave the dialog open
+    }
+    createScene({ ...DEFAULT_ARTBOARD, width: w, height: h });
+    await importImageFile(file);
+    viewport.fit();
+    closeModal();
+  };
 
   // Picking any colour implies an opaque background.
   const pickColour = (hex: string) => {
@@ -113,6 +136,31 @@ export function CanvasSizeModal({ mode = "resize" }: { mode?: "resize" | "new" }
       {/* Body — text/labels breathe (padded); segmented groups bleed to the
           frame edges via -mx-4 border-x-0 (DESIGN.md §6/§7). */}
       <div className="space-y-4 px-4 py-4">
+        {/* "new" mode's other door: a scene FROM an image. Reuses the
+            empty-hint's shipped "Add image" label. */}
+        {mode === "new" && (
+          <>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void fromImage(f);
+                e.target.value = "";
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="-mx-4 flex h-12 w-[calc(100%+2rem)] items-center justify-center gap-2 border-y border-border bg-card text-xs hover:bg-accent"
+            >
+              <ImagePlus className="size-[16px] text-muted-foreground" aria-hidden />
+              Add image
+            </button>
+          </>
+        )}
         {/* Presets — dimension labels are data, not copy. */}
         <section className="space-y-2">
           <div className="text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">
@@ -217,7 +265,12 @@ export function CanvasSizeModal({ mode = "resize" }: { mode?: "resize" | "new" }
         <Button
           type="button"
           variant="ghost"
-          onClick={() => closeModal()}
+          onClick={() => {
+            closeModal();
+            // fresh boots are doc-less until this dialog lands one — a
+            // cancelled New-scene falls back to a default blank
+            if (mode === "new") ensureScene();
+          }}
           className="h-12 flex-1 rounded-none border-r border-border text-sm"
         >
           Cancel
