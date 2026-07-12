@@ -3,7 +3,6 @@ import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { featuredTools, allTools } from "@/lib/tools";
 import { ToolGrid, FeaturedGrid } from "@/components/tool-grid";
-import { DownloadCard } from "@/components/download-card";
 import { StickerWall } from "@/components/sticker-wall";
 import { SectionHeader } from "@/components/section-header";
 
@@ -70,45 +69,14 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Substrata — the editor billboard (more than a tool, so it lives
-          above the grid as its own object; copy is Ruby's). */}
-      <section className="mb-12">
-        <Link
-          href="/editor"
-          className="group relative block min-h-[200px] overflow-hidden border border-border bg-gradient-to-br from-primary/[0.08] via-primary/[0.03] to-transparent p-6 transition-colors hover:from-primary/[0.12] sm:p-8"
-        >
-          <div className="relative z-10 flex max-w-md flex-col items-start">
-            <span className="text-[0.6rem] font-bold uppercase tracking-[0.2em] text-primary">
-              Beta
-            </span>
-            <h2 className="mt-2 text-2xl font-bold leading-snug text-foreground">Substrata</h2>
-            <p className="text-sm text-muted-foreground">the delphitools editor</p>
-            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-              Edit, arrange and mark up images in the browser.
-            </p>
-          </div>
-          {/* Ruby's graffiti wordmark — mask over bg-primary keeps it in the
-              theme's green; aspect 250.76:151.92 */}
-          <div
-            aria-hidden
-            className="absolute bottom-4 right-6 hidden h-32 w-[211px] bg-primary [mask-image:url(/substrata/wordmark.svg)] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain] sm:block"
-          />
-        </Link>
-      </section>
-
       {/* Greatest Hits */}
       <section className="mb-12">
         <SectionHeader title="Greatest Hits" count={featuredTools.length} star />
         <FeaturedGrid />
       </section>
 
-      {/* Elsewhere */}
-      <section className="mb-12">
-        <SectionHeader title="Elsewhere" count={2} />
-        <DownloadCard />
-      </section>
-
-      {/* All Tools */}
+      {/* All Tools — Substrata and the iOS/CLI editions live in the grid now
+          (the billboard + Elsewhere cards were folded in; Ruby 2026-07-12) */}
       <section>
         <SectionHeader title="All Tools" count={allTools.length} />
         <ToolGrid />
