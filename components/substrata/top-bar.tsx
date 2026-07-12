@@ -8,7 +8,6 @@ import {
   Maximize2,
   MessageSquarePlus,
   Download,
-  ChevronDown,
   Plus,
   Scissors,
   Copy,
@@ -25,7 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { subscribe, getSnapshot, undo, redo, canUndo, canRedo } from "@/lib/substrata/doc-store";
+import { subscribe, getSnapshot, undo, redo, canUndo, canRedo, update } from "@/lib/substrata/doc-store";
 import { getPersistenceEnabled, subscribePersistence } from "@/lib/substrata/persistence-pref";
 import { openModal } from "@/lib/substrata/modal";
 import { getGuides, subscribeGuides, toggleGuide } from "@/lib/substrata/guides-pref";
@@ -122,12 +121,9 @@ export function TopBar() {
         </Menu>
       </nav>
 
-      {/* Centre: scene name + save status */}
+      {/* Centre: scene name (click to rename — one undoable doc edit) + save status */}
       <div className="absolute left-1/2 flex -translate-x-1/2 items-center gap-2.5">
-        <span className="flex cursor-pointer items-center gap-1.5 px-2 py-1 text-[12.5px] font-medium hover:bg-accent">
-          {doc?.name?.trim() ? doc.name : "Untitled scene"}
-          <ChevronDown className="size-3" />
-        </span>
+        <SceneName name={doc?.name ?? ""} hasDoc={!!doc} />
         <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
           {/* Three-state dot: stored locally (primary) · edits at risk — storage
               off with undoable work (amber) · idle with storage off (muted). */}
@@ -190,6 +186,53 @@ export function TopBar() {
         <ThemeToggle />
       </div>
     </div>
+  );
+}
+
+/** Scene name, click-to-rename (Ruby 2026-07-12): the centre slot swaps to an
+ *  inline input; Enter/blur commit the new name as ONE undoable doc edit,
+ *  Escape cancels. The name is doc content — it persists, saves into the
+ *  .substrata file, and drives the export/save filenames. */
+function SceneName({ name, hasDoc }: { name: string; hasDoc: boolean }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const commit = () => {
+    setEditing(false);
+    const next = draft.trim();
+    if (next === name.trim()) return;
+    update((d) => ({ ...d, name: next }));
+  };
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        data-scene-name
+        disabled={!hasDoc}
+        onClick={() => {
+          setDraft(name);
+          setEditing(true);
+        }}
+        {...hint("Rename scene")}
+        className="cursor-text px-2 py-1 text-[12.5px] font-medium hover:bg-accent disabled:cursor-default"
+      >
+        {name.trim() ? name : "Untitled scene"}
+      </button>
+    );
+  }
+  return (
+    <input
+      autoFocus
+      data-scene-name-input
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onFocus={(e) => e.target.select()}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") commit();
+        if (e.key === "Escape") setEditing(false);
+      }}
+      className="w-[22ch] border border-border bg-background px-2 py-1 text-center text-[12.5px] font-medium outline-none focus:border-primary"
+    />
   );
 }
 
