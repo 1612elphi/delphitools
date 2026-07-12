@@ -11,9 +11,10 @@
  */
 
 import { fileOpen, fileSave } from "browser-fs-access";
-import { createEmptyDoc, type Artboard, type SubstrataDoc } from "./doc-model";
+import { createEmptyDoc, DEFAULT_ARTBOARD, type Artboard, type SubstrataDoc } from "./doc-model";
 import { getSnapshot, setDoc } from "./doc-store";
 import { openModal } from "./modal";
+import { viewport } from "./viewport";
 import { packSubstrata, unpackSubstrata } from "./substrata-file";
 import { slugifySceneName } from "./export-core";
 import { loadProject, persistAll } from "./autosave";
@@ -43,6 +44,15 @@ export function newScene(): void {
 export function createScene(artboard: Artboard): void {
   handle = null;
   setDoc(createEmptyDoc("", artboard));
+}
+
+/** Dismissing the New-scene dialog while the session is still doc-less
+ *  (fresh boots start EMPTY — no canvas until you choose) falls back to a
+ *  default blank scene so the editor is never stranded without a document. */
+export function ensureScene(): void {
+  if (getSnapshot()) return;
+  createScene({ ...DEFAULT_ARTBOARD });
+  viewport.fit();
 }
 
 /** Scene ▸ Open recent: swap to a stored project (same discard guard as

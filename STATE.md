@@ -1182,3 +1182,12 @@ Copy in the sketches is illustrative; real strings stay `\u2211CG` (see Conventi
     Back/Next/final). Probes: full slide walk, storage arm, mailto, Done→
     New-scene, seen-across-reload, About body render. tsc/lint/build green;
     pieces/text/workspace harnesses re-run ALL PASS.
+    Addenda (same day): **small-screen notice** (sub-768px, Ruby's wording,
+    centred card, "all right all right" dismiss, localStorage-persistent —
+    `small-screen-notice.tsx`). **Doc-less boot**: fresh sessions start with
+    NO document — the New-scene dialog is the way in, now with a second
+    door: **Add image** (shipped label) sizes the artboard to the picture
+    and imports it as the first layer (placeOnArtboard lands it full-bleed).
+    Every dismiss path (Cancel/Esc/overlay) falls back to a default blank
+    via `ensureScene()` (file-ops) so the editor is never stranded;
+    harnesses keep the instant default doc under navigator.webdriver.
