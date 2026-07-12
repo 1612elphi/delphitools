@@ -24,7 +24,6 @@ import { toast } from "@/lib/substrata/toast";
 
 const BUG_MAILTO = "mailto:tools@rmv.fyi?subject=substrata%20bug%20report";
 const REPO_URL = "https://github.com/1612elphi/delphitools";
-const LAST = 3;
 
 function StorageButton() {
   const enabled = useSyncExternalStore(subscribePersistence, getPersistenceEnabled, () => false);
@@ -50,24 +49,28 @@ export function OnboardingModal() {
   // every close path (the final button here; Esc/overlay in ModalHost)
   // routes through finishOnboarding — see onboarding-pref
 
+  // Slide copy: Ruby's dictated lines form the skeleton; the additions
+  // (capability line, model footnote, save-to-file reassurance, feedback
+  // pointer, touch slide, sign-off) are Claude-authored per Ruby's
+  // 2026-07-12 grant — she may rewrite any of it. Illustrations drop inline
+  // as <img src="/substrata/onboarding/…"> wherever they fit.
   const slides: React.ReactNode[] = [
-    <p key="1" className="leading-relaxed">
-      Hi, this is Substrata, the delphitools image editor. We&rsquo;re still in beta — let me
-      show you around.
-    </p>,
-    <p key="2" className="leading-relaxed">
+    <div key="hello" className="space-y-3">
+      <p className="leading-relaxed">
+        Hi, this is Substrata, the delphitools image editor. Layers, filters, brushes, text,
+        background removal — a real editor, living in this tab.
+      </p>
+      <p className="leading-relaxed">We&rsquo;re still in beta — let me show you around.</p>
+    </div>,
+    <p key="local" className="leading-relaxed">
       Everything is local, everything runs on your browser. This means that it might be slow on
       low-end machines.
     </p>,
-    <div key="3" className="space-y-3">
+    <div key="private" className="space-y-3">
       <p className="leading-relaxed">
-        Because this is in your browser, it&rsquo;s entirely private by design. If you want to
-        store your settings, files or preferences, you have to turn on local storage.
-      </p>
-      <StorageButton />
-      <p className="leading-relaxed">
-        Nothing of your data — no images, no clicks, no mouse movements, no analytics — will be
-        sent back to the server. And I can prove this, since it&rsquo;s all{" "}
+        Because this is in your browser, it&rsquo;s entirely private by design. Nothing of your
+        data — no images, no clicks, no mouse movements, no analytics — will be sent back to the
+        server. And I can prove this, since it&rsquo;s all{" "}
         <a
           href={REPO_URL}
           target="_blank"
@@ -78,14 +81,45 @@ export function OnboardingModal() {
         </a>
         .
       </p>
+      <p className="leading-relaxed text-muted-foreground/80">
+        One footnote: a few heavyweight tools download their machinery on first use — the
+        background remover fetches its model, for instance. That&rsquo;s a download, not an
+        upload. Nothing of yours goes anywhere.
+      </p>
     </div>,
-    <p key="4" className="leading-relaxed">
-      Substrata is still an early access public beta. Please report bugs you find to me directly:{" "}
-      <a href={BUG_MAILTO} className="underline underline-offset-2 hover:text-foreground">
-        tools@rmv.fyi
-      </a>
-    </p>,
+    <div key="storage" className="space-y-3">
+      <p className="leading-relaxed">
+        If you want to store your settings, files or preferences, you have to turn on local
+        storage.
+      </p>
+      <StorageButton />
+      <p className="leading-relaxed">
+        Prefer to leave it off? Also fine — ⌘S still saves your scene as a file, and off means
+        off: Substrata keeps no trace in this browser.
+      </p>
+    </div>,
+    // touch devices only: the two-finger navigation nobody would discover unprompted
+    ...(typeof navigator !== "undefined" && navigator.maxTouchPoints > 1
+      ? [
+          <p key="touch" className="leading-relaxed">
+            Since you&rsquo;re on touch: two fingers pan and zoom the canvas, one finger — or
+            your pencil — drives the tool. Pinch away.
+          </p>,
+        ]
+      : []),
+    <div key="beta" className="space-y-3">
+      <p className="leading-relaxed">
+        Substrata is still an early access public beta. Please report bugs you find to me
+        directly:{" "}
+        <a href={BUG_MAILTO} className="underline underline-offset-2 hover:text-foreground">
+          tools@rmv.fyi
+        </a>{" "}
+        — or hit the Feedback button up in the top bar, it does the same thing.
+      </p>
+      <p className="leading-relaxed">Thanks for being here this early. Love, delphi</p>
+    </div>,
   ];
+  const LAST = slides.length - 1;
 
   return (
     <DialogContent
@@ -117,11 +151,7 @@ export function OnboardingModal() {
           onClick={() => setSlide((s) => Math.max(0, s - 1))}
           className="h-12 flex-1 rounded-none border-r border-border text-sm"
         >
-          {/* ∑CG: onboarding back button
-              spec: one word, steps to the previous slide; disabled on slide 1; ≤ 8 chars
-              sample: "Back"
-          */}
-          {"∑CG"}
+          Back
         </Button>
         {slide < LAST ? (
           <Button
@@ -129,11 +159,7 @@ export function OnboardingModal() {
             onClick={() => setSlide((s) => Math.min(LAST, s + 1))}
             className="h-12 flex-[2] rounded-none text-sm font-semibold"
           >
-            {/* ∑CG: onboarding next button
-                spec: one word, advances to the next slide; ≤ 8 chars
-                sample: "Next"
-            */}
-            {"∑CG"}
+            Next
           </Button>
         ) : (
           <Button
@@ -141,11 +167,7 @@ export function OnboardingModal() {
             onClick={() => finishOnboarding()}
             className="h-12 flex-[2] rounded-none text-sm font-semibold"
           >
-            {/* ∑CG: onboarding final button — closes the tour, opens the New-scene dialog
-                spec: short send-off that ends the tour and starts working; ≤ 14 chars
-                sample: "Let's go"
-            */}
-            {"∑CG"}
+            let&rsquo;s go
           </Button>
         )}
       </div>
