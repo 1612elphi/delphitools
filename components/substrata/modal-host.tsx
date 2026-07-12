@@ -3,9 +3,11 @@
 import { useSyncExternalStore } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { closeModal, getOpenModal, subscribeModal } from "@/lib/substrata/modal";
+import { finishOnboarding } from "@/lib/substrata/onboarding-pref";
 import { ExportModal } from "@/components/substrata/modals/export-modal";
 import { CanvasSizeModal } from "@/components/substrata/modals/canvas-size-modal";
 import { ShortcutsModal } from "@/components/substrata/modals/shortcuts-modal";
+import { OnboardingModal } from "@/components/substrata/modals/onboarding-modal";
 import { AboutSubstrataModal, AboutDelphitoolsModal } from "@/components/substrata/modals/about-modals";
 
 /**
@@ -22,12 +24,17 @@ export function ModalHost() {
     <Dialog
       open={open !== null}
       onOpenChange={(next) => {
-        if (!next) closeModal();
+        if (next) return;
+        // Esc/overlay-close of the onboarding still counts as "seen" and
+        // hands over to the New-scene dialog — same path as its final button
+        if (open === "onboarding") finishOnboarding();
+        else closeModal();
       }}
     >
       {open === "export" && <ExportModal />}
       {open === "canvas-size" && <CanvasSizeModal />}
       {open === "new-scene" && <CanvasSizeModal mode="new" />}
+      {open === "onboarding" && <OnboardingModal />}
       {open === "shortcuts" && <ShortcutsModal />}
       {open === "about-substrata" && <AboutSubstrataModal />}
       {open === "about-delphitools" && <AboutDelphitoolsModal />}

@@ -64,6 +64,7 @@ import { subscribeLuts } from "@/lib/substrata/lut-data";
 import { getMatte, getMatteStatus, putMatte, subscribeMattes } from "@/lib/substrata/bg-removal";
 import { resizeArtboardReflow } from "@/lib/substrata/artboard-ops";
 import { openModal } from "@/lib/substrata/modal";
+import { isOnboardingSeen } from "@/lib/substrata/onboarding-pref";
 import { getLayerMenu, openCanvasMenu, openLayerMenu } from "@/lib/substrata/context-menu";
 import {
   getToolSettings,
@@ -2370,11 +2371,15 @@ export function FabricCanvas() {
       if (cancelled || getSnapshot()) return;
       setDoc(doc ?? createEmptyDoc());
       fit();
-      // Nothing restored → offer dimensions up front instead of silently
-      // adopting the hardcoded default artboard (Ruby 2026-07-11). Escape
-      // keeps the default. Skipped under automation: every headless harness
-      // boots exactly this state and would deadlock behind the overlay.
-      if (!doc && !navigator.webdriver) openModal("new-scene");
+      // Nothing restored → first visit gets the onboarding flow (it hands
+      // over to the New-scene dialog on close); return visits go straight to
+      // New-scene instead of silently adopting the hardcoded default artboard
+      // (Ruby 2026-07-11/12). Escape keeps the default. Skipped under
+      // automation: every headless harness boots exactly this state and
+      // would deadlock behind the overlay.
+      if (!doc && !navigator.webdriver) {
+        openModal(isOnboardingSeen() ? "new-scene" : "onboarding");
+      }
     })();
 
     // Autosave lifecycle follows the opt-in preference: enabling persists the

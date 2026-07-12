@@ -1155,3 +1155,30 @@ Copy in the sketches is illustrative; real strings stay `\u2211CG` (see Conventi
     Full 17-harness suite ALL PASS; tsc green; lint at baseline; build
     green. `.verify-effects.mjs` note: its default URL is :3010 — run with
     EDITOR_URL=http://localhost:3000/editor.
+15. **✅ ONBOARDING FLOW + ABOUT REUSE + FEEDBACK (2026-07-12, Ruby's list).**
+    - **Four-slide onboarding** (`modals/onboarding-modal.tsx`) — wording is
+      RUBY'S DICTATION shipped verbatim (capitalisation/punctuation
+      normalised only): hi/beta/show-you-around · everything-local/
+      may-be-slow · private-by-design + the storage opt-in as a BIG button
+      (reuses the toggle's shipped "Save in this browser" label) +
+      nothing-sent-back/open-source (repo link) · beta/bug-report mailto
+      (tools@rmv.fyi, subject prefilled "substrata bug report"). Auto-opens
+      on first visit (fresh boot, nothing restored) and hands over to the
+      New-scene dialog on ANY close (Done/Esc/overlay/X) via
+      `finishOnboarding()` in the new `onboarding-pref.ts` (seen-flag store;
+      blocked-localStorage users see it every visit — intended, they need
+      the pitch most). LESSON: the close hook is an explicit call, NOT an
+      unmount effect — StrictMode double-invokes cleanups in dev (caught by
+      probe: the flow self-dismissed at mount). The storage-intro card is
+      DELETED — absorbed by slide 3.
+    - **About delphitools = the main site's dialog body**, extracted
+      verbatim into `components/about-delphitools.tsx` and rendered by BOTH
+      app-sidebar's footer dialog and the editor's Help pane (single source
+      of truth; pure extraction, sidebar behaviour unchanged).
+    - **Feedback button** in the top bar's right cluster (bordered, before
+      Export) — the same prefilled bug-report mailto; "Feedback" is Ruby's
+      word.
+    slopsieve: 5 gaps (new-scene verb · About-Substrata body · onboarding
+    Back/Next/final). Probes: full slide walk, storage arm, mailto, Done→
+    New-scene, seen-across-reload, About body render. tsc/lint/build green;
+    pieces/text/workspace harnesses re-run ALL PASS.
