@@ -67,11 +67,21 @@ function ToolCell({ tool, featured = false }: { tool: Tool; featured?: boolean }
       onBlur={Animated ? stop : undefined}
       className={cn(
         "tool-cell group flex min-h-[62px] items-center gap-3 border-b border-r px-3.5 py-3 transition-colors focus-visible:z-10 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring",
-        featured
-          ? "border-amber-500/30 bg-amber-500/[0.06] hover:bg-amber-500/[0.12]"
-          : "border-border hover:bg-primary/[0.09]"
+        tool.highlight
+          ? "relative overflow-hidden bg-primary/[0.07] hover:bg-primary/[0.13] sm:col-span-2"
+          : featured
+            ? "border-amber-500/30 bg-amber-500/[0.06] hover:bg-amber-500/[0.12]"
+            : "border-border hover:bg-primary/[0.09]",
+        tool.highlight && (featured ? "border-amber-500/30" : "border-border"),
       )}
     >
+      {tool.highlight && (
+        // the graffiti wordmark, masked in the theme green, ghosted right
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-1 top-1/2 h-[85%] w-32 -translate-y-1/2 bg-primary opacity-25 transition-opacity group-hover:opacity-40 [mask-image:url(/substrata/wordmark.svg)] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain]"
+        />
+      )}
       {Animated ? (
         <BespokeIcon Icon={Animated} iconRef={handleRef} className={iconClass} />
       ) : (

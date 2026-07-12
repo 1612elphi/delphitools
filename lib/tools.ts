@@ -62,6 +62,9 @@ export interface Tool {
   /** off-site / off-catalogue destination (App Store, GitHub) — the grid
    *  renders a plain new-tab anchor and no /tools/[id] page is generated */
   external?: boolean;
+  /** the flagship treatment: green accent, double-width cell, ghosted
+   *  wordmark backdrop (Substrata) */
+  highlight?: boolean;
 }
 
 export interface ToolCategory {
@@ -195,6 +198,7 @@ export const toolCategories: ToolCategory[] = [
         href: "/editor",
         beta: true,
         new: true,
+        highlight: true,
       },
       {
         id: "artwork-enhancer",
