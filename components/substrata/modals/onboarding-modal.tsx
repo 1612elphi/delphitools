@@ -4,7 +4,7 @@ import { useState, useSyncExternalStore } from "react";
 import { Check, HardDrive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { finishOnboarding } from "@/lib/substrata/onboarding-pref";
 import {
   getPersistenceEnabled,
@@ -89,16 +89,16 @@ export function OnboardingModal() {
 
   return (
     <DialogContent
+      showCloseButton={false}
       className="max-w-md gap-0 border-2 border-border p-0"
       aria-describedby={undefined}
     >
-      <DialogHeader className="border-b-2 border-border px-4 py-3 text-left">
-        <DialogTitle className="pr-8 text-sm font-bold uppercase tracking-wide">
-          Substrata
-        </DialogTitle>
-      </DialogHeader>
+      {/* no visible chrome (Ruby 2026-07-12): one box, content + nav only —
+          the slides are free-flow JSX so illustrations can sit inline with
+          the text (drop <img src="/substrata/onboarding/…"> anywhere) */}
+      <DialogTitle className="sr-only">Substrata</DialogTitle>
 
-      <div className="min-h-[168px] px-4 py-4 text-sm text-muted-foreground">{slides[slide]}</div>
+      <div className="min-h-[188px] px-5 py-5 text-sm text-muted-foreground">{slides[slide]}</div>
 
       <div className="flex items-center justify-center gap-1.5 pb-3" aria-hidden>
         {slides.map((_, i) => (
