@@ -70,9 +70,13 @@ interface ToolPageProps {
 }
 
 export async function generateStaticParams() {
-  return allTools.map((tool) => ({
-    toolId: tool.id,
-  }));
+  // catalogue entries living at their own routes (Substrata → /editor) have
+  // no /tools/[toolId] page — only generate pages for in-catalogue hrefs
+  return allTools
+    .filter((tool) => tool.href.startsWith("/tools/"))
+    .map((tool) => ({
+      toolId: tool.id,
+    }));
 }
 
 export async function generateMetadata({ params }: ToolPageProps) {
