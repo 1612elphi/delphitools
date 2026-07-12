@@ -141,6 +141,14 @@ export function OnboardingModal() {
         ]
       : []),
     <div key="beta" className="space-y-3">
+      {/* eslint-disable-next-line @next/next/no-img-element -- static export, unoptimized anyway */}
+      <img
+        src="/substrata/onboarding/not-finished.png"
+        alt=""
+        width={1000}
+        height={394}
+        className="mx-auto -mt-1 h-auto max-h-40 w-auto"
+      />
       <p className="leading-relaxed">
         Substrata is still an early access public beta. Please report bugs you find to me
         directly:{" "}
