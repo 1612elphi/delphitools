@@ -1,12 +1,13 @@
 "use client";
 
 import { useRef, useSyncExternalStore } from "react";
-import { ChevronDown, ChevronUp, Circle, Pentagon, Slash, Square, Star, Upload } from "lucide-react";
+import { ChevronDown, ChevronUp, Circle, Contrast, Copy, Moon, Pentagon, Slash, Sparkle, Square, Star, Sun, Upload } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { uploadLocalFont } from "@/lib/substrata/fonts";
 import { FontSelect, TextAlignRow, TextStyleRow } from "@/components/substrata/text-style-row";
-import { getActiveLayerId } from "@/lib/substrata/selection";
-import { getSnapshot } from "@/lib/substrata/doc-store";
+import { getActiveLayerId, subscribeSelection } from "@/lib/substrata/selection";
+import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
+import { addFx, setFxParams } from "@/lib/substrata/fx-ops";
 import { findLayer } from "@/lib/substrata/layer-tree";
 import { setTextProps } from "@/lib/substrata/layer-ops";
 import { styleFields, textAccent, type TextStylePreset } from "@/lib/substrata/text-style";
@@ -50,9 +51,74 @@ export function ToolSettingsBody({ tool, sub }: { tool: ToolId; sub?: string }) 
   if (tool === "text" && sub === "text") return <TextToolSettings />;
   if (tool === "select" && (sub === "lasso" || sub === "wand")) return <SelectToolSettings sub={sub} />;
   if (tool === "pieces" && sub === "pieces") return <PiecesGallerySettings />;
+  if (tool === "adjust") return <AdjustSettings />;
   // marquee has no real settings yet (feather/boolean combine are post-v1) —
   // it keeps the placeholder like other settings-less modes
   return <PlaceholderSettings />;
+}
+
+/** ADJUST quick presets (Ruby 2026-07-12; titles + icons Claude-picked per
+ *  her grant): one-tap versions of the FX everybody reaches for. Each adds
+ *  its effect/filter to the ACTIVE raster layer (registry defaults, tuned
+ *  params where the default is wrong for a scrim) — or retargets the
+ *  existing block's params if the type is already on the stack (one undo
+ *  step either way; fine-tuning lives in the FX panel). */
+const ADJUST_PRESETS: {
+  title: string;
+  icon: LucideIcon;
+  stack: "effects" | "filters";
+  type: string;
+  params?: Record<string, number | string>;
+}[] = [
+  { title: "Drop shadow", icon: Copy, stack: "effects", type: "drop-shadow" },
+  { title: "Black overlay", icon: Moon, stack: "effects", type: "colour-overlay", params: { colour: "#000000", opacity: 40 } },
+  { title: "White overlay", icon: Sun, stack: "effects", type: "colour-overlay", params: { colour: "#ffffff", opacity: 40 } },
+  { title: "Outline", icon: Square, stack: "effects", type: "stroke" },
+  { title: "Glow", icon: Sparkle, stack: "effects", type: "outer-glow" },
+  { title: "Greyscale", icon: Contrast, stack: "filters", type: "grayscale" },
+];
+
+function AdjustSettings() {
+  const doc = useSyncExternalStore(subscribe, getSnapshot, () => null);
+  const layerId = useSyncExternalStore(subscribeSelection, getActiveLayerId, () => null);
+  const layer = doc && layerId ? findLayer(doc.layers, layerId) : null;
+  const ok = layer?.kind === "raster";
+
+  const apply = (preset: (typeof ADJUST_PRESETS)[number]) => {
+    if (!ok || !layerId || !layer) return;
+    const stack = preset.stack === "effects" ? layer.effects : layer.filters;
+    const existing = stack.find((fx) => fx.type === preset.type);
+    if (existing && preset.params) setFxParams(layerId, preset.stack, existing.id, preset.params);
+    else if (!existing) addFx(layerId, preset.stack, preset.type, preset.params);
+  };
+
+  return (
+    <div className="w-[224px]">
+      {!ok && (
+        // the FX panel's shipped gate line, reused
+        <div className="border-b border-border px-[11px] py-2 text-[11px] text-muted-foreground">
+          Effects apply to image layers for now.
+        </div>
+      )}
+      <div className="segmented grid-cols-2">
+        {ADJUST_PRESETS.map((p) => (
+          <button
+            key={p.title}
+            type="button"
+            disabled={!ok}
+            onClick={() => apply(p)}
+            className={cn(
+              "flex h-11 items-center justify-start gap-2 bg-background px-2.5 text-[11px]",
+              ok ? "hover:bg-accent" : "text-muted-foreground/50",
+            )}
+          >
+            <p.icon className="size-[14px] shrink-0 text-muted-foreground" aria-hidden />
+            {p.title}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 /** The active subtool's display label (module `sub` slot). Ids are globally
