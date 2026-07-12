@@ -67,7 +67,7 @@ export function OnboardingModal() {
       <p className="leading-relaxed">
         Hi, this is Substrata, the delphitools image editor. It does effects, layers, filters, film sims, cropping, text and more.
       </p>
-      <p className="leading-relaxed">It's still in early access, so calibrate your excitement.</p>
+      <p className="leading-relaxed">{"It's still in early access, so calibrate your excitement."}</p>
     </div>,
     <div key="local" className="space-y-3">
       {/* eslint-disable-next-line @next/next/no-img-element -- static export, unoptimized anyway */}

@@ -1136,7 +1136,7 @@ Copy in the sketches is illustrative; real strings stay `\u2211CG` (see Conventi
       empty-scene-card vintage bug (text-props' creation click + nothing
       else) — same fix as the lasso, coords moved off-centre.
     - **New-scene dialog** — the Canvas-size modal grew a `mode="new"`:
-      same presets/fields, no reflow row, Apply (label = ∑CG gap) lands a
+      same presets/fields, no reflow row, Apply (label = \u2211CG gap) lands a
       FRESH doc via `createScene` (file-ops; history reset) + fit. Opens on
       any fresh session with nothing restored (suppressed under
       `navigator.webdriver` — every headless harness boots that state) and
@@ -1145,11 +1145,11 @@ Copy in the sketches is illustrative; real strings stay `\u2211CG` (see Conventi
     - **Storage intro card** (`storage-intro.tsx`) — tiny dismissible
       bottom-right card embedding the SHIPPED PersistenceToggle; shown
       until dismissed or storage goes on, seen-flag in localStorage (the
-      layout-pref precedent). Title/body/dismiss aria = ∑CG gaps.
+      layout-pref precedent). Title/body/dismiss aria = \u2211CG gaps.
     - **Help menu wired** — Keyboard shortcuts (grouped keymap sheet:
       subtool keys, edit/scene combos, view gestures incl. two-finger
       touch), About Substrata, About delphitools (version from
-      package.json, delphitools + GitHub links; body text = ∑CG gaps) as
+      package.json, delphitools + GitHub links; body text = \u2211CG gaps) as
       blocking modals via the ModalHost/modal-store pattern.
     slopsieve: 6 gaps open (the four-pack's strings), all parse-clean.
     Full 17-harness suite ALL PASS; tsc green; lint at baseline; build
