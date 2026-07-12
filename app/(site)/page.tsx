@@ -87,8 +87,12 @@ export default function Home() {
               Edit, arrange and mark up images in the browser.
             </p>
           </div>
-          {/* delphi art slot: anchor an <img> bottom-right at bounded height
-              (the DownloadCard mascot pattern) when the drawing lands */}
+          {/* Ruby's graffiti wordmark — mask over bg-primary keeps it in the
+              theme's green; aspect 250.76:151.92 */}
+          <div
+            aria-hidden
+            className="absolute bottom-4 right-6 hidden h-32 w-[211px] bg-primary [mask-image:url(/substrata/wordmark.svg)] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain] sm:block"
+          />
         </Link>
       </section>
 
