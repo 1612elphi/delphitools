@@ -1,6 +1,6 @@
 "use client";
 
-import { GripVertical, X } from "lucide-react";
+import { GripVertical, Pin, PinOff, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { setClamped } from "@/lib/substrata/dock-pref";
 import { togglePin, type ModuleId } from "@/lib/substrata/pin-pref";
@@ -44,22 +44,6 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
 const RAIL_H = "h-[300px]";
 
 export type ModuleVariant = "rail" | "float";
-
-/** A small G-clamp — lucide has no clamp, and Ruby prefers one over a pin. */
-export function ClampIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      {/* frame: down the left, across the bottom */}
-      <path d="M7 3v14a3 3 0 0 0 3 3h7" />
-      {/* fixed jaw + work piece */}
-      <path d="M7 7h10" />
-      <path d="M11 11h6" />
-      {/* screw: through the bottom jaw up to the piece */}
-      <path d="M14 11v-4" />
-      <path d="M12 3.5 16 3" />
-    </svg>
-  );
-}
 
 /**
  * Render a module. `rail` = docked in the rail (own width, uniform height,
@@ -115,14 +99,14 @@ export function ModuleHeader({
         <button
           onClick={() => setClamped(id, !clamped)}
           aria-pressed={clamped}
-          {...hint(clamped ? "Unclamp" : "Clamp open")}
+          {...hint(clamped ? "Unpin" : "Pin open")}
           className={cn(
             "grid size-[22px] shrink-0 place-items-center",
             def.sub == null && "ml-auto",
             clamped ? "bg-primary/10 text-primary ring-1 ring-inset ring-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground",
           )}
         >
-          <ClampIcon className="size-3.5" />
+          {clamped ? <PinOff className="size-3.5" /> : <Pin className="size-3.5" />}
         </button>
       )}
       <button
