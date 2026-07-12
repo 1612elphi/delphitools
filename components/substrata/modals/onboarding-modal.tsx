@@ -84,6 +84,14 @@ export function OnboardingModal() {
       </p>
     </div>,
     <div key="private" className="space-y-3">
+      {/* eslint-disable-next-line @next/next/no-img-element -- static export, unoptimized anyway */}
+      <img
+        src="/substrata/onboarding/private.png"
+        alt=""
+        width={1000}
+        height={622}
+        className="mx-auto -mt-1 h-auto max-h-100 w-auto"
+      />
       <p className="leading-relaxed">
         Because this is in your browser, it&rsquo;s entirely private by design. Nothing of your
         data — no images, no clicks, no mouse movements, no analytics — will be sent back to the
