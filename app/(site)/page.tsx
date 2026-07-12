@@ -70,6 +70,28 @@ export default function Home() {
         </div>
       </header>
 
+      {/* Substrata — the editor billboard (more than a tool, so it lives
+          above the grid as its own object; copy is Ruby's). */}
+      <section className="mb-12">
+        <Link
+          href="/editor"
+          className="group relative block min-h-[200px] overflow-hidden border border-border bg-gradient-to-br from-primary/[0.08] via-primary/[0.03] to-transparent p-6 transition-colors hover:from-primary/[0.12] sm:p-8"
+        >
+          <div className="relative z-10 flex max-w-md flex-col items-start">
+            <span className="text-[0.6rem] font-bold uppercase tracking-[0.2em] text-primary">
+              Beta
+            </span>
+            <h2 className="mt-2 text-2xl font-bold leading-snug text-foreground">Substrata</h2>
+            <p className="text-sm text-muted-foreground">the delphitools editor</p>
+            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+              Edit, arrange and mark up images in the browser.
+            </p>
+          </div>
+          {/* delphi art slot: anchor an <img> bottom-right at bounded height
+              (the DownloadCard mascot pattern) when the drawing lands */}
+        </Link>
+      </section>
+
       {/* Greatest Hits */}
       <section className="mb-12">
         <SectionHeader title="Greatest Hits" count={featuredTools.length} star />
