@@ -1111,6 +1111,15 @@ Copy in the sketches is illustrative; real strings stay `\u2211CG` (see Conventi
     mini 32px idle · hover-expand · clamp holds · unclamp returns · rail
     re-dock · omnibar edges) — ALL PASS; review-fixes/pieces/select/m7/
     touchnav re-run ALL PASS; tsc/lint/build green.
+18. **✅ ADJUST QUICK PRESETS (2026-07-12, Ruby's ask; titles + lucide icons
+    Claude-picked per her grant).** The ADJUST tool-settings body replaces
+    its placeholder with six one-tap FX presets — Drop shadow · Black
+    overlay · White overlay (colour-overlay at 40% scrim) · Outline ·
+    Glow · Greyscale — applying to the active RASTER layer via
+    addFx/setFxParams (existing type retargets instead of duplicating;
+    one undo step either way). Non-raster gate reuses the FX panel's
+    shipped line. Probed: gating, stack placement, shadow ink, overlay
+    retarget, 4-undo round trip.
 13. **✅ iPAD TOUCH PASS, ROUND 1 (2026-07-11, Ruby's on-device loop).**
     Real-model bake verified headlessly first (WebGPU 12s e2e + forced-WASM
     17s, real RMBG-1.4 from the hub — `.verify-real-matte.mjs`), plus a
