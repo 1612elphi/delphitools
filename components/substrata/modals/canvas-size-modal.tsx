@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useSyncExternalStore } from "react";
-import { ImagePlus } from "lucide-react";
+import { ImagePlus, SquareDashed } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,6 +65,9 @@ export function CanvasSizeModal({ mode = "resize" }: { mode?: "resize" | "new" }
   // a plain canvas-size edit stays a plain canvas-size edit.
   const [reflow, setReflow] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  // "new" mode is TWO steps (Ruby 2026-07-12): a chooser — upload an image
+  // or create an empty scene — then the size form for the blank path only.
+  const [step, setStep] = useState<"choose" | "size">(mode === "new" ? "choose" : "size");
 
   // "new" mode's second door: a scene built FROM an image — artboard sized to
   // the picture, the file imported as its first layer (placeOnArtboard lands
@@ -133,34 +136,48 @@ export function CanvasSizeModal({ mode = "resize" }: { mode?: "resize" | "new" }
         </DialogTitle>
       </DialogHeader>
 
+      {/* Step 1 (new mode only): the two-door chooser — labels + "or" are
+          Ruby's wording verbatim. */}
+      {step === "choose" ? (
+        <div className="px-4 py-4">
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void fromImage(f);
+              e.target.value = "";
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="-mx-4 flex h-20 w-[calc(100%+2rem)] flex-col items-center justify-center gap-1.5 border-y border-border bg-card text-xs hover:bg-accent"
+          >
+            <ImagePlus className="size-[18px] text-muted-foreground" aria-hidden />
+            Upload an image
+          </button>
+          <div className="flex items-center gap-3 py-1" aria-hidden>
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-[10.5px] uppercase tracking-wide text-muted-foreground">or</span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+          <button
+            type="button"
+            onClick={() => setStep("size")}
+            className="-mx-4 flex h-20 w-[calc(100%+2rem)] flex-col items-center justify-center gap-1.5 border-y border-border bg-card text-xs hover:bg-accent"
+          >
+            <SquareDashed className="size-[18px] text-muted-foreground" aria-hidden />
+            Create an empty scene
+          </button>
+        </div>
+      ) : (
+      <>
       {/* Body — text/labels breathe (padded); segmented groups bleed to the
           frame edges via -mx-4 border-x-0 (DESIGN.md §6/§7). */}
       <div className="space-y-4 px-4 py-4">
-        {/* "new" mode's other door: a scene FROM an image. Reuses the
-            empty-hint's shipped "Add image" label. */}
-        {mode === "new" && (
-          <>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void fromImage(f);
-                e.target.value = "";
-              }}
-            />
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              className="-mx-4 flex h-12 w-[calc(100%+2rem)] items-center justify-center gap-2 border-y border-border bg-card text-xs hover:bg-accent"
-            >
-              <ImagePlus className="size-[16px] text-muted-foreground" aria-hidden />
-              Add image
-            </button>
-          </>
-        )}
         {/* Presets — dimension labels are data, not copy. */}
         <section className="space-y-2">
           <div className="text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">
@@ -266,10 +283,10 @@ export function CanvasSizeModal({ mode = "resize" }: { mode?: "resize" | "new" }
           type="button"
           variant="ghost"
           onClick={() => {
-            closeModal();
-            // fresh boots are doc-less until this dialog lands one — a
-            // cancelled New-scene falls back to a default blank
-            if (mode === "new") ensureScene();
+            // new mode: Cancel steps back to the two-door chooser; only
+            // dialog-level dismissal (Esc/X) falls back via ensureScene
+            if (mode === "new") setStep("choose");
+            else closeModal();
           }}
           className="h-12 flex-1 rounded-none border-r border-border text-sm"
         >
@@ -293,6 +310,8 @@ export function CanvasSizeModal({ mode = "resize" }: { mode?: "resize" | "new" }
           )}
         </Button>
       </DialogFooter>
+      </>
+      )}
     </DialogContent>
   );
 }
