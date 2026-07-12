@@ -14,7 +14,7 @@ import { ColourSwatchCell, DeferredHexInput, normalizeHex } from "@/components/c
 import { Switch } from "@/components/ui/switch";
 import { getSnapshot, subscribe } from "@/lib/substrata/doc-store";
 import { resizeArtboardReflow, setArtboard } from "@/lib/substrata/artboard-ops";
-import { createScene, ensureScene } from "@/lib/substrata/file-ops";
+import { createScene } from "@/lib/substrata/file-ops";
 import { importImageFile } from "@/lib/substrata/import-raster";
 import { closeModal } from "@/lib/substrata/modal";
 import { DEFAULT_ARTBOARD } from "@/lib/substrata/doc-model";
