@@ -37,13 +37,13 @@ applicable on this surface (hardware/native or format constraint).
 ## Substrata (image editor) — outside the parity contract
 
 **Substrata** is a browser-based image editor at `/editor` in the web repo. Since
-2026-07-12 it has a **catalogue entry** in `lib/tools.ts` (home grid + sidebar +
-featured, `href: "/editor"` — no `/tools/[toolId]` page is generated for it), but
-it remains **web-only / explicitly non-parity**: a heavy Fabric.js canvas app
-(layers, per-layer effects stack, local persistence) with no realistic CLI or iOS
-sibling, so it is excluded from the W/C/I tables and the tool counts above.
-Precedent: the Base64 Image Encoder is similarly web-only. Spec: `SPEC.md`.
-Build plan: `BUILD-PLAN.md`.
+2026-07-12 it is surfaced on the main page as its own **billboard object** above
+the tool grid, plus a sidebar item beside Home ("more than just a tool" — Ruby;
+it is deliberately NOT a `lib/tools.ts` catalogue entry). It remains **web-only /
+explicitly non-parity**: a heavy Fabric.js canvas app (layers, per-layer effects
+stack, local persistence) with no realistic CLI or iOS sibling, so it is excluded
+from the W/C/I tables and the tool counts above. Precedent: the Base64 Image
+Encoder is similarly web-only. Spec: `SPEC.md`. Build plan: `BUILD-PLAN.md`.
 
 ---
 

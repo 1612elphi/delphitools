@@ -46,7 +46,6 @@ import {
   Wind,
   GitCompare,
   KeyRound,
-  Brush,
 } from "lucide-react";
 
 export interface Tool {
@@ -180,20 +179,6 @@ export const toolCategories: ToolCategory[] = [
     id: "img-assets",
     name: "Images & Assets",
     tools: [
-      {
-        // Substrata lives at its own full-viewport route, not /tools/[id] —
-        // generateStaticParams filters external hrefs out of page generation
-        id: "substrata",
-        name: "Substrata",
-        // ∑CG: Substrata's catalogue card description
-        //   spec: one line under the tool name on the home grid; what the editor is, terse like sibling descriptions; ≤ 60 chars
-        //   sample: "Layered image editor — brushes, filters, text, export"
-        description: "∑CG",
-        icon: Brush,
-        href: "/editor",
-        beta: true,
-        new: true,
-      },
       {
         id: "artwork-enhancer",
         name: "Artwork Enhancer",
@@ -509,7 +494,7 @@ export const toolCategories: ToolCategory[] = [
 export const allTools = toolCategories.flatMap((category) => category.tools);
 
 // Featured tools for "Delphi's Greatest Hits" section
-const featuredToolIds = ["substrata", "qr-genny", "palette-genny", "background-remover"];
+const featuredToolIds = ["qr-genny", "palette-genny", "background-remover"];
 export const featuredTools = featuredToolIds
   .map((id) => allTools.find((tool) => tool.id === id))
   .filter((tool): tool is Tool => tool !== undefined);

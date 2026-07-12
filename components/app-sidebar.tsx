@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Info, Search, Star, X } from "lucide-react";
+import { Brush, Home, Info, Search, Star, X } from "lucide-react";
 
 import { toolCategories, featuredTools } from "@/lib/tools";
 import { AboutDelphitoolsBody } from "@/components/about-delphitools";
@@ -143,6 +143,16 @@ export function AppSidebar() {
                     <Link href="/">
                       <Home className="size-4" />
                       <span>Home</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                {/* the editor — more than a tool, so it sits with Home rather
+                    than inside a category */}
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Substrata">
+                    <Link href="/editor" prefetch={false}>
+                      <Brush className="size-4" />
+                      <span>Substrata</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
