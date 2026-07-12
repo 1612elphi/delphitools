@@ -43,7 +43,7 @@ export function SmallScreenNotice() {
   if (!isMobile || seen) return null;
 
   return (
-    <div className="fixed inset-x-2 bottom-2 z-40 border-2 border-border bg-background shadow-lg">
+    <div className="fixed left-1/2 top-1/2 z-40 w-[calc(100vw-32px)] max-w-sm -translate-x-1/2 -translate-y-1/2 border-2 border-border bg-background shadow-lg">
       <p className="px-3 pt-3 text-xs leading-relaxed text-muted-foreground">
         Substrata works best on a bigger screen. You can still use it here, but please
         don&rsquo;t email me about issues arising from your screen being too small. I&rsquo;m
@@ -56,11 +56,7 @@ export function SmallScreenNotice() {
           onClick={markSeen}
           className="h-11 w-full bg-primary text-sm font-semibold text-primary-foreground hover:brightness-105"
         >
-          {/* ∑CG: small-screen notice dismiss button
-              spec: one short phrase acknowledging the notice and hiding it for good; ≤ 12 chars
-              sample: "Got it"
-          */}
-          {"∑CG"}
+          all right all right
         </button>
       </div>
     </div>
