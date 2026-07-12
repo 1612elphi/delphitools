@@ -20,6 +20,7 @@ import { LayerContextMenu } from "@/components/substrata/layer-context-menu";
 import { SelectionPopup } from "@/components/substrata/selection-popup";
 import { SecureContextNotice } from "@/components/substrata/secure-context-notice";
 import { EmptyHint } from "@/components/substrata/empty-hint";
+import { SmallScreenNotice } from "@/components/substrata/small-screen-notice";
 import { DockZones } from "@/components/substrata/dock-zones";
 import { useEditorShortcuts } from "@/hooks/use-editor-shortcuts";
 import { hydrateLayoutPrefs, setModuleDock, setOmnibarEdge, type DockTarget, type Edge } from "@/lib/substrata/dock-pref";
@@ -116,6 +117,8 @@ export function SubstrataShell() {
       <ModalHost />
       {/* right-click layer menu — ONE instance; canvas + layers panel open it */}
       <LayerContextMenu />
+      {/* sub-768px viewports: dismissible not-designed-for-this-yet banner */}
+      <SmallScreenNotice />
     </div>
     </DndContext>
   );
