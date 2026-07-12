@@ -56,9 +56,16 @@ export function OnboardingModal() {
   // as <img src="/substrata/onboarding/…"> wherever they fit.
   const slides: React.ReactNode[] = [
     <div key="hello" className="space-y-3">
+      {/* eslint-disable-next-line @next/next/no-img-element -- static export, unoptimized anyway */}
+      <img
+        src="/substrata/onboarding/workshop.png"
+        alt=""
+        width={982}
+        height={1000}
+        className="mx-auto -mt-1 h-auto max-h-[300px] w-auto"
+      />
       <p className="leading-relaxed">
-        Hi, this is Substrata, the delphitools image editor. Layers, filters, brushes, text,
-        background removal — a real editor, living in this tab.
+        Hi, this is Substrata, the delphitools image editor. It does effects, layers, filters, .
       </p>
       <p className="leading-relaxed">We&rsquo;re still in beta — let me show you around.</p>
     </div>,
