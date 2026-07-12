@@ -1191,3 +1191,12 @@ Copy in the sketches is illustrative; real strings stay `\u2211CG` (see Conventi
     Every dismiss path (Cancel/Esc/overlay) falls back to a default blank
     via `ensureScene()` (file-ops) so the editor is never stranded;
     harnesses keep the instant default doc under navigator.webdriver.
+16. **✅ HARNESS SUITE PROMOTED + ROOT CLEANUP (2026-07-12).** The untracked
+    root `.verify-*.mjs` dot-files now live TRACKED in `scripts/verify/*.mjs`
+    (~20 harnesses; puppeteer-core pinned as a devDependency; effects.mjs
+    default URL fixed :3010→:3000; real-matte's Chrome profile → OS tmpdir;
+    static-smoke's `out/` path re-anchored to the repo root). One-off debug
+    rigs (.check-/.debug-/.repro-/.perf-/.serve-out) DELETED; future session
+    scratch stays gitignored via `/.*.mjs`. Stale pre-redesign `test.html`
+    removed from the repo root; CLAUDE.md's "No Tests" section replaced with
+    the suite's run instructions.

@@ -51,8 +51,9 @@ DESIGN.md
 .superpowers/
 .claude/scheduled_tasks.lock
 
+# session scratch (one-off debug/repro rigs land as root dot-files;
+# anything worth keeping graduates into scripts/verify/)
+/.*.mjs
+
 # build data (downloaded source files for dictionary builds)
 scripts/data/
-
-# design sketches / mockups (not part of the app)
-/sketches/
