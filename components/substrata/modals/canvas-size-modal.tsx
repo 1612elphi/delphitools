@@ -299,11 +299,7 @@ export function CanvasSizeModal({ mode = "resize" }: { mode?: "resize" | "new" }
         >
           {mode === "new" ? (
             <>
-              {/* ∑CG: New-scene dialog primary action button
-                  spec: one word, imperative, confirms creating the fresh scene at the chosen size; pairs with the shipped "Cancel"; ≤ 10 chars
-                  sample: "Create"
-              */}
-              {"∑CG"}
+              {"Create"}
             </>
           ) : (
             "Apply"

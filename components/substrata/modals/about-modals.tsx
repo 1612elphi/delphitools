@@ -36,11 +36,7 @@ export function AboutSubstrataModal() {
         <span className="font-mono text-[11px] tabular-nums text-muted-foreground">v{pkg.version}</span>
       </div>
       <p className="leading-relaxed text-muted-foreground">
-        {/* ∑CG: About-Substrata body — what the editor is, in the product's voice
-            spec: 1–2 sentences shown in the Help ▸ About Substrata dialog; names the editor's promise (layered image editing, in the browser, nothing uploaded); ≤ 200 chars
-            sample: "A layered image editor that runs entirely in your browser. Your work never leaves this machine unless you export it."
-        */}
-        {"∑CG"}
+        {"Substrata is a simple, uncomplicated image editor for the browser, based on Fabric.JS."}
       </p>
       <div className="border-t border-border pt-2 text-[11px] text-muted-foreground">
         {/* factual: part of the delphitools catalogue */}
