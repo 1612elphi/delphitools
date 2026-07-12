@@ -2530,6 +2530,13 @@ export function FabricCanvas() {
 
   return (
     <div ref={wrapRef} className="relative flex-1 overflow-hidden bg-muted">
+      {/* Ruby's graffiti wordmark, tiled faintly across the void (the fabric
+          canvases are transparent outside the artboard). CSS mask over a
+          foreground-coloured layer keeps it theme-aware. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-foreground opacity-[0.035] [mask-image:url(/substrata/wordmark-tile.svg)] [mask-repeat:repeat] [mask-size:220px_auto]"
+      />
       <canvas ref={elRef} />
       {/* drop-target highlight — toggled imperatively while files hover */}
       <div

@@ -94,7 +94,7 @@ export function OnboardingModal() {
       />
       <p className="leading-relaxed">
         Because this is in your browser, it&rsquo;s entirely private by design. Nothing of your
-        data — no images, no clicks, no mouse movements, no analytics — will be sent back to the
+        data, no images, no clicks, no mouse movements, no analytics, will be sent back to the
         server. And I can prove this, since it&rsquo;s all{" "}
         <a
           href={REPO_URL}
@@ -107,9 +107,8 @@ export function OnboardingModal() {
         .
       </p>
       <p className="leading-relaxed text-muted-foreground/80">
-        One footnote: a few heavyweight tools download their machinery on first use — the
-        background remover fetches its model, for instance. That&rsquo;s a download, not an
-        upload. Nothing of yours goes anywhere.
+        One footnote: a few heavyweight tools download themselves on first use — the
+        background remover fetches its model, for instance. This is data going to you, not to me.
       </p>
     </div>,
     <div key="storage" className="space-y-3">
@@ -136,7 +135,7 @@ export function OnboardingModal() {
       ? [
           <p key="touch" className="leading-relaxed">
             Since you&rsquo;re on touch: two fingers pan and zoom the canvas, one finger — or
-            your pencil — drives the tool. Pinch away.
+            your pencil — uses the selected tool. Touch support is in alpha, so please watch for bugs.
           </p>,
         ]
       : []),
@@ -155,9 +154,9 @@ export function OnboardingModal() {
         <a href={BUG_MAILTO} className="underline underline-offset-2 hover:text-foreground">
           tools@rmv.fyi
         </a>{" "}
-        — or hit the Feedback button up in the top bar, it does the same thing.
+        or press the Feedback button up in the top bar.
       </p>
-      <p className="leading-relaxed">Thanks for being here this early. Love, delphi</p>
+      <p className="leading-relaxed">Thanks for being here this early.</p>
     </div>,
   ];
   const LAST = slides.length - 1;
