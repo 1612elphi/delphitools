@@ -45,7 +45,7 @@ import {
   type ToolSettings,
 } from "@/lib/substrata/tool-settings";
 import type { Layer } from "@/lib/substrata/doc-model";
-import { ModuleBox, MODULES } from "@/components/substrata/omnibar/modules";
+import { MODULES } from "@/components/substrata/omnibar/modules";
 import { hint } from "@/lib/substrata/hint";
 import { Rail } from "@/components/substrata/omnibar/rail";
 import { PiecesFlyout, PrimitivesFlyout } from "@/components/substrata/omnibar/tool-settings";
@@ -56,8 +56,9 @@ import { PiecesFlyout, PrimitivesFlyout } from "@/components/substrata/omnibar/t
  * [tools] [tool settings, inline + always visible] [panels/more] [colour].
  * Every subtool is a flat, FLUSH full-height button (a selected tool's
  * highlight touches the bar edges — no padding halo); no hover fans. Panel
- * triggers peek on hover and pin on click; the colour unit is one big
- * full-height swatch. Copy \u2211CG.
+ * triggers TOGGLE their module on click (round 3 — hover-peek is gone; a
+ * module opens in the rail, or floats where it was last dragged); the
+ * colour unit is one big full-height swatch.
  */
 
 interface ToolDef {
@@ -228,20 +229,20 @@ export function Omnibar() {
       {/* 2 · tool settings — the contextual trigger (Ruby's keeper shape):
           active subtool's icon + name + a couple of live setting chips at a
           glance; peeks/pins the TOOL module like every panel trigger */}
-      <ToolSettingsUnit edge={edge} vertical={vertical} pinned={isPinned("tool")} />
+      <ToolSettingsUnit vertical={vertical} pinned={isPinned("tool")} />
 
       {/* 3 · panels ("more") — flush triggers + the overflow toggle */}
       <div className={box}>
-        <PanelButton id="effects" icon={<Sparkles className={ICON} />} edge={edge} vertical={vertical} pinned={isPinned("effects")} />
-        <PanelButton id="layers" icon={<Layers className={ICON} />} edge={edge} vertical={vertical} pinned={isPinned("layers")} />
-        <PanelButton id="inspector" icon={<BoxIcon className={ICON} />} edge={edge} vertical={vertical} pinned={isPinned("inspector")} />
-        <PanelButton id="looks" icon={<Film className={ICON} />} edge={edge} vertical={vertical} pinned={isPinned("looks")} />
+        <PanelButton id="effects" icon={<Sparkles className={ICON} />} vertical={vertical} pinned={isPinned("effects")} />
+        <PanelButton id="layers" icon={<Layers className={ICON} />} vertical={vertical} pinned={isPinned("layers")} />
+        <PanelButton id="inspector" icon={<BoxIcon className={ICON} />} vertical={vertical} pinned={isPinned("inspector")} />
+        <PanelButton id="looks" icon={<Film className={ICON} />} vertical={vertical} pinned={isPinned("looks")} />
         {/* arrange was the overflow bar's only occupant — pulled in (Ruby) */}
-        <PanelButton id="arrange" icon={<AlignHorizontalDistributeCenter className={ICON} />} edge={edge} vertical={vertical} pinned={isPinned("arrange")} />
+        <PanelButton id="arrange" icon={<AlignHorizontalDistributeCenter className={ICON} />} vertical={vertical} pinned={isPinned("arrange")} />
       </div>
 
       {/* 4 · colour — one big full-height swatch, its own unit */}
-      <ColourButton edge={edge} vertical={vertical} pinned={isPinned("colour")} />
+      <ColourButton pinned={isPinned("colour")} />
     </div>
   );
 
@@ -341,7 +342,7 @@ function readoutChips(tool: ToolId, sub: string, layer: Layer | null, ts: ToolSe
  * peeks the TOOL module (the full settings body); click pins it. Uniform bar
  * height; vertical docks show the icon only.
  */
-function ToolSettingsUnit({ edge, vertical, pinned }: { edge: Edge; vertical: boolean; pinned: boolean }) {
+function ToolSettingsUnit({ vertical, pinned }: { vertical: boolean; pinned: boolean }) {
   const doc = useSyncExternalStore(subscribe, getSnapshot, () => null);
   const layerId = useSyncExternalStore(subscribeSelection, getActiveLayerId, () => null);
   const toolSettings = useSyncExternalStore(subscribeToolSettings, getToolSettings, getToolSettings);
@@ -379,11 +380,6 @@ function ToolSettingsUnit({ edge, vertical, pinned }: { edge: Edge; vertical: bo
           </span>
         )}
       </button>
-      {!pinned && (
-        <Bloom edge={edge} cross="center">
-          <ModuleBox id="tool" />
-        </Bloom>
-      )}
     </div>
   );
 }
@@ -412,7 +408,7 @@ function OmnibarGrip({ vertical }: { vertical: boolean }) {
 
 /** The colour trigger — its own UNIT: one big full-height live swatch.
  *  Same peek/pin semantics as every PanelButton, just louder. */
-function ColourButton({ edge, pinned }: { edge: Edge; vertical?: boolean; pinned: boolean }) {
+function ColourButton({ pinned }: { pinned: boolean }) {
   const colour = useSyncExternalStore(subscribeColour, getColour, getColour);
   return (
     <div className="group/trigger pointer-events-auto relative shrink-0 border border-border bg-background shadow-lg">
@@ -429,11 +425,6 @@ function ColourButton({ edge, pinned }: { edge: Edge; vertical?: boolean; pinned
           style={{ backgroundColor: colour.hex, boxShadow: "inset 0 0 0 1px rgba(255,255,255,.4)" }}
         />
       </button>
-      {!pinned && (
-        <Bloom edge={edge} cross="end">
-          <ModuleBox id="colour" />
-        </Bloom>
-      )}
     </div>
   );
 }
@@ -441,17 +432,13 @@ function ColourButton({ edge, pinned }: { edge: Edge; vertical?: boolean; pinned
 function PanelButton({
   id,
   icon,
-  edge,
   vertical,
   pinned,
-  cross = "end",
 }: {
   id: ModuleId;
   icon: React.ReactNode;
-  edge: Edge;
   vertical: boolean;
   pinned: boolean;
-  cross?: "center" | "end";
 }) {
   return (
     <div className="group/trigger relative shrink-0">
@@ -470,11 +457,6 @@ function PanelButton({
       >
         {icon}
       </button>
-      {!pinned && (
-        <Bloom edge={edge} cross={cross}>
-          <ModuleBox id={id} />
-        </Bloom>
-      )}
     </div>
   );
 }

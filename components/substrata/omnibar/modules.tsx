@@ -2,6 +2,7 @@
 
 import { GripVertical, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { setClamped } from "@/lib/substrata/dock-pref";
 import { togglePin, type ModuleId } from "@/lib/substrata/pin-pref";
 import { useDraggable } from "@dnd-kit/core";
 import { hint } from "@/lib/substrata/hint";
@@ -14,12 +15,11 @@ import { LooksBody, LooksSub } from "@/components/substrata/modules/looks-panel"
 import { ToolModuleBody, ToolModuleSub } from "@/components/substrata/omnibar/tool-settings";
 
 /**
- * Module registry + box wrapper. One definition per omnibar module; the SAME
- * content renders in the hover-peek bloom (unpinned) or the rail (pinned). The
- * box supplies the header (title · sub · unpin-when-pinned). All six modules
- * are real. Titles = mockup/omnibar words ("FX" matches its omnibar trigger —
- * the module holds adjustments + effects; the film-sim/LUT family lives in
- * LOOKS, whose category Ruby hasn't named yet → its title is the \u2211CG gap).
+ * Module registry + box wrapper (round 3): an open module renders in the
+ * RAIL (uniform height, beside the omnibar) or FLOATS at an arbitrary point
+ * (natural height, mini-when-idle — see float-layer.tsx). The box supplies
+ * the header (grip · title · sub · clamp-when-floating · ✕). Titles =
+ * mockup/omnibar words.
  */
 
 export interface ModuleDef {
@@ -43,57 +43,109 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
 /** Uniform rail height (the §8 "every pinned module is the same height"). */
 const RAIL_H = "h-[300px]";
 
-export type ModuleVariant = "bloom" | "rail" | "dock";
+export type ModuleVariant = "rail" | "float";
+
+/** A small G-clamp — lucide has no clamp, and Ruby prefers one over a pin. */
+export function ClampIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      {/* frame: down the left, across the bottom */}
+      <path d="M7 3v14a3 3 0 0 0 3 3h7" />
+      {/* fixed jaw + work piece */}
+      <path d="M7 7h10" />
+      <path d="M11 11h6" />
+      {/* screw: through the bottom jaw up to the piece */}
+      <path d="M14 11v-4" />
+      <path d="M12 3.5 16 3" />
+    </svg>
+  );
+}
 
 /**
- * Render a module. `bloom` = hover-peek (own width, natural height); `rail` =
- * pinned in the rail (own width, uniform height, sticky header, ✕ close);
- * `dock` = pinned in a side sidebar (full sidebar width, natural height, ✕).
+ * Render a module. `rail` = docked in the rail (own width, uniform height,
+ * sticky header); `float` = free-floating (own width, natural height, clamp
+ * toggle in the header). The float-layer owns mini/full switching — this box
+ * always renders the FULL panel.
  */
-export function ModuleBox({ id, variant = "bloom" }: { id: ModuleId; variant?: ModuleVariant }) {
+export function ModuleBox({
+  id,
+  variant = "rail",
+  clamped = false,
+}: {
+  id: ModuleId;
+  variant?: ModuleVariant;
+  clamped?: boolean;
+}) {
   const def = MODULES[id];
-  const closable = variant !== "bloom";
   return (
     <div
-      className={cn(
-        variant === "dock" ? "w-full" : def.width,
-        variant === "rail" && cn("flex flex-col overflow-hidden", RAIL_H),
-      )}
+      className={cn(def.width, "flex flex-col overflow-hidden", variant === "rail" ? RAIL_H : "max-h-[min(480px,60vh)]")}
     >
-      <div
-        className={cn(
-          "flex h-[30px] items-center gap-1.5 border-b border-border bg-card pl-1 pr-[7px]",
-          variant === "rail" && "sticky top-0 z-[2]",
-        )}
-      >
-        <ModuleGrip id={id} />
-        <span className="text-[10.5px] font-bold uppercase tracking-wide">{def.title}</span>
-        {def.sub != null && <span className="ml-auto text-[10px] text-muted-foreground">{def.sub}</span>}
-        {closable && (
-          <button
-            onClick={() => togglePin(id)}
-            aria-label="Close panel"
-            className={cn(
-              "grid size-[22px] place-items-center text-muted-foreground hover:bg-accent hover:text-foreground",
-              def.sub == null && "ml-auto",
-            )}
-          >
-            <X className="size-3.5" />
-          </button>
-        )}
-      </div>
-      <div className={cn(variant === "rail" && "min-h-0 flex-1 overflow-auto")}>{def.body}</div>
+      <ModuleHeader id={id} variant={variant} clamped={clamped} />
+      <div className="min-h-0 flex-1 overflow-auto">{def.body}</div>
     </div>
   );
 }
 
-/** Drag-to-dock grip (dnd-kit draggable) — the visible affordance that
- *  replaced the Workspace-menu dock rows; works from the bloom too (a drop
- *  also pins). The shell's DndContext owns sensors + the drop dispatch. */
-function ModuleGrip({ id }: { id: ModuleId }) {
+/** The shared header row: grip · title · sub · (clamp) · ✕. Exported so the
+ *  float-layer's mini card can render exactly this and nothing else. */
+export function ModuleHeader({
+  id,
+  variant,
+  clamped = false,
+}: {
+  id: ModuleId;
+  variant: ModuleVariant;
+  clamped?: boolean;
+}) {
+  const def = MODULES[id];
+  return (
+    <div
+      className={cn(
+        "flex h-[30px] shrink-0 items-center gap-1.5 border-b border-border bg-card pl-1 pr-[7px]",
+        variant === "rail" && "sticky top-0 z-[2]",
+      )}
+    >
+      <ModuleGrip id={id} from={variant} />
+      <span className="whitespace-nowrap text-[10.5px] font-bold uppercase tracking-wide">{def.title}</span>
+      {def.sub != null && (
+        <span className="ml-auto min-w-0 truncate text-[10px] text-muted-foreground">{def.sub}</span>
+      )}
+      {variant === "float" && (
+        <button
+          onClick={() => setClamped(id, !clamped)}
+          aria-pressed={clamped}
+          {...hint(clamped ? "Unclamp" : "Clamp open")}
+          className={cn(
+            "grid size-[22px] shrink-0 place-items-center",
+            def.sub == null && "ml-auto",
+            clamped ? "bg-primary/10 text-primary ring-1 ring-inset ring-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground",
+          )}
+        >
+          <ClampIcon className="size-3.5" />
+        </button>
+      )}
+      <button
+        onClick={() => togglePin(id)}
+        aria-label="Close panel"
+        className={cn(
+          "grid size-[22px] shrink-0 place-items-center text-muted-foreground hover:bg-accent hover:text-foreground",
+          def.sub == null && variant !== "float" && "ml-auto",
+        )}
+      >
+        <X className="size-3.5" />
+      </button>
+    </div>
+  );
+}
+
+/** Drag grip (dnd-kit draggable): drag a module out of the rail to float it
+ *  anywhere, drag a floating module to move it, drop on the rail zone to
+ *  re-dock. The shell's DndContext owns sensors + the drop dispatch. */
+function ModuleGrip({ id, from }: { id: ModuleId; from: ModuleVariant }) {
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: `dock-module-${id}`,
-    data: { kind: "module", id },
+    data: { kind: "module", id, from },
   });
   return (
     <span
@@ -101,7 +153,7 @@ function ModuleGrip({ id }: { id: ModuleId }) {
       {...attributes}
       {...listeners}
       className="grid h-full w-4 shrink-0 cursor-grab touch-none place-items-center text-muted-foreground/60 outline-none hover:text-foreground"
-      {...hint("Drag to dock")}
+      {...hint("Drag to move")}
     >
       <GripVertical className="size-3" />
     </span>

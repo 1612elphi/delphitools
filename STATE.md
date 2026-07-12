@@ -1078,13 +1078,39 @@ Copy in the sketches is illustrative; real strings stay `\u2211CG` (see Conventi
     Harness grew keys/flyout/arrange checks (24 ALL PASS; one probe
     hardened: collapsed blooms keep layout, filter by computed
     pointer-events). review-fixes + M7 ALL PASS; tsc/lint/build green.
-11. **⏳ NEXT (Ruby, 2026-07-08): PANELS OVERHAUL, ROUND 3.** Ruby: "we
-    gotta overhaul the panels one more time." Scope TBD with her — candidate
-    threads from today's passes: panel hover-peek vs click (the hover-gap
-    complaint from the clarity review), rail vs sidebar defaults, module
-    widths (tool module w-auto slack in sidebars), the layers-panel
-    affordances (drag grip, hidden-state text, first-run hint), and the
-    flat bar's total width on small screens. Decisions first.
+11. **✅ PANELS OVERHAUL, ROUND 3 (2026-07-12, Ruby's four-point spec —
+    built same day, see item 17).**
+17. **✅ ROUND-3 DOCKING: FLOAT/MINI/CLAMP (2026-07-12).** Ruby's spec:
+    (1) omnibar keeps its four draggable edges, rail follows · (2) panels
+    UNDOCK by dragging, land at any arbitrary point · (3) undocked +
+    unfocused panels shrink to MINI read-only cards · (4) a CLAMP toggle
+    holds them full-size. Built:
+    - **Sidebars DELETED** (`sidebar.tsx`; the "doesn't work half the
+      time" system). DockTarget is now `"rail" | "float"`; persisted
+      left/right layouts migrate to rail. dock-pref grew `floatPos` +
+      `clamped` records (persisted).
+    - **Drag model**: module grips (rail or float) drag the ghost chip;
+      drop on the RAIL ZONE (the only module zone now) re-docks, drop
+      ANYWHERE ELSE floats the panel at the pointer (shell computes
+      activator+delta → canvas-area coords, clamped to bounds).
+      `floatModule`/`dockToRail` in dock-pref.
+    - **FloatLayer** (`float-layer.tsx`, z-35): idle floats render MINI =
+      the ModuleHeader row alone (title + live `sub` summary + grip/clamp/
+      ✕ — read-only at a glance, w-max); hover or focus-within expands to
+      the full ModuleBox in place; CLAMP (custom G-clamp icon — lucide has
+      none) pins full-size. Float boxes are natural-height
+      (max-h min(480px,60vh)) vs the rail's uniform 300px.
+    - **Hover-peek REMOVED from all panel triggers** (PanelButton /
+      ToolSettingsUnit / ColourButton are plain click-toggles — the
+      clarity-review hover-gap complaint dies with it; Bloom survives only
+      for the pieces/primitives shape flyouts).
+    - ponytail: drags move the ghost chip, the panel teleports on drop
+      (live-following drag is the upgrade); no z-reorder among floats;
+      float positions don't re-clamp on window resize.
+    workspace.mjs rewritten for the new flows (float near drop point ·
+    mini 32px idle · hover-expand · clamp holds · unclamp returns · rail
+    re-dock · omnibar edges) — ALL PASS; review-fixes/pieces/select/m7/
+    touchnav re-run ALL PASS; tsc/lint/build green.
 13. **✅ iPAD TOUCH PASS, ROUND 1 (2026-07-11, Ruby's on-device loop).**
     Real-model bake verified headlessly first (WebGPU 12s e2e + forced-WASM
     17s, real RMBG-1.4 from the hub — `.verify-real-matte.mjs`), plus a
