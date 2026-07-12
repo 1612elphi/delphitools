@@ -1,4 +1,4 @@
-// Headless verification for workspace drag-to-dock + menu slim-down (delete after use).
+// Headless verification for the round-3 workspace: omnibar units, float/mini/clamp panels, edge docking.
 // Pattern from .verify-review-fixes.mjs. Needs `npm run dev` on :3000.
 import puppeteer from "puppeteer-core";
 
@@ -150,7 +150,7 @@ const moreGone = await page.evaluate(
 check("panels: overflow toggle removed", String(moreGone), moreGone === true);
 check("ux: full-height colour swatch unit", String(ux.bigColour), ux.bigColour === true);
 
-// ── 2. module drag: rail → right sidebar ─────────────────────────────────────
+// ── 2c. round-3 float: drag out of the rail → floats · mini/hover · clamp ────
 const gripRect = await page.evaluate(() => {
   const grip = [...document.querySelectorAll("span.cursor-grab")].find((el) => {
     const header = el.parentElement;
@@ -160,34 +160,82 @@ const gripRect = await page.evaluate(() => {
   const r = grip.getBoundingClientRect();
   return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
 });
-check("drag: layers module grip found", JSON.stringify(gripRect), !!gripRect);
+check("float: layers module grip found", JSON.stringify(gripRect), !!gripRect);
 
 if (gripRect) {
   await page.mouse.move(gripRect.x, gripRect.y);
   await page.mouse.down();
-  await page.mouse.move(gripRect.x + 40, gripRect.y - 40, { steps: 4 }); // past threshold → zones appear
+  await page.mouse.move(gripRect.x + 40, gripRect.y - 40, { steps: 4 }); // past threshold → zone appears
   await sleep(200);
   const zonesUp = await page.evaluate(() => document.querySelectorAll("[data-dock-zone]").length);
-  check("drag: drop zones appear mid-drag", `${zonesUp} zones`, zonesUp === 3);
-  // drop on the RIGHT zone
-  const target = await page.evaluate(() => {
-    const z = document.querySelector('[data-dock-zone="right"]');
-    if (!z) return null;
-    const r = z.getBoundingClientRect();
-    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  });
-  await page.mouse.move(target.x, target.y, { steps: 6 });
+  check("float: only the rail zone appears mid-drag", `${zonesUp} zone`, zonesUp === 1);
+  // drop on open canvas, well away from the rail zone
+  await page.mouse.move(420, 260, { steps: 6 });
   await sleep(150);
   await page.mouse.up();
   await sleep(500);
-  const docked = await page.evaluate(() => {
-    const zonesGone = document.querySelectorAll("[data-dock-zone]").length === 0;
-    const sidebars = [...document.querySelectorAll("div")].filter((d) => d.className.includes?.("border-l"));
-    const inRight = sidebars.some((d) => d.textContent?.toUpperCase().includes("LAYERS"));
-    return { zonesGone, inRight };
+  const floated = await page.evaluate(() => {
+    const el = document.querySelector("[data-float-panel='layers']");
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { x: Math.round(r.left), y: Math.round(r.top), h: Math.round(r.height) };
   });
-  check("drag: zones clear after drop", String(docked.zonesGone), docked.zonesGone);
-  check("drag: layers docked to right sidebar", String(docked.inRight), docked.inRight === true);
+  check("float: panel floats near the drop point", JSON.stringify(floated), !!floated && Math.abs(floated.x - 410) < 30 && Math.abs(floated.y - 250) < 60);
+  // pointer landed on the panel → full; move away → MINI (header-only)
+  await page.mouse.move(1200, 700, { steps: 4 });
+  await sleep(300);
+  const miniH = await page.evaluate(() => Math.round(document.querySelector("[data-float-panel='layers']")?.getBoundingClientRect().height ?? -1));
+  check("float: idle panel goes mini (header-only)", `${miniH}px`, miniH > 0 && miniH < 44);
+  // hover → expands to the full panel in place
+  await page.mouse.move(floated.x + 60, floated.y + 12, { steps: 4 });
+  await sleep(300);
+  const fullState = await page.evaluate(() => {
+    const el = document.querySelector("[data-float-panel='layers']");
+    return { h: Math.round(el?.getBoundingClientRect().height ?? -1), body: el?.textContent?.includes("Upload") ?? false };
+  });
+  check("float: hover expands to the full panel", JSON.stringify(fullState), fullState.h > 120 && fullState.body === true);
+  // clamp: click the clamp toggle, move away → stays full
+  await page.evaluate(() => document.querySelector("[data-float-panel='layers'] button[title='Clamp open']")?.click());
+  await sleep(150);
+  await page.mouse.move(1200, 700, { steps: 4 });
+  await sleep(300);
+  const clampedH = await page.evaluate(() => Math.round(document.querySelector("[data-float-panel='layers']")?.getBoundingClientRect().height ?? -1));
+  check("float: clamp holds it full-size when idle", `${clampedH}px`, clampedH > 120);
+  // unclamp → mini again
+  await page.mouse.move(floated.x + 60, floated.y + 12, { steps: 4 });
+  await sleep(200);
+  await page.evaluate(() => document.querySelector("[data-float-panel='layers'] button[title='Unclamp']")?.click());
+  await page.mouse.move(1200, 700, { steps: 4 });
+  await sleep(300);
+  const unclampedH = await page.evaluate(() => Math.round(document.querySelector("[data-float-panel='layers']")?.getBoundingClientRect().height ?? -1));
+  check("float: unclamp returns to mini", `${unclampedH}px`, unclampedH > 0 && unclampedH < 44);
+  // drag the floating panel onto the rail zone → re-docks
+  const floatGrip = await page.evaluate(() => {
+    const grip = document.querySelector("[data-float-panel='layers'] span.cursor-grab");
+    const r = grip?.getBoundingClientRect();
+    return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+  });
+  await page.mouse.move(floatGrip.x, floatGrip.y);
+  await page.mouse.down();
+  await page.mouse.move(floatGrip.x + 30, floatGrip.y + 30, { steps: 4 });
+  await sleep(200);
+  const railZone = await page.evaluate(() => {
+    const z = document.querySelector("[data-dock-zone='rail']");
+    const r = z?.getBoundingClientRect();
+    return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+  });
+  await page.mouse.move(railZone.x, railZone.y, { steps: 6 });
+  await sleep(150);
+  await page.mouse.up();
+  await sleep(500);
+  const redocked = await page.evaluate(() => {
+    const floatGone = !document.querySelector("[data-float-panel='layers']");
+    const railHasLayers = [...document.querySelectorAll(".shadow-lg")].some(
+      (u) => u.textContent?.toUpperCase().includes("LAYERS") && u.textContent?.includes("Upload"),
+    );
+    return { floatGone, railHasLayers };
+  });
+  check("float: drop on rail zone re-docks", JSON.stringify(redocked), redocked.floatGone && redocked.railHasLayers);
 }
 
 // ── 3. omnibar drag → left edge ───────────────────────────────────────────────
