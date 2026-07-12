@@ -1097,8 +1097,8 @@ Copy in the sketches is illustrative; real strings stay `\u2211CG` (see Conventi
     - **FloatLayer** (`float-layer.tsx`, z-35): idle floats render MINI =
       the ModuleHeader row alone (title + live `sub` summary + grip/clamp/
       ✕ — read-only at a glance, w-max); hover or focus-within expands to
-      the full ModuleBox in place; CLAMP (custom G-clamp icon — lucide has
-      none) pins full-size. Float boxes are natural-height
+      the full ModuleBox in place; the hold toggle pins full-size (lucide
+      Pin/PinOff — Ruby vetoed a hand-drawn clamp). Float boxes are natural-height
       (max-h min(480px,60vh)) vs the rail's uniform 300px.
     - **Hover-peek REMOVED from all panel triggers** (PanelButton /
       ToolSettingsUnit / ColourButton are plain click-toggles — the

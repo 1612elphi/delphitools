@@ -195,20 +195,20 @@ if (gripRect) {
   });
   check("float: hover expands to the full panel", JSON.stringify(fullState), fullState.h > 120 && fullState.body === true);
   // clamp: click the clamp toggle, move away → stays full
-  await page.evaluate(() => document.querySelector("[data-float-panel='layers'] button[title='Clamp open']")?.click());
+  await page.evaluate(() => document.querySelector("[data-float-panel='layers'] button[title='Pin open']")?.click());
   await sleep(150);
   await page.mouse.move(1200, 700, { steps: 4 });
   await sleep(300);
   const clampedH = await page.evaluate(() => Math.round(document.querySelector("[data-float-panel='layers']")?.getBoundingClientRect().height ?? -1));
-  check("float: clamp holds it full-size when idle", `${clampedH}px`, clampedH > 120);
+  check("float: pin holds it full-size when idle", `${clampedH}px`, clampedH > 120);
   // unclamp → mini again
   await page.mouse.move(floated.x + 60, floated.y + 12, { steps: 4 });
   await sleep(200);
-  await page.evaluate(() => document.querySelector("[data-float-panel='layers'] button[title='Unclamp']")?.click());
+  await page.evaluate(() => document.querySelector("[data-float-panel='layers'] button[title='Unpin']")?.click());
   await page.mouse.move(1200, 700, { steps: 4 });
   await sleep(300);
   const unclampedH = await page.evaluate(() => Math.round(document.querySelector("[data-float-panel='layers']")?.getBoundingClientRect().height ?? -1));
-  check("float: unclamp returns to mini", `${unclampedH}px`, unclampedH > 0 && unclampedH < 44);
+  check("float: unpin returns to mini", `${unclampedH}px`, unclampedH > 0 && unclampedH < 44);
   // drag the floating panel onto the rail zone → re-docks
   const floatGrip = await page.evaluate(() => {
     const grip = document.querySelector("[data-float-panel='layers'] span.cursor-grab");
