@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useSyncExternalStore } from "react";
-import { ChevronDown, ChevronUp, Circle, Contrast, Copy, Moon, Pentagon, Slash, Sparkle, Square, Star, Sun, Upload } from "lucide-react";
+import { ChevronDown, ChevronUp, Circle, Contrast, Copy, Moon, Pentagon, Slash, Sparkle, Sparkles, Square, Star, Sun, Upload } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { uploadLocalFont } from "@/lib/substrata/fonts";
 import { FontSelect, TextAlignRow, TextStyleRow } from "@/components/substrata/text-style-row";
@@ -94,6 +94,12 @@ function AdjustSettings() {
 
   return (
     <div className="w-[224px]">
+      {/* Ruby's intro line, verbatim — the inline sparkle mirrors the
+          omnibar's FX-panel trigger icon */}
+      <div className="border-b border-border px-[11px] py-2 text-[11px] leading-relaxed text-muted-foreground">
+        Quickly add an adjustment. Fine-adjust in the{" "}
+        <Sparkles aria-hidden className="inline size-3 align-[-2px]" /> FX panel.
+      </div>
       {!ok && (
         // the FX panel's shipped gate line, reused
         <div className="border-b border-border px-[11px] py-2 text-[11px] text-muted-foreground">
@@ -108,11 +114,11 @@ function AdjustSettings() {
             disabled={!ok}
             onClick={() => apply(p)}
             className={cn(
-              "flex h-11 items-center justify-start gap-2 bg-background px-2.5 text-[11px]",
+              "flex h-[52px] flex-col items-center justify-center gap-1 whitespace-nowrap bg-background px-2 text-[11px]",
               ok ? "hover:bg-accent" : "text-muted-foreground/50",
             )}
           >
-            <p.icon className="size-[14px] shrink-0 text-muted-foreground" aria-hidden />
+            <p.icon className="size-[15px] shrink-0 text-muted-foreground" aria-hidden />
             {p.title}
           </button>
         ))}
