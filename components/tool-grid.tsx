@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import { useEffect, useRef, type Ref } from "react";
 
 import { toolCategories, featuredTools, type Tool } from "@/lib/tools";
@@ -30,6 +31,8 @@ function BespokeIcon({
 }
 
 function ToolCell({ tool, featured = false }: { tool: Tool; featured?: boolean }) {
+  // external entries (App Store, GitHub) render a plain anchor in a new tab
+  const Cmp: React.ElementType = tool.external ? "a" : Link;
   const handleRef = useRef<AnimatedIconHandle>(null);
   const staticRef = useRef<HTMLSpanElement>(null);
   const Animated = ANIMATED_ICONS.get(tool.icon);
@@ -55,19 +58,30 @@ function ToolCell({ tool, featured = false }: { tool: Tool; featured?: boolean }
   );
 
   return (
-    <Link
+    <Cmp
       href={tool.href}
+      {...(tool.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
       onMouseEnter={Animated ? start : undefined}
       onMouseLeave={Animated ? stop : undefined}
       onFocus={Animated ? start : undefined}
       onBlur={Animated ? stop : undefined}
       className={cn(
         "tool-cell group flex min-h-[62px] items-center gap-3 border-b border-r px-3.5 py-3 transition-colors focus-visible:z-10 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring",
-        featured
-          ? "border-amber-500/30 bg-amber-500/[0.06] hover:bg-amber-500/[0.12]"
-          : "border-border hover:bg-primary/[0.09]"
+        tool.highlight
+          ? "relative overflow-hidden bg-primary/[0.07] hover:bg-primary/[0.13] sm:col-span-2"
+          : featured
+            ? "border-amber-500/30 bg-amber-500/[0.06] hover:bg-amber-500/[0.12]"
+            : "border-border hover:bg-primary/[0.09]",
+        tool.highlight && (featured ? "border-amber-500/30" : "border-border"),
       )}
     >
+      {tool.highlight && (
+        // the graffiti wordmark, masked in the theme green, ghosted right
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-1 top-1/2 h-[85%] w-32 -translate-y-1/2 bg-primary opacity-25 transition-opacity group-hover:opacity-40 [mask-image:url(/substrata/wordmark.svg)] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain]"
+        />
+      )}
       {Animated ? (
         <BespokeIcon Icon={Animated} iconRef={handleRef} className={iconClass} />
       ) : (
@@ -95,12 +109,18 @@ function ToolCell({ tool, featured = false }: { tool: Tool; featured?: boolean }
               New
             </Badge>
           )}
+          {tool.external && (
+            <>
+              <ExternalLink aria-hidden className="size-3 shrink-0 text-muted-foreground/70" />
+              <span className="sr-only"> (opens in new tab)</span>
+            </>
+          )}
         </span>
         <span className="line-clamp-2 text-[0.66rem] leading-[1.32] text-muted-foreground">
           {tool.description}
         </span>
       </span>
-    </Link>
+    </Cmp>
   );
 }
 

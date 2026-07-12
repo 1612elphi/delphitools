@@ -1,12 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { AppHeader } from "@/components/app-header";
 import { ColourNotationProvider } from "@/components/colour-notation-provider";
-import { FavourBanner } from "@/components/favour-banner";
-import SkipLink from "@/components/ui/skip-link";
 
 export const metadata: Metadata = {
   title: "delphitools",
@@ -19,6 +14,13 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * Bare root layout: <html>/<body>, the no-flash theme bootstrap, and the
+ * globally-shared colour-notation context. The site chrome (sidebar + header)
+ * lives in app/(site)/layout.tsx so that sibling route trees — notably the
+ * full-viewport Substrata editor at /editor — can opt out of it. Layouts nest
+ * rather than replace, so anything chrome-specific must NOT live here.
+ */
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -34,23 +36,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-mono antialiased">
-        <ColourNotationProvider>
-          <SidebarProvider>
-            <SkipLink />
-            <AppSidebar />
-            <SidebarInset>
-              <AppHeader />
-              <FavourBanner />
-              <main
-                className="flex-1 overflow-auto"
-                id="main-content"
-                tabIndex={-1}
-              >
-                {children}
-              </main>
-            </SidebarInset>
-          </SidebarProvider>
-        </ColourNotationProvider>
+        <ColourNotationProvider>{children}</ColourNotationProvider>
       </body>
     </html>
   );

@@ -46,6 +46,9 @@ import {
   Wind,
   GitCompare,
   KeyRound,
+  Brush,
+  Smartphone,
+  SquareTerminal,
 } from "lucide-react";
 
 export interface Tool {
@@ -56,6 +59,12 @@ export interface Tool {
   href: string;
   beta?: boolean;
   new?: boolean;
+  /** off-site / off-catalogue destination (App Store, GitHub) — the grid
+   *  renders a plain new-tab anchor and no /tools/[id] page is generated */
+  external?: boolean;
+  /** the flagship treatment: green accent, double-width cell, ghosted
+   *  wordmark backdrop (Substrata) */
+  highlight?: boolean;
 }
 
 export interface ToolCategory {
@@ -179,6 +188,18 @@ export const toolCategories: ToolCategory[] = [
     id: "img-assets",
     name: "Images & Assets",
     tools: [
+      {
+        // the editor lives at its own route — no /tools/[id] page (see
+        // generateStaticParams filter); description is Ruby's billboard line
+        id: "substrata",
+        name: "Substrata",
+        description: "Edit, arrange and mark up images in the browser",
+        icon: Brush,
+        href: "/editor",
+        beta: true,
+        new: true,
+        highlight: true,
+      },
       {
         id: "artwork-enhancer",
         name: "Artwork Enhancer",
@@ -489,12 +510,35 @@ export const toolCategories: ToolCategory[] = [
       },
     ],
   },
+  {
+    id: "elsewhere",
+    name: "Elsewhere",
+    tools: [
+      {
+        // descriptions reuse the retired download-card's shipped lines
+        id: "ios-app",
+        name: "delphitools for iOS",
+        description: "Built natively for iPhone and iPad. No accounts, no tracking, no compromises.",
+        icon: Smartphone,
+        href: "https://apps.apple.com/us/app/delphitools/id6761313703",
+        external: true,
+      },
+      {
+        id: "cli",
+        name: "delphitools CLI",
+        description: "The same tools, in your shell. Entirely offline.",
+        icon: SquareTerminal,
+        href: "https://github.com/1612elphi/delphitools-cli",
+        external: true,
+      },
+    ],
+  },
 ];
 
 export const allTools = toolCategories.flatMap((category) => category.tools);
 
 // Featured tools for "Delphi's Greatest Hits" section
-const featuredToolIds = ["qr-genny", "palette-genny", "background-remover"];
+const featuredToolIds = ["substrata", "qr-genny", "palette-genny", "background-remover"];
 export const featuredTools = featuredToolIds
   .map((id) => allTools.find((tool) => tool.id === id))
   .filter((tool): tool is Tool => tool !== undefined);

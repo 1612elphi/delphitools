@@ -3,7 +3,6 @@ import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { featuredTools, allTools } from "@/lib/tools";
 import { ToolGrid, FeaturedGrid } from "@/components/tool-grid";
-import { DownloadCard } from "@/components/download-card";
 import { StickerWall } from "@/components/sticker-wall";
 import { SectionHeader } from "@/components/section-header";
 
@@ -76,13 +75,8 @@ export default function Home() {
         <FeaturedGrid />
       </section>
 
-      {/* Elsewhere */}
-      <section className="mb-12">
-        <SectionHeader title="Elsewhere" count={2} />
-        <DownloadCard />
-      </section>
-
-      {/* All Tools */}
+      {/* All Tools — Substrata and the iOS/CLI editions live in the grid now
+          (the billboard + Elsewhere cards were folded in; Ruby 2026-07-12) */}
       <section>
         <SectionHeader title="All Tools" count={allTools.length} />
         <ToolGrid />
