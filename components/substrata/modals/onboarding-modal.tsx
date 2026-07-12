@@ -117,10 +117,18 @@ export function OnboardingModal() {
         If you want to store your settings, files or preferences, you have to turn on local
         storage.
       </p>
+      {/* eslint-disable-next-line @next/next/no-img-element -- static export, unoptimized anyway */}
+      <img
+        src="/substrata/onboarding/still-private.png"
+        alt=""
+        width={800}
+        height={561}
+        className="mx-auto h-auto max-h-36 w-auto"
+      />
       <StorageButton />
       <p className="leading-relaxed">
-        Prefer to leave it off? Also fine — ⌘S still saves your scene as a file, and off means
-        off: Substrata keeps no trace in this browser.
+        Substrata will still work if you leave this off, and won&rsquo;t save any cookies or
+        local data, but you won&rsquo;t be able to autosave or remember tool preferences.
       </p>
     </div>,
     // touch devices only: the two-finger navigation nobody would discover unprompted
