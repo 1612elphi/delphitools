@@ -34,6 +34,7 @@ import { importImageFile } from "@/lib/substrata/import-raster";
 import { newScene, openRecent, openScene, saveScene } from "@/lib/substrata/file-ops";
 import { listRecentProjects, type RecentProject } from "@/lib/substrata/autosave";
 import { duplicateLayers, deleteLayers } from "@/lib/substrata/layer-ops";
+import { selectableLeafIds } from "@/lib/substrata/layer-tree";
 import { getSelectedLayerIds, setSelection, subscribeSelection } from "@/lib/substrata/selection";
 import { hint } from "@/lib/substrata/hint";
 import { PersistenceToggle } from "@/components/substrata/persistence-toggle";
@@ -452,7 +453,8 @@ function EditMenu({
   const doc = useSyncExternalStore(subscribe, getSnapshot, () => null);
   const selectedIds = useSyncExternalStore(subscribeSelection, getSelectedLayerIds, () => EMPTY_IDS);
   const hasSelection = selectedIds.length > 0;
-  const hasLayers = (doc?.layers.length ?? 0) > 0;
+  // Same set ⌘A grabs — visible + unlocked leaves, not locked/hidden strays.
+  const selectable = doc ? selectableLeafIds(doc.layers) : [];
   // The mockup's fake history list is GONE (clarity review: a history that
   // never reflects real actions poisons trust in the whole menu). Labelled
   // history needs command labels the snapshot store doesn't carry — later.
@@ -474,6 +476,7 @@ function EditMenu({
           <Ab
             icon={<CopyPlus className="size-[15px]" />}
             label="Duplicate"
+            hint="⌘D"
             disabled={!hasSelection}
             onClick={() => {
               duplicateLayers(selectedIds);
@@ -483,6 +486,7 @@ function EditMenu({
           <Ab
             icon={<Trash2 className="size-[15px]" />}
             label="Delete"
+            hint="⌫"
             disabled={!hasSelection}
             onClick={() => {
               deleteLayers(selectedIds);
@@ -492,9 +496,10 @@ function EditMenu({
           <Ab
             icon={<BoxSelect className="size-[15px]" />}
             label="Select all"
-            disabled={!hasLayers}
+            hint="⌘A"
+            disabled={selectable.length === 0}
             onClick={() => {
-              setSelection(doc!.layers.map((l) => l.id));
+              setSelection(selectable);
               onClose();
             }}
           />
@@ -540,11 +545,13 @@ function UrButton({
 function Ab({
   icon,
   label,
+  hint,
   onClick,
   disabled,
 }: {
   icon: React.ReactNode;
   label: string;
+  hint?: string;
   onClick?: () => void;
   disabled?: boolean;
 }) {
@@ -555,7 +562,10 @@ function Ab({
       className="flex h-[50px] cursor-default flex-col items-center justify-center gap-1.5 bg-background text-[10px] hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
     >
       {icon}
-      {label}
+      <span className="flex items-baseline gap-1">
+        {label}
+        {hint && <span className="text-[9px] text-muted-foreground">{hint}</span>}
+      </span>
     </button>
   );
 }

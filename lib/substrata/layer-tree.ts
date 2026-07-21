@@ -165,6 +165,14 @@ export function leafRenderList(
   return into;
 }
 
+/** What a marquee could grab: effectively visible + unlocked leaf ids — the
+ *  one "select all" semantics (⌘A, Edit ▸ Select all, canvas context menu). */
+export function selectableLeafIds(layers: readonly Layer[]): string[] {
+  return leafRenderList(layers)
+    .filter((e) => e.visible && !e.locked)
+    .map((e) => e.layer.id);
+}
+
 /** One Layers-panel row (display order = top-first at every level). */
 export interface PanelRow {
   layer: Layer;
