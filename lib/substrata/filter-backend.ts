@@ -30,8 +30,12 @@ export function initSubstrataFilterBackend(): void {
   if (installed || typeof document === "undefined") return;
   installed = true;
 
-  // (1) Clamp the GPU working texture size to our capped ceiling.
-  config.textureSize = Math.min(config.textureSize, workingRasterCap());
+  // (1) Set the GPU working texture size to MATCH the import cap. Imports are
+  // clamped to workingRasterCap() (M1-5, up to 8192), but Fabric's default
+  // textureSize is 4096 — min() could only ever lower it, so a 4097–8192px
+  // raster survived import intact and then square-cropped to 4096×4096 the
+  // first time a filter (a look) ran over it (#6805 again, past the guard).
+  config.textureSize = workingRasterCap();
 
   // (2) Context-loss fallback. getFilterBackend(false) returns the lazily-init'd
   // backend without forcing WebGL; only wire the listener if WebGL is actually
