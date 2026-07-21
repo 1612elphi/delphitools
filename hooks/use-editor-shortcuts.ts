@@ -2,21 +2,35 @@
 
 import { useEffect } from "react";
 import { fileOpen } from "browser-fs-access";
-import { undo, redo } from "@/lib/substrata/doc-store";
+import { getSnapshot, undo, redo } from "@/lib/substrata/doc-store";
 import { importImageFile } from "@/lib/substrata/import-raster";
 import { openScene, saveScene } from "@/lib/substrata/file-ops";
-import { deleteLayers, nudgeSelection } from "@/lib/substrata/layer-ops";
-import { getSelectedLayerIds } from "@/lib/substrata/selection";
+import {
+  deleteLayers,
+  duplicateLayers,
+  groupLayers,
+  nudgeSelection,
+  reorderLayers,
+  ungroupLayer,
+} from "@/lib/substrata/layer-ops";
+import { selectableLeafIds } from "@/lib/substrata/layer-tree";
+import { getSelectedLayerIds, setSelection } from "@/lib/substrata/selection";
+import { openModal } from "@/lib/substrata/modal";
 import { getActiveTool } from "@/lib/substrata/tool";
 import { getToolSettings } from "@/lib/substrata/tool-settings";
+import { viewport } from "@/lib/substrata/viewport";
 
 /**
  * Substrata keyboard map. ⌘/Ctrl+Z = undo, ⌘/Ctrl+Shift+Z or Ctrl+Y = redo.
  * Backspace/Delete removes the selected layers (same path as the layers-panel
  * footer; one undo step). Arrow keys nudge the selection while MOVE is the
  * active tool (step = the MOVE settings' nudge value, ⇧ ×10; one undo step per
- * press). Ignored while typing in a field. Mounted by the editor shell; the
- * top-bar undo/redo buttons call the same doc-store actions.
+ * press). ⌘A selects what a marquee could grab (visible + unlocked leaves) —
+ * never the page text. ⌘D duplicate · ⌘G/⇧⌘G group/ungroup · ⌘]/⌘[ restack
+ * (⇧ to the ends) · ⌘E export · ⌘0 fit / ⌘1 100%. Ignored while typing in a
+ * field. Mounted by the editor shell; the menus call the same actions and
+ * hint these combos. The layer ops validate internally, so a combo on an
+ * ineligible selection is a clean no-op.
  */
 
 const ARROWS: Record<string, readonly [number, number]> = {
@@ -81,6 +95,34 @@ export function useEditorShortcuts(): void {
             // picker dismissed
           }
         })();
+      } else if (key === "e") {
+        // ⌘E export — the Scene-menu hint promised this too
+        e.preventDefault();
+        openModal("export");
+      } else if (key === "a") {
+        e.preventDefault(); // never the browser's select-all-page-text
+        const doc = getSnapshot();
+        if (doc) setSelection(selectableLeafIds(doc.layers));
+      } else if (key === "d") {
+        e.preventDefault(); // and never the browser's bookmark dialog
+        duplicateLayers(getSelectedLayerIds());
+      } else if (key === "g") {
+        e.preventDefault();
+        if (e.shiftKey) getSelectedLayerIds().forEach(ungroupLayer);
+        else groupLayers(getSelectedLayerIds());
+      } else if (key === "]" || key === "}") {
+        // ⇧ turns ] into } on most layouts — treat both as the shifted combo
+        e.preventDefault();
+        reorderLayers(getSelectedLayerIds(), e.shiftKey || key === "}" ? "front" : "forward");
+      } else if (key === "[" || key === "{") {
+        e.preventDefault();
+        reorderLayers(getSelectedLayerIds(), e.shiftKey || key === "{" ? "back" : "backward");
+      } else if (key === "0") {
+        e.preventDefault();
+        viewport.fit();
+      } else if (key === "1") {
+        e.preventDefault();
+        viewport.setZoom(1);
       }
     };
 

@@ -36,7 +36,7 @@ import {
   subscribeLayerMenu,
   type MenuState,
 } from "@/lib/substrata/context-menu";
-import { findLayer, isGroup, leafRenderList, siblingListOf } from "@/lib/substrata/layer-tree";
+import { findLayer, isGroup, selectableLeafIds, siblingListOf } from "@/lib/substrata/layer-tree";
 import {
   deleteLayers,
   duplicateLayers,
@@ -111,7 +111,7 @@ function LayerMenuBody({ menu, doc }: { menu: Extract<MenuState, { kind: "layer"
 
   return (
     <>
-      <Item icon={Copy} label="Duplicate" onClick={run(() => duplicateLayers(ids))} />
+      <Item icon={Copy} label="Duplicate" hint="⌘D" onClick={run(() => duplicateLayers(ids))} />
       {/* Rasterize (M3-15): bake vector/text content so the raster pipelines
           (filters/effects, SELECT cut) apply. Standard vocabulary chrome. */}
       {(() => {
@@ -131,15 +131,15 @@ function LayerMenuBody({ menu, doc }: { menu: Extract<MenuState, { kind: "layer"
         );
       })()}
       {canUngroup ? (
-        <Item icon={Ungroup} label="Ungroup" onClick={run(() => ungroupLayer(primary.id))} />
+        <Item icon={Ungroup} label="Ungroup" hint="⇧⌘G" onClick={run(() => ungroupLayer(primary.id))} />
       ) : (
-        <Item icon={Group} label="Group" disabled={!canGroup} onClick={run(() => groupLayers(ids))} />
+        <Item icon={Group} label="Group" hint="⌘G" disabled={!canGroup} onClick={run(() => groupLayers(ids))} />
       )}
       <Rule />
-      <Item icon={ArrowUpToLine} label="Bring to Front" disabled={!sameSiblings} onClick={restack("front")} />
-      <Item icon={ArrowUp} label="Bring Forward" disabled={!sameSiblings} onClick={restack("forward")} />
-      <Item icon={ArrowDown} label="Send Backward" disabled={!sameSiblings} onClick={restack("backward")} />
-      <Item icon={ArrowDownToLine} label="Send to Back" disabled={!sameSiblings} onClick={restack("back")} />
+      <Item icon={ArrowUpToLine} label="Bring to Front" hint="⇧⌘]" disabled={!sameSiblings} onClick={restack("front")} />
+      <Item icon={ArrowUp} label="Bring Forward" hint="⌘]" disabled={!sameSiblings} onClick={restack("forward")} />
+      <Item icon={ArrowDown} label="Send Backward" hint="⌘[" disabled={!sameSiblings} onClick={restack("backward")} />
+      <Item icon={ArrowDownToLine} label="Send to Back" hint="⇧⌘[" disabled={!sameSiblings} onClick={restack("back")} />
       <Rule />
       <Item
         icon={primary.visible ? EyeOff : Eye}
@@ -152,7 +152,7 @@ function LayerMenuBody({ menu, doc }: { menu: Extract<MenuState, { kind: "layer"
         onClick={run(() => ids.forEach((id) => toggleLock(id)))}
       />
       <Rule />
-      <Item icon={Trash2} label="Delete" destructive onClick={run(() => deleteLayers(ids))} />
+      <Item icon={Trash2} label="Delete" hint="⌫" destructive onClick={run(() => deleteLayers(ids))} />
     </>
   );
 }
@@ -174,10 +174,7 @@ function CanvasMenuBody({
     closeLayerMenu();
   };
 
-  // What a marquee could grab: effectively visible + unlocked leaves.
-  const selectable = leafRenderList(doc.layers)
-    .filter((e) => e.visible && !e.locked)
-    .map((e) => e.layer.id);
+  const selectable = selectableLeafIds(doc.layers);
 
   const placeImage = () => {
     const input = document.createElement("input");
@@ -192,18 +189,19 @@ function CanvasMenuBody({
 
   return (
     <>
-      <Item icon={Clipboard} label="Paste" onClick={run(() => void importClipboardImage({ at }))} />
+      <Item icon={Clipboard} label="Paste" hint="⌘V" onClick={run(() => void importClipboardImage({ at }))} />
       <Item icon={ImagePlus} label="Place Image…" onClick={run(placeImage)} />
       <Rule />
       <Item
         icon={SquareDashed}
         label="Select All"
+        hint="⌘A"
         disabled={selectable.length === 0}
         onClick={run(() => setSelection(selectable))}
       />
       <Rule />
-      <Item icon={Maximize2} label="Zoom to Fit" onClick={run(() => viewport.fit())} />
-      <Item icon={Search} label="Zoom to 100%" onClick={run(() => viewport.setZoom(1))} />
+      <Item icon={Maximize2} label="Zoom to Fit" hint="⌘0" onClick={run(() => viewport.fit())} />
+      <Item icon={Search} label="Zoom to 100%" hint="⌘1" onClick={run(() => viewport.setZoom(1))} />
       <Rule />
       {/* toggles stay open — the checkmark is the feedback */}
       <Item icon={Grid3x3} label="Grid" checked={grid} onClick={() => toggleGuide("grid")} />
@@ -221,6 +219,7 @@ function Rule() {
 function Item({
   icon: Icon,
   label,
+  hint,
   onClick,
   disabled = false,
   destructive = false,
@@ -228,6 +227,8 @@ function Item({
 }: {
   icon: LucideIcon;
   label: string;
+  /** keyboard combo, shown right-aligned — only for combos the keymap delivers */
+  hint?: string;
   onClick: () => void;
   disabled?: boolean;
   destructive?: boolean;
@@ -251,6 +252,7 @@ function Item({
     >
       <Icon className="size-3.5 shrink-0 text-muted-foreground" />
       <span className="min-w-0 flex-1 truncate">{label}</span>
+      {hint && <span className="shrink-0 text-[9.5px] text-muted-foreground">{hint}</span>}
       {checked && <Check className="size-3.5 shrink-0 text-primary" />}
     </button>
   );
