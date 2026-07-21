@@ -37,6 +37,9 @@ const parents = async () => {
 };
 const sample = async (sx, sy) => {
   const p = toPage(sx, sy);
+  // settle first: reconcile paints on rAF, so a read straight after an op
+  // races the render and samples the previous frame (flaked ~50%)
+  await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
   return page.evaluate(([x, y]) => window.__substrata.samplePixel(x, y), [p.x - rect.left, p.y - rect.top]);
 };
 const near = (px, rgba, tol = 8) => !!px && rgba.every((v, i) => Math.abs(px[i] - v) <= tol);
