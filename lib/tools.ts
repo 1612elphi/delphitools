@@ -50,6 +50,7 @@ import {
   Smartphone,
   SquareTerminal,
   Combine,
+  CaseUpper,
 } from "lucide-react";
 
 export interface Tool {
@@ -66,6 +67,10 @@ export interface Tool {
   /** the flagship treatment: green accent, double-width cell, ghosted
    *  wordmark backdrop (Substrata) */
   highlight?: boolean;
+  /** tool page drops the max-w-4xl cap for the COMPONENT (header stays
+   *  capped) — for tools whose display wants the whole main column; the
+   *  component re-caps whatever chrome it wants narrow (Large Type) */
+  wide?: boolean;
 }
 
 export interface ToolCategory {
@@ -323,6 +328,15 @@ export const toolCategories: ToolCategory[] = [
         description: "Browse unicode glyphs",
         icon: Type,
         href: "/tools/glyph-browser",
+      },
+      {
+        id: "large-type",
+        name: "Large Type",
+        description: "Text, but big",
+        icon: CaseUpper,
+        href: "/tools/large-type",
+        new: true,
+        wide: true,
       },
       {
         id: "line-height-calc",
