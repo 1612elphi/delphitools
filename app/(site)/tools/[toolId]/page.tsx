@@ -15,6 +15,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   "image-converter": dynamic(() => import("@/components/tools/image-converter").then(mod => mod.ImageConverterTool)),
   "artwork-enhancer": dynamic(() => import("@/components/tools/artwork-enhancer").then(mod => mod.ArtworkEnhancerTool)),
   "regex-tester": dynamic(() => import("@/components/tools/regex-tester").then(mod => mod.RegexTesterTool)),
+  "large-type": dynamic(() => import("@/components/tools/large-type").then(mod => mod.LargeTypeTool)),
   "line-height-calc": dynamic(() => import("@/components/tools/line-height-calc").then(mod => mod.LineHeightCalcTool)),
   "placeholder-genny": dynamic(() => import("@/components/tools/placeholder-genny").then(mod => mod.PlaceholderGennyTool)),
   "meta-tag-genny": dynamic(() => import("@/components/tools/meta-tag-genny").then(mod => mod.MetaTagGennyTool)),
@@ -110,9 +111,9 @@ export default async function ToolPage({ params }: ToolPageProps) {
 
   return (
     <div className="p-6 md:p-8 lg:p-10">
-      <div className="max-w-4xl mx-auto">
-        {/* Tool Header */}
-        <div className="mb-8">
+      <div className={tool.wide ? undefined : "max-w-4xl mx-auto"}>
+        {/* Tool Header — stays column-capped even on wide tools */}
+        <div className={`mb-8${tool.wide ? " max-w-4xl mx-auto" : ""}`}>
           <div className="flex items-start gap-4 mb-4">
             <div className="flex size-14 items-center justify-center rounded-xl bg-primary/10">
               <Icon className="size-7 text-primary" />
