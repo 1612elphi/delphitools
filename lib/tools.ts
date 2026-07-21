@@ -49,6 +49,7 @@ import {
   Brush,
   Smartphone,
   SquareTerminal,
+  Combine,
 } from "lucide-react";
 
 export interface Tool {
@@ -242,6 +243,14 @@ export const toolCategories: ToolCategory[] = [
         description: "Split images into tiles",
         icon: Scissors,
         href: "/tools/image-splitter",
+      },
+      {
+        id: "image-stitcher",
+        name: "Image Stitcher",
+        description: "Combine multiple images into one",
+        icon: Combine,
+        href: "/tools/image-stitcher",
+        new: true,
       },
       {
         id: "image-tracer",
