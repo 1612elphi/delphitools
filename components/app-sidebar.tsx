@@ -48,11 +48,13 @@ export function AppSidebar() {
   );
 
   const filteredCategories = toolCategories.flatMap((cat) => {
-    const tools = cat.tools.filter(
-      (t) =>
-        t.name.toLowerCase().includes(query) ||
-        t.description.toLowerCase().includes(query)
-    );
+    const tools = cat.tools
+      .filter(
+        (t) =>
+          t.name.toLowerCase().includes(query) ||
+          t.description.toLowerCase().includes(query)
+      )
+      .sort((a, b) => a.name.localeCompare(b.name));
     return tools.length > 0 ? [{ ...cat, tools }] : [];
   });
 
