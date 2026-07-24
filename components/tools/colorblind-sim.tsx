@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Upload, Trash2, Palette, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useColourNotation } from "@/hooks/use-colour-notation";
@@ -169,6 +170,7 @@ export function ColorblindSimTool() {
   const [selectedSim, setSelectedSim] = useState<SimulationType>("normal");
   const [sourceImage, setSourceImage] = useState<string | null>(null);
   const [simulatedImage, setSimulatedImage] = useState<string | null>(null);
+  const [zoomed, setZoomed] = useState<{ src: string; label: string } | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const { notation } = useColourNotation();
@@ -481,23 +483,31 @@ export function ColorblindSimTool() {
                 <div className="grid grid-cols-2">
                   <div className="border-r border-border">
                     <p className="text-xs text-muted-foreground text-center p-2 border-b border-border">Original</p>
-                    <div className="overflow-hidden bg-muted/30">
+                    <button
+                      className="block w-full cursor-zoom-in overflow-hidden bg-muted/30"
+                      onClick={() => setZoomed({ src: sourceImage, label: "Original" })}
+                    >
                       <img
                         src={sourceImage}
                         alt="Original"
                         className="w-full h-auto"
                       />
-                    </div>
+                    </button>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground text-center p-2 border-b border-border truncate px-3">{SIMULATIONS[selectedSim].name}</p>
                     <div className="overflow-hidden bg-muted/30">
                       {simulatedImage ? (
-                        <img
-                          src={simulatedImage}
-                          alt={`Simulated ${SIMULATIONS[selectedSim].name}`}
-                          className="w-full h-auto"
-                        />
+                        <button
+                          className="block w-full cursor-zoom-in"
+                          onClick={() => setZoomed({ src: simulatedImage, label: SIMULATIONS[selectedSim].name })}
+                        >
+                          <img
+                            src={simulatedImage}
+                            alt={`Simulated ${SIMULATIONS[selectedSim].name}`}
+                            className="w-full h-auto"
+                          />
+                        </button>
                       ) : (
                         <div className="aspect-video flex items-center justify-center">
                           <span className="text-muted-foreground text-sm">Processing...</span>
@@ -511,6 +521,21 @@ export function ColorblindSimTool() {
           </>
         )}
       </div>
+
+      {/* Expanded image lightbox */}
+      <Dialog open={!!zoomed} onOpenChange={(open) => !open && setZoomed(null)}>
+        <DialogContent className="w-fit max-w-[95vw] sm:max-w-[95vw] p-0 gap-0 overflow-hidden">
+          <DialogTitle className="sr-only">{zoomed?.label}</DialogTitle>
+          {zoomed && (
+            <img
+              src={zoomed.src}
+              alt={zoomed.label}
+              className="max-h-[90vh] max-w-full cursor-zoom-out"
+              onClick={() => setZoomed(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Info */}
       <div className="border border-border p-4 bg-card">
