@@ -23,7 +23,8 @@
 # misc
 .DS_Store
 *.pem
-package-lock.json
+# package-lock.json is tracked on purpose: CF Pages can't read the text-format
+# bun.lock and would otherwise npm-install unpinned (broke the 2026-07-24 deploy)
 
 # debug
 npm-debug.log*
