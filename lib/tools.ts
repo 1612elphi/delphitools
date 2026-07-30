@@ -566,6 +566,17 @@ export const featuredTools = featuredToolIds
   .map((id) => allTools.find((tool) => tool.id === id))
   .filter((tool): tool is Tool => tool !== undefined);
 
+/**
+ * Route params for every catalogue entry that has a /tools/[toolId] page —
+ * entries living at their own route (Substrata → /editor) or off-site are left
+ * out. Used by the page and by its og.png card, which must generate in lockstep.
+ */
+export function toolPageParams(): { toolId: string }[] {
+  return allTools
+    .filter((tool) => tool.href.startsWith("/tools/"))
+    .map((tool) => ({ toolId: tool.id }));
+}
+
 export function getToolById(id: string): Tool | undefined {
   return allTools.find((tool) => tool.id === id);
 }

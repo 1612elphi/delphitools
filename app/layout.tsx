@@ -4,6 +4,8 @@ import "./globals.css";
 import { ColourNotationProvider } from "@/components/colour-notation-provider";
 
 export const metadata: Metadata = {
+  // absolute og:image URLs in the static export come from this, not from the request
+  metadataBase: new URL("https://delphi.tools"),
   title: "delphitools",
   description:
     "A collection of small, low stakes and low effort tools. No logins, no registration, no data collection.",

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Construction } from "lucide-react";
-import { getToolById, getCategoryByToolId, allTools } from "@/lib/tools";
+import { getToolById, getCategoryByToolId, toolPageParams } from "@/lib/tools";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PeelSticker } from "@/components/sticker-wall";
@@ -72,13 +72,7 @@ interface ToolPageProps {
 }
 
 export async function generateStaticParams() {
-  // catalogue entries living at their own routes (Substrata → /editor) have
-  // no /tools/[toolId] page — only generate pages for in-catalogue hrefs
-  return allTools
-    .filter((tool) => tool.href.startsWith("/tools/"))
-    .map((tool) => ({
-      toolId: tool.id,
-    }));
+  return toolPageParams();
 }
 
 export async function generateMetadata({ params }: ToolPageProps) {
@@ -91,9 +85,28 @@ export async function generateMetadata({ params }: ToolPageProps) {
     };
   }
 
+  // share card rendered by ./og.png/route.tsx
+  const image = {
+    url: `/tools/${toolId}/og.png`,
+    width: 1200,
+    height: 630,
+    // ∑CG: og:image:alt for the tool share card, announced by screen readers on social posts
+    //   spec: one sentence describing the card, ≤ 120 chars, may interpolate ${tool.name}
+    //   sample: "A share card for QR Generator, a free tool on delphitools."
+    alt: "∑CG",
+  };
+
   return {
     title: `${tool.name} - delphitools`,
     description: tool.description,
+    openGraph: {
+      type: "website",
+      siteName: "delphitools",
+      title: `${tool.name} - delphitools`,
+      description: tool.description,
+      url: `/tools/${toolId}`,
+      images: [image],
+    },
   };
 }
 
