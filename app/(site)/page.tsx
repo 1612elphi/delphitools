@@ -6,10 +6,25 @@ import { ToolGrid, FeaturedGrid } from "@/components/tool-grid";
 import { StickerWall } from "@/components/sticker-wall";
 import { SectionHeader } from "@/components/section-header";
 
+const title = "delphitools — privacy-first browser tools";
+const description =
+  "A collection of small, low stakes and low effort tools. No logins, no registration, no data collection. Everything runs locally in your browser.";
+
+// share card rendered by ./og.png/route.tsx
+const image = {
+  url: "/og.png",
+  width: 1200,
+  height: 630,
+  // ∑CG: og:image:alt for the home page share card, announced by screen readers on social posts
+  //   spec: one sentence describing the card (the hero drawing on the house green), ≤ 120 chars
+  //   sample: "The delphitools hero drawing: someone holding up a handful of small tools."
+  alt: "∑CG",
+};
+
 export const metadata: Metadata = {
-  title: "delphitools — privacy-first browser tools",
-  description:
-    "A collection of small, low stakes and low effort tools. No logins, no registration, no data collection. Everything runs locally in your browser.",
+  title,
+  description,
+  openGraph: { type: "website", siteName: "delphitools", title, description, url: "/", images: [image] },
 };
 
 /** Letters of the TAXIWAY wordmark, pre-keyed so duplicate letters keep stable identities. */

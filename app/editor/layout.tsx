@@ -12,10 +12,22 @@ import type { Metadata } from "next";
  * is M0-4/M0-5/M0-6 and needs Ruby's visual review. This layout only
  * establishes the full-viewport box they will live in.
  */
+// share card rendered by ./og.png/route.tsx
+const image = {
+  url: "/editor/og.png",
+  width: 1200,
+  height: 630,
+  // ∑CG: og:image:alt for the Substrata share card, announced by screen readers on social posts
+  //   spec: one sentence describing the card, ≤ 120 chars, names Substrata
+  //   sample: "A share card for Substrata, the delphitools image editor."
+  alt: "∑CG",
+};
+
 export const metadata: Metadata = {
-  // "Substrata" is Ruby's chosen product name (an identifier she set), not
+  // "Substrata" is Ruby's chosen product name (an identifier they set), not
   // authored copy. Any descriptive tagline appended here would be \u2211CG.
   title: "Substrata",
+  openGraph: { type: "website", siteName: "delphitools", title: "Substrata", url: "/editor", images: [image] },
 };
 
 export default function EditorLayout({
