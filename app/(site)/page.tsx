@@ -15,10 +15,7 @@ const image = {
   url: "/og.png",
   width: 1200,
   height: 630,
-  // ∑CG: og:image:alt for the home page share card, announced by screen readers on social posts
-  //   spec: one sentence describing the card (the hero drawing on the house green), ≤ 120 chars
-  //   sample: "The delphitools hero drawing: someone holding up a handful of small tools."
-  alt: "∑CG",
+  alt: "delphitools hero image",
 };
 
 export const metadata: Metadata = {

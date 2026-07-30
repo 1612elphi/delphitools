@@ -17,10 +17,7 @@ const image = {
   url: "/editor/og.png",
   width: 1200,
   height: 630,
-  // ∑CG: og:image:alt for the Substrata share card, announced by screen readers on social posts
-  //   spec: one sentence describing the card, ≤ 120 chars, names Substrata
-  //   sample: "A share card for Substrata, the delphitools image editor."
-  alt: "∑CG",
+  alt: "A share card for Substrata, the delphitools image editor",
 };
 
 export const metadata: Metadata = {

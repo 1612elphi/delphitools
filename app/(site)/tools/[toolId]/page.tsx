@@ -90,10 +90,7 @@ export async function generateMetadata({ params }: ToolPageProps) {
     url: `/tools/${toolId}/og.png`,
     width: 1200,
     height: 630,
-    // ∑CG: og:image:alt for the tool share card, announced by screen readers on social posts
-    //   spec: one sentence describing the card, ≤ 120 chars, may interpolate ${tool.name}
-    //   sample: "A share card for QR Generator, a free tool on delphitools."
-    alt: "∑CG",
+    alt: "A share card for a free tool on delphitools",
   };
 
   return {
