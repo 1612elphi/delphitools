@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>delphitools</title>
+    <meta name="description" content="A collection of small, low stakes and low effort tools. No logins, no registration, no data collection. Everything runs locally in your browser.">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="/delphi-lowlod.png">
+
+    <!-- Theme before first paint. Runs ahead of the stylesheet so a dark-mode
+         visitor never sees the cream background flash. Mirrors the inline
+         script in the Next app's root layout. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('theme');
+          if (t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme:dark)').matches)) {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
+
+    {{content-for "head"}}
+
+    <link integrity="" rel="stylesheet" href="/@embroider/virtual/vendor.css">
+
+    {{content-for "head-footer"}}
+  </head>
+  <body>
+    {{content-for "body"}}
+
+    <script src="/@embroider/virtual/vendor.js"></script>
+    <script type="module">
+      import Application from './app/app';
+      import environment from './app/config/environment';
+
+      Application.create(environment.APP);
+    </script>
+
+    {{content-for "body-footer"}}
+  </body>
+</html>
