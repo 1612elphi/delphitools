@@ -10,13 +10,11 @@ export interface IconSignature {
   };
 }
 
-// lucide-static bakes width/height 24 into every icon. Stripping them lets the
-// wrapper's size drive the box, so `size-*` on <Icon> is what sizes it.
-const SIZE_ATTRS = /\s(?:width|height)="24"/g;
-
+// `.dt-icon svg { width: 100%; height: 100% }` in app.scss beats lucide-static's
+// baked-in width/height presentation attributes, so the wrapper sizes the icon
+// and the attributes need no stripping.
 function markup(name: string) {
-  const svg = icons[name];
-  return htmlSafe(svg ? svg.replace(SIZE_ATTRS, '') : '');
+  return htmlSafe(icons[name] ?? '');
 }
 
 const Icon: TOC<IconSignature> = <template>

@@ -24,8 +24,11 @@ export default {
     // rewriting it would make every future diff against the parent repo noisy.
     'lightness-notation': null,
     'hue-degree-notation': null,
-    // -webkit-background-clip beside background-clip is a support pair.
-    'declaration-block-no-duplicate-properties': null,
+    // `-webkit-background-clip: text` is deliberate. Autofix once rewrote it to
+    // the unprefixed property, which both dropped older WebKit and produced an
+    // identical duplicate — the exact failure the @supports guard exists to
+    // avoid. The `.pride-*` rules are the only prefixed properties here.
+    'property-no-vendor-prefix': null,
     // .dt-editor's "typography refinements" section layers on the base rules
     // on purpose; same for the sticker-wall states.
     'no-duplicate-selectors': null,
