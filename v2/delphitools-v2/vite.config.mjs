@@ -47,6 +47,15 @@ export default defineConfig({
 		__DT_COMMIT_SHA__: JSON.stringify(commitSha()),
 		__DT_PRIDE__: JSON.stringify(prideEnabled()),
 	},
+	optimizeDeps: {
+		// @pdf-lib/standard-fonts stores each font as a deflated payload in a
+		// file named .json, and its own es/Font.js imports them as JSON. The
+		// dev dep-optimizer parses them and fails the whole pass with
+		// "trailing characters", which takes the dev server down with it —
+		// every pdf tool then 504s on its dynamic import. The production build
+		// does not run the optimizer and has never been affected.
+		exclude: ['pdf-lib'],
+	},
 	css: {
 		preprocessorOptions: {
 			scss: {

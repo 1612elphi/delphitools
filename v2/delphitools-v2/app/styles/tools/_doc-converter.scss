@@ -1,0 +1,723 @@
+// Styles for the doc-converter tool.
+//
+// One partial per tool: app.scss had grown past three thousand lines and every
+// new tool collided in it.
+
+@use "../crayon-config" as crayon;
+
+// Amber has no theme token, so the tailwind scale stands in.
+$amber: crayon.color("amber-500");
+
+.dt-docconv {
+	display: flex;
+	flex-direction: column;
+	gap: crayon.size(6);
+}
+
+.dt-docconv-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-docconv-section {
+	padding: crayon.size(4);
+	border-bottom: 2px solid var(--border);
+
+	&.is-formats {
+		padding-bottom: 0;
+	}
+}
+
+.dt-docconv-section-head {
+	display: flex;
+	min-height: crayon.size(9);
+	align-items: center;
+	justify-content: space-between;
+}
+
+.dt-docconv-label {
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-docconv-ghost {
+	@include crayon.hstack(1);
+
+	align-items: center;
+	padding: crayon.size(1) crayon.size(2);
+	border: 0;
+	background: none;
+	color: inherit;
+	cursor: pointer;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--muted) 60%, transparent);
+	}
+}
+
+/* ── Input ──────────────────────────────────────────────────────────────── */
+
+.dt-docconv-drop {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	margin-top: crayon.size(3);
+	padding: crayon.size(8);
+	border: 2px dashed var(--border);
+	gap: crayon.size(2);
+	text-align: center;
+	transition:
+		border-color 150ms,
+		background 150ms;
+
+	&.is-dragging {
+		border-color: var(--primary);
+		background: color-mix(in oklch, var(--primary) 5%, transparent);
+	}
+}
+
+.dt-docconv-drop-icon {
+	width: crayon.size(6);
+	height: crayon.size(6);
+	color: var(--muted-foreground);
+}
+
+.dt-docconv-drop-text {
+	margin: 0;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-docconv-choose {
+	padding: crayon.size(1.5) crayon.size(3);
+	border: 1px solid var(--border);
+	cursor: pointer;
+	font-size: crayon.font-size("sm");
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--muted) 60%, transparent);
+	}
+
+	/* the file input is visually hidden, so its focus ring has to land here */
+	&:focus-within {
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+}
+
+.dt-docconv-file {
+	@include crayon.hstack(3);
+
+	align-items: center;
+}
+
+.dt-docconv-file-icon {
+	width: crayon.size(5);
+	height: crayon.size(5);
+	color: var(--primary);
+}
+
+.dt-docconv-file-meta {
+	text-align: left;
+
+	p {
+		margin: 0;
+	}
+}
+
+.dt-docconv-file-name {
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-docconv-file-size {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-docconv-icon-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: crayon.size(2);
+	border: 0;
+	background: none;
+	color: inherit;
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--muted) 60%, transparent);
+	}
+}
+
+.dt-docconv-file-error {
+	@include crayon.hstack(1.5);
+
+	align-items: center;
+	justify-content: center;
+	margin: crayon.size(3) 0 0;
+	padding-inline: crayon.size(2);
+	color: var(--destructive);
+	font-size: crayon.font-size("xs");
+	text-align: center;
+
+	.dt-icon {
+		width: crayon.size(3.5);
+		height: crayon.size(3.5);
+		flex-shrink: 0;
+	}
+}
+
+.dt-docconv-mode-link {
+	display: block;
+	margin: crayon.size(3) auto 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+	font: inherit;
+	font-size: crayon.font-size("xs");
+	text-underline-offset: 2px;
+
+	@include crayon.hover {
+		color: var(--foreground);
+		text-decoration: underline;
+	}
+}
+
+.dt-docconv-textarea {
+	width: 100%;
+	min-height: 200px;
+	margin-top: crayon.size(3);
+	padding: crayon.size(3);
+	border: 1px solid var(--border);
+	background: var(--background);
+	color: var(--foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	line-height: 1.6;
+	resize: vertical;
+}
+
+/* ── Format ─────────────────────────────────────────────────────────────── */
+
+.dt-docconv-formats {
+	display: grid;
+	margin: crayon.size(3) crayon.size(-4) 0;
+	border-top: 1px solid var(--border);
+	grid-template-columns: 1fr;
+
+	@include crayon.screen("sm") {
+		grid-template-columns: 1fr auto 1fr;
+	}
+}
+
+.dt-docconv-side {
+	&.is-from {
+		@include crayon.screen("sm") {
+			border-right: 1px solid var(--border);
+		}
+	}
+
+	&.is-to {
+		border-top: 1px solid var(--border);
+
+		@include crayon.screen("sm") {
+			border-top: 0;
+			border-left: 1px solid var(--border);
+		}
+	}
+
+	.dt-docconv-picker {
+		width: calc(100% - #{crayon.size(8)});
+		margin: crayon.size(1.5) crayon.size(4) crayon.size(3);
+	}
+}
+
+.dt-docconv-sub {
+	display: block;
+	padding: crayon.size(3) crayon.size(4) 0;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-docconv-swap-cell {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: crayon.size(2);
+	border-top: 1px solid var(--border);
+
+	@include crayon.screen("sm") {
+		border-top: 0;
+	}
+}
+
+.dt-docconv-swap {
+	display: flex;
+	width: crayon.size(9);
+	height: crayon.size(9);
+	align-items: center;
+	justify-content: center;
+	border: 1px solid var(--border);
+	background: var(--background);
+	color: inherit;
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	&:disabled {
+		cursor: default;
+		opacity: 0.4;
+	}
+
+	@include crayon.hover {
+		&:not(:disabled) {
+			background: color-mix(
+				in oklch,
+				var(--muted) 60%,
+				transparent
+			);
+		}
+	}
+}
+
+.dt-docconv-binary-warn {
+	margin: 0;
+	padding: crayon.size(3) 0;
+	color: crayon.color("amber-600");
+	font-size: crayon.font-size("xs");
+
+	@include crayon.dark {
+		color: crayon.color("amber-400");
+	}
+}
+
+/* ── Format picker (combobox) ───────────────────────────────────────────── */
+
+.dt-docconv-picker {
+	@include crayon.hstack(2);
+
+	height: crayon.size(10);
+	align-items: center;
+	justify-content: space-between;
+	padding-inline: crayon.size(3);
+	border: 1px solid var(--border);
+	background: var(--background);
+	color: inherit;
+	cursor: pointer;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	text-align: left;
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--muted) 40%, transparent);
+	}
+}
+
+.dt-docconv-picker-label {
+	overflow: hidden;
+	min-width: 0;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-docconv-picker-chevron {
+	width: crayon.size(4);
+	height: crayon.size(4);
+	flex-shrink: 0;
+	opacity: 0.5;
+}
+
+.dt-docconv-popover {
+	width: min(20rem, 90vw);
+	padding: 0;
+}
+
+.dt-docconv-check {
+	width: crayon.size(4);
+	height: crayon.size(4);
+	flex-shrink: 0;
+	margin-top: 2px;
+	opacity: 0;
+
+	&.is-on {
+		opacity: 1;
+	}
+}
+
+.dt-docconv-item-text {
+	min-width: 0;
+	flex: 1;
+}
+
+.dt-docconv-item-name {
+	display: block;
+	overflow: hidden;
+	line-height: 1.3;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-docconv-item-desc {
+	display: block;
+	overflow: hidden;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	line-height: 1.3;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* ── Options ────────────────────────────────────────────────────────────── */
+
+.dt-docconv-options {
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-docconv-options-summary {
+	display: flex;
+	width: 100%;
+	align-items: center;
+	justify-content: space-between;
+	padding: crayon.size(3) crayon.size(4);
+	border: 0;
+	background: none;
+	color: inherit;
+	cursor: pointer;
+	font: inherit;
+	font-weight: crayon.font-weight("bold");
+	text-align: left;
+}
+
+.dt-docconv-options-chevron {
+	width: crayon.size(4);
+	height: crayon.size(4);
+	transition: transform 150ms;
+
+	&.is-open {
+		transform: rotate(180deg);
+	}
+}
+
+.dt-docconv-option-list {
+	display: flex;
+	flex-direction: column;
+	padding: crayon.size(1) crayon.size(4) crayon.size(4);
+	gap: crayon.size(4);
+}
+
+.dt-docconv-option {
+	@include crayon.hstack(4);
+
+	align-items: center;
+	justify-content: space-between;
+	cursor: pointer;
+}
+
+.dt-docconv-option-name {
+	display: block;
+	font-size: crayon.font-size("sm");
+}
+
+.dt-docconv-option-desc {
+	display: block;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-docconv-option-input {
+	width: crayon.size(4);
+	height: crayon.size(4);
+	flex-shrink: 0;
+	accent-color: var(--primary);
+}
+
+/* ── Convert ────────────────────────────────────────────────────────────── */
+
+.dt-docconv-convert {
+	@include crayon.hstack(2);
+
+	width: 100%;
+	height: crayon.size(14);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: var(--primary);
+	color: var(--primary-foreground);
+	cursor: pointer;
+	font: inherit;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("bold");
+
+	&:disabled {
+		cursor: default;
+		opacity: 0.5;
+	}
+
+	@include crayon.hover {
+		&:not(:disabled) {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				black
+			);
+		}
+	}
+}
+
+.dt-docconv-spinner {
+	width: crayon.size(4);
+	height: crayon.size(4);
+	animation: dt-docconv-spin 1s linear infinite;
+}
+
+@keyframes dt-docconv-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.dt-docconv-progress {
+	padding: crayon.size(4);
+	border-top: 2px solid var(--border);
+}
+
+.dt-docconv-progress-track {
+	overflow: hidden;
+	height: crayon.size(2);
+	background: var(--muted);
+}
+
+.dt-docconv-progress-fill {
+	height: 100%;
+	background: var(--primary);
+	transition: width 200ms;
+
+	&.is-indeterminate {
+		animation: dt-docconv-pulse 1.5s ease-in-out infinite;
+	}
+}
+
+@keyframes dt-docconv-pulse {
+	50% {
+		opacity: 0.5;
+	}
+}
+
+.dt-docconv-progress-caption {
+	margin: crayon.size(1.5) 0 0;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+/* ── Error, output, warnings, notice ────────────────────────────────────── */
+
+.dt-docconv-error {
+	@include crayon.hstack(2);
+
+	align-items: flex-start;
+	padding: crayon.size(3);
+	border: 1px solid
+		color-mix(in oklch, var(--destructive) 40%, transparent);
+	background: color-mix(in oklch, var(--destructive) 5%, transparent);
+	color: var(--destructive);
+	font-size: crayon.font-size("sm");
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+		flex-shrink: 0;
+		margin-top: 2px;
+	}
+
+	pre {
+		margin: 0;
+		font-family: inherit;
+		overflow-wrap: break-word;
+		white-space: pre-wrap;
+	}
+}
+
+.dt-docconv-output {
+	border: 2px solid var(--border);
+}
+
+.dt-docconv-output-head {
+	display: flex;
+	min-height: crayon.size(14);
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+
+	.dt-docconv-label {
+		display: flex;
+		flex: 1;
+		align-items: center;
+		padding-inline: crayon.size(4);
+	}
+}
+
+.dt-docconv-output-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(5);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: inherit;
+	cursor: pointer;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--muted) 60%, transparent);
+	}
+
+	&.is-primary {
+		padding-inline: crayon.size(6);
+		background: var(--primary);
+		color: var(--primary-foreground);
+		font-weight: crayon.font-weight("semibold");
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				black
+			);
+		}
+	}
+}
+
+.dt-docconv-output-text {
+	display: block;
+	width: 100%;
+	min-height: 220px;
+	padding: crayon.size(3);
+	border: 0;
+	background: var(--background);
+	color: var(--foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	line-height: 1.6;
+	resize: vertical;
+}
+
+.dt-docconv-output-row {
+	@include crayon.hstack(3);
+
+	align-items: center;
+	padding: crayon.size(4);
+}
+
+.dt-docconv-output-icon {
+	width: crayon.size(6);
+	height: crayon.size(6);
+	color: var(--primary);
+}
+
+.dt-docconv-output-meta {
+	flex: 1;
+
+	p {
+		margin: 0;
+	}
+}
+
+.dt-docconv-output-name {
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-docconv-output-note {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-docconv-warnings {
+	padding: crayon.size(3);
+	border: 1px solid color-mix(in oklch, #{$amber} 40%, transparent);
+	background: color-mix(in oklch, #{$amber} 5%, transparent);
+	font-size: crayon.font-size("sm");
+
+	ul {
+		margin: 0;
+		padding-left: crayon.size(5);
+		color: var(--muted-foreground);
+
+		li {
+			overflow-wrap: break-word;
+		}
+	}
+}
+
+.dt-docconv-warnings-head {
+	@include crayon.hstack(1.5);
+
+	align-items: center;
+	margin: 0 0 crayon.size(1);
+	color: crayon.color("amber-600");
+	font-weight: crayon.font-weight("medium");
+
+	@include crayon.dark {
+		color: crayon.color("amber-400");
+	}
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+}
+
+.dt-docconv-notice {
+	@include crayon.hstack(2);
+
+	align-items: flex-start;
+	padding: crayon.size(3);
+	border: 1px solid var(--border);
+	background: color-mix(in oklch, var(--muted) 50%, transparent);
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+		flex-shrink: 0;
+		margin-top: 2px;
+		color: var(--muted-foreground);
+	}
+
+	p {
+		margin: 0;
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+	}
+
+	a {
+		color: inherit;
+		text-decoration: underline;
+
+		@include crayon.hover {
+			color: var(--foreground);
+		}
+	}
+}

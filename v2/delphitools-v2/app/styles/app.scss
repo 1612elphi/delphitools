@@ -15,10 +15,12 @@
 @use "tools/background-remover";
 @use "tools/base-converter";
 @use "tools/base64-image-encoder";
+@use "tools/code-genny";
 @use "tools/colorblind-sim";
 @use "tools/colour-converter";
 @use "tools/contrast-checker";
 @use "tools/decoder";
+@use "tools/doc-converter";
 @use "tools/encoder";
 @use "tools/favicon-genny";
 @use "tools/font-explorer";
@@ -26,7 +28,10 @@
 @use "tools/gradient-genny";
 @use "tools/harmony-genny";
 @use "tools/image-clipper";
+@use "tools/image-converter";
 @use "tools/image-splitter";
+@use "tools/image-tracer";
+@use "tools/imposer";
 @use "tools/large-type";
 @use "tools/line-height-calc";
 @use "tools/markdown-writer";
@@ -37,22 +42,27 @@
 @use "tools/palette-genny";
 @use "tools/paper-sizes";
 @use "tools/paste-image";
+@use "tools/pdf-preflight";
 @use "tools/pixel-picker";
 @use "tools/placeholder-genny";
 @use "tools/px-to-rem";
+@use "tools/qr-genny";
 @use "tools/regex-tester";
 @use "tools/sci-calc";
 @use "tools/scroll-generator";
 @use "tools/shavian-transliterator";
+@use "tools/social-cropper";
 @use "tools/svg-optimiser";
 @use "tools/tailwind-cheatsheet";
 @use "tools/tailwind-shades";
 @use "tools/text-diff";
+@use "tools/text-editor";
 @use "tools/time-calc";
 @use "tools/typo-calc";
 @use "tools/unit-converter";
 @use "tools/watermarker";
 @use "tools/word-counter";
+@use "tools/zine-imposer";
 
 /* iA Writer Quattro — self-hosted variable font (weight axis 400–700, upright +
    italic). The single typeface for the whole UI; replaces IBM Plex Mono and

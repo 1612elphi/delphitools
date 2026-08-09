@@ -45,9 +45,19 @@ const parserOptions = {
 };
 
 export default defineConfig([
-	// public/jxl is the libjxl emscripten build, copied verbatim from
-	// @jsquash/jxl; it is served as-is and never linted or edited.
-	globalIgnores(['dist/', 'coverage/', 'public/jxl/', '!**/.*']),
+	// Everything here is vendored verbatim and served as-is: public/jxl is the
+	// libjxl emscripten build from @jsquash/jxl, pandoc-core.js is the MIT
+	// pandoc-wasm wrapper, imagetracer is the standalone build image-tracer
+	// builds its worker from, and pdf.worker is pdfjs-dist's shipped worker.
+	globalIgnores([
+		'dist/',
+		'coverage/',
+		'public/jxl/',
+		'public/lib/imagetracer_v1.2.6.js',
+		'public/pdf.worker.min.mjs',
+		'app/lib/pandoc/pandoc-core.js',
+		'!**/.*',
+	]),
 	js.configs.recommended,
 	ember.configs.base,
 	ember.configs.gjs,

@@ -1,0 +1,862 @@
+// Styles for the imposer tool.
+//
+// One partial per tool: app.scss had grown past three thousand lines and every
+// new tool collided in it.
+
+@use "../crayon-config" as crayon;
+
+/* ── Print imposer ───────────────────────────────────────────────────────── */
+
+.dt-imp {
+	@include crayon.vstack(6);
+}
+
+.dt-imp-frame {
+	border: 2px solid var(--border);
+}
+
+/* ── Upload ──────────────────────────────────────────────────────────────── */
+
+.dt-imp-upload {
+	position: relative;
+}
+
+.dt-imp-drop {
+	display: block;
+	margin: crayon.size(4);
+	padding: crayon.size(8);
+	border: 2px dashed var(--border);
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 150ms;
+
+	@include crayon.hover {
+		border-color: color-mix(
+			in oklch,
+			var(--primary) 50%,
+			transparent
+		);
+	}
+
+	/* the file input is visually hidden, so its focus ring has to land here */
+	&:focus-within {
+		border-color: var(--primary);
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+}
+
+.dt-imp-drop-icon {
+	width: crayon.size(10);
+	height: crayon.size(10);
+	margin: 0 auto crayon.size(3);
+	color: var(--muted-foreground);
+}
+
+.dt-imp-drop-title {
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-imp-drop-hint {
+	margin-top: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-imp-file {
+	@include crayon.hstack(3);
+
+	align-items: center;
+	justify-content: center;
+}
+
+.dt-imp-file-icon {
+	width: crayon.size(8);
+	height: crayon.size(8);
+	color: var(--primary);
+}
+
+.dt-imp-file-text {
+	text-align: left;
+}
+
+.dt-imp-file-name {
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-imp-file-meta {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+/* Outside the drop label rather than inside its text: a button nested in a
+   label is a second interactive target for the same activation. */
+.dt-imp-remove {
+	position: absolute;
+	top: crayon.size(6);
+	right: crayon.size(6);
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	text-decoration: underline;
+	cursor: pointer;
+
+	@include crayon.hover {
+		color: var(--foreground);
+	}
+}
+
+/* ── Configuration ───────────────────────────────────────────────────────── */
+
+.dt-imp-section {
+	@include crayon.vstack(1.5);
+
+	padding: crayon.size(4);
+	border-top: 2px solid var(--border);
+}
+
+.dt-imp-heading {
+	display: block;
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-imp-cards {
+	display: grid;
+	border-top: 2px solid var(--border);
+
+	@include crayon.screen("sm") {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.dt-imp-card {
+	@include crayon.vstack(3);
+
+	padding: crayon.size(4);
+	border-bottom: 2px solid var(--border);
+	min-width: 0;
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	@include crayon.screen("sm") {
+		border-bottom: 0;
+
+		&:first-child {
+			border-right: 2px solid var(--border);
+		}
+	}
+}
+
+.dt-imp-field {
+	@include crayon.vstack(1.5);
+}
+
+/* ── Label with an info popover ──────────────────────────────────────────── */
+
+.dt-imp-labelinfo {
+	@include crayon.hstack(1);
+
+	align-items: center;
+}
+
+.dt-imp-label {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-imp-info {
+	display: inline-flex;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: color-mix(in oklch, var(--muted-foreground) 50%, transparent);
+	cursor: pointer;
+	transition: color 150ms;
+
+	.dt-icon {
+		width: crayon.size(3);
+		height: crayon.size(3);
+	}
+
+	@include crayon.hover {
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-imp-infopanel {
+	max-width: 260px;
+	font-size: crayon.font-size("xs");
+	line-height: crayon.leading("relaxed");
+}
+
+/* ── Layout combobox ─────────────────────────────────────────────────────── */
+
+.dt-imp-layout-trigger {
+	@include crayon.hstack(3);
+
+	width: 100%;
+	align-items: center;
+	padding: crayon.size(2.5) crayon.size(3);
+	border: 1px solid var(--border);
+	background: var(--background);
+	color: var(--foreground);
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+}
+
+.dt-imp-layout-icon,
+.dt-imp-layout-caret {
+	flex-shrink: 0;
+	width: crayon.size(4);
+	height: crayon.size(4);
+	color: var(--muted-foreground);
+}
+
+.dt-imp-layout-text {
+	flex: 1;
+	min-width: 0;
+}
+
+.dt-imp-layout-name {
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-imp-layout-use {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+/* The vendored popover publishes no trigger width, so the panel sets its own. */
+.dt-imp-layout-panel {
+	width: min(34rem, calc(100vw - #{crayon.size(8)}));
+	padding: crayon.size(1);
+}
+
+.dt-imp-layout-option {
+	@include crayon.hstack(3);
+
+	width: 100%;
+	align-items: center;
+	padding: crayon.size(2.5) crayon.size(3);
+	border: 0;
+	border-left: 2px solid transparent;
+	background: none;
+	color: var(--foreground);
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		border-left-color: var(--primary);
+		background: color-mix(
+			in oklch,
+			var(--primary) 10%,
+			transparent
+		);
+	}
+}
+
+.dt-imp-option-icon {
+	flex-shrink: 0;
+	width: crayon.size(5);
+	height: crayon.size(5);
+	color: var(--muted-foreground);
+
+	.dt-imp-layout-option.is-active & {
+		color: var(--primary);
+	}
+}
+
+.dt-imp-option-text {
+	@include crayon.vstack(0.5);
+
+	flex: 1;
+	min-width: 0;
+}
+
+.dt-imp-option-name {
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-imp-option-desc {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-imp-option-check {
+	flex-shrink: 0;
+	width: crayon.size(4);
+	height: crayon.size(4);
+	color: var(--primary);
+}
+
+/* ── Controls ────────────────────────────────────────────────────────────── */
+
+.dt-imp-combo {
+	width: 100%;
+}
+
+.dt-imp-segments {
+	height: crayon.size(9);
+	grid-auto-flow: column;
+	grid-auto-columns: minmax(0, 1fr);
+}
+
+.dt-imp-segment {
+	background: var(--background);
+	color: var(--foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("medium");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-imp-dims {
+	@include crayon.hstack(2);
+
+	align-items: center;
+}
+
+.dt-imp-number {
+	width: crayon.size(20);
+	height: crayon.size(8);
+	padding: 0 crayon.size(2);
+	border: 1px solid var(--border);
+	background: var(--background);
+	color: var(--foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+
+	&.is-narrow {
+		width: crayon.size(14);
+		height: crayon.size(9);
+	}
+}
+
+.dt-imp-dims-sep,
+.dt-imp-dims-unit {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-imp-slider {
+	@include crayon.vstack(1.5);
+
+	min-width: crayon.size(36);
+}
+
+.dt-imp-slider-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.dt-imp-slider-value {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-imp-range {
+	width: 100%;
+	accent-color: var(--primary);
+	cursor: pointer;
+}
+
+.dt-imp-rule {
+	height: 1px;
+	border: 0;
+	background: var(--border);
+}
+
+.dt-imp-toggle {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: crayon.size(3);
+}
+
+.dt-imp-toggle-controls {
+	@include crayon.hstack(2);
+
+	align-items: center;
+}
+
+.dt-imp-stepper {
+	@include crayon.hstack(1);
+
+	align-items: center;
+}
+
+.dt-imp-step {
+	display: inline-flex;
+	width: crayon.size(6);
+	height: crayon.size(6);
+	align-items: center;
+	justify-content: center;
+	border: 1px solid var(--border);
+	background: var(--background);
+	color: var(--foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(3);
+		height: crayon.size(3);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+}
+
+.dt-imp-step-value {
+	width: crayon.size(6);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("medium");
+	font-variant-numeric: tabular-nums;
+	text-align: center;
+}
+
+/* A native checkbox drawn as a switch; the v2 app has no Switch primitive. */
+.dt-imp-switch {
+	position: relative;
+	width: crayon.size(9);
+	height: crayon.size(5);
+	flex-shrink: 0;
+	border: 1px solid var(--border);
+	appearance: none;
+	background: var(--muted);
+	border-radius: 9999px;
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	&::after {
+		position: absolute;
+		top: 1px;
+		left: 1px;
+		width: calc(#{crayon.size(5)} - 4px);
+		height: calc(#{crayon.size(5)} - 4px);
+		background: var(--background);
+		border-radius: 9999px;
+		content: "";
+		transition: transform 150ms;
+	}
+
+	&:checked {
+		border-color: var(--primary);
+		background: var(--primary);
+	}
+
+	&:checked::after {
+		transform: translateX(crayon.size(4));
+	}
+}
+
+/* ── Preview ─────────────────────────────────────────────────────────────── */
+
+.dt-imp-summary {
+	padding: crayon.size(4);
+	border-bottom: 2px solid var(--border);
+	background: color-mix(in oklch, var(--muted) 50%, transparent);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-imp-summary-blanks {
+	color: var(--muted-foreground);
+	font-weight: crayon.font-weight("normal");
+}
+
+.dt-imp-empty {
+	display: flex;
+	height: crayon.size(64);
+	align-items: center;
+	justify-content: center;
+	color: var(--muted-foreground);
+}
+
+.dt-imp-preview {
+	@include crayon.vstack(3);
+
+	padding: crayon.size(4);
+}
+
+.dt-imp-side-label {
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("medium");
+	text-align: center;
+}
+
+.dt-imp-stack {
+	position: relative;
+	margin: 0 auto;
+	width: 100%;
+}
+
+.dt-imp-shadow {
+	position: absolute;
+	inset: 0;
+	border: 1px solid var(--border);
+
+	&.is-far {
+		z-index: 0;
+		background: color-mix(in oklch, var(--muted) 30%, transparent);
+		transform: translate(6px, 6px);
+	}
+
+	&.is-near {
+		z-index: 1;
+		background: color-mix(in oklch, var(--muted) 20%, transparent);
+		transform: translate(3px, 3px);
+	}
+}
+
+.dt-imp-flip {
+	position: relative;
+	z-index: 2;
+	width: 100%;
+	height: 100%;
+	perspective: 1200px;
+}
+
+.dt-imp-faces {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	transform-style: preserve-3d;
+	transition: transform 600ms ease;
+
+	&.is-flipped {
+		transform: rotateY(180deg);
+	}
+}
+
+.dt-imp-face {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	border: 1px solid var(--border);
+	backface-visibility: hidden;
+
+	&.is-back {
+		transform: rotateY(180deg);
+	}
+}
+
+.dt-imp-canvas {
+	width: 100%;
+	height: 100%;
+	background: #fff;
+	object-fit: contain;
+}
+
+/* The sheet is paper, so it stays white in both themes and carries its own
+   ink colours rather than the theme tokens. */
+.dt-imp-sheet {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	background: #fff;
+}
+
+.dt-imp-marks {
+	position: absolute;
+	z-index: 10;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	stroke: #333;
+	stroke-width: 0.5;
+}
+
+.dt-imp-fold {
+	position: absolute;
+	z-index: 5;
+	border-color: #68b;
+
+	&.is-v {
+		top: 0;
+		bottom: 0;
+		left: 50%;
+		border-left: 1px dashed #68b;
+	}
+
+	&.is-h {
+		right: 0;
+		left: 0;
+		top: 50%;
+		border-top: 1px dashed #68b;
+	}
+}
+
+.dt-imp-cell {
+	position: absolute;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	border: 1.5px dashed #999;
+}
+
+.dt-imp-cell-blank {
+	color: #888;
+	font-size: crayon.font-size("xs");
+}
+
+.dt-imp-cell-number {
+	color: #444;
+	font-size: crayon.font-size("2xl");
+	font-weight: crayon.font-weight("bold");
+	line-height: 1;
+}
+
+.dt-imp-cell-meta {
+	margin-top: crayon.size(1);
+	color: #777;
+	font-size: crayon.font-size("xs");
+}
+
+.dt-imp-cell-dims {
+	margin-top: crayon.size(1);
+	color: #777;
+	font-size: 10px;
+}
+
+/* ── Navigation ──────────────────────────────────────────────────────────── */
+
+.dt-imp-nav {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	justify-content: center;
+}
+
+.dt-imp-navbtn {
+	@include crayon.hstack(1);
+
+	height: crayon.size(8);
+	align-items: center;
+	padding: 0 crayon.size(3);
+	border: 1px solid var(--border);
+	background: var(--background);
+	color: var(--foreground);
+	font: inherit;
+	font-size: crayon.font-size("xs");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(3.5);
+		height: crayon.size(3.5);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+}
+
+.dt-imp-dots {
+	@include crayon.hstack(1.5);
+
+	align-items: center;
+	justify-content: center;
+}
+
+.dt-imp-dot {
+	width: crayon.size(2);
+	height: crayon.size(2);
+	border: 0;
+	background: color-mix(
+		in oklch,
+		var(--muted-foreground) 30%,
+		transparent
+	);
+	border-radius: 9999px;
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	@include crayon.hover {
+		background: color-mix(
+			in oklch,
+			var(--muted-foreground) 50%,
+			transparent
+		);
+	}
+
+	&.is-active {
+		background: var(--primary);
+	}
+}
+
+.dt-imp-counter {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("medium");
+}
+
+/* ── Actions ─────────────────────────────────────────────────────────────── */
+
+.dt-imp-actions {
+	display: flex;
+	min-height: crayon.size(14);
+	align-items: stretch;
+	border: 2px solid var(--border);
+}
+
+.dt-imp-generate {
+	@include crayon.hstack(2);
+
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font: inherit;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--primary) 90%, black);
+	}
+
+	&:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+}
+
+.dt-imp-spinner {
+	animation: dt-imp-spin 1s linear infinite;
+}
+
+@keyframes dt-imp-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.dt-imp-guidebtn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding: 0 crayon.size(5);
+	border: 0;
+	border-left: 2px solid var(--border);
+	background: var(--background);
+	color: var(--foreground);
+	font: inherit;
+	font-weight: crayon.font-weight("medium");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+}
+
+/* ── Print guide ─────────────────────────────────────────────────────────── */
+
+.dt-imp-guide {
+	@include crayon.vstack(3);
+
+	padding: crayon.size(4);
+}
+
+.dt-imp-guide-head {
+	@include crayon.hstack(2);
+
+	align-items: center;
+
+	.dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+		color: var(--muted-foreground);
+	}
+
+	h3 {
+		font-size: crayon.font-size("sm");
+		font-weight: crayon.font-weight("bold");
+	}
+}
+
+.dt-imp-guide-intro,
+.dt-imp-guide-note {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-imp-guide-steps {
+	@include crayon.vstack(1);
+
+	padding-left: crayon.size(5);
+	list-style: decimal;
+	font-size: crayon.font-size("sm");
+}
+
+.dt-imp-step-front {
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-imp-step-back {
+	display: block;
+	margin-left: crayon.size(5);
+	color: var(--muted-foreground);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dt-imp-faces {
+		transition: none;
+	}
+
+	.dt-imp-spinner {
+		animation: none;
+	}
+}

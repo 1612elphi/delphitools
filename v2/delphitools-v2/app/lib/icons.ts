@@ -3,22 +3,35 @@
 // Covers every icon named in app/lib/tools.ts plus every literal <Icon @name>
 // in a .gts template. Re-run after adding either.
 
+import iAlertCircle from 'lucide-static/icons/alert-circle.svg?raw';
+import iAlertTriangle from 'lucide-static/icons/alert-triangle.svg?raw';
+import iArchive from 'lucide-static/icons/archive.svg?raw';
+import iArrowLeftRight from 'lucide-static/icons/arrow-left-right.svg?raw';
 import iArrowRight from 'lucide-static/icons/arrow-right.svg?raw';
 import iArrowRightLeft from 'lucide-static/icons/arrow-right-left.svg?raw';
 import iArrowUpDown from 'lucide-static/icons/arrow-up-down.svg?raw';
 import iBarcode from 'lucide-static/icons/barcode.svg?raw';
 import iBinary from 'lucide-static/icons/binary.svg?raw';
 import iBlend from 'lucide-static/icons/blend.svg?raw';
+import iBold from 'lucide-static/icons/bold.svg?raw';
 import iBookOpen from 'lucide-static/icons/book-open.svg?raw';
 import iBrush from 'lucide-static/icons/brush.svg?raw';
 import iCalculator from 'lucide-static/icons/calculator.svg?raw';
 import iCaseUpper from 'lucide-static/icons/case-upper.svg?raw';
 import iCheck from 'lucide-static/icons/check.svg?raw';
 import iChevronDown from 'lucide-static/icons/chevron-down.svg?raw';
+import iChevronLeft from 'lucide-static/icons/chevron-left.svg?raw';
+import iChevronRight from 'lucide-static/icons/chevron-right.svg?raw';
+import iChevronUp from 'lucide-static/icons/chevron-up.svg?raw';
 import iChevronsUpDown from 'lucide-static/icons/chevrons-up-down.svg?raw';
 import iCircleAlert from 'lucide-static/icons/circle-alert.svg?raw';
+import iCircleCheck from 'lucide-static/icons/circle-check.svg?raw';
+import iCircleCheckBig from 'lucide-static/icons/circle-check-big.svg?raw';
+import iCircleX from 'lucide-static/icons/circle-x.svg?raw';
 import iClipboardPaste from 'lucide-static/icons/clipboard-paste.svg?raw';
 import iClock from 'lucide-static/icons/clock.svg?raw';
+import iCode from 'lucide-static/icons/code.svg?raw';
+import iCode2 from 'lucide-static/icons/code-2.svg?raw';
 import iCombine from 'lucide-static/icons/combine.svg?raw';
 import iContrast from 'lucide-static/icons/contrast.svg?raw';
 import iCopy from 'lucide-static/icons/copy.svg?raw';
@@ -38,26 +51,36 @@ import iFileType2 from 'lucide-static/icons/file-type-2.svg?raw';
 import iFrown from 'lucide-static/icons/frown.svg?raw';
 import iGalleryVertical from 'lucide-static/icons/gallery-vertical.svg?raw';
 import iGitCompare from 'lucide-static/icons/git-compare.svg?raw';
+import iGripVertical from 'lucide-static/icons/grip-vertical.svg?raw';
 import iHash from 'lucide-static/icons/hash.svg?raw';
 import iHome from 'lucide-static/icons/home.svg?raw';
 import iImage from 'lucide-static/icons/image.svg?raw';
 import iInfo from 'lucide-static/icons/info.svg?raw';
+import iItalic from 'lucide-static/icons/italic.svg?raw';
 import iKeyRound from 'lucide-static/icons/key-round.svg?raw';
 import iLanguages from 'lucide-static/icons/languages.svg?raw';
 import iLayers from 'lucide-static/icons/layers.svg?raw';
 import iLayoutGrid from 'lucide-static/icons/layout-grid.svg?raw';
 import iLibrary from 'lucide-static/icons/library.svg?raw';
 import iLineChart from 'lucide-static/icons/line-chart.svg?raw';
+import iLink from 'lucide-static/icons/link.svg?raw';
+import iLoader2 from 'lucide-static/icons/loader-2.svg?raw';
 import iLoaderCircle from 'lucide-static/icons/loader-circle.svg?raw';
 import iLock from 'lucide-static/icons/lock.svg?raw';
+import iMaximize from 'lucide-static/icons/maximize.svg?raw';
 import iMaximize2 from 'lucide-static/icons/maximize-2.svg?raw';
+import iMinimize from 'lucide-static/icons/minimize.svg?raw';
+import iMinimize2 from 'lucide-static/icons/minimize-2.svg?raw';
 import iMinus from 'lucide-static/icons/minus.svg?raw';
 import iMoon from 'lucide-static/icons/moon.svg?raw';
+import iMove from 'lucide-static/icons/move.svg?raw';
+import iPackage from 'lucide-static/icons/package.svg?raw';
 import iPalette from 'lucide-static/icons/palette.svg?raw';
 import iPanelLeft from 'lucide-static/icons/panel-left.svg?raw';
 import iPenLine from 'lucide-static/icons/pen-line.svg?raw';
 import iPipette from 'lucide-static/icons/pipette.svg?raw';
 import iPlus from 'lucide-static/icons/plus.svg?raw';
+import iPrinter from 'lucide-static/icons/printer.svg?raw';
 import iQrCode from 'lucide-static/icons/qr-code.svg?raw';
 import iRainbow from 'lucide-static/icons/rainbow.svg?raw';
 import iRefreshCw from 'lucide-static/icons/refresh-cw.svg?raw';
@@ -65,9 +88,13 @@ import iRegex from 'lucide-static/icons/regex.svg?raw';
 import iRotateCcw from 'lucide-static/icons/rotate-ccw.svg?raw';
 import iRuler from 'lucide-static/icons/ruler.svg?raw';
 import iScale from 'lucide-static/icons/scale.svg?raw';
+import iScaling from 'lucide-static/icons/scaling.svg?raw';
 import iScanLine from 'lucide-static/icons/scan-line.svg?raw';
+import iScanSearch from 'lucide-static/icons/scan-search.svg?raw';
 import iScissors from 'lucide-static/icons/scissors.svg?raw';
+import iScissorsLineDashed from 'lucide-static/icons/scissors-line-dashed.svg?raw';
 import iSearch from 'lucide-static/icons/search.svg?raw';
+import iSettings from 'lucide-static/icons/settings.svg?raw';
 import iShuffle from 'lucide-static/icons/shuffle.svg?raw';
 import iSmartphone from 'lucide-static/icons/smartphone.svg?raw';
 import iSparkles from 'lucide-static/icons/sparkles.svg?raw';
@@ -75,6 +102,7 @@ import iSquare from 'lucide-static/icons/square.svg?raw';
 import iSquareTerminal from 'lucide-static/icons/square-terminal.svg?raw';
 import iStamp from 'lucide-static/icons/stamp.svg?raw';
 import iStar from 'lucide-static/icons/star.svg?raw';
+import iStrikethrough from 'lucide-static/icons/strikethrough.svg?raw';
 import iSun from 'lucide-static/icons/sun.svg?raw';
 import iTag from 'lucide-static/icons/tag.svg?raw';
 import iTrash2 from 'lucide-static/icons/trash-2.svg?raw';
@@ -87,22 +115,35 @@ import iWind from 'lucide-static/icons/wind.svg?raw';
 import iX from 'lucide-static/icons/x.svg?raw';
 
 export const icons: Record<string, string> = {
+	'alert-circle': iAlertCircle,
+	'alert-triangle': iAlertTriangle,
+	archive: iArchive,
+	'arrow-left-right': iArrowLeftRight,
 	'arrow-right': iArrowRight,
 	'arrow-right-left': iArrowRightLeft,
 	'arrow-up-down': iArrowUpDown,
 	barcode: iBarcode,
 	binary: iBinary,
 	blend: iBlend,
+	bold: iBold,
 	'book-open': iBookOpen,
 	brush: iBrush,
 	calculator: iCalculator,
 	'case-upper': iCaseUpper,
 	check: iCheck,
 	'chevron-down': iChevronDown,
+	'chevron-left': iChevronLeft,
+	'chevron-right': iChevronRight,
+	'chevron-up': iChevronUp,
 	'chevrons-up-down': iChevronsUpDown,
 	'circle-alert': iCircleAlert,
+	'circle-check': iCircleCheck,
+	'circle-check-big': iCircleCheckBig,
+	'circle-x': iCircleX,
 	'clipboard-paste': iClipboardPaste,
 	clock: iClock,
+	code: iCode,
+	'code-2': iCode2,
 	combine: iCombine,
 	contrast: iContrast,
 	copy: iCopy,
@@ -122,26 +163,36 @@ export const icons: Record<string, string> = {
 	frown: iFrown,
 	'gallery-vertical': iGalleryVertical,
 	'git-compare': iGitCompare,
+	'grip-vertical': iGripVertical,
 	hash: iHash,
 	home: iHome,
 	image: iImage,
 	info: iInfo,
+	italic: iItalic,
 	'key-round': iKeyRound,
 	languages: iLanguages,
 	layers: iLayers,
 	'layout-grid': iLayoutGrid,
 	library: iLibrary,
 	'line-chart': iLineChart,
+	link: iLink,
+	'loader-2': iLoader2,
 	'loader-circle': iLoaderCircle,
 	lock: iLock,
+	maximize: iMaximize,
 	'maximize-2': iMaximize2,
+	minimize: iMinimize,
+	'minimize-2': iMinimize2,
 	minus: iMinus,
 	moon: iMoon,
+	move: iMove,
+	package: iPackage,
 	palette: iPalette,
 	'panel-left': iPanelLeft,
 	'pen-line': iPenLine,
 	pipette: iPipette,
 	plus: iPlus,
+	printer: iPrinter,
 	'qr-code': iQrCode,
 	rainbow: iRainbow,
 	'refresh-cw': iRefreshCw,
@@ -149,9 +200,13 @@ export const icons: Record<string, string> = {
 	'rotate-ccw': iRotateCcw,
 	ruler: iRuler,
 	scale: iScale,
+	scaling: iScaling,
 	'scan-line': iScanLine,
+	'scan-search': iScanSearch,
 	scissors: iScissors,
+	'scissors-line-dashed': iScissorsLineDashed,
 	search: iSearch,
+	settings: iSettings,
 	shuffle: iShuffle,
 	smartphone: iSmartphone,
 	sparkles: iSparkles,
@@ -159,6 +214,7 @@ export const icons: Record<string, string> = {
 	'square-terminal': iSquareTerminal,
 	stamp: iStamp,
 	star: iStar,
+	strikethrough: iStrikethrough,
 	sun: iSun,
 	tag: iTag,
 	'trash-2': iTrash2,

@@ -1,0 +1,641 @@
+// Styles for the image-converter tool.
+//
+// One partial per tool: app.scss had grown past three thousand lines and every
+// new tool collided in it.
+
+@use "../crayon-config" as crayon;
+
+/* ── Image converter ─────────────────────────────────────────────────────── */
+
+.dt-conv {
+	@include crayon.vstack(6);
+}
+
+.dt-conv-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-conv-drop {
+	display: block;
+	margin: crayon.size(4);
+	padding: crayon.size(8);
+	border: 2px dashed var(--border);
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(12);
+		height: crayon.size(12);
+		margin-bottom: crayon.size(4);
+		color: var(--muted-foreground);
+	}
+
+	@include crayon.hover {
+		border-color: color-mix(
+			in oklch,
+			var(--primary) 50%,
+			transparent
+		);
+	}
+
+	/* the file input is visually hidden, so its focus ring has to land here */
+	&:focus-within {
+		border-color: var(--primary);
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+}
+
+.dt-conv-drop-title {
+	display: block;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-conv-drop-hint {
+	display: block;
+	margin-top: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-conv-section {
+	padding: crayon.size(4);
+	border-top: 2px solid var(--border);
+}
+
+.dt-conv-label {
+	display: block;
+	margin-bottom: crayon.size(3);
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-conv-sublabel {
+	display: block;
+	margin-bottom: crayon.size(2);
+	font-size: crayon.font-size("sm");
+}
+
+/* `.segmented` draws a 1px frame on all four edges; every group here bleeds to
+   its panel's own border, so the side edges are dropped and the panel padding
+   is cancelled with a negative margin. Both classes are on the selector to
+   outrank `.segmented` itself. */
+.segmented.dt-conv-formats,
+.segmented.dt-conv-depths,
+.segmented.dt-conv-sizes,
+.segmented.dt-conv-modes,
+.segmented.dt-conv-scales {
+	margin-inline: crayon.size(-4);
+	border-inline: 0;
+}
+
+.dt-conv-formats {
+	grid-template-columns: repeat(5, 1fr);
+}
+
+.dt-conv-format {
+	@include crayon.hstack(2);
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: crayon.size(11);
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--background);
+	color: var(--foreground);
+	font: inherit;
+	font-weight: crayon.font-weight("bold");
+	text-decoration: none;
+	text-transform: uppercase;
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-conv-panels {
+	display: grid;
+	border-top: 2px solid var(--border);
+
+	@include crayon.screen("sm") {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.dt-conv-panel {
+	@include crayon.vstack(4);
+
+	min-width: 0;
+	padding: crayon.size(4);
+	border-bottom: 1px solid var(--border);
+
+	@include crayon.screen("sm") {
+		border-bottom: 0;
+
+		&:first-child {
+			border-right: 1px solid var(--border);
+		}
+	}
+}
+
+.dt-conv-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: crayon.size(3);
+	font-size: crayon.font-size("sm");
+}
+
+/* A native checkbox drawn as a switch — the same shape pixel-picker uses, this
+   app having no Switch primitive. */
+.dt-conv-switch {
+	position: relative;
+	width: crayon.size(9);
+	height: crayon.size(5);
+	flex-shrink: 0;
+	border: 1px solid var(--border);
+	appearance: none;
+	background: var(--muted);
+	border-radius: 9999px;
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	&::after {
+		position: absolute;
+		top: 1px;
+		left: 1px;
+		width: calc(#{crayon.size(5)} - 4px);
+		height: calc(#{crayon.size(5)} - 4px);
+		background: var(--background);
+		border-radius: 9999px;
+		content: "";
+		transition: transform 150ms;
+	}
+
+	&:checked {
+		border-color: var(--primary);
+		background: var(--primary);
+	}
+
+	&:checked::after {
+		transform: translateX(crayon.size(4));
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+}
+
+.dt-conv-swatch {
+	@include crayon.hstack(2);
+
+	display: flex;
+	align-items: center;
+
+	input[type="color"] {
+		width: crayon.size(8);
+		height: crayon.size(8);
+		padding: 0;
+		border: 1px solid var(--border);
+		background: none;
+		cursor: pointer;
+	}
+
+	code {
+		color: var(--muted-foreground);
+		font-family: crayon.font-family("mono");
+		font-size: crayon.font-size("xs");
+	}
+}
+
+.dt-conv-slider {
+	display: flex;
+	align-items: center;
+	gap: crayon.size(3);
+
+	label {
+		flex-shrink: 0;
+		font-size: crayon.font-size("sm");
+	}
+
+	input[type="range"] {
+		flex: 1;
+		min-width: 0;
+		accent-color: var(--primary);
+		cursor: pointer;
+	}
+}
+
+.dt-conv-readout {
+	flex-shrink: 0;
+	min-width: crayon.size(12);
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+}
+
+.dt-conv-field {
+	min-width: 0;
+}
+
+.dt-conv-note {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	line-height: crayon.leading("snug");
+
+	&.is-inline {
+		@include crayon.hstack(2);
+
+		display: flex;
+		align-items: center;
+		font-size: crayon.font-size("sm");
+	}
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+		flex-shrink: 0;
+	}
+}
+
+.dt-conv-depths {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dt-conv-depth {
+	padding: crayon.size(2);
+	background: var(--background);
+	color: var(--foreground);
+	font: inherit;
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	span {
+		display: block;
+		font-size: crayon.font-size("xs");
+		font-weight: crayon.font-weight("normal");
+		opacity: 0.7;
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-conv-sizes {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+
+	/* seven sizes over four columns, so the last one takes the spare pair */
+	&.is-icns {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+
+		> :last-child {
+			grid-column: span 2;
+		}
+	}
+}
+
+.dt-conv-size {
+	min-height: crayon.size(9);
+	padding: crayon.size(2);
+	background: var(--background);
+	color: var(--foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-conv-modes {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dt-conv-mode {
+	min-height: crayon.size(10);
+	padding: crayon.size(2);
+	background: var(--background);
+	color: var(--foreground);
+	font: inherit;
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-conv-scales {
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.dt-conv-scale {
+	min-height: crayon.size(10);
+	padding: crayon.size(2);
+	background: var(--background);
+	color: var(--foreground);
+	font: inherit;
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-conv-dims {
+	display: flex;
+	align-items: flex-end;
+	gap: crayon.size(2);
+}
+
+.dt-conv-dim {
+	display: block;
+	flex: 1;
+	min-width: 0;
+
+	label {
+		display: block;
+		margin-bottom: crayon.size(1.5);
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+	}
+
+	input {
+		width: 100%;
+		min-width: 0;
+		padding: crayon.size(2) crayon.size(3);
+		border: 1px solid var(--border);
+		background: var(--background);
+		color: var(--foreground);
+		font: inherit;
+		font-size: crayon.font-size("sm");
+	}
+}
+
+.dt-conv-lock {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: crayon.size(9);
+	padding: crayon.size(2);
+	border: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+	transition:
+		border-color 150ms,
+		color 150ms;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		border-color: color-mix(
+			in oklch,
+			var(--primary) 50%,
+			transparent
+		);
+	}
+
+	&.is-active {
+		border-color: var(--primary);
+		background: color-mix(
+			in oklch,
+			var(--primary) 10%,
+			transparent
+		);
+		color: var(--primary);
+	}
+}
+
+.dt-conv-custom {
+	@include crayon.hstack(2);
+
+	display: flex;
+	align-items: center;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+
+	input {
+		width: crayon.size(20);
+		padding: crayon.size(1) crayon.size(2);
+		border: 1px solid var(--border);
+		background: var(--background);
+		color: var(--foreground);
+		font: inherit;
+		font-size: crayon.font-size("sm");
+	}
+}
+
+.dt-conv-bar {
+	display: flex;
+	min-height: crayon.size(12);
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-conv-bar-title {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-conv-bar-btn {
+	@include crayon.hstack(2);
+
+	display: flex;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-conv-item {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-conv-thumb {
+	display: flex;
+	width: crayon.size(16);
+	height: crayon.size(16);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	border-right: 1px solid var(--border);
+	background: var(--muted);
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.dt-icon {
+		width: crayon.size(6);
+		height: crayon.size(6);
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-conv-item-meta {
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	flex-direction: column;
+	justify-content: center;
+	padding: crayon.size(2) crayon.size(4);
+}
+
+.dt-conv-item-name {
+	overflow: hidden;
+	font-weight: crayon.font-weight("medium");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-conv-item-size {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-conv-remove {
+	display: flex;
+	width: crayon.size(12);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+	transition:
+		background-color 150ms,
+		color 150ms;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-conv-download {
+	@include crayon.hstack(2);
+
+	display: flex;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("medium");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--primary) 90%, black);
+	}
+}
+
+.dt-conv-run {
+	@include crayon.hstack(2);
+
+	display: flex;
+	width: 100%;
+	height: crayon.size(14);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font: inherit;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--primary) 90%, black);
+	}
+
+	&:disabled {
+		opacity: 0.6;
+		cursor: default;
+	}
+}
