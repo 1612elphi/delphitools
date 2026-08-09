@@ -1,0 +1,414 @@
+// Styles for the harmony-genny tool.
+//
+// One partial per tool: app.scss had grown past three thousand lines and every
+// new tool collided in it.
+
+@use "../crayon-config" as crayon;
+
+/* ── Harmony generator ───────────────────────────────────────────────────── */
+
+.dt-harmony {
+	border: 2px solid var(--border);
+}
+
+.dt-harmony-label {
+	display: block;
+	font-weight: crayon.font-weight("bold");
+}
+
+/* Base colour */
+
+.dt-harmony-base {
+	padding: crayon.size(4);
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-harmony-base-field {
+	display: flex;
+	align-items: stretch;
+	margin-top: crayon.size(3);
+	border: 1px solid var(--border);
+}
+
+/* The picker input covers the whole cell so anywhere in the block opens it. */
+.dt-harmony-picker {
+	position: relative;
+	display: block;
+	width: crayon.size(14);
+	flex-shrink: 0;
+	border-right: 1px solid var(--border);
+
+	> span {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+
+	input[type="color"] {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		cursor: pointer;
+	}
+}
+
+.dt-harmony-hex {
+	min-width: 0;
+	flex: 1;
+	padding: crayon.size(2) crayon.size(3);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font-family: crayon.font-family("mono");
+	outline: none;
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+/* Harmony type picker */
+
+.dt-harmony-types {
+	padding: crayon.size(4);
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-harmony-type-grid {
+	grid-template-columns: repeat(2, 1fr);
+	margin: crayon.size(3) crayon.size(-4) crayon.size(-4);
+	border-inline: 0;
+	border-bottom: 0;
+
+	@include crayon.screen("sm") {
+		grid-template-columns: repeat(4, 1fr);
+	}
+}
+
+.dt-harmony-type {
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+	line-height: 1.2;
+	text-align: left;
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+/* Description of the selected harmony */
+
+.dt-harmony-desc {
+	@include crayon.hstack(2);
+
+	align-items: baseline;
+	padding: crayon.size(3) crayon.size(4);
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-harmony-desc-name {
+	flex-shrink: 0;
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-harmony-desc-text {
+	overflow: hidden;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Colour wheel. The marker offsets in harmony-genny.gts are pixels against this
+   box, so its size is fixed rather than fluid: 14rem square, centre at 112px. */
+
+.dt-harmony-wheel-wrap {
+	display: flex;
+	justify-content: center;
+	padding-block: crayon.size(6);
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-harmony-wheel {
+	position: relative;
+	width: crayon.size(56);
+	height: crayon.size(56);
+	flex-shrink: 0;
+}
+
+.dt-harmony-wheel-ring {
+	position: absolute;
+	inset: 0;
+	border-radius: 9999px;
+	background: conic-gradient(
+		from 90deg,
+		#f00,
+		#ff0,
+		#0f0,
+		#0ff,
+		#00f,
+		#f0f,
+		#f00
+	);
+	opacity: 0.3;
+}
+
+.dt-harmony-wheel-hole {
+	position: absolute;
+	inset: crayon.size(7);
+	border-radius: 9999px;
+	background: var(--background);
+}
+
+.dt-harmony-marker {
+	position: absolute;
+	width: crayon.size(7);
+	height: crayon.size(7);
+	margin-top: crayon.size(-3.5);
+	margin-left: crayon.size(-3.5);
+	border: 4px solid var(--background);
+	border-radius: 9999px;
+	box-shadow: 0 4px 6px rgb(0 0 0 / 15%);
+}
+
+.dt-harmony-wheel-centre {
+	position: absolute;
+	inset: crayon.size(14);
+	border: 4px solid var(--background);
+	border-radius: 9999px;
+	box-shadow: 0 4px 6px rgb(0 0 0 / 15%);
+}
+
+/* Flush swatch strip */
+
+.dt-harmony-strip {
+	display: flex;
+	height: crayon.size(16);
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-harmony-strip-cell {
+	flex: 1;
+	border: 0;
+	cursor: pointer;
+	transition: opacity 0.15s;
+
+	@include crayon.hover {
+		opacity: 0.8;
+	}
+}
+
+/* Colours table */
+
+.dt-harmony-table {
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-harmony-table-head {
+	padding: crayon.size(3) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-harmony-row {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+}
+
+.dt-harmony-row-swatch {
+	display: block;
+	width: crayon.size(12);
+	flex-shrink: 0;
+	border-right: 1px solid var(--border);
+}
+
+.dt-harmony-row-value {
+	@include crayon.hstack(3);
+
+	min-width: 0;
+	flex: 1;
+	align-items: center;
+	padding: crayon.size(3) crayon.size(4);
+}
+
+.dt-harmony-value {
+	overflow: hidden;
+	font-family: crayon.font-family("mono");
+	font-weight: crayon.font-weight("bold");
+	letter-spacing: crayon.tracking("wide");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-harmony-angle {
+	flex-shrink: 0;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-harmony-copy {
+	display: flex;
+	width: crayon.size(12);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+/* Export actions */
+
+.dt-harmony-export {
+	padding: crayon.size(4);
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-harmony-export-grid {
+	grid-template-columns: repeat(2, 1fr);
+	margin: crayon.size(3) crayon.size(-4) crayon.size(-4);
+	border-inline: 0;
+	border-bottom: 0;
+
+	button {
+		@include crayon.hstack(2);
+
+		align-items: center;
+		justify-content: center;
+		padding: crayon.size(3);
+		background: var(--background);
+		color: inherit;
+		font: inherit;
+		font-size: crayon.font-size("sm");
+		cursor: pointer;
+
+		.dt-icon {
+			width: crayon.size(4);
+			height: crayon.size(4);
+		}
+
+		@include crayon.hover {
+			background: var(--muted);
+		}
+	}
+}
+
+/* All-harmonies preview */
+
+.dt-harmony-all {
+	padding: crayon.size(4);
+}
+
+.dt-harmony-all-list {
+	margin: crayon.size(3) crayon.size(-4) crayon.size(-4);
+	border-top: 1px solid var(--border);
+}
+
+.dt-harmony-all-row {
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+	border: 0;
+	border-bottom: 1px solid var(--border);
+	background: none;
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--muted) 50%, transparent);
+	}
+
+	&.is-active {
+		background: var(--muted);
+	}
+}
+
+.dt-harmony-all-strip {
+	display: flex;
+	width: crayon.size(32);
+	height: crayon.size(12);
+	flex-shrink: 0;
+	border-right: 1px solid var(--border);
+}
+
+.dt-harmony-all-cell {
+	flex: 1;
+}
+
+.dt-harmony-all-info {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	flex-direction: column;
+	justify-content: center;
+	padding-inline: crayon.size(4);
+	text-align: left;
+}
+
+.dt-harmony-all-name {
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	line-height: 1.2;
+
+	.is-active & {
+		color: var(--primary);
+	}
+}
+
+.dt-harmony-all-desc {
+	overflow: hidden;
+	margin-top: 2px;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-harmony-all-check {
+	display: flex;
+	width: crayon.size(8);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border-left: 1px solid var(--border);
+	color: var(--primary);
+
+	.dt-icon {
+		width: crayon.size(3.5);
+		height: crayon.size(3.5);
+	}
+}

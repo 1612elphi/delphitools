@@ -11,9 +11,17 @@
 
 // One partial per tool; see app/styles/tools/.
 @use "tools/background-remover";
+@use "tools/colorblind-sim";
 @use "tools/colour-converter";
+@use "tools/contrast-checker";
 @use "tools/favicon-genny";
+@use "tools/gradient-genny";
+@use "tools/harmony-genny";
+@use "tools/palette-collection";
+@use "tools/palette-extractor";
 @use "tools/palette-genny";
+@use "tools/pixel-picker";
+@use "tools/tailwind-shades";
 
 /* iA Writer Quattro — self-hosted variable font (weight axis 400–700, upright +
    italic). The single typeface for the whole UI; replaces IBM Plex Mono and

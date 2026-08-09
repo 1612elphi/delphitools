@@ -12,12 +12,18 @@ import type { ComponentLike } from '@glint/template';
  */
 import BackgroundRemover from 'delphitools-v2/components/tools/background-remover';
 import ColourConverter from 'delphitools-v2/components/tools/colour-converter';
+import ContrastChecker from 'delphitools-v2/components/tools/contrast-checker';
 import FaviconGenny from 'delphitools-v2/components/tools/favicon-genny';
+import HarmonyGenny from 'delphitools-v2/components/tools/harmony-genny';
 import PaletteGenny from 'delphitools-v2/components/tools/palette-genny';
+import TailwindShades from 'delphitools-v2/components/tools/tailwind-shades';
 
 export const TOOL_COMPONENTS: Record<string, ComponentLike<object>> = {
 	'background-remover': BackgroundRemover,
 	'colour-converter': ColourConverter,
+	'contrast-checker': ContrastChecker,
 	'favicon-genny': FaviconGenny,
+	'harmony-genny': HarmonyGenny,
 	'palette-genny': PaletteGenny,
+	'tailwind-shades': TailwindShades,
 };

@@ -3,6 +3,8 @@
 // Covers every icon named in app/lib/tools.ts plus every literal <Icon @name>
 // in a .gts template. Re-run after adding either.
 
+import iArrowRight from 'lucide-static/icons/arrow-right.svg?raw';
+import iArrowUpDown from 'lucide-static/icons/arrow-up-down.svg?raw';
 import iBarcode from 'lucide-static/icons/barcode.svg?raw';
 import iBinary from 'lucide-static/icons/binary.svg?raw';
 import iBlend from 'lucide-static/icons/blend.svg?raw';
@@ -75,10 +77,13 @@ import iType from 'lucide-static/icons/type.svg?raw';
 import iUnlock from 'lucide-static/icons/unlock.svg?raw';
 import iUpload from 'lucide-static/icons/upload.svg?raw';
 import iVariable from 'lucide-static/icons/variable.svg?raw';
+import iWand2 from 'lucide-static/icons/wand-2.svg?raw';
 import iWind from 'lucide-static/icons/wind.svg?raw';
 import iX from 'lucide-static/icons/x.svg?raw';
 
 export const icons: Record<string, string> = {
+	'arrow-right': iArrowRight,
+	'arrow-up-down': iArrowUpDown,
 	barcode: iBarcode,
 	binary: iBinary,
 	blend: iBlend,
@@ -151,6 +156,7 @@ export const icons: Record<string, string> = {
 	unlock: iUnlock,
 	upload: iUpload,
 	variable: iVariable,
+	'wand-2': iWand2,
 	wind: iWind,
 	x: iX,
 };
