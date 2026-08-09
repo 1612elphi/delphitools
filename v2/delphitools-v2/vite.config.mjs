@@ -52,6 +52,12 @@ export default defineConfig({
 			scss: {
 				// crayon-css resolves as a bare specifier; see app/styles/_crayon-config.scss
 				loadPaths: ['node_modules', 'app/styles'],
+				// Sass 1.100 deprecated the old if() form. The three uses are all
+				// in crayon-css itself (_borders.scss 38 and 88, _svg_masks.scss
+				// 22), none in this app, so the warning is noise we cannot fix
+				// here. Narrow on purpose — other deprecations still surface.
+				// Remove once crayon-css ships the modern syntax.
+				silenceDeprecations: ['if-function'],
 			},
 		},
 	},
