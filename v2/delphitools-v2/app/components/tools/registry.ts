@@ -30,6 +30,7 @@ import PaletteExtractor from 'delphitools-v2/components/tools/palette-extractor'
 import PaletteGenny from 'delphitools-v2/components/tools/palette-genny';
 import PixelPicker from 'delphitools-v2/components/tools/pixel-picker';
 import PxToRem from 'delphitools-v2/components/tools/px-to-rem';
+import SciCalc from 'delphitools-v2/components/tools/sci-calc';
 import SvgOptimiser from 'delphitools-v2/components/tools/svg-optimiser';
 import TailwindShades from 'delphitools-v2/components/tools/tailwind-shades';
 import TypoCalc from 'delphitools-v2/components/tools/typo-calc';
@@ -57,6 +58,7 @@ export const TOOL_COMPONENTS: Record<string, ComponentLike<object>> = {
 	'palette-genny': PaletteGenny,
 	'pixel-picker': PixelPicker,
 	'px-to-rem': PxToRem,
+	'sci-calc': SciCalc,
 	'svg-optimiser': SvgOptimiser,
 	'tailwind-shades': TailwindShades,
 	'typo-calc': TypoCalc,

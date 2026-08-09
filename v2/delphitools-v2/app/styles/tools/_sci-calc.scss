@@ -4,3 +4,324 @@
 // new tool collided in it.
 
 @use "../crayon-config" as crayon;
+
+/* ── Scientific calculator ───────────────────────────────────────────────── */
+
+.dt-sci {
+	max-width: 28rem;
+	margin-inline: auto;
+}
+
+.dt-sci-frame {
+	border: 2px solid var(--border);
+}
+
+/* Angle mode + history */
+
+.dt-sci-head {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-sci-mode {
+	height: crayon.size(12);
+	flex: 1;
+	border: 0;
+	border-right: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-sci-history-toggle {
+	@include crayon.hstack(2);
+
+	display: flex;
+	height: crayon.size(12);
+	align-items: center;
+	justify-content: center;
+	padding-inline: crayon.size(5);
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-sci-chevron {
+	transition: transform 150ms;
+
+	&.is-open {
+		transform: rotate(180deg);
+	}
+}
+
+/* Display */
+
+.dt-sci-display {
+	@include crayon.vstack(2);
+
+	padding: crayon.size(4);
+	border-bottom: 2px solid var(--border);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+	text-align: right;
+}
+
+.dt-sci-expression {
+	min-height: 28px;
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("lg");
+	word-break: break-all;
+}
+
+.dt-sci-readout {
+	@include crayon.hstack(2);
+
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+}
+
+.dt-sci-value {
+	overflow: hidden;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("3xl");
+	font-weight: crayon.font-weight("bold");
+	text-overflow: ellipsis;
+
+	&.is-error {
+		color: var(--destructive);
+	}
+}
+
+.dt-sci-copy {
+	display: flex;
+	width: crayon.size(9);
+	height: crayon.size(9);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+
+		&.is-copied {
+			color: crayon.color("green-500");
+		}
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+/* History panel */
+
+.dt-sci-history {
+	max-height: crayon.size(48);
+	overflow-y: auto;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-sci-history-item {
+	display: block;
+	width: 100%;
+	padding: crayon.size(2) crayon.size(4);
+	border: 0;
+	border-bottom: 1px solid var(--border);
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: right;
+	cursor: pointer;
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+}
+
+.dt-sci-history-expression {
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+}
+
+.dt-sci-history-result {
+	font-family: crayon.font-family("mono");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-sci-history-empty {
+	padding-block: crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	text-align: center;
+}
+
+/* Keypad */
+
+/* `.segmented` draws a 1px frame on all four edges; the panel border already
+   covers those, so both classes are on the selector to outrank it. */
+.segmented.dt-sci-keypad {
+	grid-template-columns: repeat(5, 1fr);
+	border: 0;
+}
+
+.dt-sci-key {
+	display: flex;
+	height: crayon.size(12);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: var(--card);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--accent) 50%, transparent);
+	}
+
+	&.is-digit {
+		background: var(--muted);
+		font-size: crayon.font-size("lg");
+		font-weight: crayon.font-weight("bold");
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--muted) 80%,
+				transparent
+			);
+		}
+	}
+
+	&.is-operator {
+		background: var(--accent);
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--accent) 80%,
+				transparent
+			);
+		}
+	}
+
+	&.is-const {
+		background: var(--accent);
+		font-weight: crayon.font-weight("medium");
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--accent) 80%,
+				transparent
+			);
+		}
+	}
+
+	&.is-clear {
+		background: color-mix(
+			in oklch,
+			var(--destructive) 10%,
+			transparent
+		);
+		color: var(--destructive);
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--destructive) 20%,
+				transparent
+			);
+		}
+	}
+
+	/* The one double-height key: last column, spanning the final two rows. */
+	&.is-equals {
+		height: auto;
+		grid-row: span 2;
+		background: var(--primary);
+		color: var(--primary-foreground);
+		font-size: crayon.font-size("xl");
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				black
+			);
+		}
+	}
+}
+
+/* Constants picker */
+
+.dt-sci-constants {
+	width: 20rem;
+	padding: 0;
+}
+
+.dt-sci-constant-symbol {
+	width: crayon.size(14);
+	flex-shrink: 0;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-sci-constant-name {
+	overflow: hidden;
+	flex: 1;
+	color: var(--muted-foreground);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-sci-hint {
+	margin-top: crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	text-align: center;
+}

@@ -3,6 +3,7 @@ import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { modifier } from 'ember-modifier';
+import { eq } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
 import {
 	Popover,
@@ -116,7 +117,9 @@ export function angleScope(
 
 /** mathjs also returns units, complex numbers and matrices, which print themselves. */
 export function resultText(value: unknown): string {
-	return typeof value === 'number' ? formatScientific(value) : String(value);
+	return typeof value === 'number'
+		? formatScientific(value)
+		: String(value);
 }
 
 // mathjs is ~700 KB and only a press of `=` needs it, so it is fetched on the
@@ -277,16 +280,22 @@ export default class SciCalcTool extends Component {
 				// exponential result loses its × and ^ here and negates wrong.
 				if (this.result !== null) {
 					const num = Number.parseFloat(
-						this.result.replace(/[^\d.-]/g, ''),
+						this.result.replace(
+							/[^\d.-]/g,
+							'',
+						),
 					);
 					if (!Number.isNaN(num)) {
 						this.expression = String(-num);
 						this.result = null;
 					}
 				} else if (this.expression) {
-					this.expression = this.expression.startsWith('-')
-						? this.expression.slice(1)
-						: `-${this.expression}`;
+					this.expression =
+						this.expression.startsWith('-')
+							? this.expression.slice(
+									1,
+								)
+							: `-${this.expression}`;
 				}
 				break;
 			case 'x²':
@@ -375,7 +384,10 @@ export default class SciCalcTool extends Component {
 		await navigator.clipboard.writeText(this.result);
 		this.copied = true;
 		clearTimeout(this.#copiedTimer);
-		this.#copiedTimer = setTimeout(() => (this.copied = false), COPIED_MS);
+		this.#copiedTimer = setTimeout(
+			() => (this.copied = false),
+			COPIED_MS,
+		);
 	};
 
 	copy = () => void this.copyResult();
@@ -388,24 +400,36 @@ export default class SciCalcTool extends Component {
 						type="button"
 						class="dt-sci-mode
 							{{if
-								(eq this.angleMode "deg")
+								(eq
+									this.angleMode
+									'deg'
+								)
 								'is-active'
 							}}"
 						{{on
 							"click"
-							(fn this.setAngleMode "deg")
+							(fn
+								this.setAngleMode
+								"deg"
+							)
 						}}
 					>DEG</button>
 					<button
 						type="button"
 						class="dt-sci-mode
 							{{if
-								(eq this.angleMode "rad")
+								(eq
+									this.angleMode
+									'rad'
+								)
 								'is-active'
 							}}"
 						{{on
 							"click"
-							(fn this.setAngleMode "rad")
+							(fn
+								this.setAngleMode
+								"rad"
+							)
 						}}
 					>RAD</button>
 					<button
@@ -416,7 +440,10 @@ export default class SciCalcTool extends Component {
 							"true"
 							"false"
 						}}
-						{{on "click" this.toggleHistory}}
+						{{on
+							"click"
+							this.toggleHistory
+						}}
 					>
 						<Icon @name="clock" />
 						{{! wording carried over from the Next app }}
@@ -449,7 +476,10 @@ export default class SciCalcTool extends Component {
 								type="button"
 								class="dt-sci-copy"
 								aria-label="Copy result"
-								{{on "click" this.copy}}
+								{{on
+									"click"
+									this.copy
+								}}
 							>
 								<Icon
 									@name={{if
@@ -501,7 +531,10 @@ export default class SciCalcTool extends Component {
 				{{/if}}
 
 				<div class="dt-sci-keypad segmented">
-					{{#each this.buttons key="key" as |btn|}}
+					{{#each
+						this.buttons key="key"
+						as |btn|
+					}}
 						{{#if btn.isConst}}
 							<Popover
 								@open={{this.constantsOpen}}
@@ -522,12 +555,14 @@ export default class SciCalcTool extends Component {
 									@align="start"
 									class="dt-sci-constants"
 								>
-									<Command>
+									<Command
+									>
 										{{! wording carried over from the Next app }}
 										<CommandInput
 											@placeholder="Search constants..."
 										/>
-										<CommandList>
+										<CommandList
+										>
 											{{! wording carried over from the Next app }}
 											<CommandEmpty
 											>No
@@ -586,8 +621,8 @@ export default class SciCalcTool extends Component {
 			</div>
 
 			{{! wording carried over from the Next app }}
-			<p class="dt-sci-hint">Keyboard supported: numbers, operators,
-				Enter to calculate, Escape to clear</p>
+			<p class="dt-sci-hint">Keyboard supported: numbers,
+				operators, Enter to calculate, Escape to clear</p>
 		</div>
 	</template>
 }
