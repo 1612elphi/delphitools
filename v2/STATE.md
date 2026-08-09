@@ -5,14 +5,23 @@ Snapshot of the `v2-ember` branch for the Next-to-Ember rewrite. Companion to
 plan, which also carries the Phase 0 findings). This file is what actually
 exists in the code right now.
 
-**Status:** Phase 0 is CLOSED — all six questions answered, neither gate failed.
-The site chrome is built, the Colour category is complete at 10 of 10, and the
-behavioural rigs are committed rather than gitignored.
+**Status:** Phase 0 is CLOSED. Every D1 and D2 tool is ported: 43 of 56. What
+remains is the nine D3 tools, the two D4 tools, and two sub-panels that have no
+route of their own.
 
 Branch: `v2-ember`. App: `v2/delphitools-v2/`. The Next app in the repo root is
 untouched and still the production site.
 
 ```
+5b9df3b  feat(v2): port the last eleven D2 tools
+a7735f6  feat(v2): port font-explorer, and rebuild the tool registry
+71519ac  feat(v2): port regex-tester, text-diff and the three social canvas tools
+8ac58dc  feat(v2): port sci-calc, completing the first D2 wave
+cb083f3  feat(v2): port five more D2 tools
+d4e6736  test(v2): cover the D1 tools' pure logic
+d8957f6  feat(v2): port the eight D1 tools
+064a773  chore(v2): prep for the D1 and D2 batch
+c6c4aff  docs(v2): STATE.md for a complete Colour category
 2ef7199  feat(v2): port gradient-genny, completing the Colour category
 66da352  feat(v2): port colorblind-sim and palette-extractor
 8046257  feat(v2): port pixel-picker
@@ -50,15 +59,20 @@ npm start                 # vite, pinned to :3000 so the rigs work
 npm run build             # vite build -> dist/
 npm run build:static      # build, then prerender each route + its og.png
 npm run gen-icons         # regenerate app/lib/icons.ts from what templates use
-npm test                  # ember-qunit, 35 tests
+npm test                  # ember-qunit, 69 tests
 npm run lint              # eslint + template-lint + stylelint + prettier
 npm run verify            # 10 puppeteer rigs, 183 checks, needs npm start
 npm run verify:static     # prerendered output, jxl and ONNX, needs build:static
 npm run verify:model      # background removal end to end, downloads 88 MB
 ```
 
-Gates, all green as of `d53986f`: `ember-tsc --noEmit`, `eslint .`,
+Gates, all green as of `5b9df3b`: `ember-tsc --noEmit`, `eslint .`,
 `ember-template-lint .`, `stylelint **/*.{css,scss}`, `prettier --check .`.
+
+**Never run `npm run format` from the repo root.** It formats the Next app, not
+this one. Doing so once rewrote 313 files across Substrata, every tool and the
+vendored minified assets in `public/`. This app has its own `npm run format`,
+and the root `.prettierignore` excludes `/v2/`.
 
 `scripts/verify/` holds the behavioural coverage that qunit cannot reach —
 chrome that only exists once the whole app is booted, and tool behaviour that
@@ -109,16 +123,36 @@ toggle, About dialog, 404. Pride styling and the commit SHA come through Vite
 **Routing.** `/`, `/tools/:tool_id`, `/editor` (stub), wildcard 404. URLs
 unchanged from the Next app.
 
-**Tools.** 12 of 56. The Colour category is complete.
+**Tools.** 43 of 56, by category:
 
-| Category | Tools |
+| Category | State |
 | --- | --- |
-| Colour | all ten: `palette-genny`, `colour-converter`, `contrast-checker`, `harmony-genny`, `tailwind-shades`, `palette-collection`, `palette-extractor`, `pixel-picker`, `colorblind-sim`, `gradient-genny` |
-| Images & Assets | `favicon-genny`, `background-remover` |
+| Colour | 10 of 10 |
+| Typography & Text | 8 of 9 — `text-editor` left |
+| Calculators | 5 of 6 — `graph-calc` left |
+| Social Media | 4 of 5 — `social-cropper` left |
+| Images & Assets | 8 of 12 |
+| Other Tools | 5 of 6 |
+| Print & Production | 0 of 3 |
+| Turbo-nerd Shit | 1 of 1 |
 
 Every Colour tool reads its conversions from `lib/colour-maths.ts` and formats
 through the `colour-notation` service, so a value copied from one matches the
 next, and none of them carries a format picker of its own.
+
+### Dependency substitutions
+
+Three tools use something the Next app has and this one does not. Each was
+rebuilt on what is already installed rather than by adding a package. **None is
+verified at parity — read the porting notes before trusting them.**
+
+| Tool | Next app | Here |
+| --- | --- | --- |
+| `encoder` | crypto-js | Web Crypto and `btoa` |
+| `algebra-calc` | nerdamer + katex | mathjs |
+| `markdown-writer` | react-markdown + remark-gfm | no markdown library |
+
+Installed for this batch: `svgo`, `mathjs`, `pdf-lib`.
 
 **Shared pieces the ports produced.** `lib/colour-maths.ts` holds both
 directions of every colour transform, replacing the three copies the Next app
@@ -127,8 +161,14 @@ there. `modifiers/file-paste.ts` replaces the `use-file-paste` hook that 23
 Next tools use.
 
 **Primitives.** `app/components/ui/` holds `dialog` (local, over the native
-element) plus `tooltip`, `popover`, `command` and `select` vendored from
-shadcn-ember and restyled.
+element) plus `tooltip`, `popover`, `command`, `select` and `tabs` vendored
+from shadcn-ember and restyled. `select` and `tabs` both gained the keyboard
+handling upstream omits.
+
+**Libraries.** `app/lib/` holds `colour-maths` (every conversion, both
+directions), `colour-names`, `colour-notation`, `palette-strategies`,
+`palette-collection` (284 palettes), `gradient`, `ico`, `bg-removal`, `jxl`,
+`paper-sizes`, `math-constants`, `shavian/`, `tools`, `icons`, `build-flags`.
 
 **Static output.** `scripts/prerender.mjs` boots the built app in headless
 Chrome at all 57 routes, checks each renders, and writes a per-route
@@ -136,7 +176,7 @@ Chrome at all 57 routes, checks each renders, and writes a per-route
 against five scraper user agents; head tags match the Next build field for
 field on tool routes.
 
-**Tests.** 55 qunit tests over the pure logic: the sidebar service, two share
+**Tests.** 69 qunit tests over the pure logic: the sidebar service, two share
 link parsers, the colour converter, the Tailwind ramp, the palette-extractor
 quantiser, the ICO builder and the paste-accept matcher. The quantiser takes
 its random source as a parameter, so the clustering tests are deterministic.
@@ -300,6 +340,31 @@ and asserts a second later can find the tool back at its drop zone. It looks
 exactly like a tool that resets itself. Do not run browser checks against the
 dev server while a port is in progress.
 
+**Never run a repo-wide command from an unverified directory.** A `cd` that
+silently fails leaves the next command running at the repo root, where
+`npm run format` belongs to the Next app. That happened once and rewrote 313
+files. Prep scripts should use absolute paths.
+
+**Generate the tool registry, do not patch it.** The first integration script
+inserted an entry and then re-sorted the list; once sorted, the next insert
+appended a duplicate of every entry, which typescript caught as 31 duplicate
+object keys. It is now rebuilt from the components on disk each time.
+
+**Prettier strips quotes from single-word object keys.** `decoder: Decoder`,
+not `'decoder': Decoder`. Any script that greps the registry or `icons.ts` for
+`'name':` silently misses them, which reads as a tool that failed to register.
+
+**Read the DOM before writing an assertion.** Five browser checks in this batch
+failed against tools that were working: a bordered Select trigger read as a
+native control, a selector that matched the sidebar search rather than the
+tool, `sci-calc` being a keypad rather than a text field, `watermarker` needing
+two images rather than one, and `encoder` putting its output in a textarea's
+`value`, which never appears in `textContent`.
+
+**Shell word-splitting bites here.** `for t in $TOOLS` treats the variable as a
+single string in this shell, so a file-watcher built that way never matches.
+Use python for anything involving a list.
+
 **`npm` is a fish alias for `bun` on this machine.** Installs write `bun.lock`
 and leave `package-lock.json` stale. Use `/opt/homebrew/bin/npm install
 --package-lock-only` to resync; the parent repo tracks that file to pin the
@@ -315,7 +380,22 @@ syntax. The fix for Ash is three lines, but it raises Crayon's Sass floor to
 
 ## Not done
 
-**Tools.** 44 of 56. Colour is done; Images & Assets is the next dense block. See `CONVERSION.md` for the per-tool difficulty matrix.
+**Tools.** 13 left.
+
+| D | Tools |
+| --- | --- |
+| D3 | `social-cropper`, `text-editor`, `doc-converter`, `zine-imposer`, `image-converter`, `image-tracer`, `pdf-preflight`, `qr-generator`, `imposer` |
+| D4 | `graph-calc` (mafs is React-only), `image-stitcher` (@dnd-kit) |
+| sub-panel | `wifi-form` belongs to `qr-generator`, `code-generator` to the barcode tooling. Neither has a route of its own; port them with their parents. |
+
+`gradient-genny` was rated D4 for the same @dnd-kit reason as `image-stitcher`,
+and came in without it, on native Pointer Events and `setPointerCapture`. If
+that holds for `image-stitcher` too, only `graph-calc` is genuinely D4.
+
+**Bundle.** `main` is 1.65 MB, 463 kB gzip, up from 690 kB before this batch.
+All 43 tools are statically imported in `components/tools/registry.ts`, so every
+visitor downloads all of them. That file's own comment names this as the place
+to split. Worth doing before the remaining 13, not after.
 
 **Substrata.** Untouched. `window.__substrata` must be ported before any of it,
 because the 22 harnesses in the parent repo's `scripts/verify/` are the only
@@ -324,21 +404,19 @@ regression net on the editor.
 **Chrome leftovers.** Animated icons, sticker wall, favour banner, the TAXIWAY
 split-flap and Friends of Delphi are all GSAP or motion and absent.
 
-**Primitives still to vendor.** collapsible, sheet/drawer, and whatever later
-tools need. `select` is done; nothing has needed the other two yet.
+**Primitives still to vendor.** collapsible and sheet/drawer, if a later tool
+needs them. Nothing has yet.
 
-**Copy.** One unfilled gap, in `favicon-genny.gts`: the message shown when a
-chosen file will not decode. `slopsieve` fills it. Separately,
-`background-remover.gts` carries the Next app's line about "a ~180MB processing
-engine", which was accurate at fp32 and is now roughly 110 MB. The number needs
-correcting and the wording is Ruby's.
+**Copy.** Five unfilled gaps: `algebra-calc`, `favicon-genny`,
+`matte-generator`, `scroll-generator`, `watermarker`. `slopsieve` fills them.
+Separately, `background-remover` carries the Next app's line about "a ~180MB
+processing engine", which was accurate at fp32 and is now roughly 110 MB.
 
 **Build output path.** `dist/`, where the parent repo's `static-smoke.mjs`
 expects `out/`. One line in `vite.config.mjs` when it matters.
 
 **`tailwind-merge`, `clsx`, `class-variance-authority`** are still in
-`package.json`. `tailwind-merge` is dead with Tailwind gone; the other two are
-framework-independent and may still earn their place.
+`package.json`. `tailwind-merge` is dead with Tailwind gone.
 
 **Deploy.** Nothing is wired to Cloudflare Pages. `public/_redirects` has not
 been carried across.
@@ -347,18 +425,33 @@ been carried across.
 
 ## Next
 
-The tool-page shape, the primitives and the rig harness all exist now, so each
-further port inherits them. The cheapest useful work is more tools.
+1. Split the tool imports in `components/tools/registry.ts`. 1.65 MB of main
+   bundle for 43 tools, before the 13 largest are added, is the biggest single
+   win available, and the file already says so.
+2. The D3 tools, individually rather than in a batch. Four are pdf-lib or
+   worker work (`imposer`, `zine-imposer`, `pdf-preflight`, `doc-converter`)
+   and share an approach; `image-converter` can reuse `lib/jxl.ts`, which
+   already solves its hardest part.
+3. `graph-calc`, the one genuine D4: mafs is React-only and the plot surface
+   has to be rebuilt on SVG. mathjs is already installed.
+4. Deploy. `public/_redirects` and the `dist`-versus-`out` mismatch are both
+   one-line jobs, and nothing has been proven end to end past
+   `npm run build:static`.
 
-1. Images & Assets, the next dense category. `favicon-genny` and
-   `background-remover` are already across, and most of the rest are canvas
-   work on the same file-paste modifier.
-2. A tool that needs a dependency rather than a canvas — `qr-genny` or
-   `svg-optimiser` — to find out what the static import map in
-   `components/tools/registry.ts` costs before it holds fifty entries.
-3. Wire the deploy. `public/_redirects` and the `dist/` versus `out/` mismatch
-   are both one-line jobs, and until they are done nothing has been proven end
-   to end past `npm run build:static`.
-4. Substrata, which is its own project and wants `window.__substrata` first.
+---
 
-Revised estimate after Phase 0: 129.5 days to parity.
+## Outstanding outside this branch
+
+`components/substrata/substrata-shell.tsx` in the parent repo lost an
+uncommitted edit when a repo-root `npm run format` ran by mistake and the
+revert that undid it took four unstaged files with it. The untracked linter
+config survived, and `package.json` plus both lockfiles were reconstructed from
+the linter session's transcript. That one file went back to HEAD. APFS local
+snapshots from before the incident exist:
+
+```sh
+mkdir -p /tmp/snap
+sudo mount_apfs -o ro -s com.apple.TimeMachine.2026-08-09-175454.local / /tmp/snap
+diff /tmp/snap/Users/ruby/GitRepos/delphitools/components/substrata/substrata-shell.tsx \
+     components/substrata/substrata-shell.tsx
+```
