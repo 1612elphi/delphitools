@@ -100,13 +100,18 @@
     "@resvg/resvg-js": "^2.6.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "color-name-list": "^14.47.0",
     "crayon-css": "^0.9.1",
+    "ember-click-outside": "^6.1.1",
     "ember-primitives": "^0.61.1",
     "ember-provide-consume-context": "^0.10.0",
+    "ember-route-template": "^1.0.3",
+    "ember-truth-helpers": "^5.0.0",
     "lucide-static": "^1.30.0",
     "puppeteer-core": "^25.5.0",
     "sass-embedded": "^1.100.0",
     "satori": "^0.29.0",
-    "tailwind-merge": "^3.6.0"
+    "tailwind-merge": "^3.6.0",
+    "tracked-built-ins": "^4.1.2"
   }
 }

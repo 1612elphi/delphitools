@@ -9,14 +9,19 @@
         "@resvg/resvg-js": "^2.6.2",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
+        "color-name-list": "^14.47.0",
         "crayon-css": "^0.9.1",
+        "ember-click-outside": "^6.1.1",
         "ember-primitives": "^0.61.1",
         "ember-provide-consume-context": "^0.10.0",
+        "ember-route-template": "^1.0.3",
+        "ember-truth-helpers": "^5.0.0",
         "lucide-static": "^1.30.0",
         "puppeteer-core": "^25.5.0",
         "sass-embedded": "^1.100.0",
         "satori": "^0.29.0",
         "tailwind-merge": "^3.6.0",
+        "tracked-built-ins": "^4.1.2",
       },
       "devDependencies": {
         "@babel/core": "^7.29.7",
@@ -846,6 +851,8 @@
 
     "color-name": ["color-name@1.1.4", "", {}, "sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA=="],
 
+    "color-name-list": ["color-name-list@14.47.0", "", {}, "sha512-fB+92CRHdWECNMST+uhZ0Vu+h2fiegDXgy7e2mBrrBRxNFATvZIii0heA7ZASvT9U5ydTqk9rY1JKl7TEKdXZg=="],
+
     "colord": ["colord@2.9.3", "", {}, "sha512-jeC1axXpnb0/2nn/Y1LPuLdgXBLH7aDcHu4KEKfqw3CUhX7ZpfBSlPKyqXE6btIgEzfWtrX3/tyBCaCvXvMkOw=="],
 
     "colorjs.io": ["colorjs.io@0.5.2", "", {}, "sha512-twmVoizEW7ylZSN32OgKdXRmo1qg+wT5/6C3xu5b9QsWzSFAhHLn2xd8ro0diCsKfCj1RdaTP/nrcW+vAoQPIw=="],
@@ -994,6 +1001,8 @@
 
     "ember-cli-version-checker": ["ember-cli-version-checker@5.1.2", "", { "dependencies": { "resolve-package-path": "^3.1.0", "semver": "^7.3.4", "silent-error": "^1.1.1" } }, "sha512-rk7GY+FmLn/2e22HsZs0Ycrz8HQ1W3Fv+2TFOuEFW9optnDXDgkntPBIl6gact/LHsfBM5RKbM3dHsIIeLgl0Q=="],
 
+    "ember-click-outside": ["ember-click-outside@6.1.1", "", { "dependencies": { "@embroider/addon-shim": "^1.0.0", "ember-modifier": "^3.2.7 || ^4.0.0" } }, "sha512-1SOW92/k5vm+QiLBdkiSxkxSEzvA1vWdVVAI5RLV9JFztA5cSEKB2m2+10Gvw90ItxekY92JVXXTXIPUcPBqYg=="],
+
     "ember-element-helper": ["ember-element-helper@0.8.8", "", { "dependencies": { "@embroider/addon-shim": "^1.8.3" } }, "sha512-3slTltQV5ke53t3YVP2GYoswsQ6y+lhuVzKmt09tbEx91DapG8I/xa8W5OA0StvcQlavL3/vHrz/vCQEFs8bBA=="],
 
     "ember-eslint-parser": ["ember-eslint-parser@0.5.13", "", { "dependencies": { "@babel/eslint-parser": "^7.23.10", "@glimmer/syntax": ">= 0.92.0", "@typescript-eslint/tsconfig-utils": "^8.38.0", "content-tag": "^2.0.1", "eslint-scope": "^7.2.2", "html-tags": "^3.3.1", "mathml-tag-names": "^2.1.3", "svg-tags": "^1.0.0" }, "peerDependencies": { "@babel/core": "^7.23.6", "@typescript-eslint/parser": "*" } }, "sha512-b6ALDaxs9Bb4v0uagWud/5lECb78qpXHFv7M340dUHFW4Y0RuhlsfA4Rb+765X1+6KHp8G7TaAs0UgggWUqD3g=="],
@@ -1016,11 +1025,15 @@
 
     "ember-rfc176-data": ["ember-rfc176-data@0.3.18", "", {}, "sha512-JtuLoYGSjay1W3MQAxt3eINWXNYYQliK90tLwtb8aeCuQK8zKGCRbBodVIrkcTqshULMnRuTOS6t1P7oQk3g6Q=="],
 
+    "ember-route-template": ["ember-route-template@1.0.3", "", { "dependencies": { "@embroider/addon-shim": "^1.0.0" } }, "sha512-p//Nk4g4Wu9F8cZdjB69rKxTRi6RRW32a8K5sYsi5cofTcJtPBXRWUXWpQEjJX6qcucgxooQwEm9+7MOy4lwNw=="],
+
     "ember-router-generator": ["ember-router-generator@2.0.0", "", { "dependencies": { "@babel/parser": "^7.4.5", "@babel/traverse": "^7.4.5", "recast": "^0.18.1" } }, "sha512-89oVHVJwmLDvGvAUWgS87KpBoRhy3aZ6U0Ql6HOmU4TrPkyaa8pM0W81wj9cIwjYprcQtN9EwzZMHnq46+oUyw=="],
 
     "ember-source": ["ember-source@7.1.0", "", { "dependencies": { "@babel/core": "^7.24.4", "@embroider/addon-shim": "^1.10.2", "@simple-dom/interface": "^1.4.0", "backburner.js": "^2.8.0", "broccoli-file-creator": "^2.1.1", "chalk": "^4.0.0", "ember-cli-babel": "^8.3.1", "ember-cli-get-component-path-option": "^1.0.0", "ember-cli-normalize-entity-name": "^1.0.0", "ember-cli-path-utils": "^1.0.0", "ember-cli-string-utils": "^1.1.0", "ember-cli-typescript-blueprint-polyfill": "^0.1.0", "ember-router-generator": "^2.0.0", "inflection": "^2.0.1", "route-recognizer": "^0.3.4", "semver": "^7.5.2", "silent-error": "^1.1.1", "simple-html-tokenizer": "^0.5.11" }, "peerDependencies": { "@glimmer/component": ">= 1.1.2" } }, "sha512-qOHhTiVMeYcNp2UQKuAqsf33LKgNtzqvw46dQX5AqutTfXXPn4KYR0+aiGQdJaCuzs81nFvvTDJuHzELOZ5UBg=="],
 
     "ember-template-lint": ["ember-template-lint@7.9.3", "", { "dependencies": { "@lint-todo/utils": "^13.1.1", "content-tag": "^3.1.1" }, "bin": "bin/ember-template-lint.js" }, "sha512-iqC4rv/oVlXViGuf7hlOA/bC550ZqacZKAc8WvQV0ueeCtIYPkYYK+Tc7FwpM8qGx3jiwu/ZsTuNfPInI5pL7Q=="],
+
+    "ember-truth-helpers": ["ember-truth-helpers@5.0.0", "", { "dependencies": { "@embroider/addon-shim": "^1.8.9" } }, "sha512-PnQd6D6hvlNC3k6gBu0SC2cvfXX6wH6W0nToomIIoxqyrD5cllk0zBh/j/1H0KsczVCWeuF9PWj5xJgL4jQAGg=="],
 
     "emoji-regex": ["emoji-regex@8.0.0", "", {}, "sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A=="],
 
