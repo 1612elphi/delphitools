@@ -17,6 +17,7 @@ import FaviconGenny from 'delphitools-v2/components/tools/favicon-genny';
 import HarmonyGenny from 'delphitools-v2/components/tools/harmony-genny';
 import PaletteCollection from 'delphitools-v2/components/tools/palette-collection';
 import PaletteGenny from 'delphitools-v2/components/tools/palette-genny';
+import PixelPicker from 'delphitools-v2/components/tools/pixel-picker';
 import TailwindShades from 'delphitools-v2/components/tools/tailwind-shades';
 
 export const TOOL_COMPONENTS: Record<string, ComponentLike<object>> = {
@@ -27,5 +28,6 @@ export const TOOL_COMPONENTS: Record<string, ComponentLike<object>> = {
 	'harmony-genny': HarmonyGenny,
 	'palette-collection': PaletteCollection,
 	'palette-genny': PaletteGenny,
+	'pixel-picker': PixelPicker,
 	'tailwind-shades': TailwindShades,
 };

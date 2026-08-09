@@ -171,8 +171,8 @@ export default class PixelPickerTool extends Component {
 
 	handleDrop = (event: DragEvent) => {
 		event.preventDefault();
-		const file = Array.from(event.dataTransfer?.files ?? []).find((f) =>
-			f.type.startsWith('image/'),
+		const file = Array.from(event.dataTransfer?.files ?? []).find(
+			(f) => f.type.startsWith('image/'),
 		);
 		if (file) this.readFile(file);
 	};
@@ -190,10 +190,12 @@ export default class PixelPickerTool extends Component {
 		if (!canvas) return null;
 		const rect = canvas.getBoundingClientRect();
 		const x = Math.floor(
-			((event.clientX - rect.left) * canvas.width) / rect.width,
+			((event.clientX - rect.left) * canvas.width) /
+				rect.width,
 		);
 		const y = Math.floor(
-			((event.clientY - rect.top) * canvas.height) / rect.height,
+			((event.clientY - rect.top) * canvas.height) /
+				rect.height,
 		);
 		if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height)
 			return null;
@@ -216,7 +218,12 @@ export default class PixelPickerTool extends Component {
 				colorSpace: 'display-p3',
 			});
 			if (p3ctx) {
-				const p3data = p3ctx.getImageData(x, y, 1, 1).data;
+				const p3data = p3ctx.getImageData(
+					x,
+					y,
+					1,
+					1,
+				).data;
 				const r = (p3data[0] ?? 0) / 255;
 				const g = (p3data[1] ?? 0) / 255;
 				const b = (p3data[2] ?? 0) / 255;
@@ -309,7 +316,10 @@ export default class PixelPickerTool extends Component {
 			left: flipX ? cssX - 20 - LOUPE_SIZE : cssX + 20,
 			top: Math.max(
 				0,
-				Math.min(rect.height - LOUPE_SIZE, cssY - LOUPE_SIZE / 2),
+				Math.min(
+					rect.height - LOUPE_SIZE,
+					cssY - LOUPE_SIZE / 2,
+				),
 			),
 		};
 		this.#drawLoupe(pos.x, pos.y);
@@ -323,7 +333,10 @@ export default class PixelPickerTool extends Component {
 		await navigator.clipboard.writeText(value);
 		this.copied = value;
 		clearTimeout(this.#copiedTimer);
-		this.#copiedTimer = setTimeout(() => (this.copied = null), 1500);
+		this.#copiedTimer = setTimeout(
+			() => (this.copied = null),
+			1500,
+		);
 	};
 
 	selectSwatch = (index: number) => {
@@ -357,7 +370,10 @@ export default class PixelPickerTool extends Component {
 	};
 
 	<template>
-		<div class="dt-pixel" {{filePaste this.readFile accept="image/*"}}>
+		<div
+			class="dt-pixel"
+			{{filePaste this.readFile accept="image/*"}}
+		>
 			<div class="dt-pixel-frame">
 				{{#if this.fileName}}
 					<div class="dt-pixel-bar">
@@ -365,7 +381,9 @@ export default class PixelPickerTool extends Component {
 							class="dt-pixel-name"
 						>{{this.fileName}}</span>
 						{{#if this.p3Supported}}
-							<label class="dt-pixel-p3">
+							<label
+								class="dt-pixel-p3"
+							>
 								{{! wording carried over from the Next app }}
 								<span>Display P3</span>
 								<input
@@ -383,7 +401,10 @@ export default class PixelPickerTool extends Component {
 							type="button"
 							class="dt-pixel-bar-btn"
 							aria-label="Remove image"
-							{{on "click" this.clearImage}}
+							{{on
+								"click"
+								this.clearImage
+							}}
 						>
 							<Icon @name="x" />
 						</button>
@@ -408,7 +429,10 @@ export default class PixelPickerTool extends Component {
 						></canvas>
 						<span
 							class="dt-pixel-loupe
-								{{if this.hoverPos 'is-on'}}"
+								{{if
+									this.hoverPos
+									'is-on'
+								}}"
 							style={{this.loupeStyle}}
 							aria-hidden="true"
 						>
@@ -423,8 +447,8 @@ export default class PixelPickerTool extends Component {
 					<div class="dt-pixel-hint">
 						<Icon @name="crosshair" />
 						{{! wording carried over from the Next app }}
-						<span>Click anywhere on the image to
-							sample a colour</span>
+						<span>Click anywhere on the
+							image to sample a colour</span>
 					</div>
 
 					{{#if this.active}}
@@ -443,7 +467,9 @@ export default class PixelPickerTool extends Component {
 								<span
 									class="dt-pixel-active-name"
 								>{{this.active.name}}</span>
-								{{#if this.p3Mode}}
+								{{#if
+									this.p3Mode
+								}}
 									{{#if
 										this.active.p3
 									}}
@@ -499,7 +525,8 @@ export default class PixelPickerTool extends Component {
 									<Icon
 										@name="trash-2"
 									/>
-									Clear all
+									Clear
+									all
 								</button>
 							</div>
 
@@ -576,7 +603,9 @@ export default class PixelPickerTool extends Component {
 											)
 										}}
 									>
-										<Icon @name="x" />
+										<Icon
+											@name="x"
+										/>
 									</button>
 								</div>
 							{{/each}}
@@ -589,19 +618,24 @@ export default class PixelPickerTool extends Component {
 							class="dt-pixel-about-title"
 						>About colour spaces — </span>
 						{{! wording carried over from the Next app }}
-						Colours are sampled in sRGB by default.
-						Images with wide-gamut colour profiles
-						(Display P3, Adobe RGB) are converted to
-						sRGB, which may shift some colours.
+						Colours are sampled in sRGB by
+						default. Images with wide-gamut
+						colour profiles (Display P3,
+						Adobe RGB) are converted to
+						sRGB, which may shift some
+						colours.
 						{{#if this.p3Supported}}
 							{{! wording carried over from the Next app }}
-							Enable the Display P3 toggle to
-							sample wide-gamut values and get
-							color(display-p3 …) CSS output.
+							Enable the Display P3
+							toggle to sample
+							wide-gamut values and
+							get color(display-p3 …)
+							CSS output.
 						{{else}}
 							{{! wording carried over from the Next app }}
-							Your browser does not support
-							Display P3 colour sampling.
+							Your browser does not
+							support Display P3
+							colour sampling.
 						{{/if}}
 					</p>
 				{{else}}
@@ -625,8 +659,10 @@ export default class PixelPickerTool extends Component {
 							class="dt-pixel-drop-title"
 						>Drop an image here</span>
 						{{! wording carried over from the Next app }}
-						<span class="dt-pixel-drop-hint">or click
-							to select a file, or paste</span>
+						<span
+							class="dt-pixel-drop-hint"
+						>or click to select a file, or
+							paste</span>
 					</label>
 				{{/if}}
 			</div>
