@@ -78,8 +78,8 @@ export function sortStops(stops: readonly ColourStop[]): ColourStop[] {
 	return [...stops].sort((a, b) => a.position - b.position);
 }
 
-/** Straight sRGB interpolation, which is what corners mode has always used. */
-function lerpRgb(a: Triple, b: Triple, t: number): Triple {
+/** Component-wise interpolation; the caller decides which space the triple is in. */
+function lerpTriple(a: Triple, b: Triple, t: number): Triple {
 	return [
 		a[0] + (b[0] - a[0]) * t,
 		a[1] + (b[1] - a[1]) * t,
@@ -176,8 +176,14 @@ export function pigmentBlend(
 			const t = step / (stepsPerGap + 1);
 			blended.push({
 				id: newId(),
-				colour: lerpOklab(current.colour, next.colour, t),
-				position: Math.round(current.position + posGap * t),
+				colour: lerpOklab(
+					current.colour,
+					next.colour,
+					t,
+				),
+				position: Math.round(
+					current.position + posGap * t,
+				),
 			});
 		}
 	}
@@ -192,7 +198,10 @@ export function gradientCss(
 	switch (state.mode) {
 		case 'linear': {
 			const stops = sortStops(state.stops)
-				.map((stop) => `${fmt(stop.colour)} ${stop.position}%`)
+				.map(
+					(stop) =>
+						`${fmt(stop.colour)} ${stop.position}%`,
+				)
 				.join(', ');
 			return `linear-gradient(${state.angle}deg, ${stops})`;
 		}
@@ -296,7 +305,10 @@ function renderMesh(
 ): void {
 	const weighted = points
 		.map((p) => ({ x: p.x, y: p.y, rgb: hexToRgb(p.colour) }))
-		.filter((p): p is { x: number; y: number; rgb: Triple } => !!p.rgb);
+		.filter(
+			(p): p is { x: number; y: number; rgb: Triple } =>
+				!!p.rgb,
+		);
 	if (weighted.length === 0) return;
 
 	const imageData = ctx.createImageData(width, height);
@@ -370,7 +382,13 @@ export function renderGradient(
 
 	switch (state.mode) {
 		case 'linear':
-			renderLinear(ctx, width, height, state.angle, state.stops);
+			renderLinear(
+				ctx,
+				width,
+				height,
+				state.angle,
+				state.stops,
+			);
 			break;
 		case 'corners':
 			renderCorners(ctx, width, height, state.corners);

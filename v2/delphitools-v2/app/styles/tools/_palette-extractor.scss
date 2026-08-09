@@ -4,3 +4,419 @@
 // new tool collided in it.
 
 @use "../crayon-config" as crayon;
+
+/* ── Palette extractor ───────────────────────────────────────────────────── */
+
+.dt-extract-frame {
+	border: 2px solid var(--border);
+}
+
+/* Empty state: the whole panel is the file input's label, so a click anywhere
+   opens the picker and a drop anywhere loads the file. */
+.dt-extract-drop {
+	display: block;
+	padding: crayon.size(8);
+	text-align: center;
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--muted) 30%, transparent);
+	}
+
+	> .dt-icon {
+		width: crayon.size(12);
+		height: crayon.size(12);
+		margin: 0 auto crayon.size(4);
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-extract-drop-title {
+	display: block;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-extract-drop-hint {
+	display: block;
+	margin-top: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+/* Swatch strip: full-bleed columns on a wide viewport, a grid once the columns
+   stop fitting. */
+.dt-extract-strip {
+	position: relative;
+	display: flex;
+	overflow: hidden;
+	height: 18rem;
+	border-bottom: 2px solid var(--border);
+	transition: opacity 300ms ease-out;
+
+	&.is-grid {
+		display: grid;
+		height: auto;
+		gap: 1px;
+		padding: 1px;
+		background: var(--border);
+	}
+
+	&.cols-2.is-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	&.cols-3.is-grid {
+		grid-template-columns: repeat(3, 1fr);
+	}
+
+	/* The re-extract pass blocks the main thread; the dim is the only feedback
+	   that it started. */
+	&.is-busy {
+		opacity: 0.6;
+	}
+}
+
+.dt-extract-swatch {
+	position: relative;
+	cursor: pointer;
+	transition: flex 300ms ease-out;
+
+	.is-row & {
+		flex: 1;
+	}
+
+	.is-grid & {
+		aspect-ratio: 1;
+	}
+
+	.is-row &.is-selected {
+		flex: 1.5;
+	}
+
+	/* Hover expands a column and reveals its copy button. A touch device has no
+	   hover, so there the selected state does both. */
+	.is-row:not(.is-touch) &:hover {
+		flex: 1.5;
+	}
+}
+
+.dt-extract-swatch-copy {
+	@include crayon.hstack(2);
+
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("semibold");
+	letter-spacing: crayon.tracking("wider");
+	opacity: 0;
+	cursor: pointer;
+	transition: opacity 200ms;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+		flex-shrink: 0;
+	}
+
+	.is-selected > & {
+		opacity: 1;
+	}
+
+	.dt-extract-strip:not(.is-touch) .dt-extract-swatch:hover > & {
+		opacity: 1;
+	}
+}
+
+.dt-extract-swatch-value {
+	position: absolute;
+	right: 0;
+	bottom: crayon.size(3);
+	left: 0;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("semibold");
+	letter-spacing: crayon.tracking("wider");
+	text-align: center;
+	opacity: 0.7;
+	pointer-events: none;
+	transition: opacity 200ms;
+
+	.is-selected > & {
+		opacity: 0;
+	}
+
+	.dt-extract-strip:not(.is-touch) .dt-extract-swatch:hover > & {
+		opacity: 0;
+	}
+}
+
+/* Controls row: source thumbnail, strategy, re-extract, count. */
+.dt-extract-controls {
+	display: flex;
+	min-height: crayon.size(16);
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-extract-source {
+	position: relative;
+	display: block;
+	width: crayon.size(16);
+	flex-shrink: 0;
+	overflow: hidden;
+	border-right: 1px solid var(--border);
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+}
+
+.dt-extract-strategy {
+	min-width: 0;
+	flex: 1;
+	height: auto;
+	align-self: stretch;
+	border: 0;
+	border-right: 1px solid var(--border);
+}
+
+.dt-extract-run {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	justify-content: center;
+	padding-inline: crayon.size(4);
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	font-weight: crayon.font-weight("bold");
+	white-space: nowrap;
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+		flex-shrink: 0;
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&:disabled {
+		pointer-events: none;
+		opacity: 0.5;
+	}
+}
+
+.dt-extract-count {
+	display: flex;
+	align-items: stretch;
+	border-left: 1px solid var(--border);
+
+	button {
+		display: flex;
+		width: crayon.size(12);
+		align-items: center;
+		justify-content: center;
+		border: 0;
+		background: none;
+		color: var(--muted-foreground);
+		cursor: pointer;
+
+		.dt-icon {
+			width: crayon.size(3.5);
+			height: crayon.size(3.5);
+		}
+
+		@include crayon.hover {
+			background: var(--muted);
+			color: var(--foreground);
+		}
+
+		&:disabled {
+			pointer-events: none;
+			opacity: 0.3;
+		}
+	}
+
+	span {
+		display: flex;
+		min-width: crayon.size(12);
+		align-items: center;
+		justify-content: center;
+		padding-inline: crayon.size(2);
+		border-inline: 1px solid var(--border);
+		font-size: crayon.font-size("sm");
+		font-weight: crayon.font-weight("bold");
+	}
+}
+
+.dt-extract-desc {
+	padding: crayon.size(4);
+	border-bottom: 2px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-extract-desc-name {
+	color: var(--foreground);
+	font-weight: crayon.font-weight("bold");
+}
+
+/* Export + list blocks */
+.dt-extract-export,
+.dt-extract-list {
+	padding: crayon.size(4);
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-extract-label {
+	display: block;
+	margin-bottom: crayon.size(3);
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-extract-export-grid {
+	grid-template-columns: 1fr;
+	margin: 0 crayon.size(-4) crayon.size(-4);
+	border-inline: 0;
+	border-bottom: 0;
+
+	@include crayon.screen("sm") {
+		grid-template-columns: repeat(3, 1fr);
+	}
+
+	> button,
+	> a {
+		@include crayon.hstack(2);
+
+		align-items: center;
+		justify-content: center;
+		height: crayon.size(12);
+		padding-inline: crayon.size(3);
+		background: var(--background);
+		color: inherit;
+		font: inherit;
+		font-size: crayon.font-size("sm");
+		font-weight: crayon.font-weight("bold");
+		text-align: center;
+		text-decoration: none;
+		cursor: pointer;
+
+		.dt-icon {
+			width: crayon.size(3.5);
+			height: crayon.size(3.5);
+			flex-shrink: 0;
+		}
+
+		@include crayon.hover {
+			background: var(--muted);
+		}
+	}
+}
+
+.dt-extract-out {
+	opacity: 0.6;
+}
+
+.dt-extract-rows {
+	margin: crayon.size(3) crayon.size(-4) crayon.size(-4);
+	border-top: 1px solid var(--border);
+}
+
+.dt-extract-row {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+	background: var(--card);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--card) 80%, transparent);
+	}
+}
+
+.dt-extract-row-swatch {
+	width: crayon.size(16);
+	flex-shrink: 0;
+	border-right: 1px solid var(--border);
+}
+
+.dt-extract-row-info {
+	min-width: 0;
+	flex: 1;
+	padding: crayon.size(4);
+}
+
+.dt-extract-row-head {
+	@include crayon.hstack(3);
+
+	align-items: center;
+}
+
+.dt-extract-row-value {
+	overflow: hidden;
+	font-weight: crayon.font-weight("bold");
+	letter-spacing: crayon.tracking("wide");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-extract-row-name {
+	overflow: hidden;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	text-overflow: ellipsis;
+	text-transform: capitalize;
+	white-space: nowrap;
+}
+
+.dt-extract-row-share {
+	margin-top: 2px;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-extract-row .dt-icon-btn {
+	width: crayon.size(12);
+	height: auto;
+	border-left: 1px solid var(--border);
+	color: var(--muted-foreground);
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-extract-hint {
+	padding: crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	text-align: center;
+
+	kbd {
+		padding: 2px crayon.size(1.5);
+		background: var(--muted);
+		font-family: inherit;
+	}
+}

@@ -4,3 +4,528 @@
 // new tool collided in it.
 
 @use "../crayon-config" as crayon;
+
+/* ── Colourblindness simulator ───────────────────────────────────────────── */
+
+// Green and amber have no theme token, so the tailwind scale stands in, at the
+// steps the Next app used either side of the theme. Red does have one
+// (--destructive), but the three badges have to read as one set.
+$none: crayon.color("green-500");
+$partial: crayon.color("amber-500");
+$full: crayon.color("red-500");
+
+.dt-cbs-frame {
+	border: 2px solid var(--border);
+}
+
+/* Mode toggle */
+
+.segmented.dt-cbs-modes {
+	grid-template-columns: repeat(2, 1fr);
+	border-inline: 0;
+	border-top: 0;
+	border-bottom-width: 2px;
+}
+
+.dt-cbs-mode {
+	@include crayon.hstack(2);
+
+	display: flex;
+	height: crayon.size(12);
+	align-items: center;
+	justify-content: center;
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+/* Shared block furniture */
+
+.dt-cbs-label {
+	display: block;
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-cbs-head {
+	padding: crayon.size(4) crayon.size(4) crayon.size(3);
+}
+
+/* Colour picker row */
+
+.dt-cbs-pick {
+	padding: crayon.size(4) 0;
+	border-bottom: 2px solid var(--border);
+
+	.dt-cbs-label {
+		padding-inline: crayon.size(4);
+		margin-bottom: crayon.size(3);
+	}
+}
+
+/* Bleeds to the panel edges, as a flush table row. */
+.dt-cbs-field {
+	display: flex;
+	align-items: stretch;
+	border-block: 1px solid var(--border);
+}
+
+/* The picker input covers the whole cell so anywhere in the block opens it. */
+.dt-cbs-picker {
+	position: relative;
+	display: block;
+	width: crayon.size(16);
+	height: crayon.size(12);
+	flex-shrink: 0;
+
+	> span {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+
+	input[type="color"] {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		cursor: pointer;
+	}
+}
+
+.dt-cbs-hex {
+	min-width: 0;
+	flex: 1;
+	padding: crayon.size(3);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: transparent;
+	color: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	outline: none;
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+/* Vision-type table (colour mode) */
+
+.dt-cbs-types {
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-cbs-types-head {
+	padding: crayon.size(4) crayon.size(4) crayon.size(3);
+}
+
+.dt-cbs-grid {
+	display: grid;
+	border-top: 1px solid var(--border);
+	grid-template-columns: 1fr;
+
+	@include crayon.screen("sm") {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
+.dt-cbs-cell {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: crayon.size(2);
+	padding: crayon.size(3);
+	border: 0;
+	border-bottom: 1px solid var(--border);
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--muted) 50%, transparent);
+	}
+
+	&.is-active {
+		background: var(--muted);
+	}
+
+	@include crayon.screen("sm") {
+		&:not(:nth-child(3n + 1)) {
+			border-left: 1px solid var(--border);
+		}
+
+		&:nth-last-child(-n + 3) {
+			border-bottom: 0;
+		}
+	}
+}
+
+.dt-cbs-cell-top {
+	@include crayon.hstack(2);
+
+	display: flex;
+	width: 100%;
+	min-width: 0;
+	align-items: center;
+}
+
+.dt-cbs-cell-swatch {
+	display: block;
+	width: crayon.size(8);
+	height: crayon.size(8);
+	flex-shrink: 0;
+	border: 1px solid var(--border);
+}
+
+.dt-cbs-cell-text {
+	display: block;
+	min-width: 0;
+}
+
+.dt-cbs-cell-name {
+	display: block;
+	overflow: hidden;
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+
+	.dt-cbs-cell.is-active & {
+		color: var(--primary);
+	}
+}
+
+.dt-cbs-cell-value {
+	display: block;
+	overflow: hidden;
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("xs");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-cbs-badge {
+	display: block;
+	padding: 2px crayon.size(1.5);
+	border: 1px solid;
+	font-size: crayon.font-size("xs");
+	line-height: crayon.leading("none");
+
+	&.is-none {
+		border-color: color-mix(in oklch, #{$none} 40%, transparent);
+		background: color-mix(in oklch, #{$none} 10%, transparent);
+		color: crayon.color("green-600");
+
+		@include crayon.dark {
+			color: crayon.color("green-400");
+		}
+	}
+
+	&.is-partial {
+		border-color: color-mix(in oklch, #{$partial} 40%, transparent);
+		background: color-mix(in oklch, #{$partial} 10%, transparent);
+		color: crayon.color("amber-600");
+
+		@include crayon.dark {
+			color: crayon.color("amber-400");
+		}
+	}
+
+	&.is-full {
+		border-color: color-mix(in oklch, #{$full} 40%, transparent);
+		background: color-mix(in oklch, #{$full} 10%, transparent);
+		color: crayon.color("red-600");
+
+		@include crayon.dark {
+			color: crayon.color("red-400");
+		}
+	}
+}
+
+/* Two-up comparison, shared by both modes */
+
+.dt-cbs-compare {
+	display: grid;
+	border-top: 1px solid var(--border);
+	grid-template-columns: repeat(2, 1fr);
+}
+
+.dt-cbs-pane {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+
+	&:first-child {
+		border-right: 1px solid var(--border);
+	}
+}
+
+.dt-cbs-pane-title {
+	overflow: hidden;
+	padding: crayon.size(2) crayon.size(3);
+	border-bottom: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	text-align: center;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-cbs-fill {
+	display: block;
+	height: crayon.size(24);
+}
+
+.dt-cbs-pane-value {
+	padding: crayon.size(2);
+	border-top: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("xs");
+	text-align: center;
+}
+
+/* Description of the selected vision type */
+
+.dt-cbs-desc {
+	padding: crayon.size(4);
+	border-top: 1px solid var(--border);
+
+	&.is-shaded {
+		border-top: 0;
+		border-bottom: 1px solid var(--border);
+		background: color-mix(in oklch, var(--muted) 30%, transparent);
+	}
+}
+
+.dt-cbs-desc-name {
+	display: block;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-cbs-desc-text {
+	display: block;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+/* Image mode */
+
+.dt-cbs-drop {
+	display: block;
+	margin: crayon.size(4);
+	padding: crayon.size(8);
+	border: 2px dashed var(--border);
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(12);
+		height: crayon.size(12);
+		margin-bottom: crayon.size(4);
+		color: var(--muted-foreground);
+	}
+
+	@include crayon.hover {
+		border-color: color-mix(
+			in oklch,
+			var(--primary) 50%,
+			transparent
+		);
+	}
+
+	&:focus-within {
+		border-color: var(--primary);
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+}
+
+.dt-cbs-drop-title {
+	display: block;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-cbs-drop-hint {
+	display: block;
+	margin-top: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-cbs-bar {
+	display: flex;
+	min-height: crayon.size(14);
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-cbs-bar-title {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-cbs-bar-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(5);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.segmented.dt-cbs-type-grid {
+	border-inline: 0;
+	border-bottom: 0;
+	grid-template-columns: repeat(2, 1fr);
+
+	@include crayon.screen("sm") {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
+.dt-cbs-type {
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("medium");
+	line-height: 1.2;
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-cbs-zoom {
+	display: block;
+	width: 100%;
+	padding: 0;
+	overflow: hidden;
+	border: 0;
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+	cursor: zoom-in;
+
+	img {
+		display: block;
+		width: 100%;
+		height: auto;
+	}
+}
+
+.dt-cbs-pending {
+	display: flex;
+	aspect-ratio: 16 / 9;
+	align-items: center;
+	justify-content: center;
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+/* Lightbox */
+
+.dt-cbs-lightbox {
+	width: fit-content;
+	max-width: 95vw;
+	padding: 0;
+	overflow: hidden;
+	border: 1px solid var(--border);
+	background: var(--popover);
+
+	&::backdrop {
+		background: rgb(0 0 0 / 50%);
+	}
+}
+
+.dt-cbs-lightbox-btn {
+	display: block;
+	padding: 0;
+	border: 0;
+	background: none;
+	cursor: zoom-out;
+
+	img {
+		display: block;
+		max-width: 100%;
+		max-height: 90dvh;
+	}
+}
+
+/* About */
+
+.dt-cbs-about {
+	margin-top: crayon.size(6);
+	padding: crayon.size(4);
+	border: 1px solid var(--border);
+	background: var(--card);
+}
+
+.dt-cbs-about-title {
+	display: block;
+	margin-bottom: crayon.size(2);
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-cbs-about p {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+
+	& + p {
+		margin-top: crayon.size(2);
+	}
+}
