@@ -6,12 +6,18 @@ plan, which also carries the Phase 0 findings). This file is what actually
 exists in the code right now.
 
 **Status:** Phase 0 is CLOSED — all six questions answered, neither gate failed.
-The site chrome is built and the first tool is at parity. One of 56 tools ported.
+The site chrome is built, three tools are at parity, and the behavioural rigs
+are committed rather than gitignored.
 
 Branch: `v2-ember`. App: `v2/delphitools-v2/`. The Next app in the repo root is
 untouched and still the production site.
 
 ```
+d53986f  test(v2): graduate the verification rigs into scripts/verify/
+e49fbe0  feat(v2): wire the colour-notation selector into the header
+b8b5d31  feat(v2): vendor the select, port colour-converter, one home for the maths
+5384b8f  feat(v2): port favicon-genny, and a home for the verification rigs
+00788d8  docs(v2): STATE.md for the rewrite, and a gen-icons script
 ff5e044  chore(v2): silence the upstream if-function sass deprecation
 fc1e2ec  fix(v2): sidebar hover and active states span the full row
 26a4d7e  finish: validate the colour input, close the last unvalidated hex path
@@ -30,40 +36,50 @@ fd8ba23  feat(v2): Ember 7 spike on Crayon — scope docs, shell, chrome
 
 ```bash
 cd v2/delphitools-v2
-npm start                 # vite, pinned to :3000 so the harnesses work
+npm start                 # vite, pinned to :3000 so the rigs work
 npm run build             # vite build -> dist/
-npm run prerender         # per-route index.html + og.png, needs a build first
+npm run build:static      # build, then prerender each route + its og.png
 npm run gen-icons         # regenerate app/lib/icons.ts from what templates use
-npm test                  # ember-qunit, 16 tests
+npm test                  # ember-qunit, 35 tests
 npm run lint              # eslint + template-lint + stylelint + prettier
+npm run verify            # 10 puppeteer rigs, 183 checks, needs npm start
+npm run verify:static     # prerendered output + jxl, needs npm run build:static
 ```
 
-Gates, all green as of `ff5e044`: `ember-tsc --noEmit`, `eslint .`,
+Gates, all green as of `d53986f`: `ember-tsc --noEmit`, `eslint .`,
 `ember-template-lint .`, `stylelint **/*.{css,scss}`, `prettier --check .`.
 
-Behavioural checks are gitignored dot-files in the repo root (`/.v2-*.mjs`,
-matching the parent repo's convention for one-off puppeteer rigs). Six matter:
+`scripts/verify/` holds the behavioural coverage that qunit cannot reach —
+chrome that only exists once the whole app is booted, and tool behaviour that
+depends on layout, portals or real input. `harness.mjs` gives every rig the same
+contract as the parent repo's `scripts/verify`: console errors and uncaught
+exceptions count as failures, and a failing run exits non-zero.
 
 | Rig | Covers |
 | --- | --- |
-| `.v2-chrome.mjs` | sidebar collapse, search, header title, active link, 404 |
-| `.v2-palette.mjs` | generate, lock, add/remove, strategy combobox |
-| `.v2-devmode.mjs` | the hidden export panel |
-| `.v2-dialog.mjs` | native dialog: open, Escape, focus return, backdrop |
-| `.v2-sharelink.mjs` | `?colors=` parsing and fallbacks |
-| `.v2-tooltip.mjs` | collapsed-rail tooltips, unmount, keyboard focus |
+| `chrome.mjs` | sidebar, search, collapse and its cookie, routing, 404, icon sizing, sr-only clipping |
+| `colour-converter.mjs` | the conversion table, and the whole vendored select including its keyboard |
+| `devmode.mjs` | the hidden export panel: slug, JSON shape, category, import |
+| `dialog.mjs` | native `<dialog>`: top layer, `::backdrop`, inertness, Escape, focus return |
+| `favicon.mjs` | upload, canvas resize, the .ico bytes, the undecodable-file path |
+| `mobile.mjs` | the off-canvas drawer, the scrim, and the desktop resize that used to strand it |
+| `notation.mjs` | the header selector, which tools show it, and that the choice survives a reload |
+| `palette.mjs` | generate, lock, the stepper, the strategy combobox |
+| `sharelink.mjs` | `?colors=` on a cold load, and its fallbacks |
+| `tooltip.mjs` | collapsed-rail tooltips, and that they unmount rather than linger |
+| `static.mjs` | the built output: per-route head tags, share cards, client-side nav, the jxl codec |
 
-They need the dev server up. None of them are committed; if they matter
-long-term they should graduate into `tests/` or a `scripts/verify/` like the
-parent repo has.
+`static.mjs` serves `dist/` itself, so it needs no separate server, and is
+excluded from `npm run verify` because it needs a build rather than the dev
+server.
 
 ---
 
 ## What works
 
 **Stack.** Ember 7.1, Embroider + Vite, TypeScript strict + Glint, `.gts`
-template tag throughout. 6,113 lines of app source. Build is ~5s; output is
-165 kB CSS and 652 kB JS.
+template tag throughout. 10,945 lines of app source. Build is ~5s; output is
+174 kB CSS and 680 kB JS.
 
 **Styling on Crayon.** `crayon-css` 0.9.1 (Sass) replaces Tailwind 4 entirely.
 `app/styles/_crayon-config.scss` is the single config; `app/styles/app.scss` is
@@ -72,25 +88,43 @@ token block byte-identical to it.
 
 **Chrome.** Sidebar with collapsible icon rail (cookie-persisted, ⌘/Ctrl+B,
 off-canvas below 768px, live search over the registry), header with
-route-derived title and category badge, theme toggle, About dialog, 404. Pride
-styling and the commit SHA come through Vite `define`.
+route-derived title, category badge and the colour-notation selector, theme
+toggle, About dialog, 404. Pride styling and the commit SHA come through Vite
+`define`.
 
 **Routing.** `/`, `/tools/:tool_id`, `/editor` (stub), wildcard 404. URLs
 unchanged from the Next app.
 
-**Tools.** 1 of 56. `palette-genny` at full parity including the hidden
-export-to-collection panel (press P). Unported ids fall through to a
-placeholder card, so every catalogue link resolves.
+**Tools.** 3 of 56.
+
+| Tool | Notes |
+| --- | --- |
+| `palette-genny` | full parity, including the hidden export panel (press P) |
+| `colour-converter` | checked numerically against the Next implementation, 6,488 inputs, zero differences |
+| `favicon-genny` | canvas resize, per-size PNG, and the .ico container |
+
+Unported ids fall through to a placeholder card, so every catalogue link
+resolves.
+
+**Shared pieces the ports produced.** `lib/colour-maths.ts` holds both
+directions of every colour transform, replacing the three copies the Next app
+carried. `lib/ico.ts` builds the ICO container, which was inline and untested
+there. `modifiers/file-paste.ts` replaces the `use-file-paste` hook that 23
+Next tools use.
+
+**Primitives.** `app/components/ui/` holds `dialog` (local, over the native
+element) plus `tooltip`, `popover`, `command` and `select` vendored from
+shadcn-ember and restyled.
 
 **Static output.** `scripts/prerender.mjs` boots the built app in headless
 Chrome at all 57 routes, checks each renders, and writes a per-route
-`index.html` with that route's head tags plus its `og.png`. Verified against
-five scraper user agents; head tags match the Next build field for field on
-tool routes.
+`index.html` with that route's head tags plus its `og.png` beside it. Verified
+against five scraper user agents; head tags match the Next build field for
+field on tool routes.
 
-**Tests.** 16 qunit tests: 9 for the sidebar service, 7 for the share-link
-parser. Both suites were checked against the pre-fix code to confirm they
-actually fail.
+**Tests.** 35 qunit tests over the pure logic: the sidebar service, the share
+link parser, the colour converter, the ICO builder and the paste-accept
+matcher. Each suite was checked against the pre-fix code to confirm it fails.
 
 ---
 
@@ -106,12 +140,14 @@ component CSS, not utility classes. There is no `bg-background` class and there
 cannot be one.
 
 **Primitives are vendored from shadcn-ember and restyled, not depended on.**
-`app/components/ui/` holds `tooltip`, `popover`, `command` (all MIT, from
-IgnaceMaes/shadcn-ember 0.2.1) with their Tailwind class strings replaced by
-`dt-*` hooks. Each keeps a header naming the upstream version and every
-divergence. The behaviour is the expensive part and it ports; the styling does
-not. This is a fork: `shadcn-ember add` is not usable directly, and upstream
-fixes have to be pulled by hand.
+`app/components/ui/` holds `tooltip`, `popover`, `command` and `select` (all
+MIT, from IgnaceMaes/shadcn-ember 0.2.1) with their Tailwind class strings
+replaced by `dt-*` hooks. Each keeps a header naming the upstream version and
+every divergence. The behaviour is the expensive part and it ports; the styling
+does not. This is a fork: `shadcn-ember add` is not usable directly, upstream
+fixes have to be pulled by hand, and upstream bugs are ours to find — `select`
+arrived with no keyboard handling at all and a registration modifier that
+Glimmer rejects on the first arrow key.
 
 **Dialog is local, over the native element.** `app/components/ui/dialog.gts`,
 ~90 lines on `<dialog>`/`showModal()`. Not vendored, because shadcn-ember's is
@@ -128,6 +164,12 @@ defaults to. The snapshot approach is framework-independent and reuses the
 framework-agnostic as of 0.5.0 (no React dependency, no peer deps).
 `@arthur5005/dnd-kit-ember` wraps it in Glimmer modifiers and is worth using as
 a reference, but it is one author, two releases, and pinned to `@dnd-kit` 0.2.x.
+
+**Behavioural coverage is committed, and asserts.** The rigs in
+`scripts/verify/` were 18 gitignored dot-files that printed observations and
+never failed. They now follow the parent repo's contract instead. This is the
+only coverage of the chrome, of the vendored primitives, and of anything that
+needs a portal or real input, so it does not belong outside version control.
 
 **`lib/tools.ts` keeps its shape and IDs.** `PARITY.md` in the repo root names
 it as the source of truth for the CLI and iOS repos. The only change is `icon`,
@@ -189,6 +231,31 @@ At that rate the remaining ~15.5k lines of framework-free code will need a
 couple of hundred small fixes. Mechanical, but not free, and `CONVERSION.md`'s
 "ports unchanged" should be read as runtime-only.
 
+**A vendored component that reads its context inside a modifier re-runs on
+every state change.** `context` is a `@cached` getter that recomputes whenever
+anything tracked on the provider changes, so a modifier body that reads it is
+torn down and rebuilt each time. In `select` that unregistered and re-registered
+the item on every arrow key, writing to the item list after the listbox had
+already read it, which Glimmer rejects as a backtracking update. Capture the
+functions you need at construction. This is the same shape as the destructor bug
+already fixed in `command.gts`, and worth checking in every vendored component.
+
+**The copy-gap marker needs the canonical comment shape, which Handlebars
+cannot give it.** slopsieve's parser ends an annotation at the first line that
+does not look comment-ish, and a `{{! ... }}` block's closing `}}` on its own
+line does not, so the placeholder below it orphans into a second bogus gap. Put
+the string in a module constant above the template with `//` comments instead.
+`slopsieve --lint` catches this; run it before ending a session that added one.
+
+**gen-icons has to emit what prettier would.** It writes tabs, and quotes only
+the hyphenated keys. Otherwise every regeneration leaves `lint:format` red and
+needs a formatting pass over a file whose header says not to edit it.
+
+**Round-tripping a colour through its own displayed string is lossy.** OKLCH
+hue prints to one decimal place, which is not enough to pin a saturated colour
+to the same byte, so `#ff0000` comes back as `#ff0001`. The Next app does the
+same. Assert to within one 8-bit step, not exactly.
+
 **`npm` is a fish alias for `bun` on this machine.** Installs write `bun.lock`
 and leave `package-lock.json` stale. Use `/opt/homebrew/bin/npm install
 --package-lock-only` to resync; the parent repo tracks that file to pin the
@@ -204,18 +271,20 @@ syntax. The fix for Ash is three lines, but it raises Crayon's Sass floor to
 
 ## Not done
 
-**Tools.** 55 of 56. See `CONVERSION.md` for the per-tool difficulty matrix.
+**Tools.** 53 of 56. See `CONVERSION.md` for the per-tool difficulty matrix.
 
 **Substrata.** Untouched. `window.__substrata` must be ported before any of it,
 because the 22 harnesses in the parent repo's `scripts/verify/` are the only
 regression net on the editor.
 
 **Chrome leftovers.** Animated icons, sticker wall, favour banner, the TAXIWAY
-split-flap and Friends of Delphi are all GSAP or motion and absent. The
-colour-notation selector in the header is not wired, though its service exists.
+split-flap and Friends of Delphi are all GSAP or motion and absent.
 
-**Primitives still to vendor.** collapsible, select, sheet/drawer, and whatever
-later tools need. `select` is the notable gap: `paper-sizes` needs a combobox.
+**Primitives still to vendor.** collapsible, sheet/drawer, and whatever later
+tools need. `select` is done; nothing has needed the other two yet.
+
+**Copy.** One unfilled gap, in `favicon-genny.gts`: the message shown when a
+chosen file will not decode. `slopsieve` fills it.
 
 **Build output path.** `dist/`, where the parent repo's `static-smoke.mjs`
 expects `out/`. One line in `vite.config.mjs` when it matters.
@@ -231,18 +300,18 @@ been carried across.
 
 ## Next
 
-The plan says Phase 1, and the cheapest useful thing is more tools, because the
-tool-page shape now exists and every port inherits it.
+The tool-page shape, the primitives and the rig harness all exist now, so each
+further port inherits them. The cheapest useful work is more tools.
 
-1. A second and third tool, ideally a D2 canvas one (`favicon-genny`,
-   `matte-generator`) to prove the canvas pattern, and `colour-converter` to
-   exercise `colour-maths` and the notation service.
-2. Wire the colour-notation selector into the header. The service is built; the
-   header does not show it, so notation cannot currently be changed.
-3. Vendor `select` when `paper-sizes` or `image-converter` needs it.
-4. Decide whether the puppeteer rigs graduate into a committed
-   `scripts/verify/`. They are the only coverage of the chrome and they are
-   currently gitignored.
+1. More Colour tools, which now cost the least: `contrast-checker`,
+   `gradient-genny` and `harmony-genny` all read from `lib/colour-maths.ts` and
+   the notation service, both of which are built and tested.
+2. A tool that needs a dependency rather than a canvas — `qr-genny` or
+   `svg-optimiser` — to find out what the static import map in
+   `components/tools/registry.ts` costs before it holds fifty entries.
+3. Wire the deploy. `public/_redirects` and the `dist/` versus `out/` mismatch
+   are both one-line jobs, and until they are done nothing has been proven end
+   to end past `npm run build:static`.
+4. Substrata, which is its own project and wants `window.__substrata` first.
 
-Revised estimate after Phase 0: 129.5 days to parity, of which roughly 14 days
-of Phase 1 work exists.
+Revised estimate after Phase 0: 129.5 days to parity.
