@@ -4,3 +4,709 @@
 // new tool collided in it.
 
 @use "../crayon-config" as crayon;
+
+/* ── Gradient generator ──────────────────────────────────────────────────── */
+
+/* The root gap is the mode-bar-to-frame spacing; the export panel below adds
+   the rest of the wider gap that separates it from the frame. */
+.dt-gradient {
+	@include crayon.vstack(3);
+}
+
+.dt-gradient-modes {
+	grid-template-columns: repeat(3, 1fr);
+}
+
+.dt-gradient-mode {
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--background);
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+		font-weight: crayon.font-weight("bold");
+	}
+}
+
+.dt-gradient-frame {
+	border: 2px solid var(--border);
+}
+
+/* ── Preview and its overlay dots ────────────────────────────────────────── */
+
+.dt-gradient-preview {
+	position: relative;
+	overflow: hidden;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-gradient-canvas {
+	display: block;
+	width: 100%;
+	height: 300px;
+	object-fit: cover;
+}
+
+/* Inset so a dot's tooltip has room inside the preview. */
+.dt-gradient-dots {
+	position: absolute;
+	inset: crayon.size(3);
+}
+
+.dt-gradient-dot {
+	position: absolute;
+	display: block;
+	width: crayon.size(6);
+	height: crayon.size(6);
+	transform: translate(-50%, -50%);
+
+	&.is-mesh {
+		width: crayon.size(7);
+		height: crayon.size(7);
+		touch-action: none;
+	}
+
+	input[type="color"] {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		cursor: pointer;
+	}
+
+	&.is-mesh input[type="color"] {
+		cursor: grab;
+	}
+
+	&.is-dragging {
+		z-index: 3;
+	}
+}
+
+.dt-gradient-dot-face {
+	display: flex;
+	width: 100%;
+	height: 100%;
+	align-items: center;
+	justify-content: center;
+	border: 2px solid #fff;
+	border-radius: crayon.rounded("full");
+	box-shadow: 0 2px 6px rgb(0 0 0 / 30%);
+	color: #fff;
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+	pointer-events: none;
+	transition:
+		transform 0.2s ease-out,
+		box-shadow 0.2s ease-out;
+}
+
+.dt-gradient-dot:hover .dt-gradient-dot-face,
+.dt-gradient-dot.is-hovered .dt-gradient-dot-face {
+	box-shadow:
+		0 0 0 3px var(--dt-gradient-ring),
+		0 4px 12px rgb(0 0 0 / 30%);
+	transform: scale(1.25);
+}
+
+.dt-gradient-dot.is-mesh:hover .dt-gradient-dot-face,
+.dt-gradient-dot.is-mesh.is-hovered .dt-gradient-dot-face {
+	transform: scale(1.1);
+}
+
+.dt-gradient-dot.is-dragging .dt-gradient-dot-face {
+	box-shadow:
+		0 0 0 4px var(--dt-gradient-ring),
+		0 8px 24px rgb(0 0 0 / 40%);
+	transform: scale(1.25);
+}
+
+.dt-gradient-tip {
+	position: absolute;
+	bottom: 100%;
+	left: 50%;
+	z-index: 2;
+	display: block;
+	margin-bottom: crayon.size(2);
+	padding: crayon.size(1) crayon.size(2);
+	box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
+	font-size: crayon.font-size("xs");
+	line-height: 1.3;
+	opacity: 0;
+	pointer-events: none;
+	transform: translate(-50%, crayon.size(1));
+	transition:
+		opacity 0.2s,
+		transform 0.2s;
+	white-space: nowrap;
+}
+
+.dt-gradient-dot:hover .dt-gradient-tip,
+.dt-gradient-dot.is-hovered .dt-gradient-tip {
+	opacity: 1;
+	transform: translate(-50%, 0);
+}
+
+.dt-gradient-dot.is-dragging .dt-gradient-tip {
+	opacity: 0;
+}
+
+.dt-gradient-tip-name {
+	display: block;
+	font-weight: crayon.font-weight("medium");
+	text-transform: capitalize;
+}
+
+.dt-gradient-tip-value {
+	display: block;
+	opacity: 0.8;
+}
+
+.dt-gradient-preview-hint {
+	position: absolute;
+	bottom: crayon.size(2);
+	left: 50%;
+	padding: crayon.size(1) crayon.size(2);
+	backdrop-filter: blur(4px);
+	background: rgb(0 0 0 / 30%);
+	color: rgb(255 255 255 / 70%);
+	font-size: crayon.font-size("xs");
+	transform: translateX(-50%);
+}
+
+/* ── Control blocks ──────────────────────────────────────────────────────── */
+
+.dt-gradient-block {
+	@include crayon.vstack(3);
+
+	padding: crayon.size(4);
+	border-bottom: 2px solid var(--border);
+
+	&.is-last {
+		border-bottom: 0;
+	}
+}
+
+.dt-gradient-block-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: crayon.size(3);
+}
+
+.dt-gradient-block-actions {
+	@include crayon.hstack(2);
+}
+
+.dt-gradient-label {
+	display: block;
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-gradient-readout {
+	font-size: crayon.font-size("sm");
+	color: var(--muted-foreground);
+}
+
+.dt-gradient-note {
+	font-size: crayon.font-size("xs");
+	color: var(--muted-foreground);
+}
+
+.dt-gradient-btn {
+	@include crayon.hstack(1);
+
+	align-items: center;
+	padding: crayon.size(1.5) crayon.size(3);
+	border: 1px solid var(--border);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-primary {
+		border-color: var(--primary);
+		background: var(--primary);
+		color: var(--primary-foreground);
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				black
+			);
+		}
+	}
+}
+
+/* ── Stop / point rows ───────────────────────────────────────────────────── */
+
+.dt-gradient-rows {
+	margin: 0 crayon.size(-4);
+	border-block: 1px solid var(--border);
+}
+
+.dt-gradient-row {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	&.is-hovered {
+		background: color-mix(in oklch, var(--muted) 50%, transparent);
+	}
+}
+
+.dt-gradient-row-swatch {
+	position: relative;
+	width: crayon.size(12);
+	flex-shrink: 0;
+	border-left: 1px solid var(--border);
+
+	&:first-child {
+		border-left: 0;
+	}
+
+	span {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+
+	input[type="color"] {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		cursor: pointer;
+	}
+}
+
+.dt-gradient-row-badge {
+	display: flex;
+	width: crayon.size(10);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+
+	span {
+		display: flex;
+		width: crayon.size(6);
+		height: crayon.size(6);
+		align-items: center;
+		justify-content: center;
+		border: 2px solid #fff;
+		border-radius: crayon.rounded("full");
+		font-size: crayon.font-size("xs");
+		font-weight: crayon.font-weight("bold");
+	}
+}
+
+.dt-gradient-row-hex {
+	min-width: 0;
+	flex: 1;
+	padding: crayon.size(2) crayon.size(3);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -2px;
+	}
+}
+
+.dt-gradient-row-pos {
+	display: flex;
+	width: crayon.size(24);
+	flex-shrink: 0;
+	align-items: center;
+	border-left: 1px solid var(--border);
+	color: var(--muted-foreground);
+
+	input {
+		width: 100%;
+		min-width: 0;
+		padding: crayon.size(2);
+		border: 0;
+		background: transparent;
+		color: var(--foreground);
+		font: inherit;
+		font-size: crayon.font-size("sm");
+		text-align: center;
+
+		&:focus-visible {
+			outline: 2px solid var(--ring);
+			outline-offset: -2px;
+		}
+	}
+
+	span {
+		padding-right: crayon.size(3);
+	}
+}
+
+.dt-gradient-row-remove {
+	display: flex;
+	width: crayon.size(12);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&:disabled {
+		pointer-events: none;
+		opacity: 0.3;
+	}
+}
+
+.dt-gradient-row-info {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	flex-direction: column;
+	justify-content: center;
+	padding: crayon.size(2) crayon.size(3);
+	border-left: 1px solid var(--border);
+	line-height: 1.3;
+}
+
+.dt-gradient-row-name {
+	overflow: hidden;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("medium");
+	text-overflow: ellipsis;
+	text-transform: capitalize;
+	white-space: nowrap;
+}
+
+.dt-gradient-row-value {
+	overflow: hidden;
+	font-size: crayon.font-size("xs");
+	color: var(--muted-foreground);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-gradient-row-coords {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	padding-inline: crayon.size(3);
+	border-left: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	white-space: nowrap;
+}
+
+/* ── Corner grid ─────────────────────────────────────────────────────────── */
+
+.dt-gradient-corners {
+	display: grid;
+	margin: 0 crayon.size(-4);
+	gap: 1px;
+	background: var(--border);
+	border-block: 1px solid var(--border);
+	grid-template-columns: repeat(2, 1fr);
+}
+
+.dt-gradient-corner {
+	display: flex;
+	align-items: stretch;
+	background: var(--background);
+
+	&.is-hovered {
+		background: color-mix(in oklch, var(--muted) 50%, transparent);
+	}
+}
+
+.dt-gradient-corner-info {
+	min-width: 0;
+	flex: 1;
+	padding: crayon.size(2) crayon.size(3);
+	border-left: 1px solid var(--border);
+}
+
+.dt-gradient-corner-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: crayon.size(2);
+}
+
+.dt-gradient-corner-label {
+	font-weight: crayon.font-weight("bold");
+	font-size: crayon.font-size("sm");
+}
+
+.dt-gradient-corner-name {
+	overflow: hidden;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	text-overflow: ellipsis;
+	text-transform: capitalize;
+	white-space: nowrap;
+}
+
+.dt-gradient-corner-info .dt-gradient-row-hex {
+	width: 100%;
+	padding: crayon.size(1) 0;
+	border-left: 0;
+}
+
+/* ── Angle dial, sliders and preset grids ────────────────────────────────── */
+
+.dt-gradient-number {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+
+	input {
+		width: crayon.size(20);
+		padding: crayon.size(1) crayon.size(2);
+		border: 1px solid var(--border);
+		background: var(--background);
+		color: var(--foreground);
+		font: inherit;
+		font-size: crayon.font-size("sm");
+		text-align: center;
+
+		&:focus-visible {
+			outline: 2px solid var(--ring);
+			outline-offset: -2px;
+		}
+	}
+}
+
+.dt-gradient-angle {
+	@include crayon.hstack(3);
+
+	align-items: center;
+}
+
+.dt-gradient-dial {
+	position: relative;
+	width: crayon.size(12);
+	height: crayon.size(12);
+	flex-shrink: 0;
+	border: 2px solid var(--muted);
+	border-radius: crayon.rounded("full");
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+	cursor: crosshair;
+}
+
+.dt-gradient-dial-needle {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 4px;
+	height: crayon.size(5);
+	border-radius: crayon.rounded("full");
+	background: var(--primary);
+	transform-origin: bottom center;
+}
+
+.dt-gradient-dial-hub {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: crayon.size(2);
+	height: crayon.size(2);
+	border-radius: crayon.rounded("full");
+	background: var(--primary);
+	transform: translate(-50%, -50%);
+}
+
+.dt-gradient-slider {
+	width: 100%;
+	min-width: 0;
+	flex: 1;
+	accent-color: var(--primary);
+	cursor: pointer;
+}
+
+.dt-gradient-presets {
+	margin: 0 crayon.size(-4);
+	border-inline: 0;
+
+	&.is-angles {
+		grid-template-columns: repeat(4, 1fr);
+
+		@include crayon.screen("sm") {
+			grid-template-columns: repeat(8, 1fr);
+		}
+	}
+
+	&.is-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	&.is-sizes {
+		grid-template-columns: repeat(4, 1fr);
+	}
+}
+
+.dt-gradient-preset {
+	padding: crayon.size(2) crayon.size(1);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("xs");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+		font-weight: crayon.font-weight("bold");
+	}
+}
+
+/* ── Export panel ────────────────────────────────────────────────────────── */
+
+.dt-gradient-export {
+	display: grid;
+	margin-top: crayon.size(5);
+	gap: 1px;
+	background: var(--border);
+	border: 2px solid var(--border);
+
+	@include crayon.screen("md") {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+.dt-gradient-export-pane {
+	display: flex;
+	flex-direction: column;
+	background: var(--background);
+}
+
+.dt-gradient-export-body {
+	@include crayon.vstack(3);
+
+	flex: 1;
+	padding: crayon.size(4);
+}
+
+.dt-gradient-size {
+	@include crayon.hstack(2);
+
+	flex-wrap: wrap;
+	align-items: center;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+
+	input {
+		width: crayon.size(20);
+		height: crayon.size(8);
+		padding-inline: crayon.size(2);
+		border: 1px solid var(--border);
+		background: var(--background);
+		color: var(--foreground);
+		font: inherit;
+		font-size: crayon.font-size("sm");
+		text-align: center;
+
+		&:focus-visible {
+			outline: 2px solid var(--ring);
+			outline-offset: -2px;
+		}
+	}
+}
+
+.dt-gradient-css {
+	overflow-x: auto;
+	min-height: crayon.size(30);
+	margin: 0 crayon.size(-4);
+	padding: crayon.size(4);
+	border-block: 1px solid var(--border);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+	font-size: crayon.font-size("sm");
+	white-space: pre-wrap;
+}
+
+.dt-gradient-action {
+	@include crayon.hstack(2);
+
+	height: crayon.size(14);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-top: 2px solid var(--border);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-primary {
+		background: var(--primary);
+		color: var(--primary-foreground);
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				black
+			);
+		}
+	}
+}

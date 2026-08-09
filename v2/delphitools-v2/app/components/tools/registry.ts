@@ -15,6 +15,7 @@ import ColorblindSim from 'delphitools-v2/components/tools/colorblind-sim';
 import ColourConverter from 'delphitools-v2/components/tools/colour-converter';
 import ContrastChecker from 'delphitools-v2/components/tools/contrast-checker';
 import FaviconGenny from 'delphitools-v2/components/tools/favicon-genny';
+import GradientGenny from 'delphitools-v2/components/tools/gradient-genny';
 import HarmonyGenny from 'delphitools-v2/components/tools/harmony-genny';
 import PaletteCollection from 'delphitools-v2/components/tools/palette-collection';
 import PaletteExtractor from 'delphitools-v2/components/tools/palette-extractor';
@@ -28,6 +29,7 @@ export const TOOL_COMPONENTS: Record<string, ComponentLike<object>> = {
 	'colour-converter': ColourConverter,
 	'contrast-checker': ContrastChecker,
 	'favicon-genny': FaviconGenny,
+	'gradient-genny': GradientGenny,
 	'harmony-genny': HarmonyGenny,
 	'palette-collection': PaletteCollection,
 	'palette-extractor': PaletteExtractor,

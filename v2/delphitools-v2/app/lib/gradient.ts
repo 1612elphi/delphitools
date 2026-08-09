@@ -74,6 +74,16 @@ export function clamp(n: number, min: number, max: number): number {
 	return Math.max(min, Math.min(max, n));
 }
 
+/**
+ * Typed hex to the `#rrggbb` the renderers and the style attributes expect,
+ * with or without the leading #. Null for anything else, including the 3- and
+ * 8-digit forms hexToRgb rejects.
+ */
+export function normaliseHex(value: string): string | null {
+	const rgb = hexToRgb(value.trim());
+	return rgb ? rgbToHex(...rgb) : null;
+}
+
 export function sortStops(stops: readonly ColourStop[]): ColourStop[] {
 	return [...stops].sort((a, b) => a.position - b.position);
 }
@@ -99,7 +109,7 @@ export function lerpOklab(hex1: string, hex2: string, t: number): string {
 
 	const lab1 = rgbToOklab(...rgb1);
 	const lab2 = rgbToOklab(...rgb2);
-	return rgbToHex(...oklabToRgb(...lerpRgb(lab1, lab2, t)));
+	return rgbToHex(...oklabToRgb(...lerpTriple(lab1, lab2, t)));
 }
 
 // Starting colours for each grid size, carried over from the Next app.
@@ -278,9 +288,9 @@ function renderCorners(
 		const v = y / (height - 1);
 		for (let x = 0; x < width; x++) {
 			const u = x / (width - 1);
-			const top = lerpRgb(tl, tr, u);
-			const bottom = lerpRgb(bl, br, u);
-			const pixel = lerpRgb(top, bottom, v);
+			const top = lerpTriple(tl, tr, u);
+			const bottom = lerpTriple(bl, br, u);
+			const pixel = lerpTriple(top, bottom, v);
 
 			const idx = (y * width + x) * 4;
 			data[idx] = Math.round(pixel[0]);

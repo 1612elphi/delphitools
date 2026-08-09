@@ -110,24 +110,37 @@
 	}
 }
 
+/* Centred pill rather than a full-bleed overlay: the swatch around it is the
+   tap target that reveals it, so the button must not cover that. */
 .dt-extract-swatch-copy {
 	@include crayon.hstack(2);
 
 	position: absolute;
-	inset: 0;
+	top: 50%;
+	left: 50%;
 	z-index: 1;
 	align-items: center;
 	justify-content: center;
+	padding: crayon.size(2) crayon.size(4);
 	border: 0;
-	background: none;
+	background: rgb(255 255 255 / 20%);
+	backdrop-filter: blur(2px);
 	color: inherit;
 	font: inherit;
 	font-size: crayon.font-size("sm");
 	font-weight: crayon.font-weight("semibold");
 	letter-spacing: crayon.tracking("wider");
+	white-space: nowrap;
 	opacity: 0;
 	cursor: pointer;
-	transition: opacity 200ms;
+	transform: translate(-50%, -50%);
+	transition:
+		opacity 200ms,
+		background 200ms,
+		transform 200ms;
+
+	/* Invisible and unclickable together, so a first tap reaches the swatch. */
+	pointer-events: none;
 
 	.dt-icon {
 		width: crayon.size(4);
@@ -135,12 +148,19 @@
 		flex-shrink: 0;
 	}
 
-	.is-selected > & {
-		opacity: 1;
-	}
-
+	.is-selected > &,
 	.dt-extract-strip:not(.is-touch) .dt-extract-swatch:hover > & {
 		opacity: 1;
+		pointer-events: auto;
+	}
+
+	&:hover {
+		background: rgb(255 255 255 / 40%);
+		transform: translate(-50%, -50%) scale(1.05);
+	}
+
+	&:active {
+		transform: translate(-50%, -50%) scale(0.95);
 	}
 }
 

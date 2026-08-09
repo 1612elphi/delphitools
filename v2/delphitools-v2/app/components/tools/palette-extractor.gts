@@ -686,7 +686,7 @@ export default class PaletteExtractorTool extends Component {
 										{{on
 											"click"
 											(fn
-												this.copyValue
+												this.copySwatch
 												swatch.value
 												swatch.copyKey
 											)
