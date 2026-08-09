@@ -12,12 +12,13 @@ import type { ComponentLike } from '@glint/template';
  */
 import ArtworkEnhancer from 'delphitools-v2/components/tools/artwork-enhancer';
 import BackgroundRemover from 'delphitools-v2/components/tools/background-remover';
-import Base64ImageEncoder from 'delphitools-v2/components/tools/base64-image-encoder';
 import BaseConverter from 'delphitools-v2/components/tools/base-converter';
+import Base64ImageEncoder from 'delphitools-v2/components/tools/base64-image-encoder';
 import ColorblindSim from 'delphitools-v2/components/tools/colorblind-sim';
 import ColourConverter from 'delphitools-v2/components/tools/colour-converter';
 import ContrastChecker from 'delphitools-v2/components/tools/contrast-checker';
 import FaviconGenny from 'delphitools-v2/components/tools/favicon-genny';
+import FontExplorer from 'delphitools-v2/components/tools/font-explorer';
 import GlyphBrowser from 'delphitools-v2/components/tools/glyph-browser';
 import GradientGenny from 'delphitools-v2/components/tools/gradient-genny';
 import HarmonyGenny from 'delphitools-v2/components/tools/harmony-genny';
@@ -51,6 +52,7 @@ export const TOOL_COMPONENTS: Record<string, ComponentLike<object>> = {
 	'colour-converter': ColourConverter,
 	'contrast-checker': ContrastChecker,
 	'favicon-genny': FaviconGenny,
+	'font-explorer': FontExplorer,
 	'glyph-browser': GlyphBrowser,
 	'gradient-genny': GradientGenny,
 	'harmony-genny': HarmonyGenny,
