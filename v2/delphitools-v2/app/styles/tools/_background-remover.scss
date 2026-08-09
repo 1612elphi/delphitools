@@ -1,0 +1,307 @@
+// Styles for the background-remover tool.
+//
+// One partial per tool: app.scss had grown past three thousand lines and every
+// new tool collided in it.
+
+@use "../crayon-config" as crayon;
+
+/* ── Background remover ──────────────────────────────────────────────────── */
+
+.dt-bg-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-bg-drop {
+	display: block;
+	margin: crayon.size(4);
+	padding: crayon.size(8);
+	border: 2px dashed var(--border);
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(12);
+		height: crayon.size(12);
+		margin-bottom: crayon.size(4);
+		color: var(--muted-foreground);
+	}
+
+	@include crayon.hover {
+		border-color: color-mix(
+			in oklch,
+			var(--primary) 50%,
+			transparent
+		);
+	}
+
+	&:focus-within {
+		border-color: var(--primary);
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+}
+
+.dt-bg-drop-title {
+	display: block;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-bg-drop-hint {
+	display: block;
+	margin-top: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-bg-bar {
+	display: flex;
+	min-height: crayon.size(14);
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-bg-bar-title {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-bg-bar-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(5);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&:disabled {
+		pointer-events: none;
+		opacity: 0.4;
+	}
+
+	&.is-primary {
+		background: var(--primary);
+		color: var(--primary-foreground);
+		font-weight: crayon.font-weight("semibold");
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				black
+			);
+		}
+	}
+}
+
+.dt-bg-source {
+	display: block;
+	overflow: hidden;
+	background: var(--muted);
+	cursor: pointer;
+
+	img {
+		display: block;
+		max-width: 100%;
+		max-height: 20rem;
+		margin-inline: auto;
+		object-fit: contain;
+	}
+
+	&:focus-within {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.dt-bg-action {
+	border-top: 2px solid var(--border);
+}
+
+.dt-bg-run {
+	@include crayon.hstack(2);
+
+	display: flex;
+	width: 100%;
+	height: crayon.size(14);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font: inherit;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--primary) 90%, black);
+	}
+
+	&:disabled {
+		pointer-events: none;
+		opacity: 0.8;
+	}
+}
+
+.dt-bg-spinner {
+	animation: dt-spin 1s linear infinite;
+}
+
+@keyframes dt-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dt-bg-spinner {
+		animation: none;
+	}
+}
+
+.dt-bg-progress {
+	display: block;
+	width: 100%;
+	height: crayon.size(2);
+	overflow: hidden;
+	border-top: 1px solid var(--border);
+	background: var(--muted);
+
+	> span {
+		display: block;
+		height: 100%;
+		background: var(--primary);
+		transition: width 300ms ease-out;
+	}
+}
+
+.dt-bg-compare {
+	display: grid;
+	border-top: 1px solid var(--border);
+	grid-template-columns: repeat(2, 1fr);
+}
+
+.dt-bg-pane {
+	min-width: 0;
+
+	&:first-child {
+		border-right: 1px solid var(--border);
+	}
+
+	figcaption {
+		padding: crayon.size(2);
+		border-bottom: 1px solid var(--border);
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("sm");
+		text-align: center;
+	}
+}
+
+.dt-bg-canvas {
+	display: flex;
+	aspect-ratio: 1;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	background: var(--muted);
+
+	img {
+		max-width: 100%;
+		max-height: 100%;
+		object-fit: contain;
+	}
+
+	/* Transparency needs a ground of its own; the theme surface would read as
+	   a solid background in the cut-out areas. */
+	&.is-checkered {
+		background-color: #fff;
+		background-image:
+			linear-gradient(45deg, #e0e0e0 25%, transparent 25%),
+			linear-gradient(-45deg, #e0e0e0 25%, transparent 25%),
+			linear-gradient(45deg, transparent 75%, #e0e0e0 75%),
+			linear-gradient(-45deg, transparent 75%, #e0e0e0 75%);
+		background-position:
+			0 0,
+			0 8px,
+			8px -8px,
+			-8px 0;
+		background-size: 16px 16px;
+	}
+}
+
+.dt-bg-error {
+	@include crayon.hstack(3);
+
+	align-items: flex-start;
+	margin-top: crayon.size(6);
+	padding: crayon.size(4);
+	border: 1px solid
+		color-mix(in oklch, var(--destructive) 50%, transparent);
+	background: color-mix(in oklch, var(--destructive) 10%, transparent);
+
+	.dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+		flex-shrink: 0;
+		margin-top: 2px;
+		color: var(--destructive);
+	}
+}
+
+.dt-bg-error-title {
+	color: var(--destructive);
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-bg-error-detail {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-bg-note {
+	@include crayon.hstack(2);
+
+	align-items: flex-start;
+	margin-top: crayon.size(6);
+	padding: crayon.size(3);
+	border: 1px solid var(--border);
+	background: color-mix(in oklch, var(--muted) 50%, transparent);
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+		flex-shrink: 0;
+		margin-top: 2px;
+		color: var(--muted-foreground);
+	}
+
+	p {
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+	}
+}

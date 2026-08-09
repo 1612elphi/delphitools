@@ -151,7 +151,6 @@ export default class BackgroundRemoverTool extends Component {
 			<div class="dt-bg-frame">
 				{{#if this.resultImage}}
 					<div class="dt-bg-bar">
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-bg-bar-title"
 						>Result</span>
@@ -332,7 +331,7 @@ export default class BackgroundRemoverTool extends Component {
 				<Icon @name="info" />
 				{{! wording carried over from the Next app }}
 				<p>Processing happens entirely in your browser.
-					On first use, a ~180MB processing engine
+					On first use, a ~110MB processing engine
 					is downloaded and cached.</p>
 			</div>
 		</div>

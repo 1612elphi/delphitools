@@ -1,0 +1,257 @@
+// Styles for the favicon-genny tool.
+//
+// One partial per tool: app.scss had grown past three thousand lines and every
+// new tool collided in it.
+
+@use "../crayon-config" as crayon;
+
+/* ── Favicon generator ───────────────────────────────────────────────────── */
+
+.dt-favicon-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-favicon-drop {
+	display: block;
+	margin: crayon.size(4);
+	padding: crayon.size(8);
+	border: 2px dashed var(--border);
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(12);
+		height: crayon.size(12);
+		margin-bottom: crayon.size(4);
+		color: var(--muted-foreground);
+	}
+
+	@include crayon.hover {
+		border-color: color-mix(
+			in oklch,
+			var(--primary) 50%,
+			transparent
+		);
+	}
+
+	/* the file input is visually hidden, so its focus ring has to land here */
+	&:focus-within {
+		border-color: var(--primary);
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+}
+
+.dt-favicon-drop-title {
+	display: block;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-favicon-drop-hint {
+	display: block;
+	margin-top: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-favicon-bar {
+	display: flex;
+	min-height: crayon.size(14);
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+
+	&.is-actions {
+		border-top: 2px solid var(--border);
+	}
+}
+
+.dt-favicon-bar-title {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-favicon-bar-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(5);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&.is-primary {
+		background: var(--primary);
+		color: var(--primary-foreground);
+		font-weight: crayon.font-weight("semibold");
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				black
+			);
+		}
+	}
+}
+
+.dt-favicon-source {
+	@include crayon.hstack(4);
+
+	align-items: center;
+	padding: crayon.size(4);
+
+	p {
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("sm");
+	}
+}
+
+/* White behind the thumbnail, because a transparent PNG on the dark theme
+   otherwise shows nothing at all. */
+.dt-favicon-thumb {
+	display: block;
+	flex-shrink: 0;
+	border: 1px solid var(--border);
+	background: #fff;
+
+	img {
+		display: block;
+		width: crayon.size(24);
+		height: crayon.size(24);
+		object-fit: contain;
+	}
+}
+
+.dt-favicon-status,
+.dt-favicon-error {
+	padding: crayon.size(6);
+	border-top: 2px solid var(--border);
+	color: var(--muted-foreground);
+	text-align: center;
+}
+
+.dt-favicon-error {
+	color: var(--destructive);
+}
+
+.dt-favicon-list {
+	border-top: 1px solid var(--border);
+}
+
+.dt-favicon-row {
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+	border: 0;
+	border-bottom: 1px solid var(--border);
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+
+		.dt-favicon-hint {
+			opacity: 1;
+		}
+	}
+}
+
+.dt-favicon-cell {
+	display: flex;
+	width: crayon.size(20);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	padding: crayon.size(2);
+	border-right: 1px solid var(--border);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+}
+
+.dt-favicon-chip {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid var(--border);
+	background: #fff;
+
+	img {
+		object-fit: contain;
+	}
+}
+
+.dt-favicon-meta {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	justify-content: center;
+	padding: crayon.size(3) crayon.size(4);
+}
+
+.dt-favicon-size {
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-favicon-role {
+	margin-top: 2px;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-favicon-hint {
+	@include crayon.hstack(1);
+
+	align-items: center;
+	padding-inline: crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	opacity: 0;
+	transition: opacity 150ms;
+
+	.dt-icon {
+		width: crayon.size(3);
+		height: crayon.size(3);
+	}
+}
+
+.dt-favicon-snippet {
+	padding: crayon.size(4);
+	border-top: 2px solid var(--border);
+
+	pre {
+		overflow-x: auto;
+		margin-top: crayon.size(2);
+		color: var(--muted-foreground);
+		font-family: crayon.font-family("mono");
+		font-size: crayon.font-size("sm");
+	}
+}
+
+.dt-favicon-snippet-label {
+	font-weight: crayon.font-weight("bold");
+}

@@ -1,0 +1,213 @@
+// Styles for the colour-converter tool.
+//
+// One partial per tool: app.scss had grown past three thousand lines and every
+// new tool collided in it.
+
+@use "../crayon-config" as crayon;
+
+/* ── Colour converter ────────────────────────────────────────────────────── */
+
+.dt-cc {
+	border: 2px solid var(--border);
+}
+
+.dt-cc-input {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+}
+
+/* The picker input covers the whole cell so anywhere in the block opens it. */
+.dt-cc-swatch {
+	position: relative;
+	display: block;
+	width: crayon.size(20);
+	flex-shrink: 0;
+	border-right: 2px solid var(--border);
+
+	> span {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+
+	input[type="color"] {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		cursor: pointer;
+	}
+}
+
+.dt-cc-field {
+	display: flex;
+	min-width: 9rem;
+	flex-direction: column;
+	justify-content: center;
+	padding: crayon.size(3) crayon.size(4);
+
+	& + & {
+		border-left: 1px solid var(--border);
+	}
+
+	&.is-wide {
+		min-width: 0;
+		flex: 1;
+	}
+}
+
+.dt-cc-label {
+	margin-bottom: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+}
+
+/* The select inside the field is chromeless: the cell is the visible box. */
+.dt-cc-field .dt-select-trigger {
+	height: crayon.size(7);
+	padding: 0;
+	border: 0;
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-cc-value {
+	width: 100%;
+	height: crayon.size(7);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	outline: none;
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-cc-section {
+	padding: crayon.size(2) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+
+	&.is-top {
+		border-top: 2px solid var(--border);
+	}
+}
+
+.dt-cc-heading {
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-cc-row {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+}
+
+.dt-cc-name {
+	display: flex;
+	width: crayon.size(28);
+	flex-shrink: 0;
+	align-items: center;
+	padding: crayon.size(3) crayon.size(4);
+	border-right: 1px solid var(--border);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-cc-out {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	align-items: center;
+	overflow: hidden;
+	padding: crayon.size(3) crayon.size(4);
+	border-right: 1px solid var(--border);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-cc-copy {
+	display: flex;
+	width: crayon.size(12);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-cc-empty {
+	padding: crayon.size(8) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	text-align: center;
+}
+
+.dt-cc-examples {
+	display: grid;
+
+	@include crayon.screen("sm") {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+.dt-cc-example {
+	display: flex;
+	align-items: baseline;
+	gap: crayon.size(2);
+	padding: crayon.size(2) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+	font-size: crayon.font-size("sm");
+
+	code {
+		color: var(--muted-foreground);
+		font-family: crayon.font-family("mono");
+	}
+
+	/* one column: only the last row loses its rule; two: the last pair does */
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	@include crayon.screen("sm") {
+		&:nth-last-child(-n + 2) {
+			border-bottom: 0;
+		}
+
+		&:nth-child(even) {
+			border-left: 1px solid var(--border);
+		}
+	}
+}
+
+.dt-cc-example-label {
+	width: crayon.size(20);
+	flex-shrink: 0;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+}
