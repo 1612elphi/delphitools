@@ -15,78 +15,80 @@ const SHORTCUT = 'b';
  * drawer that always starts closed.
  */
 export default class SidebarService extends Service {
-  @tracked open = true;
-  @tracked openMobile = false;
-  @tracked isMobile = false;
+	@tracked open = true;
+	@tracked openMobile = false;
+	@tracked isMobile = false;
 
-  #media?: MediaQueryList;
+	#media?: MediaQueryList;
 
-  constructor(owner: Owner) {
-    super(owner);
-    if (typeof window === 'undefined') return;
+	constructor(owner: Owner) {
+		super(owner);
+		if (typeof window === 'undefined') return;
 
-    // Anchored to a cookie boundary so a different cookie ending in
-    // "…sidebar_state" cannot satisfy the match. Absent cookie means expanded.
-    const stored = new RegExp(`(?:^|;\\s*)${COOKIE}=(true|false)`).exec(
-      document.cookie,
-    );
-    this.open = stored ? stored[1] === 'true' : true;
+		// Anchored to a cookie boundary so a different cookie ending in
+		// "…sidebar_state" cannot satisfy the match. Absent cookie means expanded.
+		const stored = new RegExp(
+			`(?:^|;\\s*)${COOKIE}=(true|false)`,
+		).exec(document.cookie);
+		this.open = stored ? stored[1] === 'true' : true;
 
-    this.#media = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
-    this.isMobile = this.#media.matches;
-    this.#media.addEventListener('change', this.#onMediaChange);
+		this.#media = window.matchMedia(
+			`(max-width: ${MOBILE_BREAKPOINT - 1}px)`,
+		);
+		this.isMobile = this.#media.matches;
+		this.#media.addEventListener('change', this.#onMediaChange);
 
-    window.addEventListener('keydown', this.#onKeydown);
-  }
+		window.addEventListener('keydown', this.#onKeydown);
+	}
 
-  willDestroy() {
-    super.willDestroy();
-    this.#media?.removeEventListener('change', this.#onMediaChange);
-    window.removeEventListener('keydown', this.#onKeydown);
-  }
+	willDestroy() {
+		super.willDestroy();
+		this.#media?.removeEventListener('change', this.#onMediaChange);
+		window.removeEventListener('keydown', this.#onKeydown);
+	}
 
-  get state() {
-    return this.open ? 'expanded' : 'collapsed';
-  }
+	get state() {
+		return this.open ? 'expanded' : 'collapsed';
+	}
 
-  toggle = () => {
-    if (this.isMobile) {
-      this.openMobile = !this.openMobile;
-      return;
-    }
-    this.open = !this.open;
-    document.cookie = `${COOKIE}=${this.open}; path=/; max-age=${COOKIE_MAX_AGE}`;
-  };
+	toggle = () => {
+		if (this.isMobile) {
+			this.openMobile = !this.openMobile;
+			return;
+		}
+		this.open = !this.open;
+		document.cookie = `${COOKIE}=${this.open}; path=/; max-age=${COOKIE_MAX_AGE}`;
+	};
 
-  closeMobile = () => {
-    this.openMobile = false;
-  };
+	closeMobile = () => {
+		this.openMobile = false;
+	};
 
-  /**
-   * Crossing the mobile breakpoint. Separate from the listener so the policy is
-   * reachable without dispatching a MediaQueryList event.
-   */
-  setMobile = (isMobile: boolean) => {
-    this.isMobile = isMobile;
-    // Growing past the breakpoint with the drawer open would otherwise leave
-    // its full-screen scrim covering the desktop layout.
-    if (!isMobile) this.openMobile = false;
-  };
+	/**
+	 * Crossing the mobile breakpoint. Separate from the listener so the policy is
+	 * reachable without dispatching a MediaQueryList event.
+	 */
+	setMobile = (isMobile: boolean) => {
+		this.isMobile = isMobile;
+		// Growing past the breakpoint with the drawer open would otherwise leave
+		// its full-screen scrim covering the desktop layout.
+		if (!isMobile) this.openMobile = false;
+	};
 
-  #onMediaChange = (e: MediaQueryListEvent) => {
-    this.setMobile(e.matches);
-  };
+	#onMediaChange = (e: MediaQueryListEvent) => {
+		this.setMobile(e.matches);
+	};
 
-  #onKeydown = (e: KeyboardEvent) => {
-    if (e.key === SHORTCUT && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault();
-      this.toggle();
-    }
-  };
+	#onKeydown = (e: KeyboardEvent) => {
+		if (e.key === SHORTCUT && (e.metaKey || e.ctrlKey)) {
+			e.preventDefault();
+			this.toggle();
+		}
+	};
 }
 
 declare module '@ember/service' {
-  interface Registry {
-    sidebar: SidebarService;
-  }
+	interface Registry {
+		sidebar: SidebarService;
+	}
 }

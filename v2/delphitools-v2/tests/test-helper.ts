@@ -6,10 +6,10 @@ import { setup } from 'qunit-dom';
 import { start as qunitStart, setupEmberOnerrorValidation } from 'ember-qunit';
 
 export function start() {
-  setApplication(Application.create(config.APP));
+	setApplication(Application.create(config.APP));
 
-  setup(QUnit.assert);
-  setupEmberOnerrorValidation();
+	setup(QUnit.assert);
+	setupEmberOnerrorValidation();
 
-  qunitStart();
+	qunitStart();
 }

@@ -9,16 +9,16 @@ import { babel } from '@rollup/plugin-babel';
  * local git HEAD, then "dev".
  */
 function commitSha() {
-  if (process.env.DT_COMMIT_SHA) return process.env.DT_COMMIT_SHA;
-  try {
-    return execSync('git rev-parse --short HEAD', {
-      stdio: ['ignore', 'pipe', 'ignore'],
-    })
-      .toString()
-      .trim();
-  } catch {
-    return 'dev';
-  }
+	if (process.env.DT_COMMIT_SHA) return process.env.DT_COMMIT_SHA;
+	try {
+		return execSync('git rev-parse --short HEAD', {
+			stdio: ['ignore', 'pipe', 'ignore'],
+		})
+			.toString()
+			.trim();
+	} catch {
+		return 'dev';
+	}
 }
 
 /**
@@ -28,35 +28,35 @@ function commitSha() {
  * anything else forces it off.
  */
 function prideEnabled() {
-  const override = process.env.DT_PRIDE;
-  if (override) return /^(1|true|on|yes)$/i.test(override.trim());
-  return new Date().getMonth() === 5; // 5 = June
+	const override = process.env.DT_PRIDE;
+	if (override) return /^(1|true|on|yes)$/i.test(override.trim());
+	return new Date().getMonth() === 5; // 5 = June
 }
 
 export default defineConfig({
-  plugins: [
-    classicEmberSupport(),
-    ember(),
-    // extra plugins here
-    babel({
-      babelHelpers: 'runtime',
-      extensions,
-    }),
-  ],
-  define: {
-    __DT_COMMIT_SHA__: JSON.stringify(commitSha()),
-    __DT_PRIDE__: JSON.stringify(prideEnabled()),
-  },
-  css: {
-    preprocessorOptions: {
-      scss: {
-        // crayon-css resolves as a bare specifier; see app/styles/_crayon-config.scss
-        loadPaths: ['node_modules', 'app/styles'],
-      },
-    },
-  },
-  server: {
-    // the scripts/verify harnesses hard-code :3000
-    port: 3000,
-  },
+	plugins: [
+		classicEmberSupport(),
+		ember(),
+		// extra plugins here
+		babel({
+			babelHelpers: 'runtime',
+			extensions,
+		}),
+	],
+	define: {
+		__DT_COMMIT_SHA__: JSON.stringify(commitSha()),
+		__DT_PRIDE__: JSON.stringify(prideEnabled()),
+	},
+	css: {
+		preprocessorOptions: {
+			scss: {
+				// crayon-css resolves as a bare specifier; see app/styles/_crayon-config.scss
+				loadPaths: ['node_modules', 'app/styles'],
+			},
+		},
+	},
+	server: {
+		// the scripts/verify harnesses hard-code :3000
+		port: 3000,
+	},
 });

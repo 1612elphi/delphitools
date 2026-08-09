@@ -13,96 +13,96 @@
    italic). The single typeface for the whole UI; replaces IBM Plex Mono and
    Instrument Serif. Served locally so no third party sees visitors. */
 @font-face {
-  font-family: "iA Writer Quattro";
-  src: url("/fonts/iAWriterQuattroV.woff2") format("woff2");
-  font-weight: 400 700;
-  font-style: normal;
-  font-display: swap;
+	font-family: "iA Writer Quattro";
+	src: url("/fonts/iAWriterQuattroV.woff2") format("woff2");
+	font-weight: 400 700;
+	font-style: normal;
+	font-display: swap;
 }
 
 @font-face {
-  font-family: "iA Writer Quattro";
-  src: url("/fonts/iAWriterQuattroV-Italic.woff2") format("woff2");
-  font-weight: 400 700;
-  font-style: italic;
-  font-display: swap;
+	font-family: "iA Writer Quattro";
+	src: url("/fonts/iAWriterQuattroV-Italic.woff2") format("woff2");
+	font-weight: 400 700;
+	font-style: italic;
+	font-display: swap;
 }
 
 :root {
-  --radius: 0;
-  --background: oklch(0.97 0.02 90);
-  --foreground: oklch(0.25 0.05 140);
-  --card: oklch(0.98 0.015 90);
-  --card-foreground: oklch(0.25 0.05 140);
-  --popover: oklch(0.98 0.015 90);
-  --popover-foreground: oklch(0.25 0.05 140);
-  --primary: oklch(0.45 0.12 145);
-  --primary-foreground: oklch(0.97 0.02 90);
-  --secondary: oklch(0.94 0.025 90);
-  --secondary-foreground: oklch(0.35 0.08 145);
-  --muted: oklch(0.93 0.02 90);
-  --muted-foreground: oklch(0.5 0.04 140);
-  --accent: oklch(0.91 0.04 95);
-  --accent-foreground: oklch(0.35 0.08 145);
-  --destructive: oklch(0.55 0.2 25);
-  --border: oklch(0.88 0.03 95);
-  --input: oklch(0.88 0.03 95);
-  --ring: oklch(0.45 0.12 145);
-  --chart-1: oklch(0.45 0.12 145);
-  --chart-2: oklch(0.55 0.1 180);
-  --chart-3: oklch(0.6 0.12 90);
-  --chart-4: oklch(0.5 0.08 200);
-  --chart-5: oklch(0.55 0.1 120);
-  --sidebar: oklch(0.96 0.025 92);
-  --sidebar-foreground: oklch(0.25 0.05 140);
-  --sidebar-primary: oklch(0.45 0.12 145);
-  --sidebar-primary-foreground: oklch(0.97 0.02 90);
-  --sidebar-accent: oklch(0.91 0.04 95);
-  --sidebar-accent-foreground: oklch(0.35 0.08 145);
-  --sidebar-border: oklch(0.88 0.03 95);
-  --sidebar-ring: oklch(0.45 0.12 145);
+	--radius: 0;
+	--background: oklch(0.97 0.02 90);
+	--foreground: oklch(0.25 0.05 140);
+	--card: oklch(0.98 0.015 90);
+	--card-foreground: oklch(0.25 0.05 140);
+	--popover: oklch(0.98 0.015 90);
+	--popover-foreground: oklch(0.25 0.05 140);
+	--primary: oklch(0.45 0.12 145);
+	--primary-foreground: oklch(0.97 0.02 90);
+	--secondary: oklch(0.94 0.025 90);
+	--secondary-foreground: oklch(0.35 0.08 145);
+	--muted: oklch(0.93 0.02 90);
+	--muted-foreground: oklch(0.5 0.04 140);
+	--accent: oklch(0.91 0.04 95);
+	--accent-foreground: oklch(0.35 0.08 145);
+	--destructive: oklch(0.55 0.2 25);
+	--border: oklch(0.88 0.03 95);
+	--input: oklch(0.88 0.03 95);
+	--ring: oklch(0.45 0.12 145);
+	--chart-1: oklch(0.45 0.12 145);
+	--chart-2: oklch(0.55 0.1 180);
+	--chart-3: oklch(0.6 0.12 90);
+	--chart-4: oklch(0.5 0.08 200);
+	--chart-5: oklch(0.55 0.1 120);
+	--sidebar: oklch(0.96 0.025 92);
+	--sidebar-foreground: oklch(0.25 0.05 140);
+	--sidebar-primary: oklch(0.45 0.12 145);
+	--sidebar-primary-foreground: oklch(0.97 0.02 90);
+	--sidebar-accent: oklch(0.91 0.04 95);
+	--sidebar-accent-foreground: oklch(0.35 0.08 145);
+	--sidebar-border: oklch(0.88 0.03 95);
+	--sidebar-ring: oklch(0.45 0.12 145);
 }
 
 .dark {
-  --background: oklch(0.18 0.03 145);
-  --foreground: oklch(0.92 0.025 90);
-  --card: oklch(0.22 0.035 145);
-  --card-foreground: oklch(0.92 0.025 90);
-  --popover: oklch(0.22 0.035 145);
-  --popover-foreground: oklch(0.92 0.025 90);
-  --primary: oklch(0.75 0.1 95);
-  --primary-foreground: oklch(0.2 0.04 145);
-  --secondary: oklch(0.25 0.035 145);
-  --secondary-foreground: oklch(0.88 0.02 90);
-  --muted: oklch(0.25 0.03 145);
-  --muted-foreground: oklch(0.65 0.04 100);
-  --accent: oklch(0.28 0.04 145);
-  --accent-foreground: oklch(0.88 0.02 90);
-  --destructive: oklch(0.6 0.18 25);
-  --border: oklch(0.3 0.04 145);
-  --input: oklch(0.3 0.04 145);
-  --ring: oklch(0.75 0.1 95);
-  --chart-1: oklch(0.7 0.1 145);
-  --chart-2: oklch(0.65 0.08 180);
-  --chart-3: oklch(0.75 0.1 95);
-  --chart-4: oklch(0.6 0.06 200);
-  --chart-5: oklch(0.65 0.08 120);
-  --sidebar: oklch(0.2 0.035 145);
-  --sidebar-foreground: oklch(0.92 0.025 90);
-  --sidebar-primary: oklch(0.75 0.1 95);
-  --sidebar-primary-foreground: oklch(0.2 0.04 145);
-  --sidebar-accent: oklch(0.28 0.04 145);
-  --sidebar-accent-foreground: oklch(0.88 0.02 90);
-  --sidebar-border: oklch(0.3 0.04 145);
-  --sidebar-ring: oklch(0.75 0.1 95);
+	--background: oklch(0.18 0.03 145);
+	--foreground: oklch(0.92 0.025 90);
+	--card: oklch(0.22 0.035 145);
+	--card-foreground: oklch(0.92 0.025 90);
+	--popover: oklch(0.22 0.035 145);
+	--popover-foreground: oklch(0.92 0.025 90);
+	--primary: oklch(0.75 0.1 95);
+	--primary-foreground: oklch(0.2 0.04 145);
+	--secondary: oklch(0.25 0.035 145);
+	--secondary-foreground: oklch(0.88 0.02 90);
+	--muted: oklch(0.25 0.03 145);
+	--muted-foreground: oklch(0.65 0.04 100);
+	--accent: oklch(0.28 0.04 145);
+	--accent-foreground: oklch(0.88 0.02 90);
+	--destructive: oklch(0.6 0.18 25);
+	--border: oklch(0.3 0.04 145);
+	--input: oklch(0.3 0.04 145);
+	--ring: oklch(0.75 0.1 95);
+	--chart-1: oklch(0.7 0.1 145);
+	--chart-2: oklch(0.65 0.08 180);
+	--chart-3: oklch(0.75 0.1 95);
+	--chart-4: oklch(0.6 0.06 200);
+	--chart-5: oklch(0.65 0.08 120);
+	--sidebar: oklch(0.2 0.035 145);
+	--sidebar-foreground: oklch(0.92 0.025 90);
+	--sidebar-primary: oklch(0.75 0.1 95);
+	--sidebar-primary-foreground: oklch(0.2 0.04 145);
+	--sidebar-accent: oklch(0.28 0.04 145);
+	--sidebar-accent-foreground: oklch(0.88 0.02 90);
+	--sidebar-border: oklch(0.3 0.04 145);
+	--sidebar-ring: oklch(0.75 0.1 95);
 }
 
 html {
-  color-scheme: light;
+	color-scheme: light;
 }
 
 html.dark {
-  color-scheme: dark;
+	color-scheme: dark;
 }
 
 /* Crayon's `.border` sets width only, so the token default has to live here for
@@ -110,282 +110,282 @@ html.dark {
 *,
 *::before,
 *::after {
-  border-color: var(--border);
+	border-color: var(--border);
 }
 
 * {
-  outline-color: color-mix(in oklch, var(--ring) 50%, transparent);
+	outline-color: color-mix(in oklch, var(--ring) 50%, transparent);
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
-  -webkit-font-smoothing: antialiased;
+	background-color: var(--background);
+	color: var(--foreground);
+	-webkit-font-smoothing: antialiased;
 }
 
 /* Flush segmented option groups — children sit edge-to-edge, divided by single
    hairlines. Put `.segmented` + a `grid-cols-*` on any button/option group;
    child borders/radii are neutralised so only the 1px grid lines show. */
 .segmented {
-  display: grid;
-  gap: 1px;
-  background-color: var(--border);
-  border: 1px solid var(--border);
+	display: grid;
+	gap: 1px;
+	background-color: var(--border);
+	border: 1px solid var(--border);
 }
 
 .segmented > * {
-  border: 0 !important;
-  border-radius: 0 !important;
+	border: 0 !important;
+	border-radius: 0 !important;
 }
 
 /* Glyph styling for the decorative TAXIWAY split-flap wordmark on the home page.
    Shared across the top/bottom flap halves; only `top` varies inline. */
 .taxiway-glyph {
-  position: absolute;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 22px;
-  line-height: 1;
-  color: #d4952a;
-  text-shadow: 0 0 10px rgb(212 149 42 / 15%);
+	position: absolute;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	font-family: var(--font-mono);
+	font-weight: 700;
+	font-size: 22px;
+	line-height: 1;
+	color: #d4952a;
+	text-shadow: 0 0 10px rgb(212 149 42 / 15%);
 }
 
 /* ── Text Editor (ProseMirror surface) — v1 ─────────────────────────── */
 .dt-editor {
-  outline: none;
-  min-height: 60vh;
-  line-height: 1.7;
-  color: var(--foreground);
+	outline: none;
+	min-height: 60vh;
+	line-height: 1.7;
+	color: var(--foreground);
 }
 
 .dt-editor :first-child {
-  margin-top: 0;
+	margin-top: 0;
 }
 
 .dt-editor > * + * {
-  margin-top: 2em;
+	margin-top: 2em;
 }
 
 .dt-editor > :is(h1, h2, h3, h4, h5, h6) + * {
-  margin-top: 3.5em;
+	margin-top: 3.5em;
 }
 
 .dt-editor h1 {
-  font-size: 1.7em;
-  font-weight: 700;
-  line-height: 1.2;
+	font-size: 1.7em;
+	font-weight: 700;
+	line-height: 1.2;
 }
 
 .dt-editor h2 {
-  font-size: 1.4em;
-  font-weight: 700;
-  line-height: 1.25;
+	font-size: 1.4em;
+	font-weight: 700;
+	line-height: 1.25;
 }
 
 .dt-editor h3 {
-  font-size: 1.2em;
-  font-weight: 700;
+	font-size: 1.2em;
+	font-weight: 700;
 }
 
 .dt-editor h4,
 .dt-editor h5,
 .dt-editor h6 {
-  font-weight: 700;
+	font-weight: 700;
 }
 
 .dt-editor ul {
-  list-style: disc;
-  padding-left: 1.5em;
+	list-style: disc;
+	padding-left: 1.5em;
 }
 
 .dt-editor ol {
-  list-style: decimal;
-  padding-left: 1.5em;
+	list-style: decimal;
+	padding-left: 1.5em;
 }
 
 .dt-editor li {
-  margin: 0.1em 0;
+	margin: 0.1em 0;
 }
 
 .dt-editor li > p {
-  margin: 0;
+	margin: 0;
 }
 
 .dt-editor blockquote {
-  padding-left: 1em;
-  border-left: 2px solid var(--border);
-  color: var(--muted-foreground);
+	padding-left: 1em;
+	border-left: 2px solid var(--border);
+	color: var(--muted-foreground);
 }
 
 .dt-editor pre {
-  background: var(--muted);
-  padding: 0.75em 1em;
-  border-radius: 8px;
-  white-space: pre-wrap;
-  font-size: 0.9em;
+	background: var(--muted);
+	padding: 0.75em 1em;
+	border-radius: 8px;
+	white-space: pre-wrap;
+	font-size: 0.9em;
 }
 
 .dt-editor :not(pre) > code {
-  background: var(--muted);
-  padding: 0.1em 0.35em;
-  border-radius: 4px;
-  font-size: 0.92em;
+	background: var(--muted);
+	padding: 0.1em 0.35em;
+	border-radius: 4px;
+	font-size: 0.92em;
 }
 
 .dt-editor a {
-  color: var(--primary);
-  text-decoration: underline;
-  text-underline-offset: 2px;
+	color: var(--primary);
+	text-decoration: underline;
+	text-underline-offset: 2px;
 }
 
 .dt-editor hr {
-  border: none;
-  border-top: 1px solid var(--border);
-  margin: 1.2em 0;
+	border: none;
+	border-top: 1px solid var(--border);
+	margin: 1.2em 0;
 }
 
 .dt-editor s {
-  text-decoration-color: var(--muted-foreground);
+	text-decoration-color: var(--muted-foreground);
 }
 
 .dt-editor .task-list-item {
-  list-style: none;
-  display: flex;
-  gap: 0.45em;
+	list-style: none;
+	display: flex;
+	gap: 0.45em;
 }
 
 .dt-editor .task-checkbox {
-  flex-shrink: 0;
-  cursor: pointer;
-  user-select: none;
+	flex-shrink: 0;
+	cursor: pointer;
+	user-select: none;
 }
 
 .dt-editor .task-content {
-  flex: 1;
-  min-width: 0;
+	flex: 1;
+	min-width: 0;
 }
 
 .dt-editor .task-content > * {
-  margin: 0;
+	margin: 0;
 }
 
 .dt-editor {
-  counter-reset: dt-footnote;
+	counter-reset: dt-footnote;
 }
 
 .dt-editor footnote {
-  position: relative;
-  cursor: pointer;
-  counter-increment: dt-footnote;
+	position: relative;
+	cursor: pointer;
+	counter-increment: dt-footnote;
 }
 
 .dt-editor footnote::after {
-  content: counter(dt-footnote);
-  vertical-align: super;
-  font-size: 0.7em;
-  color: var(--primary);
-  padding: 0 0.1em;
+	content: counter(dt-footnote);
+	vertical-align: super;
+	font-size: 0.7em;
+	color: var(--primary);
+	padding: 0 0.1em;
 }
 
 .dt-editor footnote.ProseMirror-selectednode::after {
-  font-weight: 700;
-  outline: 2px solid var(--primary);
-  border-radius: 3px;
+	font-weight: 700;
+	outline: 2px solid var(--primary);
+	border-radius: 3px;
 }
 
 .footnote-tooltip {
-  position: absolute;
-  z-index: 30;
-  top: calc(1.4em);
-  left: -1em;
-  width: 22rem;
-  max-width: 80vw;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.6em 0.8em;
-  box-shadow: 0 8px 28px rgb(0 0 0 / 35%);
-  font-size: 0.92em;
-  line-height: 1.5;
+	position: absolute;
+	z-index: 30;
+	top: calc(1.4em);
+	left: -1em;
+	width: 22rem;
+	max-width: 80vw;
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	padding: 0.6em 0.8em;
+	box-shadow: 0 8px 28px rgb(0 0 0 / 35%);
+	font-size: 0.92em;
+	line-height: 1.5;
 }
 
 .footnote-tooltip .ProseMirror {
-  outline: none;
-  min-height: 1.5em;
+	outline: none;
+	min-height: 1.5em;
 }
 
 .footnote-tooltip .ProseMirror > * + * {
-  margin-top: 0.5em;
+	margin-top: 0.5em;
 }
 
 /* GFM tables (overrides prosemirror-tables' light defaults; no margin on
    `table` so the block-gap rule still spaces it) */
 .dt-editor table {
-  border-collapse: collapse;
-  table-layout: fixed;
-  width: 100%;
+	border-collapse: collapse;
+	table-layout: fixed;
+	width: 100%;
 }
 
 .dt-editor table th,
 .dt-editor table td {
-  border: 1px solid var(--border);
-  padding: 0.4em 0.6em;
-  vertical-align: top;
-  text-align: left;
-  position: relative;
+	border: 1px solid var(--border);
+	padding: 0.4em 0.6em;
+	vertical-align: top;
+	text-align: left;
+	position: relative;
 }
 
 .dt-editor table th {
-  background: var(--muted);
-  font-weight: 700;
+	background: var(--muted);
+	font-weight: 700;
 }
 
 .dt-editor table th > *,
 .dt-editor table td > * {
-  margin: 0;
+	margin: 0;
 }
 
 .dt-editor table .selectedCell::after {
-  background: color-mix(in oklch, var(--primary) 20%, transparent);
+	background: color-mix(in oklch, var(--primary) 20%, transparent);
 }
 
 .dt-editor .column-resize-handle {
-  background: var(--primary);
+	background: var(--primary);
 }
 
 /* Empty-document ghost placeholder (may wrap to several lines) */
 .dt-editor .dt-empty {
-  position: relative;
+	position: relative;
 }
 
 .dt-editor .dt-empty::before {
-  content: attr(data-placeholder);
-  position: absolute;
-  inset-inline: 0;
-  top: 0;
-  color: var(--muted-foreground);
-  opacity: 0.4;
-  pointer-events: none;
+	content: attr(data-placeholder);
+	position: absolute;
+	inset-inline: 0;
+	top: 0;
+	color: var(--muted-foreground);
+	opacity: 0.4;
+	pointer-events: none;
 }
 
 /* Typography refinements */
 .dt-editor a:hover {
-  text-decoration-thickness: 2px;
+	text-decoration-thickness: 2px;
 }
 
 .dt-editor blockquote {
-  font-style: italic;
-  border-left-color: var(--primary);
+	font-style: italic;
+	border-left-color: var(--primary);
 }
 
 .dt-editor pre {
-  border: 1px solid var(--border);
+	border: 1px solid var(--border);
 }
 
 .dt-editor li::marker {
-  color: var(--muted-foreground);
+	color: var(--muted-foreground);
 }
 
 /* ── Pride Month styling (sidebar brand mark) ───────────────────────────
@@ -397,114 +397,119 @@ body {
    stroke keeps the letters legible across the low-contrast bands (yellow on the
    cream theme, blue/purple on dark). */
 .pride-wordmark {
-  color: var(--foreground);
+	color: var(--foreground);
 }
 
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
-  .pride-wordmark {
-    background: linear-gradient(
-      90deg,
-      #e40303,
-      #ff8c00,
-      #ffed00,
-      #008026,
-      #004dff,
-      #750787,
-      #e40303
-    );
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    -webkit-text-fill-color: transparent;
-    paint-order: stroke fill;
-    -webkit-text-stroke: 0.5px
-      color-mix(in srgb, var(--foreground) 60%, transparent);
-    animation: pride-flow 6s linear infinite;
-  }
+	.pride-wordmark {
+		background: linear-gradient(
+			90deg,
+			#e40303,
+			#ff8c00,
+			#ffed00,
+			#008026,
+			#004dff,
+			#750787,
+			#e40303
+		);
+		background-size: 200% auto;
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+		-webkit-text-fill-color: transparent;
+		paint-order: stroke fill;
+		-webkit-text-stroke: 0.5px
+			color-mix(in srgb, var(--foreground) 60%, transparent);
+		animation: pride-flow 6s linear infinite;
+	}
 }
 
 /* "trans rights" tagline → trans-flag blue/pink. The light-theme stops are
    deepened so the small text clears WCAG AA on the cream background; the bright
    flag colours are kept for dark mode (where they already exceed it). */
 .pride-tagline {
-  font-weight: 600;
-  color: var(--foreground);
+	font-weight: 600;
+	color: var(--foreground);
 }
 
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
-  .pride-tagline {
-    background: linear-gradient(90deg, #1c6e93, #a8325a, #1c6e93);
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    -webkit-text-fill-color: transparent;
-    animation: pride-flow 6s linear infinite;
-  }
+	.pride-tagline {
+		background: linear-gradient(90deg, #1c6e93, #a8325a, #1c6e93);
+		background-size: 200% auto;
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+		-webkit-text-fill-color: transparent;
+		animation: pride-flow 6s linear infinite;
+	}
 
-  /* background-image (not the `background` shorthand) so it doesn't reset
+	/* background-image (not the `background` shorthand) so it doesn't reset
      background-clip back to border-box and paint a solid bar. */
-  .dark .pride-tagline {
-    background-image: linear-gradient(90deg, #5bcefa, #f5a9b8, #5bcefa);
-  }
+	.dark .pride-tagline {
+		background-image: linear-gradient(
+			90deg,
+			#5bcefa,
+			#f5a9b8,
+			#5bcefa
+		);
+	}
 }
 
 /* Logo ring cycles through the flag colours. */
 .pride-ring {
-  border-color: #e40303;
-  animation: pride-ring-cycle 6s linear infinite;
+	border-color: #e40303;
+	animation: pride-ring-cycle 6s linear infinite;
 }
 
 @keyframes pride-flow {
-  to {
-    background-position: 200% center;
-  }
+	to {
+		background-position: 200% center;
+	}
 }
 
 @keyframes pride-ring-cycle {
-  0% {
-    border-color: #e40303;
-    box-shadow: 0 0 7px #e4030366;
-  }
+	0% {
+		border-color: #e40303;
+		box-shadow: 0 0 7px #e4030366;
+	}
 
-  16% {
-    border-color: #ff8c00;
-    box-shadow: 0 0 7px #ff8c0066;
-  }
+	16% {
+		border-color: #ff8c00;
+		box-shadow: 0 0 7px #ff8c0066;
+	}
 
-  33% {
-    border-color: #ffed00;
-    box-shadow: 0 0 7px #ffed0066;
-  }
+	33% {
+		border-color: #ffed00;
+		box-shadow: 0 0 7px #ffed0066;
+	}
 
-  50% {
-    border-color: #008026;
-    box-shadow: 0 0 7px #00802666;
-  }
+	50% {
+		border-color: #008026;
+		box-shadow: 0 0 7px #00802666;
+	}
 
-  66% {
-    border-color: #004dff;
-    box-shadow: 0 0 7px #004dff66;
-  }
+	66% {
+		border-color: #004dff;
+		box-shadow: 0 0 7px #004dff66;
+	}
 
-  83% {
-    border-color: #750787;
-    box-shadow: 0 0 7px #75078766;
-  }
+	83% {
+		border-color: #750787;
+		box-shadow: 0 0 7px #75078766;
+	}
 
-  100% {
-    border-color: #e40303;
-    box-shadow: 0 0 7px #e4030366;
-  }
+	100% {
+		border-color: #e40303;
+		box-shadow: 0 0 7px #e4030366;
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pride-wordmark,
-  .pride-tagline,
-  .pride-ring {
-    animation: none;
-  }
+	.pride-wordmark,
+	.pride-tagline,
+	.pride-ring {
+		animation: none;
+	}
 }
 
 /* ── "Delphi needs a favour" ticker ─────────────────────────────────────
@@ -514,56 +519,56 @@ body {
    bar (lorem is). If the ask ever gets short, duplicate the span for a
    seamless loop. */
 .favour-banner {
-  animation: favour-rise 0.4s ease-out;
+	animation: favour-rise 0.4s ease-out;
 }
 
 .favour-marquee {
-  animation: favour-marquee 32s linear infinite;
-  will-change: transform;
+	animation: favour-marquee 32s linear infinite;
+	will-change: transform;
 }
 
 @keyframes favour-rise {
-  from {
-    transform: translateY(-100%);
-  }
+	from {
+		transform: translateY(-100%);
+	}
 
-  to {
-    transform: translateY(0);
-  }
+	to {
+		transform: translateY(0);
+	}
 }
 
 @keyframes favour-marquee {
-  from {
-    transform: translateX(100%);
-  }
+	from {
+		transform: translateX(100%);
+	}
 
-  to {
-    transform: translateX(-100%);
-  }
+	to {
+		transform: translateX(-100%);
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .favour-banner {
-    animation: none;
-  }
+	.favour-banner {
+		animation: none;
+	}
 
-  .favour-marquee {
-    animation: none;
-    transform: none;
-  }
+	.favour-marquee {
+		animation: none;
+		transform: none;
+	}
 }
 
 /* Forced-colors / high-contrast: drop the gradient-text trick so the brand
    stays visible in the system palette. */
 @media (forced-colors: active) {
-  .pride-wordmark,
-  .pride-tagline {
-    background: none;
-    color: CanvasText;
-    -webkit-text-fill-color: CanvasText;
-    -webkit-text-stroke: 0;
-    animation: none;
-  }
+	.pride-wordmark,
+	.pride-tagline {
+		background: none;
+		color: CanvasText;
+		-webkit-text-fill-color: CanvasText;
+		-webkit-text-stroke: 0;
+		animation: none;
+	}
 }
 
 /* ── Sticker wall (home page + QR tool) ──────────────────────────────────
@@ -574,125 +579,125 @@ body {
    offset together so it folds back on itself like a real sticker.
    Technique adapted from React Bits "Sticker Peel". */
 .sticker-btn {
-  /* clip padding so the die-cut edges aren't shaved; --peel = fold position */
-  --p: 10px;
-  --peel-start: calc(-1 * var(--p));
-  --peel-end: calc(100% + var(--p));
-  --peel: 0%;
+	/* clip padding so the die-cut edges aren't shaved; --peel = fold position */
+	--p: 10px;
+	--peel-start: calc(-1 * var(--p));
+	--peel-end: calc(100% + var(--p));
+	--peel: 0%;
 
-  display: block;
-  border: 0;
-  padding: 0;
-  background: none;
-  cursor: pointer;
-  position: relative;
-  z-index: 1;
-  -webkit-tap-highlight-color: transparent;
+	display: block;
+	border: 0;
+	padding: 0;
+	background: none;
+	cursor: pointer;
+	position: relative;
+	z-index: 1;
+	-webkit-tap-highlight-color: transparent;
 }
 
 /* the actively touched sticker rises above its neighbours */
 .sticker-btn:hover,
 .sticker-btn:focus-visible {
-  z-index: 5;
+	z-index: 5;
 }
 
 .sticker-btn.is-peeling {
-  z-index: 30;
-  cursor: default;
+	z-index: 30;
+	cursor: default;
 }
 
 .sticker-btn:focus-visible {
-  outline: none;
+	outline: none;
 }
 
 .sticker-btn:focus-visible .sticker-fold {
-  outline: 2px solid var(--ring);
-  outline-offset: 4px;
-  border-radius: 6px;
+	outline: 2px solid var(--ring);
+	outline-offset: 4px;
+	border-radius: 6px;
 }
 
 /* GSAP animates this layer's transform (lift toward viewer); the drop-shadow
    follows the die-cut alpha and grows with the lift's scale. */
 .peel-lift {
-  display: block;
-  transition: transform 0.25s ease;
-  will-change: transform;
-  filter: drop-shadow(0 4px 6px rgb(0 0 0 / 28%));
+	display: block;
+	transition: transform 0.25s ease;
+	will-change: transform;
+	filter: drop-shadow(0 4px 6px rgb(0 0 0 / 28%));
 }
 
 .dark .peel-lift {
-  filter: drop-shadow(0 5px 10px rgb(0 0 0 / 50%));
+	filter: drop-shadow(0 5px 10px rgb(0 0 0 / 50%));
 }
 
 .sticker-btn:not(.is-peeling):hover .peel-lift {
-  transform: translateY(-5px) scale(1.03);
+	transform: translateY(-5px) scale(1.03);
 }
 
 .sticker-btn.is-peeling .peel-lift {
-  transition: none;
+	transition: none;
 }
 
 /* The resting tilt also sets the axis the sticker peels along. */
 .sticker-fold {
-  position: relative;
-  display: block;
-  transform: rotate(var(--rot));
-  transform-origin: center;
+	position: relative;
+	display: block;
+	transform: rotate(var(--rot));
+	transform-origin: center;
 }
 
 /* Face: the part still stuck down — visible from the fold line to the bottom. */
 .sticker-face {
-  display: block;
-  clip-path: polygon(
-    var(--peel-start) var(--peel),
-    var(--peel-end) var(--peel),
-    var(--peel-end) var(--peel-end),
-    var(--peel-start) var(--peel-end)
-  );
+	display: block;
+	clip-path: polygon(
+		var(--peel-start) var(--peel),
+		var(--peel-end) var(--peel),
+		var(--peel-end) var(--peel-end),
+		var(--peel-start) var(--peel-end)
+	);
 }
 
 /* Flap: the mirrored grey underside that curls back, welded to the fold line. */
 .sticker-flap {
-  position: absolute;
-  left: 0;
-  top: calc(-100% + 2 * var(--peel) - 1px);
-  width: 100%;
-  height: 100%;
-  transform: scaleY(-1);
-  clip-path: polygon(
-    var(--peel-start) var(--peel-start),
-    var(--peel-end) var(--peel-start),
-    var(--peel-end) var(--peel),
-    var(--peel-start) var(--peel)
-  );
+	position: absolute;
+	left: 0;
+	top: calc(-100% + 2 * var(--peel) - 1px);
+	width: 100%;
+	height: 100%;
+	transform: scaleY(-1);
+	clip-path: polygon(
+		var(--peel-start) var(--peel-start),
+		var(--peel-end) var(--peel-start),
+		var(--peel-end) var(--peel),
+		var(--peel-start) var(--peel)
+	);
 }
 
 .sticker-flap .sticker-img {
-  filter: url("#sticker-back");
+	filter: url("#sticker-back");
 }
 
 .sticker-img {
-  display: block;
-  width: 100%;
-  height: auto;
-  user-select: none;
-  -webkit-user-drag: none;
+	display: block;
+	width: 100%;
+	height: auto;
+	user-select: none;
+	-webkit-user-drag: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .peel-lift {
-    transition: none;
-  }
+	.peel-lift {
+		transition: none;
+	}
 
-  .sticker-btn:not(.is-peeling):hover .peel-lift {
-    transform: none;
-  }
+	.sticker-btn:not(.is-peeling):hover .peel-lift {
+		transform: none;
+	}
 }
 
 @media (forced-colors: active) {
-  .sticker-btn:focus-visible .sticker-fold {
-    outline-color: Highlight;
-  }
+	.sticker-btn:focus-visible .sticker-fold {
+		outline-color: Highlight;
+	}
 }
 
 /* ── Home tool grid — icon hover animation ──────────────────────────────
@@ -702,42 +707,43 @@ body {
    here. pathLength is normalised to 1 in tool-grid.tsx so dasharray:1 == full
    stroke. */
 @media (prefers-reduced-motion: no-preference) {
-  .tool-ic-draw svg > * {
-    stroke-dasharray: 1;
-    stroke-dashoffset: 0;
-  }
+	.tool-ic-draw svg > * {
+		stroke-dasharray: 1;
+		stroke-dashoffset: 0;
+	}
 
-  .tool-cell:hover .tool-ic-draw svg > *,
-  .tool-cell:focus-visible .tool-ic-draw svg > * {
-    animation: tool-icon-draw 0.55s ease forwards;
-  }
+	.tool-cell:hover .tool-ic-draw svg > *,
+	.tool-cell:focus-visible .tool-ic-draw svg > * {
+		animation: tool-icon-draw 0.55s ease forwards;
+	}
 
-  @keyframes tool-icon-draw {
-    from {
-      stroke-dashoffset: 1;
-    }
+	@keyframes tool-icon-draw {
+		from {
+			stroke-dashoffset: 1;
+		}
 
-    to {
-      stroke-dashoffset: 0;
-    }
-  }
+		to {
+			stroke-dashoffset: 0;
+		}
+	}
 }
 
 /* Focus-mode decorations */
 .pm-para-active {
-  background: color-mix(in oklch, var(--primary) 8%, transparent);
-  border-radius: 4px;
-  box-shadow: 0 0 0 5px color-mix(in oklch, var(--primary) 8%, transparent);
+	background: color-mix(in oklch, var(--primary) 8%, transparent);
+	border-radius: 4px;
+	box-shadow: 0 0 0 5px
+		color-mix(in oklch, var(--primary) 8%, transparent);
 }
 
 .pm-sentence-active {
-  background: color-mix(in oklch, var(--primary) 16%, transparent);
-  border-radius: 2px;
+	background: color-mix(in oklch, var(--primary) 16%, transparent);
+	border-radius: 2px;
 }
 
 .pm-dim {
-  opacity: 0.3;
-  transition: opacity 0.2s ease;
+	opacity: 0.3;
+	transition: opacity 0.2s ease;
 }
 
 /* ── Chrome — v2 ───────────────────────────────────────────────────────────
@@ -755,754 +761,754 @@ $header-height: crayon.size(14);
 /* Not crayon.sr-only: that mixin clips with the deprecated `clip` property.
    Same behaviour, current syntax. */
 .dt-sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
 }
 
 .dt-skip {
-  @extend .dt-sr-only;
+	@extend .dt-sr-only;
 
-  &:focus {
-    position: fixed;
-    top: crayon.size(3);
-    left: crayon.size(4);
-    z-index: 1000;
-    width: auto;
-    height: auto;
-    margin: 0;
-    padding: crayon.size(2) crayon.size(4);
-    clip-path: none;
-    background: var(--background);
-    color: var(--foreground);
-    border: 1px solid var(--border);
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
-    font-weight: crayon.font-weight("medium");
-  }
+	&:focus {
+		position: fixed;
+		top: crayon.size(3);
+		left: crayon.size(4);
+		z-index: 1000;
+		width: auto;
+		height: auto;
+		margin: 0;
+		padding: crayon.size(2) crayon.size(4);
+		clip-path: none;
+		background: var(--background);
+		color: var(--foreground);
+		border: 1px solid var(--border);
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+		font-weight: crayon.font-weight("medium");
+	}
 }
 
 /* The icon component wraps raw lucide SVG; make it size to its box. */
 .dt-icon {
-  display: inline-flex;
+	display: inline-flex;
 
-  svg {
-    width: 100%;
-    height: 100%;
-  }
+	svg {
+		width: 100%;
+		height: 100%;
+	}
 }
 
 /* ── Layout ─────────────────────────────────────────────────────────────── */
 
 .dt-shell {
-  display: flex;
-  min-height: 100dvh;
+	display: flex;
+	min-height: 100dvh;
 }
 
 .dt-inset {
-  display: flex;
-  flex: 1;
-  min-width: 0;
-  flex-direction: column;
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	flex-direction: column;
 }
 
 .dt-main {
-  flex: 1;
-  overflow: auto;
+	flex: 1;
+	overflow: auto;
 }
 
 /* ── Sidebar ────────────────────────────────────────────────────────────── */
 
 .dt-sidebar {
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  width: $sidebar-width;
-  height: 100dvh;
+	display: flex;
+	flex-direction: column;
+	flex-shrink: 0;
+	width: $sidebar-width;
+	height: 100dvh;
 
-  /* sticky, not relative: it also positions .dt-sidebar-rail on the outer edge */
-  position: sticky;
-  top: 0;
-  background: var(--sidebar);
-  color: var(--sidebar-foreground);
-  border-right: 1px solid var(--sidebar-border);
-  transition: width 0.2s ease;
+	/* sticky, not relative: it also positions .dt-sidebar-rail on the outer edge */
+	position: sticky;
+	top: 0;
+	background: var(--sidebar);
+	color: var(--sidebar-foreground);
+	border-right: 1px solid var(--sidebar-border);
+	transition: width 0.2s ease;
 
-  &[data-state="collapsed"] {
-    width: $sidebar-width-icon;
-  }
+	&[data-state="collapsed"] {
+		width: $sidebar-width-icon;
+	}
 
-  /* Off-canvas below md. The rail collapse is a desktop affordance only. */
-  &[data-mobile="true"] {
-    position: fixed;
-    z-index: 60;
-    width: $sidebar-width-mobile;
-    transform: translateX(-100%);
-    transition: transform 0.2s ease;
+	/* Off-canvas below md. The rail collapse is a desktop affordance only. */
+	&[data-mobile="true"] {
+		position: fixed;
+		z-index: 60;
+		width: $sidebar-width-mobile;
+		transform: translateX(-100%);
+		transition: transform 0.2s ease;
 
-    &[data-open-mobile="true"] {
-      transform: translateX(0);
-    }
-  }
+		&[data-open-mobile="true"] {
+			transform: translateX(0);
+		}
+	}
 }
 
 .dt-sidebar-scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 55;
-  border: 0;
-  padding: 0;
-  background: rgb(0 0 0 / 50%);
+	position: fixed;
+	inset: 0;
+	z-index: 55;
+	border: 0;
+	padding: 0;
+	background: rgb(0 0 0 / 50%);
 }
 
 .dt-sidebar-header {
-  padding: crayon.size(2);
-  border-bottom: 1px solid var(--sidebar-border);
+	padding: crayon.size(2);
+	border-bottom: 1px solid var(--sidebar-border);
 }
 
 .dt-brand {
-  @include crayon.hstack(2);
+	@include crayon.hstack(2);
 
-  align-items: center;
-  padding: crayon.size(2);
-  color: inherit;
-  text-decoration: none;
+	align-items: center;
+	padding: crayon.size(2);
+	color: inherit;
+	text-decoration: none;
 
-  @include crayon.hover {
-    background: var(--sidebar-accent);
-  }
+	@include crayon.hover {
+		background: var(--sidebar-accent);
+	}
 }
 
 .dt-brand-logo {
-  flex-shrink: 0;
-  width: crayon.size(10);
-  height: crayon.size(10);
-  border: 2px solid oklch(37% 0.09 145deg);
+	flex-shrink: 0;
+	width: crayon.size(10);
+	height: crayon.size(10);
+	border: 2px solid oklch(37% 0.09 145deg);
 }
 
 .dt-brand-text {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: crayon.size(0.5);
-  line-height: 1;
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+	gap: crayon.size(0.5);
+	line-height: 1;
 }
 
 .dt-brand-name {
-  font-weight: crayon.font-weight("semibold");
+	font-weight: crayon.font-weight("semibold");
 }
 
 .dt-brand-sub {
-  font-size: crayon.font-size("xs");
-  color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	color: var(--muted-foreground);
 }
 
 /* the tagline swaps to the build commit on hover */
 .dt-brand-sha {
-  display: none;
+	display: none;
 }
 
 .dt-brand:hover {
-  .dt-brand-tagline {
-    display: none;
-  }
+	.dt-brand-tagline {
+		display: none;
+	}
 
-  .dt-brand-sha {
-    display: inline;
-  }
+	.dt-brand-sha {
+		display: inline;
+	}
 }
 
 .dt-sidebar-search {
-  position: relative;
-  padding: crayon.size(2);
-  border-bottom: 1px solid var(--sidebar-border);
+	position: relative;
+	padding: crayon.size(2);
+	border-bottom: 1px solid var(--sidebar-border);
 }
 
 .dt-search-icon {
-  position: absolute;
-  top: 50%;
-  left: crayon.size(4);
-  width: crayon.size(3.5);
-  height: crayon.size(3.5);
-  transform: translateY(-50%);
-  color: var(--muted-foreground);
-  pointer-events: none;
+	position: absolute;
+	top: 50%;
+	left: crayon.size(4);
+	width: crayon.size(3.5);
+	height: crayon.size(3.5);
+	transform: translateY(-50%);
+	color: var(--muted-foreground);
+	pointer-events: none;
 }
 
 .dt-search-input {
-  width: 100%;
-  height: crayon.size(8);
-  padding-inline: crayon.size(8);
-  background: var(--background);
-  color: var(--foreground);
-  border: 1px solid var(--border);
-  font-size: crayon.font-size("sm");
+	width: 100%;
+	height: crayon.size(8);
+	padding-inline: crayon.size(8);
+	background: var(--background);
+	color: var(--foreground);
+	border: 1px solid var(--border);
+	font-size: crayon.font-size("sm");
 
-  &:focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: -1px;
-  }
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -1px;
+	}
 }
 
 .dt-search-clear {
-  position: absolute;
-  top: 50%;
-  right: crayon.size(4);
-  width: crayon.size(3.5);
-  height: crayon.size(3.5);
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--muted-foreground);
-  transform: translateY(-50%);
-  cursor: pointer;
+	position: absolute;
+	top: 50%;
+	right: crayon.size(4);
+	width: crayon.size(3.5);
+	height: crayon.size(3.5);
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	transform: translateY(-50%);
+	cursor: pointer;
 
-  @include crayon.hover {
-    color: var(--foreground);
-  }
+	@include crayon.hover {
+		color: var(--foreground);
+	}
 }
 
 .dt-sidebar-nav {
-  display: flex;
-  min-height: 0;
-  flex: 1;
-  flex-direction: column;
-  overflow-y: auto;
-  padding: crayon.size(2);
-  gap: crayon.size(4);
+	display: flex;
+	min-height: 0;
+	flex: 1;
+	flex-direction: column;
+	overflow-y: auto;
+	padding: crayon.size(2);
+	gap: crayon.size(4);
 }
 
 .dt-nav-group {
-  @include crayon.vstack(0.5);
+	@include crayon.vstack(0.5);
 }
 
 .dt-nav-group-label {
-  @include crayon.hstack(1.5);
+	@include crayon.hstack(1.5);
 
-  align-items: center;
-  padding: crayon.size(2) crayon.size(2) crayon.size(1);
-  font-size: crayon.font-size("xs");
-  font-weight: crayon.font-weight("medium");
-  color: var(--muted-foreground);
+	align-items: center;
+	padding: crayon.size(2) crayon.size(2) crayon.size(1);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("medium");
+	color: var(--muted-foreground);
 }
 
 .dt-star {
-  width: crayon.size(3);
-  height: crayon.size(3);
-  color: oklch(76% 0.16 70deg);
+	width: crayon.size(3);
+	height: crayon.size(3);
+	color: oklch(76% 0.16 70deg);
 
-  svg {
-    fill: currentcolor;
-  }
+	svg {
+		fill: currentcolor;
+	}
 }
 
 .dt-nav-link {
-  @include crayon.hstack(2);
+	@include crayon.hstack(2);
 
-  align-items: center;
-  padding: crayon.size(1.5) crayon.size(2);
-  color: inherit;
-  font-size: crayon.font-size("sm");
-  text-decoration: none;
-  white-space: nowrap;
+	align-items: center;
+	padding: crayon.size(1.5) crayon.size(2);
+	color: inherit;
+	font-size: crayon.font-size("sm");
+	text-decoration: none;
+	white-space: nowrap;
 
-  .dt-icon {
-    flex-shrink: 0;
-    width: crayon.size(4);
-    height: crayon.size(4);
-  }
+	.dt-icon {
+		flex-shrink: 0;
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
 
-  @include crayon.hover {
-    background: var(--sidebar-accent);
-    color: var(--sidebar-accent-foreground);
-  }
+	@include crayon.hover {
+		background: var(--sidebar-accent);
+		color: var(--sidebar-accent-foreground);
+	}
 
-  &:focus-visible {
-    outline: 2px solid var(--sidebar-ring);
-    outline-offset: -2px;
-  }
+	&:focus-visible {
+		outline: 2px solid var(--sidebar-ring);
+		outline-offset: -2px;
+	}
 
-  /* LinkTo sets `active` on the matching route */
-  &.active {
-    background: var(--sidebar-accent);
-    color: var(--sidebar-accent-foreground);
-    font-weight: crayon.font-weight("medium");
-  }
+	/* LinkTo sets `active` on the matching route */
+	&.active {
+		background: var(--sidebar-accent);
+		color: var(--sidebar-accent-foreground);
+		font-weight: crayon.font-weight("medium");
+	}
 }
 
 .dt-nav-link--featured {
-  color: oklch(52% 0.13 70deg);
+	color: oklch(52% 0.13 70deg);
 
-  @include crayon.dark {
-    color: oklch(80% 0.12 80deg);
-  }
+	@include crayon.dark {
+		color: oklch(80% 0.12 80deg);
+	}
 }
 
 .dt-nav-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .dt-nav-empty {
-  display: block;
-  padding: crayon.size(8) crayon.size(4);
-  text-align: center;
-  font-size: crayon.font-size("sm");
-  color: var(--muted-foreground);
+	display: block;
+	padding: crayon.size(8) crayon.size(4);
+	text-align: center;
+	font-size: crayon.font-size("sm");
+	color: var(--muted-foreground);
 }
 
 .dt-sidebar-footer {
-  padding: crayon.size(2);
-  border-top: 1px solid var(--sidebar-border);
+	padding: crayon.size(2);
+	border-top: 1px solid var(--sidebar-border);
 }
 
 .dt-about {
-  display: block;
-  width: 100%;
-  padding: crayon.size(2);
-  border: 0;
-  background: none;
-  color: var(--muted-foreground);
-  font: inherit;
-  font-size: crayon.font-size("xs");
-  text-align: left;
-  cursor: pointer;
+	display: block;
+	width: 100%;
+	padding: crayon.size(2);
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("xs");
+	text-align: left;
+	cursor: pointer;
 
-  @include crayon.hover {
-    background: var(--sidebar-accent);
-  }
+	@include crayon.hover {
+		background: var(--sidebar-accent);
+	}
 }
 
 .dt-about-text {
-  @include crayon.vstack(1);
+	@include crayon.vstack(1);
 }
 
 .dt-about-icon {
-  display: none;
-  width: crayon.size(4);
-  height: crayon.size(4);
-  margin-inline: auto;
+	display: none;
+	width: crayon.size(4);
+	height: crayon.size(4);
+	margin-inline: auto;
 }
 
 /* Collapsed rail: icons only. */
 .dt-sidebar[data-state="collapsed"][data-mobile="false"] {
-  .dt-sidebar-search,
-  .dt-nav-group-label,
-  .dt-nav-label,
-  .dt-brand-text,
-  .dt-about-text {
-    display: none;
-  }
+	.dt-sidebar-search,
+	.dt-nav-group-label,
+	.dt-nav-label,
+	.dt-brand-text,
+	.dt-about-text {
+		display: none;
+	}
 
-  .dt-about-icon {
-    display: block;
-  }
+	.dt-about-icon {
+		display: block;
+	}
 
-  .dt-nav-link {
-    justify-content: center;
-  }
+	.dt-nav-link {
+		justify-content: center;
+	}
 
-  .dt-brand {
-    justify-content: center;
-    padding: 0;
-  }
+	.dt-brand {
+		justify-content: center;
+		padding: 0;
+	}
 
-  .dt-brand-logo {
-    width: crayon.size(8);
-    height: crayon.size(8);
-  }
+	.dt-brand-logo {
+		width: crayon.size(8);
+		height: crayon.size(8);
+	}
 }
 
 /* The outer edge doubles as a toggle, as shadcn's SidebarRail does. */
 .dt-sidebar-rail {
-  position: absolute;
-  inset-block: 0;
-  right: -8px;
-  width: 16px;
-  border: 0;
-  background: transparent;
-  cursor: ew-resize;
+	position: absolute;
+	inset-block: 0;
+	right: -8px;
+	width: 16px;
+	border: 0;
+	background: transparent;
+	cursor: ew-resize;
 
-  @include crayon.hover {
-    background: linear-gradient(
-      to right,
-      transparent,
-      var(--sidebar-border),
-      transparent
-    );
-  }
+	@include crayon.hover {
+		background: linear-gradient(
+			to right,
+			transparent,
+			var(--sidebar-border),
+			transparent
+		);
+	}
 }
 
 .dt-sidebar[data-mobile="true"] .dt-sidebar-rail {
-  display: none;
+	display: none;
 }
 
 /* ── Header ─────────────────────────────────────────────────────────────── */
 
 .dt-header {
-  @include crayon.hstack(2);
+	@include crayon.hstack(2);
 
-  position: sticky;
-  z-index: 50;
-  top: 0;
-  align-items: center;
-  height: $header-height;
-  flex-shrink: 0;
-  padding-inline: crayon.size(4);
-  border-bottom: 1px solid var(--border);
-  background: color-mix(in oklch, var(--background) 95%, transparent);
-  backdrop-filter: blur(8px);
+	position: sticky;
+	z-index: 50;
+	top: 0;
+	align-items: center;
+	height: $header-height;
+	flex-shrink: 0;
+	padding-inline: crayon.size(4);
+	border-bottom: 1px solid var(--border);
+	background: color-mix(in oklch, var(--background) 95%, transparent);
+	backdrop-filter: blur(8px);
 }
 
 .dt-header-sep {
-  width: 1px;
-  height: crayon.size(4);
-  margin-right: crayon.size(2);
-  background: var(--border);
+	width: 1px;
+	height: crayon.size(4);
+	margin-right: crayon.size(2);
+	background: var(--border);
 }
 
 .dt-header-title {
-  @include crayon.hstack(2);
+	@include crayon.hstack(2);
 
-  align-items: center;
-  min-width: 0;
+	align-items: center;
+	min-width: 0;
 
-  h1 {
-    font-size: crayon.font-size("lg");
-    font-weight: crayon.font-weight("semibold");
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+	h1 {
+		font-size: crayon.font-size("lg");
+		font-weight: crayon.font-weight("semibold");
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
 }
 
 .dt-header-icon {
-  width: crayon.size(5);
-  height: crayon.size(5);
-  flex-shrink: 0;
-  color: var(--muted-foreground);
+	width: crayon.size(5);
+	height: crayon.size(5);
+	flex-shrink: 0;
+	color: var(--muted-foreground);
 }
 
 .dt-header-actions {
-  @include crayon.hstack(1);
+	@include crayon.hstack(1);
 
-  margin-left: auto;
-  align-items: center;
+	margin-left: auto;
+	align-items: center;
 }
 
 .dt-badge {
-  padding: crayon.size(0.5) crayon.size(2);
-  background: var(--secondary);
-  color: var(--secondary-foreground);
-  font-size: crayon.font-size("xs");
-  white-space: nowrap;
+	padding: crayon.size(0.5) crayon.size(2);
+	background: var(--secondary);
+	color: var(--secondary-foreground);
+	font-size: crayon.font-size("xs");
+	white-space: nowrap;
 
-  @include crayon.show-from("sm");
+	@include crayon.show-from("sm");
 }
 
 .dt-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: crayon.size(8);
-  height: crayon.size(8);
-  flex-shrink: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: crayon.size(8);
+	height: crayon.size(8);
+	flex-shrink: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	cursor: pointer;
 
-  .dt-icon {
-    width: crayon.size(4);
-    height: crayon.size(4);
-  }
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
 
-  @include crayon.hover {
-    background: var(--accent);
-    color: var(--accent-foreground);
-  }
+	@include crayon.hover {
+		background: var(--accent);
+		color: var(--accent-foreground);
+	}
 
-  &:focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: -2px;
-  }
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -2px;
+	}
 }
 
 /* ── Dialog (ember-primitives wraps the native <dialog>) ─────────────────── */
 
 .dt-dialog {
-  width: min(32rem, calc(100vw - #{crayon.size(8)}));
-  max-height: 85dvh;
-  padding: crayon.size(5);
-  overflow-y: auto;
-  background: var(--popover);
-  color: var(--popover-foreground);
-  border: 1px solid var(--border);
+	width: min(32rem, calc(100vw - #{crayon.size(8)}));
+	max-height: 85dvh;
+	padding: crayon.size(5);
+	overflow-y: auto;
+	background: var(--popover);
+	color: var(--popover-foreground);
+	border: 1px solid var(--border);
 
-  &::backdrop {
-    background: rgb(0 0 0 / 50%);
-  }
+	&::backdrop {
+		background: rgb(0 0 0 / 50%);
+	}
 }
 
 .dt-dialog-head {
-  @include crayon.hstack(2);
+	@include crayon.hstack(2);
 
-  align-items: center;
-  margin-bottom: crayon.size(4);
+	align-items: center;
+	margin-bottom: crayon.size(4);
 
-  h2 {
-    flex: 1;
-    font-size: crayon.font-size("lg");
-    font-weight: crayon.font-weight("semibold");
-  }
+	h2 {
+		flex: 1;
+		font-size: crayon.font-size("lg");
+		font-weight: crayon.font-weight("semibold");
+	}
 }
 
 .dt-dialog-close {
-  @extend .dt-icon-btn;
+	@extend .dt-icon-btn;
 }
 
 /* ── About body ─────────────────────────────────────────────────────────── */
 
 .dt-about-body {
-  @include crayon.vstack(4);
+	@include crayon.vstack(4);
 
-  font-size: crayon.font-size("sm");
-  color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	color: var(--muted-foreground);
 
-  h3 {
-    margin-bottom: crayon.size(1);
-    color: var(--foreground);
-    font-size: crayon.font-size("sm");
-    font-weight: crayon.font-weight("medium");
-  }
+	h3 {
+		margin-bottom: crayon.size(1);
+		color: var(--foreground);
+		font-size: crayon.font-size("sm");
+		font-weight: crayon.font-weight("medium");
+	}
 
-  a {
-    color: inherit;
+	a {
+		color: inherit;
 
-    @include crayon.hover {
-      color: var(--primary);
-    }
-  }
+		@include crayon.hover {
+			color: var(--primary);
+		}
+	}
 }
 
 .dt-about-lede {
-  @include crayon.vstack(4);
+	@include crayon.vstack(4);
 }
 
 .dt-about-cols {
-  display: grid;
-  gap: crayon.size(4);
-  padding-top: crayon.size(4);
-  border-top: 1px solid var(--border);
+	display: grid;
+	gap: crayon.size(4);
+	padding-top: crayon.size(4);
+	border-top: 1px solid var(--border);
 
-  @include crayon.screen("sm") {
-    grid-template-columns: 1fr 1fr;
-  }
+	@include crayon.screen("sm") {
+		grid-template-columns: 1fr 1fr;
+	}
 }
 
 .dt-about-block {
-  @include crayon.vstack(2);
+	@include crayon.vstack(2);
 
-  padding-top: crayon.size(4);
-  border-top: 1px solid var(--border);
+	padding-top: crayon.size(4);
+	border-top: 1px solid var(--border);
 }
 
 .dt-about-note {
-  font-size: crayon.font-size("xs");
+	font-size: crayon.font-size("xs");
 }
 
 .dt-chips {
-  @include crayon.cluster(1.5);
+	@include crayon.cluster(1.5);
 
-  a {
-    padding: crayon.size(1) crayon.size(2);
-    background: var(--muted);
-    font-size: crayon.font-size("xs");
-    text-decoration: none;
+	a {
+		padding: crayon.size(1) crayon.size(2);
+		background: var(--muted);
+		font-size: crayon.font-size("xs");
+		text-decoration: none;
 
-    @include crayon.hover {
-      color: var(--foreground);
-    }
-  }
+		@include crayon.hover {
+			color: var(--foreground);
+		}
+	}
 }
 
 /* ── 404 ────────────────────────────────────────────────────────────────── */
 
 .dt-404 {
-  @include crayon.vstack(0);
+	@include crayon.vstack(0);
 
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-  padding: crayon.size(6);
-  text-align: center;
+	align-items: center;
+	justify-content: center;
+	min-height: 60vh;
+	padding: crayon.size(6);
+	text-align: center;
 
-  h1 {
-    margin-bottom: crayon.size(2);
-    font-size: crayon.font-size("3xl");
-    font-weight: crayon.font-weight("bold");
-  }
+	h1 {
+		margin-bottom: crayon.size(2);
+		font-size: crayon.font-size("3xl");
+		font-weight: crayon.font-weight("bold");
+	}
 
-  p {
-    max-width: 28rem;
-    margin-bottom: crayon.size(8);
-    color: var(--muted-foreground);
-  }
+	p {
+		max-width: 28rem;
+		margin-bottom: crayon.size(8);
+		color: var(--muted-foreground);
+	}
 }
 
 .dt-404-mark {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: crayon.size(20);
-  height: crayon.size(20);
-  margin-bottom: crayon.size(6);
-  background: var(--muted);
-  border-radius: crayon.rounded("full");
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: crayon.size(20);
+	height: crayon.size(20);
+	margin-bottom: crayon.size(6);
+	background: var(--muted);
+	border-radius: crayon.rounded("full");
 
-  .dt-icon {
-    width: crayon.size(10);
-    height: crayon.size(10);
-    color: var(--muted-foreground);
-  }
+	.dt-icon {
+		width: crayon.size(10);
+		height: crayon.size(10);
+		color: var(--muted-foreground);
+	}
 }
 
 .dt-btn {
-  @include crayon.hstack(2);
+	@include crayon.hstack(2);
 
-  align-items: center;
-  padding: crayon.size(2) crayon.size(4);
-  background: var(--primary);
-  color: var(--primary-foreground);
-  font-size: crayon.font-size("sm");
-  font-weight: crayon.font-weight("medium");
-  text-decoration: none;
+	align-items: center;
+	padding: crayon.size(2) crayon.size(4);
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("medium");
+	text-decoration: none;
 
-  .dt-icon {
-    width: crayon.size(4);
-    height: crayon.size(4);
-  }
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
 
-  @include crayon.hover {
-    background: color-mix(in oklch, var(--primary) 90%, black);
-  }
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--primary) 90%, black);
+	}
 }
 
 /* ── Home page ──────────────────────────────────────────────────────────── */
 
 .dt-page {
-  padding: crayon.size(6);
+	padding: crayon.size(6);
 
-  @include crayon.screen("md") {
-    padding: crayon.size(8);
-  }
+	@include crayon.screen("md") {
+		padding: crayon.size(8);
+	}
 
-  @include crayon.screen("lg") {
-    padding: crayon.size(10);
-  }
+	@include crayon.screen("lg") {
+		padding: crayon.size(10);
+	}
 }
 
 .dt-hero {
-  margin-bottom: crayon.size(12);
+	margin-bottom: crayon.size(12);
 }
 
 .dt-hero-art {
-  width: 100%;
-  max-width: 42rem;
-  height: auto;
+	width: 100%;
+	max-width: 42rem;
+	height: auto;
 }
 
 .dt-hero-copy {
-  @include crayon.vstack(3);
+	@include crayon.vstack(3);
 
-  max-width: 42rem;
-  margin-top: crayon.size(6);
-  font-size: crayon.font-size("sm");
-  line-height: crayon.leading("relaxed");
-  color: var(--muted-foreground);
+	max-width: 42rem;
+	margin-top: crayon.size(6);
+	font-size: crayon.font-size("sm");
+	line-height: crayon.leading("relaxed");
+	color: var(--muted-foreground);
 }
 
 .dt-hero-lead {
-  font-size: crayon.font-size("base");
-  line-height: crayon.leading("snug");
-  color: var(--foreground);
+	font-size: crayon.font-size("base");
+	line-height: crayon.leading("snug");
+	color: var(--foreground);
 }
 
 .dt-section {
-  margin-bottom: crayon.size(12);
+	margin-bottom: crayon.size(12);
 }
 
 .dt-section-title {
-  @include crayon.hstack(2);
+	@include crayon.hstack(2);
 
-  align-items: baseline;
-  margin-bottom: crayon.size(4);
-  font-size: crayon.font-size("sm");
-  font-weight: crayon.font-weight("bold");
-  text-transform: uppercase;
-  letter-spacing: crayon.tracking("wide");
-  color: var(--foreground);
+	align-items: baseline;
+	margin-bottom: crayon.size(4);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	text-transform: uppercase;
+	letter-spacing: crayon.tracking("wide");
+	color: var(--foreground);
 }
 
 .dt-section-count {
-  font-weight: crayon.font-weight("normal");
-  color: var(--muted-foreground);
+	font-weight: crayon.font-weight("normal");
+	color: var(--muted-foreground);
 }
 
 /* Hairline dividers via a 1px gap over the border colour, as .segmented. */
 .dt-grid {
-  display: grid;
-  gap: 1px;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  background: var(--border);
-  border: 1px solid var(--border);
+	display: grid;
+	gap: 1px;
+	grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+	background: var(--border);
+	border: 1px solid var(--border);
 }
 
 .dt-cell {
-  display: block;
-  padding: crayon.size(4);
-  background: var(--card);
-  color: var(--card-foreground);
-  text-decoration: none;
+	display: block;
+	padding: crayon.size(4);
+	background: var(--card);
+	color: var(--card-foreground);
+	text-decoration: none;
 
-  @include crayon.hover {
-    background: var(--accent);
-    color: var(--accent-foreground);
-  }
+	@include crayon.hover {
+		background: var(--accent);
+		color: var(--accent-foreground);
+	}
 
-  &:focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: -2px;
-  }
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -2px;
+	}
 }
 
 .dt-cell-icon {
-  display: block;
-  width: crayon.size(6);
-  height: crayon.size(6);
-  margin-bottom: crayon.size(3);
-  color: var(--primary);
+	display: block;
+	width: crayon.size(6);
+	height: crayon.size(6);
+	margin-bottom: crayon.size(3);
+	color: var(--primary);
 }
 
 .dt-cell-name {
-  display: block;
-  font-weight: crayon.font-weight("bold");
-  font-size: crayon.font-size("sm");
+	display: block;
+	font-weight: crayon.font-weight("bold");
+	font-size: crayon.font-size("sm");
 }
 
 .dt-cell-desc {
-  display: block;
-  margin-top: crayon.size(1);
-  font-size: crayon.font-size("xs");
-  line-height: crayon.leading("snug");
-  color: var(--muted-foreground);
+	display: block;
+	margin-top: crayon.size(1);
+	font-size: crayon.font-size("xs");
+	line-height: crayon.leading("snug");
+	color: var(--muted-foreground);
 }
 
 /* ── Tooltip (vendored from shadcn-ember, restyled) ──────────────────────────
@@ -1511,654 +1517,655 @@ $header-height: crayon.size(14);
    tw-animate-css, which Crayon replaces. */
 
 .dt-tooltip-trigger {
-  display: inline-block;
+	display: inline-block;
 }
 
 .dt-tooltip {
-  z-index: 50;
-  padding: crayon.size(1.5) crayon.size(3);
-  background: var(--foreground);
-  color: var(--background);
-  font-size: crayon.font-size("xs");
-  animation: dt-tooltip-in 0.12s ease-out;
+	z-index: 50;
+	padding: crayon.size(1.5) crayon.size(3);
+	background: var(--foreground);
+	color: var(--background);
+	font-size: crayon.font-size("xs");
+	animation: dt-tooltip-in 0.12s ease-out;
 
-  &[data-state="closed"] {
-    animation: dt-tooltip-out 0.1s ease-in forwards;
-  }
+	&[data-state="closed"] {
+		animation: dt-tooltip-out 0.1s ease-in forwards;
+	}
 }
 
 .dt-tooltip-arrow {
-  position: absolute;
-  width: crayon.size(2.5);
-  height: crayon.size(2.5);
-  background: var(--foreground);
-  transform: rotate(45deg);
+	position: absolute;
+	width: crayon.size(2.5);
+	height: crayon.size(2.5);
+	background: var(--foreground);
+	transform: rotate(45deg);
 }
 
 @keyframes dt-tooltip-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
+	from {
+		opacity: 0;
+		transform: scale(0.95);
+	}
 
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
 }
 
 @keyframes dt-tooltip-out {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
+	from {
+		opacity: 1;
+		transform: scale(1);
+	}
 
-  to {
-    opacity: 0;
-    transform: scale(0.95);
-  }
+	to {
+		opacity: 0;
+		transform: scale(0.95);
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* still animated, but fast enough to be imperceptible: animationend has to
+	/* still animated, but fast enough to be imperceptible: animationend has to
      fire or the tooltip never unmounts */
-  .dt-tooltip,
-  .dt-tooltip[data-state="closed"] {
-    animation-duration: 0.01s;
-  }
+	.dt-tooltip,
+	.dt-tooltip[data-state="closed"] {
+		animation-duration: 0.01s;
+	}
 }
 
 /* ── Tool page shell ─────────────────────────────────────────────────────── */
 
 .dt-tool-page {
-  padding: crayon.size(6);
+	padding: crayon.size(6);
 
-  @include crayon.screen('md') {
-    padding: crayon.size(8);
-  }
+	@include crayon.screen("md") {
+		padding: crayon.size(8);
+	}
 
-  @include crayon.screen('lg') {
-    padding: crayon.size(10);
-  }
+	@include crayon.screen("lg") {
+		padding: crayon.size(10);
+	}
 }
 
 .dt-tool-body.is-capped,
 .dt-tool-header.is-capped {
-  max-width: 56rem;
-  margin-inline: auto;
+	max-width: 56rem;
+	margin-inline: auto;
 }
 
 .dt-tool-header {
-  @include crayon.hstack(4);
+	@include crayon.hstack(4);
 
-  align-items: flex-start;
-  margin-bottom: crayon.size(8);
+	align-items: flex-start;
+	margin-bottom: crayon.size(8);
 }
 
 .dt-tool-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: crayon.size(14);
-  height: crayon.size(14);
-  flex-shrink: 0;
-  background: color-mix(in oklch, var(--primary) 10%, transparent);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: crayon.size(14);
+	height: crayon.size(14);
+	flex-shrink: 0;
+	background: color-mix(in oklch, var(--primary) 10%, transparent);
 
-  .dt-icon {
-    width: crayon.size(7);
-    height: crayon.size(7);
-    color: var(--primary);
-  }
+	.dt-icon {
+		width: crayon.size(7);
+		height: crayon.size(7);
+		color: var(--primary);
+	}
 }
 
 .dt-tool-heading {
-  min-width: 0;
-  flex: 1;
+	min-width: 0;
+	flex: 1;
 }
 
 .dt-tool-titles {
-  @include crayon.cluster(3);
+	@include crayon.cluster(3);
 
-  align-items: center;
+	align-items: center;
 
-  h1 {
-    font-size: crayon.font-size('2xl');
-    font-weight: crayon.font-weight('bold');
-    letter-spacing: crayon.tracking('tight');
-  }
+	h1 {
+		font-size: crayon.font-size("2xl");
+		font-weight: crayon.font-weight("bold");
+		letter-spacing: crayon.tracking("tight");
+	}
 }
 
 .dt-badge.is-beta {
-  background: transparent;
-  border: 1px solid color-mix(in oklch, oklch(76% 0.16 70deg) 50%, transparent);
-  color: oklch(60% 0.14 70deg);
+	background: transparent;
+	border: 1px solid
+		color-mix(in oklch, oklch(76% 0.16 70deg) 50%, transparent);
+	color: oklch(60% 0.14 70deg);
 }
 
 .dt-badge.is-new {
-  background: transparent;
-  border: 1px solid color-mix(in oklch, var(--primary) 50%, transparent);
-  color: var(--primary);
+	background: transparent;
+	border: 1px solid color-mix(in oklch, var(--primary) 50%, transparent);
+	color: var(--primary);
 }
 
 .dt-tool-desc {
-  margin-top: crayon.size(1);
-  color: var(--muted-foreground);
+	margin-top: crayon.size(1);
+	color: var(--muted-foreground);
 }
 
 .dt-tool-soon {
-  padding: crayon.size(10) crayon.size(6);
-  border: 1px dashed var(--border);
-  text-align: center;
+	padding: crayon.size(10) crayon.size(6);
+	border: 1px dashed var(--border);
+	text-align: center;
 
-  h2 {
-    font-size: crayon.font-size('xl');
-    font-weight: crayon.font-weight('bold');
-  }
+	h2 {
+		font-size: crayon.font-size("xl");
+		font-weight: crayon.font-weight("bold");
+	}
 
-  p {
-    max-width: 28rem;
-    margin: crayon.size(2) auto 0;
-    color: var(--muted-foreground);
-  }
+	p {
+		max-width: 28rem;
+		margin: crayon.size(2) auto 0;
+		color: var(--muted-foreground);
+	}
 }
 
 .dt-tool-soon-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: crayon.size(16);
-  height: crayon.size(16);
-  margin-bottom: crayon.size(4);
-  background: var(--muted);
-  border-radius: crayon.rounded('full');
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: crayon.size(16);
+	height: crayon.size(16);
+	margin-bottom: crayon.size(4);
+	background: var(--muted);
+	border-radius: crayon.rounded("full");
 
-  .dt-icon {
-    width: crayon.size(8);
-    height: crayon.size(8);
-    color: var(--muted-foreground);
-  }
+	.dt-icon {
+		width: crayon.size(8);
+		height: crayon.size(8);
+		color: var(--muted-foreground);
+	}
 }
 
 /* ── Palette generator ───────────────────────────────────────────────────── */
 
 .dt-palette-frame {
-  border: 2px solid var(--border);
+	border: 2px solid var(--border);
 }
 
 /* Periodic-table columns: flush, hairline-divided, one column per colour. */
 .dt-palette-swatches {
-  display: flex;
-  gap: 1px;
-  height: 20rem;
-  background: var(--border);
-  border-bottom: 2px solid var(--border);
+	display: flex;
+	gap: 1px;
+	height: 20rem;
+	background: var(--border);
+	border-bottom: 2px solid var(--border);
 
-  &.is-grid {
-    display: grid;
-    height: auto;
-  }
+	&.is-grid {
+		display: grid;
+		height: auto;
+	}
 
-  &.cols-2.is-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+	&.cols-2.is-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
 
-  &.cols-3.is-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+	&.cols-3.is-grid {
+		grid-template-columns: repeat(3, 1fr);
+	}
 }
 
 .dt-swatch {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  background: var(--background);
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+	background: var(--background);
 
-  .is-row & {
-    flex: 1;
-  }
+	.is-row & {
+		flex: 1;
+	}
 }
 
 .dt-swatch-fill {
-  position: relative;
-  display: block;
-  cursor: pointer;
+	position: relative;
+	display: block;
+	cursor: pointer;
 
-  .is-row & {
-    flex: 1;
-  }
+	.is-row & {
+		flex: 1;
+	}
 
-  .is-grid & {
-    aspect-ratio: 1;
-  }
+	.is-grid & {
+		aspect-ratio: 1;
+	}
 
-  /* the real input sits invisible over the fill so the whole area opens the picker */
-  input[type='color'] {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    cursor: pointer;
-  }
+	/* the real input sits invisible over the fill so the whole area opens the picker */
+	input[type="color"] {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		cursor: pointer;
+	}
 }
 
 .dt-swatch-colour {
-  position: absolute;
-  inset: 0;
+	position: absolute;
+	inset: 0;
 }
 
 .dt-swatch-index {
-  position: absolute;
-  top: crayon.size(1);
-  left: crayon.size(1.5);
-  font-size: 10px;
-  font-weight: crayon.font-weight('bold');
-  font-variant-numeric: tabular-nums;
-  opacity: 0.5;
-  pointer-events: none;
+	position: absolute;
+	top: crayon.size(1);
+	left: crayon.size(1.5);
+	font-size: 10px;
+	font-weight: crayon.font-weight("bold");
+	font-variant-numeric: tabular-nums;
+	opacity: 0.5;
+	pointer-events: none;
 }
 
 .dt-swatch-lock {
-  position: absolute;
-  top: crayon.size(1.5);
-  right: crayon.size(1.5);
-  width: crayon.size(3.5);
-  height: crayon.size(3.5);
-  pointer-events: none;
+	position: absolute;
+	top: crayon.size(1.5);
+	right: crayon.size(1.5);
+	width: crayon.size(3.5);
+	height: crayon.size(3.5);
+	pointer-events: none;
 }
 
 .dt-swatch-caption {
-  padding: crayon.size(1.5) crayon.size(2);
-  border-top: 1px solid var(--border);
-  line-height: 1.2;
+	padding: crayon.size(1.5) crayon.size(2);
+	border-top: 1px solid var(--border);
+	line-height: 1.2;
 }
 
 .dt-swatch-value {
-  overflow: hidden;
-  font-size: crayon.font-size('sm');
-  font-weight: crayon.font-weight('bold');
-  letter-spacing: crayon.tracking('tight');
-  text-overflow: ellipsis;
-  white-space: nowrap;
+	overflow: hidden;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	letter-spacing: crayon.tracking("tight");
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .dt-swatch-name {
-  overflow: hidden;
-  font-size: 11px;
-  color: var(--muted-foreground);
-  text-overflow: ellipsis;
-  text-transform: capitalize;
-  white-space: nowrap;
+	overflow: hidden;
+	font-size: 11px;
+	color: var(--muted-foreground);
+	text-overflow: ellipsis;
+	text-transform: capitalize;
+	white-space: nowrap;
 }
 
 .dt-swatch-bar {
-  display: flex;
-  border-top: 1px solid var(--border);
+	display: flex;
+	border-top: 1px solid var(--border);
 }
 
 .dt-swatch-btn {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-  height: crayon.size(9);
-  border: 0;
-  border-left: 1px solid var(--border);
-  background: none;
-  color: var(--muted-foreground);
-  cursor: pointer;
+	display: flex;
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+	height: crayon.size(9);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
 
-  &:first-child {
-    border-left: 0;
-  }
+	&:first-child {
+		border-left: 0;
+	}
 
-  .dt-icon {
-    width: crayon.size(4);
-    height: crayon.size(4);
-  }
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
 
-  @include crayon.hover {
-    background: var(--muted);
-    color: var(--foreground);
-  }
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
 
-  &.is-locked {
-    color: var(--primary);
-  }
+	&.is-locked {
+		color: var(--primary);
+	}
 
-  &.is-danger:hover {
-    color: var(--destructive);
-  }
+	&.is-danger:hover {
+		color: var(--destructive);
+	}
 
-  &:disabled {
-    pointer-events: none;
-    opacity: 0.3;
-  }
+	&:disabled {
+		pointer-events: none;
+		opacity: 0.3;
+	}
 }
 
 /* Controls row */
 .dt-palette-controls {
-  display: flex;
-  min-height: crayon.size(16);
-  align-items: stretch;
-  border-bottom: 2px solid var(--border);
+	display: flex;
+	min-height: crayon.size(16);
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
 }
 
 .dt-strategy {
-  @include crayon.hstack(3);
+	@include crayon.hstack(3);
 
-  min-width: 0;
-  flex: 1;
-  align-items: center;
-  padding: crayon.size(2) crayon.size(4);
-  border: 0;
-  border-right: 1px solid var(--border);
-  background: none;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
+	min-width: 0;
+	flex: 1;
+	align-items: center;
+	padding: crayon.size(2) crayon.size(4);
+	border: 0;
+	border-right: 1px solid var(--border);
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
 
-  @include crayon.hover {
-    background: color-mix(in oklch, var(--muted) 50%, transparent);
-  }
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--muted) 50%, transparent);
+	}
 }
 
 .dt-strategy-text {
-  min-width: 0;
-  flex: 1;
+	min-width: 0;
+	flex: 1;
 }
 
 .dt-strategy-name {
-  display: block;
-  overflow: hidden;
-  font-weight: crayon.font-weight('bold');
-  line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+	display: block;
+	overflow: hidden;
+	font-weight: crayon.font-weight("bold");
+	line-height: 1.2;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .dt-strategy-desc {
-  display: block;
-  overflow: hidden;
-  color: var(--muted-foreground);
-  font-size: crayon.font-size('xs');
-  line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+	display: block;
+	overflow: hidden;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	line-height: 1.2;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .dt-strategy-chevron {
-  width: crayon.size(4);
-  height: crayon.size(4);
-  flex-shrink: 0;
-  opacity: 0.5;
+	width: crayon.size(4);
+	height: crayon.size(4);
+	flex-shrink: 0;
+	opacity: 0.5;
 }
 
 .dt-strategy-popover {
-  width: min(24rem, 90vw);
-  padding: 0;
+	width: min(24rem, 90vw);
+	padding: 0;
 }
 
 .dt-strategy-check {
-  width: crayon.size(4);
-  height: crayon.size(4);
-  flex-shrink: 0;
-  margin-top: 2px;
-  opacity: 0;
+	width: crayon.size(4);
+	height: crayon.size(4);
+	flex-shrink: 0;
+	margin-top: 2px;
+	opacity: 0;
 
-  &.is-on {
-    opacity: 1;
-  }
+	&.is-on {
+		opacity: 1;
+	}
 }
 
 .dt-generate {
-  @include crayon.hstack(2);
+	@include crayon.hstack(2);
 
-  flex: 1.3;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  background: var(--primary);
-  color: var(--primary-foreground);
-  font: inherit;
-  font-size: crayon.font-size('base');
-  font-weight: crayon.font-weight('bold');
-  cursor: pointer;
+	flex: 1.3;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font: inherit;
+	font-size: crayon.font-size("base");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
 
-  .dt-icon {
-    width: crayon.size(5);
-    height: crayon.size(5);
-  }
+	.dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+	}
 
-  @include crayon.hover {
-    background: color-mix(in oklch, var(--primary) 90%, black);
-  }
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--primary) 90%, black);
+	}
 }
 
 .dt-count {
-  display: flex;
-  align-items: stretch;
-  border-left: 1px solid var(--border);
+	display: flex;
+	align-items: stretch;
+	border-left: 1px solid var(--border);
 
-  button {
-    display: flex;
-    width: crayon.size(12);
-    align-items: center;
-    justify-content: center;
-    border: 0;
-    background: none;
-    color: var(--muted-foreground);
-    cursor: pointer;
+	button {
+		display: flex;
+		width: crayon.size(12);
+		align-items: center;
+		justify-content: center;
+		border: 0;
+		background: none;
+		color: var(--muted-foreground);
+		cursor: pointer;
 
-    .dt-icon {
-      width: crayon.size(4);
-      height: crayon.size(4);
-    }
+		.dt-icon {
+			width: crayon.size(4);
+			height: crayon.size(4);
+		}
 
-    @include crayon.hover {
-      background: var(--muted);
-      color: var(--foreground);
-    }
+		@include crayon.hover {
+			background: var(--muted);
+			color: var(--foreground);
+		}
 
-    &:disabled {
-      pointer-events: none;
-      opacity: 0.3;
-    }
-  }
+		&:disabled {
+			pointer-events: none;
+			opacity: 0.3;
+		}
+	}
 
-  span {
-    display: flex;
-    min-width: crayon.size(12);
-    align-items: center;
-    justify-content: center;
-    padding-inline: crayon.size(2);
-    border-inline: 1px solid var(--border);
-    font-size: crayon.font-size('sm');
-    font-weight: crayon.font-weight('bold');
-  }
+	span {
+		display: flex;
+		min-width: crayon.size(12);
+		align-items: center;
+		justify-content: center;
+		padding-inline: crayon.size(2);
+		border-inline: 1px solid var(--border);
+		font-size: crayon.font-size("sm");
+		font-weight: crayon.font-weight("bold");
+	}
 }
 
 /* Export + list blocks */
 .dt-palette-export,
 .dt-palette-list {
-  padding: crayon.size(4);
+	padding: crayon.size(4);
 }
 
 .dt-palette-export {
-  border-bottom: 2px solid var(--border);
+	border-bottom: 2px solid var(--border);
 }
 
 .dt-palette-label {
-  display: block;
-  margin-bottom: crayon.size(3);
-  font-weight: crayon.font-weight('bold');
+	display: block;
+	margin-bottom: crayon.size(3);
+	font-weight: crayon.font-weight("bold");
 }
 
 .dt-export-grid {
-  grid-template-columns: repeat(2, 1fr);
-  margin: 0 crayon.size(-4) crayon.size(-4);
-  border-inline: 0;
-  border-bottom: 0;
+	grid-template-columns: repeat(2, 1fr);
+	margin: 0 crayon.size(-4) crayon.size(-4);
+	border-inline: 0;
+	border-bottom: 0;
 
-  @include crayon.screen('sm') {
-    grid-template-columns: repeat(4, 1fr);
-  }
+	@include crayon.screen("sm") {
+		grid-template-columns: repeat(4, 1fr);
+	}
 
-  button {
-    @include crayon.hstack(2);
+	button {
+		@include crayon.hstack(2);
 
-    align-items: center;
-    justify-content: center;
-    padding: crayon.size(3);
-    background: var(--background);
-    color: inherit;
-    font: inherit;
-    font-size: crayon.font-size('sm');
-    cursor: pointer;
+		align-items: center;
+		justify-content: center;
+		padding: crayon.size(3);
+		background: var(--background);
+		color: inherit;
+		font: inherit;
+		font-size: crayon.font-size("sm");
+		cursor: pointer;
 
-    .dt-icon {
-      width: crayon.size(4);
-      height: crayon.size(4);
-    }
+		.dt-icon {
+			width: crayon.size(4);
+			height: crayon.size(4);
+		}
 
-    @include crayon.hover {
-      background: var(--muted);
-    }
-  }
+		@include crayon.hover {
+			background: var(--muted);
+		}
+	}
 }
 
 .dt-colour-rows {
-  margin: crayon.size(3) crayon.size(-4) crayon.size(-4);
-  border-top: 1px solid var(--border);
+	margin: crayon.size(3) crayon.size(-4) crayon.size(-4);
+	border-top: 1px solid var(--border);
 }
 
 .dt-colour-row {
-  display: flex;
-  align-items: stretch;
-  border-bottom: 1px solid var(--border);
-  background: var(--card);
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+	background: var(--card);
 
-  @include crayon.hover {
-    background: color-mix(in oklch, var(--card) 80%, transparent);
-  }
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--card) 80%, transparent);
+	}
 }
 
 .dt-colour-row-swatch {
-  position: relative;
-  width: crayon.size(16);
-  flex-shrink: 0;
-  border-right: 1px solid var(--border);
-  cursor: pointer;
+	position: relative;
+	width: crayon.size(16);
+	flex-shrink: 0;
+	border-right: 1px solid var(--border);
+	cursor: pointer;
 
-  input[type='color'] {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    cursor: pointer;
-  }
+	input[type="color"] {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		cursor: pointer;
+	}
 
-  span {
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
+	span {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
 }
 
 .dt-colour-row-info {
-  min-width: 0;
-  flex: 1;
-  padding: crayon.size(4);
+	min-width: 0;
+	flex: 1;
+	padding: crayon.size(4);
 }
 
 .dt-colour-row-head {
-  @include crayon.hstack(3);
+	@include crayon.hstack(3);
 
-  align-items: center;
+	align-items: center;
 }
 
 .dt-colour-row-value {
-  font-size: crayon.font-size('lg');
-  font-weight: crayon.font-weight('bold');
-  letter-spacing: crayon.tracking('wide');
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("bold");
+	letter-spacing: crayon.tracking("wide");
 }
 
 .dt-colour-row-name {
-  font-size: crayon.font-size('sm');
-  color: var(--muted-foreground);
-  text-transform: capitalize;
+	font-size: crayon.font-size("sm");
+	color: var(--muted-foreground);
+	text-transform: capitalize;
 }
 
 .dt-colour-row-meta {
-  margin-top: 2px;
-  font-size: crayon.font-size('xs');
-  color: var(--muted-foreground);
+	margin-top: 2px;
+	font-size: crayon.font-size("xs");
+	color: var(--muted-foreground);
 
-  .dt-sep {
-    margin-inline: crayon.size(2);
-    opacity: 0.5;
-  }
+	.dt-sep {
+		margin-inline: crayon.size(2);
+		opacity: 0.5;
+	}
 }
 
 .dt-colour-row-actions {
-  @include crayon.hstack(1);
+	@include crayon.hstack(1);
 
-  align-items: center;
-  padding-inline: crayon.size(2);
-  border-left: 1px solid var(--border);
+	align-items: center;
+	padding-inline: crayon.size(2);
+	border-left: 1px solid var(--border);
 
-  .dt-icon-btn.is-locked {
-    color: var(--primary);
-  }
+	.dt-icon-btn.is-locked {
+		color: var(--primary);
+	}
 
-  .dt-icon-btn.is-danger:hover {
-    color: var(--destructive);
-  }
+	.dt-icon-btn.is-danger:hover {
+		color: var(--destructive);
+	}
 }
 
 .dt-palette-hint {
-  margin-top: crayon.size(4);
-  padding-top: crayon.size(4);
-  border-top: 1px solid var(--border);
-  color: var(--muted-foreground);
-  font-size: crayon.font-size('xs');
-  text-align: center;
+	margin-top: crayon.size(4);
+	padding-top: crayon.size(4);
+	border-top: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	text-align: center;
 
-  kbd {
-    padding: 2px crayon.size(1.5);
-    background: var(--muted);
-    font-family: inherit;
-  }
+	kbd {
+		padding: 2px crayon.size(1.5);
+		background: var(--muted);
+		font-family: inherit;
+	}
 }
 
 /* ── Popover + Command (vendored from shadcn-ember, restyled) ─────────────── */
 
 .dt-popover {
-  z-index: 50;
-  background: var(--popover);
-  color: var(--popover-foreground);
-  border: 1px solid var(--border);
-  box-shadow: 0 8px 28px rgb(0 0 0 / 25%);
+	z-index: 50;
+	background: var(--popover);
+	color: var(--popover-foreground);
+	border: 1px solid var(--border);
+	box-shadow: 0 8px 28px rgb(0 0 0 / 25%);
 }
 
 /* Not `display: contents`: the trigger is what floating-ui measures, and an
    element with no box reports a zero rect, which pins the popover to 0,0. */
 .dt-popover-trigger,
 .dt-popover-anchor {
-  display: flex;
-  min-width: 0;
+	display: flex;
+	min-width: 0;
 }
 
 .dt-command {
-  display: flex;
-  height: 100%;
-  width: 100%;
-  flex-direction: column;
-  overflow: hidden;
-  background: var(--popover);
-  color: var(--popover-foreground);
+	display: flex;
+	height: 100%;
+	width: 100%;
+	flex-direction: column;
+	overflow: hidden;
+	background: var(--popover);
+	color: var(--popover-foreground);
 }
 
 .dt-command-search-icon {
@@ -2169,94 +2176,94 @@ $header-height: crayon.size(14);
 }
 
 .dt-command-search {
-  @include crayon.hstack(2);
+	@include crayon.hstack(2);
 
-  align-items: center;
-  height: crayon.size(9);
-  padding-inline: crayon.size(3);
-  border-bottom: 1px solid var(--border);
+	align-items: center;
+	height: crayon.size(9);
+	padding-inline: crayon.size(3);
+	border-bottom: 1px solid var(--border);
 
-  .dt-icon {
-    width: crayon.size(4);
-    height: crayon.size(4);
-    flex-shrink: 0;
-    color: var(--muted-foreground);
-  }
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+		flex-shrink: 0;
+		color: var(--muted-foreground);
+	}
 }
 
 .dt-command-input {
-  width: 100%;
-  height: crayon.size(10);
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: crayon.font-size('sm');
-  outline: none;
+	width: 100%;
+	height: crayon.size(10);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	outline: none;
 
-  &::placeholder {
-    color: var(--muted-foreground);
-  }
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
 }
 
 .dt-command-list {
-  max-height: 300px;
-  overflow: hidden auto;
-  scroll-padding-block: crayon.size(1);
+	max-height: 300px;
+	overflow: hidden auto;
+	scroll-padding-block: crayon.size(1);
 }
 
 .dt-command-empty {
-  padding-block: crayon.size(6);
-  font-size: crayon.font-size('sm');
-  text-align: center;
-  color: var(--muted-foreground);
+	padding-block: crayon.size(6);
+	font-size: crayon.font-size("sm");
+	text-align: center;
+	color: var(--muted-foreground);
 }
 
 .dt-command-group {
-  overflow: hidden;
-  padding: crayon.size(1);
+	overflow: hidden;
+	padding: crayon.size(1);
 
-  [data-cmdk-group-heading] {
-    padding: crayon.size(1.5) crayon.size(2);
-    font-size: crayon.font-size('xs');
-    font-weight: crayon.font-weight('medium');
-    color: var(--muted-foreground);
-  }
+	[data-cmdk-group-heading] {
+		padding: crayon.size(1.5) crayon.size(2);
+		font-size: crayon.font-size("xs");
+		font-weight: crayon.font-weight("medium");
+		color: var(--muted-foreground);
+	}
 }
 
 .dt-command-item {
-  @include crayon.hstack(2);
+	@include crayon.hstack(2);
 
-  position: relative;
-  align-items: flex-start;
-  padding: crayon.size(1.5) crayon.size(2);
-  font-size: crayon.font-size('sm');
-  cursor: default;
-  outline: none;
-  user-select: none;
+	position: relative;
+	align-items: flex-start;
+	padding: crayon.size(1.5) crayon.size(2);
+	font-size: crayon.font-size("sm");
+	cursor: default;
+	outline: none;
+	user-select: none;
 
-  &[data-selected='true'] {
-    background: var(--accent);
-    color: var(--accent-foreground);
-  }
+	&[data-selected="true"] {
+		background: var(--accent);
+		color: var(--accent-foreground);
+	}
 
-  &[data-disabled='true'] {
-    pointer-events: none;
-    opacity: 0.5;
-  }
+	&[data-disabled="true"] {
+		pointer-events: none;
+		opacity: 0.5;
+	}
 }
 
 .dt-command-separator {
-  height: 1px;
-  margin-inline: crayon.size(-1);
-  background: var(--border);
+	height: 1px;
+	margin-inline: crayon.size(-1);
+	background: var(--border);
 }
 
 .dt-command-shortcut {
-  margin-left: auto;
-  font-size: crayon.font-size('xs');
-  letter-spacing: crayon.tracking('widest');
-  color: var(--muted-foreground);
+	margin-left: auto;
+	font-size: crayon.font-size("xs");
+	letter-spacing: crayon.tracking("widest");
+	color: var(--muted-foreground);
 }
 
 /* The popover unmounts on `animationend` (isOpenOrClosing clears in
@@ -2264,194 +2271,194 @@ $header-height: crayon.size(14);
    load-bearing animation the tooltip needs. Upstream got them from
    tw-animate-css, which Crayon replaces. */
 .dt-popover {
-  animation: dt-pop-in 0.12s ease-out;
+	animation: dt-pop-in 0.12s ease-out;
 
-  &[data-state='closed'] {
-    animation: dt-pop-out 0.1s ease-in forwards;
-  }
+	&[data-state="closed"] {
+		animation: dt-pop-out 0.1s ease-in forwards;
+	}
 }
 
 @keyframes dt-pop-in {
-  from {
-    opacity: 0;
-    transform: scale(0.97);
-  }
+	from {
+		opacity: 0;
+		transform: scale(0.97);
+	}
 
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
 }
 
 @keyframes dt-pop-out {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
+	from {
+		opacity: 1;
+		transform: scale(1);
+	}
 
-  to {
-    opacity: 0;
-    transform: scale(0.97);
-  }
+	to {
+		opacity: 0;
+		transform: scale(0.97);
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* still animated, just imperceptibly: animationend has to fire */
-  .dt-popover,
-  .dt-popover[data-state='closed'] {
-    animation-duration: 0.01s;
-  }
+	/* still animated, just imperceptibly: animationend has to fire */
+	.dt-popover,
+	.dt-popover[data-state="closed"] {
+		animation-duration: 0.01s;
+	}
 }
 
 /* ── Palette export panel (hidden dev mode, press P) ─────────────────────── */
 
 .dt-export-panel {
-  @include crayon.vstack(4);
+	@include crayon.vstack(4);
 
-  padding: crayon.size(4);
-  border-bottom: 2px dashed
-    color-mix(in oklch, oklch(76% 0.16 70deg) 50%, transparent);
-  background: color-mix(in oklch, oklch(76% 0.16 70deg) 5%, transparent);
+	padding: crayon.size(4);
+	border-bottom: 2px dashed
+		color-mix(in oklch, oklch(76% 0.16 70deg) 50%, transparent);
+	background: color-mix(in oklch, oklch(76% 0.16 70deg) 5%, transparent);
 
-  label {
-    display: block;
-    margin-bottom: crayon.size(2);
-    font-size: crayon.font-size('sm');
-    font-weight: crayon.font-weight('medium');
-  }
+	label {
+		display: block;
+		margin-bottom: crayon.size(2);
+		font-size: crayon.font-size("sm");
+		font-weight: crayon.font-weight("medium");
+	}
 
-  input[type='text'],
-  select,
-  textarea {
-    width: 100%;
-    padding: crayon.size(2) crayon.size(3);
-    border: 1px solid var(--border);
-    background: var(--background);
-    color: inherit;
-    font: inherit;
-    font-size: crayon.font-size('sm');
+	input[type="text"],
+	select,
+	textarea {
+		width: 100%;
+		padding: crayon.size(2) crayon.size(3);
+		border: 1px solid var(--border);
+		background: var(--background);
+		color: inherit;
+		font: inherit;
+		font-size: crayon.font-size("sm");
 
-    &:focus-visible {
-      outline: 2px solid var(--ring);
-      outline-offset: -1px;
-    }
-  }
+		&:focus-visible {
+			outline: 2px solid var(--ring);
+			outline-offset: -1px;
+		}
+	}
 
-  textarea {
-    resize: none;
-  }
+	textarea {
+		resize: none;
+	}
 }
 
 .dt-export-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 
-  h3 {
-    font-weight: crayon.font-weight('bold');
-    color: oklch(60% 0.14 70deg);
-  }
+	h3 {
+		font-weight: crayon.font-weight("bold");
+		color: oklch(60% 0.14 70deg);
+	}
 
-  button {
-    border: 0;
-    background: none;
-    color: var(--muted-foreground);
-    font: inherit;
-    font-size: crayon.font-size('xs');
-    cursor: pointer;
+	button {
+		border: 0;
+		background: none;
+		color: var(--muted-foreground);
+		font: inherit;
+		font-size: crayon.font-size("xs");
+		cursor: pointer;
 
-    @include crayon.hover {
-      color: var(--foreground);
-    }
-  }
+		@include crayon.hover {
+			color: var(--foreground);
+		}
+	}
 }
 
 .dt-export-fields {
-  display: grid;
-  gap: crayon.size(4);
+	display: grid;
+	gap: crayon.size(4);
 
-  @include crayon.screen('sm') {
-    grid-template-columns: 1fr 1fr;
-  }
+	@include crayon.screen("sm") {
+		grid-template-columns: 1fr 1fr;
+	}
 }
 
 .dt-export-note {
-  margin-top: crayon.size(2);
-  font-size: crayon.font-size('xs');
-  color: var(--muted-foreground);
+	margin-top: crayon.size(2);
+	font-size: crayon.font-size("xs");
+	color: var(--muted-foreground);
 
-  code {
-    padding: 2px crayon.size(1);
-    background: var(--muted);
-  }
+	code {
+		padding: 2px crayon.size(1);
+		background: var(--muted);
+	}
 }
 
 .dt-export-import-row {
-  @include crayon.hstack(2);
+	@include crayon.hstack(2);
 
-  align-items: flex-end;
+	align-items: flex-end;
 
-  textarea {
-    flex: 1;
-  }
+	textarea {
+		flex: 1;
+	}
 
-  button {
-    padding: crayon.size(2) crayon.size(4);
-    border: 1px solid var(--border);
-    background: var(--background);
-    color: inherit;
-    font: inherit;
-    font-size: crayon.font-size('sm');
-    cursor: pointer;
+	button {
+		padding: crayon.size(2) crayon.size(4);
+		border: 1px solid var(--border);
+		background: var(--background);
+		color: inherit;
+		font: inherit;
+		font-size: crayon.font-size("sm");
+		cursor: pointer;
 
-    @include crayon.hover {
-      background: var(--muted);
-    }
+		@include crayon.hover {
+			background: var(--muted);
+		}
 
-    &:disabled {
-      pointer-events: none;
-      opacity: 0.4;
-    }
-  }
+		&:disabled {
+			pointer-events: none;
+			opacity: 0.4;
+		}
+	}
 }
 
 .dt-export-json {
-  @include crayon.vstack(2);
+	@include crayon.vstack(2);
 
-  pre {
-    overflow-x: auto;
-    padding: crayon.size(3);
-    background: var(--muted);
-    font-size: crayon.font-size('xs');
-  }
+	pre {
+		overflow-x: auto;
+		padding: crayon.size(3);
+		background: var(--muted);
+		font-size: crayon.font-size("xs");
+	}
 }
 
 .dt-export-json-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: crayon.font-size('sm');
-  font-weight: crayon.font-weight('medium');
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("medium");
 
-  button {
-    @include crayon.hstack(2);
+	button {
+		@include crayon.hstack(2);
 
-    align-items: center;
-    padding: crayon.size(1) crayon.size(2);
-    border: 1px solid var(--border);
-    background: var(--background);
-    color: inherit;
-    font: inherit;
-    font-size: crayon.font-size('xs');
-    cursor: pointer;
+		align-items: center;
+		padding: crayon.size(1) crayon.size(2);
+		border: 1px solid var(--border);
+		background: var(--background);
+		color: inherit;
+		font: inherit;
+		font-size: crayon.font-size("xs");
+		cursor: pointer;
 
-    .dt-icon {
-      width: crayon.size(3);
-      height: crayon.size(3);
-    }
+		.dt-icon {
+			width: crayon.size(3);
+			height: crayon.size(3);
+		}
 
-    @include crayon.hover {
-      background: var(--muted);
-    }
-  }
+		@include crayon.hover {
+			background: var(--muted);
+		}
+	}
 }

@@ -1,3 +1,3 @@
 export default {
-  extends: 'recommended',
+	extends: 'recommended',
 };

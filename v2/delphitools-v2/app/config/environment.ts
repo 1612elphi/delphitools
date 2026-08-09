@@ -4,30 +4,30 @@ import { assert } from '@ember/debug';
 const config = loadConfigFromMeta('delphitools-v2') as unknown;
 
 assert(
-  'config is not an object',
-  typeof config === 'object' && config !== null,
+	'config is not an object',
+	typeof config === 'object' && config !== null,
 );
 assert(
-  'modulePrefix was not detected on your config',
-  'modulePrefix' in config && typeof config.modulePrefix === 'string',
+	'modulePrefix was not detected on your config',
+	'modulePrefix' in config && typeof config.modulePrefix === 'string',
 );
 assert(
-  'locationType was not detected on your config',
-  'locationType' in config && typeof config.locationType === 'string',
+	'locationType was not detected on your config',
+	'locationType' in config && typeof config.locationType === 'string',
 );
 assert(
-  'rootURL was not detected on your config',
-  'rootURL' in config && typeof config.rootURL === 'string',
+	'rootURL was not detected on your config',
+	'rootURL' in config && typeof config.rootURL === 'string',
 );
 assert(
-  'APP was not detected on your config',
-  'APP' in config && typeof config.APP === 'object',
+	'APP was not detected on your config',
+	'APP' in config && typeof config.APP === 'object',
 );
 
 export default config as {
-  modulePrefix: string;
-  podModulePrefix?: string;
-  locationType: string;
-  rootURL: string;
-  APP: Record<string, unknown>;
+	modulePrefix: string;
+	podModulePrefix?: string;
+	locationType: string;
+	rootURL: string;
+	APP: Record<string, unknown>;
 } & Record<string, unknown>;

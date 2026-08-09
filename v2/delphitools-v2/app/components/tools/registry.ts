@@ -13,5 +13,5 @@ import type { ComponentLike } from '@glint/template';
 import PaletteGenny from 'delphitools-v2/components/tools/palette-genny';
 
 export const TOOL_COMPONENTS: Record<string, ComponentLike<object>> = {
-  'palette-genny': PaletteGenny,
+	'palette-genny': PaletteGenny,
 };

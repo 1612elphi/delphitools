@@ -11,66 +11,66 @@
 // CLI is the reverse — it needs the subpath — so compile checks outside Vite
 // will not resolve this line.)
 @forward "crayon-css" hide dark with (
-  // The whole UI is monospaced. iA Writer Quattro is self-hosted; see the
-  // @font-face pair in app.scss.
-  $font-families: (
-      "sans": (
-        "iA Writer Quattro",
-        ui-monospace,
-        monospace,
-      ),
-      "serif": (
-        Georgia,
-        "Times New Roman",
-        serif,
-      ),
-      "mono": (
-        "iA Writer Quattro",
-        ui-monospace,
-        "Cascadia Mono",
-        Menlo,
-        Monaco,
-        Consolas,
-        monospace,
-      )
-    ),
-  $default-font: "mono",
+	// The whole UI is monospaced. iA Writer Quattro is self-hosted; see the
+	// @font-face pair in app.scss.
+	$font-families: (
+			"sans": (
+				"iA Writer Quattro",
+				ui-monospace,
+				monospace,
+			),
+			"serif": (
+				Georgia,
+				"Times New Roman",
+				serif,
+			),
+			"mono": (
+				"iA Writer Quattro",
+				ui-monospace,
+				"Cascadia Mono",
+				Menlo,
+				Monaco,
+				Consolas,
+				monospace,
+			)
+		),
+	$default-font: "mono",
 
-  // The `.bg-red-500\/50` variants are 1.12 MB of the 1.32 MB default output.
-  // Off, the whole sheet is 192 KB raw / 17.5 KB brotli, so Crayon's suggested
-  // PurgeCSS step buys nothing here.
-  // ponytail: no purge step; add one if the sheet passes ~50 KB brotli.
-  $use-color-opacity-modifiers: false,
+	// The `.bg-red-500\/50` variants are 1.12 MB of the 1.32 MB default output.
+	// Off, the whole sheet is 192 KB raw / 17.5 KB brotli, so Crayon's suggested
+	// PurgeCSS step buys nothing here.
+	// ponytail: no purge step; add one if the sheet passes ~50 KB brotli.
+	$use-color-opacity-modifiers: false,
 
-  // Square corners everywhere. `full` stays for pills, switches and avatars.
-  $border-radii: (
-      "none": 0,
-      "sm": 0,
-      "DEFAULT": 0,
-      "md": 0,
-      "lg": 0,
-      "xl": 0,
-      "2xl": 0,
-      "3xl": 0,
-      "full": 9999px
-    ),
+	// Square corners everywhere. `full` stays for pills, switches and avatars.
+	$border-radii: (
+			"none": 0,
+			"sm": 0,
+			"DEFAULT": 0,
+			"md": 0,
+			"lg": 0,
+			"xl": 0,
+			"2xl": 0,
+			"3xl": 0,
+			"full": 9999px
+		),
 
-  // Share-card greens, the only brand colours that are fixed rather than
-  // theme-dependent. lib/og-card.tsx hard-codes the same values because satori
-  // has no oklch parser.
-  $colors: (
-      "delphi-cream": #faf5e6,
-      "delphi-border": #1b5e20,
-      "delphi-title": #14481a,
-      "delphi-sub": #1e6626,
-      "delphi-sage": #93a98d
-    )
+	// Share-card greens, the only brand colours that are fixed rather than
+	// theme-dependent. lib/og-card.tsx hard-codes the same values because satori
+	// has no oklch parser.
+	$colors: (
+			"delphi-cream": #faf5e6,
+			"delphi-border": #1b5e20,
+			"delphi-title": #14481a,
+			"delphi-sub": #1e6626,
+			"delphi-sage": #93a98d
+		)
 );
 
 /// Class-based dark mode, matching the `.dark` toggle on <html>.
 /// @content
 @mixin dark {
-  html.dark & {
-    @content;
-  }
+	html.dark & {
+		@content;
+	}
 }

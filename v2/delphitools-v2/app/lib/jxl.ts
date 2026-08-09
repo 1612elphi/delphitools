@@ -16,12 +16,12 @@
 import { JXL_ENCODE_DEFAULTS } from './jxl-defaults';
 
 interface JxlEncoderModule {
-  encode(
-    data: Uint8ClampedArray,
-    width: number,
-    height: number,
-    options: Record<string, unknown>,
-  ): Uint8Array | null;
+	encode(
+		data: Uint8ClampedArray,
+		width: number,
+		height: number,
+		options: Record<string, unknown>,
+	): Uint8Array | null;
 }
 
 const CODEC_URL = '/jxl/jxl_enc.js';
@@ -40,35 +40,40 @@ const CODEC_URL = '/jxl/jxl_enc.js';
 // above; nothing reaches this from user input.
 // eslint-disable-next-line @typescript-eslint/no-implied-eval
 const rawImport = new Function('u', 'return import(u)') as (
-  u: string,
+	u: string,
 ) => Promise<{ default: (opts: unknown) => Promise<JxlEncoderModule> }>;
 
 let modulePromise: Promise<JxlEncoderModule> | null = null;
 
 export function getJxlModule(): Promise<JxlEncoderModule> {
-  modulePromise ??= (async () => {
-    const { default: factory } = await rawImport(CODEC_URL);
-    return factory({
-      noInitialRun: true,
-      locateFile: (path: string) => `/jxl/${path}`,
-    });
-  })();
-  return modulePromise;
+	modulePromise ??= (async () => {
+		const { default: factory } = await rawImport(CODEC_URL);
+		return factory({
+			noInitialRun: true,
+			locateFile: (path: string) => `/jxl/${path}`,
+		});
+	})();
+	return modulePromise;
 }
 
 export async function encodeJxl(
-  canvas: HTMLCanvasElement,
-  options: { quality: number; lossless: boolean },
+	canvas: HTMLCanvasElement,
+	options: { quality: number; lossless: boolean },
 ): Promise<Blob> {
-  const mod = await getJxlModule();
-  const ctx = canvas.getContext('2d')!;
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const result = mod.encode(imageData.data, imageData.width, imageData.height, {
-    ...JXL_ENCODE_DEFAULTS,
-    quality: options.lossless ? 100 : options.quality,
-    lossless: options.lossless,
-  });
-  if (!result) throw new Error('JXL encoding failed');
-  // Copy out of the WASM heap into a standalone buffer.
-  return new Blob([new Uint8Array(result)], { type: 'image/jxl' });
+	const mod = await getJxlModule();
+	const ctx = canvas.getContext('2d')!;
+	const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+	const result = mod.encode(
+		imageData.data,
+		imageData.width,
+		imageData.height,
+		{
+			...JXL_ENCODE_DEFAULTS,
+			quality: options.lossless ? 100 : options.quality,
+			lossless: options.lossless,
+		},
+	);
+	if (!result) throw new Error('JXL encoding failed');
+	// Copy out of the WASM heap into a standalone buffer.
+	return new Blob([new Uint8Array(result)], { type: 'image/jxl' });
 }

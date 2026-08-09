@@ -9,22 +9,22 @@ import { importSync, isDevelopingApp, macroCondition } from '@embroider/macros';
 import setupInspector from '@embroider/legacy-inspector-support/ember-source-4.12';
 
 if (macroCondition(isDevelopingApp())) {
-  importSync('./deprecation-workflow');
+	importSync('./deprecation-workflow');
 }
 
 export default class App extends Application {
-  modulePrefix = config.modulePrefix;
-  podModulePrefix = config.podModulePrefix;
-  Resolver = Resolver.withModules(compatModules);
-  inspector = setupInspector(this);
+	modulePrefix = config.modulePrefix;
+	podModulePrefix = config.podModulePrefix;
+	Resolver = Resolver.withModules(compatModules);
+	inspector = setupInspector(this);
 }
 
 // Dev-only rig for the headless harnesses, same idea as Substrata's
 // window.__substrata in the Next app.
 if (macroCondition(isDevelopingApp())) {
-  void import('./lib/jxl').then((m) => {
-    (globalThis as unknown as { __jxl?: unknown }).__jxl = m;
-  });
+	void import('./lib/jxl').then((m) => {
+		(globalThis as unknown as { __jxl?: unknown }).__jxl = m;
+	});
 }
 
 loadInitializers(App, config.modulePrefix, compatModules);
