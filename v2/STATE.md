@@ -5,14 +5,14 @@ Snapshot of the `v2-ember` branch for the Next-to-Ember rewrite. Companion to
 plan, which also carries the Phase 0 findings). This file is what actually
 exists in the code right now.
 
-**Status:** Phase 0 is CLOSED. Every D1 and D2 tool is ported: 43 of 56. What
-remains is the nine D3 tools, the two D4 tools, and two sub-panels that have no
-route of their own.
+**Status:** Phase 0 is CLOSED. Every D1, D2 and D3 tool is ported: 53 of 56.
+What remains is `image-stitcher`, `graph-calc` and Substrata itself.
 
 Branch: `v2-ember`. App: `v2/delphitools-v2/`. The Next app in the repo root is
 untouched and still the production site.
 
 ```
+1e26b3b  feat(v2): port the ten remaining D3 tools
 55fce9c  perf(v2): one chunk per tool, and app/lib out of the eager graph
 5b9df3b  feat(v2): port the last eleven D2 tools
 a7735f6  feat(v2): port font-explorer, and rebuild the tool registry
@@ -62,7 +62,7 @@ npm run build:static      # build, then prerender each route + its og.png
 npm run gen-icons         # regenerate app/lib/icons.ts from what templates use
 npm run test              # ember-qunit, 69 tests
 npm run lint              # eslint + template-lint + stylelint + prettier
-npm run verify            # 10 puppeteer rigs, 183 checks, needs npm start
+npm run verify            # 11 puppeteer rigs, needs npm start
 npm run verify:static     # prerendered output, jxl and ONNX, needs build:static
 npm run verify:model      # background removal end to end, downloads 88 MB
 ```
@@ -71,7 +71,7 @@ npm run verify:model      # background removal end to end, downloads 88 MB
 its own subcommand. `npm run test` builds a test bundle over `dist/`, so
 `verify:static` after it reads the wrong build; rerun `build:static` first.
 
-Gates, all green as of `55fce9c`: `ember-tsc --noEmit`, `eslint .`,
+Gates, all green as of `1e26b3b`: `ember-tsc --noEmit`, `eslint .`,
 `ember-template-lint .`, `stylelint **/*.{css,scss}`, `prettier --check .`.
 
 **Never run `npm run format` from the repo root.** It formats the Next app, not
@@ -97,6 +97,7 @@ exceptions count as failures, and a failing run exits non-zero.
 | `palette.mjs` | generate, lock, the stepper, the strategy combobox |
 | `sharelink.mjs` | `?colors=` on a cold load, and its fallbacks |
 | `tooltip.mjs` | collapsed-rail tooltips, and that they unmount rather than linger |
+| `tools.mjs` | every tool route renders its tool rather than the placeholder |
 | `static.mjs` | the built output: per-route head tags, share cards, client-side nav, per-tool chunks, the jxl codec, the ONNX binary |
 | `bg-removal.mjs` | the real model, end to end, checking a matte reaches the alpha channel |
 
@@ -110,12 +111,14 @@ inference, which takes minutes and needs network.
 ## What works
 
 **Stack.** Ember 7.1, Embroider + Vite, TypeScript strict + Glint, `.gts`
-template tag throughout. 10,945 lines of app source. Build is ~15s.
+template tag throughout. 56,794 lines of app source, not counting the
+stylesheets or the vendored pandoc wrapper. Build is ~26s.
 
 **Bundle.** Each tool is its own chunk, fetched by the route's model hook during
-the transition. First load is 18 files, 134 kB gzip: `main` 83 kB raw, the
-`application` route chunk 158 kB raw, and the shared runtime. Before the split
-it was `main` at 1.65 MB, 463 kB gzip, carrying all 43 tools.
+the transition. First load is 18 files, 134 kB gzip: `main` 86 kB raw, the
+`application` route chunk 158 kB raw, and the shared runtime. Ten more tools,
+ProseMirror and pandoc among them, cost `main` 3 kB. Before the split it was
+`main` at 1.65 MB, 463 kB gzip, carrying all 43 tools.
 
 **Styling on Crayon.** `crayon-css` 0.9.1 (Sass) replaces Tailwind 4 entirely.
 `app/styles/_crayon-config.scss` is the single config. `app/styles/app.scss`
@@ -132,17 +135,17 @@ toggle, About dialog, 404. Pride styling and the commit SHA come through Vite
 **Routing.** `/`, `/tools/:tool_id`, `/editor` (stub), wildcard 404. URLs
 unchanged from the Next app.
 
-**Tools.** 43 of 56, by category:
+**Tools.** 53 of 56, by category:
 
 | Category | State |
 | --- | --- |
 | Colour | 10 of 10 |
-| Typography & Text | 8 of 9 — `text-editor` left |
-| Calculators | 5 of 6 — `graph-calc` left |
-| Social Media | 4 of 5 — `social-cropper` left |
-| Images & Assets | 8 of 12 |
-| Other Tools | 5 of 6 |
-| Print & Production | 0 of 3 |
+| Typography & Text | 11 of 11 |
+| Calculators | 6 of 7 — `graph-calc` left |
+| Social Media | 4 of 4 |
+| Images & Assets | 11 of 13 — `substrata` and `image-stitcher` left |
+| Other Tools | 7 of 7 |
+| Print & Production | 3 of 3 |
 | Turbo-nerd Shit | 1 of 1 |
 
 Every Colour tool reads its conversions from `lib/colour-maths.ts` and formats
@@ -161,13 +164,21 @@ verified at parity — read the porting notes before trusting them.**
 | `algebra-calc` | nerdamer + katex | mathjs |
 | `markdown-writer` | react-markdown + remark-gfm | no markdown library |
 
-Installed for this batch: `svgo`, `mathjs`, `pdf-lib`.
+Installed so far: `svgo`, `mathjs`, `pdf-lib`, then `bwip-js`, `jszip`,
+`qr-code-styling`, `pdfjs-dist`, `imagetracerjs` and the thirteen prosemirror
+packages for the D3 batch, all at the versions the Next app pins. Two assets
+are served rather than bundled: `public/pdf.worker.min.mjs` and
+`public/lib/imagetracer_v1.2.6.js`, the latter because `image-tracer` builds
+its Web Worker from that URL.
 
 **Shared pieces the ports produced.** `lib/colour-maths.ts` holds both
 directions of every colour transform, replacing the three copies the Next app
 carried. `lib/ico.ts` builds the ICO container, which was inline and untested
 there. `modifiers/file-paste.ts` replaces the `use-file-paste` hook that 23
-Next tools use.
+Next tools use. The D3 batch added `lib/imposition.ts` and `lib/zine-folds.ts`
+(both imposers), `ui/paper-size-combobox.gts`, `lib/editor/` (fourteen files of
+ProseMirror), `lib/pandoc/`, `lib/social-presets.ts`, `lib/gif.ts` and
+`lib/tiff.ts`.
 
 **Primitives.** `app/components/ui/` holds `dialog` (local, over the native
 element) plus `tooltip`, `popover`, `command`, `select` and `tabs` vendored
@@ -395,6 +406,27 @@ and leave `package-lock.json` stale. Use `/opt/homebrew/bin/npm install
 --package-lock-only` to resync; the parent repo tracks that file to pin the
 Cloudflare Pages build.
 
+**A tool that fails to export a default renders as "Coming Soon", and every
+gate stays green.** `loadToolComponent` returns undefined, the route falls to
+the placeholder, and the build, the five lint gates and the prerender pass all
+succeed — prerender reads the page header, which comes from `lib/tools.ts`, not
+from the component. A tool that throws while rendering looks the same to a
+visitor. `scripts/verify/tools.mjs` exists for this: it visits all 53 routes and
+asserts the placeholder is absent.
+
+**pdf-lib breaks Vite's dep optimizer, and only in dev.**
+`@pdf-lib/standard-fonts` stores each font as a deflated payload in a file named
+`.json`, and its own `es/Font.js` imports them as JSON. The optimizer parses
+them, fails the whole pass with "trailing characters", and takes the dev server
+down; every pdf tool then 504s on its dynamic import and the failure reads as a
+broken tool. `optimizeDeps.exclude: ['pdf-lib']` in `vite.config.mjs`. The
+production build never runs that pass, so `npm run build` was green throughout.
+
+**Clearing `node_modules/.vite` is how you find this class of bug.** The dev
+server can be running happily on a cached prebundle while a cold start fails
+outright, so a green dev server proves nothing about a new dependency until the
+cache has been cleared once.
+
 **Embroider's compat-modules is what actually decides the bundle.** Splitting
 the tools into dynamic imports took `main` from 1.65 MB to 772 kB, and 448 kB of
 what was left was the Shavian dictionary — a file only one tool imports, and
@@ -414,18 +446,17 @@ syntax. The fix for Ash is three lines, but it raises Crayon's Sass floor to
 
 ## Not done
 
-**Tools.** 13 left.
+**Tools.** 3 left.
 
 Route ids, taken from `lib/tools.ts` against what the registry glob picks up.
-`code-genny` is a route of its own, not a sub-panel, and `substrata` is one of
-the 13 rather than a separate concern.
 
 | D | Tools |
 | --- | --- |
-| D3 | `social-cropper`, `image-converter`, `code-genny`, `qr-genny`, `zine-imposer`, `imposer`, `pdf-preflight`, `image-tracer`, `text-editor`, `doc-converter` |
 | D4 | `image-stitcher` (@dnd-kit, and Substrata's export libs), `graph-calc` (mafs is React-only) |
 | its own project | `substrata`, the editor |
-| sub-panel | `wifi-form` belongs to `qr-genny`; port it with its parent. |
+
+`wifi-form` was a sub-panel with no route of its own and is now part of
+`qr-genny`, where it belongs.
 
 `gradient-genny` was rated D4 for the same @dnd-kit reason as `image-stitcher`,
 and came in without it, on native Pointer Events and `setPointerCapture`. If
@@ -439,10 +470,21 @@ regression net on the editor.
 split-flap and Friends of Delphi are all GSAP or motion and absent.
 
 **Primitives still to vendor.** collapsible and sheet/drawer, if a later tool
-needs them. Nothing has yet.
+needs them. Nothing has yet: the D3 tools that wanted an Accordion or a Switch
+built a toggle button and a styled checkbox instead, partly because
+ember-template-lint's `no-nested-interactive` and `require-presentational-children`
+reject several of the shapes the shadcn versions use.
 
-**Copy.** Five unfilled gaps: `algebra-calc`, `favicon-genny`,
-`matte-generator`, `scroll-generator`, `watermarker`. `slopsieve` fills them.
+**The D3 batch is unexercised.** Ten tools render, boot without a console
+error, and pass every gate. None has been driven: no crop dragged, no PDF
+imposed, no document converted, no barcode decoded. `tools.mjs` is a mount
+check, not a behaviour check, and it is all the coverage those ten have.
+
+**Copy.** Six unfilled gaps: `algebra-calc`, `favicon-genny`,
+`matte-generator`, `scroll-generator`, `social-cropper`, `watermarker`.
+`slopsieve` fills them. The D3 batch added only the one, because every other
+string in those ten tools already exists verbatim in the Next app and was
+carried across rather than rewritten.
 Separately, `background-remover` carries the Next app's line about "a ~180MB
 processing engine", which was accurate at fp32 and is now roughly 110 MB.
 
@@ -467,12 +509,18 @@ anything is deployed at all.
 
 ## Next
 
-1. The D3 tools, individually rather than in a batch. Four are pdf-lib or
-   worker work (`imposer`, `zine-imposer`, `pdf-preflight`, `doc-converter`)
-   and share an approach; `image-converter` can reuse `lib/jxl.ts`, which
-   already solves its hardest part.
-2. `graph-calc`, the one genuine D4: mafs is React-only and the plot surface
-   has to be rebuilt on SVG. mathjs is already installed.
+1. Interaction coverage for the D3 batch. All ten render and boot clean, and
+   none has been driven: no crop dragged, no PDF imposed, no document
+   converted, no barcode read back. `tools.mjs` proves they mount, which is
+   the floor rather than the bar. The rigs worth writing first are the ones
+   whose output is checkable without a human eye — the imposers against
+   `lib/imposition`, `code-genny` against a decoder, `image-converter`
+   round-tripping a known image.
+2. `image-stitcher`, then `graph-calc`. `gradient-genny` shipped without
+   @dnd-kit on native Pointer Events, so try that for the stitcher before
+   adding the dependency; its Substrata export imports are the real question.
+   `graph-calc` needs the plot surface rebuilt on SVG because mafs is
+   React-only. mathjs is already installed.
 3. Deploy. `public/_redirects` and the `dist`-versus-`out` mismatch are both
    one-line jobs, and nothing has been proven end to end past
    `npm run build:static`.
@@ -481,7 +529,7 @@ anything is deployed at all.
    cannot start until `main` has run. `scripts/prerender.mjs` already boots
    each route in Chrome, so recording that route's asset requests and writing
    a `modulepreload` link per route is about five lines. And the 158 kB
-   `application` chunk is the largest thing on first load, against an 82 kB
+   `application` chunk is the largest thing on first load, against an 86 kB
    `main`; nobody has looked at what is in it.
 
 ---
