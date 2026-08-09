@@ -1,4 +1,13 @@
-import { hexToRgb } from './colour-maths';
+import {
+	hexToRgb,
+	rgbToHsl,
+	rgbToHsv,
+	rgbToXyz,
+	xyzToLab,
+	rgbToOklab,
+	rgbToOklch,
+	rgbToYcbcr,
+} from './colour-maths';
 
 export type ColourNotation =
 	| 'hex'
@@ -35,140 +44,6 @@ export const COLOUR_NOTATIONS: {
 	{ id: 'ycbcr', label: 'YCbCr', example: 'ycbcr(131, 186, 68)' },
 ];
 
-// ============================================================================
-// Conversion utilities
-// ============================================================================
-
-function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
-	r /= 255;
-	g /= 255;
-	b /= 255;
-	const max = Math.max(r, g, b),
-		min = Math.min(r, g, b);
-	let h = 0,
-		s = 0;
-	const l = (max + min) / 2;
-
-	if (max !== min) {
-		const d = max - min;
-		s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-		switch (max) {
-			case r:
-				h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
-				break;
-			case g:
-				h = ((b - r) / d + 2) / 6;
-				break;
-			case b:
-				h = ((r - g) / d + 4) / 6;
-				break;
-		}
-	}
-	return [h * 360, s * 100, l * 100];
-}
-
-function rgbToHsv(r: number, g: number, b: number): [number, number, number] {
-	r /= 255;
-	g /= 255;
-	b /= 255;
-	const max = Math.max(r, g, b),
-		min = Math.min(r, g, b);
-	const d = max - min;
-	let h = 0;
-	const s = max === 0 ? 0 : d / max;
-	const v = max;
-
-	if (max !== min) {
-		switch (max) {
-			case r:
-				h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
-				break;
-			case g:
-				h = ((b - r) / d + 2) / 6;
-				break;
-			case b:
-				h = ((r - g) / d + 4) / 6;
-				break;
-		}
-	}
-	return [h * 360, s * 100, v * 100];
-}
-
-function srgbToLinear(c: number): number {
-	c /= 255;
-	return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-}
-
-// RGB to XYZ (D65)
-function rgbToXyz(r: number, g: number, b: number): [number, number, number] {
-	const lr = srgbToLinear(r),
-		lg = srgbToLinear(g),
-		lb = srgbToLinear(b);
-	return [
-		0.4124564 * lr + 0.3575761 * lg + 0.1804375 * lb,
-		0.2126729 * lr + 0.7151522 * lg + 0.072175 * lb,
-		0.0193339 * lr + 0.119192 * lg + 0.9503041 * lb,
-	];
-}
-
-// XYZ to CIE LAB
-function xyzToLab(x: number, y: number, z: number): [number, number, number] {
-	const xn = 0.95047,
-		yn = 1.0,
-		zn = 1.08883;
-	const f = (t: number) =>
-		t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116;
-	const fx = f(x / xn),
-		fy = f(y / yn),
-		fz = f(z / zn);
-	return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
-}
-
-// RGB to OKLAB
-function rgbToOklab(r: number, g: number, b: number): [number, number, number] {
-	const lr = srgbToLinear(r),
-		lg = srgbToLinear(g),
-		lb = srgbToLinear(b);
-	const l = Math.cbrt(
-		0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb,
-	);
-	const m = Math.cbrt(
-		0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb,
-	);
-	const s = Math.cbrt(
-		0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb,
-	);
-	return [
-		0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
-		1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
-		0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s,
-	];
-}
-
-// OKLAB to OKLCH
-function oklabToOklch(
-	L: number,
-	a: number,
-	b: number,
-): [number, number, number] {
-	const c = Math.sqrt(a * a + b * b);
-	let h = (Math.atan2(b, a) * 180) / Math.PI;
-	if (h < 0) h += 360;
-	return [L, c, h];
-}
-
-// RGB to YCbCr (ITU-R BT.601)
-function rgbToYcbcr(r: number, g: number, b: number): [number, number, number] {
-	const y = 16 + (65.481 * r + 128.553 * g + 24.966 * b) / 255;
-	const cb = 128 + (-37.797 * r - 74.203 * g + 112.0 * b) / 255;
-	const cr = 128 + (112.0 * r - 93.786 * g - 18.214 * b) / 255;
-	return [Math.round(y), Math.round(cb), Math.round(cr)];
-}
-
-// ============================================================================
-// Public API
-// ============================================================================
-
 /**
  * Format a hex colour string in the given notation.
  * Returns the hex string unchanged if parsing fails.
@@ -193,8 +68,7 @@ export function formatColour(hex: string, notation: ColourNotation): string {
 			return `hsv(${h.toFixed(1)}, ${s.toFixed(1)}%, ${v.toFixed(1)}%)`;
 		}
 		case 'lab': {
-			const xyz = rgbToXyz(...rgb);
-			const [l, a, b] = xyzToLab(...xyz);
+			const [l, a, b] = xyzToLab(...rgbToXyz(...rgb));
 			return `lab(${l.toFixed(2)} ${a.toFixed(2)} ${b.toFixed(2)})`;
 		}
 		case 'oklab': {
@@ -202,8 +76,7 @@ export function formatColour(hex: string, notation: ColourNotation): string {
 			return `oklab(${l.toFixed(4)} ${a.toFixed(4)} ${b.toFixed(4)})`;
 		}
 		case 'oklch': {
-			const oklab = rgbToOklab(...rgb);
-			const [l, c, h] = oklabToOklch(...oklab);
+			const [l, c, h] = rgbToOklch(...rgb);
 			return `oklch(${l.toFixed(4)} ${c.toFixed(4)} ${h.toFixed(1)})`;
 		}
 		case 'ycbcr': {

@@ -10,10 +10,12 @@ import type { ComponentLike } from '@glint/template';
  * obvious place to split them out once there are enough to matter.
  * ponytail: static imports; make them async when the bundle warrants it.
  */
+import ColourConverter from 'delphitools-v2/components/tools/colour-converter';
 import FaviconGenny from 'delphitools-v2/components/tools/favicon-genny';
 import PaletteGenny from 'delphitools-v2/components/tools/palette-genny';
 
 export const TOOL_COMPONENTS: Record<string, ComponentLike<object>> = {
+	'colour-converter': ColourConverter,
 	'favicon-genny': FaviconGenny,
 	'palette-genny': PaletteGenny,
 };

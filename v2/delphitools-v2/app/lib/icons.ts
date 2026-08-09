@@ -11,6 +11,7 @@ import iBrush from 'lucide-static/icons/brush.svg?raw';
 import iCalculator from 'lucide-static/icons/calculator.svg?raw';
 import iCaseUpper from 'lucide-static/icons/case-upper.svg?raw';
 import iCheck from 'lucide-static/icons/check.svg?raw';
+import iChevronDown from 'lucide-static/icons/chevron-down.svg?raw';
 import iChevronsUpDown from 'lucide-static/icons/chevrons-up-down.svg?raw';
 import iClipboardPaste from 'lucide-static/icons/clipboard-paste.svg?raw';
 import iClock from 'lucide-static/icons/clock.svg?raw';
@@ -84,6 +85,7 @@ export const icons: Record<string, string> = {
 	calculator: iCalculator,
 	'case-upper': iCaseUpper,
 	check: iCheck,
+	'chevron-down': iChevronDown,
 	'chevrons-up-down': iChevronsUpDown,
 	'clipboard-paste': iClipboardPaste,
 	clock: iClock,
