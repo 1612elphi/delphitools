@@ -4,3 +4,219 @@
 // new tool collided in it.
 
 @use "../crayon-config" as crayon;
+
+/* ── Artwork enhancer ────────────────────────────────────────────────────── */
+
+.dt-art {
+	@include crayon.vstack(6);
+}
+
+.dt-art-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-art-drop {
+	display: block;
+	margin: crayon.size(4);
+	padding: crayon.size(12);
+	border: 2px dashed var(--border);
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(12);
+		height: crayon.size(12);
+		margin-bottom: crayon.size(4);
+		color: var(--muted-foreground);
+	}
+
+	@include crayon.hover {
+		border-color: color-mix(
+			in oklch,
+			var(--primary) 50%,
+			transparent
+		);
+	}
+
+	/* the file input is visually hidden, so its focus ring has to land here */
+	&:focus-within {
+		border-color: var(--primary);
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+}
+
+.dt-art-drop-title {
+	display: block;
+	margin-bottom: crayon.size(1);
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-art-drop-hint {
+	display: block;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-art-controls {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-art-control {
+	padding: crayon.size(4);
+
+	&:first-child {
+		border-right: 1px solid var(--border);
+	}
+}
+
+.dt-art-control-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: crayon.size(3);
+
+	label {
+		font-weight: crayon.font-weight("bold");
+	}
+}
+
+.dt-art-readout {
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+}
+
+.dt-art-slider {
+	width: 100%;
+	accent-color: var(--primary);
+	cursor: pointer;
+}
+
+.dt-art-hint {
+	margin-top: crayon.size(2);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-art-preview {
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-art-preview-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: crayon.size(3) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+
+	.dt-art-readout {
+		font-size: crayon.font-size("xs");
+	}
+}
+
+.dt-art-preview-title {
+	font-weight: crayon.font-weight("bold");
+}
+
+/* Transparency needs a ground of its own; the theme surface would read as a
+   solid background wherever the artwork is cut out. */
+.dt-art-canvas {
+	min-height: crayon.size(16);
+	background-color: #fff;
+	background-image:
+		linear-gradient(45deg, #e0e0e0 25%, transparent 25%),
+		linear-gradient(-45deg, #e0e0e0 25%, transparent 25%),
+		linear-gradient(45deg, transparent 75%, #e0e0e0 75%),
+		linear-gradient(-45deg, transparent 75%, #e0e0e0 75%);
+	background-position:
+		0 0,
+		0 8px,
+		8px -8px,
+		-8px 0;
+	background-size: 16px 16px;
+
+	img {
+		display: block;
+		width: 100%;
+		max-height: 600px;
+		object-fit: contain;
+	}
+}
+
+.dt-art-actions {
+	display: flex;
+	min-height: crayon.size(14);
+	align-items: stretch;
+}
+
+.dt-art-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	justify-content: center;
+	padding-inline: crayon.size(5);
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-weight: crayon.font-weight("semibold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&.is-divided {
+		border-left: 1px solid var(--border);
+		font-weight: crayon.font-weight("normal");
+	}
+
+	&.is-primary {
+		flex: 1;
+		border-left: 1px solid var(--border);
+		background: var(--primary);
+		color: var(--primary-foreground);
+		font-size: crayon.font-size("base");
+		font-weight: crayon.font-weight("bold");
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				black
+			);
+		}
+
+		&:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+	}
+}
+
+.dt-art-note {
+	padding: crayon.size(4);
+	border: 1px solid var(--border);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+	font-size: crayon.font-size("sm");
+
+	p:last-child {
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-art-note-title {
+	margin-bottom: crayon.size(1);
+	font-weight: crayon.font-weight("bold");
+}

@@ -4,3 +4,147 @@
 // new tool collided in it.
 
 @use "../crayon-config" as crayon;
+
+/* ── Unit converter ──────────────────────────────────────────────────────── */
+
+.dt-uc {
+	@include crayon.vstack(3);
+}
+
+/* The vendored tabs primitive carries no styles of its own yet, so the list and
+   the triggers are dressed here through the classes this tool passes in.
+   Seven categories in one row is unreadable on a phone, so the row wraps to two
+   below the small breakpoint; the Next app kept all seven and let them squeeze. */
+.dt-uc-tabs {
+	display: grid;
+	gap: 1px;
+	grid-template-columns: repeat(4, 1fr);
+	background: var(--border);
+	border: 1px solid var(--border);
+
+	@include crayon.screen("sm") {
+		grid-template-columns: repeat(7, 1fr);
+	}
+}
+
+.dt-uc-tab {
+	display: flex;
+	height: crayon.size(10);
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	padding-inline: crayon.size(1);
+	border: 0;
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	cursor: pointer;
+
+	@include crayon.screen("sm") {
+		font-size: crayon.font-size("sm");
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&[data-state="active"] {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-uc-table {
+	border: 2px solid var(--border);
+}
+
+.dt-uc-row {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	&.is-active {
+		background: color-mix(in oklch, var(--muted) 40%, transparent);
+	}
+}
+
+.dt-uc-name {
+	@include crayon.hstack(1.5);
+
+	display: flex;
+	width: crayon.size(40);
+	flex-shrink: 0;
+	align-items: baseline;
+	padding: crayon.size(3) crayon.size(4);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-uc-unit {
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-uc-symbol {
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("xs");
+}
+
+.dt-uc-input {
+	width: 100%;
+	min-width: 0;
+	height: crayon.size(10);
+	flex: 1;
+	padding: 0 crayon.size(3);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: transparent;
+	color: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	text-align: right;
+	outline: none;
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-uc-copy {
+	display: flex;
+	width: crayon.size(12);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&.is-copied .dt-icon {
+		color: crayon.color("green-500");
+	}
+
+	&:disabled {
+		opacity: 0.3;
+		cursor: default;
+	}
+}

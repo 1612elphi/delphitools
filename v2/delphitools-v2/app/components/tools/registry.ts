@@ -10,8 +10,10 @@ import type { ComponentLike } from '@glint/template';
  * obvious place to split them out once there are enough to matter.
  * ponytail: static imports; make them async when the bundle warrants it.
  */
+import ArtworkEnhancer from 'delphitools-v2/components/tools/artwork-enhancer';
 import BackgroundRemover from 'delphitools-v2/components/tools/background-remover';
 import Base64ImageEncoder from 'delphitools-v2/components/tools/base64-image-encoder';
+import BaseConverter from 'delphitools-v2/components/tools/base-converter';
 import ColorblindSim from 'delphitools-v2/components/tools/colorblind-sim';
 import ColourConverter from 'delphitools-v2/components/tools/colour-converter';
 import ContrastChecker from 'delphitools-v2/components/tools/contrast-checker';
@@ -19,6 +21,8 @@ import FaviconGenny from 'delphitools-v2/components/tools/favicon-genny';
 import GlyphBrowser from 'delphitools-v2/components/tools/glyph-browser';
 import GradientGenny from 'delphitools-v2/components/tools/gradient-genny';
 import HarmonyGenny from 'delphitools-v2/components/tools/harmony-genny';
+import ImageClipper from 'delphitools-v2/components/tools/image-clipper';
+import ImageSplitter from 'delphitools-v2/components/tools/image-splitter';
 import LineHeightCalc from 'delphitools-v2/components/tools/line-height-calc';
 import MetaTagGenny from 'delphitools-v2/components/tools/meta-tag-genny';
 import PaletteCollection from 'delphitools-v2/components/tools/palette-collection';
@@ -29,10 +33,13 @@ import PxToRem from 'delphitools-v2/components/tools/px-to-rem';
 import SvgOptimiser from 'delphitools-v2/components/tools/svg-optimiser';
 import TailwindShades from 'delphitools-v2/components/tools/tailwind-shades';
 import TypoCalc from 'delphitools-v2/components/tools/typo-calc';
+import UnitConverter from 'delphitools-v2/components/tools/unit-converter';
 import WordCounter from 'delphitools-v2/components/tools/word-counter';
 
 export const TOOL_COMPONENTS: Record<string, ComponentLike<object>> = {
+	'artwork-enhancer': ArtworkEnhancer,
 	'background-remover': BackgroundRemover,
+	'base-converter': BaseConverter,
 	'base64-image-encoder': Base64ImageEncoder,
 	'colorblind-sim': ColorblindSim,
 	'colour-converter': ColourConverter,
@@ -41,6 +48,8 @@ export const TOOL_COMPONENTS: Record<string, ComponentLike<object>> = {
 	'glyph-browser': GlyphBrowser,
 	'gradient-genny': GradientGenny,
 	'harmony-genny': HarmonyGenny,
+	'image-clipper': ImageClipper,
+	'image-splitter': ImageSplitter,
 	'line-height-calc': LineHeightCalc,
 	'meta-tag-genny': MetaTagGenny,
 	'palette-collection': PaletteCollection,
@@ -51,5 +60,6 @@ export const TOOL_COMPONENTS: Record<string, ComponentLike<object>> = {
 	'svg-optimiser': SvgOptimiser,
 	'tailwind-shades': TailwindShades,
 	'typo-calc': TypoCalc,
+	'unit-converter': UnitConverter,
 	'word-counter': WordCounter,
 };
