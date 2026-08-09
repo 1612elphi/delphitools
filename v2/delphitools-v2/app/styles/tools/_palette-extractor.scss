@@ -50,16 +50,16 @@
 	position: relative;
 	display: flex;
 	overflow: hidden;
+	gap: 1px;
 	height: 18rem;
+	background: var(--border);
 	border-bottom: 2px solid var(--border);
 	transition: opacity 300ms ease-out;
 
 	&.is-grid {
 		display: grid;
 		height: auto;
-		gap: 1px;
 		padding: 1px;
-		background: var(--border);
 	}
 
 	&.cols-2.is-grid {
@@ -92,6 +92,15 @@
 
 	.is-row &.is-selected {
 		flex: 1.5;
+	}
+
+	/* A grid cell cannot widen, so a tapped one lifts instead. */
+	.is-grid &.is-selected {
+		z-index: 1;
+		outline: 4px solid rgb(255 255 255 / 60%);
+		outline-offset: -4px;
+		transform: scale(1.03);
+		box-shadow: 0 25px 50px -12px rgb(0 0 0 / 25%);
 	}
 
 	/* Hover expands a column and reveals its copy button. A touch device has no

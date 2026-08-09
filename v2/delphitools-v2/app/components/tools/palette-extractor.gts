@@ -366,9 +366,14 @@ export default class PaletteExtractorTool extends Component {
 	willDestroy() {
 		super.willDestroy();
 		clearTimeout(this.#copiedTimer);
-		if (this.#frame !== undefined)
-			cancelAnimationFrame(this.#frame);
+		this.#cancelFrame();
 		if (this.imageUrl) URL.revokeObjectURL(this.imageUrl);
+	}
+
+	#cancelFrame() {
+		if (this.#frame === undefined) return;
+		cancelAnimationFrame(this.#frame);
+		this.#frame = undefined;
 	}
 
 	get strategyInfo() {
@@ -491,7 +496,10 @@ export default class PaletteExtractorTool extends Component {
 
 	extract = () => {
 		const canvas = this.#sampleCanvas;
-		if (!canvas || this.extracting) return;
+		if (!canvas) return;
+		// A pending pass is one for the previous canvas or the previous seeds;
+		// either way its result is about to be discarded.
+		this.#cancelFrame();
 		this.extracting = true;
 		// One frame so the dimmed state paints: the clustering below is tens of
 		// milliseconds of synchronous work on the main thread.
@@ -510,12 +518,14 @@ export default class PaletteExtractorTool extends Component {
 	readFile = (file: File) => {
 		if (!file.type.startsWith('image/')) return;
 		if (this.imageUrl) URL.revokeObjectURL(this.imageUrl);
+		this.#cancelFrame();
 
 		const url = URL.createObjectURL(file);
 		this.imageUrl = url;
 		this.imageName = file.name;
 		this.clusters = [];
 		this.selectedIndex = null;
+		this.extracting = false;
 		this.#sampleCanvas = null;
 
 		const image = new Image();
@@ -547,16 +557,23 @@ export default class PaletteExtractorTool extends Component {
 		event.preventDefault();
 	};
 
+	// The selection is an index into the ranked palette, so anything that
+	// re-ranks it has to clear it or the highlight lands on another colour.
 	chooseStrategy = (value: string) => {
 		this.strategy = value as ExtractionStrategy;
+		this.selectedIndex = null;
 	};
 
 	fewer = () => {
-		if (!this.atMin) this.count -= 1;
+		if (this.atMin) return;
+		this.count -= 1;
+		this.selectedIndex = null;
 	};
 
 	more = () => {
-		if (!this.atMax) this.count += 1;
+		if (this.atMax) return;
+		this.count += 1;
+		this.selectedIndex = null;
 	};
 
 	// Hover expands a swatch on a pointer; a touch has no hover, so there it
@@ -582,6 +599,13 @@ export default class PaletteExtractorTool extends Component {
 	};
 
 	copyValue = (value: string, key: string) => void this.copy(value, key);
+
+	// The pill sits inside the swatch, whose own click toggles the selection;
+	// without this a tap that copies also closes what it copied from.
+	copySwatch = (value: string, key: string, event: MouseEvent) => {
+		event.stopPropagation();
+		this.copyValue(value, key);
+	};
 
 	copyAll = () =>
 		this.copyValue(

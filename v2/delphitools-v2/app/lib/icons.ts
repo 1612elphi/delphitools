@@ -25,6 +25,7 @@ import iCrop from 'lucide-static/icons/crop.svg?raw';
 import iCrosshair from 'lucide-static/icons/crosshair.svg?raw';
 import iDownload from 'lucide-static/icons/download.svg?raw';
 import iEraser from 'lucide-static/icons/eraser.svg?raw';
+import iExternalLink from 'lucide-static/icons/external-link.svg?raw';
 import iEye from 'lucide-static/icons/eye.svg?raw';
 import iFileCode from 'lucide-static/icons/file-code.svg?raw';
 import iFileImage from 'lucide-static/icons/file-image.svg?raw';
@@ -104,6 +105,7 @@ export const icons: Record<string, string> = {
 	crosshair: iCrosshair,
 	download: iDownload,
 	eraser: iEraser,
+	'external-link': iExternalLink,
 	eye: iEye,
 	'file-code': iFileCode,
 	'file-image': iFileImage,

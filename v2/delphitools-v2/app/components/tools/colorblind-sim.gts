@@ -259,6 +259,12 @@ export default class ColorblindSimTool extends Component {
 		return `${info.description} — ${info.prevalence}`;
 	}
 
+	// Built here rather than in the template: prettier wraps a long attribute
+	// value across lines, and hbs keeps that newline inside the alt text.
+	get simulatedAlt() {
+		return `Simulated ${this.selectedInfo.name}`;
+	}
+
 	get simulations() {
 		return SIM_KEYS.map((key) => {
 			const info = SIMULATIONS[key];
@@ -715,8 +721,7 @@ export default class ColorblindSimTool extends Component {
 									>
 										<img
 											src={{this.simulatedImage}}
-											alt="Simulated
-												{{this.selectedInfo.name}}"
+											alt={{this.simulatedAlt}}
 										/>
 									</button>
 								{{else}}

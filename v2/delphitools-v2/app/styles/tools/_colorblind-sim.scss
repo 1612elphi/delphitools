@@ -317,9 +317,10 @@ $full: crayon.color("red-500");
 	padding: crayon.size(4);
 	border-top: 1px solid var(--border);
 
+	/* Image mode: the block above already rules, and the comparison below
+	   draws its own top border. */
 	&.is-shaded {
 		border-top: 0;
-		border-bottom: 1px solid var(--border);
 		background: color-mix(in oklch, var(--muted) 30%, transparent);
 	}
 }
