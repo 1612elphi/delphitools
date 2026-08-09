@@ -261,16 +261,13 @@ export default class BackgroundRemoverTool extends Component {
 								{{#if
 									this.isDownloading
 								}}
-									{{! wording carried over from the Next app }}
 									Downloading...
 									{{this.percent}}%
 								{{else}}
-									{{! wording carried over from the Next app }}
 									Removing
 									background...
 								{{/if}}
 							{{else}}
-								{{! wording carried over from the Next app }}
 								Remove
 								Background
 							{{/if}}
@@ -301,7 +298,6 @@ export default class BackgroundRemoverTool extends Component {
 							}}
 						/>
 						<Icon @name="upload" />
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-bg-drop-title"
 						>Drop an image here</span>
@@ -316,7 +312,6 @@ export default class BackgroundRemoverTool extends Component {
 				<div class="dt-bg-error" role="alert">
 					<Icon @name="circle-alert" />
 					<div>
-						{{! wording carried over from the Next app }}
 						<p
 							class="dt-bg-error-title"
 						>Error</p>
@@ -329,7 +324,6 @@ export default class BackgroundRemoverTool extends Component {
 
 			<div class="dt-bg-note">
 				<Icon @name="info" />
-				{{! wording carried over from the Next app }}
 				<p>Processing happens entirely in your browser.
 					On first use, a ~110MB processing engine
 					is downloaded and cached.</p>

@@ -4,3 +4,372 @@
 // new tool collided in it.
 
 @use "../crayon-config" as crayon;
+
+/* ── Shavian transliterator ──────────────────────────────────────────────── */
+
+/* The Next app injected this face from the component at runtime; here it is
+   part of the sheet, so no <style> element is created or removed. */
+@font-face {
+	font-family: "Noto Sans Shavian";
+	src: url("/fonts/NotoSansShavian-Regular.woff2") format("woff2");
+	font-display: swap;
+}
+
+.dt-shav {
+	--dt-shav-marked: #ff9f43;
+	--dt-shav-dict: #22c55e;
+
+	@include crayon.vstack(4);
+}
+
+.dt-shav-intro {
+	@include crayon.vstack(1);
+
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+
+	strong {
+		color: var(--foreground);
+	}
+}
+
+.dt-shav-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-shav-input-pane {
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-shav-pane-head {
+	padding: crayon.size(3) crayon.size(4) crayon.size(1);
+
+	&.is-split {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		border-bottom: 1px solid var(--border);
+	}
+}
+
+.dt-shav-label {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+	text-transform: uppercase;
+	letter-spacing: crayon.tracking("wide");
+}
+
+.dt-shav-status {
+	@include crayon.hstack(1.5);
+
+	align-items: center;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+
+	.dt-icon {
+		width: crayon.size(3);
+		height: crayon.size(3);
+	}
+
+	&.is-ready {
+		color: var(--dt-shav-dict);
+	}
+}
+
+.dt-shav-spinner {
+	animation: dt-shav-spin 1s linear infinite;
+}
+
+@keyframes dt-shav-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.dt-shav-input {
+	display: block;
+	width: 100%;
+	min-height: 6.25rem;
+	padding: crayon.size(3) crayon.size(4);
+	border: 0;
+	border-top: 1px solid var(--border);
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("base");
+	resize: none;
+
+	&:focus {
+		outline: none;
+	}
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-shav-grid-wrap {
+	min-height: 7.5rem;
+	padding: crayon.size(4);
+}
+
+.dt-shav-grid {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	row-gap: crayon.size(3);
+}
+
+.dt-shav-space {
+	display: block;
+	width: crayon.size(4);
+}
+
+.dt-shav-punct {
+	align-self: flex-end;
+	margin-left: crayon.size(-1);
+	padding-bottom: crayon.size(5);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("lg");
+}
+
+.dt-shav-word {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: crayon.size(0.5);
+}
+
+.dt-shav-latin {
+	padding-inline: crayon.size(1);
+	border: 0;
+	background: transparent;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	@include crayon.hover {
+		background: var(--accent);
+	}
+
+	&.is-marked {
+		color: var(--dt-shav-marked);
+		font-weight: crayon.font-weight("medium");
+	}
+}
+
+.dt-shav-letters {
+	display: flex;
+	align-items: center;
+	gap: 1px;
+}
+
+.dt-shav-marker {
+	padding-inline: crayon.size(0.5);
+	color: var(--dt-shav-marked);
+	font-family: "Noto Sans Shavian", sans-serif;
+	font-size: 22px;
+	line-height: crayon.leading("tight");
+}
+
+.dt-shav-phoneme {
+	position: relative;
+}
+
+.dt-shav-glyph {
+	padding: crayon.size(0.5) crayon.size(1);
+	border: 0;
+	background: transparent;
+	color: var(--foreground);
+	font-family: "Noto Sans Shavian", sans-serif;
+	font-size: 22px;
+	line-height: crayon.leading("tight");
+	cursor: pointer;
+	transition:
+		background-color 150ms,
+		transform 150ms;
+
+	@include crayon.hover {
+		background: var(--accent);
+		transform: translateY(-2px);
+	}
+
+	&.is-marked {
+		color: var(--dt-shav-marked);
+	}
+
+	&.is-active {
+		background: var(--accent);
+		outline: 2px solid var(--primary);
+		transform: translateY(-2px);
+	}
+}
+
+.dt-shav-popover {
+	position: absolute;
+	z-index: 50;
+	top: 100%;
+	left: 0;
+	min-width: 11.25rem;
+	margin-top: crayon.size(1);
+	border: 1px solid var(--border);
+	background: var(--popover);
+	box-shadow: 0 10px 15px -3px rgb(0 0 0 / 10%);
+}
+
+.dt-shav-current,
+.dt-shav-option {
+	display: flex;
+	width: 100%;
+	align-items: center;
+	gap: crayon.size(2.5);
+	padding: crayon.size(1.5) crayon.size(2.5);
+	border: 0;
+	border-bottom: 1px solid var(--border);
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+}
+
+.dt-shav-current {
+	border-left: 2px solid var(--primary);
+	background: color-mix(in oklch, var(--accent) 50%, transparent);
+}
+
+.dt-shav-option {
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	@include crayon.hover {
+		background: var(--accent);
+	}
+}
+
+.dt-shav-option-glyph {
+	width: crayon.size(7);
+	font-family: "Noto Sans Shavian", sans-serif;
+	font-size: crayon.font-size("xl");
+	text-align: center;
+}
+
+.dt-shav-option-name {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-shav-option-ipa {
+	margin-left: auto;
+	color: var(--dt-shav-dict);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-shav-ipa-row {
+	display: flex;
+	gap: 1px;
+	color: var(--dt-shav-dict);
+
+	&.is-heuristic {
+		color: var(--destructive);
+	}
+}
+
+.dt-shav-ipa {
+	min-width: 1.25rem;
+	padding-inline: crayon.size(1);
+	font-size: 13px;
+}
+
+.dt-shav-empty {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-shav-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: crayon.size(1) crayon.size(4);
+	align-items: center;
+	padding: crayon.size(2) crayon.size(4);
+	border-top: 1px solid var(--border);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-shav-legend-item {
+	@include crayon.hstack(1.5);
+
+	align-items: center;
+}
+
+.dt-shav-dot {
+	display: block;
+	width: crayon.size(2);
+	height: crayon.size(2);
+	border-radius: crayon.rounded("full");
+
+	&.is-dict {
+		background: var(--dt-shav-dict);
+	}
+
+	&.is-heuristic {
+		background: var(--destructive);
+	}
+
+	&.is-marked {
+		background: var(--dt-shav-marked);
+	}
+}
+
+.dt-shav-actions {
+	display: flex;
+	border-top: 2px solid var(--border);
+}
+
+.dt-shav-copy,
+.dt-shav-export {
+	@include crayon.hstack(2);
+
+	height: crayon.size(14);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	font: inherit;
+	font-size: crayon.font-size("base");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+}
+
+.dt-shav-copy {
+	flex: 1;
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font-weight: crayon.font-weight("bold");
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--primary) 90%, black);
+	}
+}
+
+.dt-shav-export {
+	padding-inline: crayon.size(6);
+	border-left: 1px solid var(--border);
+	background: transparent;
+	color: inherit;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+}

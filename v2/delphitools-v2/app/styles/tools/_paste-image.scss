@@ -4,3 +4,266 @@
 // new tool collided in it.
 
 @use "../crayon-config" as crayon;
+
+/* ── Paste image ─────────────────────────────────────────────────────────── */
+
+.dt-pi {
+	display: flex;
+	flex-direction: column;
+	gap: crayon.size(4);
+}
+
+/* The scratch canvas the crop is drawn on; never shown. */
+.dt-pi-canvas {
+	display: none;
+}
+
+.dt-pi-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-pi-empty {
+	display: flex;
+	min-height: 50vh;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: crayon.size(12);
+	text-align: center;
+
+	> .dt-icon {
+		width: crayon.size(12);
+		height: crayon.size(12);
+		margin-bottom: crayon.size(4);
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-pi-empty-title {
+	margin-bottom: crayon.size(2);
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("bold");
+
+	kbd {
+		padding: 2px crayon.size(2);
+		border: 1px solid var(--border);
+		background: var(--muted);
+		font-family: crayon.font-family("mono");
+		font-size: crayon.font-size("sm");
+	}
+}
+
+.dt-pi-empty-hint {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-pi-bar {
+	display: flex;
+	min-height: crayon.size(14);
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-pi-spacer {
+	flex: 1;
+}
+
+.dt-pi-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(5);
+	border: 0;
+	border-right: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&.is-trailing {
+		border-right: 0;
+		border-left: 1px solid var(--border);
+	}
+
+	&.is-primary {
+		background: var(--primary);
+		color: var(--primary-foreground);
+		font-weight: crayon.font-weight("semibold");
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				black
+			);
+			color: var(--primary-foreground);
+		}
+	}
+}
+
+.dt-pi-stage {
+	display: flex;
+	min-height: 50vh;
+	justify-content: center;
+	overflow: hidden;
+	padding: crayon.size(4);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+}
+
+.dt-pi-holder {
+	position: relative;
+	display: inline-block;
+	touch-action: none;
+	user-select: none;
+}
+
+.dt-pi-image {
+	display: block;
+	max-width: 100%;
+	max-height: 70vh;
+	pointer-events: none;
+}
+
+/* The spread shadow is the dimmed surround; the crop itself stays unpainted. */
+.dt-pi-crop {
+	position: absolute;
+	box-shadow: 0 0 0 9999px rgb(0 0 0 / 65%);
+	pointer-events: none;
+}
+
+.dt-pi-grid {
+	position: absolute;
+	display: grid;
+	inset: 0;
+	border: 1px solid rgb(255 255 255 / 50%);
+	grid-template-columns: repeat(3, 1fr);
+	grid-template-rows: repeat(3, 1fr);
+}
+
+.dt-pi-grid-cell {
+	border: 1px solid rgb(255 255 255 / 30%);
+}
+
+.dt-pi-handle {
+	position: absolute;
+	pointer-events: auto;
+	touch-action: none;
+
+	&.is-move {
+		inset: 0;
+		cursor: move;
+	}
+
+	&.is-n,
+	&.is-s {
+		right: 0;
+		left: 0;
+		height: crayon.size(2);
+		cursor: ns-resize;
+	}
+
+	&.is-n {
+		top: 0;
+		transform: translateY(-50%);
+	}
+
+	&.is-s {
+		bottom: 0;
+		transform: translateY(50%);
+	}
+
+	&.is-w,
+	&.is-e {
+		top: 0;
+		bottom: 0;
+		width: crayon.size(2);
+		cursor: ew-resize;
+	}
+
+	&.is-w {
+		left: 0;
+		transform: translateX(-50%);
+	}
+
+	&.is-e {
+		right: 0;
+		transform: translateX(50%);
+	}
+
+	&.is-nw,
+	&.is-ne,
+	&.is-sw,
+	&.is-se {
+		width: crayon.size(4);
+		height: crayon.size(4);
+		border: 1px solid var(--border);
+		background: #fff;
+	}
+
+	&.is-nw {
+		top: 0;
+		left: 0;
+		transform: translate(-50%, -50%);
+		cursor: nwse-resize;
+	}
+
+	&.is-ne {
+		top: 0;
+		right: 0;
+		transform: translate(50%, -50%);
+		cursor: nesw-resize;
+	}
+
+	&.is-sw {
+		bottom: 0;
+		left: 0;
+		transform: translate(-50%, 50%);
+		cursor: nesw-resize;
+	}
+
+	&.is-se {
+		right: 0;
+		bottom: 0;
+		transform: translate(50%, 50%);
+		cursor: nwse-resize;
+	}
+}
+
+.dt-pi-badge {
+	position: absolute;
+	top: crayon.size(4);
+	left: 50%;
+	padding: crayon.size(1) crayon.size(2);
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	transform: translateX(-50%);
+	white-space: nowrap;
+}
+
+.dt-pi-credit {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	text-align: center;
+
+	a {
+		color: inherit;
+		text-decoration: underline;
+
+		@include crayon.hover {
+			color: var(--foreground);
+		}
+	}
+}

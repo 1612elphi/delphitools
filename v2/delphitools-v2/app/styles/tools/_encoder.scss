@@ -4,3 +4,281 @@
 // new tool collided in it.
 
 @use "../crayon-config" as crayon;
+
+/* ── Encoder ─────────────────────────────────────────────────────────────── */
+
+.dt-enc-tabs {
+	display: grid;
+	gap: 1px;
+	border: 1px solid var(--border);
+	background: var(--border);
+	grid-template-columns: repeat(3, 1fr);
+}
+
+.dt-enc-tab {
+	display: flex;
+	height: crayon.size(10);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&[data-state="active"] {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-enc-frame {
+	margin-top: crayon.size(3);
+	border: 2px solid var(--border);
+}
+
+.dt-enc-panel {
+	/* The panel is a focus target, and its own ring would double the section
+	   borders it sits inside. */
+	outline-offset: -2px;
+}
+
+.dt-enc-label {
+	display: block;
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-enc-section {
+	padding: crayon.size(4);
+	border-bottom: 2px solid var(--border);
+
+	&.is-output {
+		border-bottom-width: 1px;
+	}
+}
+
+.dt-enc-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.dt-enc-modes {
+	margin: crayon.size(3) crayon.size(-4) crayon.size(-4);
+	border-inline: 0;
+	border-bottom: 0;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dt-enc-mode {
+	padding: crayon.size(2);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+
+		@include crayon.hover {
+			background: var(--primary);
+		}
+	}
+}
+
+.dt-enc-area {
+	display: block;
+	width: 100%;
+	min-height: crayon.size(30);
+	margin-top: crayon.size(3);
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	font-family: crayon.font-family("mono");
+	resize: vertical;
+
+	&:focus-visible {
+		outline: none;
+	}
+
+	&.is-error {
+		color: var(--destructive);
+	}
+}
+
+.dt-enc-switch {
+	@include crayon.hstack(2);
+
+	width: 100%;
+	align-items: center;
+	justify-content: center;
+	padding-block: crayon.size(2);
+	border: 0;
+	border-bottom: 2px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-enc-copy {
+	@include crayon.hstack(1.5);
+
+	align-items: center;
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		color: var(--foreground);
+	}
+}
+
+.dt-enc-action {
+	@include crayon.hstack(2);
+
+	width: 100%;
+	height: crayon.size(14);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font: inherit;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--primary) 90%, black);
+	}
+}
+
+.dt-enc-note {
+	padding: crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-enc-status {
+	padding: crayon.size(4);
+	border-bottom: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-enc-hashes {
+	border-bottom: 2px solid var(--border);
+
+	.dt-enc-head {
+		padding: crayon.size(4) crayon.size(4) crayon.size(3);
+		border-bottom: 1px solid var(--border);
+	}
+}
+
+.dt-enc-hash {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+}
+
+.dt-enc-hash-name {
+	display: flex;
+	width: crayon.size(20);
+	flex-shrink: 0;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-enc-hash-value {
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	align-items: center;
+	padding: crayon.size(3) crayon.size(4);
+	border-left: 1px solid var(--border);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("xs");
+	word-break: break-all;
+}
+
+.dt-enc-hash-copy {
+	display: flex;
+	width: crayon.size(12);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-enc-about {
+	padding: crayon.size(4);
+
+	p {
+		margin-top: crayon.size(1);
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("sm");
+
+		&:first-of-type {
+			margin-top: crayon.size(3);
+		}
+	}
+}

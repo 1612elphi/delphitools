@@ -50,6 +50,7 @@ import iLibrary from 'lucide-static/icons/library.svg?raw';
 import iLineChart from 'lucide-static/icons/line-chart.svg?raw';
 import iLoaderCircle from 'lucide-static/icons/loader-circle.svg?raw';
 import iLock from 'lucide-static/icons/lock.svg?raw';
+import iMaximize2 from 'lucide-static/icons/maximize-2.svg?raw';
 import iMinus from 'lucide-static/icons/minus.svg?raw';
 import iMoon from 'lucide-static/icons/moon.svg?raw';
 import iPalette from 'lucide-static/icons/palette.svg?raw';
@@ -61,6 +62,7 @@ import iQrCode from 'lucide-static/icons/qr-code.svg?raw';
 import iRainbow from 'lucide-static/icons/rainbow.svg?raw';
 import iRefreshCw from 'lucide-static/icons/refresh-cw.svg?raw';
 import iRegex from 'lucide-static/icons/regex.svg?raw';
+import iRotateCcw from 'lucide-static/icons/rotate-ccw.svg?raw';
 import iRuler from 'lucide-static/icons/ruler.svg?raw';
 import iScale from 'lucide-static/icons/scale.svg?raw';
 import iScanLine from 'lucide-static/icons/scan-line.svg?raw';
@@ -132,6 +134,7 @@ export const icons: Record<string, string> = {
 	'line-chart': iLineChart,
 	'loader-circle': iLoaderCircle,
 	lock: iLock,
+	'maximize-2': iMaximize2,
 	minus: iMinus,
 	moon: iMoon,
 	palette: iPalette,
@@ -143,6 +146,7 @@ export const icons: Record<string, string> = {
 	rainbow: iRainbow,
 	'refresh-cw': iRefreshCw,
 	regex: iRegex,
+	'rotate-ccw': iRotateCcw,
 	ruler: iRuler,
 	scale: iScale,
 	'scan-line': iScanLine,

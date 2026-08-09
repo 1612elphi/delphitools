@@ -4,3 +4,547 @@
 // new tool collided in it.
 
 @use "../crayon-config" as crayon;
+
+/* ── Decoder ─────────────────────────────────────────────────────────────── */
+
+.dt-dec {
+	@include crayon.vstack(6);
+}
+
+.dt-dec-panel {
+	border: 2px solid var(--border);
+
+	&.is-tabbed {
+		margin-top: crayon.size(3);
+	}
+}
+
+.dt-dec-input-bar {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-dec-input-label {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-dec-input-action {
+	@include crayon.hstack(1.5);
+
+	width: crayon.size(28);
+	min-height: crayon.size(10);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: transparent;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(3.5);
+		height: crayon.size(3.5);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		cursor: default;
+
+		@include crayon.hover {
+			background: transparent;
+			color: var(--muted-foreground);
+		}
+	}
+}
+
+.dt-dec-input {
+	display: block;
+	width: 100%;
+	min-height: 8.75rem;
+	padding: crayon.size(3) crayon.size(4);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	resize: vertical;
+
+	&:focus {
+		outline: none;
+	}
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-dec-tabs {
+	display: grid;
+	width: 100%;
+	grid-template-columns: repeat(2, 1fr);
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+		margin-right: crayon.size(2);
+	}
+}
+
+.dt-dec-blank {
+	@include crayon.vstack(4);
+
+	padding: crayon.size(4);
+}
+
+.dt-dec-blank-note {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	text-align: center;
+}
+
+.dt-dec-samples {
+	margin: 0 crayon.size(-4) crayon.size(-4);
+	border-top: 1px solid var(--border);
+}
+
+.dt-dec-samples-head {
+	padding: crayon.size(2) crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+}
+
+/* `.segmented` draws a 1px frame on all four edges; the row bleeds to the panel
+   edges, so the side and bottom rules would double the panel's own. Both
+   classes are needed on the selector to outrank `.segmented` itself. */
+.segmented.dt-dec-sample-grid {
+	grid-template-columns: repeat(3, 1fr);
+	border-inline: 0;
+	border-bottom: 0;
+}
+
+.dt-dec-sample {
+	min-height: crayon.size(10);
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+}
+
+.dt-dec-candidate {
+	border-bottom: 2px solid var(--border);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	&.is-hero {
+		background: color-mix(in oklch, var(--muted) 30%, transparent);
+	}
+}
+
+.dt-dec-candidate-head {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-dec-candidate-name {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: crayon.size(2);
+	padding: crayon.size(3) crayon.size(4);
+}
+
+.dt-dec-hero-icon {
+	width: crayon.size(4);
+	height: crayon.size(4);
+	flex-shrink: 0;
+	color: var(--primary);
+}
+
+.dt-dec-cipher {
+	font-weight: crayon.font-weight("bold");
+
+	.is-hero & {
+		font-size: crayon.font-size("base");
+	}
+}
+
+.dt-dec-detail {
+	padding: crayon.size(0.5) crayon.size(1.5);
+	background: var(--muted);
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("xs");
+}
+
+.dt-dec-score {
+	display: flex;
+	width: crayon.size(16);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border-left: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-dec-copy {
+	display: flex;
+	width: crayon.size(12);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: transparent;
+	color: var(--muted-foreground);
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-dec-bar {
+	height: crayon.size(1.5);
+	background: var(--muted);
+
+	> span {
+		display: block;
+		height: 100%;
+		background: color-mix(
+			in oklch,
+			var(--primary) 60%,
+			transparent
+		);
+		transition: width 150ms;
+	}
+
+	.is-hero & > span {
+		background: var(--primary);
+	}
+}
+
+.dt-dec-output {
+	padding: crayon.size(4);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("xs");
+	overflow-wrap: break-word;
+	white-space: pre-wrap;
+
+	.is-hero & {
+		font-size: crayon.font-size("sm");
+	}
+}
+
+.dt-dec-tweak {
+	@include crayon.hstack(1);
+
+	width: 100%;
+	align-items: center;
+	justify-content: center;
+	padding-block: crayon.size(2);
+	border: 0;
+	border-top: 1px solid var(--border);
+	background: transparent;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("xs");
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(3);
+		height: crayon.size(3);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-dec-empty {
+	padding: crayon.size(8);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	text-align: center;
+}
+
+.dt-dec-note {
+	padding: crayon.size(4);
+	border-top: 2px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-dec-field {
+	@include crayon.vstack(2);
+
+	padding: crayon.size(4);
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-dec-field-label {
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-dec-select {
+	width: 100%;
+}
+
+/* A heading between option groups; the listbox skips it when the arrows move
+   because only SelectItem registers itself. */
+.dt-dec-select-group {
+	display: block;
+	padding: crayon.size(1.5) crayon.size(2);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+}
+
+.segmented.dt-dec-directions {
+	margin: 0 crayon.size(-4) crayon.size(-4);
+	grid-template-columns: repeat(2, 1fr);
+	border-inline: 0;
+	border-bottom: 0;
+}
+
+.dt-dec-direction {
+	min-height: crayon.size(10);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	text-transform: capitalize;
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+
+		@include crayon.hover {
+			background: var(--primary);
+		}
+	}
+}
+
+.dt-dec-number,
+.dt-dec-key {
+	width: 100%;
+	height: crayon.size(10);
+	padding-inline: crayon.size(3);
+	border: 1px solid var(--border);
+	background: transparent;
+	color: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	outline: none;
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-dec-key {
+	text-transform: uppercase;
+}
+
+.dt-dec-number.is-flush {
+	flex: 1;
+	border: 0;
+	border-left: 1px solid var(--border);
+}
+
+.dt-dec-affine {
+	display: flex;
+	align-items: stretch;
+	margin: 0 crayon.size(-4) crayon.size(-4);
+	border-top: 1px solid var(--border);
+}
+
+.dt-dec-affine-cell {
+	display: flex;
+	flex: 1;
+	align-items: stretch;
+
+	& + & {
+		border-left: 1px solid var(--border);
+	}
+}
+
+.dt-dec-affine-label {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-dec-affine-hint {
+	margin-left: crayon.size(1);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-dec-affine-select {
+	flex: 1;
+	border: 0;
+	border-left: 1px solid var(--border);
+	font-family: crayon.font-family("mono");
+}
+
+.dt-dec-output-block {
+	@include crayon.vstack(3);
+
+	padding: crayon.size(4);
+}
+
+.dt-dec-output-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.dt-dec-manual-copy {
+	@include crayon.hstack(1.5);
+
+	height: crayon.size(7);
+	align-items: center;
+	padding-inline: crayon.size(2);
+	border: 0;
+	background: transparent;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(3.5);
+		height: crayon.size(3.5);
+	}
+
+	@include crayon.hover {
+		color: var(--foreground);
+	}
+}
+
+.dt-dec-manual-output {
+	min-height: 12.5rem;
+	margin: 0 crayon.size(-4) crayon.size(-4);
+	border-top: 1px solid var(--border);
+	background: var(--card);
+
+	&.is-error {
+		background: color-mix(
+			in oklch,
+			var(--destructive) 5%,
+			transparent
+		);
+
+		.dt-dec-output {
+			color: var(--destructive);
+		}
+	}
+
+	.dt-dec-output {
+		font-size: crayon.font-size("sm");
+	}
+}
+
+.dt-dec-placeholder {
+	padding: crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	font-style: italic;
+}
+
+.dt-dec-reference-head {
+	display: flex;
+	width: 100%;
+	align-items: center;
+	justify-content: space-between;
+	padding: crayon.size(4);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--muted) 40%, transparent);
+	}
+
+	&.is-open .dt-dec-reference-chevron {
+		transform: rotate(180deg);
+	}
+}
+
+.dt-dec-reference-chevron {
+	width: crayon.size(4);
+	height: crayon.size(4);
+	transition: transform 150ms;
+}
+
+.dt-dec-reference {
+	@include crayon.vstack(3);
+
+	padding: 0 crayon.size(4) crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+
+	ul {
+		@include crayon.vstack(1);
+
+		margin-top: crayon.size(1);
+		padding-left: crayon.size(4);
+		list-style: disc;
+	}
+
+	code {
+		font-family: crayon.font-family("mono");
+	}
+}
+
+.dt-dec-reference-title {
+	color: var(--foreground);
+	font-weight: crayon.font-weight("medium");
+}
