@@ -4,7 +4,7 @@ import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import { service } from '@ember/service';
 import { LinkTo } from '@ember/routing';
-import { Dialog } from 'ember-primitives';
+import Dialog from 'delphitools-v2/components/ui/dialog';
 import {
 	Tooltip,
 	TooltipTrigger,
@@ -332,7 +332,7 @@ export default class AppSidebar extends Component {
 							delphitools</span>
 					</button>
 
-					<d.Dialog class="dt-dialog">
+					<d.Content class="dt-dialog">
 						<header class="dt-dialog-head">
 							<h2>About delphitools</h2>
 							<button
@@ -350,7 +350,7 @@ export default class AppSidebar extends Component {
 							</button>
 						</header>
 						<AboutDelphitoolsBody />
-					</d.Dialog>
+					</d.Content>
 				</Dialog>
 			</div>
 

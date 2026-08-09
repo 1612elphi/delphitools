@@ -103,7 +103,6 @@
 		"color-name-list": "^14.47.0",
 		"crayon-css": "^0.9.1",
 		"ember-click-outside": "^6.1.1",
-		"ember-primitives": "^0.61.1",
 		"ember-provide-consume-context": "^0.10.0",
 		"ember-route-template": "^1.0.3",
 		"ember-truth-helpers": "^5.0.0",

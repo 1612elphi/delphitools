@@ -1,3 +1,5 @@
+import { hexToRgb } from './colour-maths';
+
 export type ColourNotation =
 	| 'hex'
 	| 'rgb'
@@ -36,17 +38,6 @@ export const COLOUR_NOTATIONS: {
 // ============================================================================
 // Conversion utilities
 // ============================================================================
-
-function hexToRgb(hex: string): [number, number, number] | null {
-	const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-	if (!result) return null;
-	// three groups, and exec returned non-null
-	return [
-		parseInt(result[1]!, 16),
-		parseInt(result[2]!, 16),
-		parseInt(result[3]!, 16),
-	];
-}
 
 function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
 	r /= 255;

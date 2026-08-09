@@ -42,7 +42,10 @@ const BUILT_WITH = [
 	},
 	{ name: 'Vite', url: 'https://vite.dev' },
 	{ name: 'Crayon', url: 'https://github.com/TeriyakiBomb/crayon' },
-	{ name: 'ember-primitives', url: 'https://ember-primitives.pages.dev' },
+	{
+		name: 'shadcn-ember',
+		url: 'https://github.com/IgnaceMaes/shadcn-ember',
+	},
 	{ name: 'Lucide', url: 'https://lucide.dev' },
 ];
 
