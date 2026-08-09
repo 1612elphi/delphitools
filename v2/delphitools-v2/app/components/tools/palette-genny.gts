@@ -252,8 +252,12 @@ export default class PaletteGennyTool extends Component {
 		};
 	};
 
+	// Every other path that sets a hex validates it, and these values reach an
+	// inline style attribute, so this one validates too rather than trusting
+	// that <input type="color"> can only ever yield #rrggbb.
 	updateColour = (id: string, event: Event) => {
 		const hex = (event.target as HTMLInputElement).value;
+		if (!hexToRgb(hex)) return;
 		const i = this.colours.findIndex((c) => c.id === id);
 		if (i !== -1) this.colours[i] = { ...this.colours[i]!, hex };
 	};
