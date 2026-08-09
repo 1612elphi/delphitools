@@ -3038,3 +3038,96 @@ $header-height: crayon.size(14);
 	font-size: crayon.font-size("xs");
 	font-weight: crayon.font-weight("bold");
 }
+
+/* ── Colour notation selector (header) ───────────────────────────────────── */
+
+.dt-notation-trigger {
+	@include crayon.hstack(1.5);
+
+	display: flex;
+	height: crayon.size(8);
+	align-items: center;
+	padding-inline: crayon.size(2);
+	border: 0;
+	background: none;
+	color: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("xs");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(3.5);
+		height: crayon.size(3.5);
+	}
+
+	/* the label is the wide part; below sm the icon carries it alone */
+	span {
+		display: none;
+
+		@include crayon.screen("sm") {
+			display: inline;
+		}
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+}
+
+.dt-notation-popover {
+	width: 16rem;
+	padding: crayon.size(2);
+}
+
+.dt-notation-label {
+	display: block;
+	padding: 0 crayon.size(1) crayon.size(2);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-notation-grid {
+	display: grid;
+	gap: crayon.size(1.5);
+	grid-template-columns: repeat(3, 1fr);
+}
+
+.dt-notation-option {
+	display: flex;
+	min-height: 3.25rem;
+	align-items: center;
+	justify-content: center;
+	padding: crayon.size(2);
+	border: 1px solid var(--border);
+	background: none;
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("medium");
+	line-height: 1.2;
+	text-align: center;
+	cursor: pointer;
+	transition:
+		background-color 150ms,
+		border-color 150ms;
+
+	@include crayon.hover {
+		border-color: color-mix(
+			in oklch,
+			var(--primary) 40%,
+			transparent
+		);
+		background: var(--muted);
+	}
+
+	&.is-on {
+		border-color: var(--primary);
+		background: color-mix(
+			in oklch,
+			var(--primary) 10%,
+			transparent
+		);
+		color: var(--primary);
+	}
+}

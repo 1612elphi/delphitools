@@ -4,6 +4,7 @@ import { service } from '@ember/service';
 import type RouterService from '@ember/routing/router-service';
 import Icon from 'delphitools-v2/components/icon';
 import ThemeToggle from 'delphitools-v2/components/theme-toggle';
+import ColourNotationSelector from 'delphitools-v2/components/colour-notation-selector';
 import { getToolById, getCategoryByToolId } from 'delphitools-v2/lib/tools';
 import type SidebarService from 'delphitools-v2/services/sidebar';
 
@@ -30,6 +31,15 @@ export default class AppHeader extends Component {
 
 	get isHome() {
 		return this.router.currentRouteName === 'index';
+	}
+
+	// colour-converter is excluded because its own format picker already sets
+	// the notation for everything it shows. Same condition as the Next header.
+	get showsNotation() {
+		return (
+			this.category?.name === 'Colour' &&
+			this.toolId !== 'colour-converter'
+		);
 	}
 
 	<template>
@@ -77,6 +87,9 @@ export default class AppHeader extends Component {
 			{{/if}}
 
 			<span class="dt-header-actions">
+				{{#if this.showsNotation}}
+					<ColourNotationSelector />
+				{{/if}}
 				<ThemeToggle />
 			</span>
 		</header>
