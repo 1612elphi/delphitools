@@ -30,6 +30,10 @@ import {
 	type PaletteStrategy,
 } from 'delphitools-v2/lib/palette-strategies';
 import { getColourName } from 'delphitools-v2/lib/colour-names';
+import {
+	COLLECTION_CATEGORIES,
+	type PaletteCollectionCategory,
+} from 'delphitools-v2/lib/palette-collection';
 import type BreakpointService from 'delphitools-v2/services/breakpoint';
 import type ColourNotationService from 'delphitools-v2/services/colour-notation';
 
@@ -126,6 +130,13 @@ export default class PaletteGennyTool extends Component {
 	@tracked strategyOpen = false;
 	@tracked copied: string | null = null;
 
+	// Hidden panel for adding the current palette to lib/palette-collection.ts.
+	// Press P, as in the Next app; not linked from anywhere.
+	@tracked exportMode = false;
+	@tracked exportName = '';
+	@tracked exportCategory: PaletteCollectionCategory = 'classic';
+	@tracked importText = '';
+
 	#copiedTimer?: ReturnType<typeof setTimeout>;
 
 	willDestroy() {
@@ -215,6 +226,10 @@ export default class PaletteGennyTool extends Component {
 				e.preventDefault();
 				this.regenerate();
 			}
+			if (e.code === 'KeyP') {
+				e.preventDefault();
+				this.exportMode = !this.exportMode;
+			}
 		};
 		element.ownerDocument.addEventListener('keydown', onKeyDown);
 		return () =>
@@ -274,6 +289,81 @@ export default class PaletteGennyTool extends Component {
 		const hex = (event.target as HTMLInputElement).value;
 		const i = this.colours.findIndex((c) => c.id === id);
 		if (i !== -1) this.colours[i] = { ...this.colours[i]!, hex };
+	};
+
+	get collectionCategories() {
+		return Object.entries(COLLECTION_CATEGORIES).map(
+			([key, meta]) => ({
+				key,
+				label: meta.label,
+			}),
+		);
+	}
+
+	/** Slug the name the same way the collection file does. */
+	get exportId() {
+		return this.exportName
+			.toLowerCase()
+			.replace(/[^a-z0-9\s-]/g, '')
+			.replace(/\s+/g, '-')
+			.replace(/-+/g, '-')
+			.trim();
+	}
+
+	/** Trailing comma so it pastes straight into the collection array. */
+	get exportJson() {
+		if (!this.exportName.trim()) return '';
+		return (
+			JSON.stringify(
+				{
+					id: this.exportId,
+					name: this.exportName.trim(),
+					colors: this.colours.map((c) => c.hex),
+					category: this.exportCategory,
+				},
+				null,
+				2,
+			) + ','
+		);
+	}
+
+	closeExport = () => {
+		this.exportMode = false;
+	};
+
+	setExportName = (e: Event) => {
+		this.exportName = (e.target as HTMLInputElement).value;
+	};
+
+	setExportCategory = (e: Event) => {
+		this.exportCategory = (e.target as HTMLSelectElement)
+			.value as PaletteCollectionCategory;
+	};
+
+	setImportText = (e: Event) => {
+		this.importText = (e.target as HTMLTextAreaElement).value;
+	};
+
+	copyExportJson = () => {
+		if (this.exportJson)
+			void this.copy(this.exportJson, 'export-json');
+	};
+
+	/** One hex per line, with or without the leading #. */
+	loadFromText = () => {
+		const parsed = this.importText
+			.trim()
+			.split('\n')
+			.map((line) => line.trim().replace(/^#/, ''))
+			.filter((hex) => /^[a-f\d]{6}$/i.test(hex))
+			.map((hex) => `#${hex}`);
+		if (parsed.length < MIN_COLOURS) return;
+		this.colours.splice(
+			0,
+			this.colours.length,
+			...parsed.map(swatch),
+		);
+		this.importText = '';
 	};
 
 	copy = async (value: string, label: string) => {
@@ -509,16 +599,166 @@ export default class PaletteGennyTool extends Component {
 					{{/each}}
 				</div>
 
+				{{#if this.exportMode}}
+					<div class="dt-export-panel">
+						<div class="dt-export-head">
+							<h3>Export to Collection
+								(Dev Mode)</h3>
+							<button
+								type="button"
+								{{on
+									"click"
+									this.closeExport
+								}}
+							>
+								Press P to close
+							</button>
+						</div>
+
+						<div class="dt-export-fields">
+							<div>
+								<label
+									for="dt-export-name"
+								>Palette Name</label>
+								<input
+									id="dt-export-name"
+									type="text"
+									value={{this.exportName}}
+									placeholder="e.g. Ocean Sunset"
+									{{on
+										"input"
+										this.setExportName
+									}}
+								/>
+								{{#if
+									this.exportId
+								}}
+									<p
+										class="dt-export-note"
+									>ID:
+										<code
+										>{{this.exportId}}</code></p>
+								{{/if}}
+							</div>
+
+							<div>
+								<label
+									for="dt-export-cat"
+								>Category</label>
+								{{! native select: a dev-only panel does not warrant a primitive }}
+								<select
+									id="dt-export-cat"
+									{{on
+										"change"
+										this.setExportCategory
+									}}
+								>
+									{{#each
+										this.collectionCategories
+										as |cat|
+									}}
+										<option
+											value={{cat.key}}
+											selected={{eq
+												cat.key
+												this.exportCategory
+											}}
+										>{{cat.label}}</option>
+									{{/each}}
+								</select>
+							</div>
+						</div>
+
+						<div class="dt-export-import">
+							<label
+								for="dt-export-import"
+							>Import Colors (one per
+								line, no #)</label>
+							<div
+								class="dt-export-import-row"
+							>
+								<textarea
+									id="dt-export-import"
+									rows="4"
+									value={{this.importText}}
+									{{on
+										"input"
+										this.setImportText
+									}}
+								></textarea>
+								<button
+									type="button"
+									disabled={{unless
+										this.importText
+										true
+										false
+									}}
+									{{on
+										"click"
+										this.loadFromText
+									}}
+								>Load</button>
+							</div>
+						</div>
+
+						{{#if this.exportJson}}
+							<div
+								class="dt-export-json"
+							>
+								<div
+									class="dt-export-json-head"
+								>
+									<span
+									>JSON
+										Output</span>
+									<button
+										type="button"
+										{{on
+											"click"
+											this.copyExportJson
+										}}
+									>
+										<Icon
+											@name={{if
+												(eq
+													this.copied
+													"export-json"
+												)
+												"check"
+												"copy"
+											}}
+										/>
+										{{if
+											(eq
+												this.copied
+												"export-json"
+											)
+											"Copied!"
+											"Copy"
+										}}
+									</button>
+								</div>
+								<pre
+								>{{this.exportJson}}</pre>
+							</div>
+						{{/if}}
+					</div>
+				{{/if}}
+
 				<div class="dt-palette-controls">
 					<Popover
 						@open={{this.strategyOpen}}
 						@onOpenChange={{this.setStrategyOpen}}
 					>
-						<PopoverTrigger>
+						<PopoverTrigger
+							@asChild={{true}}
+							as |trigger|
+						>
 							<button
 								type="button"
 								class="dt-strategy"
 								aria-label="Choose palette strategy"
+								{{trigger.modifiers}}
 							>
 								<span
 									class="dt-strategy-text"
