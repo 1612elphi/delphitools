@@ -1,0 +1,6 @@
+// Styles for the word-counter tool.
+//
+// One partial per tool: app.scss had grown past three thousand lines and every
+// new tool collided in it.
+
+@use "../crayon-config" as crayon;

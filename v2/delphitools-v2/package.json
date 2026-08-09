@@ -112,9 +112,12 @@
 		"ember-route-template": "^1.0.3",
 		"ember-truth-helpers": "^5.0.0",
 		"lucide-static": "^1.30.0",
+		"mathjs": "^15.2.0",
+		"pdf-lib": "^1.17.1",
 		"puppeteer-core": "^25.5.0",
 		"sass-embedded": "^1.100.0",
 		"satori": "^0.29.0",
+		"svgo": "^4.0.2",
 		"tailwind-merge": "^3.6.0",
 		"tracked-built-ins": "^4.1.2"
 	}
