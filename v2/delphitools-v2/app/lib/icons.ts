@@ -70,6 +70,7 @@ import iTag from 'lucide-static/icons/tag.svg?raw';
 import iTrash2 from 'lucide-static/icons/trash-2.svg?raw';
 import iType from 'lucide-static/icons/type.svg?raw';
 import iUnlock from 'lucide-static/icons/unlock.svg?raw';
+import iUpload from 'lucide-static/icons/upload.svg?raw';
 import iVariable from 'lucide-static/icons/variable.svg?raw';
 import iWind from 'lucide-static/icons/wind.svg?raw';
 import iX from 'lucide-static/icons/x.svg?raw';
@@ -142,6 +143,7 @@ export const icons: Record<string, string> = {
 	'trash-2': iTrash2,
 	type: iType,
 	unlock: iUnlock,
+	upload: iUpload,
 	variable: iVariable,
 	wind: iWind,
 	x: iX,
