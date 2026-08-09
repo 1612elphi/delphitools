@@ -9,7 +9,7 @@
 //
 // Usage: npm run build && npm run prerender, then node scripts/verify/static.mjs
 
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from '../static-server.mjs';
@@ -126,6 +126,49 @@ if (!existsSync(join(dist, 'index.html'))) {
 		navigated.rows === 8,
 		`${navigated.rows} rows`,
 	);
+
+	// ── the ONNX runtime ships with the build ───────────────────────────
+	//
+	// transformers.js only falls back to a jsdelivr URL when nothing has set
+	// wasmPaths, and a bundler that can resolve the binary sets it. Rolldown
+	// does, and so does Turbopack for the Next app: both emit the identical
+	// 21.6 MB binary. A build that stops emitting it has quietly moved the
+	// runtime onto a CDN, which is the sort of thing nobody notices.
+
+	const assets = join(dist, 'assets');
+	const ortWasm = readdirSync(assets).filter((name) =>
+		/^ort-wasm.*\.wasm$/.test(name),
+	);
+	check(
+		'the ONNX runtime binary is in the build',
+		ortWasm.length === 1,
+		ortWasm.join(' ') || 'none emitted',
+	);
+	if (ortWasm[0]) {
+		const bytes = statSync(join(assets, ortWasm[0])).size;
+		check(
+			'and is the whole binary, not a stub',
+			bytes > 10_000_000,
+			`${(bytes / 1e6).toFixed(1)} MB`,
+		);
+
+		const chunk = readdirSync(assets).find((name) =>
+			/^transformers\.web-.*\.js$/.test(name),
+		);
+		const source = chunk
+			? readFileSync(join(assets, chunk), 'utf8')
+			: '';
+		check(
+			'transformers is its own chunk, not part of main',
+			!!chunk,
+			chunk ?? 'not split out',
+		);
+		check(
+			'and points at the local binary',
+			source.includes(ortWasm[0]),
+			ortWasm[0],
+		);
+	}
 
 	// ── the jxl codec, against the built bundle ─────────────────────────
 

@@ -13,6 +13,7 @@ import iCaseUpper from 'lucide-static/icons/case-upper.svg?raw';
 import iCheck from 'lucide-static/icons/check.svg?raw';
 import iChevronDown from 'lucide-static/icons/chevron-down.svg?raw';
 import iChevronsUpDown from 'lucide-static/icons/chevrons-up-down.svg?raw';
+import iCircleAlert from 'lucide-static/icons/circle-alert.svg?raw';
 import iClipboardPaste from 'lucide-static/icons/clipboard-paste.svg?raw';
 import iClock from 'lucide-static/icons/clock.svg?raw';
 import iCombine from 'lucide-static/icons/combine.svg?raw';
@@ -42,6 +43,7 @@ import iLayers from 'lucide-static/icons/layers.svg?raw';
 import iLayoutGrid from 'lucide-static/icons/layout-grid.svg?raw';
 import iLibrary from 'lucide-static/icons/library.svg?raw';
 import iLineChart from 'lucide-static/icons/line-chart.svg?raw';
+import iLoaderCircle from 'lucide-static/icons/loader-circle.svg?raw';
 import iLock from 'lucide-static/icons/lock.svg?raw';
 import iMinus from 'lucide-static/icons/minus.svg?raw';
 import iMoon from 'lucide-static/icons/moon.svg?raw';
@@ -87,6 +89,7 @@ export const icons: Record<string, string> = {
 	check: iCheck,
 	'chevron-down': iChevronDown,
 	'chevrons-up-down': iChevronsUpDown,
+	'circle-alert': iCircleAlert,
 	'clipboard-paste': iClipboardPaste,
 	clock: iClock,
 	combine: iCombine,
@@ -116,6 +119,7 @@ export const icons: Record<string, string> = {
 	'layout-grid': iLayoutGrid,
 	library: iLibrary,
 	'line-chart': iLineChart,
+	'loader-circle': iLoaderCircle,
 	lock: iLock,
 	minus: iMinus,
 	moon: iMoon,

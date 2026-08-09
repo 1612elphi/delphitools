@@ -1,8 +1,9 @@
 // Runs every rig in this directory against a dev server and reports the tally.
 //
-// static.mjs is excluded: it drives the built output rather than the dev
-// server, and needs `npm run build && npm run prerender` first. Run it on its
-// own.
+// Two rigs are excluded. static.mjs drives the built output rather than the
+// dev server and needs `npm run build:static` first. bg-removal.mjs downloads
+// roughly 44 MB of model weights and runs inference, so it takes minutes and
+// needs network. Both have their own npm script.
 //
 // Usage: npm start in one shell, then npm run verify.
 
@@ -14,7 +15,12 @@ import { get } from 'node:http';
 import { BASE } from './harness.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const SKIP = new Set(['all.mjs', 'harness.mjs', 'static.mjs']);
+const SKIP = new Set([
+	'all.mjs',
+	'harness.mjs',
+	'static.mjs',
+	'bg-removal.mjs',
+]);
 
 const rigs = readdirSync(here)
 	.filter((name) => name.endsWith('.mjs') && !SKIP.has(name))

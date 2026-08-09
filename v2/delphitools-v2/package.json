@@ -33,6 +33,7 @@
 		"start": "vite",
 		"test": "vite build --mode development && ember test --path dist",
 		"verify": "node scripts/verify/all.mjs",
+		"verify:model": "node scripts/verify/bg-removal.mjs",
 		"verify:static": "node scripts/verify/static.mjs"
 	},
 	"devDependencies": {
@@ -100,6 +101,7 @@
 	},
 	"dependencies": {
 		"@floating-ui/dom": "^1.8.0",
+		"@huggingface/transformers": "3.8.1",
 		"@resvg/resvg-js": "^2.6.2",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
