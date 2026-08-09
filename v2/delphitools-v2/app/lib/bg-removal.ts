@@ -34,6 +34,16 @@
  */
 export const MODEL_ID = 'briaai/RMBG-1.4';
 
+/**
+ * Half precision, not fp32. Same weights, and on this model it is a strictly
+ * better trade: the download drops from 176 MB to 88 MB and a WebGPU run of the
+ * delphi logo went from 24s to 10s, with the resulting matte identical to three
+ * significant figures. The q8 build halves it again to 44 MB and also matched,
+ * but quantisation costs edge precision in a way one stylised test image will
+ * not show, so it is not the default without someone looking at photographs.
+ */
+const DTYPE = 'fp16';
+
 export type Device = 'webgpu' | 'wasm';
 
 export interface LoadProgress {
@@ -93,7 +103,7 @@ export async function loadRemover(
 	const build = async (device: Device) =>
 		(await pipeline('image-segmentation', MODEL_ID, {
 			device,
-			dtype: 'fp32',
+			dtype: DTYPE,
 			progress_callback,
 		})) as unknown as Pipeline;
 

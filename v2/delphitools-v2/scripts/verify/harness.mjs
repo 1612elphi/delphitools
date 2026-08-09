@@ -36,14 +36,27 @@ export function fail(label, detail) {
  * A page with console errors and uncaught exceptions already wired into the
  * tally — a rig that forgets to look still fails when the app throws.
  * `ignore` takes regexes for noise a rig genuinely expects.
+ *
+ * `userDataDir` keeps the browser profile between runs, which matters for the
+ * model rigs: a fresh profile re-downloads tens of megabytes of weights every
+ * time. `args` reaches Chrome directly, for flags like WebGPU's.
  */
 export async function launch({
 	viewport = { width: 1400, height: 1000 },
 	ignore = [],
+	userDataDir,
+	args = [],
 } = {}) {
 	const browser = await puppeteer.launch({
 		executablePath: CHROME,
 		headless: 'new',
+		// Puppeteer rejects any CDP call still outstanding after 180s, which
+		// silently caps every waitForFunction in this directory at three
+		// minutes however long the rig asked for. A model download runs longer
+		// than that, and the rejection reads as the rig's own timeout.
+		protocolTimeout: 0,
+		...(userDataDir ? { userDataDir } : {}),
+		args,
 	});
 	const page = await browser.newPage();
 	await page.setViewport(viewport);
