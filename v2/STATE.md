@@ -6,13 +6,18 @@ plan, which also carries the Phase 0 findings). This file is what actually
 exists in the code right now.
 
 **Status:** Phase 0 is CLOSED — all six questions answered, neither gate failed.
-The site chrome is built, three tools are at parity, and the behavioural rigs
-are committed rather than gitignored.
+The site chrome is built, four tools are at parity including the one that
+carries a machine-learning runtime, and the behavioural rigs are committed
+rather than gitignored.
 
 Branch: `v2-ember`. App: `v2/delphitools-v2/`. The Next app in the repo root is
 untouched and still the production site.
 
 ```
+0c2436e  perf(v2): half-precision weights, and fix a 180s cap on every rig
+91b04ad  feat(v2): port background-remover, wasm runtime and all
+2257299  fix(v2): the notation pipette stays visible on a narrow header
+62301a1  docs(v2): bring STATE.md up to three tools and a committed rig suite
 d53986f  test(v2): graduate the verification rigs into scripts/verify/
 e49fbe0  feat(v2): wire the colour-notation selector into the header
 b8b5d31  feat(v2): vendor the select, port colour-converter, one home for the maths
@@ -43,7 +48,8 @@ npm run gen-icons         # regenerate app/lib/icons.ts from what templates use
 npm test                  # ember-qunit, 35 tests
 npm run lint              # eslint + template-lint + stylelint + prettier
 npm run verify            # 10 puppeteer rigs, 183 checks, needs npm start
-npm run verify:static     # prerendered output + jxl, needs npm run build:static
+npm run verify:static     # prerendered output, jxl and ONNX, needs build:static
+npm run verify:model      # background removal end to end, downloads 88 MB
 ```
 
 Gates, all green as of `d53986f`: `ember-tsc --noEmit`, `eslint .`,
@@ -67,11 +73,13 @@ exceptions count as failures, and a failing run exits non-zero.
 | `palette.mjs` | generate, lock, the stepper, the strategy combobox |
 | `sharelink.mjs` | `?colors=` on a cold load, and its fallbacks |
 | `tooltip.mjs` | collapsed-rail tooltips, and that they unmount rather than linger |
-| `static.mjs` | the built output: per-route head tags, share cards, client-side nav, the jxl codec |
+| `static.mjs` | the built output: per-route head tags, share cards, client-side nav, the jxl codec, the ONNX binary |
+| `bg-removal.mjs` | the real model, end to end, checking a matte reaches the alpha channel |
 
 `static.mjs` serves `dist/` itself, so it needs no separate server, and is
 excluded from `npm run verify` because it needs a build rather than the dev
-server.
+server. `bg-removal.mjs` is excluded because it downloads weights and runs
+inference, which takes minutes and needs network.
 
 ---
 
@@ -95,13 +103,14 @@ toggle, About dialog, 404. Pride styling and the commit SHA come through Vite
 **Routing.** `/`, `/tools/:tool_id`, `/editor` (stub), wildcard 404. URLs
 unchanged from the Next app.
 
-**Tools.** 3 of 56.
+**Tools.** 4 of 56.
 
 | Tool | Notes |
 | --- | --- |
 | `palette-genny` | full parity, including the hidden export panel (press P) |
 | `colour-converter` | checked numerically against the Next implementation, 6,488 inputs, zero differences |
 | `favicon-genny` | canvas resize, per-size PNG, and the .ico container |
+| `background-remover` | RMBG-1.4 through transformers.js, on WebGPU with a wasm fallback |
 
 Unported ids fall through to a placeholder card, so every catalogue link
 resolves.
@@ -256,6 +265,29 @@ hue prints to one decimal place, which is not enough to pin a saturated colour
 to the same byte, so `#ff0000` comes back as `#ff0001`. The Next app does the
 same. Assert to within one 8-bit step, not exactly.
 
+**Machine-learning weights are fetched, the ONNX runtime is bundled.** They
+look like one concern and are two. transformers.js falls back to a jsdelivr URL
+for the runtime only when nothing has set `wasmPaths`, and any bundler that can
+resolve the binary sets it — Rolldown emits the 21.6 MB
+ort-wasm-simd-threaded.jsep.wasm and rewrites the reference, exactly as
+Turbopack does for the Next app. The dev server serves transformers unbundled
+and so does use the CDN, which is the same dev-versus-build split `lib/jxl.ts`
+documents. `static.mjs` asserts the built half.
+
+**Ask for fp16 weights, not fp32.** On RMBG-1.4 that is 88 MB instead of 176 MB
+and a WebGPU run of 10s instead of 24s, for a matte identical to three
+significant figures. q8 is 44 MB and also matched, but on one stylised test
+image, which is not where quantisation shows.
+
+**RMBG's sigmoid does not saturate.** A fully kept pixel comes back at alpha
+254, not 255. An assertion written against 255 reports zero opaque pixels and
+reads exactly like a broken mask.
+
+**Puppeteer rejects any CDP call outstanding after 180s.** That silently capped
+every rig here at three minutes however long it asked for, and the rejection
+surfaces as the rig's own timeout rather than as a protocol error, so a long
+model run looks like a model failure. `protocolTimeout: 0` in the harness.
+
 **`npm` is a fish alias for `bun` on this machine.** Installs write `bun.lock`
 and leave `package-lock.json` stale. Use `/opt/homebrew/bin/npm install
 --package-lock-only` to resync; the parent repo tracks that file to pin the
@@ -271,7 +303,7 @@ syntax. The fix for Ash is three lines, but it raises Crayon's Sass floor to
 
 ## Not done
 
-**Tools.** 53 of 56. See `CONVERSION.md` for the per-tool difficulty matrix.
+**Tools.** 52 of 56. See `CONVERSION.md` for the per-tool difficulty matrix.
 
 **Substrata.** Untouched. `window.__substrata` must be ported before any of it,
 because the 22 harnesses in the parent repo's `scripts/verify/` are the only
@@ -284,7 +316,10 @@ split-flap and Friends of Delphi are all GSAP or motion and absent.
 tools need. `select` is done; nothing has needed the other two yet.
 
 **Copy.** One unfilled gap, in `favicon-genny.gts`: the message shown when a
-chosen file will not decode. `slopsieve` fills it.
+chosen file will not decode. `slopsieve` fills it. Separately,
+`background-remover.gts` carries the Next app's line about "a ~180MB processing
+engine", which was accurate at fp32 and is now roughly 110 MB. The number needs
+correcting and the wording is Ruby's.
 
 **Build output path.** `dist/`, where the parent repo's `static-smoke.mjs`
 expects `out/`. One line in `vite.config.mjs` when it matters.
