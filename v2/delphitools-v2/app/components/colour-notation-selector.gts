@@ -57,7 +57,9 @@ export default class ColourNotationSelector extends Component {
 					{{trigger.modifiers}}
 				>
 					<Icon @name="pipette" />
-					<span>{{this.currentLabel}}</span>
+					<span
+						class="dt-notation-current"
+					>{{this.currentLabel}}</span>
 				</button>
 			</PopoverTrigger>
 			<PopoverContent

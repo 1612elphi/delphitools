@@ -83,6 +83,42 @@ check(
 	'favicon-genny is Images & Assets',
 );
 
+// Below sm the label drops and the pipette carries the control on its own. The
+// rule has to be scoped to the label, because Icon renders a <span> too and a
+// bare `span` selector leaves a clickable box with nothing drawn in it.
+await visit(page, '/tools/palette-genny');
+for (const [width, label] of [
+	[420, 'none'],
+	[900, 'block'],
+]) {
+	await page.setViewport({ width, height: 800 });
+	await sleep(350);
+	const parts = await page.evaluate(() => {
+		const button = document.querySelector('.dt-notation-trigger');
+		const icon = button.querySelector('.dt-icon');
+		return {
+			icon: Math.round(icon.getBoundingClientRect().width),
+			trigger: Math.round(
+				button.getBoundingClientRect().width,
+			),
+			label: getComputedStyle(
+				button.querySelector('.dt-notation-current'),
+			).display,
+		};
+	});
+	check(
+		`at ${width}px the pipette is drawn`,
+		parts.icon > 0 && parts.trigger > parts.icon,
+		`icon ${parts.icon}px in a ${parts.trigger}px control`,
+	);
+	check(
+		`at ${width}px the label is ${label}`,
+		parts.label === label,
+		parts.label,
+	);
+}
+await page.setViewport({ width: 1400, height: 1000 });
+
 // The Next version held this in memory and lost it on reload.
 await visit(page, '/tools/palette-genny');
 check(

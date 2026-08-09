@@ -3060,8 +3060,9 @@ $header-height: crayon.size(14);
 		height: crayon.size(3.5);
 	}
 
-	/* the label is the wide part; below sm the icon carries it alone */
-	span {
+	/* Scoped to the label, not to `span`: Icon renders a <span class="dt-icon">
+	   too, so a bare selector collapsed the whole control to an invisible box. */
+	.dt-notation-current {
 		display: none;
 
 		@include crayon.screen("sm") {
