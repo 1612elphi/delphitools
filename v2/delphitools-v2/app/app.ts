@@ -19,4 +19,12 @@ export default class App extends Application {
   inspector = setupInspector(this);
 }
 
+// Dev-only rig for the headless harnesses, same idea as Substrata's
+// window.__substrata in the Next app.
+if (macroCondition(isDevelopingApp())) {
+  void import('./lib/jxl').then((m) => {
+    (globalThis as unknown as { __jxl?: unknown }).__jxl = m;
+  });
+}
+
 loadInitializers(App, config.modulePrefix, compatModules);

@@ -11,3 +11,6 @@
 /pnpm-lock.yaml
 ember-cli-update.json
 *.html
+
+# libjxl emscripten build, copied verbatim from @jsquash/jxl
+/public/jxl/

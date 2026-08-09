@@ -43,7 +43,9 @@ const parserOptions = {
 };
 
 export default defineConfig([
-  globalIgnores(['dist/', 'coverage/', '!**/.*']),
+  // public/jxl is the libjxl emscripten build, copied verbatim from
+  // @jsquash/jxl; it is served as-is and never linted or edited.
+  globalIgnores(['dist/', 'coverage/', 'public/jxl/', '!**/.*']),
   js.configs.recommended,
   ember.configs.base,
   ember.configs.gjs,
@@ -124,6 +126,17 @@ export default defineConfig([
       parserOptions: parserOptions.esm.js,
       globals: {
         ...globals.node,
+      },
+    },
+  },
+  {
+    // scripts/ runs in node but embeds callbacks that puppeteer serialises and
+    // evaluates in the page, so both global sets are legitimately in scope.
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.browser,
       },
     },
   },

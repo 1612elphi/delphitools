@@ -62,12 +62,65 @@ in both light and dark.
 
 | # | Question | State |
 | :-: | --- | --- |
-| 1 | Prerendering | not started |
-| 2 | OG rendering | not started; `satori`, `@resvg/resvg-js` and `assets/og/` are in place |
-| 3 | Tailwind 4 under Embroider + Vite | **superseded** — Crayon replaces Tailwind, see below |
-| 4 | jxl WASM path | not started |
-| 5 | `ember-primitives` in practice | not started |
-| 6 | DnD | not started |
+| 1 | Prerendering | **yes** — 57 routes, per-route head tags, verified against five scraper user agents |
+| 2 | OG rendering | **yes** — pixel-identical to the Next cards after a 1px blur |
+| 3 | Tailwind 4 under Embroider + Vite | **superseded** — Crayon replaces Tailwind |
+| 4 | jxl WASM path | **yes**, with a Vite-specific workaround |
+| 5 | Primitives in practice | **yes** — resolved as vendoring from shadcn-ember |
+| 6 | DnD | **yes** — dnd-kit's core is framework-agnostic |
+
+All six answered. The exit criterion is met: neither 1 nor 2 failed.
+
+**1. Prerendering works.** `scripts/prerender.mjs` boots the built app in headless
+Chrome at every route, checks it renders, and writes a per-route `index.html`
+carrying that route's head tags, with the share card beside it. 57 routes. Head
+tags match the Next build field for field on tool routes. Fetched as
+facebookexternalhit, Twitterbot, Slackbot, Discordbot and Googlebot, every route
+returns its own title, description and `og:image`. The prerendered pages still
+boot the SPA, render no duplicate chrome, and client-side navigation works from
+a prerendered entry point.
+
+Two things to know. The registry is imported rather than parsed — Node 26 strips
+TypeScript natively, so `app/lib/tools.ts` stays the single source of truth that
+`PARITY.md` requires. And the body is left as the app shell rather than
+snapshotted: scrapers do not run JS and take the head tags, humans get the SPA.
+Serving pre-rendered body content would need Ember to adopt it rather than
+replace it, which is a bigger question and is not needed for share cards.
+
+**2. OG rendering works.** `scripts/og.mjs` ports `lib/og-card.tsx` to satori's
+object form, no JSX and no React. Against the Next build's cards: RMSE 0.0043,
+and after a 1px blur the two are pixel-identical. The raw pixel difference
+(11.5% on the tool card) is entirely rasteriser antialiasing — `next/og` bundles
+a WASM resvg, this uses the native `@resvg/resvg-js` — and every differing pixel
+is within 20% colour of its counterpart.
+
+**4. The jxl path works, but not the way the plan assumed.**
+`/* @vite-ignore */` alone is not enough. It only suppresses analysis of a
+*non-literal* specifier; written inline as a string, Rolldown still resolves it
+and the build fails with `UNRESOLVED_IMPORT`. Moving the URL to a variable fixes
+the build, but the dev server then rewrites the request to
+`/jxl/jxl_enc.js?import` and tries to transform the emscripten glue as an ES
+module. Building the import through `new Function` keeps it out of Vite's
+transform in both modes. Verified end to end in dev and production: the codec
+loads, and encoding a 256×256 canvas yields a valid JXL codestream (`FF 0A`),
+714 bytes, ~70 ms. The codec's contents stay out of the bundle.
+
+**6. dnd-kit, not ember-sortable.** dnd-kit's core is framework-agnostic as of
+0.5.0: `@dnd-kit/dom` and `@dnd-kit/abstract` have no React dependency and no
+peer dependencies. `@arthur5005/dnd-kit-ember` 0.1.2 (MIT, on npm since
+2026-02-01) wraps it in Glimmer modifiers — draggable, droppable, handle,
+sortable — including `SortableKeyboardPlugin`.
+
+Recommendation: depend on `@dnd-kit/dom` directly and take the addon as the
+reference for the modifier layer, the same play as shadcn-ember. The addon is
+one author, two releases, last touched February, and pins `@dnd-kit` 0.2.x while
+0.5.0 is current; the modifier layer it provides is five small files. The core
+underneath is the maintained thing.
+
+This is better than the plan assumed. Phase 4 budgeted 4 days each for
+`gradient-genny` and `image-stitcher` on the premise that their drag-and-drop
+would be rebuilt. Porting dnd-kit semantics rather than rebuilding them should
+bring that down; the same applies to Substrata's dock and layer panels.
 
 **Crayon replaces Tailwind 4.** `crayon-css` 0.9.1 is a Sass utility toolkit, so
 `sass-embedded` is the preprocessor and `tailwindcss`, `@tailwindcss/vite`,

@@ -28,7 +28,9 @@
     "lint:js:fix": "eslint . --fix",
     "lint:types": "ember-tsc --noEmit",
     "start": "vite",
-    "test": "vite build --mode development && ember test --path dist"
+    "test": "vite build --mode development && ember test --path dist",
+    "prerender": "node scripts/prerender.mjs",
+    "build:static": "vite build && node scripts/prerender.mjs"
   },
   "devDependencies": {
     "@babel/core": "^7.29.7",
