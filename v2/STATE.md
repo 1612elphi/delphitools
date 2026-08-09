@@ -6,14 +6,19 @@ plan, which also carries the Phase 0 findings). This file is what actually
 exists in the code right now.
 
 **Status:** Phase 0 is CLOSED — all six questions answered, neither gate failed.
-The site chrome is built, four tools are at parity including the one that
-carries a machine-learning runtime, and the behavioural rigs are committed
-rather than gitignored.
+The site chrome is built, the Colour category is complete at 10 of 10, and the
+behavioural rigs are committed rather than gitignored.
 
 Branch: `v2-ember`. App: `v2/delphitools-v2/`. The Next app in the repo root is
 untouched and still the production site.
 
 ```
+2ef7199  feat(v2): port gradient-genny, completing the Colour category
+66da352  feat(v2): port colorblind-sim and palette-extractor
+8046257  feat(v2): port pixel-picker
+c5e0c04  feat(v2): port palette-collection
+980f35b  feat(v2): port contrast-checker, harmony-genny and tailwind-shades
+fd56e95  refactor(v2): one stylesheet partial per tool
 0c2436e  perf(v2): half-precision weights, and fix a 180s cap on every rig
 91b04ad  feat(v2): port background-remover, wasm runtime and all
 2257299  fix(v2): the notation pipette stays visible on a narrow header
@@ -90,9 +95,10 @@ template tag throughout. 10,945 lines of app source. Build is ~5s; output is
 174 kB CSS and 680 kB JS.
 
 **Styling on Crayon.** `crayon-css` 0.9.1 (Sass) replaces Tailwind 4 entirely.
-`app/styles/_crayon-config.scss` is the single config; `app/styles/app.scss` is
-the whole stylesheet, ported from the Next app's `globals.css` with the theme
-token block byte-identical to it.
+`app/styles/_crayon-config.scss` is the single config. `app/styles/app.scss`
+holds the theme tokens, the chrome and the vendored primitives; each tool has
+its own partial under `app/styles/tools/`, because one file made two tools
+impossible to work on at once.
 
 **Chrome.** Sidebar with collapsible icon rail (cookie-persisted, ⌘/Ctrl+B,
 off-canvas below 768px, live search over the registry), header with
@@ -103,17 +109,16 @@ toggle, About dialog, 404. Pride styling and the commit SHA come through Vite
 **Routing.** `/`, `/tools/:tool_id`, `/editor` (stub), wildcard 404. URLs
 unchanged from the Next app.
 
-**Tools.** 4 of 56.
+**Tools.** 12 of 56. The Colour category is complete.
 
-| Tool | Notes |
+| Category | Tools |
 | --- | --- |
-| `palette-genny` | full parity, including the hidden export panel (press P) |
-| `colour-converter` | checked numerically against the Next implementation, 6,488 inputs, zero differences |
-| `favicon-genny` | canvas resize, per-size PNG, and the .ico container |
-| `background-remover` | RMBG-1.4 through transformers.js, on WebGPU with a wasm fallback |
+| Colour | all ten: `palette-genny`, `colour-converter`, `contrast-checker`, `harmony-genny`, `tailwind-shades`, `palette-collection`, `palette-extractor`, `pixel-picker`, `colorblind-sim`, `gradient-genny` |
+| Images & Assets | `favicon-genny`, `background-remover` |
 
-Unported ids fall through to a placeholder card, so every catalogue link
-resolves.
+Every Colour tool reads its conversions from `lib/colour-maths.ts` and formats
+through the `colour-notation` service, so a value copied from one matches the
+next, and none of them carries a format picker of its own.
 
 **Shared pieces the ports produced.** `lib/colour-maths.ts` holds both
 directions of every colour transform, replacing the three copies the Next app
@@ -131,9 +136,10 @@ Chrome at all 57 routes, checks each renders, and writes a per-route
 against five scraper user agents; head tags match the Next build field for
 field on tool routes.
 
-**Tests.** 35 qunit tests over the pure logic: the sidebar service, the share
-link parser, the colour converter, the ICO builder and the paste-accept
-matcher. Each suite was checked against the pre-fix code to confirm it fails.
+**Tests.** 55 qunit tests over the pure logic: the sidebar service, two share
+link parsers, the colour converter, the Tailwind ramp, the palette-extractor
+quantiser, the ICO builder and the paste-accept matcher. The quantiser takes
+its random source as a parameter, so the clustering tests are deterministic.
 
 ---
 
@@ -288,6 +294,12 @@ every rig here at three minutes however long it asked for, and the rejection
 surfaces as the rig's own timeout rather than as a protocol error, so a long
 model run looks like a model failure. `protocolTimeout: 0` in the harness.
 
+**A browser check run while anything is editing files will see state wiped.**
+Vite HMR remounts the component on every save, so a rig that uploads an image
+and asserts a second later can find the tool back at its drop zone. It looks
+exactly like a tool that resets itself. Do not run browser checks against the
+dev server while a port is in progress.
+
 **`npm` is a fish alias for `bun` on this machine.** Installs write `bun.lock`
 and leave `package-lock.json` stale. Use `/opt/homebrew/bin/npm install
 --package-lock-only` to resync; the parent repo tracks that file to pin the
@@ -303,7 +315,7 @@ syntax. The fix for Ash is three lines, but it raises Crayon's Sass floor to
 
 ## Not done
 
-**Tools.** 52 of 56. See `CONVERSION.md` for the per-tool difficulty matrix.
+**Tools.** 44 of 56. Colour is done; Images & Assets is the next dense block. See `CONVERSION.md` for the per-tool difficulty matrix.
 
 **Substrata.** Untouched. `window.__substrata` must be ported before any of it,
 because the 22 harnesses in the parent repo's `scripts/verify/` are the only
@@ -338,9 +350,9 @@ been carried across.
 The tool-page shape, the primitives and the rig harness all exist now, so each
 further port inherits them. The cheapest useful work is more tools.
 
-1. More Colour tools, which now cost the least: `contrast-checker`,
-   `gradient-genny` and `harmony-genny` all read from `lib/colour-maths.ts` and
-   the notation service, both of which are built and tested.
+1. Images & Assets, the next dense category. `favicon-genny` and
+   `background-remover` are already across, and most of the rest are canvas
+   work on the same file-paste modifier.
 2. A tool that needs a dependency rather than a canvas — `qr-genny` or
    `svg-optimiser` — to find out what the static import map in
    `components/tools/registry.ts` costs before it holds fifty entries.
