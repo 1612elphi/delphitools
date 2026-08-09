@@ -4,3 +4,119 @@
 // new tool collided in it.
 
 @use "../crayon-config" as crayon;
+
+/* ── Word counter ────────────────────────────────────────────────────────── */
+
+.dt-wc {
+	border: 2px solid var(--border);
+}
+
+/* `.segmented` draws a 1px frame on all four edges; the panel border already
+   covers the sides, so only the internal hairlines and the bottom rule are
+   wanted. app.scss is @use'd after every tool partial, so dropping the frame
+   needs both classes to outrank `.segmented` itself. */
+.segmented.dt-wc-primary,
+.segmented.dt-wc-secondary {
+	grid-template-columns: repeat(4, 1fr);
+	border-block: 0;
+	border-inline: 0;
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-wc-stat {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: crayon.size(5) crayon.size(4);
+	background: var(--card);
+}
+
+.dt-wc-stat-value {
+	font-size: crayon.font-size("4xl");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-wc-stat-label {
+	margin-top: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-wc-text {
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-wc-input {
+	display: block;
+	width: 100%;
+	min-height: crayon.size(75);
+	padding: crayon.size(4);
+	border: 0;
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("base");
+	outline: none;
+	resize: vertical;
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-wc-cell {
+	display: flex;
+	flex-direction: column;
+	padding: crayon.size(4);
+	background: var(--card);
+}
+
+.dt-wc-cell-label {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-wc-cell-value {
+	font-size: crayon.font-size("2xl");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-wc-actions {
+	display: flex;
+	align-items: stretch;
+
+	button {
+		@include crayon.hstack(2);
+
+		height: crayon.size(14);
+		flex: 1;
+		align-items: center;
+		justify-content: center;
+		border: 0;
+		background: var(--background);
+		color: inherit;
+		font: inherit;
+		font-size: crayon.font-size("base");
+		cursor: pointer;
+
+		.dt-icon {
+			width: crayon.size(4);
+			height: crayon.size(4);
+		}
+
+		@include crayon.hover {
+			background: var(--muted);
+		}
+
+		&:disabled {
+			color: var(--muted-foreground);
+			cursor: not-allowed;
+			opacity: 0.5;
+		}
+	}
+
+	button + button {
+		border-left: 1px solid var(--border);
+	}
+}

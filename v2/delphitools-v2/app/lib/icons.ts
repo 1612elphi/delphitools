@@ -4,6 +4,7 @@
 // in a .gts template. Re-run after adding either.
 
 import iArrowRight from 'lucide-static/icons/arrow-right.svg?raw';
+import iArrowRightLeft from 'lucide-static/icons/arrow-right-left.svg?raw';
 import iArrowUpDown from 'lucide-static/icons/arrow-up-down.svg?raw';
 import iBarcode from 'lucide-static/icons/barcode.svg?raw';
 import iBinary from 'lucide-static/icons/binary.svg?raw';
@@ -27,6 +28,7 @@ import iDownload from 'lucide-static/icons/download.svg?raw';
 import iEraser from 'lucide-static/icons/eraser.svg?raw';
 import iExternalLink from 'lucide-static/icons/external-link.svg?raw';
 import iEye from 'lucide-static/icons/eye.svg?raw';
+import iEyeOff from 'lucide-static/icons/eye-off.svg?raw';
 import iFileCode from 'lucide-static/icons/file-code.svg?raw';
 import iFileImage from 'lucide-static/icons/file-image.svg?raw';
 import iFileSearch from 'lucide-static/icons/file-search.svg?raw';
@@ -84,6 +86,7 @@ import iX from 'lucide-static/icons/x.svg?raw';
 
 export const icons: Record<string, string> = {
 	'arrow-right': iArrowRight,
+	'arrow-right-left': iArrowRightLeft,
 	'arrow-up-down': iArrowUpDown,
 	barcode: iBarcode,
 	binary: iBinary,
@@ -107,6 +110,7 @@ export const icons: Record<string, string> = {
 	eraser: iEraser,
 	'external-link': iExternalLink,
 	eye: iEye,
+	'eye-off': iEyeOff,
 	'file-code': iFileCode,
 	'file-image': iFileImage,
 	'file-search': iFileSearch,

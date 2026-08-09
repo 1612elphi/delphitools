@@ -4,3 +4,250 @@
 // new tool collided in it.
 
 @use "../crayon-config" as crayon;
+
+/* ── Typography calculator ───────────────────────────────────────────────── */
+
+.dt-typo {
+	border: 2px solid var(--border);
+}
+
+.dt-typo-base {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-typo-base-text {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	flex-direction: column;
+	justify-content: center;
+	padding: crayon.size(4);
+
+	label {
+		font-weight: crayon.font-weight("bold");
+	}
+
+	p {
+		margin: 0;
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("sm");
+	}
+}
+
+.dt-typo-base-field {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding: 0 crayon.size(4);
+	border-left: 1px solid var(--border);
+
+	input {
+		width: crayon.size(24);
+		height: crayon.size(10);
+		padding: 0 crayon.size(2);
+		border: 0;
+		background: transparent;
+		color: inherit;
+		font-family: crayon.font-family("mono");
+		text-align: center;
+		outline: none;
+	}
+}
+
+.dt-typo-unit {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-typo-from {
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-typo-head {
+	padding: crayon.size(4) crayon.size(4) crayon.size(3);
+
+	label {
+		font-weight: crayon.font-weight("bold");
+	}
+}
+
+.dt-typo-heading {
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-typo-from-row {
+	display: flex;
+	align-items: stretch;
+	border-top: 1px solid var(--border);
+
+	input {
+		width: 100%;
+		min-width: 0;
+		height: crayon.size(14);
+		flex: 1;
+		padding: 0 crayon.size(4);
+		border: 0;
+		background: transparent;
+		color: inherit;
+		font-family: crayon.font-family("mono");
+		font-size: crayon.font-size("2xl");
+		outline: none;
+	}
+}
+
+.dt-typo-picker {
+	flex-shrink: 0;
+	border-left: 1px solid var(--border);
+
+	.dt-select-trigger {
+		height: crayon.size(14);
+		min-width: crayon.size(25);
+		padding: 0 crayon.size(4);
+		border: 0;
+		font-family: crayon.font-family("mono");
+		font-size: crayon.font-size("lg");
+	}
+}
+
+.dt-typo-table {
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-typo-rows {
+	border-top: 1px solid var(--border);
+}
+
+.dt-typo-row {
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+	border: 0;
+	border-bottom: 1px solid var(--border);
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	&.is-active {
+		background: color-mix(in oklch, var(--muted) 40%, transparent);
+		cursor: default;
+	}
+
+	&:not(.is-active):hover {
+		background: color-mix(in oklch, var(--muted) 20%, transparent);
+	}
+}
+
+.dt-typo-badge {
+	display: flex;
+	width: crayon.size(10);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border-right: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-typo-value {
+	display: flex;
+	width: crayon.size(40);
+	flex-shrink: 0;
+	align-items: center;
+	padding: 0 crayon.size(4);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("lg");
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-typo-meta {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	flex-direction: column;
+	justify-content: center;
+	padding: crayon.size(2) crayon.size(4);
+	border-left: 1px solid var(--border);
+}
+
+.dt-typo-name {
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-typo-desc {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+/* Hidden until the row is pointed at; the active row shows a dimmed one so the
+   column keeps its width either way. */
+.dt-typo-swap {
+	display: flex;
+	width: crayon.size(12);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border-left: 1px solid var(--border);
+	color: var(--muted-foreground);
+	opacity: 0;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+}
+
+.dt-typo-row.is-active .dt-typo-swap {
+	opacity: 0.3;
+}
+
+.dt-typo-row:not(.is-active):hover .dt-typo-swap {
+	color: var(--primary);
+	opacity: 1;
+}
+
+.dt-typo-ref {
+	padding: crayon.size(4);
+}
+
+/* Bleeds back out to the panel edges, so the cells sit flush with the rows
+   above. `.segmented` draws a 1px frame; only the top rule is wanted. */
+.segmented.dt-typo-ref-grid {
+	margin: crayon.size(3) (crayon.size(4) * -1) (crayon.size(4) * -1);
+	grid-template-columns: repeat(2, 1fr);
+	border-inline: 0;
+	border-bottom: 0;
+
+	@include crayon.screen("sm") {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
+.dt-typo-ref-cell {
+	display: flex;
+	flex-direction: column;
+	padding: crayon.size(3);
+	background: var(--card);
+}
+
+.dt-typo-ref-label {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-typo-ref-value {
+	margin-top: crayon.size(0.5);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+}

@@ -4,3 +4,289 @@
 // new tool collided in it.
 
 @use "../crayon-config" as crayon;
+
+/* ── Meta tag generator ──────────────────────────────────────────────────── */
+
+.dt-meta {
+	border: 2px solid var(--border);
+}
+
+.dt-meta-form {
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-meta-field {
+	padding: crayon.size(4);
+	border-bottom: 1px solid var(--border);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+}
+
+.dt-meta-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	margin-bottom: crayon.size(2);
+
+	label {
+		font-weight: crayon.font-weight("bold");
+	}
+}
+
+.dt-meta-count {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+
+	&.is-over {
+		color: var(--destructive);
+	}
+}
+
+.dt-meta-input {
+	width: 100%;
+	padding: crayon.size(2) crayon.size(3);
+	border: 1px solid var(--border);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+
+	&.is-tall {
+		height: crayon.size(11);
+	}
+
+	&.is-mono {
+		font-family: crayon.font-family("mono");
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -1px;
+	}
+}
+
+.dt-meta-textarea {
+	width: 100%;
+	min-height: crayon.size(24);
+	padding: crayon.size(3);
+	border: 1px solid var(--border);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	resize: vertical;
+
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -1px;
+	}
+}
+
+.dt-meta-note {
+	margin-top: crayon.size(2);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+/* Site name and Twitter handle share a row, divided by one hairline. */
+.dt-meta-row {
+	display: flex;
+
+	.dt-meta-field {
+		flex: 1;
+		border-bottom: 0;
+
+		& + .dt-meta-field {
+			border-left: 1px solid var(--border);
+		}
+	}
+}
+
+.dt-meta-output {
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-meta-output-head {
+	padding: crayon.size(4);
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-meta-code {
+	overflow-x: auto;
+	padding: crayon.size(4);
+	border-top: 1px solid var(--border);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	white-space: pre-wrap;
+}
+
+.dt-meta-actions {
+	display: flex;
+	align-items: stretch;
+}
+
+.dt-meta-copy {
+	@include crayon.hstack(2);
+
+	height: crayon.size(14);
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font: inherit;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--primary) 90%, black);
+	}
+}
+
+.dt-meta-toggle {
+	@include crayon.hstack(2);
+
+	height: crayon.size(14);
+	align-items: center;
+	padding-inline: crayon.size(5);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+}
+
+.dt-meta-previews {
+	border-top: 2px solid var(--border);
+}
+
+.dt-meta-preview {
+	padding: crayon.size(4);
+	border-bottom: 1px solid var(--border);
+
+	&.is-card {
+		border-bottom: 0;
+	}
+}
+
+.dt-meta-preview-label {
+	display: block;
+	margin-bottom: crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-meta-serp {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+
+	span {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}
+
+/* Google's own result colours, so the preview reads as a search result rather
+   than as part of the theme. They are the same in both themes. */
+.dt-meta-serp-title {
+	color: #2563eb;
+	font-size: crayon.font-size("lg");
+	cursor: pointer;
+
+	@include crayon.hover {
+		text-decoration: underline;
+	}
+}
+
+.dt-meta-serp-url {
+	color: #15803d;
+	font-size: crayon.font-size("sm");
+}
+
+.dt-meta-serp-desc {
+	display: -webkit-box;
+	overflow: hidden;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	white-space: normal;
+}
+
+.dt-meta-card {
+	max-width: crayon.size(112);
+	overflow: hidden;
+	border: 1px solid var(--border);
+}
+
+.dt-meta-card-image {
+	display: flex;
+	aspect-ratio: 1.91 / 1;
+	align-items: center;
+	justify-content: center;
+	background: var(--muted);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+}
+
+.dt-meta-card-body {
+	display: flex;
+	flex-direction: column;
+	padding: crayon.size(3);
+	border-top: 1px solid var(--border);
+	background: var(--card);
+
+	> span {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}
+
+.dt-meta-card-host {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	text-transform: uppercase;
+}
+
+.dt-meta-card-title {
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-meta-card-desc {
+	display: -webkit-box;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	white-space: normal;
+}

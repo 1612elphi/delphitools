@@ -4,3 +4,213 @@
 // new tool collided in it.
 
 @use "../crayon-config" as crayon;
+
+/* ── SVG optimiser ───────────────────────────────────────────────────────── */
+
+.dt-svgo {
+	border: 2px solid var(--border);
+}
+
+.dt-svgo-drop {
+	display: block;
+	padding: crayon.size(8);
+	border-bottom: 2px dashed var(--border);
+	text-align: center;
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(10);
+		height: crayon.size(10);
+		margin-bottom: crayon.size(3);
+		color: var(--muted-foreground);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--muted) 30%, transparent);
+	}
+
+	/* the file input is visually hidden, so its focus ring has to land here */
+	&:focus-within {
+		outline: 2px solid var(--primary);
+		outline-offset: -4px;
+	}
+}
+
+.dt-svgo-drop-title {
+	display: block;
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-svgo-drop-hint {
+	display: block;
+	margin-top: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-svgo-section {
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-svgo-bar {
+	display: flex;
+	min-height: crayon.size(12);
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+
+	> label,
+	> span {
+		display: flex;
+		flex: 1;
+		align-items: center;
+		padding: crayon.size(3) crayon.size(4);
+		font-weight: crayon.font-weight("bold");
+	}
+}
+
+.dt-svgo-bar-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-svgo-code {
+	display: block;
+	width: 100%;
+	height: crayon.size(40);
+	padding: crayon.size(4);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	resize: vertical;
+
+	&.is-output {
+		background: color-mix(in oklch, var(--muted) 30%, transparent);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -2px;
+	}
+}
+
+.dt-svgo-stats {
+	display: flex;
+	align-items: stretch;
+}
+
+.dt-svgo-stat {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	padding: crayon.size(4);
+	border-right: 1px solid var(--border);
+
+	&:last-child {
+		border-right: 0;
+	}
+}
+
+.dt-svgo-stat-label {
+	margin-bottom: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-svgo-stat-value {
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("xl");
+	font-weight: crayon.font-weight("bold");
+
+	&.is-primary {
+		color: var(--primary);
+	}
+}
+
+/* White, not var(--background): an SVG drawn in black is invisible on the dark
+   theme, and the file itself carries no background. */
+.dt-svgo-preview {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: crayon.size(6);
+	background: #fff;
+
+	img {
+		width: auto;
+		max-width: 100%;
+		height: auto;
+		max-height: crayon.size(50);
+	}
+}
+
+.dt-svgo-actions {
+	display: flex;
+	min-height: crayon.size(14);
+	align-items: stretch;
+}
+
+.dt-svgo-action {
+	@include crayon.hstack(2);
+
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+	padding: crayon.size(3) crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("base");
+	font-weight: crayon.font-weight("semibold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+	}
+
+	&:first-child {
+		border-left: 0;
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-primary {
+		background: var(--primary);
+		color: var(--primary-foreground);
+		font-weight: crayon.font-weight("bold");
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				black
+			);
+		}
+	}
+}

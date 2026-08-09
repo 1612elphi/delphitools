@@ -4,3 +4,230 @@
 // new tool collided in it.
 
 @use "../crayon-config" as crayon;
+
+/* ── PX to REM ───────────────────────────────────────────────────────────── */
+
+.dt-ptr {
+	border: 2px solid var(--border);
+}
+
+.dt-ptr-base {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-ptr-base-label {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	padding: 0 crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-ptr-base-field {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	border-left: 1px solid var(--border);
+
+	input {
+		width: crayon.size(24);
+		height: crayon.size(10);
+		padding: 0 crayon.size(2);
+		border: 0;
+		background: transparent;
+		color: inherit;
+		font-family: crayon.font-family("mono");
+		font-weight: crayon.font-weight("bold");
+		text-align: center;
+		outline: none;
+	}
+}
+
+.dt-ptr-unit {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-ptr-convert {
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-ptr-col {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+}
+
+.dt-ptr-col-head {
+	padding: crayon.size(2) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+
+	label {
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("sm");
+		font-weight: crayon.font-weight("bold");
+	}
+}
+
+.dt-ptr-field {
+	position: relative;
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	align-items: stretch;
+
+	input {
+		width: 100%;
+		min-width: 0;
+		height: crayon.size(16);
+		padding: 0 crayon.size(16) 0 crayon.size(4);
+		border: 0;
+		background: transparent;
+		color: inherit;
+		font-family: crayon.font-family("mono");
+		font-size: crayon.font-size("3xl");
+		font-weight: crayon.font-weight("bold");
+		outline: none;
+
+		&::placeholder {
+			color: var(--muted-foreground);
+		}
+	}
+}
+
+.dt-ptr-suffix {
+	position: absolute;
+	top: 50%;
+	right: crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("medium");
+	transform: translateY(-50%);
+	pointer-events: none;
+}
+
+.dt-ptr-copy {
+	@include crayon.hstack(2);
+
+	height: crayon.size(10);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-top: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-ptr-swap {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0 crayon.size(3);
+	border-right: 1px solid var(--border);
+	border-left: 1px solid var(--border);
+
+	button {
+		display: flex;
+		width: crayon.size(10);
+		height: crayon.size(10);
+		align-items: center;
+		justify-content: center;
+		border: 1px solid var(--border);
+		background: var(--background);
+		color: inherit;
+		cursor: pointer;
+
+		.dt-icon {
+			width: crayon.size(5);
+			height: crayon.size(5);
+		}
+
+		@include crayon.hover {
+			background: var(--muted);
+		}
+	}
+}
+
+.dt-ptr-ref-head {
+	padding: crayon.size(2) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-ptr-heading {
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-ptr-ref-cols {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+
+	span {
+		flex: 1;
+		padding: crayon.size(2) crayon.size(4);
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+		font-weight: crayon.font-weight("bold");
+	}
+
+	span:first-child {
+		border-right: 1px solid var(--border);
+	}
+}
+
+.dt-ptr-ref-row {
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+	border: 0;
+	border-bottom: 1px solid var(--border);
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--muted) 50%, transparent);
+	}
+}
+
+.dt-ptr-ref-px {
+	flex: 1;
+	padding: crayon.size(2) crayon.size(4);
+	border-right: 1px solid var(--border);
+	font-family: crayon.font-family("mono");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-ptr-ref-rem {
+	flex: 1;
+	padding: crayon.size(2) crayon.size(4);
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+}
