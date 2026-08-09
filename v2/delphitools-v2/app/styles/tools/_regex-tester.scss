@@ -4,3 +4,295 @@
 // new tool collided in it.
 
 @use "../crayon-config" as crayon;
+
+/* ── Regex tester ────────────────────────────────────────────────────────── */
+
+.dt-rx {
+	border: 2px solid var(--border);
+}
+
+.dt-rx-section {
+	padding: crayon.size(4);
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-rx-label {
+	display: block;
+	margin-bottom: crayon.size(3);
+	font-weight: crayon.font-weight("bold");
+
+	&.is-inline {
+		display: inline;
+		margin-bottom: 0;
+	}
+}
+
+.dt-rx-pattern {
+	display: flex;
+	align-items: stretch;
+	border: 1px solid var(--border);
+}
+
+.dt-rx-slash {
+	display: flex;
+	align-items: center;
+	padding-inline: crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xl");
+	user-select: none;
+}
+
+.dt-rx-input {
+	min-width: 0;
+	height: crayon.size(12);
+	flex: 1;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("base");
+	outline: none;
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-rx-flags-cell {
+	display: flex;
+	align-items: center;
+	padding-inline: crayon.size(3);
+	border-left: 1px solid var(--border);
+}
+
+.dt-rx-flags-input {
+	width: crayon.size(12);
+	height: crayon.size(12);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("base");
+	text-align: center;
+	outline: none;
+}
+
+/* `.segmented` draws a 1px frame on all four edges; the row bleeds to the panel
+   edges instead, so the side rules would double the panel's own border and the
+   bottom rule would double the section's. Both classes are needed on the
+   selector to outrank `.segmented` itself. */
+.segmented.dt-rx-options {
+	margin: 0 crayon.size(-4) crayon.size(-4);
+	grid-template-columns: repeat(2, 1fr);
+	border-inline: 0;
+	border-bottom: 0;
+
+	@include crayon.screen("sm") {
+		grid-template-columns: repeat(4, 1fr);
+	}
+}
+
+.dt-rx-option {
+	@include crayon.hstack(1.5);
+
+	min-height: crayon.size(10);
+	align-items: center;
+	justify-content: center;
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	text-align: center;
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-rx-flag-letter {
+	font-family: crayon.font-family("mono");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-rx-error {
+	@include crayon.hstack(3);
+
+	align-items: center;
+	padding: crayon.size(3) crayon.size(4);
+	border-bottom: 2px solid var(--border);
+	background: color-mix(in oklch, var(--destructive) 10%, transparent);
+	color: var(--destructive);
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+		flex-shrink: 0;
+	}
+}
+
+.dt-rx-error-text {
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+}
+
+.dt-rx-textarea {
+	display: block;
+	width: 100%;
+	min-height: crayon.size(30);
+	padding: crayon.size(3);
+	border: 1px solid var(--border);
+	background: var(--background);
+	color: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("base");
+	outline: none;
+	resize: vertical;
+
+	&:focus {
+		outline: 1px solid var(--ring);
+	}
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-rx-preview {
+	padding: crayon.size(3);
+	border: 1px solid var(--border);
+	background: var(--card);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("base");
+	overflow-wrap: break-word;
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.dt-rx-mark {
+	padding-inline: crayon.size(0.5);
+	background: color-mix(in oklch, var(--primary) 30%, transparent);
+	color: var(--foreground);
+}
+
+.dt-rx-results-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: crayon.size(3) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-rx-copy {
+	@include crayon.hstack(1.5);
+
+	align-items: center;
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(3.5);
+		height: crayon.size(3.5);
+	}
+
+	@include crayon.hover {
+		color: var(--foreground);
+	}
+}
+
+.dt-rx-match {
+	border-bottom: 1px solid var(--border);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+}
+
+.dt-rx-match-row {
+	display: flex;
+	align-items: stretch;
+}
+
+.dt-rx-match-num {
+	display: flex;
+	width: crayon.size(10);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border-right: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-rx-match-value {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	align-items: center;
+	padding: crayon.size(3) crayon.size(4);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	overflow-wrap: break-word;
+	word-break: break-all;
+}
+
+.dt-rx-match-blank {
+	color: var(--muted-foreground);
+	font-style: italic;
+	font-weight: crayon.font-weight("normal");
+}
+
+.dt-rx-match-pos {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	padding: crayon.size(3) crayon.size(4);
+	border-left: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-rx-groups {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: crayon.size(3);
+	padding: crayon.size(2) crayon.size(4);
+	border-top: 1px solid var(--border);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-rx-group-heading {
+	flex-shrink: 0;
+	color: var(--muted-foreground);
+}
+
+.dt-rx-group {
+	@include crayon.hstack(1);
+
+	min-width: 0;
+	align-items: baseline;
+
+	strong {
+		font-family: crayon.font-family("mono");
+		overflow-wrap: break-word;
+		word-break: break-all;
+	}
+}
+
+.dt-rx-group-label {
+	flex-shrink: 0;
+	color: var(--muted-foreground);
+}

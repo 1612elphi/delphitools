@@ -24,17 +24,22 @@ import HarmonyGenny from 'delphitools-v2/components/tools/harmony-genny';
 import ImageClipper from 'delphitools-v2/components/tools/image-clipper';
 import ImageSplitter from 'delphitools-v2/components/tools/image-splitter';
 import LineHeightCalc from 'delphitools-v2/components/tools/line-height-calc';
+import MatteGenerator from 'delphitools-v2/components/tools/matte-generator';
 import MetaTagGenny from 'delphitools-v2/components/tools/meta-tag-genny';
 import PaletteCollection from 'delphitools-v2/components/tools/palette-collection';
 import PaletteExtractor from 'delphitools-v2/components/tools/palette-extractor';
 import PaletteGenny from 'delphitools-v2/components/tools/palette-genny';
 import PixelPicker from 'delphitools-v2/components/tools/pixel-picker';
 import PxToRem from 'delphitools-v2/components/tools/px-to-rem';
+import RegexTester from 'delphitools-v2/components/tools/regex-tester';
 import SciCalc from 'delphitools-v2/components/tools/sci-calc';
+import ScrollGenerator from 'delphitools-v2/components/tools/scroll-generator';
 import SvgOptimiser from 'delphitools-v2/components/tools/svg-optimiser';
 import TailwindShades from 'delphitools-v2/components/tools/tailwind-shades';
+import TextDiff from 'delphitools-v2/components/tools/text-diff';
 import TypoCalc from 'delphitools-v2/components/tools/typo-calc';
 import UnitConverter from 'delphitools-v2/components/tools/unit-converter';
+import Watermarker from 'delphitools-v2/components/tools/watermarker';
 import WordCounter from 'delphitools-v2/components/tools/word-counter';
 
 export const TOOL_COMPONENTS: Record<string, ComponentLike<object>> = {
@@ -52,16 +57,21 @@ export const TOOL_COMPONENTS: Record<string, ComponentLike<object>> = {
 	'image-clipper': ImageClipper,
 	'image-splitter': ImageSplitter,
 	'line-height-calc': LineHeightCalc,
+	'matte-generator': MatteGenerator,
 	'meta-tag-genny': MetaTagGenny,
 	'palette-collection': PaletteCollection,
 	'palette-extractor': PaletteExtractor,
 	'palette-genny': PaletteGenny,
 	'pixel-picker': PixelPicker,
 	'px-to-rem': PxToRem,
+	'regex-tester': RegexTester,
 	'sci-calc': SciCalc,
+	'scroll-generator': ScrollGenerator,
 	'svg-optimiser': SvgOptimiser,
 	'tailwind-shades': TailwindShades,
+	'text-diff': TextDiff,
 	'typo-calc': TypoCalc,
 	'unit-converter': UnitConverter,
+	watermarker: Watermarker,
 	'word-counter': WordCounter,
 };

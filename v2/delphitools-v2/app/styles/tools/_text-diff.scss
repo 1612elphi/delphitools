@@ -4,3 +4,333 @@
 // new tool collided in it.
 
 @use "../crayon-config" as crayon;
+
+/* ── Text diff ───────────────────────────────────────────────────────────── */
+
+// Added and removed are green and red the world over; neither is a theme token,
+// so the two Tailwind ramps the Next app used are named here once.
+$add: crayon.color("emerald-500");
+$del: crayon.color("rose-500");
+
+.dt-td-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-td-options {
+	display: flex;
+	min-height: crayon.size(12);
+	align-items: center;
+	justify-content: space-between;
+	gap: crayon.size(3);
+	padding: crayon.size(2) crayon.size(4);
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-td-stats {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-td-stat {
+	@include crayon.hstack(1.5);
+
+	align-items: center;
+}
+
+.dt-td-chip {
+	display: inline-block;
+	width: crayon.size(2);
+	height: crayon.size(2);
+
+	&.is-add {
+		background: color-mix(in oklch, #{$add} 70%, transparent);
+	}
+
+	&.is-del {
+		background: color-mix(in oklch, #{$del} 70%, transparent);
+	}
+}
+
+/* `.segmented` draws its own 1px frame; here it is the whole visible box, so it
+   stays. Only the fixed two-column track is added. */
+.segmented.dt-td-wrap-toggle {
+	width: 12rem;
+	flex-shrink: 0;
+	grid-template-columns: repeat(2, 1fr);
+}
+
+.dt-td-wrap-option {
+	height: crayon.size(8);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("xs");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-td-panes {
+	display: grid;
+	grid-template-columns: 1fr;
+	border-bottom: 2px solid var(--border);
+
+	@include crayon.screen("md") {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.dt-td-pane {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+
+	/* Stacked on a phone, so the divider between panes runs the other way. */
+	&.is-right {
+		border-top: 2px solid var(--border);
+
+		@include crayon.screen("md") {
+			border-top: 0;
+			border-left: 2px solid var(--border);
+		}
+	}
+}
+
+.dt-td-pane-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding-left: crayon.size(4);
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-td-pane-label {
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-td-pane-tools {
+	display: flex;
+	align-items: stretch;
+}
+
+.dt-td-btn {
+	@include crayon.hstack(1);
+
+	display: flex;
+	width: crayon.size(8);
+	height: crayon.size(8);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+		flex-shrink: 0;
+	}
+
+	&.is-wide {
+		width: auto;
+		padding-inline: crayon.size(3);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&:disabled {
+		color: var(--muted-foreground);
+		cursor: not-allowed;
+		opacity: 0.5;
+	}
+}
+
+/* The word is dropped on a phone; the icon carries the meaning and the header
+   has four controls to fit. */
+.dt-td-btn-text {
+	display: none;
+
+	@include crayon.screen("sm") {
+		display: inline;
+	}
+}
+
+.dt-td-editor {
+	position: relative;
+	display: flex;
+	height: crayon.size(75);
+	overflow: hidden;
+}
+
+/* Off-screen copy of the textarea's text at the same content width. Its rows
+   are measured to height the gutter cells in word-wrap mode; see alignGutter. */
+.dt-td-mirror {
+	position: absolute;
+	visibility: hidden;
+	overflow: hidden;
+	padding: crayon.size(3);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	line-height: crayon.size(6);
+	overflow-wrap: break-word;
+	white-space: pre-wrap;
+}
+
+.dt-td-gutter {
+	flex-shrink: 0;
+	overflow: hidden;
+	padding: crayon.size(3);
+	background: color-mix(in oklch, var(--muted) 40%, transparent);
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	line-height: crayon.size(6);
+	text-align: right;
+	user-select: none;
+}
+
+.dt-td-textarea {
+	min-width: 0;
+	height: 100%;
+	flex: 1;
+	padding: crayon.size(3);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: transparent;
+	color: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	line-height: crayon.size(6);
+	outline: none;
+	resize: none;
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-td-output-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding-left: crayon.size(4);
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-td-output-label {
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-td-output {
+	background: var(--background);
+}
+
+.dt-td-empty {
+	padding: crayon.size(8);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	text-align: center;
+}
+
+.dt-td-diff {
+	overflow-x: auto;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	line-height: crayon.size(6);
+}
+
+.dt-td-row {
+	display: flex;
+	border-bottom: 1px solid var(--border);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	&.is-add {
+		background: color-mix(in oklch, #{$add} 10%, transparent);
+	}
+
+	&.is-del {
+		background: color-mix(in oklch, #{$del} 10%, transparent);
+	}
+}
+
+.dt-td-num {
+	width: crayon.size(10);
+	flex-shrink: 0;
+	padding-inline: crayon.size(2);
+	border-right: 1px solid var(--border);
+	color: color-mix(in oklch, var(--muted-foreground) 70%, transparent);
+	text-align: right;
+	user-select: none;
+}
+
+.dt-td-marker {
+	flex-shrink: 0;
+	padding-inline: crayon.size(2);
+	border-right: 1px solid var(--border);
+	color: var(--muted-foreground);
+	user-select: none;
+
+	.dt-td-row.is-add & {
+		color: crayon.color("emerald-600");
+
+		@include crayon.dark {
+			color: crayon.color("emerald-400");
+		}
+	}
+
+	.dt-td-row.is-del & {
+		color: crayon.color("rose-600");
+
+		@include crayon.dark {
+			color: crayon.color("rose-400");
+		}
+	}
+}
+
+.dt-td-text {
+	flex: 1;
+	padding-inline: crayon.size(3);
+	white-space: pre;
+
+	.dt-td-diff.is-wrap & {
+		overflow-wrap: break-word;
+		white-space: pre-wrap;
+	}
+}
+
+.dt-td-credit {
+	padding-top: crayon.size(3);
+	color: color-mix(in oklch, var(--muted-foreground) 60%, transparent);
+	font-size: crayon.font-size("xs");
+
+	a {
+		color: inherit;
+		text-decoration: underline;
+
+		@include crayon.hover {
+			color: var(--foreground);
+		}
+	}
+}

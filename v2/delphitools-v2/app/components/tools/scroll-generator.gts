@@ -147,9 +147,7 @@ interface Tile {
 }
 
 function swatchStyle(colour: string) {
-	return htmlSafe(
-		HEX.test(colour) ? `background-color: ${colour}` : '',
-	);
+	return htmlSafe(HEX.test(colour) ? `background-color: ${colour}` : '');
 }
 
 export default class ScrollGeneratorTool extends Component {
@@ -331,7 +329,12 @@ export default class ScrollGeneratorTool extends Component {
 				ctx.clearRect(0, 0, tileWidth, tileHeight);
 
 				if (rect.isFillEdge)
-					this.#drawFill(ctx, image, rect, geometry);
+					this.#drawFill(
+						ctx,
+						image,
+						rect,
+						geometry,
+					);
 
 				if (rect.sourceWidth > 0) {
 					ctx.drawImage(
@@ -437,7 +440,10 @@ export default class ScrollGeneratorTool extends Component {
 						<button
 							type="button"
 							class="dt-scroll-bar-btn"
-							{{on "click" this.clear}}
+							{{on
+								"click"
+								this.clear
+							}}
 						>
 							<Icon @name="trash-2" />
 							Clear
@@ -476,7 +482,9 @@ export default class ScrollGeneratorTool extends Component {
 						</div>
 					</div>
 
-					<div class="dt-scroll-section is-padded">
+					<div
+						class="dt-scroll-section is-padded"
+					>
 						{{! wording carried over from the Next app }}
 						<span
 							class="dt-scroll-label"
@@ -569,7 +577,12 @@ export default class ScrollGeneratorTool extends Component {
 								Colour</button>
 						</div>
 
-						{{#if (eq this.fillMode "colour")}}
+						{{#if
+							(eq
+								this.fillMode
+								"colour"
+							)
+						}}
 							<div
 								class="dt-scroll-swatches"
 							>
@@ -625,8 +638,9 @@ export default class ScrollGeneratorTool extends Component {
 							class="dt-scroll-count"
 						>{{this.geometry.slideCount}}</span>
 						{{! wording carried over from the Next app }}
-						<span class="dt-scroll-stat">slides
-							at
+						<span
+							class="dt-scroll-stat"
+						>slides at
 							{{this.geometry.tileWidth}}
 							×
 							{{this.geometry.tileHeight}}</span>
@@ -675,8 +689,7 @@ export default class ScrollGeneratorTool extends Component {
 						{{! wording carried over from the Next app }}
 						<span
 							class="dt-scroll-drop-hint"
-						>or click to select, or
-							paste</span>
+						>or click to select, or paste</span>
 					</label>
 				{{/if}}
 
@@ -692,7 +705,9 @@ export default class ScrollGeneratorTool extends Component {
 				<div class="dt-scroll-frame is-results">
 					<div class="dt-scroll-bar">
 						{{! wording carried over from the Next app }}
-						<span class="dt-scroll-ready">{{this.tiles.length}}
+						<span
+							class="dt-scroll-ready"
+						>{{this.tiles.length}}
 							slides ready</span>
 						<button
 							type="button"
@@ -702,15 +717,16 @@ export default class ScrollGeneratorTool extends Component {
 								this.downloadAll
 							}}
 						>
-							<Icon @name="download" />
+							<Icon
+								@name="download"
+							/>
 							Download All
 						</button>
 					</div>
 
 					<div class="dt-scroll-strip">
 						{{#each
-							this.tiles
-							key="index"
+							this.tiles key="index"
 							as |tile|
 						}}
 							<button
@@ -733,7 +749,8 @@ export default class ScrollGeneratorTool extends Component {
 									class="dt-scroll-tile-hint"
 								>
 									{{! wording carried over from the Next app }}
-									<span>Slide
+									<span
+									>Slide
 										{{tile.number}}</span>
 									<Icon
 										@name="download"
@@ -745,8 +762,9 @@ export default class ScrollGeneratorTool extends Component {
 
 					<div class="dt-scroll-footer">
 						{{! wording carried over from the Next app }}
-						<p>Post these slides in order to create
-							a seamless scrolling carousel</p>
+						<p>Post these slides in order to
+							create a seamless
+							scrolling carousel</p>
 					</div>
 				</div>
 			{{/if}}
