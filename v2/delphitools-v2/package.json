@@ -16,7 +16,9 @@
 	},
 	"scripts": {
 		"build": "vite build",
+		"build:static": "vite build && node scripts/prerender.mjs",
 		"format": "prettier . --cache --write",
+		"gen-icons": "node scripts/gen-icons.mjs",
 		"lint": "concurrently \"npm:lint:*(!fix)\" --names \"lint:\" --prefixColors auto",
 		"lint:css": "stylelint \"**/*.{css,scss}\"",
 		"lint:css:fix": "concurrently \"npm:lint:css -- --fix\"",
@@ -27,10 +29,9 @@
 		"lint:js": "eslint . --cache",
 		"lint:js:fix": "eslint . --fix",
 		"lint:types": "ember-tsc --noEmit",
-		"start": "vite",
-		"test": "vite build --mode development && ember test --path dist",
 		"prerender": "node scripts/prerender.mjs",
-		"build:static": "vite build && node scripts/prerender.mjs"
+		"start": "vite",
+		"test": "vite build --mode development && ember test --path dist"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.29.7",
