@@ -13,6 +13,7 @@ Branch: `v2-ember`. App: `v2/delphitools-v2/`. The Next app in the repo root is
 untouched and still the production site.
 
 ```
+55fce9c  perf(v2): one chunk per tool, and app/lib out of the eager graph
 5b9df3b  feat(v2): port the last eleven D2 tools
 a7735f6  feat(v2): port font-explorer, and rebuild the tool registry
 71519ac  feat(v2): port regex-tester, text-diff and the three social canvas tools
@@ -59,14 +60,18 @@ npm start                 # vite, pinned to :3000 so the rigs work
 npm run build             # vite build -> dist/
 npm run build:static      # build, then prerender each route + its og.png
 npm run gen-icons         # regenerate app/lib/icons.ts from what templates use
-npm test                  # ember-qunit, 69 tests
+npm run test              # ember-qunit, 69 tests
 npm run lint              # eslint + template-lint + stylelint + prettier
 npm run verify            # 10 puppeteer rigs, 183 checks, needs npm start
 npm run verify:static     # prerendered output, jxl and ONNX, needs build:static
 npm run verify:model      # background removal end to end, downloads 88 MB
 ```
 
-Gates, all green as of `5b9df3b`: `ember-tsc --noEmit`, `eslint .`,
+`npm test` is not the same command: `npm` is bun here, and bun takes `test` as
+its own subcommand. `npm run test` builds a test bundle over `dist/`, so
+`verify:static` after it reads the wrong build; rerun `build:static` first.
+
+Gates, all green as of `55fce9c`: `ember-tsc --noEmit`, `eslint .`,
 `ember-template-lint .`, `stylelint **/*.{css,scss}`, `prettier --check .`.
 
 **Never run `npm run format` from the repo root.** It formats the Next app, not
@@ -92,7 +97,7 @@ exceptions count as failures, and a failing run exits non-zero.
 | `palette.mjs` | generate, lock, the stepper, the strategy combobox |
 | `sharelink.mjs` | `?colors=` on a cold load, and its fallbacks |
 | `tooltip.mjs` | collapsed-rail tooltips, and that they unmount rather than linger |
-| `static.mjs` | the built output: per-route head tags, share cards, client-side nav, the jxl codec, the ONNX binary |
+| `static.mjs` | the built output: per-route head tags, share cards, client-side nav, per-tool chunks, the jxl codec, the ONNX binary |
 | `bg-removal.mjs` | the real model, end to end, checking a matte reaches the alpha channel |
 
 `static.mjs` serves `dist/` itself, so it needs no separate server, and is
@@ -105,8 +110,12 @@ inference, which takes minutes and needs network.
 ## What works
 
 **Stack.** Ember 7.1, Embroider + Vite, TypeScript strict + Glint, `.gts`
-template tag throughout. 10,945 lines of app source. Build is ~5s; output is
-174 kB CSS and 680 kB JS.
+template tag throughout. 10,945 lines of app source. Build is ~15s.
+
+**Bundle.** Each tool is its own chunk, fetched by the route's model hook during
+the transition. First load is 18 files, 134 kB gzip: `main` 83 kB raw, the
+`application` route chunk 158 kB raw, and the shared runtime. Before the split
+it was `main` at 1.65 MB, 463 kB gzip, carrying all 43 tools.
 
 **Styling on Crayon.** `crayon-css` 0.9.1 (Sass) replaces Tailwind 4 entirely.
 `app/styles/_crayon-config.scss` is the single config. `app/styles/app.scss`
@@ -225,6 +234,21 @@ a reference, but it is one author, two releases, and pinned to `@dnd-kit` 0.2.x.
 never failed. They now follow the parent repo's contract instead. This is the
 only coverage of the chrome, of the vendored primitives, and of anything that
 needs a portal or real input, so it does not belong outside version control.
+
+**The tool registry is a glob, and the route awaits it.**
+`components/tools/registry.ts` is `import.meta.glob('./*.gts')`, so the id is
+the file's own basename and a new tool registers itself. Vite expands the glob
+into one literal `import()` per file, which is what gives each tool its own
+chunk. `routes/tools/tool.ts` awaits the loader in `model`: Ember does not
+render a route until its model resolves, so the chunk arrives with the
+transition and the template gets a component or `undefined`, the same two cases
+it had before. A template-side await would need a loading state on every tool
+page for a fetch that is usually a few kB.
+
+**`app/lib` is declared static.** `staticAppPaths: ['lib']` in
+`ember-cli-build.mjs`. Nothing there is resolved by name, and the default puts
+every one of them in `@embroider/virtual/compat-modules`, which the app entry
+imports eagerly.
 
 **`lib/tools.ts` keeps its shape and IDs.** `PARITY.md` in the repo root names
 it as the source of truth for the CLI and iOS repos. The only change is `icon`,
@@ -348,7 +372,8 @@ files. Prep scripts should use absolute paths.
 **Generate the tool registry, do not patch it.** The first integration script
 inserted an entry and then re-sorted the list; once sorted, the next insert
 appended a duplicate of every entry, which typescript caught as 31 duplicate
-object keys. It is now rebuilt from the components on disk each time.
+object keys. It was then rebuilt from the components on disk each time, and is
+now `import.meta.glob`, which is the same idea with no script to run.
 
 **Prettier strips quotes from single-word object keys.** `decoder: Decoder`,
 not `'decoder': Decoder`. Any script that greps the registry or `icons.ts` for
@@ -370,6 +395,15 @@ and leave `package-lock.json` stale. Use `/opt/homebrew/bin/npm install
 --package-lock-only` to resync; the parent repo tracks that file to pin the
 Cloudflare Pages build.
 
+**Embroider's compat-modules is what actually decides the bundle.** Splitting
+the tools into dynamic imports took `main` from 1.65 MB to 772 kB, and 448 kB of
+what was left was the Shavian dictionary — a file only one tool imports, and
+only through `?raw`. Every module under `app/lib/` was listed in
+`@embroider/virtual/compat-modules` for the runtime resolver, and `app/app.ts`
+imports that map eagerly, so a dynamic import elsewhere buys nothing. Components
+are not affected: `staticInvokables` already keeps them out. Read the emitted
+`main` before assuming an import graph explains it.
+
 **Sass deprecation noise is upstream.** The `if-function` warnings come from
 `crayon-css` (`_borders.scss` 38 and 88, `_svg_masks.scss` 22), not this app.
 Narrowly silenced in `vite.config.mjs`; remove once Crayon ships the modern
@@ -382,20 +416,20 @@ syntax. The fix for Ash is three lines, but it raises Crayon's Sass floor to
 
 **Tools.** 13 left.
 
+Route ids, taken from `lib/tools.ts` against what the registry glob picks up.
+`code-genny` is a route of its own, not a sub-panel, and `substrata` is one of
+the 13 rather than a separate concern.
+
 | D | Tools |
 | --- | --- |
-| D3 | `social-cropper`, `text-editor`, `doc-converter`, `zine-imposer`, `image-converter`, `image-tracer`, `pdf-preflight`, `qr-generator`, `imposer` |
-| D4 | `graph-calc` (mafs is React-only), `image-stitcher` (@dnd-kit) |
-| sub-panel | `wifi-form` belongs to `qr-generator`, `code-generator` to the barcode tooling. Neither has a route of its own; port them with their parents. |
+| D3 | `social-cropper`, `image-converter`, `code-genny`, `qr-genny`, `zine-imposer`, `imposer`, `pdf-preflight`, `image-tracer`, `text-editor`, `doc-converter` |
+| D4 | `image-stitcher` (@dnd-kit, and Substrata's export libs), `graph-calc` (mafs is React-only) |
+| its own project | `substrata`, the editor |
+| sub-panel | `wifi-form` belongs to `qr-genny`; port it with its parent. |
 
 `gradient-genny` was rated D4 for the same @dnd-kit reason as `image-stitcher`,
 and came in without it, on native Pointer Events and `setPointerCapture`. If
 that holds for `image-stitcher` too, only `graph-calc` is genuinely D4.
-
-**Bundle.** `main` is 1.65 MB, 463 kB gzip, up from 690 kB before this batch.
-All 43 tools are statically imported in `components/tools/registry.ts`, so every
-visitor downloads all of them. That file's own comment names this as the place
-to split. Worth doing before the remaining 13, not after.
 
 **Substrata.** Untouched. `window.__substrata` must be ported before any of it,
 because the 22 harnesses in the parent repo's `scripts/verify/` are the only
@@ -421,22 +455,34 @@ expects `out/`. One line in `vite.config.mjs` when it matters.
 **Deploy.** Nothing is wired to Cloudflare Pages. `public/_redirects` has not
 been carried across.
 
+**A failed chunk fetch has nowhere to go.** The route's model hook now awaits a
+network request, and there is no `error` template, so a 404 on a tool chunk
+leaves the transition aborted with a console error. The way that happens in
+practice is a redeploy under an open tab: the cached `index.html` names hashes
+that no longer exist. Static imports could not fail this way. It needs an
+`error` route or a reload-on-chunk-error, and neither is worth building before
+anything is deployed at all.
+
 ---
 
 ## Next
 
-1. Split the tool imports in `components/tools/registry.ts`. 1.65 MB of main
-   bundle for 43 tools, before the 13 largest are added, is the biggest single
-   win available, and the file already says so.
-2. The D3 tools, individually rather than in a batch. Four are pdf-lib or
+1. The D3 tools, individually rather than in a batch. Four are pdf-lib or
    worker work (`imposer`, `zine-imposer`, `pdf-preflight`, `doc-converter`)
    and share an approach; `image-converter` can reuse `lib/jxl.ts`, which
    already solves its hardest part.
-3. `graph-calc`, the one genuine D4: mafs is React-only and the plot surface
+2. `graph-calc`, the one genuine D4: mafs is React-only and the plot surface
    has to be rebuilt on SVG. mathjs is already installed.
-4. Deploy. `public/_redirects` and the `dist`-versus-`out` mismatch are both
+3. Deploy. `public/_redirects` and the `dist`-versus-`out` mismatch are both
    one-line jobs, and nothing has been proven end to end past
    `npm run build:static`.
+4. Two bundle jobs left, both optional. A deep-linked tool page now costs an
+   extra round trip: only `main` knows the tool chunk's URL, so the fetch
+   cannot start until `main` has run. `scripts/prerender.mjs` already boots
+   each route in Chrome, so recording that route's asset requests and writing
+   a `modulepreload` link per route is about five lines. And the 158 kB
+   `application` chunk is the largest thing on first load, against an 82 kB
+   `main`; nobody has looked at what is in it.
 
 ---
 
