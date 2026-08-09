@@ -1,15 +1,11 @@
 import RouteTemplate from 'ember-route-template';
 import { pageTitle } from 'ember-page-title';
 import Icon from 'delphitools-v2/components/icon';
-import { TOOL_COMPONENTS } from 'delphitools-v2/components/tools/registry';
 import type { ToolModel } from 'delphitools-v2/routes/tools/tool';
 
 // The shape every tool page inherits: capped header block, then the tool's own
 // component at whatever width it asked for. Mirrors the Next app's
 // tools/[toolId]/page.tsx, minus the sticker (GSAP, Phase 1).
-function componentFor(id: string) {
-	return TOOL_COMPONENTS[id];
-}
 
 export default RouteTemplate<{ Args: { model: ToolModel } }>(
 	<template>
@@ -58,32 +54,23 @@ export default RouteTemplate<{ Args: { model: ToolModel } }>(
 					</div>
 				</header>
 
-				{{#let
-					(componentFor @model.tool.id)
-					as |ToolComponent|
-				}}
-					{{#if ToolComponent}}
-						<ToolComponent />
-					{{else}}
-						{{! wording carried over from the Next app's placeholder card }}
-						<div class="dt-tool-soon">
-							<span
-								class="dt-tool-soon-mark"
-							><Icon
-									@name="wind"
-								/></span>
-							<h2>Coming Soon</h2>
-							<p>
-								This tool is
-								currently under
-								construction.
-								Check back soon
-								for the full
-								implementation.
-							</p>
-						</div>
-					{{/if}}
-				{{/let}}
+				{{#if @model.component}}
+					<@model.component />
+				{{else}}
+					{{! wording carried over from the Next app's placeholder card }}
+					<div class="dt-tool-soon">
+						<span
+							class="dt-tool-soon-mark"
+						><Icon @name="wind" /></span>
+						<h2>Coming Soon</h2>
+						<p>
+							This tool is currently
+							under construction.
+							Check back soon for the
+							full implementation.
+						</p>
+					</div>
+				{{/if}}
 			</div>
 		</div>
 	</template>,

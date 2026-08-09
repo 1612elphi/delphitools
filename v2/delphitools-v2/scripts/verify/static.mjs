@@ -127,6 +127,49 @@ if (!existsSync(join(dist, 'index.html'))) {
 		`${navigated.rows} rows`,
 	);
 
+	const assets = join(dist, 'assets');
+	const emitted = readdirSync(assets);
+
+	// ── tools are split out of main ─────────────────────────────────────
+	//
+	// components/tools/registry.ts globs this directory, so a tool with no
+	// chunk of its own means the glob stopped expanding into per-file
+	// imports. Both states build and run identically; only the output shows
+	// it.
+
+	const toolIds = readdirSync(join(root, 'app/components/tools'))
+		.filter((name) => name.endsWith('.gts'))
+		.map((name) => name.slice(0, -'.gts'.length));
+	const unsplit = toolIds.filter(
+		(id) =>
+			!emitted.some((name) =>
+				new RegExp(`^${id}-[^.]*\\.js$`).test(name),
+			),
+	);
+	check(
+		'every tool is its own chunk',
+		toolIds.length > 0 && unsplit.length === 0,
+		`${toolIds.length} tools${unsplit.length ? `, still in main: ${unsplit.join(' ')}` : ''}`,
+	);
+
+	// The other half of the split is staticAppPaths in ember-cli-build.mjs.
+	// Without it every module under app/lib joins @embroider/virtual/compat-
+	// modules, which app.ts imports eagerly, and the Shavian dictionary and
+	// colour-name list are back on the first load: 570 kB against an 82 kB
+	// main. No chunk name changes, so a byte budget is what catches it.
+	//
+	// The floor is the other half of the budget: `npm run test` writes a test
+	// build over dist/ whose main is a 56-byte stub, and a check with no floor
+	// reads that as a pass.
+
+	const mainJs = emitted.find((name) => /^main-.*\.js$/.test(name));
+	const mainBytes = mainJs ? statSync(join(assets, mainJs)).size : 0;
+	check(
+		'app/lib stays out of the eager graph',
+		mainBytes > 20_000 && mainBytes < 200_000,
+		`main is ${(mainBytes / 1e3).toFixed(0)} kB`,
+	);
+
 	// ── the ONNX runtime ships with the build ───────────────────────────
 	//
 	// transformers.js only falls back to a jsdelivr URL when nothing has set
@@ -135,8 +178,7 @@ if (!existsSync(join(dist, 'index.html'))) {
 	// 21.6 MB binary. A build that stops emitting it has quietly moved the
 	// runtime onto a CDN, which is the sort of thing nobody notices.
 
-	const assets = join(dist, 'assets');
-	const ortWasm = readdirSync(assets).filter((name) =>
+	const ortWasm = emitted.filter((name) =>
 		/^ort-wasm.*\.wasm$/.test(name),
 	);
 	check(
@@ -152,7 +194,7 @@ if (!existsSync(join(dist, 'index.html'))) {
 			`${(bytes / 1e6).toFixed(1)} MB`,
 		);
 
-		const chunk = readdirSync(assets).find((name) =>
+		const chunk = emitted.find((name) =>
 			/^transformers\.web-.*\.js$/.test(name),
 		);
 		const source = chunk
