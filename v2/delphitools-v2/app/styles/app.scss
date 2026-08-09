@@ -988,6 +988,13 @@ $header-height: crayon.size(14);
 	@include crayon.vstack(0.5);
 }
 
+/* NavTip wraps each link in a TooltipTrigger, which is inline-block so it can
+   sit beside inline content elsewhere. Here it has to fill the group, or the
+   hover and active backgrounds stop at the text instead of spanning the row. */
+.dt-nav-group .dt-tooltip-trigger {
+	display: block;
+}
+
 .dt-nav-group-label {
 	@include crayon.hstack(1.5);
 
