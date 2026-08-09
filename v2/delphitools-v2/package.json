@@ -31,7 +31,9 @@
 		"lint:types": "ember-tsc --noEmit",
 		"prerender": "node scripts/prerender.mjs",
 		"start": "vite",
-		"test": "vite build --mode development && ember test --path dist"
+		"test": "vite build --mode development && ember test --path dist",
+		"verify": "node scripts/verify/all.mjs",
+		"verify:static": "node scripts/verify/static.mjs"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.29.7",

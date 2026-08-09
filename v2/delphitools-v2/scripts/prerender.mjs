@@ -10,17 +10,11 @@
 //
 // Usage: node scripts/prerender.mjs [distDir]
 
-import {
-	readFileSync,
-	writeFileSync,
-	mkdirSync,
-	existsSync,
-	statSync,
-} from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createServer } from 'node:http';
 import puppeteer from 'puppeteer-core';
+import { serve } from './static-server.mjs';
 import { renderPng, toolCard, siteCard } from './og.mjs';
 
 const CHROME =
@@ -63,40 +57,6 @@ function withHead(shell, head) {
 		.replace(/<title>[\s\S]*?<\/title>/, '@@HEAD@@')
 		.replace(/\n\s*<meta name="description"[^>]*>/, '')
 		.replace('@@HEAD@@', head);
-}
-
-function serve(dir, port) {
-	const types = {
-		'.html': 'text/html',
-		'.js': 'text/javascript',
-		'.css': 'text/css',
-		'.png': 'image/png',
-		'.woff2': 'font/woff2',
-		'.wasm': 'application/wasm',
-		'.jpg': 'image/jpeg',
-		'.svg': 'image/svg+xml',
-		'.txt': 'text/plain',
-	};
-	const isFile = (p) => existsSync(p) && statSync(p).isFile();
-	const server = createServer((req, res) => {
-		const path = decodeURIComponent(req.url.split('?')[0]);
-		const asked = join(dir, path);
-		// A route directory exists once this script has written it, so a plain
-		// existsSync would hand the browser a directory and throw EISDIR. Prefer
-		// that directory's own index.html, then the SPA shell.
-		const file = isFile(asked)
-			? asked
-			: isFile(join(asked, 'index.html'))
-				? join(asked, 'index.html')
-				: join(dir, 'index.html');
-		const ext = file.slice(file.lastIndexOf('.'));
-		res.writeHead(200, {
-			'content-type':
-				types[ext] ?? 'application/octet-stream',
-		});
-		res.end(readFileSync(file));
-	});
-	return new Promise((r) => server.listen(port, () => r(server)));
 }
 
 console.log(`registry: ${toolRoutes.length} tool routes`);
