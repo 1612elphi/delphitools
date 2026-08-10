@@ -31,7 +31,7 @@
 		"lint:types": "ember-tsc --noEmit",
 		"prerender": "node scripts/prerender.mjs",
 		"start": "vite",
-		"test": "vite build --mode development && ember test --path dist",
+		"test": "NODE_ENV=development vite build --mode development && ember test --path dist",
 		"verify": "node scripts/verify/all.mjs",
 		"verify:model": "node scripts/verify/bg-removal.mjs",
 		"verify:static": "node scripts/verify/static.mjs"
