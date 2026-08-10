@@ -1,0 +1,676 @@
+// Styles for the image-stitcher tool.
+//
+// One partial per tool: app.scss had grown past three thousand lines and every
+// new tool collided in it.
+
+@use "../crayon-config" as crayon;
+
+/* ── Image stitcher ──────────────────────────────────────────────────────── */
+
+.dt-stitch {
+	@include crayon.vstack(6);
+}
+
+.dt-stitch-frame {
+	border: 2px solid var(--border);
+}
+
+/* ── Mode switch ─────────────────────────────────────────────────────────── */
+
+.dt-stitch-modes {
+	display: flex;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-stitch-mode {
+	height: crayon.size(11);
+	flex: 1;
+	border: 0;
+	background: none;
+	color: var(--foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	text-transform: capitalize;
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--muted) 50%, transparent);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+/* ── Drop zone ───────────────────────────────────────────────────────────── */
+
+.dt-stitch-drop {
+	display: block;
+	width: 100%;
+	padding: crayon.size(10);
+	border: 0;
+	background: none;
+	color: var(--foreground);
+	font: inherit;
+	text-align: center;
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(12);
+		height: crayon.size(12);
+		margin-bottom: crayon.size(4);
+		color: var(--muted-foreground);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--muted) 30%, transparent);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.dt-stitch-drop-title {
+	display: block;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-stitch-drop-hint {
+	display: block;
+	margin-top: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+/* ── Trail chrome ────────────────────────────────────────────────────────── */
+
+.dt-stitch-bar {
+	display: flex;
+	justify-content: flex-end;
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-stitch-clear {
+	@include crayon.hstack(2);
+
+	display: flex;
+	height: crayon.size(9);
+	align-items: center;
+	padding-inline: crayon.size(4);
+	border: 0;
+	background: none;
+	color: var(--foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("medium");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+}
+
+/* The four global add buttons ring the composite. Named areas rather than
+   filler cells, so the template holds nothing that renders as nothing. */
+.dt-stitch-stage {
+	display: grid;
+	grid-template:
+		". top ." 36px
+		"left trail right" minmax(0, 1fr)
+		". bottom ." 36px
+		/ 36px minmax(0, 1fr) 36px;
+	gap: crayon.size(1.5);
+	padding: crayon.size(4);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+}
+
+.dt-stitch-side {
+	display: grid;
+	border: 2px dashed var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	place-items: center;
+	cursor: pointer;
+	transition:
+		border-color 150ms,
+		background-color 150ms,
+		color 150ms,
+		opacity 150ms;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		border-color: var(--primary);
+		background: color-mix(
+			in oklch,
+			var(--primary) 10%,
+			transparent
+		);
+		color: var(--primary);
+	}
+
+	&.is-top {
+		grid-area: top;
+	}
+
+	&.is-left {
+		grid-area: left;
+	}
+
+	&.is-right {
+		grid-area: right;
+	}
+
+	&.is-bottom {
+		grid-area: bottom;
+	}
+
+	/* an image is selected: the add buttons scope to it instead */
+	&.is-hidden {
+		opacity: 0;
+		pointer-events: none;
+	}
+}
+
+.dt-stitch-trail {
+	display: flex;
+	min-height: 0;
+	align-items: center;
+	justify-content: center;
+	grid-area: trail;
+}
+
+.dt-stitch-canvas {
+	position: relative;
+	box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+}
+
+/* ── Tiles ───────────────────────────────────────────────────────────────── */
+
+.dt-stitch-tile {
+	position: absolute;
+
+	/* swap target tint while another tile is dragged over this one */
+	&.is-over::after {
+		position: absolute;
+		z-index: 10;
+		background: color-mix(
+			in oklch,
+			var(--primary) 25%,
+			transparent
+		);
+		content: "";
+		inset: 0;
+		pointer-events: none;
+	}
+}
+
+.dt-stitch-grab {
+	position: absolute;
+	overflow: hidden;
+	cursor: grab;
+	inset: 0;
+
+	&:active {
+		cursor: grabbing;
+	}
+
+	&.is-dragging {
+		opacity: 0.4;
+	}
+}
+
+.dt-stitch-img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+
+	&.is-contain {
+		object-fit: contain;
+	}
+}
+
+/* Selection ring: a double keyline, previewed at half strength on hover. */
+.dt-stitch-ring {
+	position: absolute;
+	z-index: 10;
+	box-shadow:
+		inset 0 0 0 2px var(--primary),
+		inset 0 0 0 4px var(--background);
+	inset: 0;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 150ms;
+
+	&.is-selected {
+		opacity: 1;
+	}
+}
+
+.dt-stitch-canvas:not(.is-dragging)
+	.dt-stitch-tile:hover
+	.dt-stitch-ring:not(.is-selected) {
+	opacity: 0.5;
+}
+
+/* ── Fit pill ────────────────────────────────────────────────────────────── */
+
+.dt-stitch-pill {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	z-index: 20;
+	display: none;
+	align-items: center;
+	gap: crayon.size(1);
+	padding: 2px;
+	border: 1px solid var(--border);
+	background: color-mix(in oklch, var(--background) 95%, transparent);
+	box-shadow: 0 4px 6px rgb(0 0 0 / 10%);
+	font-size: 10px;
+	font-weight: crayon.font-weight("medium");
+	transform: translate(-50%, -50%);
+
+	.dt-stitch-tile:hover & {
+		display: flex;
+	}
+}
+
+.dt-stitch-fit {
+	padding: 2px crayon.size(1.5);
+	border: 0;
+	background: none;
+	color: var(--foreground);
+	font: inherit;
+	text-transform: capitalize;
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-stitch-tile-remove {
+	display: grid;
+	width: crayon.size(5);
+	height: crayon.size(5);
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	place-items: center;
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(3);
+		height: crayon.size(3);
+	}
+
+	@include crayon.hover {
+		color: var(--foreground);
+	}
+}
+
+/* ── Drop-to-place edge zones ────────────────────────────────────────────── */
+
+.dt-stitch-place {
+	position: absolute;
+	z-index: 20;
+	display: grid;
+	place-items: center;
+	transition: background-color 150ms;
+
+	&.is-top {
+		top: 0;
+		height: crayon.size(7);
+		inset-inline: 0;
+	}
+
+	&.is-bottom {
+		bottom: 0;
+		height: crayon.size(7);
+		inset-inline: 0;
+	}
+
+	&.is-left {
+		left: 0;
+		width: crayon.size(7);
+		inset-block: 0;
+	}
+
+	&.is-right {
+		right: 0;
+		width: crayon.size(7);
+		inset-block: 0;
+	}
+
+	&.is-over {
+		background: color-mix(
+			in oklch,
+			var(--primary) 30%,
+			transparent
+		);
+	}
+}
+
+.dt-stitch-place-badge {
+	display: grid;
+	width: crayon.size(6);
+	height: crayon.size(6);
+	border: 1px solid var(--primary);
+	background: var(--background);
+	box-shadow: 0 4px 6px rgb(0 0 0 / 10%);
+	color: var(--primary);
+	place-items: center;
+	transition:
+		background-color 150ms,
+		color 150ms;
+
+	.dt-icon {
+		width: crayon.size(3.5);
+		height: crayon.size(3.5);
+	}
+
+	.dt-stitch-place.is-over & {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+/* ── Seam inserts ────────────────────────────────────────────────────────── */
+
+/* The seam itself has no width, so the invisible strip is what catches hover. */
+.dt-stitch-seam {
+	position: absolute;
+	z-index: 20;
+}
+
+.dt-stitch-seam-hit {
+	position: absolute;
+
+	.dt-stitch-seam.is-vertical & {
+		left: -12px;
+		width: 24px;
+		inset-block: 0;
+	}
+
+	.dt-stitch-seam:not(.is-vertical) & {
+		top: -12px;
+		height: 24px;
+		inset-inline: 0;
+	}
+}
+
+.dt-stitch-seam-add {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	z-index: 10;
+	display: grid;
+	width: crayon.size(6);
+	height: crayon.size(6);
+	border: 1px solid var(--primary);
+	background: var(--background);
+	box-shadow: 0 4px 6px rgb(0 0 0 / 10%);
+	color: var(--primary);
+	opacity: 0;
+	place-items: center;
+	transform: translate(-50%, -50%) scale(0.75);
+	cursor: pointer;
+	transition: all 150ms;
+
+	.dt-icon {
+		width: crayon.size(3.5);
+		height: crayon.size(3.5);
+	}
+
+	@include crayon.hover {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+
+	.dt-stitch-seam:hover &,
+	&:focus-visible {
+		opacity: 1;
+		transform: translate(-50%, -50%) scale(1);
+	}
+}
+
+/* ── Selection-scoped add buttons ────────────────────────────────────────── */
+
+.dt-stitch-adder {
+	position: absolute;
+	z-index: 30;
+	display: grid;
+	border: 1px dashed var(--primary);
+	backdrop-filter: blur(1px);
+	background: color-mix(in oklch, var(--background) 70%, transparent);
+	color: var(--primary);
+	place-items: center;
+	cursor: pointer;
+	transition:
+		background-color 150ms,
+		color 150ms;
+
+	.dt-icon {
+		width: crayon.size(3.5);
+		height: crayon.size(3.5);
+	}
+
+	@include crayon.hover {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+/* ── Batch pool ──────────────────────────────────────────────────────────── */
+
+.dt-stitch-pool {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: crayon.size(2);
+	padding: crayon.size(3);
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-stitch-thumb {
+	position: relative;
+	width: crayon.size(16);
+	height: crayon.size(16);
+	flex-shrink: 0;
+	overflow: hidden;
+	border: 1px solid var(--border);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+	cursor: grab;
+	transition:
+		border-color 150ms,
+		opacity 150ms;
+
+	&:active {
+		cursor: grabbing;
+	}
+
+	&.is-dragging {
+		z-index: 10;
+		opacity: 0.3;
+	}
+
+	&.is-over {
+		border-color: var(--primary);
+	}
+}
+
+.dt-stitch-thumb-img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	pointer-events: none;
+}
+
+.dt-stitch-thumb-index {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	padding-inline: crayon.size(1);
+	background: color-mix(in oklch, var(--background) 80%, transparent);
+	font-family: crayon.font-family("mono");
+	font-size: 10px;
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-stitch-thumb-remove {
+	position: absolute;
+	top: 0;
+	right: 0;
+	display: none;
+	width: crayon.size(5);
+	height: crayon.size(5);
+	border: 0;
+	background: color-mix(in oklch, var(--background) 80%, transparent);
+	color: var(--foreground);
+	place-items: center;
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(3);
+		height: crayon.size(3);
+	}
+
+	.dt-stitch-thumb:hover &,
+	&:focus-visible {
+		display: grid;
+	}
+}
+
+.dt-stitch-pool-add {
+	display: grid;
+	width: crayon.size(16);
+	height: crayon.size(16);
+	flex-shrink: 0;
+	border: 2px dashed var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	place-items: center;
+	cursor: pointer;
+	transition:
+		border-color 150ms,
+		color 150ms;
+
+	.dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+	}
+
+	@include crayon.hover {
+		border-color: var(--primary);
+		color: var(--primary);
+	}
+}
+
+/* ── Batch preview ───────────────────────────────────────────────────────── */
+
+.dt-stitch-preview {
+	display: flex;
+	justify-content: center;
+	padding: crayon.size(4);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+}
+
+.dt-stitch-preview-grid {
+	display: grid;
+	width: 100%;
+	max-width: 560px;
+	box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+}
+
+.dt-stitch-preview-cell {
+	overflow: hidden;
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+}
+
+/* ── Export row ──────────────────────────────────────────────────────────── */
+
+.dt-stitch-export {
+	display: flex;
+	align-items: stretch;
+	border-top: 2px solid var(--border);
+}
+
+.dt-stitch-format {
+	padding-inline: crayon.size(3.5);
+	border: 0;
+	border-right: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: 11px;
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--muted) 50%, transparent);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+
+	&:disabled {
+		opacity: 0.35;
+		cursor: not-allowed;
+	}
+}
+
+.dt-stitch-download {
+	@include crayon.hstack(2);
+
+	display: flex;
+	height: crayon.size(14);
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font: inherit;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--primary) 90%, black);
+	}
+}

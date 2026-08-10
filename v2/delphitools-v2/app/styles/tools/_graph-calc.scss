@@ -1,0 +1,548 @@
+// Styles for the graph-calc tool.
+//
+// The plot is inline SVG rather than a chart library: the Next app draws it
+// with mafs, which is React-only. Grid, axes and tick labels are styled here so
+// they follow the theme — the Next app hard-codes black for all three, which
+// only reads on a light background. The curves keep their per-function colour
+// as a presentation attribute on each path.
+
+@use "../crayon-config" as crayon;
+
+.dt-graph {
+	border: 2px solid var(--border);
+}
+
+.dt-graph-section {
+	padding: crayon.size(4);
+	border-bottom: 2px solid var(--border);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+}
+
+.dt-graph-label {
+	display: block;
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-graph-sublabel {
+	display: block;
+	margin-top: crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+/* Flush tables: the rows span the section's own padding. */
+.dt-graph-rows {
+	margin: crayon.size(4) crayon.size(-4) 0;
+	border-block: 1px solid var(--border);
+}
+
+.dt-graph-row,
+.dt-graph-range {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+}
+
+/* ── Function rows ───────────────────────────────────────────────────────── */
+
+.dt-graph-name {
+	display: flex;
+	width: crayon.size(12);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+}
+
+.dt-graph-swatch {
+	position: relative;
+	width: crayon.size(12);
+	flex-shrink: 0;
+	padding: 0;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	cursor: pointer;
+	transition: opacity 150ms;
+
+	@include crayon.hover {
+		opacity: 0.8;
+	}
+
+	.dt-icon {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: crayon.size(3.5);
+		height: crayon.size(3.5);
+		color: #fff;
+		mix-blend-mode: difference;
+		transform: translate(-50%, -50%);
+	}
+}
+
+.dt-graph-swatch-fill {
+	position: absolute;
+	inset: 0;
+}
+
+.dt-graph-op {
+	width: crayon.size(12);
+	flex-shrink: 0;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: var(--background);
+	color: var(--foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("base");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+}
+
+.dt-graph-expr {
+	position: relative;
+	display: flex;
+	min-width: 0;
+	flex: 1;
+}
+
+.dt-graph-input {
+	width: 100%;
+	padding: crayon.size(2) crayon.size(3);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: transparent;
+	color: var(--foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -2px;
+	}
+
+	&.is-error {
+		color: var(--destructive);
+	}
+}
+
+.dt-graph-error {
+	position: absolute;
+	top: 50%;
+	right: crayon.size(3);
+	color: var(--destructive);
+	font-size: crayon.font-size("xs");
+	pointer-events: none;
+	transform: translateY(-50%);
+}
+
+.dt-graph-eye,
+.dt-graph-remove {
+	display: flex;
+	width: crayon.size(12);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: var(--background);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+}
+
+.dt-graph-eye {
+	color: var(--muted-foreground);
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-graph-remove {
+	color: var(--destructive);
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+}
+
+/* ── Add + display toggles ───────────────────────────────────────────────── */
+
+.dt-graph-toolbar {
+	display: flex;
+	align-items: stretch;
+	margin: 0 crayon.size(-4) crayon.size(-4);
+	border-top: 1px solid var(--border);
+
+	> [data-slot="tooltip"],
+	.dt-tooltip-trigger {
+		display: block;
+	}
+}
+
+.dt-graph-add {
+	display: flex;
+	height: crayon.size(12);
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+	gap: crayon.size(2);
+	border: 0;
+	background: none;
+	color: var(--foreground);
+	font: inherit;
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+}
+
+.dt-graph-toggle {
+	display: flex;
+	width: crayon.size(12);
+	height: crayon.size(12);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+/* ── Plot surface ────────────────────────────────────────────────────────── */
+
+.dt-graph-surface {
+	position: relative;
+	overflow: hidden;
+	border-bottom: 2px solid var(--border);
+	background: var(--card);
+	cursor: grab;
+
+	/* The pointer handlers pan the plot; the browser must not also scroll. */
+	touch-action: none;
+
+	&.is-panning {
+		cursor: grabbing;
+	}
+}
+
+.dt-graph-plot {
+	display: block;
+	width: 100%;
+}
+
+.dt-graph-grid line {
+	stroke: var(--foreground);
+	stroke-opacity: 0.1;
+	stroke-width: 1;
+}
+
+.dt-graph-axes line {
+	stroke: var(--foreground);
+	stroke-opacity: 0.6;
+	stroke-width: 1.5;
+}
+
+.dt-graph-ticks text {
+	fill: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: 11px;
+}
+
+.dt-graph-curve {
+	fill: none;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	stroke-width: 2;
+}
+
+.dt-graph-region {
+	fill-opacity: 0.2;
+	stroke: none;
+}
+
+.dt-graph-readout {
+	position: absolute;
+	right: crayon.size(2);
+	bottom: crayon.size(2);
+	padding: crayon.size(1) crayon.size(2);
+	background: rgb(0 0 0 / 70%);
+	color: #fff;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("xs");
+	pointer-events: none;
+}
+
+/* ── View ────────────────────────────────────────────────────────────────── */
+
+.dt-graph-range-name {
+	display: flex;
+	width: crayon.size(20);
+	flex-shrink: 0;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-graph-number {
+	height: crayon.size(10);
+	min-width: 0;
+	flex: 1;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: transparent;
+	color: var(--foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	text-align: center;
+
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -2px;
+	}
+}
+
+.dt-graph-to {
+	display: flex;
+	width: crayon.size(10);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border-left: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-graph-zooms {
+	margin: crayon.size(2) crayon.size(-4) crayon.size(-4);
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	border-inline: 0;
+	border-bottom: 0;
+
+	/* The tooltip wrapper is the grid cell, so the button has to fill it. */
+	> [data-slot="tooltip"],
+	.dt-tooltip-trigger {
+		display: block;
+		height: 100%;
+	}
+}
+
+.dt-graph-zoom {
+	display: flex;
+	width: 100%;
+	height: 100%;
+	min-height: crayon.size(9);
+	align-items: center;
+	justify-content: center;
+	gap: crayon.size(1);
+	background: var(--background);
+	color: var(--foreground);
+	font: inherit;
+	font-size: crayon.font-size("xs");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+}
+
+/* ── Trace ───────────────────────────────────────────────────────────────── */
+
+.dt-graph-trace {
+	display: flex;
+	align-items: stretch;
+	margin: crayon.size(4) crayon.size(-4) crayon.size(-4);
+	border-top: 1px solid var(--border);
+}
+
+.dt-graph-trace-name {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+}
+
+.dt-graph-trace-input {
+	height: crayon.size(14);
+	min-width: 0;
+	flex: 1;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: transparent;
+	color: var(--foreground);
+	font-family: crayon.font-family("mono");
+	text-align: center;
+
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -2px;
+	}
+}
+
+.dt-graph-trace-go {
+	display: flex;
+	height: crayon.size(14);
+	align-items: center;
+	justify-content: center;
+	gap: crayon.size(2);
+	padding-inline: crayon.size(6);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font: inherit;
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--primary) 90%, black);
+	}
+}
+
+/* ── Trace results ───────────────────────────────────────────────────────── */
+
+.dt-graph-results-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.dt-graph-clear {
+	display: flex;
+	height: crayon.size(6);
+	align-items: center;
+	gap: crayon.size(1);
+	padding-inline: crayon.size(2);
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(3);
+		height: crayon.size(3);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-graph-results {
+	max-height: crayon.size(40);
+	margin: crayon.size(4) crayon.size(-4) crayon.size(-4);
+	overflow-y: auto;
+	border-top: 1px solid var(--border);
+}
+
+.dt-graph-result {
+	padding: crayon.size(2) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+
+	&:last-child {
+		border-bottom: 0;
+	}
+}
+
+.dt-graph-result-x {
+	color: var(--muted-foreground);
+}
+
+.dt-graph-result-row {
+	display: flex;
+	align-items: center;
+	margin-left: crayon.size(2);
+	gap: crayon.size(2);
+}
+
+.dt-graph-dot {
+	width: crayon.size(2);
+	height: crayon.size(2);
+	flex-shrink: 0;
+	border-radius: 9999px;
+}
+
+.dt-graph-result-expr {
+	overflow: hidden;
+	color: var(--muted-foreground);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* ── Syntax examples ─────────────────────────────────────────────────────── */
+
+.dt-graph-syntax {
+	margin: crayon.size(4) crayon.size(-4) crayon.size(-4);
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	border-inline: 0;
+	border-bottom: 0;
+
+	@include crayon.screen("sm") {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+
+	code {
+		padding: crayon.size(2) crayon.size(3);
+		background: var(--muted);
+		color: var(--muted-foreground);
+		font-family: crayon.font-family("mono");
+		font-size: crayon.font-size("xs");
+	}
+}

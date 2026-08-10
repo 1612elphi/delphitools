@@ -6,10 +6,14 @@
 import iAlertCircle from 'lucide-static/icons/alert-circle.svg?raw';
 import iAlertTriangle from 'lucide-static/icons/alert-triangle.svg?raw';
 import iArchive from 'lucide-static/icons/archive.svg?raw';
+import iArrowDown from 'lucide-static/icons/arrow-down.svg?raw';
+import iArrowLeft from 'lucide-static/icons/arrow-left.svg?raw';
 import iArrowLeftRight from 'lucide-static/icons/arrow-left-right.svg?raw';
 import iArrowRight from 'lucide-static/icons/arrow-right.svg?raw';
 import iArrowRightLeft from 'lucide-static/icons/arrow-right-left.svg?raw';
+import iArrowUp from 'lucide-static/icons/arrow-up.svg?raw';
 import iArrowUpDown from 'lucide-static/icons/arrow-up-down.svg?raw';
+import iAxis3d from 'lucide-static/icons/axis-3d.svg?raw';
 import iBarcode from 'lucide-static/icons/barcode.svg?raw';
 import iBinary from 'lucide-static/icons/binary.svg?raw';
 import iBlend from 'lucide-static/icons/blend.svg?raw';
@@ -51,6 +55,7 @@ import iFileType2 from 'lucide-static/icons/file-type-2.svg?raw';
 import iFrown from 'lucide-static/icons/frown.svg?raw';
 import iGalleryVertical from 'lucide-static/icons/gallery-vertical.svg?raw';
 import iGitCompare from 'lucide-static/icons/git-compare.svg?raw';
+import iGrid3x3 from 'lucide-static/icons/grid-3x3.svg?raw';
 import iGripVertical from 'lucide-static/icons/grip-vertical.svg?raw';
 import iHash from 'lucide-static/icons/hash.svg?raw';
 import iHome from 'lucide-static/icons/home.svg?raw';
@@ -118,10 +123,14 @@ export const icons: Record<string, string> = {
 	'alert-circle': iAlertCircle,
 	'alert-triangle': iAlertTriangle,
 	archive: iArchive,
+	'arrow-down': iArrowDown,
+	'arrow-left': iArrowLeft,
 	'arrow-left-right': iArrowLeftRight,
 	'arrow-right': iArrowRight,
 	'arrow-right-left': iArrowRightLeft,
+	'arrow-up': iArrowUp,
 	'arrow-up-down': iArrowUpDown,
+	'axis-3d': iAxis3d,
 	barcode: iBarcode,
 	binary: iBinary,
 	blend: iBlend,
@@ -163,6 +172,7 @@ export const icons: Record<string, string> = {
 	frown: iFrown,
 	'gallery-vertical': iGalleryVertical,
 	'git-compare': iGitCompare,
+	'grid-3x3': iGrid3x3,
 	'grip-vertical': iGripVertical,
 	hash: iHash,
 	home: iHome,
