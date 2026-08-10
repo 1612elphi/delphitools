@@ -206,6 +206,46 @@ its random source as a parameter, so the clustering tests are deterministic.
 
 ---
 
+## How a batch of ports is run
+
+The D3 batch was ten tools in parallel, one agent each, in this working tree.
+What made that safe is worth repeating rather than rediscovering.
+
+**Nothing shared is touched by a port.** Before starting, the shared edits are
+made once, centrally:
+
+- install every dependency the batch needs, with `/opt/homebrew/bin/npm` so
+  `package-lock.json` stays in step (plain `npm` is bun here)
+- copy any vendored asset into `public/` and add it to `.prettierignore` and
+  `eslint.config.mjs`
+- create each tool's empty `app/styles/tools/_<id>.scss` and add its `@use`
+  line to `app.scss`, sorted
+
+Each agent then owns exactly three paths: its `.gts`, its `.scss`, and any
+`app/lib/` file only it uses. The registry needs no edit at all, because it is
+a glob. Two tools that share a library (`imposer` and `zine-imposer` share
+`lib/imposition`) are sequenced: one owns and writes it, the other starts after
+and imports it.
+
+**Agents do not run browser checks, builds, or the dev server.** Vite HMR
+remounts a component on every save, so a check running while a sibling agent
+writes a file sees state wiped and reads as a broken tool. They run
+`prettier --write`, `eslint`, `ember-template-lint`, `stylelint` and
+`ember-tsc --noEmit` on their own files only, reading past errors from files
+they do not own.
+
+**The central pass afterwards is where the real verification happens:**
+`npm run gen-icons` (a new tool's icon names are not in `icons.ts` until then),
+then typecheck, lint, `build`, `build:static` — which boots all 57 routes in
+Chrome and fails on a page error — then `verify:static`, the rigs, and the unit
+tests. Then `slopsieve --list` to check the copy gaps parse.
+
+**What that pass will not catch**, and did not: anything that only fails at
+runtime inside a tool nobody drove. Both pdf failures survived every gate. The
+rigs added since (`tools.mjs`, `pdf.mjs`) exist because of that.
+
+---
+
 ## Architecture decisions
 
 These are settled. The reasoning is here so they do not get re-litigated.
@@ -442,6 +482,34 @@ it as `pdfjs-dist/build/pdf.worker.min.mjs?url` instead, so npm moves both
 together. `public/lib/imagetracer_v1.2.6.js` is a deliberate exception:
 image-tracer builds a Worker from that URL at runtime and needs a stable path.
 
+**Two engines are fetched at first use, not bundled.** RMBG-1.4 for
+`background-remover` (88 MB of fp16 weights, from the Hugging Face CDN) and
+pandoc for `doc-converter` (58 MB of wasm, 15.9 MB over the wire gzipped, from
+unpkg — measured, not estimated). Neither is self-hosted: Cloudflare Pages has a
+hard 25 MiB per-file limit and jsDelivr refuses the pandoc build too. Both cost
+nothing until a visitor uses that tool, and both are cached afterwards. The
+first conversion in `doc-converter` therefore has a real wait behind it and
+that is expected, not a hang.
+
+**Two ways the imposer preview looks broken when it is not.** The sheet paints
+grey `#e8edf3` slots with page-number badges whenever `pdfDoc` is null, which is
+what a failed pdf.js load looks like — flip, prev and next all keep working, so
+it reads as a missing feature rather than an error. The other way is the **Blank
+mode** switch, which stays available with a PDF loaded (in both apps) and swaps
+the rendered sheet for numbered blank slots. The canvas does render real page
+thumbnails: `tools.mjs` and `pdf.mjs` both pass through that path.
+
+**Bleed is real geometry now, in `zine-imposer` only.** The switch used to
+append `-bleed` to the filename and nothing else, here and in the Next app. It
+now grows the page by 3mm on all four sides, keeps the sheet inside it, draws
+each outer panel 3mm past the trim, and sets a `TrimBox` at the sheet edge. The
+bleed margin lies outside every cell, so nothing bleeding into it can reach a
+neighbour, and interior edges are folds that need none. `fill` crops to the box
+it has to cover so bleed crops slightly less rather than stretching; `fit`
+letterboxes inside its cell and never reaches an edge, so it is untouched. A
+bleed PDF is 216x303mm and a home printer will scale it to fit — that is
+inherent, and the UI does not say so.
+
 **A catch that swallows shows the wrong cause.** pdf-preflight reported "Could
 not parse this PDF file" for a pdf-lib that had failed to load at all, and
 logged nothing, so the console was empty while the tool blamed the file. Every
@@ -466,25 +534,50 @@ syntax. The fix for Ash is three lines, but it raises Crayon's Sass floor to
 
 ## Not done
 
-**Tools.** 3 left.
+**Tools.** 3 left, ranked easiest first. Sizes are the React source; the Ember
+port has run roughly the same length plus a stylesheet partial.
 
-Route ids, taken from `lib/tools.ts` against what the registry glob picks up.
+### 1. `image-stitcher` — 1100 lines
 
-| D | Tools |
-| --- | --- |
-| D4 | `image-stitcher` (@dnd-kit, and Substrata's export libs), `graph-calc` (mafs is React-only) |
-| its own project | `substrata`, the editor |
+Not the D4 it was rated. Its Substrata coupling turned out to be three
+self-contained files, 313 lines total, none of which touch the editor:
+`lib/substrata/export-core.ts` (157, the format table and `formatMeta`),
+`export-encode.ts` (87, `encodeCanvas` and `jxlAvailable`) and `blobs.ts` (69,
+`canvasToBlob`). `export-encode` already imports `lib/jxl`, which this app has.
+Port the three into `app/lib/substrata/` under their own names — Substrata
+proper will want them later and they are the shape it expects.
+
+@dnd-kit is used shallowly: `DndContext`, `SortableContext`, `useSortable`,
+`arrayMove`, `closestCenter`, `rectSortingStrategy`, across two grids.
+`gradient-genny` was rated D4 for the same reason and shipped without it, on
+native Pointer Events and `setPointerCapture`. Try that first; `zine-imposer`
+also reorders slots without a library and is the closer precedent.
+
+### 2. `graph-calc` — 937 lines
+
+The plot surface has to be rebuilt, because mafs is React-only. The good news
+is how little of mafs is used: `Mafs` (an SVG viewport), `Coordinates.Cartesian`
+(axes and grid), `Plot.Parametric`, `Plot.Inequality` and `Line.Segment`. Pan
+and zoom are already hand-rolled in the React source against pointer events and
+a viewBox, so they port as they are rather than coming from the library.
+
+What has to be written: axis and grid ticks at a readable interval for the
+current range, a sampler that turns a compiled mathjs expression into a
+polyline, and the shaded half-plane for `Plot.Inequality`, which is the awkward
+one. mathjs is installed. `mafs/core.css` goes with the library.
+
+### 3. `substrata` — 106 files, 14,124 lines
+
+Its own project, not a tool port. Also `public/substrata/` (LUTs, onboarding
+assets) and `public/substrata/wordmark*.svg`.
+
+Port `window.__substrata` first: the 22 harnesses in the **parent repo's**
+`scripts/verify/` drive it and are the only regression net the editor has.
+Without that rig they cannot be pointed at this app, and there is no other
+coverage to fall back on.
 
 `wifi-form` was a sub-panel with no route of its own and is now part of
 `qr-genny`, where it belongs.
-
-`gradient-genny` was rated D4 for the same @dnd-kit reason as `image-stitcher`,
-and came in without it, on native Pointer Events and `setPointerCapture`. If
-that holds for `image-stitcher` too, only `graph-calc` is genuinely D4.
-
-**Substrata.** Untouched. `window.__substrata` must be ported before any of it,
-because the 22 harnesses in the parent repo's `scripts/verify/` are the only
-regression net on the editor.
 
 **Chrome leftovers.** Animated icons, sticker wall, favour banner, the TAXIWAY
 split-flap and Friends of Delphi are all GSAP or motion and absent.
@@ -531,28 +624,26 @@ anything is deployed at all.
 
 ## Next
 
-1. Interaction coverage for the D3 batch. All ten render and boot clean, and
-   none has been driven: no crop dragged, no PDF imposed, no document
-   converted, no barcode read back. `tools.mjs` proves they mount, which is
-   the floor rather than the bar. The rigs worth writing first are the ones
-   whose output is checkable without a human eye — the imposers against
-   `lib/imposition`, `code-genny` against a decoder, `image-converter`
-   round-tripping a known image.
-2. `image-stitcher`, then `graph-calc`. `gradient-genny` shipped without
-   @dnd-kit on native Pointer Events, so try that for the stitcher before
-   adding the dependency; its Substrata export imports are the real question.
-   `graph-calc` needs the plot surface rebuilt on SVG because mafs is
-   React-only. mathjs is already installed.
-3. Deploy. `public/_redirects` and the `dist`-versus-`out` mismatch are both
-   one-line jobs, and nothing has been proven end to end past
-   `npm run build:static`.
-4. Two bundle jobs left, both optional. A deep-linked tool page now costs an
-   extra round trip: only `main` knows the tool chunk's URL, so the fetch
-   cannot start until `main` has run. `scripts/prerender.mjs` already boots
-   each route in Chrome, so recording that route's asset requests and writing
-   a `modulepreload` link per route is about five lines. And the 158 kB
-   `application` chunk is the largest thing on first load, against an 86 kB
-   `main`; nobody has looked at what is in it.
+1. `image-stitcher`, then `graph-calc`. Sized above; the stitcher is the
+   shorter of the two and unblocks nothing else, the graph one needs an SVG
+   plot surface written from scratch.
+2. Deploy. `public/_redirects` has not been carried across and the parent
+   repo's `static-smoke.mjs` expects `out/` where this builds to `dist/`. Both
+   are one-line jobs and nothing has been proven past `npm run build:static`.
+3. Interaction coverage for the seven D3 tools that still have none. The ones
+   worth doing first are those whose output a rig can check without a human
+   eye: `code-genny` against a barcode decoder, `image-converter` round-tripping
+   a known image (its GIF and TIFF encoders are hand-written and the least
+   proven code in the app), `image-tracer` against a traced shape.
+4. Substrata, which is its own project. `window.__substrata` first, because the
+   parent repo's 22 harnesses are the editor's only regression net.
+5. Two optional bundle jobs. A deep-linked tool page costs an extra round trip:
+   only `main` knows the tool chunk's URL, so the fetch cannot start until
+   `main` has run. `scripts/prerender.mjs` already boots each route in Chrome,
+   so recording that route's asset requests and writing a `modulepreload` link
+   per route is about five lines. And the 158 kB `application` chunk is the
+   largest thing on first load, against an 86 kB `main`; nobody has looked at
+   what is in it.
 
 ---
 
