@@ -12,6 +12,7 @@ Branch: `v2-ember`. App: `v2/delphitools-v2/`. The Next app in the repo root is
 untouched and still the production site.
 
 ```
+f94b5b8  feat(v2): the zine bleed switch adds bleed
 5c8e5f0  fix(v2): pdf-lib loads, and the pdf.js worker cannot drift again
 1e26b3b  feat(v2): port the ten remaining D3 tools
 55fce9c  perf(v2): one chunk per tool, and app/lib out of the eager graph
@@ -72,7 +73,7 @@ npm run verify:model      # background removal end to end, downloads 88 MB
 its own subcommand. `npm run test` builds a test bundle over `dist/`, so
 `verify:static` after it reads the wrong build; rerun `build:static` first.
 
-Gates, all green as of `5c8e5f0`: `ember-tsc --noEmit`, `eslint .`,
+Gates, all green as of `f94b5b8`: `ember-tsc --noEmit`, `eslint .`,
 `ember-template-lint .`, `stylelint **/*.{css,scss}`, `prettier --check .`.
 
 **Never run `npm run format` from the repo root.** It formats the Next app, not
@@ -99,7 +100,7 @@ exceptions count as failures, and a failing run exits non-zero.
 | `sharelink.mjs` | `?colors=` on a cold load, and its fallbacks |
 | `tooltip.mjs` | collapsed-rail tooltips, and that they unmount rather than linger |
 | `tools.mjs` | every tool route renders its tool rather than the placeholder |
-| `pdf.mjs` | pdf-lib and pdf.js end to end: preflight and imposer read a PDF, zine-imposer writes one |
+| `pdf.mjs` | pdf-lib and pdf.js end to end: preflight and imposer read a PDF, zine-imposer writes one with and without bleed |
 | `static.mjs` | the built output: per-route head tags, share cards, client-side nav, per-tool chunks, the jxl codec, the ONNX binary |
 | `bg-removal.mjs` | the real model, end to end, checking a matte reaches the alpha channel |
 
@@ -494,10 +495,12 @@ built a toggle button and a styled checkbox instead, partly because
 ember-template-lint's `no-nested-interactive` and `require-presentational-children`
 reject several of the shapes the shadcn versions use.
 
-**The D3 batch is unexercised.** Ten tools render, boot without a console
-error, and pass every gate. None has been driven: no crop dragged, no PDF
-imposed, no document converted, no barcode decoded. `tools.mjs` is a mount
-check, not a behaviour check, and it is all the coverage those ten have.
+**Most of the D3 batch is unexercised.** Ten tools render, boot without a
+console error, and pass every gate; `tools.mjs` is a mount check rather than a
+behaviour check. The three pdf tools now have `pdf.mjs` on top of that, and all
+ten have been through a manual pass. What still has no automated coverage of
+its actual output: no crop dragged, no document converted, no barcode decoded,
+no traced SVG compared, nothing typed into the editor.
 
 **Copy.** Six unfilled gaps: `algebra-calc`, `favicon-genny`,
 `matte-generator`, `scroll-generator`, `social-cropper`, `watermarker`.
