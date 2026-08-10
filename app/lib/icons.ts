@@ -30,6 +30,8 @@ import iBox from 'lucide-static/icons/box.svg?raw';
 import iBoxSelect from 'lucide-static/icons/box-select.svg?raw';
 import iBrush from 'lucide-static/icons/brush.svg?raw';
 import iCalculator from 'lucide-static/icons/calculator.svg?raw';
+import iCamera from 'lucide-static/icons/camera.svg?raw';
+import iCaptions from 'lucide-static/icons/captions.svg?raw';
 import iCaseUpper from 'lucide-static/icons/case-upper.svg?raw';
 import iCheck from 'lucide-static/icons/check.svg?raw';
 import iChevronDown from 'lucide-static/icons/chevron-down.svg?raw';
@@ -42,6 +44,7 @@ import iCircleAlert from 'lucide-static/icons/circle-alert.svg?raw';
 import iCircleCheck from 'lucide-static/icons/circle-check.svg?raw';
 import iCircleCheckBig from 'lucide-static/icons/circle-check-big.svg?raw';
 import iCircleX from 'lucide-static/icons/circle-x.svg?raw';
+import iClapperboard from 'lucide-static/icons/clapperboard.svg?raw';
 import iClipboard from 'lucide-static/icons/clipboard.svg?raw';
 import iClipboardPaste from 'lucide-static/icons/clipboard-paste.svg?raw';
 import iClipboardX from 'lucide-static/icons/clipboard-x.svg?raw';
@@ -196,6 +199,8 @@ export const icons: Record<string, string> = {
 	'box-select': iBoxSelect,
 	brush: iBrush,
 	calculator: iCalculator,
+	camera: iCamera,
+	captions: iCaptions,
 	'case-upper': iCaseUpper,
 	check: iCheck,
 	'chevron-down': iChevronDown,
@@ -208,6 +213,7 @@ export const icons: Record<string, string> = {
 	'circle-check': iCircleCheck,
 	'circle-check-big': iCircleCheckBig,
 	'circle-x': iCircleX,
+	clapperboard: iClapperboard,
 	clipboard: iClipboard,
 	'clipboard-paste': iClipboardPaste,
 	'clipboard-x': iClipboardX,

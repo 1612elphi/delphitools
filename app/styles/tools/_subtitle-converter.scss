@@ -1,0 +1,196 @@
+// Styles for the subtitle-converter tool.
+
+@use "../crayon-config" as crayon;
+
+/* ── Subtitle converter ──────────────────────────────────────────────────── */
+
+.dt-sub {
+	@include crayon.vstack(4);
+}
+
+.dt-sub-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-sub-options {
+	display: flex;
+	min-height: crayon.size(12);
+	align-items: center;
+	justify-content: space-between;
+	padding-inline: crayon.size(4);
+	border-bottom: 1px solid var(--border);
+	gap: crayon.size(4);
+	flex-wrap: wrap;
+}
+
+.dt-sub-stats {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-sub-controls {
+	display: flex;
+	align-items: center;
+	gap: crayon.size(4);
+	flex-wrap: wrap;
+	padding-block: crayon.size(2);
+}
+
+.dt-sub-field {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	font-size: crayon.font-size("sm");
+
+	span {
+		color: var(--muted-foreground);
+	}
+
+	input {
+		width: crayon.size(20);
+		padding: crayon.size(1) crayon.size(2);
+		border: 1px solid var(--border);
+		background: var(--background);
+		color: var(--foreground);
+		font: inherit;
+		font-size: crayon.font-size("sm");
+		font-variant-numeric: tabular-nums;
+
+		&:focus-visible {
+			outline: 2px solid var(--primary);
+			outline-offset: -1px;
+		}
+	}
+}
+
+.dt-sub-format {
+	padding: crayon.size(1) crayon.size(3);
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-sub-panes {
+	display: grid;
+	grid-template-columns: 1fr;
+
+	@include crayon.screen("md") {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.dt-sub-pane {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+
+	/* Stacked on a phone, so the divider between panes runs the other way. */
+	&.is-right {
+		border-top: 2px solid var(--border);
+
+		@include crayon.screen("md") {
+			border-top: 0;
+			border-left: 2px solid var(--border);
+		}
+	}
+}
+
+.dt-sub-pane-head {
+	display: flex;
+	min-height: crayon.size(10);
+	align-items: stretch;
+	justify-content: space-between;
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-sub-pane-label {
+	align-self: center;
+	padding-inline: crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("semibold");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.dt-sub-pane-tools {
+	display: flex;
+	align-items: stretch;
+}
+
+.dt-sub-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(3);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		pointer-events: none;
+	}
+
+	/* the file input is visually hidden, so its focus ring has to land here */
+	&:focus-within,
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.dt-sub-textarea {
+	min-height: crayon.size(80);
+	flex: 1;
+	padding: crayon.size(3);
+	border: 0;
+	background: var(--background);
+	color: var(--foreground);
+	font-family: inherit;
+	font-size: crayon.font-size("sm");
+	font-variant-numeric: tabular-nums;
+	line-height: 1.5;
+	resize: vertical;
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+
+	&[readonly] {
+		background: color-mix(in oklch, var(--muted) 40%, transparent);
+	}
+}
+
+.dt-sub-error {
+	padding: crayon.size(3);
+	border: 1px solid
+		color-mix(in oklch, var(--destructive) 50%, transparent);
+	background: color-mix(in oklch, var(--destructive) 10%, transparent);
+	color: var(--destructive);
+	font-size: crayon.font-size("sm");
+}

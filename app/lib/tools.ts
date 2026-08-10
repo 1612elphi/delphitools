@@ -272,6 +272,45 @@ export const toolCategories: ToolCategory[] = [
 		],
 	},
 	{
+		id: 'audio-video',
+		name: 'Audio & Video',
+		tools: [
+			{
+				id: 'frame-extractor',
+				name: 'Frame Extractor',
+				// ∑CG: catalogue description for Frame Extractor
+				//   spec: max 60 chars, home grid cell + tool-page subtitle, sentence fragment matching the other descriptions
+				//   sample: 'Grab stills and contact sheets from video'
+				description: '∑CG',
+				icon: 'film',
+				href: '/tools/frame-extractor',
+				new: true,
+			},
+			{
+				id: 'subtitle-converter',
+				name: 'Subtitle Converter',
+				// ∑CG: catalogue description for Subtitle Converter
+				//   spec: max 60 chars, home grid cell + tool-page subtitle, sentence fragment matching the other descriptions
+				//   sample: 'Convert, shift and rescale SRT and VTT subtitles'
+				description: '∑CG',
+				icon: 'captions',
+				href: '/tools/subtitle-converter',
+				new: true,
+			},
+			{
+				id: 'video-to-gif',
+				name: 'Video → GIF',
+				// ∑CG: catalogue description for Video → GIF
+				//   spec: max 60 chars, home grid cell + tool-page subtitle, sentence fragment matching the other descriptions
+				//   sample: 'Turn video clips into looping GIFs'
+				description: '∑CG',
+				icon: 'clapperboard',
+				href: '/tools/video-to-gif',
+				new: true,
+			},
+		],
+	},
+	{
 		id: 'typo-text',
 		name: 'Typography & Text',
 		tools: [

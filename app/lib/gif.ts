@@ -1,6 +1,7 @@
-// Single-frame GIF89a: median-cut palette, then LZW as specified in the GIF89a
-// spec, section 22 (Table Based Image Data) and appendix F. The Next app gets
-// both halves from `gifenc`, which is not installed here.
+// GIF89a: median-cut palette, then LZW as specified in the GIF89a spec,
+// section 22 (Table Based Image Data) and appendix F. The Next app gets both
+// halves from `gifenc`, which is not installed here. encodeGif writes a
+// single frame; AnimatedGifEncoder writes a looping multi-frame stream.
 //
 // ponytail: one frame, no dithering, no interlacing, and the palette is a plain
 // median cut rather than gifenc's. A photo at 256 colours looks like a photo at
@@ -279,6 +280,24 @@ function lzw(
 	return out.bytes;
 }
 
+function writePalette(out: Bytes, palette: number[], tableSize: number) {
+	out.pushAll(palette);
+	for (let i = palette.length; i < tableSize * 3; i++) out.push(0);
+}
+
+/** LZW minimum code size, then the compressed stream in ≤255-byte sub-blocks. */
+function writePixelData(out: Bytes, indices: Uint8Array, tableSize: number) {
+	const minCodeSize = Math.log2(tableSize);
+	out.push(minCodeSize);
+	const data = lzw(indices, minCodeSize);
+	for (let i = 0; i < data.length; i += 255) {
+		const chunk = data.subarray(i, i + 255);
+		out.push(chunk.length);
+		out.pushAll(chunk);
+	}
+	out.push(0); // block terminator
+}
+
 export function encodeGif(
 	rgba: Uint8ClampedArray,
 	width: number,
@@ -307,8 +326,7 @@ export function encodeGif(
 		0, // no pixel aspect ratio
 	]);
 
-	out.pushAll(palette);
-	for (let i = palette.length; i < tableSize * 3; i++) out.push(0);
+	writePalette(out, palette, tableSize);
 
 	if (transparentIndex !== null) {
 		out.pushAll([
@@ -336,17 +354,99 @@ export function encodeGif(
 		0, // no local colour table, not interlaced
 	]);
 
-	const minCodeSize = Math.log2(tableSize);
-	out.push(minCodeSize);
-
-	const data = lzw(indices, minCodeSize);
-	for (let i = 0; i < data.length; i += 255) {
-		const chunk = data.subarray(i, i + 255);
-		out.push(chunk.length);
-		out.pushAll(chunk);
-	}
-	out.push(0); // block terminator
+	writePixelData(out, indices, tableSize);
 	out.push(0x3b); // trailer
 
 	return out.bytes;
+}
+
+/**
+ * Multi-frame GIF89a: no global colour table, one median-cut local table per
+ * frame, NETSCAPE2.0 infinite loop. Frames are quantised and written as they
+ * arrive, so the caller never holds more than one frame of RGBA.
+ */
+export class AnimatedGifEncoder {
+	#out = new Bytes();
+	#width: number;
+	#height: number;
+	#maxColours: number;
+	#mode: GifQuantisation;
+
+	constructor(
+		width: number,
+		height: number,
+		maxColours = 256,
+		mode: GifQuantisation = 'rgb565',
+	) {
+		this.#width = width;
+		this.#height = height;
+		this.#maxColours = Math.max(
+			2,
+			Math.min(256, Math.round(maxColours)),
+		);
+		this.#mode = mode;
+
+		this.#out.pushAll([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]); // "GIF89a"
+		this.#out.pushAll([
+			width & 0xff,
+			width >> 8,
+			height & 0xff,
+			height >> 8,
+			7 << 4, // no global colour table, 8-bit source
+			0, // background index
+			0, // no pixel aspect ratio
+		]);
+
+		// NETSCAPE2.0 application extension: loop count 0 = forever.
+		this.#out.pushAll([0x21, 0xff, 0x0b]);
+		this.#out.pushAll(
+			[...'NETSCAPE2.0'].map((c) => c.charCodeAt(0)),
+		);
+		this.#out.pushAll([0x03, 0x01, 0, 0, 0]);
+	}
+
+	addFrame(rgba: Uint8ClampedArray, delayMs: number) {
+		const { palette, indices, transparentIndex, tableSize } =
+			quantise(
+				rgba,
+				this.#width * this.#height,
+				this.#maxColours,
+				this.#mode,
+			);
+
+		// Browsers snap a 0–1cs delay up to 10cs, so 2cs (50 fps) is the
+		// fastest delay that plays as written.
+		const delay = Math.max(2, Math.round(delayMs / 10));
+		const disposal = transparentIndex === null ? 1 : 2;
+		this.#out.pushAll([
+			0x21,
+			0xf9,
+			0x04,
+			(disposal << 2) | (transparentIndex === null ? 0 : 1),
+			delay & 0xff,
+			delay >> 8,
+			transparentIndex ?? 0,
+			0,
+		]);
+
+		this.#out.pushAll([
+			0x2c,
+			0,
+			0,
+			0,
+			0, // image position
+			this.#width & 0xff,
+			this.#width >> 8,
+			this.#height & 0xff,
+			this.#height >> 8,
+			0x80 | (Math.log2(tableSize) - 1), // local table, not interlaced
+		]);
+		writePalette(this.#out, palette, tableSize);
+		writePixelData(this.#out, indices, tableSize);
+	}
+
+	finish(): Uint8Array<ArrayBuffer> {
+		this.#out.push(0x3b); // trailer
+		return this.#out.bytes;
+	}
 }

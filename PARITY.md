@@ -23,9 +23,9 @@ applicable on this surface (hardware/native or format constraint).
 
 ## Summary
 
-- **Tools tracked:** 60
+- **Tools tracked:** 63
 - **On all three surfaces:** 41
-- **Web:** 56 · **CLI:** 46 · **iOS:** 51
+- **Web:** 59 · **CLI:** 46 · **iOS:** 51
 - iOS-exclusive (native/hardware): Colour Camera, Document Scanner, Font Installer, NFC Reader/Writer
 - Web-exclusive: Pixel Picker, Text Editor (pandoc.wasm note: GPL — incompatible with the App Store, and won't run on-device on iOS, hence Document Converter I 🚧)
 - CLI-only sub-feature: `hash` (text hashing, folded into Encoding Tools elsewhere)
@@ -80,6 +80,14 @@ Picker is similarly web-only.
 | Placeholder Generator (`placeholder-genny`)   | ✅  |  ✅ `placeholder`   | ✅  | CLI: png or svg output                                                                                                                                                                                                       |
 | Base64 Image Encoder (`base64-image-encoder`) | ✅  | ✅ `encode datauri` | ❌  | image file → Base64 data URI; CLI folds it into Encoding Tools                                                                                                                                                               |
 | Document Scanner (`document-scanner`)         | ➖  |         ➖          | ✅  | iOS-only (camera + OCR)                                                                                                                                                                                                      |
+
+## Audio & Video
+
+| Tool (web ID)                             |  W  |  C  |  I  | Notes                                                                         |
+| ----------------------------------------- | :-: | :-: | :-: | ----------------------------------------------------------------------------- |
+| Frame Extractor (`frame-extractor`)       | ✅  | ❌  | ❌  | new 2026-08; video stills + contact sheet, `<video>` + canvas                 |
+| Subtitle Converter (`subtitle-converter`) | ✅  | ❌  | ❌  | new 2026-08; srt↔vtt + shift/scale on `lib/subtitles.ts`                      |
+| Video → GIF (`video-to-gif`)              | ✅  | ❌  | ❌  | new 2026-08; canvas frames through `lib/gif.ts` `AnimatedGifEncoder`, no wasm |
 
 ## Social Media
 

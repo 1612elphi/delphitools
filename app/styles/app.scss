@@ -25,6 +25,7 @@
 @use "tools/encoder";
 @use "tools/favicon-genny";
 @use "tools/font-explorer";
+@use "tools/frame-extractor";
 @use "tools/glyph-browser";
 @use "tools/gradient-genny";
 @use "tools/graph-calc";
@@ -55,6 +56,7 @@
 @use "tools/scroll-generator";
 @use "tools/shavian-transliterator";
 @use "tools/social-cropper";
+@use "tools/subtitle-converter";
 @use "tools/svg-optimiser";
 @use "tools/tailwind-cheatsheet";
 @use "tools/tailwind-shades";
@@ -63,6 +65,7 @@
 @use "tools/time-calc";
 @use "tools/typo-calc";
 @use "tools/unit-converter";
+@use "tools/video-to-gif";
 @use "tools/watermarker";
 @use "tools/word-counter";
 @use "tools/zine-imposer";
