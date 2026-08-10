@@ -38,22 +38,12 @@ import {
 	type PaperSize,
 } from 'delphitools-v2/lib/imposition';
 import { findPaperSize } from 'delphitools-v2/lib/paper-sizes';
+import { getPdfJs } from 'delphitools-v2/lib/pdfjs';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 
-type PdfJs = typeof import('pdfjs-dist');
 type EmbeddedPage = Awaited<ReturnType<PDFDocument['embedPages']>>[number];
 type PdfPage = ReturnType<PDFDocument['addPage']>;
 type Degrees = typeof import('pdf-lib').degrees;
-
-let pdfjsPromise: Promise<PdfJs> | null = null;
-
-function getPdfJs(): Promise<PdfJs> {
-	pdfjsPromise ??= import('pdfjs-dist').then((mod) => {
-		mod.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
-		return mod;
-	});
-	return pdfjsPromise;
-}
 
 const GANG_RUN_OPTIONS = [2, 4, 6, 8, 9];
 

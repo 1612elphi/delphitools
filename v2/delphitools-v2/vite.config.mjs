@@ -55,6 +55,18 @@ export default defineConfig({
 		// every pdf tool then 504s on its dynamic import. The production build
 		// does not run the optimizer and has never been affected.
 		exclude: ['pdf-lib'],
+		// Excluding the parent leaves its own dependencies unconverted, and
+		// pdf-lib reaches pako 1.0.11 — CommonJS — down three separate paths,
+		// each resolving to its own nested copy. Served raw, any of them
+		// throws "does not provide an export named 'default'" the first time a
+		// tool touches pdf-lib, which pdf-preflight then reports as a
+		// malformed PDF. All three have to be named: an entry only covers the
+		// copy at that exact path.
+		include: [
+			'pdf-lib > pako',
+			'pdf-lib > @pdf-lib/standard-fonts > pako',
+			'pdf-lib > @pdf-lib/upng > pako',
+		],
 	},
 	css: {
 		preprocessorOptions: {

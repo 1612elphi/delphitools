@@ -4,6 +4,7 @@ import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { modifier } from 'ember-modifier';
 import Icon from 'delphitools-v2/components/icon';
+import { getPdfJs } from 'delphitools-v2/lib/pdfjs';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import type {
 	PDFArray,
@@ -15,7 +16,6 @@ import type {
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 type PdfLib = typeof import('pdf-lib');
-type PdfJs = typeof import('pdfjs-dist');
 
 const ACCEPT = '.pdf,application/pdf';
 
@@ -27,19 +27,6 @@ const IMAGE_OBJECT_TIMEOUT_MS = 500;
 
 /** 3mm, the bleed most printers ask for, in points. */
 const MIN_BLEED_PT = 8.5;
-
-/**
- * pdf-lib and pdf.js are both large and only this tool needs pdf.js, so neither
- * is imported at module scope — the same reason svg-optimiser defers svgo.
- */
-let pdfjsPromise: Promise<PdfJs> | null = null;
-function getPdfJs(): Promise<PdfJs> {
-	pdfjsPromise ??= import('pdfjs-dist').then((mod) => {
-		mod.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
-		return mod;
-	});
-	return pdfjsPromise;
-}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -1235,6 +1222,10 @@ export default class PdfPreflightTool extends Component {
 			this.report = report;
 		} catch (e) {
 			if (runId !== this.#runId) return;
+			// Everything that goes wrong here reads as "could not parse
+			// this PDF", including a pdf-lib that failed to load at all.
+			// That cost an afternoon once.
+			console.error('pdf-preflight analysis failed:', e);
 			const message = e instanceof Error ? e.message : '';
 			this.error =
 				message.includes('encrypted') ||

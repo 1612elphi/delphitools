@@ -20,6 +20,3 @@ ember-cli-update.json
 
 # imagetracerjs standalone build; image-tracer builds its worker from this URL
 /public/lib/imagetracer_v1.2.6.js
-
-# pdfjs-dist's shipped worker, served as-is
-/public/pdf.worker.min.mjs
