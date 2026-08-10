@@ -6,7 +6,8 @@ plan, which also carries the Phase 0 findings). This file is what actually
 exists in the code right now.
 
 **Status:** Phase 0 is CLOSED. Every catalogue tool is ported: 55 of 56.
-What remains is Substrata itself.
+What remains is Substrata, whose 67-file lib is ported and tested; its 39
+components are not.
 
 Branch: `v2-ember`. App: `v2/delphitools-v2/`. The Next app in the repo root is
 untouched and still the production site.
@@ -201,7 +202,11 @@ Chrome at all 57 routes, checks each renders, and writes a per-route
 against five scraper user agents; head tags match the Next build field for
 field on tool routes.
 
-**Tests.** 74 qunit tests over the pure logic: the sidebar service, two share
+**Tests.** 309 qunit tests. 235 of them are the substrata lib, in
+`tests/unit/substrata/`; one is skipped, naming a defect left alone
+(`resolveExportDims` rounds each axis after computing the area clamp, so the
+result can exceed the budget it was meant to fit — 16,777,310 against the iOS
+ceiling for a 1000x3000 at 3x). The other 74 cover the pure logic: the sidebar service, two share
 link parsers, the colour converter, the Tailwind ramp, the palette-extractor
 quantiser, the ICO builder, the paste-accept matcher and the time-calc format
 round trip. The quantiser takes
@@ -537,17 +542,80 @@ syntax. The fix for Ash is three lines, but it raises Crayon's Sass floor to
 
 ## Not done
 
-**Tools.** One left.
+**Tools.** One left, and it is half in.
 
-### `substrata` — 106 files, 14,124 lines
+### `substrata` — the lib is in, the components are not
 
-Its own project, not a tool port. Also `public/substrata/` (LUTs, onboarding
-assets) and `public/substrata/wordmark*.svg`.
+Its own project, not a tool port. 106 files in the Next app: 67 under
+`lib/substrata` and 39 under `components/substrata`.
 
-Port `window.__substrata` first: the 22 harnesses in the **parent repo's**
-`scripts/verify/` drive it and are the only regression net the editor has.
-Without that rig they cannot be pointed at this app, and there is no other
-coverage to fall back on.
+**The lib is ported, tested and committed.** All 67 files, now 11,329 lines
+under `app/lib/substrata`. The headline finding, which the earlier estimate got
+wrong: **`lib/substrata` has zero React imports.** Every file is plain
+TypeScript, so the port was the copy plus two import rewrites, and 54 of the 67
+typechecked untouched. The other 13 failed only on `noUncheckedIndexedAccess`,
+which is on here and off in the Next tsconfig — 149 errors, every one an
+indexed access, all fixed type-level with no runtime change.
+
+Three things came with it:
+
+- `app/lib/tracked-external.ts`, the Ember side of the nineteen
+  `subscribe`/`getSnapshot` stores. 34 components bind those with
+  `useSyncExternalStore`; the stores themselves are framework-free and needed
+  no change, so only the binding is per-framework.
+- `app/lib/download.ts`, which the file and export paths import. The catalogue
+  tools still each do the object-URL dance inline; they were not touched.
+- a real `SegmentationPipeline` type in `substrata/bg-removal.ts`. It carried
+  `any` plus `no-explicit-any` disables from the Next config, and this project
+  runs `recommendedTypeChecked`. Note it is **not** a duplicate of
+  `lib/bg-removal.ts` despite the name: that one is the model wrapper for the
+  background-remover tool, this one is a per-hash matte cache with a
+  WebGPU-to-WASM runtime fallback on top.
+
+**235 unit tests over it**, 4,357 lines in `tests/unit/substrata/`, the first
+this code has ever had. They pin the document model, the layer tree, every
+structural op, the colour conversions, the geometry and the export dimension
+maths. The immutability contract gets the most attention because it is what a
+port breaks quietly: every op returns a new doc, leaves its input untouched,
+and shares unvisited branches by reference — a port that deep-copies the tree
+on every edit still "works" and makes history useless.
+
+**What remains: 39 components, 11,475 lines.** `fabric-canvas.tsx` alone is
+2,549 of them and owns `window.__substrata`. Then `fx-panel` (953), `top-bar`
+(699), `inspector-panel` (699), `omnibar/tool-settings` (693), `layers-panel`
+(686), `omnibar` (503), and 32 smaller ones.
+
+**Mounting.** Substrata is not a tool page. It is `/editor`, its own Next route
+outside the `(site)` group, with its own layout and no sidebar; the registry
+entry at `lib/tools.ts:157` already carries `href: '/editor'` and
+`app/router.ts` already declares `this.route('editor')`. There is no
+`app/templates/editor.gts` yet, so `/editor` renders the shell with an empty
+outlet. The application template wraps everything in `.dt-shell` with the
+sidebar, so the editor route has to break out of that the way the Next layout
+does. `scripts/prerender.mjs` also writes `/tools/substrata` from the registry
+and has no `/editor` entry — both need correcting when the shell lands.
+
+**The rig surface is the contract.** The 22 harnesses in the **parent repo's**
+`scripts/verify/` drive `window.__substrata` and are the only regression net
+the editor has ever had. They use 33 keys, most heavily `setTool` (46 calls),
+`toolSettings` (30), `layers` (27), `select` (25), `vt` (21) and `samplePixel`
+(16). Reproducing that surface exactly is what makes the port testable, so it
+lands with the canvas rather than after it.
+
+They need no porting to run against this app: `scripts/verify/pieces.mjs` and
+its siblings read `EDITOR_URL`, defaulting to `http://localhost:3000/editor`,
+which is exactly where the Ember dev server serves it. Whether they then move
+into `v2/delphitools-v2/scripts/verify/` so `npm run verify` covers them, or
+stay in the parent repo, is undecided.
+
+**@dnd-kit has no Ember equivalent** and is not portable. Substrata uses it for
+drag-to-dock: module grips and the omnibar are draggables, the four edge zones
+and the rail strip are targets, and anywhere else floats the panel. That is a
+hand-rolled pointer-event rebuild, and `touchnav.mjs` is one of the 22
+harnesses, so touch is in scope for it in a way it was not for the stitcher.
+
+**Copy.** The Next Substrata has no unfilled gaps: every string is shipped
+wording, carried over verbatim like the other ports.
 
 `wifi-form` was a sub-panel with no route of its own and is now part of
 `qr-genny`, where it belongs.
@@ -605,16 +673,18 @@ anything is deployed at all.
 
 ## Next
 
-1. Deploy. `public/_redirects` has not been carried across and the parent
+1. Substrata's components, 39 files and 11,475 lines. `fabric-canvas` and the
+   `window.__substrata` surface first, because nothing about the editor can be
+   regression-tested until that exists; then the shell and the `/editor` route;
+   then the panels and modals.
+2. Deploy. `public/_redirects` has not been carried across and the parent
    repo's `static-smoke.mjs` expects `out/` where this builds to `dist/`. Both
    are one-line jobs and nothing has been proven past `npm run build:static`.
-2. Interaction coverage for the seven D3 tools that still have none. The ones
+3. Interaction coverage for the seven D3 tools that still have none. The ones
    worth doing first are those whose output a rig can check without a human
    eye: `code-genny` against a barcode decoder, `image-converter` round-tripping
    a known image (its GIF and TIFF encoders are hand-written and the least
    proven code in the app), `image-tracer` against a traced shape.
-3. Substrata, which is its own project. `window.__substrata` first, because the
-   parent repo's 22 harnesses are the editor's only regression net.
 4. Two optional bundle jobs. A deep-linked tool page costs an extra round trip:
    only `main` knows the tool chunk's URL, so the fetch cannot start until
    `main` has run. `scripts/prerender.mjs` already boots each route in Chrome,
