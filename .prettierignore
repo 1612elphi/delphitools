@@ -1,11 +1,30 @@
-# The Ember app has its own prettier config and its own `npm run format`.
-/v2/
+# unconventional js
+/blueprints/*/files/
 
-# Vendored third-party code (MIT pandoc-wasm wrapper) — not ours to format.
-/lib/pandoc/pandoc-core.js
+# compiled output
+/dist/
 
-# Vendored libjxl emscripten glue (from @jsquash/jxl) served from /public.
+# misc
+/coverage/
+!.*
+.*/
+/pnpm-lock.yaml
+ember-cli-update.json
+*.html
+
+# libjxl emscripten build, copied verbatim from @jsquash/jxl
 /public/jxl/
 
-package-lock.json
-bun.lock
+# vendored MIT pandoc-wasm wrapper, copied verbatim
+/app/lib/pandoc/pandoc-core.js
+
+# imagetracerjs standalone build; image-tracer builds its worker from this URL
+/public/lib/imagetracer_v1.2.6.js
+
+# 125k-entry CMU pronunciation dictionary, fetched at runtime, 5.4 MB
+/public/data/shavian-dictionary-full.json
+
+# Substrata harnesses and the dictionary builder moved in with the Next-era
+# root and keep their own formatting.
+/scripts/verify/
+/scripts/build-shavian-dict.ts

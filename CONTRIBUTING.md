@@ -34,9 +34,9 @@ AI-generated or AI-assisted code is welcome, but **every contribution must be hu
 2. **Fork the repo** and create a branch from `main`
 3. **Follow existing conventions** -- read `CLAUDE.md` for project structure, naming, and style guidance
 4. **Verify your changes**:
-   - `npm run build` must succeed (static export, no server dependencies)
-   - `npm run lint` must pass
-   - Test your changes manually in the browser
+      - `npm run build` must succeed (static export, no server dependencies)
+      - `npm run lint` must pass
+      - Test your changes manually in the browser
 5. **Open a pull request** referencing the issue it addresses
 
 ## Adding a new tool

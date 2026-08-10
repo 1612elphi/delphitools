@@ -1,3 +1,7 @@
+# EditorConfig helps developers define and maintain consistent
+# coding styles between different editors and IDEs
+# https://editorconfig.org/
+
 root = true
 
 [*]
@@ -16,6 +20,9 @@ max_line_length = 80
 [*.{yml,yaml}]
 indent_style = space
 indent_size = 2
+
+[*.hbs]
+insert_final_newline = false
 
 [*.{diff,md}]
 trim_trailing_whitespace = false

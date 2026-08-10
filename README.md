@@ -2,7 +2,7 @@
 
 A collection of small, low stakes and low effort tools.
 No logins, no registration, no data collection.
-I can't believe I have to say that. 
+I can't believe I have to say that.
 Long live the handmade web.
 
 ## Included tools
@@ -83,10 +83,10 @@ Long live the handmade web.
 
 - shavian transliterator
 
-
 ## **Self-Host Guide with Docker**
 
-- **Build locally:**  
+- **Build locally:**
+
 ```bash
 docker build -t delphitools:latest .
 # Optional: stamp the in-app version label (shown when hovering the logo).
@@ -94,13 +94,15 @@ docker build -t delphitools:latest .
 docker build --build-arg COMMIT_SHA=$(git rev-parse --short HEAD) -t delphitools:latest .
 ```
 
-- **Run locally:**  
+- **Run locally:**
+
 ```bash
-# serve on http://localhost:3000 
+# serve on http://localhost:3000
 docker run --rm -p 3000:80 delphitools:latest
 ```
 
-- **With docker-compose:**  
+- **With docker-compose:**
+
 ```bash
 ## to start the container
 docker-compose up -d --build
