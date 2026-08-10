@@ -211,21 +211,44 @@ export function rgbToOklab(r: number, g: number, b: number): Triple {
 	];
 }
 
-export function oklabToRgb(L: number, a: number, b: number): Triple {
+/** Linear-light sRGB, unclamped, so callers can see how far out of gamut a value is. */
+function oklabToLinearRgb(L: number, a: number, b: number): Triple {
 	const l = Math.pow(L + 0.3963377774 * a + 0.2158037573 * b, 3);
 	const m = Math.pow(L - 0.1055613458 * a - 0.0638541728 * b, 3);
 	const s = Math.pow(L - 0.0894841775 * a - 1.291485548 * b, 3);
 	return [
-		linearToSrgb(
-			4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
-		),
-		linearToSrgb(
-			-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
-		),
-		linearToSrgb(
-			-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
-		),
+		4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+		-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+		-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
 	];
+}
+
+export function oklabToRgb(L: number, a: number, b: number): Triple {
+	return oklabToLinearRgb(L, a, b).map(linearToSrgb) as Triple;
+}
+
+/**
+ * The largest chroma that still fits in sRGB at this lightness and hue, found
+ * by bisection. The sRGB solid is convex in OKLab, so a ray out from the
+ * neutral axis crosses its surface once and the search cannot land in a hole.
+ * 0.5 is above the whole gamut: the most saturated sRGB colour is blue, at
+ * chroma 0.313.
+ *
+ * Callers scale by this rather than clamping the channels afterwards, because
+ * per-channel clamping moves hue and lightness as well as chroma.
+ */
+export function maxOklchChroma(l: number, h: number): number {
+	let lo = 0;
+	let hi = 0.5;
+	for (let i = 0; i < 24; i++) {
+		const mid = (lo + hi) / 2;
+		const inGamut = oklabToLinearRgb(...lchToLab(l, mid, h)).every(
+			(v) => v >= -1e-5 && v <= 1 + 1e-5,
+		);
+		if (inGamut) lo = mid;
+		else hi = mid;
+	}
+	return lo;
 }
 
 /** sRGB 0–255 to OKLCH, as [L 0–1, chroma, hue 0–360]. */

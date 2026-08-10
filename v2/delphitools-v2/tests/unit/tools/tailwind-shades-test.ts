@@ -4,6 +4,7 @@ import {
 	colourFromQuery,
 	GENERATION_MODES,
 } from 'delphitools-v2/components/tools/tailwind-shades';
+import { maxOklchChroma } from 'delphitools-v2/lib/colour-maths';
 
 const BASE = '#3b82f6';
 const LEVELS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
@@ -67,6 +68,72 @@ module('Unit | Tool | tailwind-shades', function () {
 			vivid.every((s, i) => s.oklch[1] >= muted[i]!.oklch[1]),
 			`vivid ${vivid[5]?.oklch[1].toFixed(3)} vs muted ${muted[5]?.oklch[1].toFixed(3)}`,
 		);
+	});
+
+	// The bug this replaced: 50 and 100 shared one chroma multiplier and 200
+	// took the next one up, so 100 held a third of its neighbour's chroma and
+	// came out grey between two tinted swatches. Saturation is the fraction of
+	// the chroma sRGB can hold at that lightness, which is what the eye reads;
+	// a fixed chroma across the ramp is not flat in these terms.
+	test('saturation rises to the middle of the ramp and falls away again', function (assert) {
+		for (const mode of GENERATION_MODES) {
+			for (const base of [
+				'#3b82f6',
+				'#4c798c',
+				'#0ea5e9',
+				'#e11d48',
+			]) {
+				const sat = generateShades(
+					base,
+					mode.value,
+				)!.map(
+					(s) =>
+						s.oklch[1] /
+						maxOklchChroma(
+							s.oklch[0],
+							s.oklch[2],
+						),
+				);
+				const peak = sat.indexOf(Math.max(...sat));
+				const steps = sat.map((s, i) =>
+					i === 0 ? 0 : s - sat[i - 1]!,
+				);
+				const where = `${mode.value} ${base}: ${sat.map((s) => s.toFixed(2)).join(' ')}`;
+				assert.true(
+					steps.every((d, i) =>
+						i <= peak
+							? d >= -1e-6
+							: d <= 1e-6,
+					),
+					where,
+				);
+				// The old ramp's worst step was 0.53, between 50 and 100.
+				assert.true(
+					Math.max(...steps.map(Math.abs)) < 0.25,
+					where,
+				);
+			}
+		}
+	});
+
+	test('every shade lands inside sRGB', function (assert) {
+		for (const mode of GENERATION_MODES) {
+			const shades = generateShades('#0ea5e9', mode.value)!;
+			assert.true(
+				shades.every(
+					(s) =>
+						s.oklch[1] <=
+						maxOklchChroma(
+							s.oklch[0],
+							s.oklch[2],
+						) +
+							1e-6,
+				),
+				// The oklch() CSS block is written from these numbers, so an
+				// out-of-gamut one renders a different colour than the hex block.
+				`${mode.value}: ${shades.map((s) => s.oklch[1].toFixed(3)).join(' ')}`,
+			);
+		}
 	});
 
 	test('a grey base stays grey', function (assert) {

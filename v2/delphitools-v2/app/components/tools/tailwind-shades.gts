@@ -19,6 +19,7 @@ import {
 	rgbToOklch,
 	oklabToRgb,
 	lchToLab,
+	maxOklchChroma,
 	type Triple,
 } from 'delphitools-v2/lib/colour-maths';
 import type ColourNotationService from 'delphitools-v2/services/colour-notation';
@@ -88,62 +89,60 @@ export interface Shade {
 	oklch: Triple;
 }
 
-/** The OKLCH the given level lands on, as [L, chroma, hue]. */
+/**
+ * How much of the base colour's saturation a mode keeps: at the light end of
+ * the ramp, across the middle, and at the dark end. Above 1 pushes toward the
+ * edge of sRGB, and saturation is capped there.
+ */
+const MODE_RAMPS: Record<
+	GenerationMode,
+	[light: number, mid: number, dark: number]
+> = {
+	classic: [0.75, 1, 0.85],
+	'hue-shift': [0.75, 1, 0.85],
+	'luminance-anchored': [0.5, 1, 0.6],
+	vivid: [1, 1.35, 1.15],
+	muted: [0.3, 0.5, 0.4],
+};
+
+/**
+ * The saturation multiplier at `index`, easing into the middle over two levels
+ * at each end. Stepping instead — one flat bucket over 50 and 100, the middle
+ * value from 200 on — put a near-doubling of chroma between 100 and 200, and
+ * 100 came out visibly grey beside both its neighbours.
+ */
+function rampScale(index: number, mode: GenerationMode): number {
+	const [light, mid, dark] = MODE_RAMPS[mode];
+	const fromEnd = SHADE_TARGETS.length - 1 - index;
+	if (index < 2) return light + (mid - light) * (index / 2);
+	if (fromEnd < 2) return dark + (mid - dark) * (fromEnd / 2);
+	return mid;
+}
+
+/** The OKLCH the level at `index` lands on, as [L, chroma, hue]. */
 function shadeParams(
-	level: number,
+	index: number,
 	targetL: number,
-	baseC: number,
+	baseSat: number,
 	baseH: number,
 	mode: GenerationMode,
 ): Triple {
-	switch (mode) {
-		case 'classic': {
-			const chromaScale =
-				level <= 100 ? 0.3 : level >= 900 ? 0.6 : 1;
-			return [targetL, baseC * chromaScale, baseH];
-		}
-
-		case 'hue-shift': {
-			const chromaScale =
-				level <= 100 ? 0.4 : level >= 900 ? 0.7 : 1;
-			// ±15 degrees, warm at the light end and cool at the dark end
-			const hueShift = (targetL - 0.5) * 2 * 15;
-			return [
-				targetL,
-				baseC * chromaScale,
-				(baseH + hueShift + 360) % 360,
-			];
-		}
-
-		case 'luminance-anchored': {
-			const adjustedL =
-				level <= 100
-					? targetL + (1 - targetL) * 0.3
-					: level >= 900
-						? targetL * 0.8
-						: targetL;
-			const chromaScale =
-				level <= 100 ? 0.15 : level >= 900 ? 0.4 : 1;
-			return [adjustedL, baseC * chromaScale, baseH];
-		}
-
-		case 'vivid': {
-			const chromaScale =
-				level <= 100 ? 0.6 : level >= 950 ? 0.8 : 1.1;
-			// 0.4 is about the sRGB chroma ceiling; past it the conversion clips
-			return [
-				targetL,
-				Math.min(baseC * chromaScale, 0.4),
-				baseH,
-			];
-		}
-
-		case 'muted': {
-			const chromaScale =
-				level <= 100 ? 0.15 : level >= 900 ? 0.3 : 0.5;
-			return [targetL, baseC * chromaScale, baseH];
-		}
-	}
+	const fromEnd = SHADE_TARGETS.length - 1 - index;
+	const l =
+		mode !== 'luminance-anchored'
+			? targetL
+			: index < 2
+				? targetL + (1 - targetL) * 0.3
+				: fromEnd < 2
+					? targetL * 0.8
+					: targetL;
+	// ±15 degrees, warm at the light end and cool at the dark end
+	const h =
+		mode === 'hue-shift'
+			? (baseH + (targetL - 0.5) * 2 * 15 + 360) % 360
+			: baseH;
+	const sat = Math.min(1, baseSat * rampScale(index, mode));
+	return [l, sat * maxOklchChroma(l, h), h];
 }
 
 /** Null when the base colour does not parse, which blanks the whole output. */
@@ -154,11 +153,18 @@ export function generateShades(
 	const rgb = hexToRgb(baseHex);
 	if (!rgb) return null;
 
-	// Only chroma and hue come from the base colour: lightness is the ramp's.
-	const [, baseC, baseH] = rgbToOklch(...rgb);
+	// Only saturation and hue come from the base colour: lightness is the
+	// ramp's. Saturation is chroma as a fraction of the most this hue can hold
+	// at that lightness, not chroma itself — sRGB holds two to three times as
+	// much chroma at L 0.7 as it does at L 0.95, so a ramp built on a fixed
+	// chroma reads as vivid at one end and grey at the other. Tailwind's own
+	// palettes sit within a tenth of the sRGB edge at every level.
+	const [baseL, baseC, baseH] = rgbToOklch(...rgb);
+	const baseMax = maxOklchChroma(baseL, baseH);
+	const baseSat = baseMax > 0 ? Math.min(1, baseC / baseMax) : 0;
 
-	return SHADE_TARGETS.map(([level, targetL]) => {
-		const oklch = shadeParams(level, targetL, baseC, baseH, mode);
+	return SHADE_TARGETS.map(([level, targetL], index) => {
+		const oklch = shadeParams(index, targetL, baseSat, baseH, mode);
 		return {
 			level,
 			hex: rgbToHex(...oklabToRgb(...lchToLab(...oklch))),
