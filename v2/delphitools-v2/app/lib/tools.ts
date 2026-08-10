@@ -78,6 +78,17 @@ export const toolCategories: ToolCategory[] = [
 				href: '/tools/colorblind-sim',
 			},
 			{
+				id: 'colour-atlas',
+				name: 'Colour Atlas',
+				// ∑CG: catalogue description for Colour Atlas
+				//   spec: max 60 chars, shown in the home grid cell and as the tool-page subtitle, sentence fragment matching the other descriptions
+				//   sample: 'Everything about one colour, on one page'
+				description: '∑CG',
+				icon: 'swatch-book',
+				href: '/tools/colour-atlas',
+				new: true,
+			},
+			{
 				id: 'colour-converter',
 				name: 'Colour Converter',
 				description: 'Convert between colour formats',

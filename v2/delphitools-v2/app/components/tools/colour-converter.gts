@@ -15,27 +15,18 @@ import {
 	hexToRgb,
 	rgbToHex,
 	rgbToHsl,
-	hslToRgb,
 	rgbToXyz,
-	xyzToRgb,
 	xyzToLab,
-	labToXyz,
 	labToLch,
-	lchToLab,
 	rgbToOklab,
-	oklabToRgb,
 	type Triple,
 } from 'delphitools-v2/lib/colour-maths';
+import {
+	parseColour,
+	type ColourFormat,
+} from 'delphitools-v2/lib/colour-parse';
 
-export type ColourFormat =
-	| 'hex'
-	| 'rgb'
-	| 'rgb-decimal'
-	| 'hsl'
-	| 'lab'
-	| 'lch'
-	| 'oklab'
-	| 'oklch';
+export type { ColourFormat };
 
 export interface ColourValues {
 	hex: string;
@@ -65,55 +56,6 @@ export const FORMATS: {
 	{ id: 'oklab', name: 'OKLAB', placeholder: '0.64, -0.01, -0.15' },
 	{ id: 'oklch', name: 'OKLCH', placeholder: '0.64, 0.15, 264' },
 ];
-
-/**
- * Whatever the separators, three numbers in order is enough to go on. One
- * pattern replaces the Next app's eight near-identical ones, which differed
- * only in whether they admitted a minus sign — inconsistently, so LCH rejected
- * negative input that OKLAB accepted. Out-of-range numbers are clamped later
- * either way.
- */
-const THREE_SIGNED = /(-?[\d.]+)\s*,?\s*(-?[\d.]+)%?\s*,?\s*(-?[\d.]+)%?/;
-
-function three(value: string): Triple | null {
-	const m = THREE_SIGNED.exec(value);
-	if (!m) return null;
-	const nums = [
-		Number.parseFloat(m[1]!),
-		Number.parseFloat(m[2]!),
-		Number.parseFloat(m[3]!),
-	];
-	// A lone "." parses as NaN and would otherwise poison every conversion.
-	return nums.every(Number.isFinite) ? (nums as Triple) : null;
-}
-
-/** The input, read in the named notation, as sRGB. Null if it does not parse. */
-export function parseColour(
-	format: ColourFormat,
-	value: string,
-): Triple | null {
-	if (format === 'hex') return hexToRgb(value);
-
-	const parts = three(value);
-	if (!parts) return null;
-
-	switch (format) {
-		case 'rgb':
-			return parts;
-		case 'rgb-decimal':
-			return parts.map((n) => n * 255) as Triple;
-		case 'hsl':
-			return hslToRgb(...parts);
-		case 'lab':
-			return xyzToRgb(...labToXyz(...parts));
-		case 'lch':
-			return xyzToRgb(...labToXyz(...lchToLab(...parts)));
-		case 'oklab':
-			return oklabToRgb(...parts);
-		case 'oklch':
-			return oklabToRgb(...lchToLab(...parts));
-	}
-}
 
 /** Parse once, then express the result in every format the tool knows. */
 export function convert(

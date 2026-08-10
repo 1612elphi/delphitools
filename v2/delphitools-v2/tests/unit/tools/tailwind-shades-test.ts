@@ -1,9 +1,9 @@
 import { module, test } from 'qunit';
 import {
 	generateShades,
-	colourFromQuery,
 	GENERATION_MODES,
 } from 'delphitools-v2/components/tools/tailwind-shades';
+import { colourFromQuery } from 'delphitools-v2/lib/colour-query';
 import { maxOklchChroma } from 'delphitools-v2/lib/colour-maths';
 
 const BASE = '#3b82f6';

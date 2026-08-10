@@ -1,6 +1,6 @@
 import { module, test } from 'qunit';
+import { parseColour } from 'delphitools-v2/lib/colour-parse';
 import {
-	parseColour,
 	convert,
 	formatOutput,
 	FORMATS,

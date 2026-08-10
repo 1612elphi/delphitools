@@ -22,6 +22,7 @@ import {
 	maxOklchChroma,
 	type Triple,
 } from 'delphitools-v2/lib/colour-maths';
+import { colourFromQuery } from 'delphitools-v2/lib/colour-query';
 import type ColourNotationService from 'delphitools-v2/services/colour-notation';
 
 const DEFAULT_COLOUR = '#3b82f6';
@@ -180,13 +181,6 @@ export function generateShades(
  *
  * Takes the query string rather than reading location, so it is testable.
  */
-export function colourFromQuery(search: string): string | null {
-	const param = new URLSearchParams(search).get('color');
-	if (!param) return null;
-	const hex = param.startsWith('#') ? param : `#${param}`;
-	return hexToRgb(hex) ? hex : null;
-}
-
 function colourFromUrl(): string | null {
 	if (typeof window === 'undefined') return null;
 	return colourFromQuery(window.location.search);

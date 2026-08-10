@@ -23,9 +23,9 @@ applicable on this surface (hardware/native or format constraint).
 
 ## Summary
 
-- **Tools tracked:** 59
+- **Tools tracked:** 60
 - **On all three surfaces:** 41
-- **Web:** 55 · **CLI:** 46 · **iOS:** 51
+- **Web:** 56 · **CLI:** 46 · **iOS:** 51
 - iOS-exclusive (native/hardware): Colour Camera, Document Scanner, Font Installer, NFC Reader/Writer
 - Web-exclusive: Pixel Picker, Text Editor (pandoc.wasm note: GPL — incompatible with the App Store, and won't run on-device on iOS, hence Document Converter I 🚧)
 - CLI-only sub-feature: `hash` (text hashing, folded into Encoding Tools elsewhere)
@@ -51,6 +51,7 @@ Picker is similarly web-only. Spec: `SPEC.md`. Build plan: `BUILD-PLAN.md`.
 | Tool (web ID)                                 |  W  |          C          |  I  | Notes                                                       |
 | --------------------------------------------- | :-: | :-----------------: | :-: | ----------------------------------------------------------- |
 | Colour Converter (`colour-converter`)         |  ✅  |     ✅ `colour`      |  ✅  |                                                             |
+| Colour Atlas (`colour-atlas`)                 |  ✅  |          ❌          |  ❌  | v2 web only so far; one-colour interrogation page           |
 | Colour Blindness Simulator (`colorblind-sim`) |  ✅  |   ✅ `colorblind`    |  ✅  |                                                             |
 | Contrast Checker (`contrast-checker`)         |  ✅  |    ✅ `contrast`     |  ✅  |                                                             |
 | Harmony Generator (`harmony-genny`)           |  ✅  |     ✅ `harmony`     |  ✅  |                                                             |

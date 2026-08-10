@@ -1,0 +1,11 @@
+# The Ember app has its own prettier config and its own `npm run format`.
+/v2/
+
+# Vendored third-party code (MIT pandoc-wasm wrapper) — not ours to format.
+/lib/pandoc/pandoc-core.js
+
+# Vendored libjxl emscripten glue (from @jsquash/jxl) served from /public.
+/public/jxl/
+
+package-lock.json
+bun.lock
