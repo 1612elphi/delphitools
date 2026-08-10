@@ -19,8 +19,10 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const { allTools } = await import('../app/lib/tools.ts');
 
-/** Referenced via a binding rather than a literal, so the scan cannot find them. */
-const EXTRA = [];
+/** Referenced via a binding rather than a literal, so the scan cannot find
+ *  them. The four below are returned from component getters (toast-slot's
+ *  clipboard states, the module pin toggle, the layer lock toggle). */
+const EXTRA = ['clipboard-x', 'lock-open', 'pin', 'pin-off'];
 
 function walk(dir) {
 	return readdirSync(dir).flatMap((entry) => {
@@ -44,6 +46,16 @@ for (const file of walk(join(root, 'app')).filter((f) => f.endsWith('.gts'))) {
 		for (const s of m[0].matchAll(/["']([a-z0-9-]+)["']/g)) {
 			candidates.add(s[1]);
 		}
+	}
+	// Data-driven icons: `icon: 'x'` registry/option fields (the omnibar
+	// tools, the module registry, align options…) and `@icon="x"` component
+	// args (StepBtn). Candidates too — an `icon:` field can hold a non-lucide
+	// value.
+	for (const m of src.matchAll(/\bicon:\s*["']([a-z0-9-]+)["']/g)) {
+		candidates.add(m[1]);
+	}
+	for (const m of src.matchAll(/@icon=["']([a-z0-9-]+)["']/g)) {
+		candidates.add(m[1]);
 	}
 }
 

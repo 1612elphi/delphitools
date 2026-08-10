@@ -28,8 +28,12 @@ const dist = process.argv[2] ?? join(root, 'dist');
 // parsed — it stays the single source of truth, as PARITY.md requires.
 const { allTools } = await import('../app/lib/tools.ts');
 
-/** `external: true` entries have no /tools/:id page in the Next app either. */
-const toolRoutes = allTools.filter((t) => !t.external);
+/** `external: true` entries have no /tools/:id page in the Next app either;
+ *  entries whose href is not under /tools/ (substrata → /editor) live at
+ *  their own route instead. */
+const toolRoutes = allTools.filter(
+	(t) => !t.external && t.href.startsWith('/tools/'),
+);
 
 const esc = (s) =>
 	s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
@@ -87,6 +91,18 @@ const routes = [
 		imageAlt: 'A share card for a free tool on delphitools',
 		card: toolCard(t.name),
 	})),
+	{
+		// the editor route; title matches the Next layout's metadata, the
+		// description is the registry entry's shipped wording
+		url: '/editor',
+		title: 'Substrata',
+		description:
+			allTools.find((t) => t.id === 'substrata')
+				?.description ?? '',
+		image: '/editor/og.png',
+		imageAlt: 'A share card for Substrata, the delphitools image editor',
+		card: toolCard('Substrata'),
+	},
 ];
 
 let written = 0;

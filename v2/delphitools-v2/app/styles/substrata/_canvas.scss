@@ -1,0 +1,87 @@
+// fabric-canvas wrap + overlay chrome, and the pixel-selection popup.
+
+.sub-canvas-wrap {
+	position: relative;
+	flex: 1;
+	overflow: hidden;
+	background-color: var(--muted);
+	min-inline-size: 0;
+	min-block-size: 0;
+}
+
+// the graffiti wordmark tiled across the void, theme-aware via mask
+.sub-canvas-wordmark {
+	pointer-events: none;
+	position: absolute;
+	inset: 0;
+	background-color: var(--foreground);
+	opacity: 0.035;
+	mask-image: url("/substrata/wordmark-tile.svg");
+	mask-repeat: repeat;
+	mask-size: 220px auto;
+}
+
+.sub-canvas-drop-hint {
+	pointer-events: none;
+	position: absolute;
+	inset: 4px;
+	border: 2px dashed var(--primary);
+	background-color: color-mix(in oklab, var(--primary) 5%, transparent);
+
+	&.hidden {
+		display: none;
+	}
+}
+
+// ── pixel-selection popup ──────────────────────────────────────────────────
+.sub-selpop {
+	position: absolute;
+	z-index: 30;
+	display: flex;
+	translate: -50% 0;
+	border: 2px solid var(--border);
+	background-color: var(--background);
+	box-shadow: 0 1px 2px 0 rgb(0 0 0 / 5%);
+}
+
+.sub-selpop-btn {
+	display: grid;
+	place-items: center;
+	inline-size: 28px;
+	block-size: 28px;
+	background: none;
+	color: var(--foreground);
+	cursor: pointer;
+
+	&:hover {
+		background-color: var(--muted);
+	}
+
+	&.is-primary {
+		background-color: var(--primary);
+		color: var(--primary-foreground);
+
+		&:hover {
+			opacity: 0.9;
+		}
+	}
+
+	&.is-destructive {
+		color: var(--destructive);
+	}
+
+	&:disabled {
+		pointer-events: none;
+		opacity: 0.35;
+	}
+
+	.dt-icon {
+		inline-size: 14px;
+		block-size: 14px;
+	}
+}
+
+.sub-selpop-divider {
+	inline-size: 1px;
+	background-color: var(--border);
+}

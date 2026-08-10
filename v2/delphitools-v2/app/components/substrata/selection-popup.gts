@@ -1,0 +1,171 @@
+import Component from '@glimmer/component';
+import { on } from '@ember/modifier';
+import { htmlSafe } from '@ember/template';
+import Icon from 'delphitools-v2/components/icon';
+import { getSnapshot, subscribe } from 'delphitools-v2/lib/substrata/doc-store';
+import {
+	getActiveLayerId,
+	subscribeSelection,
+} from 'delphitools-v2/lib/substrata/selection';
+import {
+	clearPixelSelection,
+	getPixelSelection,
+	subscribePixelSelection,
+} from 'delphitools-v2/lib/substrata/pixel-selection';
+import {
+	canOperateOnActive,
+	cutSelection,
+	extractSelection,
+	growSelection,
+	invertSelection,
+	shrinkSelection,
+} from 'delphitools-v2/lib/substrata/select-ops';
+import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
+
+/**
+ * Contextual pixel-selection popup (M2-10, ratified 2026-07-07): while a pixel
+ * selection exists, a small action strip floats under its bounds — extract
+ * (the DEFAULT action, also Enter) · cut (destructive) · invert · grow ·
+ * shrink · deselect (also Escape). Action words are standard graphics
+ * vocabulary = functional chrome (BLEND_OPTIONS precedent). Extract/cut gate
+ * on a raster active layer (the FX non-raster precedent; auto-rasterize is
+ * M3-15's business).
+ *
+ * The canvas reports the anchor (wrap-relative screen coords) from its
+ * after:render pass via `reportSelectionAnchor` — the popup itself never
+ * touches Fabric. Plain absolutely-positioned div, NOT a popover primitive:
+ * this is a persistent mini-toolbar; dismiss/focus-trap semantics would fight
+ * it.
+ */
+
+let anchor = { x: 0, y: 0 };
+const anchorListeners = new Set<() => void>();
+
+/** Canvas → popup: bottom-centre of the selection bbox, wrap-relative px. */
+export function reportSelectionAnchor(x: number, y: number): void {
+	if (Math.abs(x - anchor.x) < 0.5 && Math.abs(y - anchor.y) < 0.5)
+		return;
+	anchor = { x, y };
+	for (const l of anchorListeners) l();
+}
+
+function subscribeAnchor(l: () => void): () => void {
+	anchorListeners.add(l);
+	return () => {
+		anchorListeners.delete(l);
+	};
+}
+
+const getAnchor = () => anchor;
+
+export default class SelectionPopup extends Component {
+	sel = new TrackedExternal(subscribePixelSelection, getPixelSelection);
+	doc = new TrackedExternal(subscribe, getSnapshot);
+	anchor = new TrackedExternal(subscribeAnchor, getAnchor);
+	// the extract/cut gate reads the active layer — re-render when it changes
+	active = new TrackedExternal(subscribeSelection, getActiveLayerId);
+
+	willDestroy() {
+		super.willDestroy();
+		this.sel.unsubscribe();
+		this.doc.unsubscribe();
+		this.anchor.unsubscribe();
+		this.active.unsubscribe();
+	}
+
+	get visible() {
+		return this.sel.current !== null && this.doc.current !== null;
+	}
+
+	get ready() {
+		// canOperateOnActive reads the doc + active layer stores directly; the
+		// tracked reads here are what re-run this getter when either changes
+		const doc = this.doc.current;
+		const active = this.active.current;
+		return doc !== null && active !== null && canOperateOnActive();
+	}
+
+	get posStyle() {
+		const a = this.anchor.current;
+		return htmlSafe(`left: ${a.x}px; top: ${a.y}px`);
+	}
+
+	extract = () => void extractSelection();
+	cut = () => void cutSelection();
+	invert = () => invertSelection();
+	grow = () => growSelection();
+	shrink = () => shrinkSelection();
+	deselect = () => clearPixelSelection();
+
+	<template>
+		{{#if this.visible}}
+			<div class="sub-selpop" style={{this.posStyle}}>
+				{{! standard graphics vocabulary = functional chrome (not authored copy) }}
+				<button
+					type="button"
+					class="sub-selpop-btn is-primary"
+					data-select-action="extract"
+					title="Extract"
+					aria-label="Extract"
+					disabled={{unless this.ready true}}
+					{{on "click" this.extract}}
+				>
+					<Icon @name="copy-plus" />
+				</button>
+				<button
+					type="button"
+					class="sub-selpop-btn is-destructive"
+					data-select-action="cut"
+					title="Cut"
+					aria-label="Cut"
+					disabled={{unless this.ready true}}
+					{{on "click" this.cut}}
+				>
+					<Icon @name="scissors" />
+				</button>
+				<div class="sub-selpop-divider"></div>
+				<button
+					type="button"
+					class="sub-selpop-btn"
+					data-select-action="invert"
+					title="Invert"
+					aria-label="Invert"
+					{{on "click" this.invert}}
+				>
+					<Icon @name="square-slash" />
+				</button>
+				<button
+					type="button"
+					class="sub-selpop-btn"
+					data-select-action="grow"
+					title="Grow"
+					aria-label="Grow"
+					{{on "click" this.grow}}
+				>
+					<Icon @name="expand" />
+				</button>
+				<button
+					type="button"
+					class="sub-selpop-btn"
+					data-select-action="shrink"
+					title="Shrink"
+					aria-label="Shrink"
+					{{on "click" this.shrink}}
+				>
+					<Icon @name="shrink" />
+				</button>
+				<div class="sub-selpop-divider"></div>
+				<button
+					type="button"
+					class="sub-selpop-btn"
+					data-select-action="deselect"
+					title="Deselect"
+					aria-label="Deselect"
+					{{on "click" this.deselect}}
+				>
+					<Icon @name="x" />
+				</button>
+			</div>
+		{{/if}}
+	</template>
+}

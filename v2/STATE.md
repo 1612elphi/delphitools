@@ -6,8 +6,12 @@ plan, which also carries the Phase 0 findings). This file is what actually
 exists in the code right now.
 
 **Status:** Phase 0 is CLOSED. Every catalogue tool is ported: 55 of 56.
-What remains is Substrata, whose 67-file lib is ported and tested; its 39
-components are not.
+Substrata pass 1 is IN: the canvas, the `window.__substrata` surface, the
+shell, `/editor`, the top bar, the omnibar, the layers and inspector panels,
+docking on `@dnd-kit/dom`, and the entry modals. 18 of the parent repo's
+substrata harnesses pass against it unmodified; the two that fail are red
+against the Next app too. What remains is pass 2: the fx/looks/arrange/colour
+panels and the export/shortcuts/about modals, ~13 files, ~3,900 lines.
 
 Branch: `v2-ember`. App: `v2/delphitools-v2/`. The Next app in the repo root is
 untouched and still the production site.
@@ -63,9 +67,9 @@ npm start                 # vite, pinned to :3000 so the rigs work
 npm run build             # vite build -> dist/
 npm run build:static      # build, then prerender each route + its og.png
 npm run gen-icons         # regenerate app/lib/icons.ts from what templates use
-npm run test              # ember-qunit, 69 tests
+npm run test              # ember-qunit, 309 tests
 npm run lint              # eslint + template-lint + stylelint + prettier
-npm run verify            # 14 puppeteer rigs, needs npm start
+npm run verify            # 15 puppeteer rigs, needs npm start
 npm run verify:static     # prerendered output, jxl and ONNX, needs build:static
 npm run verify:model      # background removal end to end, downloads 88 MB
 ```
@@ -462,7 +466,7 @@ gate stays green.** `loadToolComponent` returns undefined, the route falls to
 the placeholder, and the build, the five lint gates and the prerender pass all
 succeed — prerender reads the page header, which comes from `lib/tools.ts`, not
 from the component. A tool that throws while rendering looks the same to a
-visitor. `scripts/verify/tools.mjs` exists for this: it visits all 53 routes and
+visitor. `scripts/verify/tools.mjs` exists for this: it visits every tool route and
 asserts the placeholder is absent.
 
 **pdf-lib needs both halves of an optimizeDeps entry.**
@@ -540,6 +544,35 @@ syntax. The fix for Ash is three lines, but it raises Crayon's Sass floor to
 
 ---
 
+**A `@use`'d partial cannot `@extend` a selector from app.scss.** The partials
+compile before app.scss's own rules, so `@extend .dt-sr-only` in one fails the
+build with "target selector was not found" — while stylelint stays green and a
+running dev server keeps serving the last good CSS. Inline the rules instead.
+
+**Focus events during DOM teardown write tracked state mid-render.** A focused
+child removed by a re-render fires `focusout` synchronously inside Glimmer's
+render, so a handler that sets tracked state trips the backtracking assertion
+("attempted to update `hot`... already used in the same computation").
+`float-layer.gts` defers the write with `queueMicrotask` + an isDestroying
+guard; expect the same shape anywhere a hover/focus flag drives a mini↔full
+swap.
+
+**Substrata's jxl export spawns a worker by URL.** `substrata/export-encode.ts`
+does `new Worker('/jxl/jxl-worker.js')` — that file has to exist in
+`public/jxl/` alongside the codec the catalogue tools already used. It was the
+one missing asset the export harness caught.
+
+**Ported markup assumes Tailwind preflight.** The Next components style
+buttons against a global reset that zeroes the UA's bevelled face; without it
+an unstyled `<button>` renders grey and 3D. `_shared.scss` now carries that
+baseline for the editor, at zero specificity via `:where(.sub-editor-viewport)
+:where(button)`, so component classes always win. Icons have the same class of
+gap: gen-icons originally scanned only literal `@name=` uses and lib/tools.ts,
+so icon names in data fields (the omnibar TOOLS array, the module registry)
+never reached icons.ts and rendered as empty spans. It now also scans
+`icon: '…'` fields and `@icon="…"` args; names returned from getters go in its
+EXTRA list.
+
 ## Not done
 
 **Tools.** One left, and it is half in.
@@ -580,62 +613,76 @@ port breaks quietly: every op returns a new doc, leaves its input untouched,
 and shares unvisited branches by reference — a port that deep-copies the tree
 on every edit still "works" and makes history useless.
 
-**What remains: 39 components, 11,475 lines, in two passes.**
+**Pass 1 is IN: 27 component files, plus the shell infrastructure.** What
+exists now under `app/components/substrata/`: `fabric-canvas.gts` (the
+2,549-line controller ported by hand as one element modifier; it owns
+`window.__substrata`, all 33 keys), `selection-popup`, `substrata-shell`,
+`top-bar` + `persistence-toggle` + `toast-slot`, `omnibar/` (omnibar, rail,
+modules, tool-settings), `modules/` (layers-panel, inspector-panel),
+`layer-context-menu`, `gradient-row`, `transient-colour`, `preset-row`,
+`text-style-row`, `blend-options`, `empty-hint`, `dock-zones`, `float-layer`,
+`small-screen-notice`, `secure-context-notice`, `modal-host`, and `modals/`
+(canvas-size, onboarding). Shared pieces that came with it:
+`components/colour-field.gts` (DeferredHexInput + ColourSwatchCell),
+`components/ui/switch.gts` (native checkbox with switch role — shadcn-ember's
+Radix port not vendored), `modifiers/editor-shortcuts.ts` (the keyboard map),
+and the dnd layer below. `/editor` renders it all: `app/templates/editor.gts`
+mounts the shell, and the application template skips its `.dt-shell` chrome
+for that one route (router-service check). `scripts/prerender.mjs` writes
+`/editor` and no longer writes `/tools/substrata`. The editor is its own
+chunk: `splitAtRoutes: ['editor']` in `ember-cli-build.mjs` keeps fabric.js
+and the whole editor out of `main`, which is back at 87.6 kB.
 
-Pass 1, about 6,000 lines — a usable editor most harnesses can drive:
-`fabric-canvas` (2,549, and it owns `window.__substrata`), `substrata-shell`
-(133), the `/editor` route, `top-bar` (699), `omnibar` (503) with
-`omnibar/tool-settings` (693), `layers-panel` (686), `inspector-panel` (699).
+**The harness scoreboard.** 18 of the parent repo's substrata harnesses pass
+against `http://localhost:3000/editor` UNMODIFIED: pieces, colour-sink, crop,
+effects, export, freehand, gallery, guides, layers-tree, m7, persist,
+rasterize, select, text-props, text, workspace, resdrop, touchnav.
+`real-matte` was not run (it downloads the model; `m7` covers the wiring via
+the setMatte seam). The two failures are NOT port regressions:
+`review-fixes.mjs` (4 edit-menu checks) and `gradient.mjs` (crashes on a null
+`div.w-56.border-l`) fail identically against the Next app on :3005 — the
+menu hints broke exact-text matching and the inspector's `w-56 border-l`
+wrapper no longer exists in the Next DOM either. Harness rot, to fix in the
+rigs when they migrate into `v2/delphitools-v2/scripts/verify/`.
 
-Pass 2, about 5,500 lines: `fx-panel` (953), the four colour modes (880),
-the modals (982), `looks-panel` (278), `arrange-panel` (186), and the rest.
+**The DOM contract is class literals as much as data attributes.** The
+harnesses select on `data-*` (`data-menu-root`, `data-dock-zone`,
+`data-float-panel`, `data-tool-unit`, `data-select-action`, `data-empty-hint`)
+and `title=`/`aria-pressed`, all preserved — but also on Tailwind class
+literals that survive here as plain class names styled by the substrata
+partials: `shadow-lg` (menu boxes, float cards, the empty-hint card),
+`pointer-events-auto border` + `flex-col` (the omnibar boxes; flex-col is the
+vertical-dock signal workspace.mjs reads), `cursor-grab` (grips), and a
+`span[title]` inside each workspace seg cell. Removing any of these class
+names breaks a harness even though nothing visual changes.
 
-**This is a Fable task.** Run the component agents on `fable`, the way
-`text-editor` and `doc-converter` were. Opus was the wrong tier for it: this is
-a 2,500-line imperative canvas controller with a 33-key debug surface that 22
-harnesses assert against, not a form.
+**Docking runs on real dnd-kit, as decided.** The Glimmer layer is four small
+files: `lib/dnd.ts` (one `DragDropManager` singleton — the Next root
+DndContext — with a 4px `PointerActivationConstraints.Distance`) and the
+`draggable` / `droppable` / `sortable` modifiers. The shell holds the
+dragstart/dragend monitor listeners (dock to rail, float at the drop point,
+omnibar edge). The layers panel constructs its OWN manager for row sorting,
+mirroring its nested DndContext in the Next app. One deviation: no
+DragOverlay chip naming what's in hand — `@dnd-kit/dom`'s default feedback
+moves the grip element itself.
 
-**Mounting.** Substrata is not a tool page. It is `/editor`, its own Next route
-outside the `(site)` group, with its own layout and no sidebar; the registry
-entry at `lib/tools.ts:157` already carries `href: '/editor'` and
-`app/router.ts` already declares `this.route('editor')`. There is no
-`app/templates/editor.gts` yet, so `/editor` renders the shell with an empty
-outlet. The application template wraps everything in `.dt-shell` with the
-sidebar, so the editor route has to break out of that the way the Next layout
-does. `scripts/prerender.mjs` also writes `/tools/substrata` from the registry
-and has no `/editor` entry — both need correcting when the shell lands.
+**Pass-1 modal boundary.** Only Canvas size, New scene and Onboarding are
+ported; `modal-host` keeps the export/shortcuts/about ids closed, so ⌘E and
+the Help items currently do nothing visible. They land with pass 2. The
+first-visit path works end to end: onboarding → New-scene chooser → doc (and
+`navigator.webdriver` still gets the immediate default doc every harness
+boots on).
 
-**The rig surface is the contract.** The 22 harnesses in the **parent repo's**
-`scripts/verify/` drive `window.__substrata` and are the only regression net
-the editor has ever had. They use 33 keys, most heavily `setTool` (46 calls),
-`toolSettings` (30), `layers` (27), `select` (25), `vt` (21) and `samplePixel`
-(16). Reproducing that surface exactly is what makes the port testable, so it
-lands with the canvas rather than after it.
-
-They need no porting to run against this app: `scripts/verify/pieces.mjs` and
-its siblings read `EDITOR_URL`, defaulting to `http://localhost:3000/editor`,
-which is exactly where the Ember dev server serves it.
-
-**They move into `v2/delphitools-v2/scripts/verify/`** and are adapted to this
-app's `harness.mjs` (`launch` / `visit` / `check` / `finish`), so `npm run
-verify` becomes 37 rigs and there is one copy, one command and one harness
-style. The Next app's editor loses its only regression net; that is accepted,
-because retiring it is the point.
-
-**Docking runs on real dnd-kit.** `@dnd-kit/dom@0.5.0` and
-`@dnd-kit/abstract@0.5.0` are installed — no React, no peer dependencies, which
-is the decision already recorded under "Architecture decisions" and in
-`PHASES.md`. Substrata's drag-to-dock ports faithfully rather than being
-approximated: module grips and the omnibar grip are draggables, the four edge
-zones and the rail strip are targets, anywhere else floats the panel.
-`lib/substrata/drag-dock.ts` and `dock-pref.ts` are already across and drive it.
-`@arthur5005/dnd-kit-ember` is the reference for the Glimmer modifier layer, not
-a dependency: one author, two releases, pinned to `@dnd-kit` 0.2.x while 0.5.0
-is current, and the modifier layer is five small files. Vendor and restyle it
-the way `app/components/ui/` was. `touchnav.mjs` covers touch here.
+**What remains: pass 2, ~13 files, ~3,900 lines.** `modules/fx-panel` (953),
+`modules/colour-panel` (216) + `modules/colour-picker-kit` (75) + the six
+`colour-modes/` files (880), `modules/looks-panel` (278),
+`modules/arrange-panel` (186), and `modals/` export (246) + shortcuts (108) +
+about (68). Their omnibar module bodies are stubbed in `omnibar/modules.gts`
+with `// pass 2:` markers; the rail buttons already render.
 
 **Copy.** The Next Substrata has no unfilled gaps: every string is shipped
-wording, carried over verbatim like the other ports.
+wording, carried over verbatim in the port, including the onboarding slides
+and the small-screen notice (Ruby's dictation).
 
 `wifi-form` was a sub-panel with no route of its own and is now part of
 `qr-genny`, where it belongs.
@@ -663,14 +710,9 @@ ten have been through a manual pass. What still has no automated coverage of
 its actual output: no crop dragged, no document converted, no barcode decoded,
 no traced SVG compared, nothing typed into the editor.
 
-**Copy.** Eight unfilled gaps: `algebra-calc`, `favicon-genny`, `graph-calc`,
-`image-stitcher`, `matte-generator`, `scroll-generator`, `social-cropper`,
-`watermarker`.
-`slopsieve` fills them. The D3 batch added only the one, because every other
-string in those ten tools already exists verbatim in the Next app and was
-carried across rather than rewritten.
-Separately, `background-remover` carries the Next app's line about "a ~180MB
-processing engine", which was accurate at fp32 and is now roughly 110 MB.
+**Copy.** One unfilled gap: `shavian-transliterator.gts:38` (the
+small-dictionary notice). `slopsieve` fills it. Everything else, including
+all of Substrata pass 1, is shipped wording carried across verbatim.
 
 **Build output path.** `dist/`, where the parent repo's `static-smoke.mjs`
 expects `out/`. One line in `vite.config.mjs` when it matters.
@@ -693,19 +735,24 @@ anything is deployed at all.
 
 ## Next
 
-1. Substrata's components, 39 files and 11,475 lines. `fabric-canvas` and the
-   `window.__substrata` surface first, because nothing about the editor can be
-   regression-tested until that exists; then the shell and the `/editor` route;
-   then the panels and modals.
-2. Deploy. `public/_redirects` has not been carried across and the parent
+1. Substrata pass 2: the fx/looks/arrange/colour panels and the
+   export/shortcuts/about modals, ~13 files, ~3,900 lines. The omnibar module
+   registry already has their stubs; the modal host already routes their ids.
+   With export-modal in, ⌘E works again.
+2. Migrate the parent repo's substrata harnesses into
+   `v2/delphitools-v2/scripts/verify/` (this app's harness.mjs style), fixing
+   the two rotted ones (`review-fixes` menu-text matching, `gradient`'s
+   `div.w-56.border-l` scope) as they move. Until then they run from the
+   parent repo against :3000/editor.
+3. Deploy. `public/_redirects` has not been carried across and the parent
    repo's `static-smoke.mjs` expects `out/` where this builds to `dist/`. Both
    are one-line jobs and nothing has been proven past `npm run build:static`.
-3. Interaction coverage for the seven D3 tools that still have none. The ones
+4. Interaction coverage for the seven D3 tools that still have none. The ones
    worth doing first are those whose output a rig can check without a human
    eye: `code-genny` against a barcode decoder, `image-converter` round-tripping
    a known image (its GIF and TIFF encoders are hand-written and the least
    proven code in the app), `image-tracer` against a traced shape.
-4. Two optional bundle jobs. A deep-linked tool page costs an extra round trip:
+5. Two optional bundle jobs. A deep-linked tool page costs an extra round trip:
    only `main` knows the tool chunk's URL, so the fetch cannot start until
    `main` has run. `scripts/prerender.mjs` already boots each route in Chrome,
    so recording that route's asset requests and writing a `modulepreload` link

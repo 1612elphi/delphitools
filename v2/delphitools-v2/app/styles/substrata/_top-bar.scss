@@ -1,0 +1,581 @@
+// Substrata top bar (§7), plus its two satellites: the persistence toggle and
+// the undo/redo + toast slot. Ported from the Tailwind-authored .tsx sources —
+// class names below follow the source's arbitrary-value utilities 1:1.
+
+// ── top-bar shell ────────────────────────────────────────────────────────────
+.sub-topbar {
+	position: relative;
+	z-index: 50;
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: 4px;
+	block-size: 46px;
+	border-block-end: 1px solid var(--border);
+	background-color: var(--card);
+	padding-inline: 8px;
+}
+
+.sub-topbar-file-input {
+	display: none;
+}
+
+// ── left: home · wordmark ────────────────────────────────────────────────────
+.sub-topbar-home {
+	display: grid;
+	place-items: center;
+	inline-size: 30px;
+	block-size: 30px;
+}
+
+.sub-topbar-home-img {
+	inline-size: 22px;
+	block-size: 22px;
+	border: 2px solid oklch(0.32 0.07 145);
+}
+
+.sub-topbar-wordmark {
+	margin-inline: 2px 6px;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.sub-topbar-divider {
+	margin-inline: 4px;
+	inline-size: 1px;
+	block-size: 18px;
+	background-color: var(--border);
+}
+
+// ── menubar ───────────────────────────────────────────────────────────────────
+.sub-topbar-nav {
+	display: flex;
+}
+
+.sub-topbar-menu-root {
+	position: relative;
+}
+
+.sub-topbar-menu-btn {
+	display: flex;
+	align-items: center;
+	block-size: 30px;
+	padding-inline: 10px;
+	font-size: 12.5px;
+	user-select: none;
+
+	&:hover,
+	&.is-open {
+		background-color: var(--accent);
+	}
+}
+
+.sub-topbar-menu-pop {
+	position: absolute;
+	z-index: 60;
+	inset-block-start: 100%;
+	inset-inline-start: 0;
+	padding-block-start: 1px;
+}
+
+// ── dropdown primitives (Box / Item / Sep) ───────────────────────────────────
+.sub-topbar-box {
+	border: 1px solid var(--border);
+	background-color: var(--background);
+	box-shadow:
+		0 10px 15px -3px rgb(0 0 0 / 10%),
+		0 4px 6px -4px rgb(0 0 0 / 10%);
+}
+
+// Item is a <button> (see the .gts comment on why); also worn directly by the
+// two <a>/<LinkTo> rows that used to wrap it. Resets cover both element kinds.
+.sub-topbar-item {
+	display: flex;
+	inline-size: 100%;
+	align-items: center;
+	justify-content: space-between;
+	gap: 24px;
+	border: 0;
+	background: none;
+	padding-block: 6px;
+	padding-inline: 12px;
+	font: inherit;
+	font-size: 12px;
+	color: inherit;
+	text-align: left;
+	text-decoration: none;
+	white-space: nowrap;
+	cursor: default;
+	appearance: none;
+
+	&:hover {
+		background-color: var(--accent);
+	}
+
+	&:disabled,
+	&.is-disabled {
+		opacity: 0.4;
+	}
+}
+
+.sub-topbar-item-label {
+	overflow: hidden;
+	min-inline-size: 0;
+	text-overflow: ellipsis;
+}
+
+.sub-topbar-item-hint {
+	flex-shrink: 0;
+	font-size: 10.5px;
+	color: var(--muted-foreground);
+}
+
+.sub-topbar-item-indent {
+	padding-inline-start: 24px;
+}
+
+.sub-topbar-item-recents-label {
+	color: var(--muted-foreground);
+}
+
+.sub-topbar-sep {
+	margin-block: 4px;
+	block-size: 1px;
+	background-color: var(--border);
+}
+
+// ── Scene menu ────────────────────────────────────────────────────────────────
+.sub-topbar-scene-menu {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	min-inline-size: 224px;
+}
+
+.sub-topbar-scene-items {
+	padding-block: 4px;
+}
+
+.sub-topbar-scene-info-head {
+	border-block-end: 1px solid var(--border);
+	padding-block: 8px 5px;
+	padding-inline: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	font-size: 9.5px;
+	color: var(--muted-foreground);
+}
+
+.sub-topbar-di-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding-block: 5px;
+	padding-inline: 12px;
+	font-size: 11.5px;
+}
+
+.sub-topbar-di-label {
+	color: var(--muted-foreground);
+}
+
+.sub-topbar-di-value {
+	font-variant-numeric: tabular-nums;
+}
+
+// ── Scene name (click to rename) ─────────────────────────────────────────────
+.sub-topbar-scene-btn {
+	padding-block: 4px;
+	padding-inline: 8px;
+	font-size: 12.5px;
+	font-weight: 500;
+	cursor: text;
+
+	&:hover {
+		background-color: var(--accent);
+	}
+
+	&:disabled {
+		cursor: default;
+	}
+}
+
+.sub-topbar-scene-input {
+	inline-size: 22ch;
+	border: 1px solid var(--border);
+	background-color: var(--background);
+	padding-block: 4px;
+	padding-inline: 8px;
+	text-align: center;
+	font-size: 12.5px;
+	font-weight: 500;
+	outline: none;
+
+	&:focus {
+		border-color: var(--primary);
+	}
+}
+
+.sub-topbar-centre {
+	position: absolute;
+	inset-inline-start: 50%;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	translate: -50% 0;
+}
+
+.sub-topbar-status {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 11px;
+	color: var(--muted-foreground);
+}
+
+.sub-topbar-status-dot {
+	inline-size: 7px;
+	block-size: 7px;
+	border-radius: 9999px;
+
+	&.is-saved {
+		background-color: var(--primary);
+	}
+
+	&.is-unsaved {
+		background-color: #f59e0b;
+	}
+
+	&.is-off {
+		background-color: color-mix(
+			in oklch,
+			var(--muted-foreground) 40%,
+			transparent
+		);
+	}
+}
+
+// ── right cluster ─────────────────────────────────────────────────────────────
+.sub-topbar-right {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	margin-inline-start: auto;
+}
+
+.sub-topbar-zoom {
+	display: flex;
+	align-items: center;
+	border: 1px solid var(--border);
+}
+
+.sub-topbar-zoom-btn {
+	display: grid;
+	place-items: center;
+	inline-size: 26px;
+	block-size: 26px;
+	color: var(--muted-foreground);
+
+	&:hover {
+		background-color: var(--accent);
+		color: var(--foreground);
+	}
+}
+
+.sub-topbar-zoom-pct {
+	display: grid;
+	place-items: center;
+	min-inline-size: 46px;
+	block-size: 26px;
+	border-inline: 1px solid var(--border);
+	font-size: 11.5px;
+	font-variant-numeric: tabular-nums;
+
+	&:hover {
+		background-color: var(--accent);
+	}
+}
+
+// ghost icon button (was the shadcn `<Button variant="ghost" size="icon">`,
+// which has no Ember equivalent here — plain button, same visual result).
+.sub-topbar-fit-btn,
+.sub-toast-btn {
+	display: grid;
+	place-items: center;
+	inline-size: 28px;
+	block-size: 28px;
+	color: inherit;
+
+	.dt-icon {
+		inline-size: 15px;
+		block-size: 15px;
+	}
+
+	&:hover:not(:disabled) {
+		background-color: var(--accent);
+	}
+
+	&:disabled {
+		pointer-events: none;
+		opacity: 0.5;
+	}
+}
+
+.sub-topbar-feedback {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	block-size: 30px;
+	border: 1px solid var(--border);
+	padding-inline: 12px;
+	font-size: 12.5px;
+	color: var(--muted-foreground);
+
+	.dt-icon {
+		inline-size: 15px;
+		block-size: 15px;
+	}
+
+	&:hover {
+		background-color: var(--accent);
+		color: var(--foreground);
+	}
+}
+
+.sub-topbar-export {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	block-size: 30px;
+	background-color: var(--primary);
+	padding-inline: 12px;
+	font-size: 12.5px;
+	font-weight: 600;
+	color: var(--primary-foreground);
+
+	.dt-icon {
+		inline-size: 15px;
+		block-size: 15px;
+	}
+
+	&:hover {
+		filter: brightness(1.05);
+	}
+}
+
+// ── Edit menu ─────────────────────────────────────────────────────────────────
+.sub-topbar-edit-menu {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	min-inline-size: 240px;
+}
+
+.sub-topbar-ur-row {
+	display: flex;
+}
+
+.sub-topbar-ur-btn {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	block-size: 40px;
+	font-size: 12.5px;
+	font-weight: 600;
+
+	.dt-icon {
+		inline-size: 15px;
+		block-size: 15px;
+	}
+
+	&:hover:not(:disabled) {
+		background-color: var(--accent);
+	}
+
+	&:disabled {
+		opacity: 0.4;
+	}
+}
+
+.sub-topbar-ur-btn-bordered {
+	border-inline-start: 1px solid var(--border);
+}
+
+.sub-topbar-ur-hint {
+	font-size: 10px;
+	font-weight: 400;
+	color: var(--muted-foreground);
+}
+
+.sub-topbar-ab-grid {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.sub-topbar-ab {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	block-size: 50px;
+	background-color: var(--background);
+	font-size: 10px;
+	cursor: default;
+
+	.dt-icon {
+		inline-size: 15px;
+		block-size: 15px;
+	}
+
+	&:hover:not(:disabled) {
+		background-color: var(--accent);
+	}
+
+	&:disabled {
+		pointer-events: none;
+		opacity: 0.4;
+	}
+}
+
+.sub-topbar-ab-label {
+	display: flex;
+	align-items: baseline;
+	gap: 4px;
+}
+
+.sub-topbar-ab-hint {
+	font-size: 9px;
+	color: var(--muted-foreground);
+}
+
+// ── Workspace menu ────────────────────────────────────────────────────────────
+.sub-topbar-workspace-box {
+	padding-block: 4px;
+	min-inline-size: 254px;
+}
+
+.sub-topbar-wrow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 14px;
+	padding-block: 5px;
+	padding-inline: 12px;
+	font-size: 12px;
+}
+
+.sub-topbar-wrow-seg {
+	grid-auto-flow: column;
+	font-size: 10.5px;
+}
+
+.sub-topbar-seg-cell {
+	display: grid;
+	place-items: center;
+	min-inline-size: 22px;
+	block-size: 22px;
+	border: 0;
+	background-color: var(--background);
+	padding-inline: 6px;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	appearance: none;
+
+	.dt-icon {
+		inline-size: 14px;
+		block-size: 14px;
+	}
+
+	&:hover {
+		background-color: var(--accent);
+	}
+
+	&.is-active {
+		background-color: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+// ── Help menu ─────────────────────────────────────────────────────────────────
+.sub-topbar-help-box {
+	padding-block: 4px;
+	min-inline-size: 218px;
+}
+
+// ── persistence toggle ────────────────────────────────────────────────────────
+.sub-persist-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	block-size: 36px;
+	padding-inline: 8px;
+	font-size: 12px;
+}
+
+.sub-persist-icon {
+	flex-shrink: 0;
+	inline-size: 14px;
+	block-size: 14px;
+	color: var(--muted-foreground);
+}
+
+.sub-persist-label {
+	overflow: hidden;
+	flex: 1;
+	min-inline-size: 0;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--muted-foreground);
+}
+
+// ── toast slot ────────────────────────────────────────────────────────────────
+.sub-toast-slot {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	block-size: 28px;
+}
+
+.sub-toast-pill {
+	position: absolute;
+	inset-block-start: 50%;
+	inset-inline-end: 100%;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding-inline: 8px;
+	white-space: nowrap;
+	font-size: 11px;
+	font-weight: 500;
+	color: var(--primary);
+	translate: 0 -50%;
+	animation: sub-toast-in 160ms ease;
+
+	.dt-icon {
+		inline-size: 13px;
+		block-size: 13px;
+	}
+}
+
+@keyframes sub-toast-in {
+	from {
+		opacity: 0;
+		translate: 0 calc(-50% - 6px);
+	}
+
+	to {
+		opacity: 1;
+		translate: 0 -50%;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.sub-toast-pill {
+		animation: none;
+	}
+}
