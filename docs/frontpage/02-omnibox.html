@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>mock 02 — omnibox</title>
+<link rel="stylesheet" href="frontpage.css" />
+<style>
+	.omni {
+		max-width: 42rem;
+		border: 2px solid var(--border);
+		background: var(--card);
+	}
+
+	.omni-field {
+		display: flex;
+		align-items: center;
+	}
+
+	.omni-field > .icon {
+		width: 1.25rem;
+		height: 1.25rem;
+		margin: 0 1rem;
+		color: var(--muted-foreground);
+		flex: none;
+	}
+
+	.omni-input {
+		flex: 1;
+		min-width: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		font-size: 1.125rem;
+		padding: 1.375rem 0;
+		color: inherit;
+		outline: none;
+	}
+
+	.omni-kbd {
+		border: 1px solid var(--border);
+		background: var(--muted);
+		font-size: 0.75rem;
+		color: var(--muted-foreground);
+		padding: 0.125rem 0.375rem;
+		margin-right: 1rem;
+	}
+
+	/* Idle only: what the field accepts, as a flush legend strip. */
+	.omni-legend {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 1px;
+		background: var(--border);
+		border-top: 1px solid var(--border);
+	}
+
+	.omni-legend span {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		padding: 0.625rem 0.5rem;
+		background: var(--muted);
+		font-size: 0.75rem;
+		color: var(--muted-foreground);
+	}
+
+	.omni-legend .icon {
+		width: 1rem;
+		height: 1rem;
+	}
+
+	/* A dropped file replaces the field with a file bar. */
+	.omni-file {
+		display: flex;
+		align-items: stretch;
+	}
+
+	.omni-file-body {
+		display: flex;
+		align-items: center;
+		gap: 0.625rem;
+		padding: 1.125rem 1rem;
+		min-width: 0;
+	}
+
+	.omni-file-body .icon {
+		width: 1.25rem;
+		height: 1.25rem;
+		color: var(--primary);
+		flex: none;
+	}
+
+	.omni-file-name {
+		font-weight: 700;
+		font-size: 1rem;
+	}
+
+	.omni-file-meta {
+		font-size: 0.75rem;
+		color: var(--muted-foreground);
+		white-space: nowrap;
+	}
+
+	.omni-clear {
+		margin-left: auto;
+		border: 0;
+		border-left: 1px solid var(--border);
+		background: var(--muted);
+		font: inherit;
+		font-size: 0.875rem;
+		color: inherit;
+		padding: 0 1.25rem;
+		cursor: pointer;
+	}
+
+	/* Microtool answer rows, fused under the box. */
+	.ans {
+		max-width: 42rem;
+		border: 2px solid var(--border);
+		border-top: 0;
+		background: var(--card);
+	}
+
+	.ans-row {
+		display: flex;
+		align-items: center;
+		gap: 0.625rem;
+		padding: 0.625rem 1rem;
+		border-top: 1px solid var(--border);
+		font-size: 0.8125rem;
+	}
+
+	.ans-row > .icon {
+		width: 1rem;
+		height: 1rem;
+		color: var(--primary);
+		flex: none;
+	}
+
+	.ans-name {
+		font-weight: 700;
+		white-space: nowrap;
+	}
+
+	.ans-val {
+		margin-left: auto;
+		text-align: right;
+		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		font-size: 0.75rem;
+		overflow-wrap: anywhere;
+	}
+
+	.ans-open {
+		width: 1rem;
+		height: 1rem;
+		color: var(--muted-foreground);
+		flex: none;
+	}
+
+	.swatches {
+		display: flex;
+		gap: 1px;
+		margin-left: auto;
+		border: 1px solid var(--border);
+		background: var(--border);
+	}
+
+	.swatches i {
+		display: block;
+		width: 1.125rem;
+		height: 1.125rem;
+	}
+
+	.omni + .dt-section,
+	.ans + .dt-section {
+		margin-top: 1.5rem;
+	}
+
+	/* Cells in a value-result grid carry the pasted value along. */
+	.dt-cell-carry {
+		display: block;
+		margin-top: 0.375rem;
+		font-size: 0.75rem;
+		color: var(--primary);
+	}
+</style>
+</head>
+<body>
+
+<div class="mock-note">
+	<strong>mock 02</strong>
+	<span>the omnibox, round two: one big box for typing, pasting, and
+		dropping. Search filters the catalogue; a pasted or typed value that
+		parses gets microtool answer rows directly under the box (see the
+		microtools table in the README); a dropped file filters to the tools
+		that accept it. Seven states stacked.</span>
+	<nav><a href="01-drop-target.html">01</a> <a href="02-omnibox.html">02</a>
+		<a href="03-workbench.html">03</a> <a href="04-quick-answers.html">04</a>
+		<a href="05-verbs.html">05</a> <a href="06-colour-atlas.html">06</a></nav>
+</div>
+
+<header class="dt-header">delphitools</header>
+
+<main class="dt-page">
+
+	<header class="dt-hero">
+		<img src="../../v2/delphitools-v2/public/delphi-friday.png" alt="" class="dt-hero-art" />
+		<div class="dt-hero-copy">
+			<p class="dt-hero-lead">A collection of small, low stakes and low effort tools.</p>
+			<p>No logins, no registration, no data collection. I can't believe I have to say that. Long live the handmade web.</p>
+		</div>
+	</header>
+
+	<p class="mock-state">state: idle</p>
+
+	<div class="omni">
+		<div class="omni-field">
+			<span class="icon i-search"></span>
+			<input class="omni-input" type="text" placeholder="Drop a file, search for a tool, paste in what you have" />
+			<span class="omni-kbd">⌘K</span>
+		</div>
+		<div class="omni-legend">
+			<span><span class="icon i-file-up"></span>Drop a file</span>
+			<span><span class="icon i-search"></span>Search tools</span>
+			<span><span class="icon i-clipboard-paste"></span>Paste anything</span>
+		</div>
+	</div>
+
+	<p class="mock-state">state: typed "pal", plain search over names and descriptions</p>
+
+	<div class="omni">
+		<div class="omni-field">
+			<span class="icon i-search"></span>
+			<input class="omni-input" type="text" value="pal" />
+			<span class="omni-kbd">⌘K</span>
+		</div>
+	</div>
+
+	<section class="dt-section">
+		<h2 class="dt-section-title">Matches <span class="dt-section-count">3</span></h2>
+		<div class="dt-grid">
+			<a class="dt-cell" href="#"><span class="dt-cell-icon icon i-palette"></span><span class="dt-cell-name">Palette Generator</span><span class="dt-cell-desc">Generate beautiful colour palettes</span></a>
+			<a class="dt-cell" href="#"><span class="dt-cell-icon icon i-pen-line"></span><span class="dt-cell-name">Palette Extractor</span><span class="dt-cell-desc">Extract colour palettes from images</span></a>
+			<a class="dt-cell" href="#"><span class="dt-cell-icon icon i-library"></span><span class="dt-cell-name">Palette Collection</span><span class="dt-cell-desc">Browse curated colour palettes</span></a>
+		</div>
+	</section>
+
+	<p class="mock-state">state: pasted "#2E7D32", microtool rows answer in place, the arrow opens the full tool</p>
+
+	<div class="omni">
+		<div class="omni-field">
+			<span class="icon i-search"></span>
+			<input class="omni-input" type="text" value="#2E7D32" />
+			<span class="omni-kbd">⌘K</span>
+		</div>
+	</div>
+	<div class="ans">
+		<div class="ans-row">
+			<span class="icon i-pipette"></span>
+			<span class="ans-name">Colour Converter</span>
+			<span class="ans-val">rgb(46 125 50) · hsl(123 46% 34%) · oklch(0.52 0.14 149)</span>
+			<a class="ans-open icon i-arrow-right" href="#" aria-label="Colour Converter"></a>
+		</div>
+		<div class="ans-row">
+			<span class="icon i-contrast"></span>
+			<span class="ans-name">Contrast Checker</span>
+			<span class="ans-val">5.1:1 on white · 4.1:1 on black</span>
+			<a class="ans-open icon i-arrow-right" href="#" aria-label="Contrast Checker"></a>
+		</div>
+		<div class="ans-row">
+			<span class="icon i-wind"></span>
+			<span class="ans-name">Tailwind Shade Generator</span>
+			<span class="swatches"><i style="background:#f3faf3"></i><i style="background:#e3f3e4"></i><i style="background:#c8e6c9"></i><i style="background:#a5d6a7"></i><i style="background:#81c784"></i><i style="background:#4caf50"></i><i style="background:#2e7d32"></i><i style="background:#27632a"></i><i style="background:#1b5e20"></i><i style="background:#154a19"></i><i style="background:#0e3311"></i></span>
+			<a class="ans-open icon i-arrow-right" href="#" aria-label="Tailwind Shade Generator"></a>
+		</div>
+		<div class="ans-row">
+			<span class="icon i-rainbow"></span>
+			<span class="ans-name">Harmony Generator</span>
+			<span class="swatches"><i style="background:#2e7d32"></i><i style="background:#7d2e79"></i><i style="background:#322e7d"></i><i style="background:#7d322e"></i></span>
+			<a class="ans-open icon i-arrow-right" href="#" aria-label="Harmony Generator"></a>
+		</div>
+	</div>
+
+	<section class="dt-section">
+		<h2 class="dt-section-title">Takes a colour <span class="dt-section-count">3</span></h2>
+		<div class="dt-grid">
+			<a class="dt-cell" href="#"><span class="dt-cell-icon icon i-palette"></span><span class="dt-cell-name">Palette Generator</span><span class="dt-cell-desc">Generate beautiful colour palettes</span><span class="dt-cell-carry">→ #2E7D32</span></a>
+			<a class="dt-cell" href="#"><span class="dt-cell-icon icon i-blend"></span><span class="dt-cell-name">Gradient Generator</span><span class="dt-cell-desc">Create linear, corner, and mesh gradients</span><span class="dt-cell-carry">→ #2E7D32</span></a>
+			<a class="dt-cell" href="#"><span class="dt-cell-icon icon i-eye"></span><span class="dt-cell-name">Colour Blindness Simulator</span><span class="dt-cell-desc">Simulate how colours appear to colour blind users</span><span class="dt-cell-carry">→ #2E7D32</span></a>
+		</div>
+	</section>
+
+	<p class="mock-state">state: pasted ciphertext, every microtool that reads text answers</p>
+
+	<div class="omni">
+		<div class="omni-field">
+			<span class="icon i-search"></span>
+			<input class="omni-input" type="text" value="WKH TXLFN EURZQ IRA MXPSV RYHU WKH ODCB GRJ" />
+			<span class="omni-kbd">⌘K</span>
+		</div>
+	</div>
+	<div class="ans">
+		<div class="ans-row">
+			<span class="icon i-key-round"></span>
+			<span class="ans-name">Cipher Decoder</span>
+			<span class="ans-val">Caesar +3 · "the quick brown fox jumps over the lazy dog"</span>
+			<a class="ans-open icon i-arrow-right" href="#" aria-label="Cipher Decoder"></a>
+		</div>
+		<div class="ans-row">
+			<span class="icon i-book-open"></span>
+			<span class="ans-name">Word Counter</span>
+			<span class="ans-val">9 words · 43 chars</span>
+			<a class="ans-open icon i-arrow-right" href="#" aria-label="Word Counter"></a>
+		</div>
+		<div class="ans-row">
+			<span class="icon i-file-code"></span>
+			<span class="ans-name">Encoding Tools</span>
+			<span class="ans-val">V0tIIFRYTEZOIEVVUlpRIElSQSBNW…</span>
+			<a class="ans-open icon i-arrow-right" href="#" aria-label="Encoding Tools"></a>
+		</div>
+	</div>
+
+	<p class="mock-state">state: typed "18px", unit values answer the same way</p>
+
+	<div class="omni">
+		<div class="omni-field">
+			<span class="icon i-search"></span>
+			<input class="omni-input" type="text" value="18px" />
+			<span class="omni-kbd">⌘K</span>
+		</div>
+	</div>
+	<div class="ans">
+		<div class="ans-row">
+			<span class="icon i-ruler"></span>
+			<span class="ans-name">PX to REM</span>
+			<span class="ans-val">1.125rem @ 16px base</span>
+			<a class="ans-open icon i-arrow-right" href="#" aria-label="PX to REM"></a>
+		</div>
+		<div class="ans-row">
+			<span class="icon i-hash"></span>
+			<span class="ans-name">Typography Calculator</span>
+			<span class="ans-val">13.5pt · 1.125em</span>
+			<a class="ans-open icon i-arrow-right" href="#" aria-label="Typography Calculator"></a>
+		</div>
+	</div>
+
+	<p class="mock-state">state: typed an expression, the calculator answers</p>
+
+	<div class="omni">
+		<div class="omni-field">
+			<span class="icon i-search"></span>
+			<input class="omni-input" type="text" value="2*(3+4)^2" />
+			<span class="omni-kbd">⌘K</span>
+		</div>
+	</div>
+	<div class="ans">
+		<div class="ans-row">
+			<span class="icon i-calculator"></span>
+			<span class="ans-name">Scientific Calculator</span>
+			<span class="ans-val">98</span>
+			<a class="ans-open icon i-arrow-right" href="#" aria-label="Scientific Calculator"></a>
+		</div>
+	</div>
+
+	<p class="mock-state">state: dropped IMG_2041.png, the catalogue filters to tools that accept it</p>
+
+	<div class="omni">
+		<div class="omni-file">
+			<div class="omni-file-body">
+				<span class="icon i-image"></span>
+				<span class="omni-file-name">IMG_2041.png</span>
+				<span class="omni-file-meta">PNG · 3.2 MB</span>
+			</div>
+			<button class="omni-clear" type="button">Clear</button>
+		</div>
+	</div>
+
+	<section class="dt-section">
+		<h2 class="dt-section-title">Matches <span class="dt-section-count">8</span></h2>
+		<div class="dt-grid">
+			<a class="dt-cell" href="#"><span class="dt-cell-icon icon i-brush"></span><span class="dt-cell-name">Substrata</span><span class="dt-cell-desc">Edit, arrange and mark up images in the browser</span></a>
+			<a class="dt-cell" href="#"><span class="dt-cell-icon icon i-refresh-cw"></span><span class="dt-cell-name">Image Converter</span><span class="dt-cell-desc">Convert between PNG, JPEG, WebP, JXL, GIF, BMP, TIFF, ICO, ICNS with resize and format options</span></a>
+			<a class="dt-cell" href="#"><span class="dt-cell-icon icon i-eraser"></span><span class="dt-cell-name">Background Remover</span><span class="dt-cell-desc">Remove backgrounds from images automatically</span></a>
+			<a class="dt-cell" href="#"><span class="dt-cell-icon icon i-crop"></span><span class="dt-cell-name">Social Media Cropper</span><span class="dt-cell-desc">Crop images for Instagram, Bluesky &amp; Threads</span></a>
+			<a class="dt-cell" href="#"><span class="dt-cell-icon icon i-square"></span><span class="dt-cell-name">Matte Generator</span><span class="dt-cell-desc">Put non-square images on a square matte</span></a>
+			<a class="dt-cell" href="#"><span class="dt-cell-icon icon i-stamp"></span><span class="dt-cell-name">Watermarker</span><span class="dt-cell-desc">Add watermarks to images</span></a>
+			<a class="dt-cell" href="#"><span class="dt-cell-icon icon i-pen-line"></span><span class="dt-cell-name">Palette Extractor</span><span class="dt-cell-desc">Extract colour palettes from images</span></a>
+			<a class="dt-cell" href="#"><span class="dt-cell-icon icon i-crosshair"></span><span class="dt-cell-name">Pixel Picker</span><span class="dt-cell-desc">Sample colours from any image with a zoom loupe</span></a>
+		</div>
+	</section>
+
+	<p class="mock-state">catalogue continues as shipped below every state</p>
+
+</main>
+</body>
+</html>

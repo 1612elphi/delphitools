@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>mock 03 — workbench</title>
+<link rel="stylesheet" href="frontpage.css" />
+<style>
+	.bench {
+		display: grid;
+		gap: 1px;
+		grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+		background: var(--border);
+		border: 1px solid var(--border);
+	}
+
+	.bench-cell {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.625rem 0.75rem;
+		background: var(--card);
+		color: inherit;
+		text-decoration: none;
+		font-size: 0.8125rem;
+		min-width: 0;
+	}
+
+	.bench-cell:hover {
+		background: var(--accent);
+	}
+
+	.bench-cell > .icon {
+		width: 1rem;
+		height: 1rem;
+		color: var(--primary);
+		flex: none;
+	}
+
+	.bench-name {
+		font-weight: 700;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.bench-meta {
+		margin-left: auto;
+		color: var(--muted-foreground);
+		font-size: 0.75rem;
+		white-space: nowrap;
+	}
+
+	.bench-meta.icon {
+		width: 0.875rem;
+		height: 0.875rem;
+		color: var(--muted-foreground);
+	}
+
+	/* Pin affordance on ordinary catalogue cells, shown on hover. */
+	.dt-cell {
+		position: relative;
+	}
+
+	.cell-pin {
+		position: absolute;
+		top: 0.75rem;
+		right: 0.75rem;
+		width: 1rem;
+		height: 1rem;
+		color: var(--muted-foreground);
+	}
+</style>
+</head>
+<body>
+
+<div class="mock-note">
+	<strong>mock 03</strong>
+	<span>the bench: pinned and recently used tools in one compact strip above
+		the catalogue. localStorage only; absent on a first visit, so the
+		shipped page is unchanged until the visitor has history. Pinning
+		happens on the ordinary cells (hover affordance shown on QR
+		Generator).</span>
+	<nav><a href="01-drop-target.html">01</a> <a href="02-omnibox.html">02</a>
+		<a href="03-workbench.html">03</a> <a href="04-quick-answers.html">04</a>
+		<a href="05-verbs.html">05</a> <a href="06-colour-atlas.html">06</a></nav>
+</div>
+
+<header class="dt-header">delphitools</header>
+
+<main class="dt-page">
+
+	<header class="dt-hero">
+		<img src="../../v2/delphitools-v2/public/delphi-friday.png" alt="" class="dt-hero-art" />
+		<div class="dt-hero-copy">
+			<p class="dt-hero-lead">A collection of small, low stakes and low effort tools.</p>
+			<p>No logins, no registration, no data collection. I can't believe I have to say that. Long live the handmade web.</p>
+		</div>
+	</header>
+
+	<section class="dt-section">
+		<h2 class="dt-section-title">Pinned &amp; recent <span class="dt-section-count">6</span></h2>
+		<div class="bench">
+			<a class="bench-cell" href="#"><span class="icon i-brush"></span><span class="bench-name">Substrata</span><span class="bench-meta icon i-pin"></span></a>
+			<a class="bench-cell" href="#"><span class="icon i-qr-code"></span><span class="bench-name">QR Generator</span><span class="bench-meta icon i-pin"></span></a>
+			<a class="bench-cell" href="#"><span class="icon i-refresh-cw"></span><span class="bench-name">Image Converter</span><span class="bench-meta">2 h</span></a>
+			<a class="bench-cell" href="#"><span class="icon i-contrast"></span><span class="bench-name">Contrast Checker</span><span class="bench-meta">1 d</span></a>
+			<a class="bench-cell" href="#"><span class="icon i-book-open"></span><span class="bench-name">Word Counter</span><span class="bench-meta">3 d</span></a>
+			<a class="bench-cell" href="#"><span class="icon i-file-search"></span><span class="bench-name">PDF Preflight</span><span class="bench-meta">6 d</span></a>
+		</div>
+	</section>
+
+	<section class="dt-section">
+		<h2 class="dt-section-title">Greatest Hits <span class="dt-section-count">4</span></h2>
+		<div class="dt-grid">
+			<a class="dt-cell" href="#"><span class="dt-cell-icon icon i-brush"></span><span class="dt-cell-name">Substrata</span><span class="dt-cell-desc">Edit, arrange and mark up images in the browser</span></a>
+			<a class="dt-cell" href="#"><span class="dt-cell-icon icon i-qr-code"></span><span class="dt-cell-name">QR Generator</span><span class="dt-cell-desc">Generate styled QR codes with custom colors, shapes, and logos</span><span class="cell-pin icon i-pin"></span></a>
+			<a class="dt-cell" href="#"><span class="dt-cell-icon icon i-palette"></span><span class="dt-cell-name">Palette Generator</span><span class="dt-cell-desc">Generate beautiful colour palettes</span></a>
+			<a class="dt-cell" href="#"><span class="dt-cell-icon icon i-eraser"></span><span class="dt-cell-name">Background Remover</span><span class="dt-cell-desc">Remove backgrounds from images automatically</span></a>
+		</div>
+	</section>
+
+	<p class="mock-state">catalogue continues as shipped</p>
+
+</main>
+</body>
+</html>
