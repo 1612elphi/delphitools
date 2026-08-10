@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from "react";
 import { Upload, Download, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFilePaste } from "@/hooks/use-file-paste";
+import JSZip from "jszip";
 
 const FAVICON_SIZES = [16, 32, 48, 64, 128, 180, 192, 512];
 
@@ -89,10 +90,25 @@ export function FaviconGennyTool() {
     link.click();
   };
 
-  const downloadAll = () => {
-    favicons.forEach((favicon, i) => {
-      setTimeout(() => downloadFavicon(favicon), i * 100);
-    });
+  const downloadAll = async () => {
+    try {
+      const zip = new JSZip();
+      favicons.forEach((favicon) => {
+        zip.file(`favicon-${favicon.size}x${favicon.size}.png`, favicon.dataUrl.split(",")[1], { base64: true });
+      });
+      const content = await zip.generateAsync({ type: "blob" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(content);
+      link.download = "favicons.zip";
+      link.click();
+      URL.revokeObjectURL(link.href);
+    } catch (err) {
+      console.error("Error generating ZIP:", err);
+      // Fallback: download each favicon individually
+      favicons.forEach((favicon, i) => {
+        setTimeout(() => downloadFavicon(favicon), i * 100);
+      });
+    }
   };
 
   const downloadAsIco = async () => {
