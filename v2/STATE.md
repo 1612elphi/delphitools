@@ -5,8 +5,8 @@ Snapshot of the `v2-ember` branch for the Next-to-Ember rewrite. Companion to
 plan, which also carries the Phase 0 findings). This file is what actually
 exists in the code right now.
 
-**Status:** Phase 0 is CLOSED. Every D1, D2 and D3 tool is ported: 53 of 56.
-What remains is `image-stitcher`, `graph-calc` and Substrata itself.
+**Status:** Phase 0 is CLOSED. Every catalogue tool is ported: 55 of 56.
+What remains is Substrata itself.
 
 Branch: `v2-ember`. App: `v2/delphitools-v2/`. The Next app in the repo root is
 untouched and still the production site.
@@ -64,7 +64,7 @@ npm run build:static      # build, then prerender each route + its og.png
 npm run gen-icons         # regenerate app/lib/icons.ts from what templates use
 npm run test              # ember-qunit, 69 tests
 npm run lint              # eslint + template-lint + stylelint + prettier
-npm run verify            # 12 puppeteer rigs, needs npm start
+npm run verify            # 14 puppeteer rigs, needs npm start
 npm run verify:static     # prerendered output, jxl and ONNX, needs build:static
 npm run verify:model      # background removal end to end, downloads 88 MB
 ```
@@ -101,6 +101,8 @@ exceptions count as failures, and a failing run exits non-zero.
 | `tooltip.mjs` | collapsed-rail tooltips, and that they unmount rather than linger |
 | `tools.mjs` | every tool route renders its tool rather than the placeholder |
 | `pdf.mjs` | pdf-lib and pdf.js end to end: preflight and imposer read a PDF, zine-imposer writes one with and without bleed |
+| `stitch.mjs` | the mosaic, the four export formats by magic bytes, a side button, the batch pool |
+| `graph.mjs` | the hand-written plot surface: axes, ticks, curve sampling, asymptote breaks, pan and zoom |
 | `static.mjs` | the built output: per-route head tags, share cards, client-side nav, per-tool chunks, the jxl codec, the ONNX binary |
 | `bg-removal.mjs` | the real model, end to end, checking a matte reaches the alpha channel |
 
@@ -138,15 +140,15 @@ toggle, About dialog, 404. Pride styling and the commit SHA come through Vite
 **Routing.** `/`, `/tools/:tool_id`, `/editor` (stub), wildcard 404. URLs
 unchanged from the Next app.
 
-**Tools.** 53 of 56, by category:
+**Tools.** 55 of 56, by category:
 
 | Category | State |
 | --- | --- |
 | Colour | 10 of 10 |
 | Typography & Text | 11 of 11 |
-| Calculators | 6 of 7 — `graph-calc` left |
+| Calculators | 7 of 7 |
 | Social Media | 4 of 4 |
-| Images & Assets | 11 of 13 — `substrata` and `image-stitcher` left |
+| Images & Assets | 12 of 13 — `substrata` left |
 | Other Tools | 7 of 7 |
 | Print & Production | 3 of 3 |
 | Turbo-nerd Shit | 1 of 1 |
@@ -199,9 +201,10 @@ Chrome at all 57 routes, checks each renders, and writes a per-route
 against five scraper user agents; head tags match the Next build field for
 field on tool routes.
 
-**Tests.** 69 qunit tests over the pure logic: the sidebar service, two share
+**Tests.** 74 qunit tests over the pure logic: the sidebar service, two share
 link parsers, the colour converter, the Tailwind ramp, the palette-extractor
-quantiser, the ICO builder and the paste-accept matcher. The quantiser takes
+quantiser, the ICO builder, the paste-accept matcher and the time-calc format
+round trip. The quantiser takes
 its random source as a parameter, so the clustering tests are deterministic.
 
 ---
@@ -534,39 +537,9 @@ syntax. The fix for Ash is three lines, but it raises Crayon's Sass floor to
 
 ## Not done
 
-**Tools.** 3 left, ranked easiest first. Sizes are the React source; the Ember
-port has run roughly the same length plus a stylesheet partial.
+**Tools.** One left.
 
-### 1. `image-stitcher` — 1100 lines
-
-Not the D4 it was rated. Its Substrata coupling turned out to be three
-self-contained files, 313 lines total, none of which touch the editor:
-`lib/substrata/export-core.ts` (157, the format table and `formatMeta`),
-`export-encode.ts` (87, `encodeCanvas` and `jxlAvailable`) and `blobs.ts` (69,
-`canvasToBlob`). `export-encode` already imports `lib/jxl`, which this app has.
-Port the three into `app/lib/substrata/` under their own names — Substrata
-proper will want them later and they are the shape it expects.
-
-@dnd-kit is used shallowly: `DndContext`, `SortableContext`, `useSortable`,
-`arrayMove`, `closestCenter`, `rectSortingStrategy`, across two grids.
-`gradient-genny` was rated D4 for the same reason and shipped without it, on
-native Pointer Events and `setPointerCapture`. Try that first; `zine-imposer`
-also reorders slots without a library and is the closer precedent.
-
-### 2. `graph-calc` — 937 lines
-
-The plot surface has to be rebuilt, because mafs is React-only. The good news
-is how little of mafs is used: `Mafs` (an SVG viewport), `Coordinates.Cartesian`
-(axes and grid), `Plot.Parametric`, `Plot.Inequality` and `Line.Segment`. Pan
-and zoom are already hand-rolled in the React source against pointer events and
-a viewBox, so they port as they are rather than coming from the library.
-
-What has to be written: axis and grid ticks at a readable interval for the
-current range, a sampler that turns a compiled mathjs expression into a
-polyline, and the shaded half-plane for `Plot.Inequality`, which is the awkward
-one. mathjs is installed. `mafs/core.css` goes with the library.
-
-### 3. `substrata` — 106 files, 14,124 lines
+### `substrata` — 106 files, 14,124 lines
 
 Its own project, not a tool port. Also `public/substrata/` (LUTs, onboarding
 assets) and `public/substrata/wordmark*.svg`.
@@ -588,6 +561,13 @@ built a toggle button and a styled checkbox instead, partly because
 ember-template-lint's `no-nested-interactive` and `require-presentational-children`
 reject several of the shapes the shadcn versions use.
 
+**image-stitcher and graph-calc are covered.** `stitch.mjs` drives the mosaic,
+the four export formats (PNG magic bytes, JXL codestream signature), a side
+button growing the mosaic, and the batch pool. `graph.mjs` drives the sampler:
+axes, grid and ticks present, an expression replacing the curve, tan(x) breaking
+into seven subpaths and 1/x into two, an uncompilable expression reporting
+itself, and pan and zoom moving the range fields.
+
 **Most of the D3 batch is unexercised.** Ten tools render, boot without a
 console error, and pass every gate; `tools.mjs` is a mount check rather than a
 behaviour check. The three pdf tools now have `pdf.mjs` on top of that, and all
@@ -595,8 +575,9 @@ ten have been through a manual pass. What still has no automated coverage of
 its actual output: no crop dragged, no document converted, no barcode decoded,
 no traced SVG compared, nothing typed into the editor.
 
-**Copy.** Six unfilled gaps: `algebra-calc`, `favicon-genny`,
-`matte-generator`, `scroll-generator`, `social-cropper`, `watermarker`.
+**Copy.** Eight unfilled gaps: `algebra-calc`, `favicon-genny`, `graph-calc`,
+`image-stitcher`, `matte-generator`, `scroll-generator`, `social-cropper`,
+`watermarker`.
 `slopsieve` fills them. The D3 batch added only the one, because every other
 string in those ten tools already exists verbatim in the Next app and was
 carried across rather than rewritten.
@@ -624,20 +605,17 @@ anything is deployed at all.
 
 ## Next
 
-1. `image-stitcher`, then `graph-calc`. Sized above; the stitcher is the
-   shorter of the two and unblocks nothing else, the graph one needs an SVG
-   plot surface written from scratch.
-2. Deploy. `public/_redirects` has not been carried across and the parent
+1. Deploy. `public/_redirects` has not been carried across and the parent
    repo's `static-smoke.mjs` expects `out/` where this builds to `dist/`. Both
    are one-line jobs and nothing has been proven past `npm run build:static`.
-3. Interaction coverage for the seven D3 tools that still have none. The ones
+2. Interaction coverage for the seven D3 tools that still have none. The ones
    worth doing first are those whose output a rig can check without a human
    eye: `code-genny` against a barcode decoder, `image-converter` round-tripping
    a known image (its GIF and TIFF encoders are hand-written and the least
    proven code in the app), `image-tracer` against a traced shape.
-4. Substrata, which is its own project. `window.__substrata` first, because the
+3. Substrata, which is its own project. `window.__substrata` first, because the
    parent repo's 22 harnesses are the editor's only regression net.
-5. Two optional bundle jobs. A deep-linked tool page costs an extra round trip:
+4. Two optional bundle jobs. A deep-linked tool page costs an extra round trip:
    only `main` knows the tool chunk's URL, so the fetch cannot start until
    `main` has run. `scripts/prerender.mjs` already boots each route in Chrome,
    so recording that route's asset requests and writing a `modulepreload` link

@@ -12,10 +12,7 @@ import {
 	type SocialRatio,
 } from 'delphitools-v2/lib/social-presets';
 
-// ∑CG: replaces the drop zone after a chosen file fails to decode
-//   spec: one sentence, max 70 chars, says the image could not be read and to try another file, plain and unapologetic
-//   sample: "That image could not be read. Try another file."
-const LOAD_FAILED = '∑CG';
+const LOAD_FAILED = 'Image could not be read. Try another file?';
 
 const FIRST_PLATFORM = SOCIAL_PLATFORMS[0]!;
 const FIRST_RATIO = FIRST_PLATFORM.ratios[0]!;

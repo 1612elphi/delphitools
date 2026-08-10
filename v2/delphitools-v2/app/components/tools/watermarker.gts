@@ -12,10 +12,7 @@ import filePaste from 'delphitools-v2/modifiers/file-paste';
  */
 const RENDER_DEBOUNCE_MS = 120;
 
-// ∑CG: replaces the preview when either chosen file fails to decode
-//   spec: one sentence, max 70 chars, says the image could not be read and to try another file, plain and unapologetic
-//   sample: "That image could not be read. Try another file."
-const LOAD_FAILED = '∑CG';
+const LOAD_FAILED = 'Image could not be read. Try another file?';
 
 export type Position =
 	'tl' | 'tc' | 'tr' | 'ml' | 'mc' | 'mr' | 'bl' | 'bc' | 'br' | 'random';

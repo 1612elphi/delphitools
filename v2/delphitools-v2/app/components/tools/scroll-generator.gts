@@ -25,10 +25,7 @@ const FILL_OVERSCAN = 1.2;
  */
 const FIT_TOLERANCE = 0.01;
 
-// ∑CG: replaces the drop zone after a chosen file fails to decode
-//   spec: one sentence, max 70 chars, says the image could not be read and to try another file, plain and unapologetic
-//   sample: "That image could not be read. Try another file."
-const LOAD_FAILED = '∑CG';
+const LOAD_FAILED = 'Image could not be read. Try another file?';
 
 const PRESET_COLOURS = ['#ffffff', '#000000', '#f5f5f5', '#1a1a1a'];
 

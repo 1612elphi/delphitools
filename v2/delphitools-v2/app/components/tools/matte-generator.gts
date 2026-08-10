@@ -34,10 +34,7 @@ const MAX_RATIO = 32;
 const MIN_SIZE = 100;
 const MAX_SIZE = 8192;
 
-// ∑CG: replaces the drop zone after a chosen file fails to decode
-//   spec: one sentence, max 70 chars, says the image could not be read and to try another file, plain and unapologetic
-//   sample: "That image could not be read. Try another file."
-const LOAD_FAILED = '∑CG';
+const LOAD_FAILED = 'Image could not be read. Try another file?';
 
 export type MatteType = 'blur' | 'colour' | 'gradient';
 

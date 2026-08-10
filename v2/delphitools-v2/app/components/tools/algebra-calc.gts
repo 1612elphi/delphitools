@@ -13,10 +13,7 @@ export type Operation =
 const COPIED_MS = 1500;
 const ROOT_PRECISION = 10;
 
-// ∑CG: error shown in the result panel when the chosen operation is one this build cannot perform
-//   spec: one line, no more than 70 characters, names the operation as unavailable, factual, no apology
-//   sample: "Factoring is not available in this build"
-const UNSUPPORTED_OP = '∑CG';
+const UNSUPPORTED_OP = 'This operation is not supported at this time';
 
 /** Labels carried over from the Next app, verbatim. */
 export const OPERATIONS: { id: Operation; label: string }[] = [

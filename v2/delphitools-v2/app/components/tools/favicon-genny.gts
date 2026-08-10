@@ -24,10 +24,7 @@ const HTML_SNIPPET = `<link rel="icon" type="image/png" sizes="16x16" href="/fav
 <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png">`;
 
-// ∑CG: replaces the drop zone after a chosen file fails to decode
-//   spec: one sentence, max 70 chars, says the image could not be read and to try another file, plain and unapologetic
-//   sample: "That image could not be read. Try another file."
-const LOAD_FAILED = '∑CG';
+const LOAD_FAILED = 'Image could not be read. Try another file?';
 
 interface GeneratedFavicon {
 	size: number;
