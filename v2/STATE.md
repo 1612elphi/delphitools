@@ -12,6 +12,7 @@ Branch: `v2-ember`. App: `v2/delphitools-v2/`. The Next app in the repo root is
 untouched and still the production site.
 
 ```
+5c8e5f0  fix(v2): pdf-lib loads, and the pdf.js worker cannot drift again
 1e26b3b  feat(v2): port the ten remaining D3 tools
 55fce9c  perf(v2): one chunk per tool, and app/lib out of the eager graph
 5b9df3b  feat(v2): port the last eleven D2 tools
@@ -62,7 +63,7 @@ npm run build:static      # build, then prerender each route + its og.png
 npm run gen-icons         # regenerate app/lib/icons.ts from what templates use
 npm run test              # ember-qunit, 69 tests
 npm run lint              # eslint + template-lint + stylelint + prettier
-npm run verify            # 11 puppeteer rigs, needs npm start
+npm run verify            # 12 puppeteer rigs, needs npm start
 npm run verify:static     # prerendered output, jxl and ONNX, needs build:static
 npm run verify:model      # background removal end to end, downloads 88 MB
 ```
@@ -71,7 +72,7 @@ npm run verify:model      # background removal end to end, downloads 88 MB
 its own subcommand. `npm run test` builds a test bundle over `dist/`, so
 `verify:static` after it reads the wrong build; rerun `build:static` first.
 
-Gates, all green as of `1e26b3b`: `ember-tsc --noEmit`, `eslint .`,
+Gates, all green as of `5c8e5f0`: `ember-tsc --noEmit`, `eslint .`,
 `ember-template-lint .`, `stylelint **/*.{css,scss}`, `prettier --check .`.
 
 **Never run `npm run format` from the repo root.** It formats the Next app, not
@@ -98,6 +99,7 @@ exceptions count as failures, and a failing run exits non-zero.
 | `sharelink.mjs` | `?colors=` on a cold load, and its fallbacks |
 | `tooltip.mjs` | collapsed-rail tooltips, and that they unmount rather than linger |
 | `tools.mjs` | every tool route renders its tool rather than the placeholder |
+| `pdf.mjs` | pdf-lib and pdf.js end to end: preflight and imposer read a PDF, zine-imposer writes one |
 | `static.mjs` | the built output: per-route head tags, share cards, client-side nav, per-tool chunks, the jxl codec, the ONNX binary |
 | `bg-removal.mjs` | the real model, end to end, checking a matte reaches the alpha channel |
 
@@ -414,18 +416,35 @@ from the component. A tool that throws while rendering looks the same to a
 visitor. `scripts/verify/tools.mjs` exists for this: it visits all 53 routes and
 asserts the placeholder is absent.
 
-**pdf-lib breaks Vite's dep optimizer, and only in dev.**
+**pdf-lib needs both halves of an optimizeDeps entry.**
 `@pdf-lib/standard-fonts` stores each font as a deflated payload in a file named
-`.json`, and its own `es/Font.js` imports them as JSON. The optimizer parses
-them, fails the whole pass with "trailing characters", and takes the dev server
-down; every pdf tool then 504s on its dynamic import and the failure reads as a
-broken tool. `optimizeDeps.exclude: ['pdf-lib']` in `vite.config.mjs`. The
-production build never runs that pass, so `npm run build` was green throughout.
+`.json`, and its own `es/Font.js` imports them as JSON. Vite's dep optimizer
+parses them, fails the whole pass with "trailing characters", and takes the dev
+server down, so pdf-lib is excluded from it. But excluding a package leaves its
+dependencies unconverted, and pdf-lib reaches pako 1.0.11 — CommonJS — down
+three paths, each resolving to its own nested copy. Served raw, any of them
+throws "does not provide an export named 'default'" the first time a tool
+touches pdf-lib. All three are named in `optimizeDeps.include`; an entry only
+covers the copy at that exact path. The production build runs neither pass, so
+`npm run build` stayed green through both failures.
 
 **Clearing `node_modules/.vite` is how you find this class of bug.** The dev
 server can be running happily on a cached prebundle while a cold start fails
 outright, so a green dev server proves nothing about a new dependency until the
 cache has been cleared once.
+
+**Never copy a worker into `public/`.** `pdf.worker.min.mjs` was copied from the
+Next app at 5.4.624 while this app installed 5.7.284, and pdf.js refuses to run
+on any mismatch: "The API version X does not match the Worker version Y",
+thrown on the first PDF opened rather than at build time. `lib/pdfjs.ts` imports
+it as `pdfjs-dist/build/pdf.worker.min.mjs?url` instead, so npm moves both
+together. `public/lib/imagetracer_v1.2.6.js` is a deliberate exception:
+image-tracer builds a Worker from that URL at runtime and needs a stable path.
+
+**A catch that swallows shows the wrong cause.** pdf-preflight reported "Could
+not parse this PDF file" for a pdf-lib that had failed to load at all, and
+logged nothing, so the console was empty while the tool blamed the file. Every
+analysis path there logs its cause now.
 
 **Embroider's compat-modules is what actually decides the bundle.** Splitting
 the tools into dynamic imports took `main` from 1.65 MB to 772 kB, and 448 kB of
