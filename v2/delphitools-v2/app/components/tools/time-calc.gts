@@ -19,7 +19,7 @@ import {
 	TabsContent,
 } from 'delphitools-v2/components/ui/tabs';
 
-export type TimeFormat = 'unix' | 'unixMs' | 'iso' | 'human';
+export type TimeFormat = 'unix' | 'unixMs' | 'iso' | 'rfc822' | 'human';
 export type TimeUnit = 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
 export type ArithmeticMode = 'add' | 'subtract';
 
@@ -27,6 +27,7 @@ export interface FormatValues {
 	unix: string;
 	unixMs: string;
 	iso: string;
+	rfc822: string;
 	human: string;
 }
 
@@ -54,10 +55,20 @@ export const FORMAT_INFO: Record<
 	unix: { name: 'Unix (seconds)', placeholder: '1704067200' },
 	unixMs: { name: 'Unix (milliseconds)', placeholder: '1704067200000' },
 	iso: { name: 'ISO 8601', placeholder: '2024-01-01T00:00:00.000Z' },
+	rfc822: {
+		name: 'RFC 822',
+		placeholder: 'Mon, 01 Jan 2024 00:00:00 GMT',
+	},
 	human: { name: 'Date & Time', placeholder: '2024-01-01 00:00:00' },
 };
 
-export const FORMATS: TimeFormat[] = ['unix', 'unixMs', 'iso', 'human'];
+export const FORMATS: TimeFormat[] = [
+	'unix',
+	'unixMs',
+	'iso',
+	'rfc822',
+	'human',
+];
 
 export const UNITS: { value: TimeUnit; label: string }[] = [
 	{ value: 'minutes', label: 'Minutes' },
@@ -87,7 +98,13 @@ const MAX_ZONES = 6;
 const TICK_MS = 1000;
 const COPIED_MS = 1500;
 
-const EMPTY_VALUES: FormatValues = { unix: '', unixMs: '', iso: '', human: '' };
+const EMPTY_VALUES: FormatValues = {
+	unix: '',
+	unixMs: '',
+	iso: '',
+	rfc822: '',
+	human: '',
+};
 
 const ARITHMETIC_PLACEHOLDER = '2024-01-01 00:00:00';
 
@@ -123,7 +140,11 @@ export function parseToDate(value: string, format: TimeFormat): Date | null {
 			);
 			break;
 		}
+		// Date's own parser handles both. RFC 822 is not in the ECMA-262
+		// grammar, but every browser engine accepts it, and this tool only
+		// ever runs in one.
 		case 'iso':
+		case 'rfc822':
 			date = new Date(trimmed);
 			break;
 		// Accepts "2024-01-01 00:00:00" as well as the T-separated form.
@@ -140,6 +161,10 @@ export function dateToFormats(date: Date): FormatValues {
 		unix: Math.floor(date.getTime() / 1000).toString(),
 		unixMs: date.getTime().toString(),
 		iso: date.toISOString(),
+		// ECMA-262 fixes toUTCString at "Mon, 01 Jan 2024 00:00:00 GMT",
+		// English abbreviations and all, which is the RFC 822 date RSS 2.0
+		// asks for with the four-digit year RSS also allows.
+		rfc822: date.toUTCString(),
 		human: toHumanDate(date),
 	};
 }
@@ -349,6 +374,7 @@ export default class TimeCalcTool extends Component {
 	get resultRows() {
 		const result = this.arithmeticResult;
 		if (!result) return [];
+		const formats = dateToFormats(result);
 		return [
 			{
 				key: 'utc',
@@ -356,11 +382,19 @@ export default class TimeCalcTool extends Component {
 				value: formatInTimezone(result, 'UTC'),
 			},
 			{
+				key: 'iso',
+				label: FORMAT_INFO.iso.name,
+				value: formats.iso,
+			},
+			{
+				key: 'rfc822',
+				label: FORMAT_INFO.rfc822.name,
+				value: formats.rfc822,
+			},
+			{
 				key: 'unix',
 				label: 'Unix',
-				value: String(
-					Math.floor(result.getTime() / 1000),
-				),
+				value: formats.unix,
 			},
 			{
 				key: 'relative',
@@ -387,7 +421,11 @@ export default class TimeCalcTool extends Component {
 			return;
 		}
 
-		this.values = dateToFormats(date);
+		// Every field but the one being typed in. Overwriting that one puts
+		// the canonical form under the caret the moment a prefix parses, and
+		// the rest of the keystrokes land after it: typing an ISO date gave
+		// "2001-01-31T23:00:00.000Z025-08-09T11:45:30Z".
+		this.values = { ...dateToFormats(date), [format]: value };
 	};
 
 	setNow = () => {
