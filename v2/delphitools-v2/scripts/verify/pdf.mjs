@@ -53,12 +53,17 @@ const IMAGE = join(
 	'public/delphi.png',
 );
 
+const MM_TO_PT = 72 / 25.4;
+const A4_LONG_PT = 297 * MM_TO_PT;
+const A4_SHORT_PT = 210 * MM_TO_PT;
+const BLEED_PT = 3 * MM_TO_PT;
+
 /** Chrome writes a .crdownload first, so wait for a settled, named file. */
-async function waitForDownload(dir, timeout) {
+async function waitForDownload(dir, timeout, match = /\.pdf$/) {
 	const until = Date.now() + timeout;
 	while (Date.now() < until) {
 		const name = readdirSync(dir).find(
-			(n) => n.endsWith('.pdf') && !n.endsWith('.crdownload'),
+			(n) => match.test(n) && !n.endsWith('.crdownload'),
 		);
 		if (name) {
 			const bytes = statSync(join(dir, name)).size;
@@ -155,10 +160,12 @@ if (loaded) {
 // doc.save() into a Blob and a download. The error surfaced as "zine pdf
 // generation failed" with a pako SyntaxError behind it.
 
+// Every slot of the mini-8 gets an image, so an empty cell cannot be
+// mistaken for a bleed that failed to reach the edge.
 await visit(page, '/tools/zine-imposer');
 await (
 	await page.$('.dt-zine-bulk input[type="file"]')
-).uploadFile(IMAGE, IMAGE, IMAGE, IMAGE);
+).uploadFile(...Array(8).fill(IMAGE));
 await sleep(1200);
 
 const generate = await page.$('.dt-zine-generate');
@@ -186,6 +193,103 @@ if (ready) {
 				.subarray(0, 5)
 				.toString() === '%PDF-',
 			'%PDF-',
+		);
+
+		// A4 landscape for the mini-8 fold, and no bleed asked for, so the
+		// page is the sheet and carries no trim box of its own.
+		const plain = await PDFDocument.load(
+			readFileSync(join(downloads, wrote.name)),
+		);
+		const size = plain.getPage(0).getSize();
+		check(
+			'sized to the sheet when bleed is off',
+			Math.abs(size.width - A4_LONG_PT) < 1 &&
+				Math.abs(size.height - A4_SHORT_PT) < 1,
+			`${size.width.toFixed(1)} x ${size.height.toFixed(1)} pt`,
+		);
+	}
+
+	// ── and again with bleed ────────────────────────────────────────
+
+	await page.click('#zine-bleed');
+	await sleep(200);
+	await (await page.$('.dt-zine-generate')).click();
+	const bled = await waitForDownload(downloads, 30000, /-bleed\.pdf$/);
+	check(
+		'zine-imposer writes a bleed PDF',
+		bled.ok,
+		bled.ok ? bled.name : 'no file appeared',
+	);
+
+	if (bled.ok) {
+		const doc = await PDFDocument.load(
+			readFileSync(join(downloads, bled.name)),
+		);
+		const sheet = doc.getPage(0);
+		const size = sheet.getSize();
+		const trim = sheet.getTrimBox();
+		// 3mm on all four sides: the page grows by 6mm each way and the
+		// trim box is the original sheet, inset by the bleed.
+		check(
+			'whose page grew by 3mm on every side',
+			Math.abs(size.width - (A4_LONG_PT + BLEED_PT * 2)) <
+				1 &&
+				Math.abs(
+					size.height -
+						(A4_SHORT_PT + BLEED_PT * 2),
+				) < 1,
+			`${size.width.toFixed(1)} x ${size.height.toFixed(1)} pt`,
+		);
+		// The boxes can be perfect while the artwork sits inside them,
+		// which is the failure that leaves a white 3mm frame and makes
+		// the whole switch pointless. Render it and look at a corner.
+		// The module URL is passed in rather than written inline: it is a
+		// dev-server path resolved in the page, and eslint reads an inline
+		// one as a missing import on this filesystem.
+		const corner = await page.evaluate(
+			async (bytes, loaderUrl) => {
+				const { getPdfJs } = await import(loaderUrl);
+				const pdfjs = await getPdfJs();
+				const doc = await pdfjs.getDocument({
+					data: new Uint8Array(bytes),
+				}).promise;
+				const p1 = await doc.getPage(1);
+				const viewport = p1.getViewport({ scale: 2 });
+				const canvas = document.createElement('canvas');
+				canvas.width = viewport.width;
+				canvas.height = viewport.height;
+				await p1.render({ canvas, viewport }).promise;
+				const ctx = canvas.getContext('2d');
+				const at = (x, y) => [
+					...ctx.getImageData(x, y, 1, 1).data,
+				];
+				return {
+					topLeft: at(2, 2),
+					topRight: at(canvas.width - 3, 2),
+					bottomLeft: at(2, canvas.height - 3),
+				};
+			},
+			[...readFileSync(join(downloads, bled.name))],
+			'/app/lib/pdfjs.ts',
+		);
+
+		const inked = (px) =>
+			px[0] !== 255 || px[1] !== 255 || px[2] !== 255;
+		check(
+			'and artwork reaches into the bleed margin',
+			inked(corner.topLeft) &&
+				inked(corner.topRight) &&
+				inked(corner.bottomLeft),
+			`corners ${JSON.stringify([corner.topLeft, corner.topRight, corner.bottomLeft])}`,
+		);
+
+		check(
+			'and carries a trim box at the sheet edge',
+			Math.abs(trim.x - BLEED_PT) < 1 &&
+				Math.abs(trim.y - BLEED_PT) < 1 &&
+				Math.abs(trim.width - A4_LONG_PT) < 1 &&
+				Math.abs(trim.height - A4_SHORT_PT) < 1,
+			`${trim.x.toFixed(1)},${trim.y.toFixed(1)} ${trim.width.toFixed(1)}x${trim.height.toFixed(1)}`,
 		);
 	}
 }

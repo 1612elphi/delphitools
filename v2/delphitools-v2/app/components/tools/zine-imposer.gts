@@ -25,6 +25,9 @@ const DPI_OPTIONS = [72, 150, 300, 600];
 /** Preview canvas resolution, in pixels per millimetre. */
 const PREVIEW_SCALE = 2;
 
+/** Bleed depth. 3mm is what UK and EU print shops ask for; US shops use 1/8in. */
+const BLEED_MM = 3;
+
 const FALLBACK_PAPER = PAPER_SIZES[0]!;
 
 interface ZineImage {
@@ -624,22 +627,99 @@ export default class ZineImposerTool extends Component {
 			const cellHeightPt = sheetHeightPt / layout.rows;
 			const targetAspect = cellWidthPt / cellHeightPt;
 
+			// With bleed on, the page grows by the bleed on all four sides
+			// and the sheet sits inside it, so artwork on an outer panel can
+			// run past the trim line. The margin is outside every cell, so
+			// nothing a panel draws into it can reach a neighbour.
+			const bleedPt = this.bleedEnabled
+				? BLEED_MM * MM_TO_POINTS
+				: 0;
+			const pageWidthPt = sheetWidthPt + bleedPt * 2;
+			const pageHeightPt = sheetHeightPt + bleedPt * 2;
+
 			for (const side of layout.sides) {
 				const page = pdfDoc.addPage([
-					sheetWidthPt,
-					sheetHeightPt,
+					pageWidthPt,
+					pageHeightPt,
 				]);
+				if (bleedPt) {
+					// Where the sheet actually gets cut. A print shop reads
+					// this rather than guessing from the page size.
+					page.setTrimBox(
+						bleedPt,
+						bleedPt,
+						sheetWidthPt,
+						sheetHeightPt,
+					);
+					page.setBleedBox(
+						0,
+						0,
+						pageWidthPt,
+						pageHeightPt,
+					);
+				}
 
 				for (const placement of side.placements) {
 					const zineImage =
 						this.images[placement.page - 1];
 					if (!zineImage) continue;
 
+					// Only the sides of this cell that sit on the sheet's
+					// own edge get bleed. An interior edge is a fold or a
+					// cut between two panels, and both sides of it are
+					// already covered by artwork.
+					const out = bleedPt
+						? {
+								left:
+									placement.col ===
+									0
+										? bleedPt
+										: 0,
+								right:
+									placement.col ===
+									layout.cols -
+										1
+										? bleedPt
+										: 0,
+								top:
+									placement.row ===
+									0
+										? bleedPt
+										: 0,
+								bottom:
+									placement.row ===
+									layout.rows -
+										1
+										? bleedPt
+										: 0,
+							}
+						: {
+								left: 0,
+								right: 0,
+								top: 0,
+								bottom: 0,
+							};
+
+					const boxWidthPt =
+						cellWidthPt +
+						out.left +
+						out.right;
+					const boxHeightPt =
+						cellHeightPt +
+						out.top +
+						out.bottom;
+					const boxAspect =
+						boxWidthPt / boxHeightPt;
+
+					// fill crops the source to the box it has to cover, so
+					// growing the box for bleed crops slightly less rather
+					// than stretching. fit letterboxes inside the cell and
+					// never reaches an edge, so bleed cannot apply to it.
 					const dataUrl =
 						zineImage.fitMode === 'fill'
 							? cropToAspect(
 									zineImage.element,
-									targetAspect,
+									boxAspect,
 								)
 							: zineImage.dataUrl;
 					const bytes = await fetch(dataUrl).then(
@@ -651,12 +731,30 @@ export default class ZineImposerTool extends Component {
 						dataUrl.includes('image/png'),
 					);
 
-					let drawWidth = cellWidthPt;
-					let drawHeight = cellHeightPt;
+					// The PDF origin is bottom-left; row 0 is the top
+					// row. Everything shifts by the bleed, because the
+					// sheet now sits inside a larger page.
+					const cellX =
+						bleedPt +
+						placement.col * cellWidthPt;
+					const cellY =
+						bleedPt +
+						(layout.rows -
+							1 -
+							placement.row) *
+							cellHeightPt;
+
+					let drawWidth = boxWidthPt;
+					let drawHeight = boxHeightPt;
+					let drawX = cellX - out.left;
+					let drawY = cellY - out.bottom;
+
 					if (zineImage.fitMode === 'fit') {
 						const imgAspect =
 							embedded.width /
 							embedded.height;
+						drawWidth = cellWidthPt;
+						drawHeight = cellHeightPt;
 						if (imgAspect > targetAspect) {
 							drawHeight =
 								cellWidthPt /
@@ -666,39 +764,32 @@ export default class ZineImposerTool extends Component {
 								cellHeightPt *
 								imgAspect;
 						}
+						drawX =
+							cellX +
+							(cellWidthPt -
+								drawWidth) /
+								2;
+						drawY =
+							cellY +
+							(cellHeightPt -
+								drawHeight) /
+								2;
 					}
 
-					// The PDF origin is bottom-left; row 0 is the top row.
-					const cellX =
-						placement.col * cellWidthPt;
-					const cellY =
-						(layout.rows -
-							1 -
-							placement.row) *
-						cellHeightPt;
-					const offsetX =
-						(cellWidthPt - drawWidth) / 2;
-					const offsetY =
-						(cellHeightPt - drawHeight) / 2;
-
 					if (placement.rotation === 180) {
+						// pdf-lib rotates about the origin it is given,
+						// so a 180 draw starts from the far corner.
 						page.drawImage(embedded, {
-							x:
-								cellX +
-								cellWidthPt -
-								offsetX,
-							y:
-								cellY +
-								cellHeightPt -
-								offsetY,
+							x: drawX + drawWidth,
+							y: drawY + drawHeight,
 							width: drawWidth,
 							height: drawHeight,
 							rotate: degrees(180),
 						});
 					} else {
 						page.drawImage(embedded, {
-							x: cellX + offsetX,
-							y: cellY + offsetY,
+							x: drawX,
+							y: drawY,
 							width: drawWidth,
 							height: drawHeight,
 						});
