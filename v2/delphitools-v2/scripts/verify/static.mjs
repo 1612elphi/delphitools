@@ -170,6 +170,25 @@ if (!existsSync(join(dist, 'index.html'))) {
 		`main is ${(mainBytes / 1e3).toFixed(0)} kB`,
 	);
 
+	// ── the shavian dictionary ships with the build ─────────────────────
+	//
+	// It is fetched at runtime from public/, not imported, so nothing in the
+	// module graph refers to it and a build with the file missing succeeds.
+	// The transliterator then falls back to its 7,500-entry core plus a
+	// letter-by-letter heuristic and still reports itself ready: "vigilant"
+	// glosses as v-i-g-i-l-a-n-t rather than /ˈvɪdʒələnt/. The file was in
+	// fact left behind in the port, and every gate passed.
+
+	const dictionary = join(dist, 'data/shavian-dictionary-full.json');
+	const dictBytes = existsSync(dictionary)
+		? statSync(dictionary).size
+		: 0;
+	check(
+		'the full shavian dictionary is in the build',
+		dictBytes > 4_000_000,
+		dictBytes ? `${(dictBytes / 1e6).toFixed(1)} MB` : 'missing',
+	);
+
 	// ── the ONNX runtime ships with the build ───────────────────────────
 	//
 	// transformers.js only falls back to a jsdelivr URL when nothing has set

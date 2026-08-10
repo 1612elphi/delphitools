@@ -29,7 +29,13 @@ const DEFAULT_TEXT = 'Mankind, be vigilant; we loved you.';
 const FULL_DICTIONARY_URL = '/data/shavian-dictionary-full.json';
 const COPIED_MS = 2000;
 
-export type DictStatus = 'loading-core' | 'loading-full' | 'ready';
+export type DictStatus =
+	'loading-core' | 'loading-full' | 'core-only' | 'ready';
+
+// ∑CG: status beside the gloss heading when the full dictionary fetch failed
+//   spec: one line, max 60 chars, says only the small dictionary loaded so uncommon words are guessed, no apology, no retry instruction
+//   sample: "Core dictionary only — uncommon words are guessed"
+const CORE_ONLY_STATUS = '∑CG';
 
 export function parseDictJson(json: Record<string, string[]>): Dictionary {
 	return new Map(Object.entries(json));
@@ -40,13 +46,26 @@ let fullDictPromise: Promise<Dictionary> | null = null;
 
 function loadFullDictionary(): Promise<Dictionary> {
 	fullDictPromise ??= fetch(FULL_DICTIONARY_URL)
-		.then(
-			(response) =>
-				response.json() as Promise<
-					Record<string, string[]>
-				>,
-		)
-		.then(parseDictJson);
+		.then((response) => {
+			// fetch resolves on 404. Without this the miss reaches json(),
+			// which throws a parse error the caller reads as a bad payload,
+			// and the tool glosses every word past the 7,500-entry core with
+			// the heuristic while reporting itself ready.
+			if (!response.ok) {
+				throw new Error(
+					`${FULL_DICTIONARY_URL} returned HTTP ${response.status}`,
+				);
+			}
+			return response.json() as Promise<
+				Record<string, string[]>
+			>;
+		})
+		.then(parseDictJson)
+		.catch((error: unknown) => {
+			// A cached rejection would deny every later mount a retry.
+			fullDictPromise = null;
+			throw error;
+		});
 	return fullDictPromise;
 }
 
@@ -319,11 +338,24 @@ export default class ShavianTransliteratorTool extends Component {
 			if (this.isDestroyed) return;
 			setFullDictionary(full);
 			this.tokens = reResolveTokens(this.tokens);
-		} catch {
-			// Without the second tier the heuristic stands; the tool still works.
+		} catch (error) {
+			// The heuristic stands and the tool still works, but its output is
+			// a guess for every word outside the core, which reads as a
+			// working tool with wrong pronunciations unless it says so.
+			console.error(
+				'shavian full dictionary failed to load:',
+				error,
+			);
+			if (this.isDestroyed) return;
+			this.dictStatus = 'core-only';
+			return;
 		}
 		if (this.isDestroyed) return;
 		this.dictStatus = 'ready';
+	}
+
+	get coreOnlyStatus() {
+		return CORE_ONLY_STATUS;
 	}
 
 	get hasContent() {
@@ -514,6 +546,20 @@ export default class ShavianTransliteratorTool extends Component {
 								{{! wording carried over from the Next app }}
 								Loading full
 								dictionary…
+							</span>
+						{{else if
+							(eq
+								this.dictStatus
+								"core-only"
+							)
+						}}
+							<span
+								class="dt-shav-status is-degraded"
+							>
+								<Icon
+									@name="triangle-alert"
+								/>
+								{{this.coreOnlyStatus}}
 							</span>
 						{{else}}
 							{{! wording carried over from the Next app }}

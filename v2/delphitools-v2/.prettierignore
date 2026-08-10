@@ -20,3 +20,6 @@ ember-cli-update.json
 
 # imagetracerjs standalone build; image-tracer builds its worker from this URL
 /public/lib/imagetracer_v1.2.6.js
+
+# 125k-entry CMU pronunciation dictionary, fetched at runtime, 5.4 MB
+/public/data/shavian-dictionary-full.json
