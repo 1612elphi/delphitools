@@ -58,10 +58,18 @@ export function setDoc(next: SubstrataDoc | null): void {
  */
 export function update(mutator: (doc: SubstrataDoc) => SubstrataDoc): void {
 	if (!state) return;
-	undoStack.push(state);
+	const previous = state;
+	const next = mutator(previous);
+	// Every op that declines returns the doc it was handed: moveLayer into its
+	// own descendant, setSiblingOrder with a partial id list, deleteLayers with
+	// an unknown id, reorderLayers on a selection already at the end. Recording
+	// those costs a step that undoes to an identical document, so undo looks
+	// broken. commitTransient has always tested for this; update did not.
+	if (next === previous) return;
+	undoStack.push(previous);
 	if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
 	redoStack.length = 0;
-	state = mutator(state);
+	state = next;
 	emit();
 }
 
