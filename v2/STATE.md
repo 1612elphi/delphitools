@@ -580,10 +580,20 @@ port breaks quietly: every op returns a new doc, leaves its input untouched,
 and shares unvisited branches by reference — a port that deep-copies the tree
 on every edit still "works" and makes history useless.
 
-**What remains: 39 components, 11,475 lines.** `fabric-canvas.tsx` alone is
-2,549 of them and owns `window.__substrata`. Then `fx-panel` (953), `top-bar`
-(699), `inspector-panel` (699), `omnibar/tool-settings` (693), `layers-panel`
-(686), `omnibar` (503), and 32 smaller ones.
+**What remains: 39 components, 11,475 lines, in two passes.**
+
+Pass 1, about 6,000 lines — a usable editor most harnesses can drive:
+`fabric-canvas` (2,549, and it owns `window.__substrata`), `substrata-shell`
+(133), the `/editor` route, `top-bar` (699), `omnibar` (503) with
+`omnibar/tool-settings` (693), `layers-panel` (686), `inspector-panel` (699).
+
+Pass 2, about 5,500 lines: `fx-panel` (953), the four colour modes (880),
+the modals (982), `looks-panel` (278), `arrange-panel` (186), and the rest.
+
+**This is a Fable task.** Run the component agents on `fable`, the way
+`text-editor` and `doc-converter` were. Opus was the wrong tier for it: this is
+a 2,500-line imperative canvas controller with a 33-key debug surface that 22
+harnesses assert against, not a form.
 
 **Mounting.** Substrata is not a tool page. It is `/editor`, its own Next route
 outside the `(site)` group, with its own layout and no sidebar; the registry
@@ -604,15 +614,25 @@ lands with the canvas rather than after it.
 
 They need no porting to run against this app: `scripts/verify/pieces.mjs` and
 its siblings read `EDITOR_URL`, defaulting to `http://localhost:3000/editor`,
-which is exactly where the Ember dev server serves it. Whether they then move
-into `v2/delphitools-v2/scripts/verify/` so `npm run verify` covers them, or
-stay in the parent repo, is undecided.
+which is exactly where the Ember dev server serves it.
 
-**@dnd-kit has no Ember equivalent** and is not portable. Substrata uses it for
-drag-to-dock: module grips and the omnibar are draggables, the four edge zones
-and the rail strip are targets, and anywhere else floats the panel. That is a
-hand-rolled pointer-event rebuild, and `touchnav.mjs` is one of the 22
-harnesses, so touch is in scope for it in a way it was not for the stitcher.
+**They move into `v2/delphitools-v2/scripts/verify/`** and are adapted to this
+app's `harness.mjs` (`launch` / `visit` / `check` / `finish`), so `npm run
+verify` becomes 37 rigs and there is one copy, one command and one harness
+style. The Next app's editor loses its only regression net; that is accepted,
+because retiring it is the point.
+
+**Docking runs on real dnd-kit.** `@dnd-kit/dom@0.5.0` and
+`@dnd-kit/abstract@0.5.0` are installed — no React, no peer dependencies, which
+is the decision already recorded under "Architecture decisions" and in
+`PHASES.md`. Substrata's drag-to-dock ports faithfully rather than being
+approximated: module grips and the omnibar grip are draggables, the four edge
+zones and the rail strip are targets, anywhere else floats the panel.
+`lib/substrata/drag-dock.ts` and `dock-pref.ts` are already across and drive it.
+`@arthur5005/dnd-kit-ember` is the reference for the Glimmer modifier layer, not
+a dependency: one author, two releases, pinned to `@dnd-kit` 0.2.x while 0.5.0
+is current, and the modifier layer is five small files. Vendor and restyle it
+the way `app/components/ui/` was. `touchnav.mjs` covers touch here.
 
 **Copy.** The Next Substrata has no unfilled gaps: every string is shipped
 wording, carried over verbatim like the other ports.
