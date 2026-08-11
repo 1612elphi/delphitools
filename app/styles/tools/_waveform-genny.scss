@@ -1,18 +1,18 @@
-// Styles for the video-to-gif tool.
+// Styles for the waveform-genny tool.
 
 @use "../crayon-config" as crayon;
 
-/* ── Video → GIF ─────────────────────────────────────────────────────────── */
+/* ── Waveform generator ──────────────────────────────────────────────────── */
 
-.dt-vg {
+.dt-wg {
 	@include crayon.vstack(4);
 }
 
-.dt-vg-frame {
+.dt-wg-frame {
 	border: 2px solid var(--border);
 }
 
-.dt-vg-drop {
+.dt-wg-drop {
 	display: block;
 	margin: crayon.size(4);
 	padding: crayon.size(12);
@@ -45,20 +45,33 @@
 	}
 }
 
-.dt-vg-drop-title {
+.dt-wg-drop-title {
 	display: block;
 	font-weight: crayon.font-weight("medium");
 }
 
-.dt-vg-bar {
+.dt-wg-status {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	justify-content: center;
+	padding-block: crayon.size(6);
+	color: var(--muted-foreground);
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+}
+
+.dt-wg-bar {
 	display: flex;
 	min-height: crayon.size(12);
 	align-items: stretch;
 	border-bottom: 1px solid var(--border);
-	flex-wrap: wrap;
 }
 
-.dt-vg-info {
+.dt-wg-info {
 	display: flex;
 	flex: 1;
 	min-width: 0;
@@ -67,7 +80,7 @@
 	padding: crayon.size(2) crayon.size(4);
 }
 
-.dt-vg-name {
+.dt-wg-name {
 	overflow: hidden;
 	font-size: crayon.font-size("sm");
 	font-weight: crayon.font-weight("bold");
@@ -75,36 +88,58 @@
 	white-space: nowrap;
 }
 
-.dt-vg-meta {
+.dt-wg-meta {
 	color: var(--muted-foreground);
 	font-size: crayon.font-size("xs");
 	font-variant-numeric: tabular-nums;
 }
 
-.dt-vg-settings {
-	display: flex;
-	min-height: crayon.size(10);
-	align-items: stretch;
+/* Settings as a grid of stacked label-over-control cells; the preset strip
+   gets a full-width row of its own. */
+.dt-wg-settings {
+	display: grid;
 	border-bottom: 1px solid var(--border);
-	flex-wrap: wrap;
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: repeat(auto-fit, minmax(crayon.size(32), 1fr));
 }
 
-.dt-vg-field {
-	@include crayon.hstack(2);
+.dt-wg-presets {
+	grid-auto-flow: column;
+}
 
-	align-items: center;
-	padding-block: crayon.size(1.5);
-	padding-inline: crayon.size(3);
-	border-right: 1px solid var(--border);
+.dt-wg-preset {
+	padding: crayon.size(1) crayon.size(3);
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
 	font-size: crayon.font-size("sm");
+	cursor: pointer;
 
-	span {
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-wg-field {
+	display: flex;
+	flex-direction: column;
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--card);
+	gap: crayon.size(1);
+
+	> span {
 		color: var(--muted-foreground);
-		white-space: nowrap;
+		font-size: crayon.font-size("xs");
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
 	}
 
-	input {
-		width: crayon.size(16);
+	input,
+	select {
+		width: 100%;
 		padding: crayon.size(1) crayon.size(2);
 		border: 1px solid var(--border);
 		background: var(--background);
@@ -117,14 +152,20 @@
 			outline: 2px solid var(--primary);
 			outline-offset: -1px;
 		}
+	}
 
-		&:disabled {
-			opacity: 0.4;
-		}
+	input[type="color"] {
+		height: crayon.size(7);
+		padding: crayon.size(0.5);
+		cursor: pointer;
+	}
+
+	&.is-size {
+		grid-column: 1 / -1;
 	}
 }
 
-.dt-vg-btn {
+.dt-wg-btn {
 	@include crayon.hstack(2);
 
 	align-items: center;
@@ -147,11 +188,6 @@
 		color: var(--foreground);
 	}
 
-	&:disabled {
-		opacity: 0.4;
-		pointer-events: none;
-	}
-
 	&.is-primary {
 		padding-inline: crayon.size(6);
 		background: var(--primary);
@@ -168,43 +204,19 @@
 	}
 }
 
-.dt-vg-stage {
-	background: #000;
-
-	video {
-		display: block;
-		width: 100%;
-		max-height: crayon.size(120);
-	}
+.dt-wg-stage {
+	padding: crayon.size(4);
+	background: var(--muted);
 }
 
-.dt-vg-result {
-	border-top: 2px solid var(--border);
-
-	img {
-		display: block;
-		max-width: 100%;
-		margin-inline: auto;
-	}
+.dt-wg-preview {
+	display: block;
+	width: 100%;
+	height: auto;
+	border: 1px solid var(--border);
 }
 
-.dt-vg-result-bar {
-	display: flex;
-	min-height: crayon.size(10);
-	align-items: stretch;
-	justify-content: space-between;
-	border-top: 1px solid var(--border);
-}
-
-.dt-vg-result-meta {
-	align-self: center;
-	padding-inline: crayon.size(4);
-	color: var(--muted-foreground);
-	font-size: crayon.font-size("sm");
-	font-variant-numeric: tabular-nums;
-}
-
-.dt-vg-error {
+.dt-wg-error {
 	padding: crayon.size(3);
 	border: 1px solid
 		color-mix(in oklch, var(--destructive) 50%, transparent);

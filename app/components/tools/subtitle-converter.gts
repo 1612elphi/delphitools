@@ -24,12 +24,35 @@ const MIME: Record<SubtitleFormat, string> = {
 	vtt: 'text/vtt',
 };
 
+interface ScalePreset {
+	id: string;
+	label: string;
+	factor: number;
+}
+
+// factor = from/to: subtitles timed for `from` fps content that now plays
+// at `to` fps. PAL speedup shrinks every timestamp, hence 23.976/25.
+const SCALE_PRESETS: ScalePreset[] = [
+	{ id: 'custom', label: 'Custom', factor: 1 },
+	{ id: 'film-pal', label: '23.976 → 25', factor: 23.976 / 25 },
+	{ id: 'pal-film', label: '25 → 23.976', factor: 25 / 23.976 },
+	{ id: '24-25', label: '24 → 25', factor: 24 / 25 },
+	{ id: '25-24', label: '25 → 24', factor: 25 / 24 },
+	{ id: 'film-24', label: '23.976 → 24', factor: 23.976 / 24 },
+	{ id: '24-film', label: '24 → 23.976', factor: 24 / 23.976 },
+];
+
+const VTT_KINDS = ['', 'captions', 'subtitles', 'descriptions'];
+
 export default class SubtitleConverterTool extends Component {
 	@tracked input = '';
 	@tracked fileName = '';
 	@tracked target: SubtitleFormat = 'vtt';
 	@tracked shiftSeconds = 0;
 	@tracked scaleFactor = 1;
+	@tracked presetId = 'custom';
+	@tracked vttKind = '';
+	@tracked vttLanguage = '';
 	@tracked copied = false;
 
 	#copiedTimer?: ReturnType<typeof setTimeout>;
@@ -68,8 +91,19 @@ export default class SubtitleConverterTool extends Component {
 	@cached
 	get output() {
 		if (this.cues.length === 0) return '';
-		const write = this.target === 'srt' ? writeSrt : writeVtt;
-		return write(this.adjusted);
+		if (this.target === 'srt') return writeSrt(this.adjusted);
+		return writeVtt(this.adjusted, {
+			kind: this.vttKind,
+			language: this.vttLanguage,
+		});
+	}
+
+	get scalePresets() {
+		return SCALE_PRESETS;
+	}
+
+	get vttKinds() {
+		return VTT_KINDS;
 	}
 
 	get hasInput() {
@@ -155,6 +189,23 @@ export default class SubtitleConverterTool extends Component {
 		);
 		this.scaleFactor =
 			Number.isFinite(value) && value > 0 ? value : 1;
+		this.presetId = 'custom';
+	};
+
+	setPreset = (event: Event) => {
+		const id = (event.target as HTMLSelectElement).value;
+		const preset = SCALE_PRESETS.find((p) => p.id === id);
+		if (!preset) return;
+		this.presetId = preset.id;
+		if (preset.id !== 'custom') this.scaleFactor = preset.factor;
+	};
+
+	setVttKind = (event: Event) => {
+		this.vttKind = (event.target as HTMLSelectElement).value;
+	};
+
+	setVttLanguage = (event: Event) => {
+		this.vttLanguage = (event.target as HTMLInputElement).value;
 	};
 
 	clear = () => {
@@ -201,42 +252,101 @@ export default class SubtitleConverterTool extends Component {
 				{{on "drop" this.handleDrop}}
 				{{on "dragover" this.allowDrop}}
 			>
-				<div class="dt-sub-options">
-					{{#if this.stats}}
-						<span
-							class="dt-sub-stats"
-						>{{this.stats}}</span>
-					{{else}}
-						<span></span>
+				<div class="dt-sub-settings">
+					<label class="dt-sub-field">
+						<span>Shift (s)</span>
+						<input
+							type="number"
+							step="0.1"
+							value={{this.shiftSeconds}}
+							{{on
+								"input"
+								this.setShift
+							}}
+						/>
+					</label>
+					<label class="dt-sub-field">
+						<span>Scale (×)</span>
+						<input
+							type="number"
+							step="0.001"
+							min="0.001"
+							value={{this.scaleFactor}}
+							{{on
+								"input"
+								this.setScale
+							}}
+						/>
+					</label>
+					<label class="dt-sub-field">
+						<span>Rate</span>
+						<select
+							{{on
+								"change"
+								this.setPreset
+							}}
+						>
+							{{#each
+								this.scalePresets
+								key="id"
+								as |preset|
+							}}
+								<option
+									value={{preset.id}}
+									selected={{eq
+										this.presetId
+										preset.id
+									}}
+								>{{preset.label}}</option>
+							{{/each}}
+						</select>
+					</label>
+					{{#if (eq this.target "vtt")}}
+						<label class="dt-sub-field">
+							<span>Kind</span>
+							<select
+								{{on
+									"change"
+									this.setVttKind
+								}}
+							>
+								{{#each
+									this.vttKinds
+									key="@index"
+									as |kind|
+								}}
+									<option
+										value={{kind}}
+										selected={{eq
+											this.vttKind
+											kind
+										}}
+									>{{if
+											kind
+											kind
+											"—"
+										}}</option>
+								{{/each}}
+							</select>
+						</label>
+						<label class="dt-sub-field">
+							<span>Language</span>
+							<input
+								type="text"
+								placeholder="en"
+								value={{this.vttLanguage}}
+								{{on
+									"input"
+									this.setVttLanguage
+								}}
+							/>
+						</label>
 					{{/if}}
-
-					<div class="dt-sub-controls">
-						<label class="dt-sub-field">
-							<span>Shift (s)</span>
-							<input
-								type="number"
-								step="0.1"
-								value={{this.shiftSeconds}}
-								{{on
-									"input"
-									this.setShift
-								}}
-							/>
-						</label>
-						<label class="dt-sub-field">
-							<span>Scale (×)</span>
-							<input
-								type="number"
-								step="0.001"
-								min="0.001"
-								value={{this.scaleFactor}}
-								{{on
-									"input"
-									this.setScale
-								}}
-							/>
-						</label>
-						<div class="segmented">
+					<div class="dt-sub-field">
+						<span>Target</span>
+						<div
+							class="segmented dt-sub-format-group"
+						>
 							<button
 								type="button"
 								class="dt-sub-format
@@ -373,6 +483,11 @@ export default class SubtitleConverterTool extends Component {
 							<span
 								class="dt-sub-pane-label"
 							>Output</span>
+							{{#if this.stats}}
+								<span
+									class="dt-sub-stats"
+								>{{this.stats}}</span>
+							{{/if}}
 							<div
 								class="dt-sub-pane-tools"
 							>

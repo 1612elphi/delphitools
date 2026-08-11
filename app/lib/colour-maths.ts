@@ -280,6 +280,20 @@ export function luminance(r: number, g: number, b: number): number {
 	return 0.2126 * lr + 0.7152 * lg + 0.0722 * lb;
 }
 
+/** WCAG 2.1 contrast ratio, 1–21. Null if either string is not a hex colour. */
+export function contrastRatio(one: string, two: string): number | null {
+	const rgbOne = hexToRgb(one);
+	const rgbTwo = hexToRgb(two);
+	if (!rgbOne || !rgbTwo) return null;
+
+	const lumOne = luminance(...rgbOne);
+	const lumTwo = luminance(...rgbTwo);
+	return (
+		(Math.max(lumOne, lumTwo) + 0.05) /
+		(Math.min(lumOne, lumTwo) + 0.05)
+	);
+}
+
 /**
  * Black or white, whichever reads on the given fill. The 0.4 threshold is the
  * Next app's, not the WCAG midpoint — it biases toward black text.

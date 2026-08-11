@@ -8,47 +8,53 @@
 	@include crayon.vstack(4);
 }
 
+/* Settings as a grid of stacked label-over-control cells. */
+.dt-sub-settings {
+	display: grid;
+	border-bottom: 1px solid var(--border);
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: repeat(auto-fit, minmax(crayon.size(32), 1fr));
+}
+
+.dt-sub-format-group {
+	grid-template-columns: repeat(2, 1fr);
+}
+
 .dt-sub-frame {
 	border: 2px solid var(--border);
 }
 
-.dt-sub-options {
-	display: flex;
-	min-height: crayon.size(12);
-	align-items: center;
-	justify-content: space-between;
-	padding-inline: crayon.size(4);
-	border-bottom: 1px solid var(--border);
-	gap: crayon.size(4);
-	flex-wrap: wrap;
-}
-
+/* Sits in the output pane head, between the label and the tools. */
 .dt-sub-stats {
+	margin-left: auto;
+	align-self: center;
+	overflow: hidden;
+	padding-inline: crayon.size(2);
 	color: var(--muted-foreground);
-	font-size: crayon.font-size("sm");
+	font-size: crayon.font-size("xs");
 	font-variant-numeric: tabular-nums;
-}
-
-.dt-sub-controls {
-	display: flex;
-	align-items: center;
-	gap: crayon.size(4);
-	flex-wrap: wrap;
-	padding-block: crayon.size(2);
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .dt-sub-field {
-	@include crayon.hstack(2);
+	display: flex;
+	flex-direction: column;
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--card);
+	gap: crayon.size(1);
 
-	align-items: center;
-	font-size: crayon.font-size("sm");
-
-	span {
+	> span {
 		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
 	}
 
-	input {
-		width: crayon.size(20);
+	input,
+	select {
+		width: 100%;
 		padding: crayon.size(1) crayon.size(2);
 		border: 1px solid var(--border);
 		background: var(--background);
@@ -160,6 +166,15 @@
 	&:focus-visible {
 		outline: 2px solid var(--primary);
 		outline-offset: -2px;
+	}
+}
+
+/* The Download label drops to icon-only below the sm breakpoint. */
+.dt-sub-btn-text {
+	display: none;
+
+	@include crayon.screen("sm") {
+		display: inline;
 	}
 }
 

@@ -5,7 +5,19 @@ import type { Tool } from 'delphitools-v2/lib/tools';
 
 export interface ToolGridSignature {
 	Element: HTMLDivElement;
-	Args: { tools: Tool[] };
+	Args: {
+		tools: Tool[];
+		/** query params every cell's link carries (the omnibox colour carry) */
+		query?: Record<string, string>;
+		/** chip under the description naming the carried value, `→ #2e7d32` */
+		carryLabel?: string;
+	};
+}
+
+const EMPTY_QUERY: Record<string, string> = {};
+
+function queryOrEmpty(query?: Record<string, string>) {
+	return query ?? EMPTY_QUERY;
 }
 
 // `external` entries (App Store, GitHub) have no /tools/:id route, so they
@@ -35,6 +47,7 @@ const ToolGrid: TOC<ToolGridSignature> = <template>
 				<LinkTo
 					@route="tools.tool"
 					@model={{tool.id}}
+					@query={{queryOrEmpty @query}}
 					class="dt-cell"
 				>
 					<Icon
@@ -47,6 +60,11 @@ const ToolGrid: TOC<ToolGridSignature> = <template>
 					<span
 						class="dt-cell-desc"
 					>{{tool.description}}</span>
+					{{#if @carryLabel}}
+						<span
+							class="dt-cell-carry"
+						>{{@carryLabel}}</span>
+					{{/if}}
 				</LinkTo>
 			{{/if}}
 		{{/each}}

@@ -95,6 +95,24 @@ module('Unit | Lib | subtitles', function () {
 		assert.deepEqual(parseSubtitles(vtt), cues);
 	});
 
+	test('vtt header carries kind and language, and still parses', function (assert) {
+		const cues = parseSubtitles(SRT);
+		const vtt = writeVtt(cues, {
+			kind: 'captions',
+			language: 'en-GB',
+		});
+		assert.true(
+			vtt.startsWith(
+				'WEBVTT\nKind: captions\nLanguage: en-GB\n\n',
+			),
+		);
+		assert.deepEqual(parseSubtitles(vtt), cues);
+		assert.true(
+			writeVtt(cues, { kind: '  ' }).startsWith('WEBVTT\n\n'),
+			'blank fields write no header line',
+		);
+	});
+
 	test('shifts with a floor at zero', function (assert) {
 		const cues = [{ start: 500, end: 1500, text: 'a' }];
 		assert.deepEqual(shiftCues(cues, 1000), [

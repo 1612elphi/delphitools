@@ -3,6 +3,8 @@
 export default {
 	extends: ['stylelint-config-standard'],
 	customSyntax: 'postcss-scss',
+	// Concept mocks, kept byte-frozen as design reference.
+	ignoreFiles: ['docs/**'],
 	rules: {
 		// Crayon's API is kebab-case functions in a namespace (crayon.font-size);
 		// the standard config's CSS-function allowlist does not know about them.

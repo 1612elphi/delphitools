@@ -25,10 +25,7 @@ import {
 } from 'delphitools-v2/lib/colour-notation';
 import { getColourName } from 'delphitools-v2/lib/colour-names';
 import { detectColour } from 'delphitools-v2/lib/colour-parse';
-import {
-	colourFromQuery,
-	colourToQuery,
-} from 'delphitools-v2/lib/colour-query';
+import { colourFromUrl, colourToQuery } from 'delphitools-v2/lib/colour-query';
 import {
 	simulateHex,
 	type SimulationType,
@@ -83,11 +80,6 @@ function rotateHue(hsl: Triple, offset: number): string {
 			hsl[2],
 		),
 	);
-}
-
-function colourFromUrl(): string | null {
-	if (typeof window === 'undefined') return null;
-	return colourFromQuery(window.location.search);
 }
 
 export default class ColourAtlasTool extends Component {

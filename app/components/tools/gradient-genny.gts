@@ -8,6 +8,7 @@ import { eq } from 'ember-truth-helpers';
 import { service } from '@ember/service';
 import { modifier } from 'ember-modifier';
 import Icon from 'delphitools-v2/components/icon';
+import { colourFromUrl } from 'delphitools-v2/lib/colour-query';
 import { getColourName } from 'delphitools-v2/lib/colour-names';
 import { contrastText } from 'delphitools-v2/lib/colour-maths';
 import {
@@ -98,7 +99,7 @@ export default class GradientGennyTool extends Component {
 	@tracked gridSize: GridSize = 2;
 
 	@tracked corners: CornerColours = {
-		topLeft: '#3b82f6',
+		topLeft: colourFromUrl() ?? '#3b82f6',
 		topRight: '#8b5cf6',
 		bottomLeft: '#10b981',
 		bottomRight: '#f59e0b',

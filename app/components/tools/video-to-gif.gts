@@ -7,14 +7,9 @@ import { AnimatedGifEncoder } from 'delphitools-v2/lib/gif';
 import { formatTimestamp } from 'delphitools-v2/lib/subtitles';
 import { seekTo, VideoIntake } from 'delphitools-v2/lib/video';
 
-// ∑CG: error line when range × fps exceeds the frame cap
-//   spec: one short sentence naming the limit ({max} frames), shown in the red error strip; tell the user to shorten the range or drop the fps
-//   sample: "Over 300 frames — shorten the range or lower the fps."
-const TOO_MANY_FRAMES = '∑CG';
-// ∑CG: drop-zone title on the empty video-to-gif frame
-//   spec: one line, imperative, names the input (a video file) and both routes in (drop, click)
-//   sample: "Drop a video here or click to upload"
-const DROP_TITLE = '∑CG';
+const TOO_MANY_FRAMES =
+	'Over 300 frames. Please lower the fps or shorten the range';
+const DROP_TITLE = 'Drop a video here or click to upload';
 
 // Frame cap: 300 frames at 480 px is already a ~150 MB decode pass and a
 // GIF nobody should ship.
@@ -240,6 +235,39 @@ export default class VideoToGifTool extends Component {
 								>{{this.meta}}</p>
 							{{/if}}
 						</div>
+						<button
+							type="button"
+							class="dt-vg-btn"
+							disabled={{this.busy}}
+							{{on
+								"click"
+								this.clear
+							}}
+						>
+							<Icon @name="trash-2" />
+							Clear
+						</button>
+						<button
+							type="button"
+							class="dt-vg-btn is-primary"
+							disabled={{this.busy}}
+							{{on
+								"click"
+								this.encode
+							}}
+						>
+							<Icon
+								@name="clapperboard"
+							/>
+							{{#if this.busy}}
+								{{this.progress}}
+							{{else}}
+								Encode GIF
+							{{/if}}
+						</button>
+					</div>
+
+					<div class="dt-vg-settings">
 						<label class="dt-vg-field">
 							<span>Start (s)</span>
 							<input
@@ -297,36 +325,6 @@ export default class VideoToGifTool extends Component {
 								}}
 							/>
 						</label>
-						<button
-							type="button"
-							class="dt-vg-btn"
-							disabled={{this.busy}}
-							{{on
-								"click"
-								this.clear
-							}}
-						>
-							<Icon @name="trash-2" />
-							Clear
-						</button>
-						<button
-							type="button"
-							class="dt-vg-btn is-primary"
-							disabled={{this.busy}}
-							{{on
-								"click"
-								this.encode
-							}}
-						>
-							<Icon
-								@name="clapperboard"
-							/>
-							{{#if this.busy}}
-								{{this.progress}}
-							{{else}}
-								Encode GIF
-							{{/if}}
-						</button>
 					</div>
 
 					<div class="dt-vg-stage">

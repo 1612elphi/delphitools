@@ -33,7 +33,7 @@ const DONORS = [
 	},
 ];
 
-const BUILT_WITH = [
+export const BUILT_WITH = [
 	{ name: 'Ember', url: 'https://emberjs.com' },
 	{ name: 'Glimmer', url: 'https://github.com/glimmerjs/glimmer-vm' },
 	{

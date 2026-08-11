@@ -20,6 +20,8 @@ import iArrowRightLeft from 'lucide-static/icons/arrow-right-left.svg?raw';
 import iArrowUp from 'lucide-static/icons/arrow-up.svg?raw';
 import iArrowUpDown from 'lucide-static/icons/arrow-up-down.svg?raw';
 import iArrowUpToLine from 'lucide-static/icons/arrow-up-to-line.svg?raw';
+import iAudioLines from 'lucide-static/icons/audio-lines.svg?raw';
+import iAudioWaveform from 'lucide-static/icons/audio-waveform.svg?raw';
 import iAxis3d from 'lucide-static/icons/axis-3d.svg?raw';
 import iBarcode from 'lucide-static/icons/barcode.svg?raw';
 import iBinary from 'lucide-static/icons/binary.svg?raw';
@@ -38,6 +40,8 @@ import iChevronDown from 'lucide-static/icons/chevron-down.svg?raw';
 import iChevronLeft from 'lucide-static/icons/chevron-left.svg?raw';
 import iChevronRight from 'lucide-static/icons/chevron-right.svg?raw';
 import iChevronUp from 'lucide-static/icons/chevron-up.svg?raw';
+import iChevronsLeft from 'lucide-static/icons/chevrons-left.svg?raw';
+import iChevronsRight from 'lucide-static/icons/chevrons-right.svg?raw';
 import iChevronsUpDown from 'lucide-static/icons/chevrons-up-down.svg?raw';
 import iCircle from 'lucide-static/icons/circle.svg?raw';
 import iCircleAlert from 'lucide-static/icons/circle-alert.svg?raw';
@@ -65,12 +69,14 @@ import iExpand from 'lucide-static/icons/expand.svg?raw';
 import iExternalLink from 'lucide-static/icons/external-link.svg?raw';
 import iEye from 'lucide-static/icons/eye.svg?raw';
 import iEyeOff from 'lucide-static/icons/eye-off.svg?raw';
+import iFastForward from 'lucide-static/icons/fast-forward.svg?raw';
 import iFileCode from 'lucide-static/icons/file-code.svg?raw';
 import iFileImage from 'lucide-static/icons/file-image.svg?raw';
 import iFileSearch from 'lucide-static/icons/file-search.svg?raw';
 import iFileText from 'lucide-static/icons/file-text.svg?raw';
 import iFileType from 'lucide-static/icons/file-type.svg?raw';
 import iFileType2 from 'lucide-static/icons/file-type-2.svg?raw';
+import iFileUp from 'lucide-static/icons/file-up.svg?raw';
 import iFilm from 'lucide-static/icons/film.svg?raw';
 import iFolder from 'lucide-static/icons/folder.svg?raw';
 import iFolderMinus from 'lucide-static/icons/folder-minus.svg?raw';
@@ -98,6 +104,7 @@ import iLayoutGrid from 'lucide-static/icons/layout-grid.svg?raw';
 import iLibrary from 'lucide-static/icons/library.svg?raw';
 import iLineChart from 'lucide-static/icons/line-chart.svg?raw';
 import iLink from 'lucide-static/icons/link.svg?raw';
+import iLoader from 'lucide-static/icons/loader.svg?raw';
 import iLoader2 from 'lucide-static/icons/loader-2.svg?raw';
 import iLoaderCircle from 'lucide-static/icons/loader-circle.svg?raw';
 import iLock from 'lucide-static/icons/lock.svg?raw';
@@ -117,12 +124,14 @@ import iPanelBottom from 'lucide-static/icons/panel-bottom.svg?raw';
 import iPanelLeft from 'lucide-static/icons/panel-left.svg?raw';
 import iPanelRight from 'lucide-static/icons/panel-right.svg?raw';
 import iPanelTop from 'lucide-static/icons/panel-top.svg?raw';
+import iPause from 'lucide-static/icons/pause.svg?raw';
 import iPenLine from 'lucide-static/icons/pen-line.svg?raw';
 import iPencil from 'lucide-static/icons/pencil.svg?raw';
 import iPentagon from 'lucide-static/icons/pentagon.svg?raw';
 import iPin from 'lucide-static/icons/pin.svg?raw';
 import iPinOff from 'lucide-static/icons/pin-off.svg?raw';
 import iPipette from 'lucide-static/icons/pipette.svg?raw';
+import iPlay from 'lucide-static/icons/play.svg?raw';
 import iPlus from 'lucide-static/icons/plus.svg?raw';
 import iPrinter from 'lucide-static/icons/printer.svg?raw';
 import iQrCode from 'lucide-static/icons/qr-code.svg?raw';
@@ -130,6 +139,8 @@ import iRainbow from 'lucide-static/icons/rainbow.svg?raw';
 import iRedo2 from 'lucide-static/icons/redo-2.svg?raw';
 import iRefreshCw from 'lucide-static/icons/refresh-cw.svg?raw';
 import iRegex from 'lucide-static/icons/regex.svg?raw';
+import iRepeat from 'lucide-static/icons/repeat.svg?raw';
+import iRewind from 'lucide-static/icons/rewind.svg?raw';
 import iRotateCcw from 'lucide-static/icons/rotate-ccw.svg?raw';
 import iRotateCw from 'lucide-static/icons/rotate-cw.svg?raw';
 import iRuler from 'lucide-static/icons/ruler.svg?raw';
@@ -170,6 +181,8 @@ import iVariable from 'lucide-static/icons/variable.svg?raw';
 import iWand2 from 'lucide-static/icons/wand-2.svg?raw';
 import iWind from 'lucide-static/icons/wind.svg?raw';
 import iX from 'lucide-static/icons/x.svg?raw';
+import iZoomIn from 'lucide-static/icons/zoom-in.svg?raw';
+import iZoomOut from 'lucide-static/icons/zoom-out.svg?raw';
 
 export const icons: Record<string, string> = {
 	'alert-circle': iAlertCircle,
@@ -189,6 +202,8 @@ export const icons: Record<string, string> = {
 	'arrow-up': iArrowUp,
 	'arrow-up-down': iArrowUpDown,
 	'arrow-up-to-line': iArrowUpToLine,
+	'audio-lines': iAudioLines,
+	'audio-waveform': iAudioWaveform,
 	'axis-3d': iAxis3d,
 	barcode: iBarcode,
 	binary: iBinary,
@@ -207,6 +222,8 @@ export const icons: Record<string, string> = {
 	'chevron-left': iChevronLeft,
 	'chevron-right': iChevronRight,
 	'chevron-up': iChevronUp,
+	'chevrons-left': iChevronsLeft,
+	'chevrons-right': iChevronsRight,
 	'chevrons-up-down': iChevronsUpDown,
 	circle: iCircle,
 	'circle-alert': iCircleAlert,
@@ -234,12 +251,14 @@ export const icons: Record<string, string> = {
 	'external-link': iExternalLink,
 	eye: iEye,
 	'eye-off': iEyeOff,
+	'fast-forward': iFastForward,
 	'file-code': iFileCode,
 	'file-image': iFileImage,
 	'file-search': iFileSearch,
 	'file-text': iFileText,
 	'file-type': iFileType,
 	'file-type-2': iFileType2,
+	'file-up': iFileUp,
 	film: iFilm,
 	folder: iFolder,
 	'folder-minus': iFolderMinus,
@@ -267,6 +286,7 @@ export const icons: Record<string, string> = {
 	library: iLibrary,
 	'line-chart': iLineChart,
 	link: iLink,
+	loader: iLoader,
 	'loader-2': iLoader2,
 	'loader-circle': iLoaderCircle,
 	lock: iLock,
@@ -286,12 +306,14 @@ export const icons: Record<string, string> = {
 	'panel-left': iPanelLeft,
 	'panel-right': iPanelRight,
 	'panel-top': iPanelTop,
+	pause: iPause,
 	'pen-line': iPenLine,
 	pencil: iPencil,
 	pentagon: iPentagon,
 	pin: iPin,
 	'pin-off': iPinOff,
 	pipette: iPipette,
+	play: iPlay,
 	plus: iPlus,
 	printer: iPrinter,
 	'qr-code': iQrCode,
@@ -299,6 +321,8 @@ export const icons: Record<string, string> = {
 	'redo-2': iRedo2,
 	'refresh-cw': iRefreshCw,
 	regex: iRegex,
+	repeat: iRepeat,
+	rewind: iRewind,
 	'rotate-ccw': iRotateCcw,
 	'rotate-cw': iRotateCw,
 	ruler: iRuler,
@@ -339,4 +363,6 @@ export const icons: Record<string, string> = {
 	'wand-2': iWand2,
 	wind: iWind,
 	x: iX,
+	'zoom-in': iZoomIn,
+	'zoom-out': iZoomOut,
 };

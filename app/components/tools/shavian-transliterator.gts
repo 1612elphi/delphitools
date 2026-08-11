@@ -32,10 +32,7 @@ const COPIED_MS = 2000;
 export type DictStatus =
 	'loading-core' | 'loading-full' | 'core-only' | 'ready';
 
-// ∑CG: status beside the gloss heading when the full dictionary fetch failed
-//   spec: one line, max 60 chars, says only the small dictionary loaded so uncommon words are guessed, no apology, no retry instruction
-//   sample: "Core dictionary only — uncommon words are guessed"
-const CORE_ONLY_STATUS = '∑CG';
+const CORE_ONLY_STATUS = 'Core dictionary only, uncommon words are guessed';
 
 export function parseDictJson(json: Record<string, string[]>): Dictionary {
 	return new Map(Object.entries(json));

@@ -4,7 +4,9 @@ import { on } from '@ember/modifier';
 import { service } from '@ember/service';
 import { htmlSafe } from '@ember/template';
 import Icon from 'delphitools-v2/components/icon';
+import { colourFromUrl } from 'delphitools-v2/lib/colour-query';
 import {
+	contrastRatio,
 	hexToRgb,
 	rgbToHex,
 	rgbToHsl,
@@ -24,20 +26,6 @@ const HEX = /^#[0-9a-f]{6}$/i;
 
 function isHex(value: string): boolean {
 	return HEX.test(value);
-}
-
-/** WCAG 2.1 contrast ratio, 1–21. Null if either string is not a hex colour. */
-function contrastRatio(one: string, two: string): number | null {
-	const rgbOne = hexToRgb(one);
-	const rgbTwo = hexToRgb(two);
-	if (!rgbOne || !rgbTwo) return null;
-
-	const lumOne = luminance(...rgbOne);
-	const lumTwo = luminance(...rgbTwo);
-	return (
-		(Math.max(lumOne, lumTwo) + 0.05) /
-		(Math.min(lumOne, lumTwo) + 0.05)
-	);
 }
 
 /**
@@ -86,7 +74,7 @@ export default class ContrastCheckerTool extends Component {
 	@service declare colourNotation: ColourNotationService;
 
 	@tracked background = '#1a1a2e';
-	@tracked foreground = '#eaeaea';
+	@tracked foreground = colourFromUrl() ?? '#eaeaea';
 
 	get ratio() {
 		return contrastRatio(this.foreground, this.background);

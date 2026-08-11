@@ -19,6 +19,12 @@ export interface Tool {
 	 *  capped) — for tools whose display wants the whole main column; the
 	 *  component re-caps whatever chrome it wants narrow (Large Type) */
 	wide?: boolean;
+	/** file types the tool ingests (`.srt` / `image/*` forms, as in an
+	 *  accept attribute) — the omnibox routes dropped files by this */
+	accepts?: string[];
+	/** reads `?color=` on load (lib/colour-query), so omnibox links to it
+	 *  carry the detected colour */
+	carryColour?: boolean;
 }
 
 export interface ToolCategory {
@@ -39,6 +45,7 @@ export const toolCategories: ToolCategory[] = [
 					'Put non-square images on a square matte',
 				icon: 'square',
 				href: '/tools/matte-generator',
+				accepts: ['image/*'],
 			},
 			{
 				id: 'scroll-generator',
@@ -47,6 +54,7 @@ export const toolCategories: ToolCategory[] = [
 					'Split images for Instagram carousel scrolls',
 				icon: 'gallery-vertical',
 				href: '/tools/scroll-generator',
+				accepts: ['image/*'],
 			},
 			{
 				id: 'social-cropper',
@@ -55,6 +63,7 @@ export const toolCategories: ToolCategory[] = [
 					'Crop images for Instagram, Bluesky & Threads',
 				icon: 'crop',
 				href: '/tools/social-cropper',
+				accepts: ['image/*'],
 			},
 			{
 				id: 'watermarker',
@@ -62,6 +71,7 @@ export const toolCategories: ToolCategory[] = [
 				description: 'Add watermarks to images',
 				icon: 'stamp',
 				href: '/tools/watermarker',
+				accepts: ['image/*'],
 			},
 		],
 	},
@@ -76,16 +86,17 @@ export const toolCategories: ToolCategory[] = [
 					'Simulate how colours appear to colour blind users',
 				icon: 'eye',
 				href: '/tools/colorblind-sim',
+				accepts: ['image/*'],
+				carryColour: true,
 			},
 			{
 				id: 'colour-atlas',
 				name: 'Colour Atlas',
-				// ∑CG: catalogue description for Colour Atlas
-				//   spec: max 60 chars, shown in the home grid cell and as the tool-page subtitle, sentence fragment matching the other descriptions
-				//   sample: 'Everything about one colour, on one page'
-				description: '∑CG',
+				description:
+					'Everything about one colour, on one page',
 				icon: 'swatch-book',
 				href: '/tools/colour-atlas',
+				carryColour: true,
 				new: true,
 			},
 			{
@@ -94,6 +105,7 @@ export const toolCategories: ToolCategory[] = [
 				description: 'Convert between colour formats',
 				icon: 'pipette',
 				href: '/tools/colour-converter',
+				carryColour: true,
 			},
 			{
 				id: 'contrast-checker',
@@ -102,6 +114,7 @@ export const toolCategories: ToolCategory[] = [
 					'Check WCAG colour contrast compliance',
 				icon: 'contrast',
 				href: '/tools/contrast-checker',
+				carryColour: true,
 			},
 			{
 				id: 'gradient-genny',
@@ -110,6 +123,7 @@ export const toolCategories: ToolCategory[] = [
 					'Create linear, corner, and mesh gradients',
 				icon: 'blend',
 				href: '/tools/gradient-genny',
+				carryColour: true,
 			},
 			{
 				id: 'harmony-genny',
@@ -117,6 +131,7 @@ export const toolCategories: ToolCategory[] = [
 				description: 'Generate colour harmonies',
 				icon: 'rainbow',
 				href: '/tools/harmony-genny',
+				carryColour: true,
 			},
 			{
 				id: 'palette-collection',
@@ -132,6 +147,7 @@ export const toolCategories: ToolCategory[] = [
 					'Extract colour palettes from images',
 				icon: 'palette',
 				href: '/tools/palette-extractor',
+				accepts: ['image/*'],
 			},
 			{
 				id: 'palette-genny',
@@ -148,6 +164,7 @@ export const toolCategories: ToolCategory[] = [
 					'Sample colours from any image with a zoom loupe',
 				icon: 'crosshair',
 				href: '/tools/pixel-picker',
+				accepts: ['image/*'],
 			},
 			{
 				id: 'tailwind-shades',
@@ -155,6 +172,7 @@ export const toolCategories: ToolCategory[] = [
 				description: 'Generate Tailwind colour scales',
 				icon: 'wind',
 				href: '/tools/tailwind-shades',
+				carryColour: true,
 			},
 		],
 	},
@@ -171,6 +189,7 @@ export const toolCategories: ToolCategory[] = [
 					'Edit, arrange and mark up images in the browser',
 				icon: 'brush',
 				href: '/editor',
+				accepts: ['image/*'],
 				beta: true,
 				new: true,
 				highlight: true,
@@ -182,6 +201,7 @@ export const toolCategories: ToolCategory[] = [
 					'Add colour noise overlay to artwork',
 				icon: 'sparkles',
 				href: '/tools/artwork-enhancer',
+				accepts: ['image/*'],
 			},
 			{
 				id: 'background-remover',
@@ -190,6 +210,7 @@ export const toolCategories: ToolCategory[] = [
 					'Remove backgrounds from images automatically',
 				icon: 'eraser',
 				href: '/tools/background-remover',
+				accepts: ['image/*'],
 				beta: true,
 			},
 			{
@@ -198,6 +219,7 @@ export const toolCategories: ToolCategory[] = [
 				description: 'Generate favicons from any image',
 				icon: 'image',
 				href: '/tools/favicon-genny',
+				accepts: ['image/*'],
 			},
 			{
 				id: 'image-clipper',
@@ -206,6 +228,7 @@ export const toolCategories: ToolCategory[] = [
 					'Trim transparent edges from PNGs to the smallest dimensions',
 				icon: 'crop',
 				href: '/tools/image-clipper',
+				accepts: ['.png'],
 			},
 			{
 				id: 'image-converter',
@@ -214,6 +237,7 @@ export const toolCategories: ToolCategory[] = [
 					'Convert between PNG, JPEG, WebP, JXL, GIF, BMP, TIFF, ICO, ICNS with resize and format options',
 				icon: 'refresh-cw',
 				href: '/tools/image-converter',
+				accepts: ['image/*', '.jxl'],
 			},
 			{
 				id: 'image-splitter',
@@ -221,6 +245,7 @@ export const toolCategories: ToolCategory[] = [
 				description: 'Split images into tiles',
 				icon: 'scissors',
 				href: '/tools/image-splitter',
+				accepts: ['image/*'],
 			},
 			{
 				id: 'image-stitcher',
@@ -228,6 +253,7 @@ export const toolCategories: ToolCategory[] = [
 				description: 'Combine multiple images into one',
 				icon: 'combine',
 				href: '/tools/image-stitcher',
+				accepts: ['image/*'],
 				new: true,
 			},
 			{
@@ -237,6 +263,7 @@ export const toolCategories: ToolCategory[] = [
 					'Trace raster images to SVG vectors',
 				icon: 'scan-line',
 				href: '/tools/image-tracer',
+				accepts: ['image/*'],
 			},
 			{
 				id: 'paste-image',
@@ -259,6 +286,7 @@ export const toolCategories: ToolCategory[] = [
 				description: 'Optimise and minify SVG files',
 				icon: 'file-image',
 				href: '/tools/svg-optimiser',
+				accepts: ['.svg'],
 			},
 			{
 				id: 'base64-image-encoder',
@@ -267,6 +295,7 @@ export const toolCategories: ToolCategory[] = [
 					'Convert images to Base64 strings for CSS/HTML embedding',
 				icon: 'file-code',
 				href: '/tools/base64-image-encoder',
+				accepts: ['image/*'],
 				new: true,
 			},
 		],
@@ -276,36 +305,84 @@ export const toolCategories: ToolCategory[] = [
 		name: 'Audio & Video',
 		tools: [
 			{
+				id: 'audio-atlas',
+				name: 'Audio Atlas',
+				description:
+					'Everything about one audio file, on one page',
+				icon: 'audio-lines',
+				href: '/tools/audio-atlas',
+				accepts: [
+					'audio/*',
+					'.mp3',
+					'.wav',
+					'.ogg',
+					'.m4a',
+					'.flac',
+				],
+				new: true,
+			},
+			{
+				id: 'audio-trimmer',
+				name: 'Audio Trimmer',
+				description:
+					'Cut and fade audio, export as WAV',
+				icon: 'scissors',
+				href: '/tools/audio-trimmer',
+				accepts: [
+					'audio/*',
+					'.mp3',
+					'.wav',
+					'.ogg',
+					'.m4a',
+					'.flac',
+				],
+				new: true,
+			},
+			{
 				id: 'frame-extractor',
 				name: 'Frame Extractor',
-				// ∑CG: catalogue description for Frame Extractor
-				//   spec: max 60 chars, home grid cell + tool-page subtitle, sentence fragment matching the other descriptions
-				//   sample: 'Grab stills and contact sheets from video'
-				description: '∑CG',
+				description:
+					'Grab stills and contact sheets from video',
 				icon: 'film',
 				href: '/tools/frame-extractor',
+				accepts: ['video/*'],
 				new: true,
 			},
 			{
 				id: 'subtitle-converter',
 				name: 'Subtitle Converter',
-				// ∑CG: catalogue description for Subtitle Converter
-				//   spec: max 60 chars, home grid cell + tool-page subtitle, sentence fragment matching the other descriptions
-				//   sample: 'Convert, shift and rescale SRT and VTT subtitles'
-				description: '∑CG',
+				description:
+					'Convert, shift and rescale SRT and VTT subtitles',
 				icon: 'captions',
 				href: '/tools/subtitle-converter',
+				accepts: ['.srt', '.vtt'],
 				new: true,
 			},
 			{
 				id: 'video-to-gif',
-				name: 'Video → GIF',
-				// ∑CG: catalogue description for Video → GIF
-				//   spec: max 60 chars, home grid cell + tool-page subtitle, sentence fragment matching the other descriptions
-				//   sample: 'Turn video clips into looping GIFs'
-				description: '∑CG',
+				name: 'Video to GIF',
+				description:
+					'Turn video clips into looping GIFs',
 				icon: 'clapperboard',
 				href: '/tools/video-to-gif',
+				accepts: ['video/*'],
+				new: true,
+			},
+			{
+				id: 'waveform-genny',
+				name: 'Waveform Generator',
+				description:
+					'Render audio waveforms as PNG or SVG',
+				icon: 'audio-waveform',
+				href: '/tools/waveform-genny',
+				accepts: [
+					'audio/*',
+					'.mp3',
+					'.wav',
+					'.ogg',
+					'.m4a',
+					'.flac',
+				],
 				new: true,
 			},
 		],
@@ -321,6 +398,13 @@ export const toolCategories: ToolCategory[] = [
 					'Convert documents between Markdown, HTML, Word, LaTeX, EPUB and more',
 				icon: 'file-type-2',
 				href: '/tools/doc-converter',
+				accepts: [
+					'.md',
+					'.html',
+					'.docx',
+					'.tex',
+					'.epub',
+				],
 				new: true,
 			},
 			{
@@ -329,6 +413,7 @@ export const toolCategories: ToolCategory[] = [
 				description: 'Distraction-free Markdown writer',
 				icon: 'pen-line',
 				href: '/tools/text-editor',
+				accepts: ['.md', '.txt'],
 				new: true,
 			},
 			{
@@ -337,6 +422,7 @@ export const toolCategories: ToolCategory[] = [
 				description: 'Explore font file contents',
 				icon: 'file-type',
 				href: '/tools/font-explorer',
+				accepts: ['.ttf', '.otf', '.woff', '.woff2'],
 			},
 			{
 				id: 'glyph-browser',
@@ -382,6 +468,7 @@ export const toolCategories: ToolCategory[] = [
 					'Compare two texts and highlight differences',
 				icon: 'git-compare',
 				href: '/tools/text-diff',
+				accepts: ['text/*', '.txt', '.md'],
 			},
 			{
 				id: 'typo-calc',
@@ -411,6 +498,7 @@ export const toolCategories: ToolCategory[] = [
 					'Analyse PDFs for print-readiness issues',
 				icon: 'file-search',
 				href: '/tools/pdf-preflight',
+				accepts: ['.pdf'],
 			},
 			{
 				id: 'imposer',
@@ -419,6 +507,7 @@ export const toolCategories: ToolCategory[] = [
 					'Impose PDF pages for booklet, saddle-stitch, and N-up printing',
 				icon: 'layers',
 				href: '/tools/imposer',
+				accepts: ['.pdf'],
 			},
 			{
 				id: 'zine-imposer',
@@ -427,6 +516,7 @@ export const toolCategories: ToolCategory[] = [
 					'Impose single-sheet zines: 8-page mini-zine and accordion folds',
 				icon: 'book-open',
 				href: '/tools/zine-imposer',
+				accepts: ['.pdf'],
 			},
 		],
 	},
@@ -488,6 +578,7 @@ export const toolCategories: ToolCategory[] = [
 					'Text editor with manipulation tools',
 				icon: 'pen-line',
 				href: '/tools/markdown-writer',
+				accepts: ['.md', '.txt'],
 			},
 		],
 	},

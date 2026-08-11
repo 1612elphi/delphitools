@@ -16,3 +16,9 @@ export function colourFromQuery(search: string): string | null {
 export function colourToQuery(hex: string): string {
 	return hex.replace(/^#/, '');
 }
+
+/** The carried colour from the current page URL; null outside a browser. */
+export function colourFromUrl(): string | null {
+	if (typeof window === 'undefined') return null;
+	return colourFromQuery(window.location.search);
+}

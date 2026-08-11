@@ -1,0 +1,258 @@
+// The front-page omnibox: field, legend, file bar, answer rows, carry chips.
+// Reference: docs/frontpage/02-omnibox.html.
+
+@use "crayon-config" as crayon;
+
+/* ── Omnibox ─────────────────────────────────────────────────────────────── */
+
+/* Doodle layout: the box column centres under the hero art. */
+.dt-omni-zone {
+	max-width: crayon.size(168);
+	margin-inline: auto;
+	margin-bottom: crayon.size(10);
+}
+
+.dt-omni {
+	border: 2px solid var(--border);
+	background: var(--card);
+}
+
+.dt-omni-field {
+	display: flex;
+	align-items: center;
+
+	> .dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+		margin-inline: crayon.size(4);
+		color: var(--muted-foreground);
+		flex: none;
+	}
+}
+
+.dt-omni-input {
+	min-width: 0;
+	flex: 1;
+	padding-block: crayon.size(5);
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("lg");
+
+	&:focus-visible {
+		outline: none;
+	}
+}
+
+/* the input has no outline of its own, so focus lands on the frame */
+.dt-omni:focus-within {
+	border-color: var(--primary);
+}
+
+.dt-omni-kbd {
+	margin-right: crayon.size(4);
+	padding: crayon.size(0.5) crayon.size(1.5);
+	border: 1px solid var(--border);
+	background: var(--muted);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-omni-legend {
+	display: grid;
+	border-top: 1px solid var(--border);
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: repeat(3, 1fr);
+
+	span {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: crayon.size(2.5) crayon.size(2);
+		background: var(--muted);
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+		gap: crayon.size(2);
+	}
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+}
+
+.dt-omni-file {
+	display: flex;
+	align-items: stretch;
+}
+
+.dt-omni-file-body {
+	display: flex;
+	min-width: 0;
+	align-items: center;
+	padding: crayon.size(4);
+	gap: crayon.size(2.5);
+
+	.dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+		color: var(--primary);
+		flex: none;
+	}
+}
+
+.dt-omni-file-name {
+	overflow: hidden;
+	font-weight: crayon.font-weight("bold");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-omni-file-meta {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	white-space: nowrap;
+}
+
+.dt-omni-clear {
+	margin-left: auto;
+	padding-inline: crayon.size(5);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: var(--muted);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--border);
+	}
+}
+
+/* ── Answer rows, fused under the box ────────────────────────────────────── */
+
+.dt-omni-answers {
+	border: 2px solid var(--border);
+	border-top: 0;
+	background: var(--card);
+}
+
+.dt-omni-row {
+	display: flex;
+	align-items: center;
+	padding: crayon.size(2.5) crayon.size(4);
+	border-top: 1px solid var(--border);
+	font-size: crayon.font-size("sm");
+	gap: crayon.size(2.5);
+
+	> .dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+		color: var(--primary);
+		flex: none;
+	}
+}
+
+.dt-omni-row-name {
+	font-weight: crayon.font-weight("bold");
+	white-space: nowrap;
+}
+
+.dt-omni-row-val {
+	overflow: hidden;
+	margin-left: auto;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-omni-swatches {
+	display: flex;
+	margin-left: auto;
+	border: 1px solid var(--border);
+	background: var(--border);
+	gap: 1px;
+
+	i {
+		display: block;
+		width: crayon.size(4.5);
+		height: crayon.size(4.5);
+	}
+}
+
+.dt-omni-open {
+	display: flex;
+	align-items: center;
+	color: var(--muted-foreground);
+	flex: none;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		color: var(--foreground);
+	}
+}
+
+/* ── Art credit + shuffle, under the box ─────────────────────────────────── */
+
+.dt-omni-artbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-top: crayon.size(1.5);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-omni-artist {
+	color: inherit;
+	text-decoration: none;
+
+	@include crayon.hover {
+		color: var(--foreground);
+		text-decoration: underline;
+	}
+}
+
+.dt-omni-shuffle {
+	@include crayon.hstack(1.5);
+
+	align-items: center;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(3.5);
+		height: crayon.size(3.5);
+	}
+
+	@include crayon.hover {
+		color: var(--foreground);
+	}
+}
+
+/* ── Carry chip + filtered catalogue ─────────────────────────────────────── */
+
+.dt-cell-carry {
+	display: block;
+	margin-top: crayon.size(1.5);
+	color: var(--primary);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-omni-catalogue.is-dimmed {
+	opacity: 0.45;
+}

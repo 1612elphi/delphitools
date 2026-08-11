@@ -5,6 +5,7 @@ import { fn } from '@ember/helper';
 import { service } from '@ember/service';
 import { htmlSafe } from '@ember/template';
 import Icon from 'delphitools-v2/components/icon';
+import { colourFromUrl } from 'delphitools-v2/lib/colour-query';
 import Dialog from 'delphitools-v2/components/ui/dialog';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import {
@@ -113,7 +114,7 @@ export default class ColorblindSimTool extends Component {
 	@service declare colourNotation: ColourNotationService;
 
 	@tracked mode: Mode = 'colour';
-	@tracked colour = '#e63946';
+	@tracked colour = colourFromUrl() ?? '#e63946';
 	@tracked selectedSim: SimulationType = 'normal';
 	@tracked sourceImage: string | null = null;
 	@tracked simulatedImage: string | null = null;

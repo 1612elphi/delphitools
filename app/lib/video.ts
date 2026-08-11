@@ -1,14 +1,8 @@
 import { tracked } from '@glimmer/tracking';
 import { modifier } from 'ember-modifier';
 
-// ∑CG: error line when a dropped file is not a video (shared by every video tool)
-//   spec: one short sentence, shown in the red error strip under the tool frame
-//   sample: "Only video files are supported."
-const NOT_A_VIDEO = '∑CG';
-// ∑CG: error line when the browser cannot decode the chosen video (shared by every video tool)
-//   spec: one short sentence, shown in the red error strip under the tool frame
-//   sample: "Failed to load video."
-const LOAD_FAILED = '∑CG';
+const NOT_A_VIDEO = 'Only video files are supported.';
+const LOAD_FAILED = 'Failed to load video.';
 
 /** Resolves once the frame at `time` is current. */
 export function seekTo(video: HTMLVideoElement, time: number): Promise<void> {

@@ -22,7 +22,7 @@ import {
 	maxOklchChroma,
 	type Triple,
 } from 'delphitools-v2/lib/colour-maths';
-import { colourFromQuery } from 'delphitools-v2/lib/colour-query';
+import { colourFromUrl } from 'delphitools-v2/lib/colour-query';
 import type ColourNotationService from 'delphitools-v2/services/colour-notation';
 
 const DEFAULT_COLOUR = '#3b82f6';
@@ -172,18 +172,6 @@ export function generateShades(
 			oklch,
 		};
 	});
-}
-
-/**
- * `?color=3b82f6` — the link palette-genny's shade button builds, with or
- * without the leading #. Null for anything that is not a six-digit hex, so a
- * junk link falls back to the default rather than an empty tool.
- *
- * Takes the query string rather than reading location, so it is testable.
- */
-function colourFromUrl(): string | null {
-	if (typeof window === 'undefined') return null;
-	return colourFromQuery(window.location.search);
 }
 
 export default class TailwindShadesTool extends Component {

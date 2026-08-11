@@ -9,9 +9,15 @@
 
 @use "crayon-config" as crayon;
 
+// Front-page omnibox (docs/frontpage mock 02 is the reference).
+@use "omnibox";
+@use "wave-minimap";
+
 // One partial per tool; see app/styles/tools/.
 @use "tools/algebra-calc";
 @use "tools/artwork-enhancer";
+@use "tools/audio-atlas";
+@use "tools/audio-trimmer";
 @use "tools/background-remover";
 @use "tools/base-converter";
 @use "tools/base64-image-encoder";
@@ -67,6 +73,7 @@
 @use "tools/unit-converter";
 @use "tools/video-to-gif";
 @use "tools/watermarker";
+@use "tools/waveform-genny";
 @use "tools/word-counter";
 @use "tools/zine-imposer";
 
@@ -1320,6 +1327,54 @@ $header-height: crayon.size(14);
 
 /* ── Dialog (ember-primitives wraps the native <dialog>) ─────────────────── */
 
+/* Tabs (ui/tabs.gts): a flush hairline-divided trigger strip. The active
+   state rides the component's data-state attribute. */
+.dt-tabs-list {
+	display: flex;
+	border: 1px solid var(--border);
+	background: var(--border);
+	gap: 1px;
+}
+
+.dt-tabs-trigger {
+	flex: 1;
+	padding: crayon.size(1.5) crayon.size(3);
+	border: 0;
+	background: var(--card);
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&[data-state="active"] {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		pointer-events: none;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.dt-tabs-content {
+	margin-top: crayon.size(4);
+
+	&:focus-visible {
+		outline: none;
+	}
+}
+
 .dt-dialog {
 	width: min(32rem, calc(100vw - #{crayon.size(8)}));
 	max-height: 85dvh;
@@ -1496,26 +1551,135 @@ $header-height: crayon.size(14);
 	margin-bottom: crayon.size(12);
 }
 
+/* Doodle layout: art centred directly above the omnibox. */
+.dt-hero.is-doodle {
+	display: flex;
+	justify-content: center;
+	margin-bottom: crayon.size(6);
+}
+
 .dt-hero-art {
 	width: 100%;
 	max-width: 42rem;
 	height: auto;
 }
 
-.dt-hero-copy {
-	@include crayon.vstack(3);
-
+.dt-hero-flip {
 	max-width: 42rem;
 	margin-top: crayon.size(6);
+	margin-inline: auto;
+	text-align: center;
+	perspective: 60rem;
+}
+
+.dt-hero-flip-inner {
+	display: grid;
+	transform-style: preserve-3d;
+	transition: transform 0.5s ease;
+}
+
+.dt-hero-flip.is-flipped .dt-hero-flip-inner {
+	transform: rotateY(180deg);
+}
+
+/* Both faces stack in the same grid cell; backface-visibility hides
+	whichever one is rotated away, sizing the box to the taller face. */
+.dt-hero-flip-face {
+	position: relative;
+	grid-area: 1 / 1;
+	backface-visibility: hidden;
+}
+
+.dt-hero-flip-face.is-back {
+	transform: rotateY(180deg);
+}
+
+/* Fills the face; catches clicks that miss the real links inside. Plain
+	cursor-only affordance — a hover fill here would cover the whole face,
+	well past the tiles/text it sits behind. */
+.dt-hero-flip-cover {
+	position: absolute;
+	inset: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	cursor: pointer;
+}
+
+/* Sits over the cover button visually; only its real links take clicks, so
+	the cover still catches everything else (paragraph text, tile gaps). */
+.dt-hero-flip-content {
+	@include crayon.vstack(3);
+
+	position: relative;
+	pointer-events: none;
 	font-size: crayon.font-size("sm");
 	line-height: crayon.leading("relaxed");
 	color: var(--muted-foreground);
+
+	a {
+		pointer-events: auto;
+	}
 }
 
 .dt-hero-lead {
 	font-size: crayon.font-size("base");
 	line-height: crayon.leading("snug");
 	color: var(--foreground);
+}
+
+.dt-hero-flip-hint {
+	font-size: crayon.font-size("xs");
+	text-transform: uppercase;
+	letter-spacing: crayon.tracking("wide");
+}
+
+.dt-hero-flip-more {
+	font-size: crayon.font-size("xs");
+}
+
+/* Loose, not gridded: alternating tilt per tile for a doodled, scattered feel. */
+.dt-hero-tiles {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: crayon.size(3) crayon.size(4);
+	padding-block: crayon.size(2);
+}
+
+.dt-hero-tile {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding: crayon.size(2) crayon.size(4);
+	background: var(--card);
+	border: 1px solid var(--border);
+	color: var(--card-foreground);
+	font-size: crayon.font-size("sm");
+	text-decoration: none;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	&:nth-child(3n + 1) {
+		transform: rotate(-2deg);
+	}
+
+	&:nth-child(3n + 2) {
+		transform: rotate(1.5deg) translateY(-2px);
+	}
+
+	&:nth-child(3n) {
+		transform: rotate(-1deg) translateY(2px);
+	}
+
+	@include crayon.hover {
+		background: var(--accent);
+		color: var(--accent-foreground);
+		transform: none;
+	}
 }
 
 .dt-section {

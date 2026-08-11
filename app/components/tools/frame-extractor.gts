@@ -7,19 +7,21 @@ import { downloadBlob, downloadUrl } from 'delphitools-v2/lib/download';
 import { formatTimestamp } from 'delphitools-v2/lib/subtitles';
 import { seekTo, VideoIntake } from 'delphitools-v2/lib/video';
 
-// ∑CG: drop-zone title on the empty frame-extractor
-//   spec: one line, imperative, names the input (a video file) and both routes in (drop, click)
-//   sample: "Drop a video here or click to upload"
-const DROP_TITLE = '∑CG';
+const DROP_TITLE = 'Drop a video here or click to upload';
 
 const SHEET_COLS = 4;
 const SHEET_THUMB_WIDTH = 320;
 const SHEET_LABEL_HEIGHT = 22;
 
+// ponytail: the transport's frame step assumes 30 fps — the real rate needs
+// container parsing (wave-4 mediainfo territory).
+const FRAME_S = 1 / 30;
+
 interface Still {
 	url: string;
 	label: string;
 	fileName: string;
+	blob: Blob;
 }
 
 export default class FrameExtractorTool extends Component {
@@ -27,6 +29,7 @@ export default class FrameExtractorTool extends Component {
 	@tracked sheetBusy = false;
 	@tracked sheetDone = 0;
 	@tracked sheetCount = 12;
+	@tracked videoPlaying = false;
 
 	intake = new VideoIntake({
 		onLoad: () => {
@@ -88,9 +91,52 @@ export default class FrameExtractorTool extends Component {
 					url: URL.createObjectURL(blob),
 					label,
 					fileName: `${this.baseName}-${label.replace(/[:.]/g, '-')}.png`,
+					blob,
 				},
 			];
 		}, 'image/png');
+	};
+
+	downloadAll = () => void this.#zipStills();
+
+	async #zipStills() {
+		if (this.stills.length === 0) return;
+		const { default: JSZip } = await import('jszip');
+		const zip = new JSZip();
+		for (const still of this.stills)
+			zip.file(still.fileName, still.blob);
+		const blob = await zip.generateAsync({ type: 'blob' });
+		if (this.isDestroyed) return;
+		downloadBlob(blob, `${this.baseName}-frames.zip`);
+	}
+
+	togglePlayback = () => {
+		const video = this.intake.video;
+		if (!video) return;
+		if (video.paused) void video.play();
+		else video.pause();
+	};
+
+	// Mirrors the element's real state, so the native controls stay in sync.
+	syncPlaying = (event: Event) => {
+		this.videoPlaying = !(event.target as HTMLVideoElement).paused;
+	};
+
+	jumpBy = (seconds: number) => {
+		const video = this.intake.video;
+		if (!video) return;
+		video.pause();
+		video.currentTime = Math.max(
+			0,
+			Math.min(
+				this.intake.duration,
+				video.currentTime + seconds,
+			),
+		);
+	};
+
+	jumpFrame = (direction: number) => {
+		this.jumpBy(direction * FRAME_S);
 	};
 
 	downloadStill = (still: Still) => {
@@ -297,10 +343,162 @@ export default class FrameExtractorTool extends Component {
 								"error"
 								this.intake.failed
 							}}
+							{{on
+								"play"
+								this.syncPlaying
+							}}
+							{{on
+								"pause"
+								this.syncPlaying
+							}}
 						></video>
 					</div>
 
+					<div class="dt-fx-transport">
+						<button
+							type="button"
+							class="dt-fx-tbtn"
+							aria-label="Back 5 seconds"
+							{{on
+								"click"
+								(fn
+									this.jumpBy
+									-5
+								)
+							}}
+						>
+							<Icon @name="rewind" />
+							<span>5 s</span>
+						</button>
+						<button
+							type="button"
+							class="dt-fx-tbtn"
+							aria-label="Back 1 second"
+							{{on
+								"click"
+								(fn
+									this.jumpBy
+									-1
+								)
+							}}
+						>
+							<Icon
+								@name="chevrons-left"
+							/>
+							<span>1 s</span>
+						</button>
+						<button
+							type="button"
+							class="dt-fx-tbtn"
+							aria-label="Back one frame"
+							{{on
+								"click"
+								(fn
+									this.jumpFrame
+									-1
+								)
+							}}
+						>
+							<Icon
+								@name="chevron-left"
+							/>
+							<span>Frame</span>
+						</button>
+						<button
+							type="button"
+							class="dt-fx-tbtn is-play"
+							{{on
+								"click"
+								this.togglePlayback
+							}}
+						>
+							<Icon
+								@name={{if
+									this.videoPlaying
+									"pause"
+									"play"
+								}}
+							/>
+							<span>{{if
+									this.videoPlaying
+									"Pause"
+									"Play"
+								}}</span>
+						</button>
+						<button
+							type="button"
+							class="dt-fx-tbtn"
+							aria-label="Forward one frame"
+							{{on
+								"click"
+								(fn
+									this.jumpFrame
+									1
+								)
+							}}
+						>
+							<Icon
+								@name="chevron-right"
+							/>
+							<span>Frame</span>
+						</button>
+						<button
+							type="button"
+							class="dt-fx-tbtn"
+							aria-label="Forward 1 second"
+							{{on
+								"click"
+								(fn
+									this.jumpBy
+									1
+								)
+							}}
+						>
+							<Icon
+								@name="chevrons-right"
+							/>
+							<span>1 s</span>
+						</button>
+						<button
+							type="button"
+							class="dt-fx-tbtn"
+							aria-label="Forward 5 seconds"
+							{{on
+								"click"
+								(fn
+									this.jumpBy
+									5
+								)
+							}}
+						>
+							<Icon
+								@name="fast-forward"
+							/>
+							<span>5 s</span>
+						</button>
+					</div>
+
 					{{#if this.stills.length}}
+						<div class="dt-fx-stills-bar">
+							<span
+								class="dt-fx-stills-count"
+							>{{this.stills.length}}
+								frames</span>
+							<button
+								type="button"
+								class="dt-fx-btn"
+								disabled={{this.sheetBusy}}
+								{{on
+									"click"
+									this.downloadAll
+								}}
+							>
+								<Icon
+									@name="download"
+								/>
+								Download all
+							</button>
+						</div>
 						<ul class="dt-fx-stills">
 							{{#each
 								this.stills

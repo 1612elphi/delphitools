@@ -1,0 +1,27 @@
+// The overview strip above zoomable waveforms (components/wave-minimap.gts).
+
+@use "crayon-config" as crayon;
+
+.dt-wmm {
+	display: block;
+	width: 100%;
+	height: crayon.size(10);
+	border-bottom: 1px solid var(--border);
+	cursor: crosshair;
+	touch-action: none;
+}
+
+/* Overlay plumbing for playhead lines over any strip. */
+.dt-wavewrap {
+	position: relative;
+}
+
+.dt-playhead {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 1px;
+	background: var(--foreground);
+	opacity: 0.8;
+	pointer-events: none;
+}

@@ -4,6 +4,7 @@ import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { htmlSafe } from '@ember/template';
 import Icon from 'delphitools-v2/components/icon';
+import { colourFromUrl } from 'delphitools-v2/lib/colour-query';
 import {
 	Select,
 	SelectTrigger,
@@ -118,7 +119,7 @@ const COPIED_MS = 1500;
 
 export default class ColourConverterTool extends Component {
 	@tracked inputFormat: ColourFormat = 'hex';
-	@tracked inputValue = '#3b82f6';
+	@tracked inputValue = colourFromUrl() ?? '#3b82f6';
 	@tracked copied: string | null = null;
 
 	#copiedTimer?: ReturnType<typeof setTimeout>;

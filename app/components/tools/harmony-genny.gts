@@ -6,6 +6,7 @@ import { htmlSafe } from '@ember/template';
 import { eq } from 'ember-truth-helpers';
 import { service } from '@ember/service';
 import Icon from 'delphitools-v2/components/icon';
+import { colourFromUrl } from 'delphitools-v2/lib/colour-query';
 import {
 	hexToRgb,
 	rgbToHex,
@@ -155,7 +156,7 @@ function generateHarmony(
 export default class HarmonyGennyTool extends Component {
 	@service declare colourNotation: ColourNotationService;
 
-	@tracked baseColour = '#3b82f6';
+	@tracked baseColour = colourFromUrl() ?? '#3b82f6';
 	@tracked harmonyType: HarmonyType = 'complementary';
 	@tracked copied: string | null = null;
 

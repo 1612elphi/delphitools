@@ -99,9 +99,24 @@ export function writeSrt(cues: Cue[]): string {
 	);
 }
 
-export function writeVtt(cues: Cue[]): string {
+export interface VttOptions {
+	/** `Kind:` header line — captions, subtitles, descriptions, ... */
+	kind?: string;
+	/** `Language:` header line — a BCP 47 tag */
+	language?: string;
+}
+
+export function writeVtt(cues: Cue[], options: VttOptions = {}): string {
+	// Header metadata sits directly under the signature line, before the
+	// first blank line (WebVTT spec §4.1, "WebVTT file body").
+	let header = 'WEBVTT';
+	if (options.kind?.trim()) header += `\nKind: ${options.kind.trim()}`;
+	if (options.language?.trim())
+		header += `\nLanguage: ${options.language.trim()}`;
+
 	return (
-		'WEBVTT\n\n' +
+		header +
+		'\n\n' +
 		cues
 			.map(
 				(cue) =>
