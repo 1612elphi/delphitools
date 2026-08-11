@@ -1,0 +1,488 @@
+// Substrata FX panel — the add picker, the two pipeline zones, and the
+// per-effect blocks with their generic param rows.
+//
+// The Tailwind of components/substrata/modules/fx-panel.tsx, one class per
+// element. Sizes are the literal Tailwind values (h-10 = 40px, h-12 = 48px,
+// size-3.5 = 14px, text-[10.5px] = 10.5px).
+
+.sub-fx {
+	display: flex;
+	flex-direction: column;
+	block-size: 100%;
+	overflow: hidden;
+	font-size: 12px;
+}
+
+.sub-fx-empty {
+	padding: 16px;
+	text-align: center;
+	color: var(--muted-foreground);
+	font-size: 12px;
+}
+
+.sub-fx-pipeline {
+	flex: 1;
+	min-block-size: 0;
+	overflow: auto;
+}
+
+.sub-fx-divider {
+	flex-shrink: 0;
+	block-size: 4px;
+	background-color: var(--border);
+}
+
+// ── add picker ─────────────────────────────────────────────────────────────
+.sub-fx-add {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	inline-size: 100%;
+	block-size: 48px;
+	border: none;
+	border-block-end: 1px solid var(--border);
+	background-color: var(--primary);
+	color: var(--primary-foreground);
+	font-size: 12.5px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	cursor: pointer;
+
+	&:hover {
+		filter: brightness(1.05);
+	}
+
+	.dt-icon {
+		inline-size: 16px;
+		block-size: 16px;
+	}
+}
+
+.sub-fx-picker {
+	// the popover carries no trigger-width variable, so this tracks the FX
+	// module's registry width (omnibar/modules.gts)
+	inline-size: 296px;
+	max-block-size: min(440px, 70vh);
+	padding: 0;
+	overflow: auto;
+	border-color: var(--border);
+}
+
+.sub-fx-pickhead {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	padding: 8px 10px 6px;
+}
+
+.sub-fx-pickhead-word {
+	color: var(--muted-foreground);
+	font-size: 9.5px;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+}
+
+.sub-fx-pickhead-count {
+	color: var(--muted-foreground);
+	font-size: 9px;
+	font-variant-numeric: tabular-nums;
+	opacity: 0.7;
+}
+
+.sub-fx-pickhead-rule {
+	flex: 1;
+	block-size: 1px;
+	background-color: var(--border);
+}
+
+.sub-fx-pickgrid {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	border-inline: none;
+}
+
+.sub-fx-pickcard {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	min-block-size: 54px;
+	border: none;
+	background-color: var(--popover);
+	padding: 8px 4px;
+	cursor: pointer;
+
+	&:hover {
+		background-color: color-mix(
+			in srgb,
+			var(--primary) 9%,
+			transparent
+		);
+
+		.sub-fx-pickicon {
+			color: var(--primary);
+		}
+	}
+
+	&:disabled {
+		pointer-events: none;
+		opacity: 0.3;
+	}
+}
+
+.sub-fx-pickicon {
+	display: grid;
+	place-items: center;
+	color: var(--muted-foreground);
+
+	.dt-icon {
+		inline-size: 18px;
+		block-size: 18px;
+	}
+}
+
+.sub-fx-picklabel {
+	text-align: center;
+	font-size: 9.5px;
+	line-height: 1.2;
+}
+
+// ── one block ──────────────────────────────────────────────────────────────
+.sub-fx-block {
+	border-block-end: 2px solid var(--border);
+
+	&:last-child {
+		border-block-end: none;
+	}
+
+	&.is-off {
+		opacity: 0.5;
+	}
+}
+
+.sub-fx-bar {
+	display: flex;
+	align-items: stretch;
+	block-size: 40px;
+	background-color: var(--muted);
+
+	&.is-open {
+		border-block-end: 1px solid var(--border);
+	}
+}
+
+.sub-fx-grip {
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+	align-self: stretch;
+	inline-size: 28px;
+	color: var(--muted-foreground);
+	cursor: grab;
+	outline: none;
+
+	.dt-icon {
+		inline-size: 14px;
+		block-size: 14px;
+	}
+}
+
+.sub-fx-title {
+	display: flex;
+	flex: 1;
+	min-inline-size: 0;
+	align-items: center;
+	gap: 6px;
+	border: none;
+	background: none;
+	padding-inline: 0 10px;
+	text-align: start;
+	outline: none;
+	cursor: pointer;
+
+	// paramless blocks have no chevron; the indent keeps titles aligned
+	&.is-static {
+		padding-inline-start: 18px;
+		cursor: default;
+	}
+}
+
+.sub-fx-chevron {
+	flex-shrink: 0;
+	inline-size: 12px;
+	block-size: 12px;
+	color: var(--muted-foreground);
+	transition: rotate 150ms ease-out;
+
+	&.is-closed {
+		rotate: -90deg;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.sub-fx-chevron {
+		transition: none;
+	}
+}
+
+.sub-fx-name {
+	font-weight: 600;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.sub-fx-ctl {
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+	inline-size: 36px;
+	border: none;
+	border-inline-start: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	&:hover {
+		background-color: var(--accent);
+		color: var(--foreground);
+	}
+
+	.dt-icon {
+		inline-size: 14px;
+		block-size: 14px;
+	}
+}
+
+.sub-fx-switch {
+	display: grid;
+	place-items: center;
+	border-inline-start: 1px solid var(--border);
+	padding-inline: 10px;
+}
+
+// grid-rows 1fr↔0fr collapse (the sketch's animation)
+.sub-fx-body {
+	display: grid;
+	grid-template-rows: 0fr;
+	transition: grid-template-rows 200ms ease-out;
+
+	&.is-open {
+		grid-template-rows: 1fr;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.sub-fx-body {
+		transition: none;
+	}
+}
+
+.sub-fx-body-clip {
+	min-block-size: 0;
+	overflow: hidden;
+}
+
+// ── param rows ─────────────────────────────────────────────────────────────
+.sub-fx-prow {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 10px;
+
+	&.is-bordered {
+		border-block-start: 1px solid var(--border);
+	}
+}
+
+.sub-fx-plabel {
+	flex-shrink: 0;
+	color: var(--muted-foreground);
+	font-size: 10.5px;
+}
+
+.sub-fx-pvalue {
+	flex-shrink: 0;
+	min-inline-size: 42px;
+	text-align: end;
+	font-size: 10.5px;
+	font-variant-numeric: tabular-nums;
+}
+
+.sub-fx-stepper {
+	display: flex;
+	align-items: stretch;
+	margin-inline-start: auto;
+	border: 1px solid var(--border);
+}
+
+.sub-fx-stepper-value {
+	display: grid;
+	place-items: center;
+	block-size: 24px;
+	min-inline-size: 46px;
+	padding-inline: 4px;
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+}
+
+.sub-fx-stepbtn {
+	display: grid;
+	place-items: center;
+	block-size: 24px;
+	inline-size: 22px;
+	border: none;
+	border-inline-start: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	&:hover {
+		background-color: var(--accent);
+		color: var(--foreground);
+	}
+
+	&:disabled {
+		pointer-events: none;
+		opacity: 0.3;
+	}
+
+	.dt-icon {
+		inline-size: 12px;
+		block-size: 12px;
+	}
+}
+
+.sub-fx-colour {
+	margin-inline-start: auto;
+}
+
+.sub-fx-seg {
+	margin-inline-start: auto;
+}
+
+.sub-fx-segcell {
+	block-size: 24px;
+	border: none;
+	padding-inline: 8px;
+	background-color: var(--card);
+	color: var(--muted-foreground);
+	font-size: 10.5px;
+	cursor: pointer;
+
+	&:hover {
+		background-color: var(--accent);
+		color: var(--foreground);
+	}
+
+	&.is-active {
+		background-color: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+// ── preset / pair chip grids ───────────────────────────────────────────────
+.sub-fx-presets {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 1px;
+	background-color: var(--border);
+
+	&.is-bordered {
+		border-block-start: 1px solid var(--border);
+	}
+}
+
+.sub-fx-chip {
+	aspect-ratio: 1;
+	border: none;
+	cursor: pointer;
+
+	&.is-active {
+		box-shadow: inset 0 0 0 2px var(--primary);
+	}
+}
+
+// ── remove-background status body ──────────────────────────────────────────
+.sub-fx-matte {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 8px 10px;
+	color: var(--muted-foreground);
+	font-size: 10.5px;
+}
+
+.sub-fx-matte-line {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.sub-fx-matte-pct {
+	flex-shrink: 0;
+	font-variant-numeric: tabular-nums;
+}
+
+.sub-fx-matte-bar {
+	block-size: 4px;
+	inline-size: 100%;
+	background-color: var(--muted);
+}
+
+.sub-fx-matte-fill {
+	block-size: 100%;
+	background-color: var(--primary);
+	transition: width 300ms ease-out;
+}
+
+.sub-fx-matte-pulse {
+	block-size: 4px;
+	inline-size: 100%;
+	background-color: color-mix(in srgb, var(--primary) 60%, transparent);
+	animation: sub-fx-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes sub-fx-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0.4;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.sub-fx-matte-pulse {
+		animation: none;
+	}
+
+	.sub-fx-matte-fill {
+		transition: none;
+	}
+}
+
+.sub-fx-matte-error {
+	color: var(--destructive);
+}
+
+.sub-fx-matte-retry {
+	align-self: flex-start;
+	block-size: 24px;
+	border: 1px solid var(--border);
+	background-color: var(--card);
+	padding-inline: 8px;
+	font-size: 10.5px;
+	cursor: pointer;
+
+	&:hover {
+		background-color: var(--accent);
+		color: var(--foreground);
+	}
+}

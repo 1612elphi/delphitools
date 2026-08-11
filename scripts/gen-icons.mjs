@@ -18,11 +18,21 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const { allTools } = await import('../app/lib/tools.ts');
+const { FX_ICONS, FX_ICON_FALLBACK } =
+	await import('../app/lib/substrata/fx-icons.ts');
 
 /** Referenced via a binding rather than a literal, so the scan cannot find
  *  them. The four below are returned from component getters (toast-slot's
- *  clipboard states, the module pin toggle, the layer lock toggle). */
-const EXTRA = ['clipboard-x', 'lock-open', 'pin', 'pin-off'];
+ *  clipboard states, the module pin toggle, the layer lock toggle); the FX
+ *  picker's cards read their glyph out of a type→icon map. */
+const EXTRA = [
+	'clipboard-x',
+	'lock-open',
+	'pin',
+	'pin-off',
+	...Object.values(FX_ICONS),
+	FX_ICON_FALLBACK,
+];
 
 function walk(dir) {
 	return readdirSync(dir).flatMap((entry) => {

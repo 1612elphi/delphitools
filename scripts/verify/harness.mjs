@@ -80,6 +80,23 @@ export async function visit(page, path) {
 	await sleep(300);
 }
 
+/**
+ * Open a Substrata module from the omnibar by its trigger's title (the omnibar
+ * identifies each panel trigger that way). Returns false when no such trigger
+ * exists, so a rig can assert on it.
+ */
+export async function openModule(page, title) {
+	const found = await page.evaluate((t) => {
+		const b = [...document.querySelectorAll('button')].find(
+			(x) => (x.getAttribute('title') ?? '').toLowerCase() === t,
+		);
+		b?.click();
+		return !!b;
+	}, title.toLowerCase());
+	await sleep(600);
+	return found;
+}
+
 export async function finish(browser) {
 	await browser?.close();
 	if (failures) {

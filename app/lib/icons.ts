@@ -6,10 +6,18 @@
 import iAlertCircle from 'lucide-static/icons/alert-circle.svg?raw';
 import iAlertTriangle from 'lucide-static/icons/alert-triangle.svg?raw';
 import iAlignCenter from 'lucide-static/icons/align-center.svg?raw';
+import iAlignCenterHorizontal from 'lucide-static/icons/align-center-horizontal.svg?raw';
+import iAlignCenterVertical from 'lucide-static/icons/align-center-vertical.svg?raw';
+import iAlignEndHorizontal from 'lucide-static/icons/align-end-horizontal.svg?raw';
+import iAlignEndVertical from 'lucide-static/icons/align-end-vertical.svg?raw';
 import iAlignHorizontalDistributeCenter from 'lucide-static/icons/align-horizontal-distribute-center.svg?raw';
 import iAlignJustify from 'lucide-static/icons/align-justify.svg?raw';
 import iAlignLeft from 'lucide-static/icons/align-left.svg?raw';
 import iAlignRight from 'lucide-static/icons/align-right.svg?raw';
+import iAlignStartHorizontal from 'lucide-static/icons/align-start-horizontal.svg?raw';
+import iAlignStartVertical from 'lucide-static/icons/align-start-vertical.svg?raw';
+import iAlignVerticalDistributeCenter from 'lucide-static/icons/align-vertical-distribute-center.svg?raw';
+import iAperture from 'lucide-static/icons/aperture.svg?raw';
 import iArchive from 'lucide-static/icons/archive.svg?raw';
 import iArrowDown from 'lucide-static/icons/arrow-down.svg?raw';
 import iArrowDownToLine from 'lucide-static/icons/arrow-down-to-line.svg?raw';
@@ -35,6 +43,7 @@ import iCalculator from 'lucide-static/icons/calculator.svg?raw';
 import iCamera from 'lucide-static/icons/camera.svg?raw';
 import iCaptions from 'lucide-static/icons/captions.svg?raw';
 import iCaseUpper from 'lucide-static/icons/case-upper.svg?raw';
+import iChartColumnBig from 'lucide-static/icons/chart-column-big.svg?raw';
 import iCheck from 'lucide-static/icons/check.svg?raw';
 import iChevronDown from 'lucide-static/icons/chevron-down.svg?raw';
 import iChevronLeft from 'lucide-static/icons/chevron-left.svg?raw';
@@ -47,6 +56,9 @@ import iCircle from 'lucide-static/icons/circle.svg?raw';
 import iCircleAlert from 'lucide-static/icons/circle-alert.svg?raw';
 import iCircleCheck from 'lucide-static/icons/circle-check.svg?raw';
 import iCircleCheckBig from 'lucide-static/icons/circle-check-big.svg?raw';
+import iCircleDashed from 'lucide-static/icons/circle-dashed.svg?raw';
+import iCircleDot from 'lucide-static/icons/circle-dot.svg?raw';
+import iCircleSlash from 'lucide-static/icons/circle-slash.svg?raw';
 import iCircleX from 'lucide-static/icons/circle-x.svg?raw';
 import iClapperboard from 'lucide-static/icons/clapperboard.svg?raw';
 import iClipboard from 'lucide-static/icons/clipboard.svg?raw';
@@ -55,6 +67,7 @@ import iClipboardX from 'lucide-static/icons/clipboard-x.svg?raw';
 import iClock from 'lucide-static/icons/clock.svg?raw';
 import iCode from 'lucide-static/icons/code.svg?raw';
 import iCode2 from 'lucide-static/icons/code-2.svg?raw';
+import iCoffee from 'lucide-static/icons/coffee.svg?raw';
 import iCombine from 'lucide-static/icons/combine.svg?raw';
 import iContrast from 'lucide-static/icons/contrast.svg?raw';
 import iCopy from 'lucide-static/icons/copy.svg?raw';
@@ -63,6 +76,9 @@ import iCrop from 'lucide-static/icons/crop.svg?raw';
 import iCrosshair from 'lucide-static/icons/crosshair.svg?raw';
 import iDock from 'lucide-static/icons/dock.svg?raw';
 import iDownload from 'lucide-static/icons/download.svg?raw';
+import iDroplet from 'lucide-static/icons/droplet.svg?raw';
+import iDroplets from 'lucide-static/icons/droplets.svg?raw';
+import iEclipse from 'lucide-static/icons/eclipse.svg?raw';
 import iEllipsis from 'lucide-static/icons/ellipsis.svg?raw';
 import iEraser from 'lucide-static/icons/eraser.svg?raw';
 import iExpand from 'lucide-static/icons/expand.svg?raw';
@@ -78,6 +94,9 @@ import iFileType from 'lucide-static/icons/file-type.svg?raw';
 import iFileType2 from 'lucide-static/icons/file-type-2.svg?raw';
 import iFileUp from 'lucide-static/icons/file-up.svg?raw';
 import iFilm from 'lucide-static/icons/film.svg?raw';
+import iFlipHorizontal2 from 'lucide-static/icons/flip-horizontal-2.svg?raw';
+import iFlipVertical2 from 'lucide-static/icons/flip-vertical-2.svg?raw';
+import iFocus from 'lucide-static/icons/focus.svg?raw';
 import iFolder from 'lucide-static/icons/folder.svg?raw';
 import iFolderMinus from 'lucide-static/icons/folder-minus.svg?raw';
 import iFolderPlus from 'lucide-static/icons/folder-plus.svg?raw';
@@ -87,6 +106,7 @@ import iGalleryVertical from 'lucide-static/icons/gallery-vertical.svg?raw';
 import iGitCompare from 'lucide-static/icons/git-compare.svg?raw';
 import iGrid2x2 from 'lucide-static/icons/grid-2x2.svg?raw';
 import iGrid3x3 from 'lucide-static/icons/grid-3x3.svg?raw';
+import iGrip from 'lucide-static/icons/grip.svg?raw';
 import iGripVertical from 'lucide-static/icons/grip-vertical.svg?raw';
 import iGroup from 'lucide-static/icons/group.svg?raw';
 import iHardDrive from 'lucide-static/icons/hard-drive.svg?raw';
@@ -102,6 +122,7 @@ import iLasso from 'lucide-static/icons/lasso.svg?raw';
 import iLayers from 'lucide-static/icons/layers.svg?raw';
 import iLayoutGrid from 'lucide-static/icons/layout-grid.svg?raw';
 import iLibrary from 'lucide-static/icons/library.svg?raw';
+import iLightbulb from 'lucide-static/icons/lightbulb.svg?raw';
 import iLineChart from 'lucide-static/icons/line-chart.svg?raw';
 import iLink from 'lucide-static/icons/link.svg?raw';
 import iLoader from 'lucide-static/icons/loader.svg?raw';
@@ -119,6 +140,7 @@ import iMinus from 'lucide-static/icons/minus.svg?raw';
 import iMoon from 'lucide-static/icons/moon.svg?raw';
 import iMove from 'lucide-static/icons/move.svg?raw';
 import iPackage from 'lucide-static/icons/package.svg?raw';
+import iPaintBucket from 'lucide-static/icons/paint-bucket.svg?raw';
 import iPalette from 'lucide-static/icons/palette.svg?raw';
 import iPanelBottom from 'lucide-static/icons/panel-bottom.svg?raw';
 import iPanelLeft from 'lucide-static/icons/panel-left.svg?raw';
@@ -160,9 +182,12 @@ import iSlidersHorizontal from 'lucide-static/icons/sliders-horizontal.svg?raw';
 import iSmartphone from 'lucide-static/icons/smartphone.svg?raw';
 import iSparkle from 'lucide-static/icons/sparkle.svg?raw';
 import iSparkles from 'lucide-static/icons/sparkles.svg?raw';
+import iSpline from 'lucide-static/icons/spline.svg?raw';
 import iSquare from 'lucide-static/icons/square.svg?raw';
 import iSquareDashed from 'lucide-static/icons/square-dashed.svg?raw';
 import iSquareSlash from 'lucide-static/icons/square-slash.svg?raw';
+import iSquareSquare from 'lucide-static/icons/square-square.svg?raw';
+import iSquareStack from 'lucide-static/icons/square-stack.svg?raw';
 import iSquareTerminal from 'lucide-static/icons/square-terminal.svg?raw';
 import iStamp from 'lucide-static/icons/stamp.svg?raw';
 import iStar from 'lucide-static/icons/star.svg?raw';
@@ -170,7 +195,9 @@ import iStrikethrough from 'lucide-static/icons/strikethrough.svg?raw';
 import iSun from 'lucide-static/icons/sun.svg?raw';
 import iSwatchBook from 'lucide-static/icons/swatch-book.svg?raw';
 import iTag from 'lucide-static/icons/tag.svg?raw';
+import iThermometer from 'lucide-static/icons/thermometer.svg?raw';
 import iTrash2 from 'lucide-static/icons/trash-2.svg?raw';
+import iTriangle from 'lucide-static/icons/triangle.svg?raw';
 import iTriangleAlert from 'lucide-static/icons/triangle-alert.svg?raw';
 import iType from 'lucide-static/icons/type.svg?raw';
 import iUndo2 from 'lucide-static/icons/undo-2.svg?raw';
@@ -188,10 +215,18 @@ export const icons: Record<string, string> = {
 	'alert-circle': iAlertCircle,
 	'alert-triangle': iAlertTriangle,
 	'align-center': iAlignCenter,
+	'align-center-horizontal': iAlignCenterHorizontal,
+	'align-center-vertical': iAlignCenterVertical,
+	'align-end-horizontal': iAlignEndHorizontal,
+	'align-end-vertical': iAlignEndVertical,
 	'align-horizontal-distribute-center': iAlignHorizontalDistributeCenter,
 	'align-justify': iAlignJustify,
 	'align-left': iAlignLeft,
 	'align-right': iAlignRight,
+	'align-start-horizontal': iAlignStartHorizontal,
+	'align-start-vertical': iAlignStartVertical,
+	'align-vertical-distribute-center': iAlignVerticalDistributeCenter,
+	aperture: iAperture,
 	archive: iArchive,
 	'arrow-down': iArrowDown,
 	'arrow-down-to-line': iArrowDownToLine,
@@ -217,6 +252,7 @@ export const icons: Record<string, string> = {
 	camera: iCamera,
 	captions: iCaptions,
 	'case-upper': iCaseUpper,
+	'chart-column-big': iChartColumnBig,
 	check: iCheck,
 	'chevron-down': iChevronDown,
 	'chevron-left': iChevronLeft,
@@ -229,6 +265,9 @@ export const icons: Record<string, string> = {
 	'circle-alert': iCircleAlert,
 	'circle-check': iCircleCheck,
 	'circle-check-big': iCircleCheckBig,
+	'circle-dashed': iCircleDashed,
+	'circle-dot': iCircleDot,
+	'circle-slash': iCircleSlash,
 	'circle-x': iCircleX,
 	clapperboard: iClapperboard,
 	clipboard: iClipboard,
@@ -237,6 +276,7 @@ export const icons: Record<string, string> = {
 	clock: iClock,
 	code: iCode,
 	'code-2': iCode2,
+	coffee: iCoffee,
 	combine: iCombine,
 	contrast: iContrast,
 	copy: iCopy,
@@ -245,6 +285,9 @@ export const icons: Record<string, string> = {
 	crosshair: iCrosshair,
 	dock: iDock,
 	download: iDownload,
+	droplet: iDroplet,
+	droplets: iDroplets,
+	eclipse: iEclipse,
 	ellipsis: iEllipsis,
 	eraser: iEraser,
 	expand: iExpand,
@@ -260,6 +303,9 @@ export const icons: Record<string, string> = {
 	'file-type-2': iFileType2,
 	'file-up': iFileUp,
 	film: iFilm,
+	'flip-horizontal-2': iFlipHorizontal2,
+	'flip-vertical-2': iFlipVertical2,
+	focus: iFocus,
 	folder: iFolder,
 	'folder-minus': iFolderMinus,
 	'folder-plus': iFolderPlus,
@@ -269,6 +315,7 @@ export const icons: Record<string, string> = {
 	'git-compare': iGitCompare,
 	'grid-2x2': iGrid2x2,
 	'grid-3x3': iGrid3x3,
+	grip: iGrip,
 	'grip-vertical': iGripVertical,
 	group: iGroup,
 	'hard-drive': iHardDrive,
@@ -284,6 +331,7 @@ export const icons: Record<string, string> = {
 	layers: iLayers,
 	'layout-grid': iLayoutGrid,
 	library: iLibrary,
+	lightbulb: iLightbulb,
 	'line-chart': iLineChart,
 	link: iLink,
 	loader: iLoader,
@@ -301,6 +349,7 @@ export const icons: Record<string, string> = {
 	moon: iMoon,
 	move: iMove,
 	package: iPackage,
+	'paint-bucket': iPaintBucket,
 	palette: iPalette,
 	'panel-bottom': iPanelBottom,
 	'panel-left': iPanelLeft,
@@ -342,9 +391,12 @@ export const icons: Record<string, string> = {
 	smartphone: iSmartphone,
 	sparkle: iSparkle,
 	sparkles: iSparkles,
+	spline: iSpline,
 	square: iSquare,
 	'square-dashed': iSquareDashed,
 	'square-slash': iSquareSlash,
+	'square-square': iSquareSquare,
+	'square-stack': iSquareStack,
 	'square-terminal': iSquareTerminal,
 	stamp: iStamp,
 	star: iStar,
@@ -352,7 +404,9 @@ export const icons: Record<string, string> = {
 	sun: iSun,
 	'swatch-book': iSwatchBook,
 	tag: iTag,
+	thermometer: iThermometer,
 	'trash-2': iTrash2,
+	triangle: iTriangle,
 	'triangle-alert': iTriangleAlert,
 	type: iType,
 	'undo-2': iUndo2,

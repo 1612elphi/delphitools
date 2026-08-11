@@ -56,7 +56,13 @@ const clickScene = async (sx, sy) => {
   await page.mouse.click(p.x, p.y);
   await sleep(250);
 };
+// The popup renders only once the canvas has reported an anchor for THIS
+// selection (selection-popup keys the anchor by epoch), so wait for it rather
+// than assuming the frame already landed.
+const popupReady = (action = "extract") =>
+  page.waitForSelector(`[data-select-action="${action}"]`, { visible: true, timeout: 5000 });
 const popupClick = async (action) => {
+  await popupReady(action);
   await page.click(`[data-select-action="${action}"]`);
   await sleep(350);
 };
@@ -184,8 +190,11 @@ await sleep(150);
 // ── 5) extract via the popup (default action) ─────────────────────────────────
 await page.evaluate(() => window.__substrata.setTool("select", "select"));
 await drag(550, 380, 750, 500); // inside the top-left green square
-const popupVisible = await page.$('[data-select-action="extract"]');
-check("popup: appears with a live selection", String(!!popupVisible), !!popupVisible);
+const popupVisible = await popupReady().then(
+  (h) => !!h,
+  () => false,
+);
+check("popup: appears with a live selection", String(popupVisible), popupVisible);
 await popupClick("extract");
 ls = await layers();
 check("extract: new layer above the source", ls.map((l) => l.name).join(","), ls.length === 2);
@@ -223,6 +232,7 @@ await page.evaluate(() => {
 await drag(1300, 200, 1600, 400);
 await page.evaluate(() => window.__substrata.setTool("select", "select"));
 await drag(1350, 250, 1500, 350); // over the shape layer (it's now active)
+await popupReady();
 const disabled = await page.$eval('[data-select-action="extract"]', (el) => el.disabled);
 check("gate: extract disabled on a shape layer", String(disabled), disabled === true);
 await page.evaluate(() => window.__substrata.setTool("move"));

@@ -78,9 +78,13 @@
 @use "tools/zine-imposer";
 
 // One partial per Substrata surface; see app/styles/substrata/.
+@use "substrata/arrange-panel";
 @use "substrata/canvas";
+@use "substrata/colour-panel";
+@use "substrata/fx-panel";
 @use "substrata/inspector-panel";
 @use "substrata/layers-panel";
+@use "substrata/looks-panel";
 @use "substrata/omnibar";
 @use "substrata/shared";
 @use "substrata/shell";

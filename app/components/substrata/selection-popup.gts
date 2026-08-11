@@ -38,14 +38,28 @@ import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
  * it.
  */
 
-let anchor = { x: 0, y: 0 };
+let anchor = { x: 0, y: 0, epoch: -1 };
 const anchorListeners = new Set<() => void>();
 
-/** Canvas → popup: bottom-centre of the selection bbox, wrap-relative px. */
-export function reportSelectionAnchor(x: number, y: number): void {
-	if (Math.abs(x - anchor.x) < 0.5 && Math.abs(y - anchor.y) < 0.5)
+/**
+ * Canvas → popup: bottom-centre of the selection bbox, wrap-relative px.
+ * `epoch` is the selection's, so the popup can tell an anchor computed for the
+ * CURRENT selection from a stale one — it renders only once its own selection
+ * has been measured, instead of flashing at 0,0 (or at the previous
+ * selection's spot) for however many frames the canvas takes to catch up.
+ */
+export function reportSelectionAnchor(
+	x: number,
+	y: number,
+	epoch: number,
+): void {
+	if (
+		epoch === anchor.epoch &&
+		Math.abs(x - anchor.x) < 0.5 &&
+		Math.abs(y - anchor.y) < 0.5
+	)
 		return;
-	anchor = { x, y };
+	anchor = { x, y, epoch };
 	for (const l of anchorListeners) l();
 }
 
@@ -74,7 +88,12 @@ export default class SelectionPopup extends Component {
 	}
 
 	get visible() {
-		return this.sel.current !== null && this.doc.current !== null;
+		const sel = this.sel.current;
+		return (
+			sel !== null &&
+			this.doc.current !== null &&
+			this.anchor.current.epoch === sel.epoch
+		);
 	}
 
 	get ready() {

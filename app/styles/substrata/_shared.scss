@@ -199,3 +199,46 @@
 		block-size: 12px;
 	}
 }
+
+// ── slider (LOOKS intensity, FX params) ────────────────────────────────────
+// The Next app's shadcn Slider was a Radix span stack; a native range input
+// carries the same behaviour (keyboard steps, drag) with no dependency.
+.sub-slider {
+	appearance: none;
+	flex: 1;
+	min-inline-size: 0;
+	block-size: 14px;
+	background: none;
+	cursor: pointer;
+
+	&:disabled {
+		pointer-events: none;
+	}
+
+	&::-webkit-slider-runnable-track {
+		block-size: 2px;
+		background-color: var(--border);
+	}
+
+	&::-moz-range-track {
+		block-size: 2px;
+		background-color: var(--border);
+	}
+
+	&::-webkit-slider-thumb {
+		appearance: none;
+		margin-block-start: -5px;
+		inline-size: 12px;
+		block-size: 12px;
+		border: 1px solid var(--border);
+		background-color: var(--primary);
+	}
+
+	&::-moz-range-thumb {
+		inline-size: 12px;
+		block-size: 12px;
+		border: 1px solid var(--border);
+		border-radius: 0;
+		background-color: var(--primary);
+	}
+}

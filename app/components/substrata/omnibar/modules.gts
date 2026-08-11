@@ -1,7 +1,6 @@
 import Component from '@glimmer/component';
 import { htmlSafe } from '@ember/template';
 import { on } from '@ember/modifier';
-import type { TOC } from '@ember/component/template-only';
 import type { ComponentLike } from '@glint/template';
 import { eq } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
@@ -18,6 +17,19 @@ import {
 } from 'delphitools-v2/components/substrata/modules/layers-panel';
 import { InspectorBody } from 'delphitools-v2/components/substrata/modules/inspector-panel';
 import {
+	LooksBody,
+	LooksSub,
+} from 'delphitools-v2/components/substrata/modules/looks-panel';
+import {
+	ColourBody,
+	ColourName,
+} from 'delphitools-v2/components/substrata/modules/colour-panel';
+import {
+	FxBody,
+	FxSub,
+} from 'delphitools-v2/components/substrata/modules/fx-panel';
+import { ArrangeBody } from 'delphitools-v2/components/substrata/modules/arrange-panel';
+import {
 	ToolModuleBody,
 	ToolModuleSub,
 } from 'delphitools-v2/components/substrata/omnibar/tool-settings';
@@ -29,12 +41,6 @@ import {
  * header (grip · title · sub · clamp-when-floating · ✕). Titles =
  * mockup/omnibar words.
  */
-
-/** Bodies and subs still to port. The registry entry stays live (the rail and
- *  the omnibar render every module) with nothing inside. */
-const ModuleStub: TOC<{ Args: object }> = <template>
-	<div class="sub-module-stub"></div>
-</template>;
 
 type ModulePart = ComponentLike<{ Args: object }>;
 
@@ -74,9 +80,8 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
 		title: 'FX',
 		icon: 'sparkles',
 		width: '296px',
-		// pass 2: components/substrata/modules/fx-panel.tsx — FxBody, FxSub
-		body: ModuleStub,
-		sub: ModuleStub,
+		body: FxBody,
+		sub: FxSub,
 	},
 	inspector: {
 		id: 'inspector',
@@ -91,28 +96,23 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
 		title: 'Colour',
 		icon: null,
 		width: '236px',
-		// pass 2: components/substrata/modules/colour-panel.tsx —
-		// ColourBody, ColourName
-		body: ModuleStub,
-		sub: ModuleStub,
+		body: ColourBody,
+		sub: ColourName,
 	},
 	looks: {
 		id: 'looks',
 		title: 'Looks',
 		icon: 'film',
 		width: '312px',
-		// pass 2: components/substrata/modules/looks-panel.tsx —
-		// LooksBody, LooksSub
-		body: ModuleStub,
-		sub: ModuleStub,
+		body: LooksBody,
+		sub: LooksSub,
 	},
 	arrange: {
 		id: 'arrange',
 		title: 'Arrange',
 		icon: 'align-horizontal-distribute-center',
 		width: '224px',
-		// pass 2: components/substrata/modules/arrange-panel.tsx — ArrangeBody
-		body: ModuleStub,
+		body: ArrangeBody,
 		sub: null,
 	},
 };

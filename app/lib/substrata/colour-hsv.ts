@@ -22,7 +22,7 @@ export interface HSL {
 	l: number;
 }
 
-const wrapHue = (h: number): number => ((h % 360) + 360) % 360;
+export const wrapHue = (h: number): number => ((h % 360) + 360) % 360;
 
 export function hsvToRgb({ h, s, v }: HSV): RGB {
 	h = wrapHue(h);

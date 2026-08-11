@@ -68,10 +68,12 @@ const fakeHistory = await page.evaluate(() =>
 check("edit-menu: fake history list removed", String(fakeHistory), fakeHistory === false);
 
 // Select all → Duplicate → layer count 1 → 2
+// Prefix match: the items carry their shortcut hint inside the button
+// ("Duplicate ⌘D"), so an exact-text match finds nothing.
 const menuBtn = async (label) => {
   const clicked = await page.evaluate((l) => {
     const btn = [...document.querySelectorAll("[data-menu-root] button")].find(
-      (b) => b.textContent?.trim() === l && !b.disabled,
+      (b) => (b.textContent ?? "").replace(/\s+/g, " ").trim().startsWith(l) && !b.disabled,
     );
     if (!btn) return false;
     btn.click();

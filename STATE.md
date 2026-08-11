@@ -11,10 +11,20 @@ should read this file, CLAUDE.md and PARITY.md before touching anything.
   page, AV wave 2, transports, polish round — this file ships in it, so
   it cannot name its own hash). Working tree clean; Ruby triggers
   commits explicitly.
-- Verification is green across the board: `bun run lint` (5 checks),
-  `bun run test` (346 QUnit), production build, and the harnesses —
-  tools.mjs (63 routes), av-tools.mjs (6), audio-tools.mjs (16),
-  omnibox.mjs (15), classes.mjs (static, ~2070 class uses).
+- Verification: `bun run lint` (5 checks), `bun run test` (346 QUnit) and
+  `node scripts/verify/all.mjs` (44 rigs) all green except two rigs that
+  are stale for reasons of their own:
+     - `gradient.mjs` drives `div.w-56.border-l`, the right sidebar that
+       round-3 docking deleted in `8fbe785`. It crashes before its first
+       check. Rewriting its panel drivers against the Inspector MODULE
+       (`.sub-insp*`, opened from the omnibar — see layers-tree.mjs) is the
+       fix; the checks themselves are still worth having.
+     - `static-smoke.mjs` needs a `bun run build:static` first (reads
+       `out/tools`); it is not run standalone.
+- `review-fixes.mjs` was also failing before this stretch — its Edit-menu
+  driver matched button text exactly, and the items now carry their
+  shortcut hint inside the button ("Duplicate ⌘D"). Fixed to a prefix
+  match; the menu itself was working.
 - `scripts/verify/classes.mjs` is new and important: it fails when a
   `dt-` class used in any component has no definition under app/styles.
   It exists because a bulk stylesheet edit silently deleted an unrelated
@@ -53,24 +63,84 @@ should read this file, CLAUDE.md and PARITY.md before touching anything.
   (bare use stacks vertically — bit twice).
 - PARITY.md: 66 tracked / 62 web.
 
-## Substrata bugs (Ruby's testing, 2026-08-11 — unverified, not yet triaged)
+## Substrata bugs (Ruby's testing, 2026-08-11) — TRIAGED AND FIXED
 
-Reported symptoms, in Ruby's words; the editor lives at /editor
-(app/components/substrata/, lib/substrata/):
+1. **Preset sizes are not centred properly.** Real bug, fixed.
+   `fitView` centred the artboard in the raw canvas element, ignoring the
+   chrome painted over it: the 22px ruler bands and the omnibar/rail docks
+   (82px at the bottom by default). Every fit put the artboard low, with
+   its bottom edge under the omnibar. `chromeInset()` in fabric-canvas now
+   measures each dock off its edge class and subtracts the ruler bands, and
+   `fitView` centres in what is left. Covered by two new checks at the end
+   of `scripts/verify/workspace.mjs`, which run with the omnibar docked
+   LEFT so the inset generalises across edges.
+2. **LOOKS and FX panels do not populate.** Not a defect — never ported.
+   `omnibar/modules.gts` registered them with `body: ModuleStub` (an empty
+   div) plus `// pass 2:` pointers at the Next sources. Adjust populated
+   because its body was the real `ToolModuleBody`. Both ported now.
+3. **The colour panel does not show up.** Same cause, same fix.
+4. **Arrange does not show up** (reported after the first three landed).
+   The fourth `ModuleStub`, ported the same way. Every module in the
+   registry now has a real body, so `ModuleStub` and its `.sub-module-stub`
+   rule are both gone; the panel rigs still assert the class is absent.
 
-1. **Preset sizes are not centred properly** — a document created from a
-   preset size sits off-centre (likely the canvas/artboard initial
-   placement).
-2. **LOOKS panel and FX panel do not populate at all**, although the
-   content is known to be available. The Adjust tool's settings pane DOES
-   populate fine — compare its wiring against the two dead panels for the
-   difference.
-3. **The colour panel does not show up at all.**
+Ported this stretch (Next `.tsx` → `.gts`, logic libs were already in
+place, so these were UI translations):
 
-Starting points: the panel/docking system from commit `8fbe785`
-("Substrata pass 1 — canvas, shell, panels, docking") and the dev-only
-`window.__substrata` rig that the scripts/verify substrata harnesses
-drive — a failing panel may already be reproducible headlessly there.
+- `modules/looks-panel.gts` + `styles/substrata/_looks-panel.scss` —
+  film-sim/LUT gallery, live per-layer thumbnails, None row, intensity.
+- `modules/colour-panel.gts`, `modules/colour-picker-kit.gts`, the six
+  files under `modules/colour-modes/` and `_colour-panel.scss` — the
+  7-mode picker (the hue cube is inline in the panel).
+- `modules/fx-panel.gts` + `_fx-panel.scss` — add picker, both pipeline
+  zones with per-zone sortable, accordion blocks, generic param rows from
+  the registry ParamSpecs, remove-background status body.
+- `modifiers/pointer-area.ts` — the shared normalised drag surface
+  (`usePointerArea`'s replacement), transient-bracketed.
+- `lib/substrata/fx-icons.ts` — the FX type→icon map lives in a plain .ts
+  because `scripts/gen-icons.mjs` imports it; names behind a map are
+  invisible to the generator's template scan.
+- `.sub-slider` in `_shared.scss` — a native range input replaces the
+  Next app's Radix Slider (LOOKS intensity + every FX slider param).
+- `modules/arrange-panel.gts` + `_arrange-panel.scss` — align to the
+  artboard, distribute (≥3), rotate, flip, each one undo step through
+  setTransforms.
+
+New rigs: `scripts/verify/looks.mjs` (12), `colour-panel.mjs` (19),
+`fx-panel.mjs` (19), `arrange.mjs` (16). `classes.mjs` now covers `sub-`
+classes as well as `dt-` (2070 → 2465 uses checked); four
+genuinely-unstyled substrata wrappers are listed in its
+UNSTYLED_CONTAINERS with reasons.
+
+`fx-panel.mjs` deliberately never adds **Remove Background** — the kick
+downloads a ~44 MB model, which is `bg-removal.mjs`'s job. That left the
+matte body uncovered, and it was broken: `ensureMatte()` ran inside the
+`status` getter, dirtying a tag already consumed in the same render, so
+Ember asserted and the body rendered EMPTY. The kick is now an element
+modifier (post-render, like the React effect it was ported from). Verified
+by hand before and after — 1 assertion + blank body, then 0 + "Downloading
+model…".
+
+Known adjacent bug, NOT fixed (pre-existing, outside this stretch):
+`layers-panel.gts`'s `handleDragEnd` ignores `event.canceled`, so Escape
+mid-drag still commits a layer reorder. `substrata-shell.gts:67` shows the
+guard; fx-panel's zones now use it.
+
+Also hardened: the pixel-selection popup rendered as soon as a selection
+existed, but its position comes from the canvas's after:render pass, so
+nothing stopped it painting at a stale anchor first.
+`reportSelectionAnchor` now carries the selection's epoch and the popup
+renders only once the anchor matches its own selection; `select.mjs`
+waits for the popup instead of assuming the frame landed.
+
+**Read this before chasing a substrata rig failure.** The symptom that
+led here — `select.mjs` failing 3/3 with the popup stuck at 0,0 — turned
+out to be mostly a STALE VITE MODULE GRAPH. A long-lived `bun run start`
+accumulating many in-place edits serves inconsistent modules, and two
+copies of selection-popup.gts mean the canvas reports the anchor into one
+module's state while the rendered popup reads the other's. Restarting the
+dev server made the same rig pass 3/3 with no code change. Restart it
+before believing any editor-rig failure that appears mid-session.
 
 ## AV plan — remaining waves
 
@@ -165,7 +235,5 @@ tool list**. v1 reference lives in git history (tree at `c6c6e6d~1`):
 
 ## Next actions
 
-1. Substrata bug triage (the three reports above) — likely before wave 3,
-   since it is fresh in Ruby's testing.
-2. Then wave 3 recorders, or the remaining omnibox microtools, or the
-   v1 sticker port.
+1. Wave 3 recorders, the remaining omnibox microtools, or the v1 sticker
+   port. The `gradient.mjs` rewrite is small and unclaimed.

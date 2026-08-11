@@ -84,7 +84,10 @@ await pieces({ shape: "rectangle", fill: "#ff0000", stroke: null, cornerRadius: 
 await drag({ x: 600, y: 500 }, { x: 1000, y: 700 });
 let ls = await layers();
 check("rect: one layer, named Rectangle", ls.map((l) => l.name).join(","), ls.length === 1 && ls[0].name === "Rectangle");
-check("rect: centred at drag midpoint", JSON.stringify(ls[0]?.scene), ls[0] && Math.abs(ls[0].scene.x - 800) < 2 && Math.abs(ls[0].scene.y - 600) < 2);
+// Tolerance is the scene-per-screen-pixel bound: mouse coordinates are whole
+// screen pixels, so a drag endpoint quantises to 1/zoom scene units, and the
+// fitted zoom is under 1.
+check("rect: centred at drag midpoint", JSON.stringify(ls[0]?.scene), ls[0] && Math.abs(ls[0].scene.x - 800) < 3 && Math.abs(ls[0].scene.y - 600) < 3);
 let px = await sample(800, 600);
 check("rect: fill at centre", px, near(px, [255, 0, 0]));
 px = await sample(610, 510);
@@ -169,10 +172,13 @@ await setTool("move");
 const starId = (await layers())[0].id;
 await page.evaluate((id) => window.__substrata.select([id]), starId);
 await sleep(200);
+// The nudge DELTA is what this checks; the star's absolute x came from a
+// screen-pixel drag, so it depends on the fitted zoom.
+const beforeNudge = (await layers())[0].scene.x;
 await page.keyboard.press("ArrowRight");
 await sleep(250);
 ls = await layers();
-check("move: arrow nudge shifts the shape", ls[0]?.scene.x, Math.abs(ls[0].scene.x - 801) < 0.5);
+check("move: arrow nudge shifts the shape", ls[0]?.scene.x, Math.abs(ls[0].scene.x - beforeNudge - 1) < 0.5);
 px = await sample(801, 600);
 check("move: shape re-rendered at new spot", px, near(px, [204, 0, 204]));
 

@@ -270,6 +270,39 @@ if (omniGrip) {
   check("drag: omnibar re-docked to left edge (vertical)", String(vertical), vertical === true);
 }
 
+// ── 4. fit centres in the FREE area, not under the chrome ────────────────────
+// Regression: fitView used to centre in the raw canvas element, so the artboard
+// sat under the omnibar dock (and behind the ruler bands) on every fit.
+const fitGeom = async () => {
+  await page.evaluate(() => document.querySelector('button[title*="Fit"], button[aria-label*="Fit"]')?.click());
+  await sleep(300);
+  return page.evaluate(() => {
+    const vt = window.__substrata.vt();
+    const el = document.querySelector("canvas");
+    const box = el.getBoundingClientRect();
+    // default scene: 2000 × 1500
+    const art = { left: vt[4], top: vt[5], right: vt[4] + 2000 * vt[0], bottom: vt[5] + 1500 * vt[3] };
+    const free = { top: 22, right: box.width, bottom: box.height, left: 22 };
+    for (const dock of document.querySelectorAll(".sub-omni-dock, .sub-omni-rail-dock")) {
+      const r = dock.getBoundingClientRect();
+      if (dock.classList.contains("is-top")) free.top = Math.max(free.top, r.height);
+      else if (dock.classList.contains("is-bottom")) free.bottom = Math.min(free.bottom, box.height - r.height);
+      else if (dock.classList.contains("is-left")) free.left = Math.max(free.left, r.width);
+      else if (dock.classList.contains("is-right")) free.right = Math.min(free.right, box.width - r.width);
+    }
+    return { art, free };
+  });
+};
+
+for (const [where, geom] of [["left-docked omnibar", await fitGeom()]]) {
+  const { art, free } = geom;
+  const inside = art.left >= free.left - 1 && art.right <= free.right + 1 && art.top >= free.top - 1 && art.bottom <= free.bottom + 1;
+  const dx = (art.left - free.left) - (free.right - art.right);
+  const dy = (art.top - free.top) - (free.bottom - art.bottom);
+  check(`fit (${where}): artboard clears the chrome`, JSON.stringify({ art, free }), inside);
+  check(`fit (${where}): centred in the free area`, `dx=${dx.toFixed(1)} dy=${dy.toFixed(1)}`, Math.abs(dx) < 1.5 && Math.abs(dy) < 1.5);
+}
+
 await browser.close();
 console.log(failures === 0 ? "\nALL PASS" : `\n${failures} FAILURES`);
 process.exit(failures === 0 ? 0 : 1);

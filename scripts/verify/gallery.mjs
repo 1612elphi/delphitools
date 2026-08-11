@@ -79,8 +79,10 @@ check("cog: layer named Cog", ls[0]?.name, ls.length === 1 && ls[0].name === "Co
 // grid centre (128,128) is the gear's HOLE (counter-wound subpath)
 px = await sample(400 + 200, 800 + 200);
 check("cog: centre hole is background (nonzero winding)", px?.join(","), near(px, [255, 255, 255, 255]));
-// grid (128, 40) is the top tooth
-px = await sample(400 + 200, 800 + (40 / 256) * 400);
+// grid (128, 60) is solid body: the outer edge sits at y=40 and the hole's rim
+// at y=88, so this is clear of both — sampling the y=40 edge itself picked up
+// antialiasing once the fitted zoom shrank the shape on screen.
+px = await sample(400 + 200, 800 + (60 / 256) * 400);
 check("cog: tooth filled", px?.join(","), near(px, [62, 107, 51, 255]));
 
 // ── 3) primitives sub still draws primitives (settings not clobbered) ────────

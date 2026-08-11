@@ -1,7 +1,8 @@
-// Every dt- class a component uses must be defined somewhere in the
-// stylesheets. Guards against the failure mode where a bulk stylesheet edit
-// swallows an unrelated rule block and the element silently falls back to UA
-// default styling (the trimmer's transport buttons, 2026-08-11).
+// Every dt- (app) and sub- (Substrata) class a component uses must be defined
+// somewhere in the stylesheets. Guards against the failure mode where a bulk
+// stylesheet edit swallows an unrelated rule block and the element silently
+// falls back to UA default styling (the trimmer's transport buttons,
+// 2026-08-11).
 //
 // Static check — needs no dev server. Usage: node scripts/verify/classes.mjs
 
@@ -21,6 +22,11 @@ const UNSTYLED_CONTAINERS = new Set([
 	'dt-shades-rows',
 	'dt-tc-table',
 	'dt-tabs',
+	// Substrata: behaviour hooks and layout-neutral wrappers.
+	'sub-csm-section', // grouping only; the heading + grid inside are styled
+	'sub-grip', // the draggable modifier's handle selector
+	'sub-preset-strip', // .segmented carries the strip's own styling
+	'sub-topbar-seg-hook', // span[title] the parent repo's rigs read
 ]);
 
 function* walk(dir) {
@@ -42,8 +48,11 @@ for (const path of walk(join(root, 'app/components'))) {
 	if (!path.endsWith('.gts')) continue;
 	const source = readFileSync(path, 'utf8');
 	const used = new Set();
+	// The lookbehind keeps `dt-sub-frame` from also reading as a `sub-` class.
 	for (const attr of source.matchAll(/class="([^"]*)"/g))
-		for (const cls of attr[1].matchAll(/\bdt-[a-z0-9-]+\b/g))
+		for (const cls of attr[1].matchAll(
+			/(?<![\w-])(?:dt|sub)-[a-z0-9-]+\b/g,
+		))
 			used.add(cls[0]);
 
 	for (const cls of used) {

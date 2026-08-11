@@ -229,16 +229,70 @@ class AnchorBoxLayout extends FitContentLayout {
 	}
 }
 
-/** Fit the artboard within the viewport with a little padding, centred. */
-function fitView(canvas: Canvas, artboard: Artboard): void {
+/** Ruler band thickness in screen px (the bands paint at the end of the
+ *  after:render pass; see the rulers section in mount). */
+const RULER_PX = 22;
+
+interface Inset {
+	top: number;
+	right: number;
+	bottom: number;
+	left: number;
+}
+
+/**
+ * The chrome painted OVER the canvas element: the ruler bands (top-left, on
+ * the overlay context) and the omnibar / rail docks (absolutely positioned
+ * siblings, each sized to the edge it is docked to). Fitting into the raw
+ * element centres the artboard under that chrome instead of in the free area.
+ */
+function chromeInset(wrap: HTMLElement, rulers: boolean): Inset {
+	const inset: Inset = {
+		top: rulers ? RULER_PX : 0,
+		right: 0,
+		bottom: 0,
+		left: rulers ? RULER_PX : 0,
+	};
+	const area = wrap.closest('.sub-shell-canvas-area');
+	const docks =
+		area?.querySelectorAll('.sub-omni-dock, .sub-omni-rail-dock') ??
+		[];
+	for (const dock of docks) {
+		const r = dock.getBoundingClientRect();
+		// A dock is pinned to one edge and sized by its content on that axis,
+		// so its own rect IS the occupied thickness there.
+		if (dock.classList.contains('is-top'))
+			inset.top = Math.max(inset.top, r.height);
+		else if (dock.classList.contains('is-bottom'))
+			inset.bottom = Math.max(inset.bottom, r.height);
+		else if (dock.classList.contains('is-left'))
+			inset.left = Math.max(inset.left, r.width);
+		else if (dock.classList.contains('is-right'))
+			inset.right = Math.max(inset.right, r.width);
+	}
+	return inset;
+}
+
+/** Fit the artboard within the viewport with a little padding, centred in the
+ *  area the chrome leaves free. */
+function fitView(canvas: Canvas, artboard: Artboard, inset: Inset): void {
 	const pad = 0.92;
-	const z =
-		Math.min(
-			canvas.getWidth() / artboard.width,
-			canvas.getHeight() / artboard.height,
-		) * pad;
-	const tx = (canvas.getWidth() - artboard.width * z) / 2;
-	const ty = (canvas.getHeight() - artboard.height * z) / 2;
+	// Cap the total inset: two opposing docks wider than the canvas would
+	// otherwise starve the fit area down to the 1px floor and park the artboard
+	// in a corner at ~0 zoom.
+	const cap = (a: number, b: number, size: number): [number, number] => {
+		const total = a + b;
+		const max = size * 0.8;
+		if (total <= max) return [a, b];
+		return [(a / total) * max, (b / total) * max];
+	};
+	const [left, right] = cap(inset.left, inset.right, canvas.getWidth());
+	const [top, bottom] = cap(inset.top, inset.bottom, canvas.getHeight());
+	const w = Math.max(1, canvas.getWidth() - left - right);
+	const h = Math.max(1, canvas.getHeight() - top - bottom);
+	const z = Math.min(w / artboard.width, h / artboard.height) * pad;
+	const tx = left + (w - artboard.width * z) / 2;
+	const ty = top + (h - artboard.height * z) / 2;
 	canvas.setViewportTransform([z, 0, 0, z, tx, ty]);
 }
 
@@ -530,7 +584,12 @@ export default class FabricCanvas extends Component {
 				height: wrap.clientHeight,
 			});
 			const doc = getSnapshot();
-			if (doc) fitView(canvas, doc.artboard);
+			if (doc)
+				fitView(
+					canvas,
+					doc.artboard,
+					chromeInset(wrap, getGuides().rulers),
+				);
 			canvas.requestRenderAll();
 			resetCycle();
 			reportZoom(canvas.getZoom());
@@ -672,7 +731,16 @@ export default class FabricCanvas extends Component {
 					canvas.zoomToPoint(centre(), 1);
 				} else if (cycleStep === 1) {
 					const doc = getSnapshot();
-					if (doc) fitView(canvas, doc.artboard);
+					if (doc)
+						fitView(
+							canvas,
+							doc.artboard,
+							chromeInset(
+								wrap,
+								getGuides()
+									.rulers,
+							),
+						);
 				} else {
 					canvas.zoomToPoint(
 						centre(),
@@ -1707,7 +1775,6 @@ export default class FabricCanvas extends Component {
 		// pointerdown on the wrap div — it runs before Fabric's own
 		// upper-canvas listeners, so ruler drag-outs and guide grabs never
 		// fight tool guards or object targeting.
-		const RULER_PX = 22;
 		const GUIDE_GRAB_PX = 4; // screen-px slop for grabbing an existing guide
 		// Pick a "nice" scene step (1/2/5 × 10^n) at least `min` scene units
 		// wide.
@@ -2561,6 +2628,7 @@ export default class FabricCanvas extends Component {
 							),
 							canvas.getHeight() - 44,
 						),
+						pixelSel.epoch,
 					);
 				}
 			}
@@ -3137,6 +3205,10 @@ export default class FabricCanvas extends Component {
 										c.y,
 									),
 								filters: e.layer.filters.map(
+									(f) =>
+										f.type,
+								),
+								effects: e.layer.effects.map(
 									(f) =>
 										f.type,
 								),
