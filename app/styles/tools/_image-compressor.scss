@@ -1,0 +1,290 @@
+// Styles for the image-compressor tool.
+
+@use "../crayon-config" as crayon;
+
+/* ── Image compressor ────────────────────────────────────────────────────── */
+
+.dt-ic-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-ic-drop {
+	display: block;
+	margin: crayon.size(4);
+	padding: crayon.size(12);
+	border: 2px dashed
+		color-mix(in oklch, var(--muted-foreground) 25%, transparent);
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(8);
+		height: crayon.size(8);
+		margin-bottom: crayon.size(3);
+		color: var(--muted-foreground);
+	}
+
+	@include crayon.hover {
+		border-color: color-mix(
+			in oklch,
+			var(--muted-foreground) 50%,
+			transparent
+		);
+	}
+
+	/* the file input is visually hidden, so its focus ring has to land here */
+	&:focus-within {
+		border-color: var(--primary);
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+}
+
+.dt-ic-drop-title {
+	display: block;
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-ic-drop-hint {
+	display: block;
+	margin-top: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+/* Flush action bar: file identity left, actions right. */
+.dt-ic-bar {
+	display: flex;
+	min-height: crayon.size(12);
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+	flex-wrap: wrap;
+}
+
+.dt-ic-info {
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	flex-direction: column;
+	justify-content: center;
+	padding: crayon.size(2) crayon.size(4);
+}
+
+.dt-ic-name {
+	overflow: hidden;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-ic-meta {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-ic-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&.is-primary {
+		padding-inline: crayon.size(6);
+		background: var(--primary);
+		color: var(--primary-foreground);
+		font-weight: crayon.font-weight("semibold");
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				black
+			);
+		}
+
+		&:disabled {
+			opacity: 0.5;
+			cursor: default;
+		}
+	}
+}
+
+/* Settings as a grid of stacked label-over-input cells. */
+.dt-ic-fields {
+	display: grid;
+	border-bottom: 1px solid var(--border);
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: repeat(auto-fit, minmax(crayon.size(36), 1fr));
+}
+
+.dt-ic-field {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--card);
+	gap: crayon.size(1);
+
+	> span:first-child {
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+	}
+}
+
+/* `.segmented` draws a 1px frame on all four edges; the cell borders already
+   cover them. Both classes are needed to outrank `.segmented` itself. */
+.segmented.dt-ic-formats {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	border: 0;
+
+	&.is-avif {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+}
+
+.dt-ic-format {
+	padding: crayon.size(1) crayon.size(2);
+	background: var(--background);
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-ic-slider {
+	display: flex;
+	align-items: center;
+	gap: crayon.size(2);
+}
+
+.dt-ic-quality,
+.dt-ic-effort {
+	flex: 1;
+	min-width: 0;
+	accent-color: var(--primary);
+}
+
+.dt-ic-readout {
+	min-width: 4ch;
+	color: var(--foreground);
+	font-size: crayon.font-size("sm");
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+}
+
+.dt-ic-avif {
+	display: flex;
+	align-items: center;
+	gap: crayon.size(2);
+}
+
+.dt-ic-switch {
+	accent-color: var(--primary);
+}
+
+.dt-ic-note {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+/* Before/after work surface: two panes split by a 1px rule. */
+.dt-ic-compare {
+	display: grid;
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: 1fr 1fr;
+}
+
+.dt-ic-pane {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+	margin: 0;
+	background: var(--card);
+
+	img {
+		display: block;
+		width: 100%;
+		max-height: crayon.size(120);
+		flex: 1;
+		object-fit: contain;
+		padding: crayon.size(3);
+
+		/* transparent inputs stay readable on either theme */
+		background: var(--background);
+	}
+}
+
+.dt-ic-pane-meta {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: crayon.size(2) crayon.size(3);
+	border-top: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-ic-status {
+	@include crayon.hstack(2);
+
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+	padding-block: crayon.size(6);
+	color: var(--muted-foreground);
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+}
+
+.dt-ic-after-size {
+	display: flex;
+	align-items: center;
+}
+
+.dt-ic-savings {
+	margin-left: crayon.size(1);
+	color: var(--primary);
+	font-weight: crayon.font-weight("semibold");
+
+	&.is-larger {
+		color: var(--destructive);
+	}
+}

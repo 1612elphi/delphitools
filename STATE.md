@@ -196,15 +196,12 @@ before believing any editor-rig failure that appears mid-session.
 Everything processes locally; ffmpeg.wasm stays ruled out (~31 MB +
 COOP/COEP). Per-codec wasm self-hosted in /public (jxl pattern).
 
-### Wave 3 — recorders (MediaRecorder)
+### Wave 3 — recorders (MediaRecorder) — SHIPPED `8d25430`
 
-| Tool            | id                | Core                                              |
-| --------------- | ----------------- | ------------------------------------------------- |
-| Voice Recorder  | `voice-recorder`  | getUserMedia + MediaRecorder, level meter, export |
-| Screen Recorder | `screen-recorder` | getDisplayMedia + MediaRecorder, webm download    |
-
-lib/video's `resolveDuration` already covers MediaRecorder's
-Infinity-duration output (Chromium bug 642012).
+voice-recorder and screen-recorder both shipped (level meter, pause/resume,
+playback via resolveDuration, webm/wav export, rigs). lib/video's
+`resolveDuration` covers MediaRecorder's Infinity-duration output (Chromium
+bug 642012).
 
 ### Wave 4 — first heavy dependencies
 
@@ -231,33 +228,21 @@ real frame rate for Frame Extractor's frame step (currently assumes
   lib/subtitles.ts is its parse/write core; the trimmer/atlas zoom +
   minimap machinery (ViewWindow, WaveMinimap) is its timeline seed.
 
-## Omnibox — remaining microtools
+## Omnibox microtools — SHIPPED `8d25430`
 
-Built (README table in docs/frontpage/): Encoding Tools row, Shavian,
-paper sizes, glyph lookup, Tailwind class, URL→QR, SVG optimise, algebra.
-Ceilings fixed: named CSS colours now parse; unit detection falls through
-to unit-converter's UNIT_CATEGORIES symbol index (e.g. `5km`).
+Built: Encoding Tools row, Shavian, paper sizes, glyph lookup, Tailwind
+class, URL→QR, SVG optimise, algebra. Ceilings fixed: named CSS colours now
+parse (via a canvas resolve in colour-parse, NOT color-name-list — see the
+bundle-budget note); unit detection falls through to unit-converter's
+UNIT_CATEGORIES symbol index (e.g. `5km`).
 
-## v1 features still to port (requested 2026-08-11)
+## v1 sticker port — SHIPPED `8d25430`
 
-**Stickers under each tool** and the **sticker bin at the end of the
-tool list**. v1 reference lives in git history (tree at `c6c6e6d~1`):
-
-- `components/sticker-wall.tsx` holds the wall AND the per-tool
-  `PeelSticker` mode (commits `19c45e8` peelable wall, `8567035`
-  per-tool series, `ce4ed29` last art additions).
-- Per-tool: `/stickers/lousy/<toolId>.png`, 52 die-cut stickers in 1x
-  and @2x with transparent margins clipped, rendered beneath every tool
-  page with a "Have a sticker!" caption; `app/tools/[toolId]/page.tsx`
-  in that tree shows the wiring.
-- Assets: `public/stickers/` (wall art plus `lousy/`, 108 tree entries)
-  exists ONLY in git history — the current public/ has no stickers.
-  Restore with `git checkout c6c6e6d~1 -- public/stickers`.
-- templates/index.gts's header comment lists the sticker wall among the
-  GSAP/motion-dependent "Phase 1" items (with TAXIWAY and Friends of
-  Delphi); the peel animation either brings that dependency in or gets
-  rebuilt without it. Tools added since the port (colour-atlas, the six
-  AV tools) have no lousy sticker art yet — Ruby draws those.
+Per-tool sticker + end-of-list sticker wall ported to `sticker-wall.gts` +
+`_sticker-wall.scss`, `public/stickers/` restored, wired into the tool
+template and About. Tools added since the v1 port (colour-atlas, the AV
+tools) have no `lousy/<id>.png` art yet — the per-tool sticker renders
+nothing for those; Ruby draws the missing art.
 
 ## Per-tool checklist (every tool, every time)
 
@@ -283,14 +268,51 @@ tool list**. v1 reference lives in git history (tree at `c6c6e6d~1`):
 
 ## Next actions
 
-Four handoff prompts are written in `docs/handoffs/handoffs.md` (gitignored,
-local-only):
+The four 2026-08-13 handoff prompts (AV wave 3 recorders, the omnibox
+microtools, the v1 sticker port, the bundle-budget fix) all SHIPPED in commit
+`8d25430`; the hero-art 2.8:1 tweak is `7fb292e`. Their prompts are kept in
+`docs/handoffs/handoffs.md` for the record.
 
-1. **Prompt A** — AV wave 3 recorders (voice-recorder, screen-recorder).
-2. **Prompt B** — the remaining omnibox microtools (8 reading kinds).
-3. **Prompt C** — the v1 sticker port (per-tool sticker + bin).
-4. **Prompt D** — the `main` bundle budget failure (bundle trace: leak or
-   recalibrate the ceiling).
+Next is a fresh tool backlog: `docs/handoffs/tool-backlog.md` (gitignored),
+46 planned tools across AV, images, PDF, dev/encoding, colour, calculators,
+and the turbo-nerd lane. Mirrored into PARITY.md as 🚧 planned rows. Two
+decisions recorded there (2026-08-13):
 
-The uncommitted close-out stretch is ready to commit whenever Ruby wants it;
-the `gradient.mjs` rewrite and the `layers-panel` guard are already done.
+- Text & Typography tools are NOT built standalone — line/case/whitespace/
+  readability/fancy-unicode utilities fold into the Text Scratchpad
+  (`markdown-writer`) instead.
+- Metadata Stripper stays plain EXIF/GPS/XMP; no AI, no C2PA credential
+  removal.
+
+Batches, in order: (1) PDF + Images pack — BUILT 2026-08-13, uncommitted;
+(2) dev-encoder pack; (3) AV wave 4 (Video Atlas + Video Muter, which unlock
+true sample rate in Audio Atlas and real fps in Frame Extractor); (4)
+turbo-nerd pack. The parallel one-prompt-per-agent flow works; prompts live in
+`docs/handoffs/handoffs.md`.
+
+Batch 1 (uncommitted): pdf-organiser, image-to-pdf, metadata-stripper,
+image-compressor. Four tools + libs (`pdf-pages.ts`, `metadata.ts`,
+`image-compress.ts`) + rigs + unit tests. Codec wasm self-hosted in
+`public/compress/` (jxl pattern, ignored by lint/prettier like `public/jxl/`);
+jSquash deps added (mozjpeg/webp/oxipng/avif), package-lock resynced. PARITY
+backlog 46→42, tracked 72, web 68. All gates green (lint, 402 QUnit, 51 rigs,
+static budget main 127 kB). Copy gaps open for Ruby's `slopsieve`.
+
+Also uncommitted (2026-08-13):
+
+- **Timecode Calculator** (`timecode-calc`, Audio & Video) — a user request.
+  SMPTE add/subtract on `lib/timecode.ts`, drop-frame correct (29.97/59.94),
+  misinput-proof parser (right-aligns short input, reports bad fields by code,
+  snaps dropped drop-frame values up). 10 unit tests incl. a full 0–2h
+  round-trip. lint + 412 QUnit + classes green. PARITY tracked 73, web 69.
+- **Category split**: PDF is now its own registry category
+  (pdf-preflight, pdf-organiser, image-to-pdf); Print & Production keeps the
+  imposers (imposer, zine-imposer). The line is document-vs-physical-paper. No
+  mega "PDF Toolkit" tool — the one-tool-one-page model and per-intent SEO win.
+  When the remaining PDF backlog tools ship, factor a shared `lib/pdf.ts`
+  (intake + page-thumbnail grid); four components still import pdf-lib directly.
+  Backlog doc's PDF section reflects this. PARITY.md's Print & Production
+  section is not yet split to match (follow-up).
+
+Batches ready to commit once gaps are filled. The backlog now has a distinct
+**PDF batch** (Numberer/Stamper, Rotate/Crop, Compressor + the shared lib).

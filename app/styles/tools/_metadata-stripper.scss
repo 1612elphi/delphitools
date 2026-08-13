@@ -1,0 +1,315 @@
+// Styles for the metadata-stripper tool.
+
+@use "../crayon-config" as crayon;
+
+.dt-strip {
+	@include crayon.vstack(4);
+}
+
+.dt-strip-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-strip-drop {
+	@include crayon.vstack(2);
+
+	align-items: center;
+	justify-content: center;
+	padding: crayon.size(12) crayon.size(4);
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(8);
+		height: crayon.size(8);
+	}
+
+	&:focus-within {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.dt-strip-drop-title {
+	color: var(--foreground);
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("semibold");
+}
+
+.dt-strip-drop-hint {
+	font-size: crayon.font-size("sm");
+}
+
+/* Flush action bar: file identity left, tools right. */
+.dt-strip-bar {
+	display: flex;
+	min-height: crayon.size(10);
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+
+	> .dt-icon {
+		align-self: center;
+		width: crayon.size(4);
+		height: crayon.size(4);
+		margin-left: crayon.size(3);
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-strip-name {
+	align-self: center;
+	overflow: hidden;
+	padding-inline: crayon.size(2);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("semibold");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-strip-size {
+	align-self: center;
+	margin-right: auto;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.dt-strip-bar-tools {
+	display: flex;
+	align-items: stretch;
+}
+
+.dt-strip-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(3);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&.is-primary {
+		background: var(--primary);
+		color: var(--primary-foreground);
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				transparent
+			);
+			color: var(--primary-foreground);
+		}
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		pointer-events: none;
+	}
+
+	/* the file input is visually hidden, so its focus ring has to land here */
+	&:focus-within,
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+/* The Download label drops to icon-only below the sm breakpoint. */
+.dt-strip-btn-text {
+	display: none;
+
+	@include crayon.screen("sm") {
+		display: inline;
+	}
+}
+
+/* Settings as a grid of stacked label-over-control cells. */
+.dt-strip-settings {
+	display: grid;
+	border-bottom: 1px solid var(--border);
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: repeat(auto-fit, minmax(crayon.size(32), 1fr));
+}
+
+.dt-strip-cell {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--card);
+	gap: crayon.size(1);
+
+	> span:first-child {
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+	}
+}
+
+.dt-strip-cell-row {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	font-size: crayon.font-size("sm");
+}
+
+.dt-strip-cell-value {
+	overflow: hidden;
+	font-size: crayon.font-size("sm");
+	font-variant-numeric: tabular-nums;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-strip-switch {
+	width: crayon.size(4);
+	height: crayon.size(4);
+	margin: 0;
+	accent-color: var(--primary);
+}
+
+/* Before/after panes. */
+.dt-strip-panes {
+	display: grid;
+	grid-template-columns: 1fr;
+
+	@include crayon.screen("md") {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.dt-strip-pane {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+
+	/* Stacked on a phone, so the divider between panes runs the other way. */
+	&.is-right {
+		border-top: 2px solid var(--border);
+
+		@include crayon.screen("md") {
+			border-top: 0;
+			border-left: 2px solid var(--border);
+		}
+	}
+}
+
+.dt-strip-pane-head {
+	display: flex;
+	min-height: crayon.size(10);
+	align-items: center;
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-strip-pane-label {
+	padding-inline: crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("semibold");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.dt-strip-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.dt-strip-row {
+	display: flex;
+	align-items: baseline;
+	padding: crayon.size(2) crayon.size(3);
+	border-bottom: 1px solid var(--border);
+	gap: crayon.size(2);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	.dt-icon {
+		align-self: center;
+		width: crayon.size(4);
+		height: crayon.size(4);
+		flex-shrink: 0;
+		color: var(--destructive);
+	}
+
+	/* GPS is the headline privacy item; the row gets the danger tint. */
+	&.is-gps {
+		background: color-mix(
+			in oklch,
+			var(--destructive) 8%,
+			transparent
+		);
+
+		.dt-strip-row-detail {
+			color: var(--destructive);
+			font-weight: crayon.font-weight("semibold");
+		}
+	}
+}
+
+.dt-strip-row-label {
+	flex-shrink: 0;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.dt-strip-row-detail {
+	overflow-wrap: anywhere;
+	font-size: crayon.font-size("sm");
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-strip-note {
+	margin: 0;
+	padding: crayon.size(4) crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-strip-clean {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	margin: 0;
+	padding: crayon.size(4) crayon.size(3);
+	color: var(--primary);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("semibold");
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+}
+
+.dt-strip-error {
+	padding: crayon.size(3);
+	border: 1px solid
+		color-mix(in oklch, var(--destructive) 50%, transparent);
+	background: color-mix(in oklch, var(--destructive) 10%, transparent);
+	color: var(--destructive);
+	font-size: crayon.font-size("sm");
+}

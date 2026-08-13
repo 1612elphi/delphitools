@@ -27,6 +27,10 @@ const UNSTYLED_CONTAINERS = new Set([
 	'sub-grip', // the draggable modifier's handle selector
 	'sub-preset-strip', // .segmented carries the strip's own styling
 	'sub-topbar-seg-hook', // span[title] the parent repo's rigs read
+	// image-compressor: selectors image-compressor.mjs drives; .dt-ic-btn and
+	// .dt-ic-pane img carry the styling.
+	'dt-ic-after-img', // rigs fetch the encoded bytes off its blob src
+	'dt-ic-download', // rigs read its disabled state
 ]);
 
 function* walk(dir) {

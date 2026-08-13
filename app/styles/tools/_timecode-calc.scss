@@ -1,0 +1,165 @@
+@use "../crayon-config" as crayon;
+
+.dt-tc {
+	display: flex;
+	flex-direction: column;
+	gap: crayon.size(4);
+}
+
+.dt-tc-rate {
+	display: flex;
+	flex-direction: column;
+	gap: crayon.size(1);
+
+	label {
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+	}
+}
+
+.dt-tc-select {
+	appearance: auto;
+	border: 2px solid var(--border);
+	background: var(--card);
+	padding: crayon.size(1.5) crayon.size(2);
+	font-family: inherit;
+	font-size: crayon.font-size("sm");
+	max-inline-size: 16rem;
+}
+
+.dt-tc-grid {
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	gap: crayon.size(3);
+	align-items: end;
+
+	@media (width <= 640px) {
+		grid-template-columns: 1fr;
+	}
+}
+
+.dt-tc-cell {
+	display: flex;
+	flex-direction: column;
+	gap: crayon.size(1);
+
+	label {
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+	}
+}
+
+.dt-tc-input {
+	border: 2px solid var(--border);
+	background: var(--card);
+	padding: crayon.size(2);
+	font-family: var(--font-mono);
+	font-size: crayon.font-size("lg");
+	letter-spacing: 0.04em;
+
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -2px;
+	}
+}
+
+.dt-tc-msg {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: crayon.size(1.5);
+	font-size: crayon.font-size("xs");
+
+	&.error {
+		color: var(--destructive);
+	}
+
+	&.info {
+		color: var(--muted-foreground);
+	}
+
+	code {
+		font-family: var(--font-mono);
+		font-size: 11px;
+	}
+}
+
+// The +/- operator, a vertical 2-cell segmented between the two inputs.
+.dt-tc-op {
+	grid-template-columns: 1fr;
+	align-self: end;
+	margin-bottom: crayon.size(1);
+}
+
+.dt-tc-op-cell {
+	display: grid;
+	place-items: center;
+	inline-size: crayon.size(9);
+	block-size: crayon.size(6);
+	background: var(--card);
+	font-size: crayon.font-size("lg");
+	cursor: pointer;
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+
+	@media (width <= 640px) {
+		inline-size: 100%;
+	}
+}
+
+.dt-tc-result {
+	display: flex;
+	flex-direction: column;
+	gap: crayon.size(3);
+	border: 2px solid var(--border);
+	background: var(--muted);
+	padding: crayon.size(4);
+}
+
+.dt-tc-tc {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: crayon.size(3);
+	background: none;
+	border: 0;
+	padding: 0;
+	color: inherit;
+	font-family: var(--font-mono);
+	font-size: clamp(1.75rem, 6vw, 3rem);
+	font-weight: 700;
+	letter-spacing: 0.03em;
+	cursor: pointer;
+
+	.dt-icon {
+		inline-size: 18px;
+		block-size: 18px;
+		color: var(--muted-foreground);
+		flex-shrink: 0;
+	}
+}
+
+.dt-tc-readout {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 2px;
+	margin: 0;
+	border-top: 1px solid var(--border);
+	padding-top: crayon.size(3);
+
+	dt {
+		color: var(--muted-foreground);
+		font-size: 10px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	dd {
+		margin: 0;
+		font-family: var(--font-mono);
+		font-size: crayon.font-size("sm");
+	}
+}

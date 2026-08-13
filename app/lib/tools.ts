@@ -268,6 +268,16 @@ export const toolCategories: ToolCategory[] = [
 				accepts: ['.png'],
 			},
 			{
+				id: 'image-compressor',
+				name: 'Image Compressor',
+				description:
+					'Shrink JPEG, WebP, PNG and AVIF files',
+				icon: 'shrink',
+				href: '/tools/image-compressor',
+				accepts: ['image/*'],
+				new: true,
+			},
+			{
 				id: 'image-converter',
 				name: 'Image Converter',
 				description:
@@ -301,6 +311,16 @@ export const toolCategories: ToolCategory[] = [
 				icon: 'scan-line',
 				href: '/tools/image-tracer',
 				accepts: ['image/*'],
+			},
+			{
+				id: 'metadata-stripper',
+				name: 'Metadata Stripper',
+				description:
+					'Strip EXIF and GPS metadata from images',
+				icon: 'shield-check',
+				href: '/tools/metadata-stripper',
+				accepts: ['image/*'],
+				new: true,
 			},
 			{
 				id: 'paste-image',
@@ -388,6 +408,15 @@ export const toolCategories: ToolCategory[] = [
 				icon: 'captions',
 				href: '/tools/subtitle-converter',
 				accepts: ['.srt', '.vtt'],
+				new: true,
+			},
+			{
+				id: 'timecode-calc',
+				name: 'Timecode Calculator',
+				description:
+					'Add and subtract timecodes, drop-frame aware',
+				icon: 'clock',
+				href: '/tools/timecode-calc',
 				new: true,
 			},
 			{
@@ -522,8 +551,8 @@ export const toolCategories: ToolCategory[] = [
 		],
 	},
 	{
-		id: 'print-production',
-		name: 'Print & Production',
+		id: 'pdf',
+		name: 'PDF',
 		tools: [
 			{
 				id: 'pdf-preflight',
@@ -534,6 +563,30 @@ export const toolCategories: ToolCategory[] = [
 				href: '/tools/pdf-preflight',
 				accepts: ['.pdf'],
 			},
+			{
+				id: 'pdf-organiser',
+				name: 'PDF Organiser',
+				description:
+					'Merge, split and rearrange PDF pages',
+				icon: 'file-stack',
+				href: '/tools/pdf-organiser',
+				accepts: ['.pdf'],
+			},
+			{
+				id: 'image-to-pdf',
+				name: 'Images ⇄ PDF',
+				description:
+					'Turn images into a PDF, or pages into PNGs',
+				icon: 'file-image',
+				href: '/tools/image-to-pdf',
+				accepts: ['image/*', '.pdf'],
+			},
+		],
+	},
+	{
+		id: 'print-production',
+		name: 'Print & Production',
+		tools: [
 			{
 				id: 'imposer',
 				name: 'Print Imposer',

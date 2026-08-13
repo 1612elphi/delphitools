@@ -23,9 +23,10 @@ applicable on this surface (hardware/native or format constraint).
 
 ## Summary
 
-- **Tools tracked:** 68
+- **Tools tracked:** 73 (shipped, any surface)
 - **On all three surfaces:** 41
-- **Web:** 64 · **CLI:** 46 · **iOS:** 51
+- **Web:** 69 · **CLI:** 46 · **iOS:** 51
+- **Backlog:** 42 planned tools (web-first) — see the Backlog section at the end.
 - iOS-exclusive (native/hardware): Colour Camera, Document Scanner, Font Installer, NFC Reader/Writer
 - Web-exclusive: Pixel Picker, Text Editor (pandoc.wasm note: GPL — incompatible with the App Store, and won't run on-device on iOS, hence Document Converter I 🚧)
 - CLI-only sub-feature: `hash` (text hashing, folded into Encoding Tools elsewhere)
@@ -71,10 +72,12 @@ Picker is similarly web-only.
 | Background Remover (`background-remover`)     | ✅  |      ✅ `rmbg`      | ✅  | ML model download                                                                                                                                                                                                            |
 | Favicon Generator (`favicon-genny`)           | ✅  |    ✅ `favicon`     | ✅  |                                                                                                                                                                                                                              |
 | Image Clipper (`image-clipper`)               | ✅  |      ✅ `clip`      | ✅  | trim transparent edges                                                                                                                                                                                                       |
+| Image Compressor (`image-compressor`)         | ✅  |         ❌          | ❌  | new 2026-08; MozJPEG/WebP/OxiPNG/AVIF re-encode in a worker on @jsquash wasm, AVIF gated (slow)                                                                                                                              |
 | Image Converter (`image-converter`)           | ✅  |    ✅ `convert`     | ✅  | CLI: + jxl (lossless-only) + icns (2026-07)                                                                                                                                                                                  |
 | Image Splitter (`image-splitter`)             | ✅  |     ✅ `split`      | ✅  |                                                                                                                                                                                                                              |
 | Image Stitcher (`image-stitcher`)             | ✅  |     ✅ `stitch`     | ✅  | new 2026-07; edge-stitch + batch grid. CLI: flat row/col + grid; nested mosaics editor-only. iOS (2026-07): full mosaic editor + batch grid + Stitch Images intent; PNG/JPEG only — ImageIO has no WebP/JXL encoder (probed) |
 | Image Tracer (`image-tracer`)                 | ✅  |     ✅ `trace`      | ✅  | raster → SVG                                                                                                                                                                                                                 |
+| Metadata Stripper (`metadata-stripper`)       | ✅  |         ❌          | ❌  | new 2026-08; EXIF/GPS/XMP/IPTC strip without re-encoding (JPEG/PNG/WebP/GIF segments), before/after removal list, ICC kept by default                                                                                        |
 | SVG Optimiser (`svg-optimiser`)               | ✅  |      ✅ `svgo`      | ✅  |                                                                                                                                                                                                                              |
 | Paste Image (`paste-image`)                   | ✅  |         ➖          | ✅  | clipboard-driven                                                                                                                                                                                                             |
 | Placeholder Generator (`placeholder-genny`)   | ✅  |  ✅ `placeholder`   | ✅  | CLI: png or svg output                                                                                                                                                                                                       |
@@ -83,16 +86,17 @@ Picker is similarly web-only.
 
 ## Audio & Video
 
-| Tool (web ID)                             |  W  |  C  |  I  | Notes                                                                                     |
-| ----------------------------------------- | :-: | :-: | :-: | ----------------------------------------------------------------------------------------- |
-| Audio Atlas (`audio-atlas`)               | ✅  | ❌  | ❌  | new 2026-08; one-file interrogation: meta, peak dBFS, BS.1770 LUFS, waveform, spectrogram |
-| Audio Trimmer (`audio-trimmer`)           | ✅  | ❌  | ❌  | new 2026-08; drag selection, fades, wav export (`lib/audio.ts`), mp3 deferred             |
-| Frame Extractor (`frame-extractor`)       | ✅  | ❌  | ❌  | new 2026-08; video stills + contact sheet, `<video>` + canvas                             |
-| Screen Recorder (`screen-recorder`)       | ✅  | ❌  | ❌  | new 2026-08; getDisplayMedia + MediaRecorder, optional mic mix-in, webm download          |
-| Subtitle Converter (`subtitle-converter`) | ✅  | ❌  | ❌  | new 2026-08; srt↔vtt + shift/scale on `lib/subtitles.ts`                                  |
-| Voice Recorder (`voice-recorder`)         | ✅  | ❌  | ❌  | new 2026-08; getUserMedia + MediaRecorder, level meter, pause/resume, playback, download  |
-| Video to GIF (`video-to-gif`)             | ✅  | ❌  | ❌  | new 2026-08; canvas frames through `lib/gif.ts` `AnimatedGifEncoder`, no wasm             |
-| Waveform Generator (`waveform-genny`)     | ✅  | ❌  | ❌  | new 2026-08; waveform → PNG/SVG at social sizes                                           |
+| Tool (web ID)                             |  W  |  C  |  I  | Notes                                                                                                          |
+| ----------------------------------------- | :-: | :-: | :-: | -------------------------------------------------------------------------------------------------------------- |
+| Audio Atlas (`audio-atlas`)               | ✅  | ❌  | ❌  | new 2026-08; one-file interrogation: meta, peak dBFS, BS.1770 LUFS, waveform, spectrogram                      |
+| Audio Trimmer (`audio-trimmer`)           | ✅  | ❌  | ❌  | new 2026-08; drag selection, fades, wav export (`lib/audio.ts`), mp3 deferred                                  |
+| Frame Extractor (`frame-extractor`)       | ✅  | ❌  | ❌  | new 2026-08; video stills + contact sheet, `<video>` + canvas                                                  |
+| Screen Recorder (`screen-recorder`)       | ✅  | ❌  | ❌  | new 2026-08; getDisplayMedia + MediaRecorder, optional mic mix-in, webm download                               |
+| Subtitle Converter (`subtitle-converter`) | ✅  | ❌  | ❌  | new 2026-08; srt↔vtt + shift/scale on `lib/subtitles.ts`                                                       |
+| Timecode Calculator (`timecode-calc`)     | ✅  | ❌  | ❌  | new 2026-08; SMPTE add/subtract, drop-frame correct, misinput-proof parser on `lib/timecode.ts` (user request) |
+| Voice Recorder (`voice-recorder`)         | ✅  | ❌  | ❌  | new 2026-08; getUserMedia + MediaRecorder, level meter, pause/resume, playback, download                       |
+| Video to GIF (`video-to-gif`)             | ✅  | ❌  | ❌  | new 2026-08; canvas frames through `lib/gif.ts` `AnimatedGifEncoder`, no wasm                                  |
+| Waveform Generator (`waveform-genny`)     | ✅  | ❌  | ❌  | new 2026-08; waveform → PNG/SVG at social sizes                                                                |
 
 ## Social Media
 
@@ -121,11 +125,13 @@ Picker is similarly web-only.
 
 ## Print & Production
 
-| Tool (web ID)                     |  W  |       C        |  I  | Notes                                     |
-| --------------------------------- | :-: | :------------: | :-: | ----------------------------------------- |
-| PDF Preflight (`pdf-preflight`)   | ✅  | ✅ `preflight` | ✅  |                                           |
-| Print Imposer (`imposer`)         | ✅  |  ✅ `impose`   | ✅  | multi-sheet: saddle/perfect/N-up          |
-| **Zine Imposer (`zine-imposer`)** | ✅  |   ✅ `zine`    | ✅  | single-sheet folds — see fold table below |
+| Tool (web ID)                     |  W  |       C        |  I  | Notes                                                                                               |
+| --------------------------------- | :-: | :------------: | :-: | --------------------------------------------------------------------------------------------------- |
+| PDF Preflight (`pdf-preflight`)   | ✅  | ✅ `preflight` | ✅  |                                                                                                     |
+| Print Imposer (`imposer`)         | ✅  |  ✅ `impose`   | ✅  | multi-sheet: saddle/perfect/N-up                                                                    |
+| **Zine Imposer (`zine-imposer`)** | ✅  |   ✅ `zine`    | ✅  | single-sheet folds — see fold table below                                                           |
+| PDF Organiser (`pdf-organiser`)   | ✅  |       ❌       | ❌  | new 2026-08; merge, split (ranges / one file per page), drag-reorder page grid with rotate + delete |
+| Images ⇄ PDF (`image-to-pdf`)     | ✅  |       ❌       | ❌  | new 2026-08; one page per image with size/fit/margin; PDF pages out as PNGs                         |
 
 ## Other / Generators
 
@@ -179,3 +185,32 @@ only and draws no guide lines, so the split cut is documented, not rendered).
 
 Candidate future folds (single-sheet only — keep multi-sheet in Print Imposer):
 4-page folio · quarter-fold card · tri-fold / gate leaflet · 16-page mini-zine.
+
+---
+
+## Backlog — planned tools (web-first)
+
+Not yet built. The full backlog with per-tool notes and effort tags lives in
+`docs/handoffs/tool-backlog.md` (local-only). These are all web-first; the CLI
+and iOS surfaces pick them up afterwards where they apply. When one ships, move
+its row into the matching category table above and flip W to ✅.
+
+**Decisions (2026-08-13):**
+
+- Text & Typography utilities (line sort/dedupe, case conversion, whitespace and
+  invisible-char cleaning, readability score, fancy-unicode) are NOT standalone
+  tools — they fold into the Text Scratchpad (`markdown-writer`), already a
+  "textarea + text-manipulation utilities" surface.
+- Metadata Stripper stays plain EXIF/GPS/XMP; no AI, no C2PA credential removal.
+
+| Category               | Planned tools                                                                                                                                                                                                                                                                                                   |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Audio & Video          | Video Atlas · Video Muter · Audio Normaliser · Audio Extractor · Audio Speedup · Audio Converter · Video Trimmer · Video Converter · Video Compressor · Video Social Cropper · Subtitle Studio                                                                                                                  |
+| Images & Assets        | EXIF Viewer · Dithering · Blurhash / ThumbHash · Sprite Sheet Packer                                                                                                                                                                                                                                            |
+| Print & Production     | PDF Page Numberer / Stamper · PDF Rotate / Crop · PDF Compressor · Label / Card Sheet Layout                                                                                                                                                                                                                    |
+| Other / Generators     | JSON Formatter / Viewer · Data Format Converter · JWT Decoder · UUID / NanoID Generator · Password / Passphrase Generator · Hash / Checksum (file drop) · Cron Expression Builder · Cubic-bezier / Easing Editor · Lorem Ipsum Generator · URL / Query-string Editor · HTTP Status Reference · MIME Type Lookup |
+| Colour                 | Colour Mixer / Blender · Data-viz Scale Generator · Kelvin → RGB                                                                                                                                                                                                                                                |
+| Calculators & Encoding | Aspect Ratio Calculator · Percentage Calculator · Bitwise / Binary Calculator · Roman Numeral Converter                                                                                                                                                                                                         |
+| Turbo-nerd             | IPA Transcription · Morse Encoder / Decoder · Braille Converter · NATO Phonetic                                                                                                                                                                                                                                 |
+
+Total: 42 planned (11 AV · 4 image · 4 PDF · 12 dev · 3 colour · 4 calc · 4 turbo-nerd).

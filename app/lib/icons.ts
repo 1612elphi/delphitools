@@ -88,7 +88,10 @@ import iEyeOff from 'lucide-static/icons/eye-off.svg?raw';
 import iFastForward from 'lucide-static/icons/fast-forward.svg?raw';
 import iFileCode from 'lucide-static/icons/file-code.svg?raw';
 import iFileImage from 'lucide-static/icons/file-image.svg?raw';
+import iFileOutput from 'lucide-static/icons/file-output.svg?raw';
+import iFilePlus from 'lucide-static/icons/file-plus.svg?raw';
 import iFileSearch from 'lucide-static/icons/file-search.svg?raw';
+import iFileStack from 'lucide-static/icons/file-stack.svg?raw';
 import iFileText from 'lucide-static/icons/file-text.svg?raw';
 import iFileType from 'lucide-static/icons/file-type.svg?raw';
 import iFileType2 from 'lucide-static/icons/file-type-2.svg?raw';
@@ -131,6 +134,7 @@ import iLoaderCircle from 'lucide-static/icons/loader-circle.svg?raw';
 import iLock from 'lucide-static/icons/lock.svg?raw';
 import iLockOpen from 'lucide-static/icons/lock-open.svg?raw';
 import iMagnet from 'lucide-static/icons/magnet.svg?raw';
+import iMapPin from 'lucide-static/icons/map-pin.svg?raw';
 import iMaximize from 'lucide-static/icons/maximize.svg?raw';
 import iMaximize2 from 'lucide-static/icons/maximize-2.svg?raw';
 import iMessageSquarePlus from 'lucide-static/icons/message-square-plus.svg?raw';
@@ -177,6 +181,7 @@ import iScissorsLineDashed from 'lucide-static/icons/scissors-line-dashed.svg?ra
 import iSearch from 'lucide-static/icons/search.svg?raw';
 import iSettings from 'lucide-static/icons/settings.svg?raw';
 import iShapes from 'lucide-static/icons/shapes.svg?raw';
+import iShieldCheck from 'lucide-static/icons/shield-check.svg?raw';
 import iShrink from 'lucide-static/icons/shrink.svg?raw';
 import iShuffle from 'lucide-static/icons/shuffle.svg?raw';
 import iSlash from 'lucide-static/icons/slash.svg?raw';
@@ -299,7 +304,10 @@ export const icons: Record<string, string> = {
 	'fast-forward': iFastForward,
 	'file-code': iFileCode,
 	'file-image': iFileImage,
+	'file-output': iFileOutput,
+	'file-plus': iFilePlus,
 	'file-search': iFileSearch,
+	'file-stack': iFileStack,
 	'file-text': iFileText,
 	'file-type': iFileType,
 	'file-type-2': iFileType2,
@@ -342,6 +350,7 @@ export const icons: Record<string, string> = {
 	lock: iLock,
 	'lock-open': iLockOpen,
 	magnet: iMagnet,
+	'map-pin': iMapPin,
 	maximize: iMaximize,
 	'maximize-2': iMaximize2,
 	'message-square-plus': iMessageSquarePlus,
@@ -388,6 +397,7 @@ export const icons: Record<string, string> = {
 	search: iSearch,
 	settings: iSettings,
 	shapes: iShapes,
+	'shield-check': iShieldCheck,
 	shrink: iShrink,
 	shuffle: iShuffle,
 	slash: iSlash,

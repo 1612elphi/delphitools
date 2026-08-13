@@ -15,6 +15,10 @@ ember-cli-update.json
 # libjxl emscripten build, copied verbatim from @jsquash/jxl
 /public/jxl/
 
+# @jsquash mozjpeg/webp/oxipng/avif codec builds + licenses, copied verbatim,
+# and their hand-written dispatcher worker (kept in /public idiom)
+/public/compress/
+
 # vendored MIT pandoc-wasm wrapper, copied verbatim
 /app/lib/pandoc/pandoc-core.js
 

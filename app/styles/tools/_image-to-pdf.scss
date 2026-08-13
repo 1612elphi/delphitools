@@ -1,0 +1,301 @@
+// Styles for the image-to-pdf tool.
+
+@use "../crayon-config" as crayon;
+
+/* ── Image ⇄ PDF ─────────────────────────────────────────────────────────── */
+
+.dt-i2p {
+	@include crayon.vstack(4);
+}
+
+.dt-i2p-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-i2p-dir {
+	grid-template-columns: repeat(2, 1fr);
+	border: 0;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-i2p-drop {
+	display: block;
+	margin: crayon.size(4);
+	padding: crayon.size(12);
+	border: 2px dashed
+		color-mix(in oklch, var(--muted-foreground) 25%, transparent);
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(8);
+		height: crayon.size(8);
+		margin-bottom: crayon.size(3);
+		color: var(--muted-foreground);
+	}
+
+	@include crayon.hover {
+		border-color: color-mix(
+			in oklch,
+			var(--muted-foreground) 50%,
+			transparent
+		);
+	}
+
+	/* the file input is visually hidden, so its focus ring has to land here */
+	&:focus-within {
+		border-color: var(--primary);
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+}
+
+.dt-i2p-drop-title {
+	display: block;
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-i2p-drop-hint {
+	display: block;
+	margin-top: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-i2p-bar {
+	display: flex;
+	min-height: crayon.size(12);
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+	flex-wrap: wrap;
+}
+
+.dt-i2p-info {
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	align-items: center;
+	padding: crayon.size(2) crayon.size(4);
+}
+
+.dt-i2p-count {
+	overflow: hidden;
+	font-size: crayon.font-size("sm");
+	font-variant-numeric: tabular-nums;
+	font-weight: crayon.font-weight("bold");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-i2p-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		pointer-events: none;
+	}
+
+	&.is-primary {
+		padding-inline: crayon.size(6);
+		background: var(--primary);
+		color: var(--primary-foreground);
+		font-weight: crayon.font-weight("semibold");
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				black
+			);
+		}
+	}
+}
+
+/* Settings as a grid of stacked label-over-control cells. */
+.dt-i2p-settings {
+	display: grid;
+	border-bottom: 1px solid var(--border);
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: repeat(auto-fit, minmax(crayon.size(32), 1fr));
+}
+
+.dt-i2p-field {
+	display: flex;
+	flex-direction: column;
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--card);
+	gap: crayon.size(1);
+
+	> span {
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+	}
+
+	select {
+		width: 100%;
+		padding: crayon.size(1) crayon.size(2);
+		border: 1px solid var(--border);
+		background: var(--background);
+		color: var(--foreground);
+		font: inherit;
+		font-size: crayon.font-size("sm");
+
+		&:focus-visible {
+			outline: 2px solid var(--primary);
+			outline-offset: -1px;
+		}
+	}
+}
+
+.dt-i2p-status {
+	font-size: crayon.font-size("sm");
+	font-variant-numeric: tabular-nums;
+	text-transform: none;
+}
+
+.dt-i2p-orient {
+	grid-template-columns: repeat(3, 1fr);
+}
+
+.dt-i2p-fit {
+	grid-template-columns: repeat(3, 1fr);
+}
+
+.dt-i2p-margin {
+	grid-template-columns: repeat(4, 1fr);
+}
+
+.dt-i2p-scale {
+	grid-template-columns: repeat(3, 1fr);
+}
+
+.dt-i2p-opt {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	justify-content: center;
+	padding: crayon.size(1) crayon.size(3);
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	text-transform: capitalize;
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		pointer-events: none;
+	}
+}
+
+.dt-i2p-error {
+	padding: crayon.size(2) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+	color: var(--destructive);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-i2p-grid {
+	display: grid;
+	padding: crayon.size(3);
+	gap: crayon.size(3);
+	grid-template-columns: repeat(auto-fill, minmax(crayon.size(44), 1fr));
+	list-style: none;
+}
+
+.dt-i2p-cell {
+	border: 1px solid var(--border);
+	background: var(--card);
+
+	&[draggable="true"] {
+		cursor: grab;
+	}
+
+	&.is-drag-over {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.dt-i2p-thumb {
+	display: block;
+	width: 100%;
+	aspect-ratio: 1 / 1.2;
+	object-fit: contain;
+	background: var(--muted);
+}
+
+.dt-i2p-cell-foot {
+	display: flex;
+	align-items: stretch;
+	justify-content: space-between;
+	border-top: 1px solid var(--border);
+}
+
+.dt-i2p-badge {
+	flex: 1;
+	align-self: center;
+	overflow: hidden;
+	padding-inline: crayon.size(2);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-i2p-tool {
+	display: flex;
+	align-items: center;
+	padding: crayon.size(1) crayon.size(2);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(3.5);
+		height: crayon.size(3.5);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}

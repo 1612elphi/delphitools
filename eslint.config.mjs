@@ -46,13 +46,16 @@ const parserOptions = {
 
 export default defineConfig([
 	// Everything here is vendored verbatim and served as-is: public/jxl is the
-	// libjxl emscripten build from @jsquash/jxl, pandoc-core.js is the MIT
+	// libjxl emscripten build from @jsquash/jxl, public/compress the @jsquash
+	// mozjpeg/webp/oxipng/avif codec builds and their hand-written dispatcher,
+	// pandoc-core.js is the MIT
 	// pandoc-wasm wrapper, and imagetracer is the standalone build
 	// image-tracer builds its worker from.
 	globalIgnores([
 		'dist/',
 		'coverage/',
 		'public/jxl/',
+		'public/compress/',
 		'public/lib/imagetracer_v1.2.6.js',
 		'app/lib/pandoc/pandoc-core.js',
 		// Substrata harnesses and the dictionary builder predate this repo's
