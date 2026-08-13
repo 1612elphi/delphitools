@@ -1716,7 +1716,10 @@ $header-height: crayon.size(14);
 .dt-hero-art {
 	width: 100%;
 	max-width: 42rem;
-	height: auto;
+	// Hero art is authored at 2.8:1 (width:height); pin the box to that and
+	// stretch, so a slightly-off source (delphi.png is 2.84:1) still fits.
+	aspect-ratio: 2.8 / 1;
+	object-fit: fill;
 }
 
 .dt-hero-flip {
