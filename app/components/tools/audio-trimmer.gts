@@ -16,6 +16,10 @@ import {
 	extractPeaks,
 	ViewWindow,
 } from 'delphitools-v2/lib/audio';
+import { AUDIO_ACCEPT, acceptAttr } from 'delphitools-v2/lib/tools';
+
+/** Kept in step with the registry entry, which routes dropped files. */
+const ACCEPT = acceptAttr(AUDIO_ACCEPT);
 
 const DROP_TITLE = 'Drop an audio file here or click to upload';
 
@@ -373,7 +377,7 @@ export default class AudioTrimmerTool extends Component {
 					<label class="dt-at-drop">
 						<input
 							type="file"
-							accept="audio/*"
+							accept={{ACCEPT}}
 							class="dt-sr-only"
 							{{on
 								"change"

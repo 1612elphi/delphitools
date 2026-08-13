@@ -186,6 +186,14 @@
 	}
 }
 
+.dt-omni-thumb {
+	width: crayon.size(10);
+	height: crayon.size(10);
+	margin-left: auto;
+	border: 1px solid var(--border);
+	background: var(--background);
+}
+
 .dt-omni-open {
 	display: flex;
 	align-items: center;

@@ -1,11 +1,13 @@
 import RouteTemplate from 'ember-route-template';
 import { pageTitle } from 'ember-page-title';
 import Icon from 'delphitools-v2/components/icon';
+import { PeelSticker } from 'delphitools-v2/components/sticker-wall';
 import type { ToolModel } from 'delphitools-v2/routes/tools/tool';
 
 // The shape every tool page inherits: capped header block, then the tool's own
-// component at whatever width it asked for. Mirrors the Next app's
-// tools/[toolId]/page.tsx, minus the sticker (GSAP, Phase 1).
+// component at whatever width it asked for, then the per-tool lousy sticker
+// (renders nothing for tools with no art). Mirrors the Next app's
+// tools/[toolId]/page.tsx.
 
 export default RouteTemplate<{ Args: { model: ToolModel } }>(
 	<template>
@@ -71,6 +73,13 @@ export default RouteTemplate<{ Args: { model: ToolModel } }>(
 						</p>
 					</div>
 				{{/if}}
+
+				<div class="dt-tool-sticker">
+					<PeelSticker
+						@tool={{@model.tool.id}}
+						@label={{@model.tool.name}}
+					/>
+				</div>
 			</div>
 		</div>
 	</template>,

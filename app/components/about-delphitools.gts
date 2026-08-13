@@ -1,4 +1,5 @@
 import type { TOC } from '@ember/component/template-only';
+import ColourPaletteDialog from 'delphitools-v2/components/colour-palette-dialog';
 
 // Body of the About dialog. Kept as its own component because Substrata's
 // Help > About pane renders the same content, as in the Next app: one source
@@ -147,6 +148,11 @@ const AboutDelphitoolsBody: TOC<{ Element: HTMLDivElement }> = <template>
 					</a>
 				{{/each}}
 			</div>
+		</div>
+
+		<div class="dt-about-block">
+			<h3>Palette</h3>
+			<ColourPaletteDialog />
 		</div>
 
 		<div class="dt-about-block">

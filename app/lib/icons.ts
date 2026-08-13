@@ -134,9 +134,11 @@ import iMagnet from 'lucide-static/icons/magnet.svg?raw';
 import iMaximize from 'lucide-static/icons/maximize.svg?raw';
 import iMaximize2 from 'lucide-static/icons/maximize-2.svg?raw';
 import iMessageSquarePlus from 'lucide-static/icons/message-square-plus.svg?raw';
+import iMic from 'lucide-static/icons/mic.svg?raw';
 import iMinimize from 'lucide-static/icons/minimize.svg?raw';
 import iMinimize2 from 'lucide-static/icons/minimize-2.svg?raw';
 import iMinus from 'lucide-static/icons/minus.svg?raw';
+import iMonitorUp from 'lucide-static/icons/monitor-up.svg?raw';
 import iMoon from 'lucide-static/icons/moon.svg?raw';
 import iMove from 'lucide-static/icons/move.svg?raw';
 import iPackage from 'lucide-static/icons/package.svg?raw';
@@ -343,9 +345,11 @@ export const icons: Record<string, string> = {
 	maximize: iMaximize,
 	'maximize-2': iMaximize2,
 	'message-square-plus': iMessageSquarePlus,
+	mic: iMic,
 	minimize: iMinimize,
 	'minimize-2': iMinimize2,
 	minus: iMinus,
+	'monitor-up': iMonitorUp,
 	moon: iMoon,
 	move: iMove,
 	package: iPackage,

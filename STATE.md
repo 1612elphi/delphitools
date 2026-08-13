@@ -5,26 +5,58 @@ should read this file, CLAUDE.md and PARITY.md before touching anything.
 
 ## Where the repo stands
 
-- Ember app at the repo root (`v2-ember` branch). Recent commits:
-  `5ac7514` (AV wave 1), `5b18251` (front-page mocks rescued into
-  docs/frontpage/), then HEAD is the big checkpoint (omnibox front
-  page, AV wave 2, transports, polish round — this file ships in it, so
-  it cannot name its own hash). Working tree clean; Ruby triggers
-  commits explicitly.
-- Verification: `bun run lint` (5 checks), `bun run test` (346 QUnit) and
-  `node scripts/verify/all.mjs` (44 rigs) all green except two rigs that
-  are stale for reasons of their own:
-     - `gradient.mjs` drives `div.w-56.border-l`, the right sidebar that
-       round-3 docking deleted in `8fbe785`. It crashes before its first
-       check. Rewriting its panel drivers against the Inspector MODULE
-       (`.sub-insp*`, opened from the omnibar — see layers-tree.mjs) is the
-       fix; the checks themselves are still worth having.
-     - `static-smoke.mjs` needs a `bun run build:static` first (reads
-       `out/tools`); it is not run standalone.
+- Ember app at the repo root (`v2-ember` branch). HEAD is `3ed7c6c`
+  (the four substrata stub panels ported, artboard centring fixed);
+  before it, `1dad2db` (omnibox front page, AV wave 2, transports,
+  polish), `5ac7514` (AV wave 1), `5b18251` (front-page mocks into
+  docs/frontpage/). Ruby triggers commits explicitly.
+- An UNCOMMITTED close-out stretch sits on top of `3ed7c6c` (2026-08-13):
+  the colour palette dialog (`components/colour-palette-dialog.gts` +
+  `rgbToCmyk` in colour-maths + `.dt-palette-*`/`.dt-swatch*` scss, opened
+  from the About dialog), shared `AUDIO_ACCEPT`/`VIDEO_ACCEPT` lists in
+  tools.ts wired through the five AV file inputs, hero art moved to
+  `public/heroes/` with a second piece, the real crayon glyph in the hero
+  flip tile, plus the fixes listed below. All verification green except the
+  one budget failure noted at the end of this section.
+- Verification (2026-08-13): `bun run lint` (5 checks), `bun run test`
+  (349 QUnit) and `node scripts/verify/all.mjs` (44 rigs) all green.
+     - `gradient.mjs` was rewritten this stretch. It drove
+       `div.w-56.border-l`, the right sidebar that round-3 docking deleted
+       in `8fbe785`, and crashed before its first check. It now opens the
+       Inspector MODULE from the omnibar (`openModule(page, "Inspector")`)
+       and drives `.sub-grad-*` rows by label + buttons by aria-label, on
+       the shared harness.mjs. 26 checks, ALL PASS.
+     - `static-smoke.mjs` was DELETED this stretch. It read `out/tools`,
+       the Next static-export directory the Ember build never produces
+       (build target is `dist/`), so it could not pass and its own header
+       said "delete after use". `static.mjs` supersedes it (reads `dist`,
+       shared harness, `bun run verify:static`). Its one unique check — the
+       dev rig (`window.__substrata`) not shipping in the prod build — was
+       moved into static.mjs alongside a new editor-boot check.
 - `review-fixes.mjs` was also failing before this stretch — its Edit-menu
   driver matched button text exactly, and the items now carry their
   shortcut hint inside the button ("Duplicate ⌘D"). Fixed to a prefix
   match; the menu itself was working.
+- BUNDLE BUDGET (was failing, FIXED 2026-08-13, Prompt D): `static.mjs`'s
+  "app/lib stays out of the eager graph" check was failing — `main` was
+  286 kB against a 200 kB ceiling. ROOT CAUSE, from a sourcemap attribution
+  of a HEAD build (worktree at 3ed7c6c, sourcemaps on, VLQ mappings decoded
+  per source): `color-name-list` (the nearest-name dictionary) was 176 kB,
+  62% of main, and EAGER via `omni.ts` (the front-page omnibox) → both
+  `colour-parse.ts` (`detectColour` → `parseNamedColour`) and
+  `colour-names.ts` (`getColourName`) → `color-name-list/bestof`. Every
+  visitor who never typed a colour still downloaded the dictionary.
+  FIX (three edits): (1) omni.ts dynamic-imports colour-names inside the
+  async `colourAnswers`, so the dictionary loads only when a colour is
+  actually read; (2) colour-parse.ts's `detectColour` now resolves CSS
+  colour keywords through a 1x1 canvas (browser owns the list, zero data)
+  instead of `parseNamedColour`, so it no longer imports colour-names — it
+  deliberately no longer parses the fancy color-name-list names, only real
+  CSS keywords; (3) `parseNamedColour`/`NAMED_COLOUR_MAP` removed from
+  colour-names.ts as dead. colour-palette-dialog already dynamic-imports
+  colour-names. Result: `main` 286 kB → 126 kB, color-name-list absent from
+  main, `static.mjs` ALL PASS (31). `static.mjs` is excluded from all.mjs —
+  run `bun run verify:static` to see the budget check.
 - `scripts/verify/classes.mjs` is new and important: it fails when a
   `dt-` class used in any component has no definition under app/styles.
   It exists because a bulk stylesheet edit silently deleted an unrelated
@@ -33,9 +65,11 @@ should read this file, CLAUDE.md and PARITY.md before touching anything.
 - Copy gaps: Ruby runs `slopsieve` and has filled every gap so far; the
   list is currently empty. Every new tool still leaves its description
   and 4+-word strings as gaps per the global rules.
-- package-lock.json was never re-synced after `bun add` calls this
-  stretch (`realnpm` absent from the agent shell); it is tracked for CF
-  Pages deploys and is stale against package.json/bun.lock.
+- package-lock.json was resynced 2026-08-13 via `/opt/homebrew/bin/npm
+install --package-lock-only` (the real npm binary, 11.18.0 — bypasses
+  the fish `npm`→bun alias; `realnpm` is absent but unnecessary). Added
+  `@bjorn3/browser_wasi_shim@0.4.2`. It is tracked for CF Pages deploys.
+  This resync is part of the uncommitted stretch.
 
 ## What exists after this stretch (compact)
 
@@ -62,6 +96,20 @@ should read this file, CLAUDE.md and PARITY.md before touching anything.
   settings grid → work surface. `.segmented` needs explicit columns
   (bare use stacks vertically — bit twice).
 - PARITY.md: 66 tracked / 62 web.
+- **Colour palette dialog** (uncommitted, 2026-08-13):
+  `components/colour-palette-dialog.gts`, opened from the About dialog.
+  Reads the live `--token` values off `document.documentElement`, resolves
+  each `oklch(...)` through a 1×1 canvas (so it follows the active theme
+  and cannot drift from app.scss), and shows a card wall with hex/RGB/HSL/
+  CMYK/OKLCH per colour, tokens that share a value folded onto one card.
+  `rgbToCmyk` (naive, no ICC profile) added to colour-maths with a unit
+  test; the CMYK footnote is a live copy gap.
+- **Shared media accept lists** (uncommitted): `AUDIO_ACCEPT`/`VIDEO_ACCEPT`
+     - `acceptAttr()` in tools.ts, used by both the registry `accepts` (omnibox
+       drop routing) and each AV tool's own `<input accept>`, so the picker and
+       the drop target cannot disagree. The extension list widens the bare
+       `audio/*`/`video/*` wildcard for the iOS Files picker, which greys out
+       formats it has no UTI for (.ogg/.mp3 were unselectable on iPad).
 
 ## Substrata bugs (Ruby's testing, 2026-08-11) — TRIAGED AND FIXED
 
@@ -121,10 +169,11 @@ modifier (post-render, like the React effect it was ported from). Verified
 by hand before and after — 1 assertion + blank body, then 0 + "Downloading
 model…".
 
-Known adjacent bug, NOT fixed (pre-existing, outside this stretch):
-`layers-panel.gts`'s `handleDragEnd` ignores `event.canceled`, so Escape
-mid-drag still commits a layer reorder. `substrata-shell.gts:67` shows the
-guard; fx-panel's zones now use it.
+Adjacent bug, FIXED 2026-08-13 (uncommitted): `layers-panel.gts`'s
+`handleDragEnd` ignored `event.canceled`, so Escape mid-drag still committed
+a layer reorder. Now `if (event.canceled) return;` after the draggingId
+reset, matching the `substrata-shell.gts` dock-drag guard that fx-panel's
+zones already use.
 
 Also hardened: the pixel-selection popup rendered as soon as a selection
 existed, but its position comes from the canvas's after:render pass, so
@@ -184,11 +233,10 @@ real frame rate for Frame Extractor's frame step (currently assumes
 
 ## Omnibox — remaining microtools
 
-Not yet built (README table in docs/frontpage/): Encoding Tools row,
-Shavian, paper sizes, glyph lookup, Tailwind class, URL→QR, SVG
-optimise, algebra. Known ceilings: named CSS colours do not parse;
-unit detection covers px/pt/em/rem only (`5km` needs a symbol index over
-unit-converter's UNIT_CATEGORIES).
+Built (README table in docs/frontpage/): Encoding Tools row, Shavian,
+paper sizes, glyph lookup, Tailwind class, URL→QR, SVG optimise, algebra.
+Ceilings fixed: named CSS colours now parse; unit detection falls through
+to unit-converter's UNIT_CATEGORIES symbol index (e.g. `5km`).
 
 ## v1 features still to port (requested 2026-08-11)
 
@@ -235,5 +283,14 @@ tool list**. v1 reference lives in git history (tree at `c6c6e6d~1`):
 
 ## Next actions
 
-1. Wave 3 recorders, the remaining omnibox microtools, or the v1 sticker
-   port. The `gradient.mjs` rewrite is small and unclaimed.
+Four handoff prompts are written in `docs/handoffs/handoffs.md` (gitignored,
+local-only):
+
+1. **Prompt A** — AV wave 3 recorders (voice-recorder, screen-recorder).
+2. **Prompt B** — the remaining omnibox microtools (8 reading kinds).
+3. **Prompt C** — the v1 sticker port (per-tool sticker + bin).
+4. **Prompt D** — the `main` bundle budget failure (bundle trace: leak or
+   recalibrate the ceiling).
+
+The uncommitted close-out stretch is ready to commit whenever Ruby wants it;
+the `gradient.mjs` rewrite and the `layers-panel` guard are already done.

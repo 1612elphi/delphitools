@@ -30,6 +30,7 @@ interface AnswerRow {
 	tool: Tool;
 	value: string;
 	swatches: { hex: string; style: SafeString }[];
+	image?: string;
 	query: Record<string, string>;
 }
 
@@ -106,6 +107,7 @@ export default class Omnibox extends Component<OmniboxSignature> {
 						),
 					}),
 				),
+				image: answer.image,
 				query: answer.query ?? {},
 			});
 		}
@@ -314,6 +316,12 @@ export default class Omnibox extends Component<OmniboxSignature> {
 										></i>
 									{{/each}}
 								</span>
+							{{else if row.image}}
+								<img
+									src={{row.image}}
+									alt=""
+									class="dt-omni-thumb"
+								/>
 							{{else}}
 								<span
 									class="dt-omni-row-val"

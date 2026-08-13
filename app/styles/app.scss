@@ -12,6 +12,7 @@
 // Front-page omnibox (docs/frontpage mock 02 is the reference).
 @use "omnibox";
 @use "wave-minimap";
+@use "sticker-wall";
 
 // One partial per tool; see app/styles/tools/.
 @use "tools/algebra-calc";
@@ -59,6 +60,7 @@
 @use "tools/qr-genny";
 @use "tools/regex-tester";
 @use "tools/sci-calc";
+@use "tools/screen-recorder";
 @use "tools/scroll-generator";
 @use "tools/shavian-transliterator";
 @use "tools/social-cropper";
@@ -72,6 +74,7 @@
 @use "tools/typo-calc";
 @use "tools/unit-converter";
 @use "tools/video-to-gif";
+@use "tools/voice-recorder";
 @use "tools/watermarker";
 @use "tools/waveform-genny";
 @use "tools/word-counter";
@@ -1460,6 +1463,154 @@ $header-height: crayon.size(14);
 	font-size: crayon.font-size("xs");
 }
 
+/* ── Colour palette dialog ──────────────────────────────────────────── */
+.dt-palette-trigger {
+	display: inline-flex;
+	align-items: center;
+	gap: crayon.size(2);
+	border: 1px solid var(--border);
+	background: var(--muted);
+	padding: crayon.size(1.5) crayon.size(3);
+	font-size: crayon.font-size("xs");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--accent);
+		color: var(--foreground);
+	}
+
+	.dt-icon {
+		inline-size: 14px;
+		block-size: 14px;
+	}
+}
+
+.dt-palette-dialog {
+	// wider than the 32rem base so a full row of cards fits
+	inline-size: min(1440px, 96vw);
+	max-inline-size: none;
+	max-block-size: 92dvh;
+}
+
+.dt-swatches {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(222px, 1fr));
+	gap: crayon.size(3);
+	max-block-size: 74dvh;
+	padding-block: crayon.size(1);
+	overflow-y: auto;
+}
+
+.dt-swatch {
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--border);
+	background: var(--card);
+	overflow: hidden;
+}
+
+.dt-swatch-chip {
+	display: flex;
+	align-items: flex-end;
+	block-size: 86px;
+	padding: crayon.size(2);
+}
+
+.dt-swatch-hex {
+	font-family: var(--font-mono);
+	font-size: crayon.font-size("sm");
+	font-weight: 700;
+	letter-spacing: 0.02em;
+}
+
+.dt-swatch-meta {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: crayon.size(1);
+	border-top: 1px solid var(--border);
+	padding: crayon.size(2) crayon.size(2.5) crayon.size(2.5);
+
+	h3 {
+		padding-right: crayon.size(6);
+		font-size: crayon.font-size("sm");
+		line-height: 1.2;
+	}
+
+	dl {
+		display: grid;
+		gap: 2px;
+		margin: crayon.size(1) 0 0;
+	}
+
+	dl > div {
+		display: flex;
+		justify-content: space-between;
+		gap: crayon.size(2);
+	}
+
+	dt {
+		flex-shrink: 0;
+		color: var(--muted-foreground);
+		font-size: 10px;
+		letter-spacing: 0.08em;
+	}
+
+	dd {
+		margin: 0;
+		font-family: var(--font-mono);
+		font-size: 10.5px;
+		text-align: right;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		overflow: hidden;
+	}
+}
+
+.dt-swatch-tokens {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 3px;
+
+	code {
+		border: 1px solid var(--border);
+		padding: 0 4px;
+		color: var(--muted-foreground);
+		font-size: 10.5px;
+		line-height: 1.5;
+	}
+}
+
+.dt-swatch-copy {
+	position: absolute;
+	inset-block-start: crayon.size(2);
+	inset-inline-end: crayon.size(2);
+	display: grid;
+	place-items: center;
+	inline-size: 24px;
+	block-size: 24px;
+	border: 1px solid transparent;
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	@include crayon.hover {
+		border-color: var(--border);
+		color: var(--foreground);
+	}
+
+	.dt-icon {
+		inline-size: 13px;
+		block-size: 13px;
+	}
+}
+
+.dt-swatches-note {
+	padding-top: crayon.size(2);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
 .dt-chips {
 	@include crayon.cluster(1.5);
 
@@ -1665,6 +1816,13 @@ $header-height: crayon.size(14);
 	.dt-icon {
 		width: crayon.size(4);
 		height: crayon.size(4);
+	}
+
+	/* The crayon glyph is drawn wide (455x190), not square like the others;
+		a square box would letterbox it down to a sliver. */
+	.dt-icon.is-wide {
+		width: crayon.size(7);
+		height: crayon.size(3);
 	}
 
 	&:nth-child(3n + 1) {

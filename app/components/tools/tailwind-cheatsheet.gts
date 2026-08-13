@@ -198,6 +198,7 @@ export const CHEATSHEET: CheatSheetCategory[] = [
 			{ class: 'm-1', css: 'margin: 0.25rem (4px)' },
 			{ class: 'm-2', css: 'margin: 0.5rem (8px)' },
 			{ class: 'm-4', css: 'margin: 1rem (16px)' },
+			{ class: 'mt-4', css: 'margin-top: 1rem (16px)' },
 			{ class: 'm-auto', css: 'margin: auto' },
 			{ class: '-m-1', css: 'margin: -0.25rem' },
 			{
@@ -813,6 +814,18 @@ export function filterCheatsheet(
 			),
 		}))
 		.filter((category) => category.items.length > 0);
+}
+
+/** Exact-match lookup for a single Tailwind class used by the omnibox. */
+export function lookupTailwindClass(className: string): CheatSheetItem | null {
+	const q = className.trim().toLowerCase();
+	if (!q) return null;
+	for (const category of CHEATSHEET) {
+		for (const item of category.items) {
+			if (item.class.toLowerCase() === q) return item;
+		}
+	}
+	return null;
 }
 
 export default class TailwindCheatsheetTool extends Component {

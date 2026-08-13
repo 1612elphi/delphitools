@@ -38,5 +38,9 @@ CLAUDE.md
 # build data (downloaded source files for dictionary builds)
 /scripts/data/
 
+# local-only working notes (agent handoff prompts and the like); the tracked
+# docs live directly under docs/ (docs/frontpage/, ...)
+/docs/handoffs/
+
 # package-lock.json is tracked on purpose: CF Pages can't read the text-format
 # bun.lock and would otherwise npm-install unpinned (broke the 2026-07-24 deploy)

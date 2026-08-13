@@ -1,3 +1,40 @@
+/**
+ * Accept lists for the media tools, shared by the registry's `accepts` (which
+ * routes omnibox drops) and by the tools' own file inputs, so the picker and
+ * the drop target can never disagree.
+ *
+ * The extensions are not redundant with the wildcard: iOS maps `audio/*` to
+ * the system's known audio UTIs, and formats it has no UTI for — Ogg, Opus —
+ * grey out in the Files picker. Naming the extensions widens that set. (iPad,
+ * 2026-08-11: neither .ogg nor .mp3 was selectable with a bare `audio/*`.)
+ */
+export const AUDIO_ACCEPT = [
+	'audio/*',
+	'.mp3',
+	'.m4a',
+	'.wav',
+	'.aac',
+	'.flac',
+	'.ogg',
+	'.oga',
+	'.opus',
+	'.aiff',
+	'.caf',
+];
+
+export const VIDEO_ACCEPT = [
+	'video/*',
+	'.mp4',
+	'.m4v',
+	'.mov',
+	'.webm',
+	'.mkv',
+	'.avi',
+];
+
+/** The same list as an `accept` attribute value. */
+export const acceptAttr = (list: readonly string[]): string => list.join(',');
+
 /** kebab-case lucide-static icon name, resolved by <Icon> */
 export type IconName = string;
 
@@ -311,14 +348,7 @@ export const toolCategories: ToolCategory[] = [
 					'Everything about one audio file, on one page',
 				icon: 'audio-lines',
 				href: '/tools/audio-atlas',
-				accepts: [
-					'audio/*',
-					'.mp3',
-					'.wav',
-					'.ogg',
-					'.m4a',
-					'.flac',
-				],
+				accepts: AUDIO_ACCEPT,
 				new: true,
 			},
 			{
@@ -328,14 +358,7 @@ export const toolCategories: ToolCategory[] = [
 					'Cut and fade audio, export as WAV',
 				icon: 'scissors',
 				href: '/tools/audio-trimmer',
-				accepts: [
-					'audio/*',
-					'.mp3',
-					'.wav',
-					'.ogg',
-					'.m4a',
-					'.flac',
-				],
+				accepts: AUDIO_ACCEPT,
 				new: true,
 			},
 			{
@@ -345,7 +368,16 @@ export const toolCategories: ToolCategory[] = [
 					'Grab stills and contact sheets from video',
 				icon: 'film',
 				href: '/tools/frame-extractor',
-				accepts: ['video/*'],
+				accepts: VIDEO_ACCEPT,
+				new: true,
+			},
+			{
+				id: 'screen-recorder',
+				name: 'Screen Recorder',
+				description:
+					'Record your screen with optional microphone audio',
+				icon: 'monitor-up',
+				href: '/tools/screen-recorder',
 				new: true,
 			},
 			{
@@ -365,7 +397,16 @@ export const toolCategories: ToolCategory[] = [
 					'Turn video clips into looping GIFs',
 				icon: 'clapperboard',
 				href: '/tools/video-to-gif',
-				accepts: ['video/*'],
+				accepts: VIDEO_ACCEPT,
+				new: true,
+			},
+			{
+				id: 'voice-recorder',
+				name: 'Voice Recorder',
+				description:
+					'Record voice memos in the browser',
+				icon: 'mic',
+				href: '/tools/voice-recorder',
 				new: true,
 			},
 			{
@@ -375,14 +416,7 @@ export const toolCategories: ToolCategory[] = [
 					'Render audio waveforms as PNG or SVG',
 				icon: 'audio-waveform',
 				href: '/tools/waveform-genny',
-				accepts: [
-					'audio/*',
-					'.mp3',
-					'.wav',
-					'.ogg',
-					'.m4a',
-					'.flac',
-				],
+				accepts: AUDIO_ACCEPT,
 				new: true,
 			},
 		],

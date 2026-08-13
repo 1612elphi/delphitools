@@ -126,6 +126,138 @@ const expr = await page
 	);
 check('expression: evaluates to 98', expr === '98', expr);
 
+// --- remaining microtools ------------------------------------------------
+async function rowFor(name) {
+	return page.evaluate((n) => {
+		const row = [...document.querySelectorAll('.dt-omni-row')].find(
+			(r) =>
+				r
+					.querySelector('.dt-omni-row-name')
+					?.textContent.trim()
+					.includes(n),
+		);
+		return row
+			? {
+					name: row
+						.querySelector('.dt-omni-row-name')
+						?.textContent.trim(),
+					value: row
+						.querySelector('.dt-omni-row-val')
+						?.textContent.trim(),
+					hasImage: !!row.querySelector('.dt-omni-thumb'),
+				}
+			: null;
+	}, name);
+}
+
+async function waitForRow(name, timeout = 10000) {
+	const deadline = Date.now() + timeout;
+	while (Date.now() < deadline) {
+		const row = await rowFor(name);
+		if (row) return row;
+		await sleep(100);
+	}
+	return null;
+}
+
+await type('red');
+check(
+	'named colour: red reads as a colour',
+	(await waitForRow('Colour Atlas')) !== null,
+);
+
+await type('5km');
+const unitRow = await waitForRow('Unit Converter');
+check(
+	'general unit: 5km reads as unit converter',
+	unitRow?.value.includes('m'),
+	unitRow?.value,
+);
+
+await type('A4');
+const paperRow = await waitForRow('Paper Sizes');
+check(
+	'paper size: A4 shows dimensions',
+	paperRow?.value.includes('210'),
+	paperRow?.value,
+);
+
+await type('m-4');
+const tailwindRow = await waitForRow('Tailwind');
+check(
+	'tailwind: m-4 maps to css',
+	tailwindRow?.value.includes('margin'),
+	tailwindRow?.value,
+);
+
+await type('U+1F600');
+const glyphRow = await waitForRow('Glyph Browser');
+check(
+	'glyph: U+1F600 shows the codepoint',
+	glyphRow?.value.includes('U+1F600'),
+	glyphRow?.value,
+);
+
+await type('aGVsbG8gd29ybGQ=');
+const encRow = await waitForRow('Encoding Tools');
+check(
+	'encoding: base64 paste decodes',
+	encRow?.value.includes('hello world'),
+	encRow?.value,
+);
+
+await type('hello world');
+check(
+	'shavian: two english words transliterate',
+	(await waitForRow('Shavian')) !== null,
+);
+
+await type('https://example.com');
+const qrRow = await waitForRow('QR');
+check(
+	'qr: url produces a preview image',
+	qrRow?.hasImage,
+	qrRow?.hasImage
+		? 'preview rendered'
+		: qrRow
+			? 'image missing'
+			: 'row missing',
+);
+
+await type('<svg><rect width="10" height="10"/></svg>');
+const svgRow = await waitForRow('SVG');
+check(
+	'svg: markup shows optimisation stats',
+	svgRow?.value.includes('saved'),
+	svgRow?.value,
+);
+
+await type('x^2 - 4 = 0');
+const algebra = await page
+	.waitForFunction(
+		() => {
+			const row = [...document.querySelectorAll('.dt-omni-row')].find(
+				(r) =>
+					r
+						.querySelector('.dt-omni-row-name')
+						?.textContent.includes('Algebra'),
+			);
+			return row
+				? row
+						.querySelector('.dt-omni-row-val')
+						?.textContent.trim()
+				: '';
+		},
+		{ timeout: 30000 },
+	)
+	.then((handle) => handle.jsonValue())
+	.catch(() => '');
+check(
+	'algebra: equation solves',
+	algebra?.includes('2'),
+	algebra,
+);
+
 // --- file drop -----------------------------------------------------------
 await page.evaluate(() => {
 	const transfer = new DataTransfer();

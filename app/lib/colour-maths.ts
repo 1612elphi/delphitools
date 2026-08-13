@@ -267,6 +267,24 @@ export function rgbToYcbcr(r: number, g: number, b: number): Triple {
 	];
 }
 
+/**
+ * Naive device CMYK (no profile, no black generation beyond the plain K pull),
+ * percentages 0–100. This is the arithmetic every "what is this in CMYK"
+ * readout uses; it is NOT a print-accurate separation, which needs an ICC
+ * profile for the target press.
+ */
+export function rgbToCmyk(
+	r: number,
+	g: number,
+	b: number,
+): [number, number, number, number] {
+	const k = 1 - Math.max(r, g, b) / 255;
+	if (k === 1) return [0, 0, 0, 100];
+	const pct = (c: number) =>
+		Math.round(((1 - c / 255 - k) / (1 - k)) * 100);
+	return [pct(r), pct(g), pct(b), Math.round(k * 100)];
+}
+
 // ── Contrast ────────────────────────────────────────────────────────────────
 
 /** WCAG relative luminance, 0–1. */

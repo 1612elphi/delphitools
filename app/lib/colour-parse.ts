@@ -75,14 +75,41 @@ export function parseColour(
 }
 
 /**
+ * A CSS named colour (`rebeccapurple`, `tomato`, ...) as sRGB. The browser owns
+ * the list, so a 1x1 canvas paints the name and reads the pixel back — the same
+ * trick colour-palette-dialog uses for oklch. This resolves every CSS keyword
+ * with no data table, and deliberately does NOT parse the fancy names from
+ * color-name-list, which would drag that ~176 kB dictionary into the eager
+ * front-page bundle (see colour-names.ts). Only bare word tokens reach here.
+ */
+function cssNamedColour(name: string): Triple | null {
+	if (typeof document === 'undefined') return null;
+	if (!/^[a-z]+$/i.test(name)) return null;
+	const ctx = document
+		.createElement('canvas')
+		.getContext('2d', { willReadFrequently: true });
+	if (!ctx) return null;
+	// An unknown name leaves fillStyle at its default (#000), so paint over a
+	// known non-black first and require the pixel to actually change.
+	ctx.fillStyle = '#010203';
+	ctx.fillStyle = name;
+	if (ctx.fillStyle === '#010203') return null;
+	ctx.fillRect(0, 0, 1, 1);
+	const [r = 0, g = 0, b = 0] = ctx.getImageData(0, 0, 1, 1).data;
+	return [r, g, b];
+}
+
+/**
  * A pasted colour with the notation read off the string itself: hex with or
- * without the #, or any css functional form (an alpha suffix parses too — the
- * fourth number is ignored). Null when nothing matches.
+ * without the #, a CSS colour keyword, or any css functional form (an alpha
+ * suffix parses too — the fourth number is ignored). Null when nothing matches.
  */
 export function detectColour(value: string): Triple | null {
 	const v = value.trim();
 	const hex = hexToRgb(v);
 	if (hex) return hex;
+	const named = cssNamedColour(v);
+	if (named) return named;
 	const m = /^(rgb|hsl|lab|lch|oklab|oklch)a?\(/i.exec(v);
 	if (!m) return null;
 	return parseColour(m[1]!.toLowerCase() as ColourFormat, v);

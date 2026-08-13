@@ -298,6 +298,19 @@ export function applyFades(
 	}
 }
 
+/**
+ * Normalised peak level from an AnalyserNode's byte time-domain data (128 is
+ * the zero crossing). Returns 0..1, suitable for driving a live input meter.
+ */
+export function meterLevel(data: Uint8Array<ArrayBufferLike>): number {
+	let peak = 0;
+	for (const v of data) {
+		const a = Math.abs((v - 128) / 128);
+		if (a > peak) peak = a;
+	}
+	return peak;
+}
+
 /** Peak level in dBFS; -Infinity for silence. */
 export function peakDb(channels: Float32Array[]): number {
 	let peak = 0;

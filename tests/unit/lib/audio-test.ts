@@ -5,6 +5,7 @@ import {
 	extractPeaks,
 	fftMagnitudes,
 	integratedLufs,
+	meterLevel,
 	peakDb,
 } from 'delphitools-v2/lib/audio';
 
@@ -87,6 +88,17 @@ module('Unit | Lib | audio', function () {
 			20 * Math.log10(0.5),
 		);
 		assert.strictEqual(peakDb([new Float32Array(4)]), -Infinity);
+	});
+
+	test('meter level from byte time-domain data', function (assert) {
+		const silent = new Uint8Array(64).fill(128);
+		assert.strictEqual(meterLevel(silent), 0);
+
+		const full = new Uint8Array(64).fill(0);
+		assert.strictEqual(meterLevel(full), 1);
+
+		const half = new Uint8Array(64).fill(192);
+		assert.strictEqual(meterLevel(half), 0.5);
 	});
 
 	test('integrated loudness of the BS.1770 reference tone', function (assert) {

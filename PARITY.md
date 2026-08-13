@@ -23,9 +23,9 @@ applicable on this surface (hardware/native or format constraint).
 
 ## Summary
 
-- **Tools tracked:** 66
+- **Tools tracked:** 68
 - **On all three surfaces:** 41
-- **Web:** 62 · **CLI:** 46 · **iOS:** 51
+- **Web:** 64 · **CLI:** 46 · **iOS:** 51
 - iOS-exclusive (native/hardware): Colour Camera, Document Scanner, Font Installer, NFC Reader/Writer
 - Web-exclusive: Pixel Picker, Text Editor (pandoc.wasm note: GPL — incompatible with the App Store, and won't run on-device on iOS, hence Document Converter I 🚧)
 - CLI-only sub-feature: `hash` (text hashing, folded into Encoding Tools elsewhere)
@@ -88,7 +88,9 @@ Picker is similarly web-only.
 | Audio Atlas (`audio-atlas`)               | ✅  | ❌  | ❌  | new 2026-08; one-file interrogation: meta, peak dBFS, BS.1770 LUFS, waveform, spectrogram |
 | Audio Trimmer (`audio-trimmer`)           | ✅  | ❌  | ❌  | new 2026-08; drag selection, fades, wav export (`lib/audio.ts`), mp3 deferred             |
 | Frame Extractor (`frame-extractor`)       | ✅  | ❌  | ❌  | new 2026-08; video stills + contact sheet, `<video>` + canvas                             |
+| Screen Recorder (`screen-recorder`)       | ✅  | ❌  | ❌  | new 2026-08; getDisplayMedia + MediaRecorder, optional mic mix-in, webm download          |
 | Subtitle Converter (`subtitle-converter`) | ✅  | ❌  | ❌  | new 2026-08; srt↔vtt + shift/scale on `lib/subtitles.ts`                                  |
+| Voice Recorder (`voice-recorder`)         | ✅  | ❌  | ❌  | new 2026-08; getUserMedia + MediaRecorder, level meter, pause/resume, playback, download  |
 | Video to GIF (`video-to-gif`)             | ✅  | ❌  | ❌  | new 2026-08; canvas frames through `lib/gif.ts` `AnimatedGifEncoder`, no wasm             |
 | Waveform Generator (`waveform-genny`)     | ✅  | ❌  | ❌  | new 2026-08; waveform → PNG/SVG at social sizes                                           |
 

@@ -93,7 +93,7 @@ Detection kind first, then what the row shows.
 | number + measurement unit | Unit Converter | the sibling units |
 | paper size name (`A4`, `letter`) | Paper Sizes | dimensions in mm and in |
 | single glyph or `U+XXXX` | Glyph Browser | name, codepoint, block |
-| Tailwind class (`mt-4`) | Tailwind Cheat Sheet | the CSS it maps to |
+| Tailwind class (`m-4`) | Tailwind Cheat Sheet | the CSS it maps to |
 | URL | QR Generator | a small QR preview |
 | SVG markup | SVG Optimiser | optimised size next to the original |
 
@@ -115,7 +115,20 @@ shipped index template.
 
 - Filetype→tool map and value parsers for 02 (extension list, which formats
   count as a colour, URL handling).
-- Row order and cap when several microtools detect the same input, and the
-  confidence threshold for the noisy ones (cipher, Base64, Shavian).
 - Whether the bench strip caps at one row or wraps.
 - Verb vocabulary and per-tool assignments for 05.
+
+## Decided here
+
+<!-- ∑CG: explains the chosen omnibox detection order and confidence thresholds -->
+
+- Cap: `MAX_ANSWERS = 6`.
+- Detection order: colour; SVG; URL (QR); glyph (`U+XXXX` or single
+  codepoint); paper size; Tailwind class; unit; integer; timestamp;
+  arithmetic expression; algebra; encoding; Shavian; prose/cipher.
+- Confidence floors for noisy readings:
+  - Cipher: existing `CIPHER_FLOOR = 0.35`, `CIPHER_CONFIDENCE = 1.2`,
+    printable ratio ≥ 0.9.
+  - Base64: length ≥ 8, valid Base64 alphabet, decodes to printable
+    ratio ≥ 0.8.
+  - Shavian: at least 2 alphabetic words.

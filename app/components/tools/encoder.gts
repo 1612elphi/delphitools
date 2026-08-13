@@ -109,6 +109,16 @@ export function convertUrl(mode: EncodingMode, text: string): string {
 	}
 }
 
+/** Returns null instead of the error string so callers can distinguish failure. */
+export function tryDecodeUrl(text: string): string | null {
+	if (!text) return null;
+	try {
+		return decodeURIComponent(text);
+	} catch {
+		return null;
+	}
+}
+
 export function toHex(buffer: ArrayBuffer): string {
 	return Array.from(new Uint8Array(buffer))
 		.map((byte) => byte.toString(16).padStart(2, '0'))

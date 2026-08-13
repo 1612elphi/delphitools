@@ -112,6 +112,44 @@ export function codeText(code: number, format: GlyphFormat): string {
 	}
 }
 
+/** The glyph category whose range contains the code point, if any. */
+export function categoryForCode(code: number): string | null {
+	for (const category of CATEGORIES) {
+		for (const [start, end] of category.ranges) {
+			if (code >= start && code <= end) return category.name;
+		}
+	}
+	return null;
+}
+
+/** Describe a single glyph or U+XXXX string for the omnibox. */
+export function describeGlyph(
+	input: string,
+): { char: string; label: string; category: string } | null {
+	const trimmed = input.trim();
+	let code: number | null = null;
+
+	const hexMatch = /^U\+([0-9A-Fa-f]+)$/i.exec(trimmed);
+	if (hexMatch) {
+		code = parseInt(hexMatch[1]!, 16);
+	} else if ([...trimmed].length === 1) {
+		code = trimmed.codePointAt(0) ?? null;
+	}
+
+	if (code === null || Number.isNaN(code)) return null;
+	try {
+		const char = String.fromCodePoint(code);
+		const category = categoryForCode(code);
+		return {
+			char,
+			label: codeLabel(code),
+			category: category ?? 'Unknown block',
+		};
+	} catch {
+		return null;
+	}
+}
+
 export default class GlyphBrowserTool extends Component {
 	@tracked selectedCategory = CATEGORIES[0]!.name;
 	@tracked search = '';

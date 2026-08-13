@@ -6,6 +6,10 @@ import Icon from 'delphitools-v2/components/icon';
 import { downloadBlob, downloadUrl } from 'delphitools-v2/lib/download';
 import { formatTimestamp } from 'delphitools-v2/lib/subtitles';
 import { seekTo, VideoIntake } from 'delphitools-v2/lib/video';
+import { VIDEO_ACCEPT, acceptAttr } from 'delphitools-v2/lib/tools';
+
+/** Kept in step with the registry entry, which routes dropped files. */
+const ACCEPT = acceptAttr(VIDEO_ACCEPT);
 
 const DROP_TITLE = 'Drop a video here or click to upload';
 
@@ -242,7 +246,7 @@ export default class FrameExtractorTool extends Component {
 					<label class="dt-fx-drop">
 						<input
 							type="file"
-							accept="video/*"
+							accept={{ACCEPT}}
 							class="dt-sr-only"
 							{{on
 								"change"

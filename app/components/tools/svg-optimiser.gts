@@ -69,6 +69,20 @@ export function looksLikeSvg(text: string): boolean {
 	return trimmed.startsWith('<svg') || trimmed.startsWith('<?xml');
 }
 
+/** Optimise SVG markup and return size stats, or null if it is not SVG. */
+export async function optimiseSvg(
+	original: string,
+): Promise<OptimiseStats | null> {
+	if (!looksLikeSvg(original)) return null;
+	try {
+		const { optimize } = await import('svgo/browser');
+		const { data } = optimize(original, SVGO_CONFIG);
+		return statsFor(original, data);
+	} catch {
+		return null;
+	}
+}
+
 export default class SvgOptimiserTool extends Component {
 	@tracked input = '';
 	@tracked output = '';

@@ -6,6 +6,10 @@ import { downloadUrl } from 'delphitools-v2/lib/download';
 import { AnimatedGifEncoder } from 'delphitools-v2/lib/gif';
 import { formatTimestamp } from 'delphitools-v2/lib/subtitles';
 import { seekTo, VideoIntake } from 'delphitools-v2/lib/video';
+import { VIDEO_ACCEPT, acceptAttr } from 'delphitools-v2/lib/tools';
+
+/** Kept in step with the registry entry, which routes dropped files. */
+const ACCEPT = acceptAttr(VIDEO_ACCEPT);
 
 const TOO_MANY_FRAMES =
 	'Over 300 frames. Please lower the fps or shorten the range';
@@ -209,7 +213,7 @@ export default class VideoToGifTool extends Component {
 					<label class="dt-vg-drop">
 						<input
 							type="file"
-							accept="video/*"
+							accept={{ACCEPT}}
 							class="dt-sr-only"
 							{{on
 								"change"

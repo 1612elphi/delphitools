@@ -894,6 +894,7 @@ export class LayersBody extends Component {
 
 	handleDragEnd = (event: DragEndEvent) => {
 		this.draggingId = null;
+		if (event.canceled) return;
 		const { source, target } = event.operation;
 		if (!source || !target || source.id === target.id) return;
 		const rows = this.rows;

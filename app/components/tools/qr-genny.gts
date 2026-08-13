@@ -68,6 +68,44 @@ const COPY_RESET_MS = 1500;
 
 const URL_LIKE = /^https?:\/\/.+/i;
 
+/** Small PNG data URL for the omnibox QR preview. */
+export async function qrDataUrl(
+	text: string,
+	size = 80,
+): Promise<string | null> {
+	try {
+		const { default: Styling } = await import('qr-code-styling');
+		const qr = new Styling({
+			width: size,
+			height: size,
+			type: 'svg',
+			data: text,
+			margin: 2,
+			qrOptions: { errorCorrectionLevel: 'M' },
+			dotsOptions: { type: 'square', color: '#000000' },
+			cornersSquareOptions: {
+				type: 'square',
+				color: '#000000',
+			},
+			cornersDotOptions: {
+				type: 'square',
+				color: '#000000',
+			},
+			backgroundOptions: { color: '#ffffff' },
+		});
+		const blob = await qr.getRawData('png');
+		if (!(blob instanceof Blob)) return null;
+		return new Promise((resolve) => {
+			const reader = new FileReader();
+			reader.onloadend = () =>
+				resolve(reader.result as string);
+			reader.readAsDataURL(blob);
+		});
+	} catch {
+		return null;
+	}
+}
+
 const INFO_FONT =
 	'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif';
 

@@ -1,8 +1,8 @@
 /**
  * The front-page hero images. The page picks one at random per load; the
- * shuffle button appears once there are two. Add a file under /public and an
- * entry here; `artist` + `url` render the credit line under the omnibox, and
- * an entry without them shows no credit.
+ * shuffle button appears once there are two. Add a file under public/heroes
+ * and an entry here; `artist` + `url` render the credit line under the
+ * omnibox, and an entry without them shows no credit.
  */
 export interface HeroArt {
 	/** path under /public */
@@ -14,8 +14,13 @@ export interface HeroArt {
 
 export const HERO_ART: HeroArt[] = [
 	{
-		src: '/delphi-friday.png',
+		src: '/heroes/delphi.png',
 		artist: 'delphi',
 		url: 'https://rmv.fyi/',
+	},
+	{
+		src: '/heroes/Valkyrie.png',
+		artist: 'Valkyrie',
+		url: 'https://theslightlychippedmoon.com/',
 	},
 ];

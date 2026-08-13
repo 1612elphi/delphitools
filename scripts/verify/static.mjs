@@ -127,6 +127,22 @@ if (!existsSync(join(dist, 'index.html'))) {
 		`${navigated.rows} rows`,
 	);
 
+	// ── the editor's dev rig does not ship ──────────────────────────────
+	//
+	// fabric-canvas installs window.__substrata behind import.meta.env.DEV;
+	// every substrata harness in this directory drives it. A build that keeps
+	// it exposes the whole document model to any page script.
+
+	await page.goto(`${BASE}/editor`, { waitUntil: 'networkidle2' });
+	const booted = await page
+		.waitForSelector('canvas.upper-canvas', { timeout: 15000 })
+		.then(() => true)
+		.catch(() => false);
+	await sleep(600);
+	check('the editor boots from the built output', booted);
+	const rig = await page.evaluate(() => typeof window.__substrata);
+	check('and the dev rig is stripped', rig === 'undefined', rig);
+
 	const assets = join(dist, 'assets');
 	const emitted = readdirSync(assets);
 
