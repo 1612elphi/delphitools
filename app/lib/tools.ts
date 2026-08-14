@@ -581,6 +581,32 @@ export const toolCategories: ToolCategory[] = [
 				href: '/tools/image-to-pdf',
 				accepts: ['image/*', '.pdf'],
 			},
+			{
+				id: 'pdf-rotate-crop',
+				name: 'Rotate & Crop',
+				description:
+					'Rotate or crop pages or entire documents',
+				icon: 'crop',
+				href: '/tools/pdf-rotate-crop',
+				accepts: ['.pdf'],
+			},
+			{
+				id: 'pdf-page-numberer',
+				name: 'Page Numbers',
+				description:
+					'Add page numbers or stamps to documents',
+				icon: 'file-digit',
+				href: '/tools/pdf-page-numberer',
+				accepts: ['.pdf'],
+			},
+			{
+				id: 'pdf-compressor',
+				name: 'PDF Compressor',
+				description: 'Shrink PDF filesizes',
+				icon: 'shrink',
+				href: '/tools/pdf-compressor',
+				accepts: ['.pdf'],
+			},
 		],
 	},
 	{

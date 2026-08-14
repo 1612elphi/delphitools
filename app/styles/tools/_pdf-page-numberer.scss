@@ -1,0 +1,163 @@
+@use "../crayon-config" as crayon;
+
+.dt-ppn {
+	display: flex;
+	flex-direction: column;
+	gap: crayon.size(4);
+}
+
+.dt-ppn-drop {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: crayon.size(2);
+	border: 2px dashed var(--border);
+	background: var(--card);
+	padding: crayon.size(12) crayon.size(4);
+	cursor: pointer;
+
+	@include crayon.hover {
+		border-color: var(--ring);
+	}
+
+	.dt-icon {
+		inline-size: 28px;
+		block-size: 28px;
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-ppn-drop-title {
+	font-size: crayon.font-size("lg");
+}
+
+.dt-ppn-drop-hint {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-ppn-bar {
+	display: flex;
+	align-items: center;
+	gap: crayon.size(3);
+	border: 2px solid var(--border);
+	background: var(--card);
+	padding: crayon.size(2) crayon.size(3);
+}
+
+.dt-ppn-name {
+	font-family: var(--font-mono);
+	font-size: crayon.font-size("sm");
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-ppn-count {
+	flex-shrink: 0;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-ppn-go {
+	display: inline-flex;
+	align-items: center;
+	gap: crayon.size(1.5);
+	margin-inline-start: auto;
+	flex-shrink: 0;
+	border: 2px solid var(--border);
+	background: var(--primary);
+	color: var(--primary-foreground);
+	padding: crayon.size(1.5) crayon.size(3);
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	&:disabled {
+		opacity: 0.5;
+		cursor: default;
+	}
+
+	.dt-icon {
+		inline-size: 15px;
+		block-size: 15px;
+	}
+}
+
+.dt-ppn-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: crayon.size(3);
+}
+
+.dt-ppn-block {
+	display: flex;
+	flex-direction: column;
+	gap: crayon.size(2.5);
+	border: 2px solid var(--border);
+	background: var(--card);
+	padding: crayon.size(3);
+}
+
+.dt-ppn-toggle {
+	display: flex;
+	align-items: center;
+	gap: crayon.size(2);
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+}
+
+.dt-ppn-field {
+	display: flex;
+	flex-direction: column;
+	gap: crayon.size(1);
+
+	> span {
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+	}
+
+	input[type="text"],
+	input[type="number"] {
+		border: 1px solid var(--border);
+		background: var(--background);
+		padding: crayon.size(1.5) crayon.size(2);
+		font-family: var(--font-mono);
+		font-size: crayon.font-size("sm");
+	}
+}
+
+.dt-ppn-common {
+	gap: crayon.size(2);
+}
+
+// 3×3 anchor picker: a segmented grid of dot cells, the active one filled.
+.dt-ppn-anchors {
+	grid-template-columns: repeat(3, 1fr);
+	inline-size: crayon.size(20);
+}
+
+.dt-ppn-anchor {
+	position: relative;
+	aspect-ratio: 1;
+	background: var(--background);
+	cursor: pointer;
+
+	&::after {
+		content: "";
+		position: absolute;
+		inset: 50%;
+		inline-size: 4px;
+		block-size: 4px;
+		transform: translate(-50%, -50%);
+		background: var(--muted-foreground);
+	}
+
+	&.is-active {
+		background: var(--primary);
+
+		&::after {
+			background: var(--primary-foreground);
+		}
+	}
+}

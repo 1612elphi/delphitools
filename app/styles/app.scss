@@ -56,8 +56,11 @@
 @use "tools/palette-genny";
 @use "tools/paper-sizes";
 @use "tools/paste-image";
+@use "tools/pdf-compressor";
 @use "tools/pdf-organiser";
+@use "tools/pdf-page-numberer";
 @use "tools/pdf-preflight";
+@use "tools/pdf-rotate-crop";
 @use "tools/pixel-picker";
 @use "tools/placeholder-genny";
 @use "tools/px-to-rem";

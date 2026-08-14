@@ -120,7 +120,7 @@ shipped index template.
 
 ## Decided here
 
-<!-- ∑CG: explains the chosen omnibox detection order and confidence thresholds -->
+<!-- : explains the chosen omnibox detection order and confidence thresholds -->
 
 - Cap: `MAX_ANSWERS = 6`.
 - Detection order: colour; SVG; URL (QR); glyph (`U+XXXX` or single

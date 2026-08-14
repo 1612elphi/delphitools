@@ -284,35 +284,112 @@ decisions recorded there (2026-08-13):
 - Metadata Stripper stays plain EXIF/GPS/XMP; no AI, no C2PA credential
   removal.
 
-Batches, in order: (1) PDF + Images pack — BUILT 2026-08-13, uncommitted;
-(2) dev-encoder pack; (3) AV wave 4 (Video Atlas + Video Muter, which unlock
-true sample rate in Audio Atlas and real fps in Frame Extractor); (4)
-turbo-nerd pack. The parallel one-prompt-per-agent flow works; prompts live in
-`docs/handoffs/handoffs.md`.
+COMMITTED 2026-08-13/14: batch 1 (PDF + Images pack: pdf-organiser,
+image-to-pdf, metadata-stripper, image-compressor), Timecode Calculator, and
+the PDF/Print category split all landed in `66b6f15`; hero-art 2.8:1 is
+`7fb292e`; AV wave 3 / microtools / stickers / bundle fix are `8d25430`.
+Remaining backlog batches (order): dev-encoder pack; AV wave 4 (Video Atlas +
+Video Muter); turbo-nerd pack. Parallel one-prompt-per-agent flow; prompts in
+`docs/handoffs/handoffs.md`, backlog in `docs/handoffs/tool-backlog.md`.
 
-Batch 1 (uncommitted): pdf-organiser, image-to-pdf, metadata-stripper,
-image-compressor. Four tools + libs (`pdf-pages.ts`, `metadata.ts`,
-`image-compress.ts`) + rigs + unit tests. Codec wasm self-hosted in
-`public/compress/` (jxl pattern, ignored by lint/prettier like `public/jxl/`);
-jSquash deps added (mozjpeg/webp/oxipng/avif), package-lock resynced. PARITY
-backlog 46→42, tracked 72, web 68. All gates green (lint, 402 QUnit, 51 rigs,
-static budget main 127 kB). Copy gaps open for Ruby's `slopsieve`.
+## PDF batch (2026-08-14) — BUILT, all gates green, COMMITTED
 
-Also uncommitted (2026-08-13):
+Three PDF-category tools, all built and verified, committed on top of HEAD
+`66b6f15`. Drove the batch with the **omp-batch** skill
+(`.claude/skills/omp-batch/SKILL.md`, gitignored local): kimi via
+`omp -p --cwd <repo> "@promptfile"`, plus a Claude subagent for the numberer
+and the compressor. Dev server :3000 is Ruby's; restart if an editor rig flakes
+(stale Vite graph).
 
-- **Timecode Calculator** (`timecode-calc`, Audio & Video) — a user request.
-  SMPTE add/subtract on `lib/timecode.ts`, drop-frame correct (29.97/59.94),
-  misinput-proof parser (right-aligns short input, reports bad fields by code,
-  snaps dropped drop-frame values up). 10 unit tests incl. a full 0–2h
-  round-trip. lint + 412 QUnit + classes green. PARITY tracked 73, web 69.
-- **Category split**: PDF is now its own registry category
-  (pdf-preflight, pdf-organiser, image-to-pdf); Print & Production keeps the
-  imposers (imposer, zine-imposer). The line is document-vs-physical-paper. No
-  mega "PDF Toolkit" tool — the one-tool-one-page model and per-intent SEO win.
-  When the remaining PDF backlog tools ship, factor a shared `lib/pdf.ts`
-  (intake + page-thumbnail grid); four components still import pdf-lib directly.
-  Backlog doc's PDF section reflects this. PARITY.md's Print & Production
-  section is not yet split to match (follow-up).
+Verification run (2026-08-14): `bun run build` (mupdf absent from the eager
+graph), `verify:static` ALL PASS (31; main 129 kB), `bun run lint` (5/5),
+`bun run test` (430 pass), `classes.mjs` ALL PASS, `pdf-page-numberer.mjs` 4/4,
+`pdf-compressor.mjs` 5/5 (201588 → 29115 B, 12 pages kept). Cloudflare free
+static limits: dist 454 files / 20,000 cap; largest file the pre-existing 20.6 MB
+ONNX wasm / 25 MiB cap; mupdf-wasm.wasm 9.9 MB. package-lock resynced (mupdf).
 
-Batches ready to commit once gaps are filled. The backlog now has a distinct
-**PDF batch** (Numberer/Stamper, Rotate/Crop, Compressor + the shared lib).
+1. **pdf-page-numberer** (built by me) — DONE, type-clean, NOT YET REGISTERED.
+   Untracked files: `components/tools/pdf-page-numberer.gts`, `lib/pdf-stamp.ts`
+   (placement + number-format maths, bun-validated), `tests/unit/lib/
+pdf-stamp-test.ts`, `styles/tools/_pdf-page-numberer.scss`, `scripts/verify/
+pdf-page-numberer.mjs`. Page numbers (template `{n}`/`{N}`, start-at,
+   skip-first) + optional text stamp, both placed via a 3×3 anchor picker, drawn
+   with pdf-lib Helvetica (dynamic-imported, lazy), no page re-encode. Blob
+   download uses `new Uint8Array(out)` (the organiser's fresh-buffer fix — kimi
+   caught the original type error). LANDED: registered in `tools.ts` (`pdf`
+   category, icon `file-digit`, name "Page Numbers"), `@use` added, PARITY row
+   added, rig 4/4.
+
+2. **pdf-rotate-crop** (built by kimi via OMP) — DONE, REGISTERED, rig 19/19.
+   Files: `components/tools/pdf-rotate-crop.gts`, `lib/pdf-crop.ts` (+ 11 unit
+   tests), `styles/tools/_pdf-rotate-crop.scss` (`@use` added),
+   `scripts/verify/pdf-rotate-crop.mjs`. `tools.ts` entry "Rotate & Crop" in the
+   `pdf` category (icon `crop`). PARITY row currently in the Print & Production
+   table (no PDF table yet). One copy gap: `tools.ts:590` (its description). No
+   deps added. Crop converts preview px → PDF points via pdf.js viewport, stores
+   in user space, intersects the existing CropBox on export.
+
+3. **pdf-compressor** — BUILT (MuPDF wasm, in a Web Worker). Files:
+   `components/tools/pdf-compressor.gts`; a three-file lib mirroring the pandoc
+   split — `lib/pdf-compress-core.ts` (pure: `resizeTo` + `STRUCTURAL_OPTIONS` +
+   types + `formatBytes`/`savingsPercent` re-export), `lib/pdf-compress.worker.ts`
+   (all mupdf work: `getMupdf` + `recompressImages` walk + save), and
+   `lib/pdf-compress.ts` (main-thread client: spawns/keeps the worker, `compressPdf`
+   posts + transfers buffers); `tests/unit/lib/pdf-compress-test.ts` (6 tests, on
+   the pure core), `styles/tools/_pdf-compressor.scss`,
+   `scripts/verify/pdf-compressor.mjs` (own npm script `verify:pdf-compressor`,
+   excluded from all.mjs — heavy wasm). Registered in `tools.ts` (icon `shrink`,
+   name "PDF Compressor"), `@use` added, PARITY row added. The mupdf runtime is
+   copied verbatim into `/public/mupdf/` (mupdf.js + mupdf-wasm.js +
+   mupdf-wasm.wasm + LICENSE.mupdf.txt; re-copy from `node_modules/mupdf/dist/`
+   on a version bump) and loaded INSIDE the worker through the jxl.ts `new Function`
+   bundler-ignore idiom, so the 9.9 MB wasm never enters the module graph and
+   default `new URL` resolution finds it as a sibling — no locateFile.
+   `/public/mupdf/` is lint/prettier-excluded.
+
+      WORKER + explicit trigger (Ruby: "it makes the entire browser hang while it
+      compresses, and it does that automatically … make this async, non-blocking, and
+      make the user actually click compress"): all mupdf calls are synchronous wasm,
+      so they run in `pdf-compress.worker.ts` off the main thread — the tab stays
+      responsive. Loading a file no longer compresses; it only reads the bytes. A
+      **Compress** button (primary, in the action bar) starts the run; the spinner
+      animates because the thread is free. Changing Images/Quality/Max size drops the
+      stale result (`#invalidate`) rather than auto-recompressing, so the user
+      re-clicks Compress. Download stays disabled until a result exists. The rig
+      asserts "does not auto-compress on load".
+
+      TWO shrink paths (Ruby: "the compressor barely does anything. can I at least
+      have options for image compression"): (1) always-on structural pass
+      (garbage=deduplicate, compress streams/images/fonts, subsetFonts) — lossless,
+      but barely helps image-heavy PDFs; (2) NEW image recompression (default on) —
+      walk every image XObject, optionally downscale to a longest-edge cap, re-encode
+      as JPEG at a quality slider. NO binary swap was needed: the mupdf wasm already
+      exposes Image.toPixmap → Pixmap.warp (downscale) → Pixmap.asJPEG(quality) plus
+      PDFObject.writeRawStream to write it back in place. Controls: Images
+      Keep/Recompress, Quality 30–90 (default 65), Max size Full/2400/1600/1000 px.
+      Rig (image fixture): 847 kB → 351 kB at q65/Full. SAFE-v1 ceilings (named in
+      the code): skips 1-bit ImageMask stencils and images with an SMask (JPEG has no
+      alpha — never deletes the mask), skips codecs MuPDF cannot decode
+      (JPEG2000/JBIG2, via try/catch), and only writes an image back when the JPEG is
+      actually smaller than the stream it had (never enlarges; a standalone grayscale
+      SMask object may still be re-encoded — minor). `mupdf` is in `dependencies`
+      (never bundled — only the rig imports it and the re-copy needs it).
+
+### Close-out — DONE
+
+All landed: both new tools registered in the `pdf` category with `@use` lines;
+PARITY split into `## PDF` (preflight, organiser, image-to-pdf, rotate-crop,
+page-numberer, compressor) + `## Print & Production` (imposer, zine); counts
+reconciled to tracked 76 / web 72; backlog trimmed to 39 (page-numberer +
+compressor removed). All gates green (see the run above). package-lock resynced.
+The `lib/pdf.ts` shared refactor stays deferred (ponytail — don't rewrite working
+tools for no user gain).
+
+REMAINING for Ruby: none. Resolved before commit:
+
+- Copy gaps: all three PDF tool descriptions filled in `tools.ts`
+  (`pdf-rotate-crop`, `pdf-page-numberer`, `pdf-compressor`); no `\u2211CG`
+  tokens remain anywhere in the tree, so `slopsieve` reports zero gaps.
+- The `docs/frontpage/README.md:123` leak is gone — the bare copy-gap token was
+  stripped from that comment.
+- The batch was committed in the same commit that carries this STATE edit.

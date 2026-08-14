@@ -34,6 +34,7 @@
 		"test": "NODE_ENV=development vite build --mode development && ember test --path dist",
 		"verify": "node scripts/verify/all.mjs",
 		"verify:model": "node scripts/verify/bg-removal.mjs",
+		"verify:pdf-compressor": "node scripts/verify/pdf-compressor.mjs",
 		"verify:static": "node scripts/verify/static.mjs"
 	},
 	"devDependencies": {
@@ -127,6 +128,7 @@
 		"jszip": "^3.10.1",
 		"lucide-static": "^1.30.0",
 		"mathjs": "^15.2.0",
+		"mupdf": "^1.28.0",
 		"pdf-lib": "^1.17.1",
 		"pdfjs-dist": "^5.7.284",
 		"perfect-freehand": "^1.2.3",

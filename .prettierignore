@@ -19,6 +19,9 @@ ember-cli-update.json
 # and their hand-written dispatcher worker (kept in /public idiom)
 /public/compress/
 
+# MuPDF.js emscripten build, copied verbatim from the mupdf npm package
+/public/mupdf/
+
 # vendored MIT pandoc-wasm wrapper, copied verbatim
 /app/lib/pandoc/pandoc-core.js
 

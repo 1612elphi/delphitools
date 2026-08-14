@@ -87,6 +87,7 @@ import iEye from 'lucide-static/icons/eye.svg?raw';
 import iEyeOff from 'lucide-static/icons/eye-off.svg?raw';
 import iFastForward from 'lucide-static/icons/fast-forward.svg?raw';
 import iFileCode from 'lucide-static/icons/file-code.svg?raw';
+import iFileDigit from 'lucide-static/icons/file-digit.svg?raw';
 import iFileImage from 'lucide-static/icons/file-image.svg?raw';
 import iFileOutput from 'lucide-static/icons/file-output.svg?raw';
 import iFilePlus from 'lucide-static/icons/file-plus.svg?raw';
@@ -303,6 +304,7 @@ export const icons: Record<string, string> = {
 	'eye-off': iEyeOff,
 	'fast-forward': iFastForward,
 	'file-code': iFileCode,
+	'file-digit': iFileDigit,
 	'file-image': iFileImage,
 	'file-output': iFileOutput,
 	'file-plus': iFilePlus,

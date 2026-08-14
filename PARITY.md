@@ -23,10 +23,10 @@ applicable on this surface (hardware/native or format constraint).
 
 ## Summary
 
-- **Tools tracked:** 73 (shipped, any surface)
+- **Tools tracked:** 76 (shipped, any surface)
 - **On all three surfaces:** 41
-- **Web:** 69 · **CLI:** 46 · **iOS:** 51
-- **Backlog:** 42 planned tools (web-first) — see the Backlog section at the end.
+- **Web:** 72 · **CLI:** 46 · **iOS:** 51
+- **Backlog:** 39 planned tools (web-first) — see the Backlog section at the end.
 - iOS-exclusive (native/hardware): Colour Camera, Document Scanner, Font Installer, NFC Reader/Writer
 - Web-exclusive: Pixel Picker, Text Editor (pandoc.wasm note: GPL — incompatible with the App Store, and won't run on-device on iOS, hence Document Converter I 🚧)
 - CLI-only sub-feature: `hash` (text hashing, folded into Encoding Tools elsewhere)
@@ -123,15 +123,23 @@ Picker is similarly web-only.
 | Text Diff (`text-diff`)                     | ✅  |      ✅ `diff`       | ✅  |                                                                                                                                                                                                                                                                             |
 | Font Installer (`font-installer`)           | ➖  |          ➖          | ✅  | iOS-only (system fonts)                                                                                                                                                                                                                                                     |
 
+## PDF
+
+| Tool (web ID)                      |  W  |       C        |  I  | Notes                                                                                                |
+| ---------------------------------- | :-: | :------------: | :-: | ---------------------------------------------------------------------------------------------------- |
+| PDF Preflight (`pdf-preflight`)    | ✅  | ✅ `preflight` | ✅  |                                                                                                      |
+| PDF Organiser (`pdf-organiser`)    | ✅  |       ❌       | ❌  | new 2026-08; merge, split (ranges / one file per page), drag-reorder page grid with rotate + delete  |
+| Images ⇄ PDF (`image-to-pdf`)      | ✅  |       ❌       | ❌  | new 2026-08; one page per image with size/fit/margin; PDF pages out as PNGs                          |
+| Rotate & Crop (`pdf-rotate-crop`)  | ✅  |       ❌       | ❌  | new 2026-08; per-page 90° rotation (+ rotate-all), drag-box crop applied to current or all pages     |
+| Page Numbers (`pdf-page-numberer`) | ✅  |       ❌       | ❌  | new 2026-08; page numbers ({n}/{N}, start-at, skip-first) + optional text stamp, 3×3 anchor, pdf-lib |
+| PDF Compressor (`pdf-compressor`)  | ✅  |       ❌       | ❌  | new 2026-08; MuPDF wasm (self-hosted, lazy); lossless structural squeeze, no image downsampling      |
+
 ## Print & Production
 
-| Tool (web ID)                     |  W  |       C        |  I  | Notes                                                                                               |
-| --------------------------------- | :-: | :------------: | :-: | --------------------------------------------------------------------------------------------------- |
-| PDF Preflight (`pdf-preflight`)   | ✅  | ✅ `preflight` | ✅  |                                                                                                     |
-| Print Imposer (`imposer`)         | ✅  |  ✅ `impose`   | ✅  | multi-sheet: saddle/perfect/N-up                                                                    |
-| **Zine Imposer (`zine-imposer`)** | ✅  |   ✅ `zine`    | ✅  | single-sheet folds — see fold table below                                                           |
-| PDF Organiser (`pdf-organiser`)   | ✅  |       ❌       | ❌  | new 2026-08; merge, split (ranges / one file per page), drag-reorder page grid with rotate + delete |
-| Images ⇄ PDF (`image-to-pdf`)     | ✅  |       ❌       | ❌  | new 2026-08; one page per image with size/fit/margin; PDF pages out as PNGs                         |
+| Tool (web ID)                     |  W  |      C      |  I  | Notes                                     |
+| --------------------------------- | :-: | :---------: | :-: | ----------------------------------------- |
+| Print Imposer (`imposer`)         | ✅  | ✅ `impose` | ✅  | multi-sheet: saddle/perfect/N-up          |
+| **Zine Imposer (`zine-imposer`)** | ✅  |  ✅ `zine`  | ✅  | single-sheet folds — see fold table below |
 
 ## Other / Generators
 
@@ -207,10 +215,10 @@ its row into the matching category table above and flip W to ✅.
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Audio & Video          | Video Atlas · Video Muter · Audio Normaliser · Audio Extractor · Audio Speedup · Audio Converter · Video Trimmer · Video Converter · Video Compressor · Video Social Cropper · Subtitle Studio                                                                                                                  |
 | Images & Assets        | EXIF Viewer · Dithering · Blurhash / ThumbHash · Sprite Sheet Packer                                                                                                                                                                                                                                            |
-| Print & Production     | PDF Page Numberer / Stamper · PDF Rotate / Crop · PDF Compressor · Label / Card Sheet Layout                                                                                                                                                                                                                    |
+| Print & Production     | Label / Card Sheet Layout                                                                                                                                                                                                                                                                                       |
 | Other / Generators     | JSON Formatter / Viewer · Data Format Converter · JWT Decoder · UUID / NanoID Generator · Password / Passphrase Generator · Hash / Checksum (file drop) · Cron Expression Builder · Cubic-bezier / Easing Editor · Lorem Ipsum Generator · URL / Query-string Editor · HTTP Status Reference · MIME Type Lookup |
 | Colour                 | Colour Mixer / Blender · Data-viz Scale Generator · Kelvin → RGB                                                                                                                                                                                                                                                |
 | Calculators & Encoding | Aspect Ratio Calculator · Percentage Calculator · Bitwise / Binary Calculator · Roman Numeral Converter                                                                                                                                                                                                         |
 | Turbo-nerd             | IPA Transcription · Morse Encoder / Decoder · Braille Converter · NATO Phonetic                                                                                                                                                                                                                                 |
 
-Total: 42 planned (11 AV · 4 image · 4 PDF · 12 dev · 3 colour · 4 calc · 4 turbo-nerd).
+Total: 39 planned (11 AV · 4 image · 1 PDF · 12 dev · 3 colour · 4 calc · 4 turbo-nerd).
