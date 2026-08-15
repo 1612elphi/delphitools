@@ -393,3 +393,153 @@ REMAINING for Ruby: none. Resolved before commit:
 - The `docs/frontpage/README.md:123` leak is gone — the bare copy-gap token was
   stripped from that comment.
 - The batch was committed in the same commit that carries this STATE edit.
+
+## Session 2026-08-15 — metadata stripper + i2p tab polish (UNCOMMITTED)
+
+Small UI/logic pass, sits on top of `efd9779` alongside Ruby's own unstaged
+work (pdf-organiser, imposer, pdfjs, vite.config, etc. — left untouched).
+
+- **Metadata Stripper**: dropped the "Pixel data: Untouched/Re-encoded" cell
+  (noise — the re-encode fact is already in the "Removed" label as
+  `All metadata (re-encoded)`). Removed the now write-only `reencoded` getter
+  and `StripState.reencoded` field with it.
+- **C2PA detection added** (read-only): `parseMetadata` now returns
+  `c2pa: boolean`, set when the JUMBF superbox type `jumb` and the label `c2pa`
+  both occur in the bytes (`bytesIndexOf`, whole-file scan, works across all
+  four containers). Surfaced as a "Content Credentials → C2PA found / None"
+  cell. A stripped image reports None afterward. Test: "flags a C2PA manifest
+  by its JUMBF markers".
+  - RECONCILES with the prior decision ("no C2PA credential removal", STATE
+    line ~284 / tool-backlog line ~28): that ruled out *removal/re-signing*.
+    This is *detection* only — a report row, nothing is stripped or rewritten.
+  - **SynthID deliberately NOT added**: it is an imperceptible pixel-domain
+    watermark needing Google's proprietary detector model, not a metadata
+    marker. Nothing to byte-scan; any indicator would be a guess.
+- **Images to PDF**: gave `.dt-i2p-tab` `height: crayon.size(10)` +
+  flex-centre so its tab buttons match the QR (`.dt-qr-tab`) and Barcode
+  (`.dt-code-tab`) generators, which were already pinned to that height. The
+  i2p tabs previously had no height rule and fell back to the shorter
+  `.dt-tabs-trigger` padding.
+
+Verification: `lint:types` clean, `npm test` 441 pass / 0 fail / 1 pre-existing
+skip, prettier + eslint clean on changed files. Not committed (Ruby triggers
+commits).
+
+## Session 2026-08-15 (cont.) — DESIGN.md recovered + rewritten, ppn layout fix
+
+Housekeeping, still UNCOMMITTED on top of `efd9779`.
+
+- **DESIGN.md recovered and rewritten.** The file was deleted long ago; the last
+  blob is in commit `90beb85` (`git show 90beb85:DESIGN.md`). That version
+  documented the old Next/React/Tailwind tree (`.tsx`, `globals.css`, Radix), so
+  it was rewritten for the current Ember/Glimmer + Crayon stack: the crayon API
+  (`size`/`font-size`/`font-weight`/`font-family`/`color`, `vstack`/`hstack`/
+  `hover`/`screen`/`dark` mixins), the OKLCH `var(--token)` set, zeroed radii,
+  the two border weights, `.segmented` vs sibling-border hairlines, tool anatomy,
+  the additive tabs primitive, `classes.mjs`, the copy-gap rule, and the gate
+  commands. Canonical references updated to the real `.gts` tools (qr-genny,
+  code-genny, background-remover, pdf-page-numberer).
+- **pdf-page-numberer layout fix** (Ruby: "what the hell is this, looks so bad").
+  Two real bugs in `_pdf-page-numberer.scss`:
+  1. `.dt-ppn-fields` used `auto-fit minmax(size(28),1fr)`, cramming
+     Font/Size/Margin/Position into narrow tracks; the 3-button segmented font
+     picker had no `min-width:0` and overflowed into the Size column. Replaced
+     with a fixed `minmax(0,1fr) minmax(0,1fr) auto` grid (Size · Margin ·
+     Position on one row), Font + Format span full width, `min-width:0` on
+     `.dt-ppn-field` and `.dt-ppn-opt`.
+  2. `.dt-ppn-controls` had `background: var(--border)`; as a stretched grid item
+     all space below the last block painted in the hairline colour (the dark
+     void). Now `background: var(--card)` with blocks divided by `& + &`
+     `border-top` hairlines. Template: Font field gets `dt-ppn-field-wide`.
+  Verified in-browser at :3000 with a synthetic 8-page PDF (screenshot). stylelint
+  + `classes.mjs` clean for `dt-ppn-*`; DESIGN.md prettier-clean.
+
+**WARN**: `node scripts/verify/classes.mjs` FAILS on Ruby's uncommitted
+`pdf-rotate-crop.gts` — `.dt-prc-settings-2` and `.dt-prc-paperfield` are used
+with no rule in `app/styles`. Not mine; left untouched. Ruby's WIP to resolve
+before that gate passes.
+
+## Session 2026-08-15 (cont.) — pdf-page-numberer redesign pass
+
+Second, larger pass on the same tool (Ruby: "too stretched, preview doesn't
+respect aspect ratio, position selectors need lucide arrows, sections need a
+pass, use shadcn not native checkboxes, put Apply at the bottom full-width").
+All UNCOMMITTED.
+
+- **Preview aspect ratio.** It distorted because the box got an explicit
+  width+height and `max-width: 100%` squished width without height. Now the box
+  is `width + aspect-ratio` with `container-type: inline-size`; `max-width: 100%`
+  shrinks it proportionally. `#overlayStyle` was rewritten from absolute px to
+  `cqw` units (`value / pageWidthPoints * 100`), so the number/stamp overlays
+  track the page at any display size. Preview column 320→360px, vertically
+  centred.
+- **shadcn primitives.** The two native checkboxes are now `ui/switch` (Switch);
+  the sections Style native `<select>` is now `ui/select` (Select/Trigger/Value/
+  Content/Item). Handlers changed: `toggleNumbers/toggleStamp` →
+  `setNumbersOn/setStampOn(boolean)`; `setSectionStyle(index, value)`.
+- **Position pickers = lucide arrows.** The 3x3 dot grid is now directional arrow
+  icons (arrow-up-left … arrow-down-right, `dot` centre) via an `ANCHOR_ICON`
+  map read with the `{{get}}` helper. Icons added to `scripts/gen-icons.mjs`
+  EXTRA (dynamic ref, invisible to the scan) and `node scripts/gen-icons.mjs`
+  re-run (220 icons).
+- **Layout de-stretched.** Size/Margin are now narrow inline inputs
+  (`.dt-ppn-metrics`), Position dropped to its own full-width row below them, so
+  no awkward L-gap. Sections numeric columns 5rem→3.5rem so the Style select
+  shows "1, 2, 3" instead of truncating to "1..".
+- **Apply moved** out of the top bar to a full-width primary `.dt-ppn-apply`
+  button at the foot of the frame (`border-top: 2px`, height size(14)). The top
+  bar keeps only the filename + Clear.
+- **Rig updated**: `scripts/verify/pdf-page-numberer.mjs` clicked `.dt-ppn-go`
+  (stale even before this session); now `.dt-ppn-apply`. Rig 4/4 green.
+
+Verified end-to-end in-browser at :3000 (8-page synthetic PDF): overlays track
+position clicks (cqw), stamp renders, download pipeline intact. lint:types +
+stylelint + ember-template-lint clean; `classes.mjs` clean for `dt-ppn-*` (the
+two pdf-rotate-crop failures above are still Ruby's, untouched).
+
+## Session 2026-08-15 (cont.) — ppn sliders, inline rows, watermark mode
+
+Third pass on pdf-page-numberer (Ruby: "sliders for size and margin with
+debounced preview, position in line with the font/size/margin selectors, stamp
+text should have LABEL and WATERMARK modes with an opacity slider"). UNCOMMITTED.
+
+- **Label-beside-control rows** (`.dt-ppn-set`, `grid-template-columns: 5rem 1fr`)
+  so Format, Font, Size, Margin, Position line up in one column. Replaces the old
+  `.dt-ppn-field`/`.dt-ppn-metrics`/`.dt-ppn-metric` (all removed).
+- **Sliders** for Size (`<input type=range>` 6–48) and Margin (0–120, step 2),
+  each `.dt-ppn-slider` = range + `.dt-ppn-readout`. **Debounced preview**:
+  `fontSize`/`margin`/`watermarkOpacity` are the committed source (readout +
+  output, live); the overlay reads debounced mirrors `previewSize`/
+  `previewMargin`/`previewOpacity`, copied 100ms after a drag settles via
+  `#schedulePreview` (guards `isDestroyed`). Verified: readout jumps to 40
+  immediately, overlay font-size 2.62→9.52cqw after the debounce.
+- **Stamp LABEL / WATERMARK modes** (`stampMode`, `STAMP_MODES`, segmented
+  `.dt-ppn-modes`). LABEL = the existing anchored gray text. WATERMARK = full-page
+  diagonal text: centred, `rotate(-45deg)` in CSS / `degrees(45)` in pdf-lib,
+  translucent via an Opacity slider (5–60%, `watermarkOpacity` 0–1). Size auto
+  from `watermarkSize(pageW,pageH,textLen)` — targets 80% of the page diagonal
+  from the string length alone (Helvetica ~0.55em/char), so CSS preview and drawn
+  PDF match; apply() centres with `widthOfTextAtSize`. Position picker is hidden
+  in watermark mode (replaced by Opacity).
+- **apply()** imports `degrees`; branches label vs watermark per page.
+
+Verified in-browser at :3000: watermark "CONFIDENTIAL" renders diagonal at 15%,
+3 sliders, mode toggle swaps Position/Opacity, Apply with watermark throws no
+error. Rig `pdf-page-numberer.mjs` 4/4 (label-mode numbering path). lint:types +
+stylelint + ember-template-lint clean; `classes.mjs` clean for `dt-ppn-*` (the
+two pdf-rotate-crop failures remain Ruby's).
+
+Follow-up (same session): the Position 3x3 was lopsided (a 96px square left in a
+wide cell). `.dt-ppn-anchors` is now `inline-size: 100%` and `.dt-ppn-anchor`
+drops `aspect-ratio: 1` for `height: size(9)`, so the grid fills the control cell
+and lines up with Format/Font/Size/Margin. Verified in-browser.
+
+Follow-up 2: Sections rows reworked into a flush table on the `dt-harmony-row`
+pattern (Ruby likes that look). `.dt-ppn-sections` is a 1px-bordered frame; a
+`.dt-ppn-section-head` column header (From · Style · Start) plus rows, all
+`display: grid` sharing `minmax(0,0.7fr) minmax(0,1.6fr) minmax(0,0.7fr) 2.25rem`,
+`align-items: stretch`, cells divided by `> * + *` border-left and rows by
+border-bottom (last none). Inputs (`.dt-ppn-section-num`) and the Select trigger
+go borderless/transparent and fill their cell; remove ✕ is a flush cell. The old
+`.dt-ppn-mini`/`.dt-ppn-mini-wide` and per-field labels are gone. Verified
+in-browser (2 rows, "1, 2, 3" not truncated). Rig 4/4; gates clean.
