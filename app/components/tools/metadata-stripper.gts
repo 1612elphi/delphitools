@@ -33,7 +33,6 @@ function formatBytes(bytes: number): string {
 interface StripState {
 	blob: Blob;
 	removed: string[];
-	reencoded: boolean;
 }
 
 export default class MetadataStripperTool extends Component {
@@ -69,8 +68,8 @@ export default class MetadataStripperTool extends Component {
 		return removed.length ? removed.join(' · ') : 'Nothing';
 	}
 
-	get reencoded() {
-		return this.result?.reencoded ?? false;
+	get c2pa() {
+		return this.report?.c2pa ?? false;
 	}
 
 	/** The container is outside the four the parser reads. */
@@ -124,7 +123,6 @@ export default class MetadataStripperTool extends Component {
 					type: MIME[stripped.format],
 				}),
 				removed: stripped.removed,
-				reencoded: false,
 			};
 			this.afterReport = parseMetadata(stripped.data);
 		} else {
@@ -155,7 +153,6 @@ export default class MetadataStripperTool extends Component {
 			this.result = {
 				blob,
 				removed: ['All metadata (re-encoded)'],
-				reencoded: true,
 			};
 			this.afterReport = parseMetadata(
 				new Uint8Array(await blob.arrayBuffer()),
@@ -299,14 +296,14 @@ export default class MetadataStripperTool extends Component {
 							</span>
 						</label>
 						<div class="dt-strip-cell">
-							<span>Pixel data</span>
+							<span>Content Credentials</span>
 							<span
 								class="dt-strip-cell-value"
 							>
 								{{if
-									this.reencoded
-									"Re-encoded"
-									"Untouched"
+									this.c2pa
+									"C2PA found"
+									"None"
 								}}
 							</span>
 						</div>

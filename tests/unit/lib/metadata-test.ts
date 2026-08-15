@@ -280,6 +280,22 @@ module('Unit | Lib | metadata', function () {
 		);
 	});
 
+	test('flags a C2PA manifest by its JUMBF markers', function (assert) {
+		assert.false(
+			parseMetadata(buildJpeg()).c2pa,
+			'plain JPEG carries no manifest',
+		);
+		const withManifest = new Uint8Array([
+			...buildJpeg(),
+			...asciiBytes('jumb'),
+			...asciiBytes('c2pa'),
+		]);
+		assert.true(
+			parseMetadata(withManifest).c2pa,
+			'jumb + c2pa byte strings detected',
+		);
+	});
+
 	test('reads EXIF fields and GPS from a JPEG', function (assert) {
 		const report = parseMetadata(buildJpeg());
 		assert.deepEqual(report.gps, {

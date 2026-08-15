@@ -28,6 +28,8 @@ export interface MetadataReport {
 	format: ImageContainer | null;
 	entries: MetadataEntry[];
 	gps: GpsFix | null;
+	/** A C2PA / Content Credentials manifest is embedded. */
+	c2pa: boolean;
 }
 
 export interface StripResult {
@@ -57,6 +59,18 @@ function concat(parts: Uint8Array[]): Uint8Array {
 
 function ascii(bytes: Uint8Array): string {
 	return String.fromCharCode(...bytes);
+}
+
+/** Naive scan for an ASCII needle in a byte array. */
+function bytesIndexOf(data: Uint8Array, needle: string): number {
+	const last = data.length - needle.length;
+	outer: for (let i = 0; i <= last; i++) {
+		for (let j = 0; j < needle.length; j++)
+			if (data[i + j] !== needle.charCodeAt(j))
+				continue outer;
+		return i;
+	}
+	return -1;
 }
 
 function latin1(view: DataView, start: number, length: number): string {
@@ -943,7 +957,12 @@ function stripGif(data: Uint8Array): StripResult {
 
 export function parseMetadata(data: Uint8Array): MetadataReport {
 	const format = detectFormat(data);
-	const report: MetadataReport = { format, entries: [], gps: null };
+	// C2PA / Content Credentials embed a JUMBF manifest: superbox type "jumb",
+	// label "c2pa". Both byte strings co-occur only in a real manifest.
+	const c2pa =
+		bytesIndexOf(data, 'jumb') !== -1 &&
+		bytesIndexOf(data, 'c2pa') !== -1;
+	const report: MetadataReport = { format, entries: [], gps: null, c2pa };
 	if (format === 'jpeg') parseJpeg(data, report);
 	else if (format === 'png') parsePng(data, report);
 	else if (format === 'webp') parseWebp(data, report);
