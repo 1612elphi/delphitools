@@ -20,6 +20,8 @@ import iAlignVerticalDistributeCenter from 'lucide-static/icons/align-vertical-d
 import iAperture from 'lucide-static/icons/aperture.svg?raw';
 import iArchive from 'lucide-static/icons/archive.svg?raw';
 import iArrowDown from 'lucide-static/icons/arrow-down.svg?raw';
+import iArrowDownLeft from 'lucide-static/icons/arrow-down-left.svg?raw';
+import iArrowDownRight from 'lucide-static/icons/arrow-down-right.svg?raw';
 import iArrowDownToLine from 'lucide-static/icons/arrow-down-to-line.svg?raw';
 import iArrowLeft from 'lucide-static/icons/arrow-left.svg?raw';
 import iArrowLeftRight from 'lucide-static/icons/arrow-left-right.svg?raw';
@@ -27,6 +29,8 @@ import iArrowRight from 'lucide-static/icons/arrow-right.svg?raw';
 import iArrowRightLeft from 'lucide-static/icons/arrow-right-left.svg?raw';
 import iArrowUp from 'lucide-static/icons/arrow-up.svg?raw';
 import iArrowUpDown from 'lucide-static/icons/arrow-up-down.svg?raw';
+import iArrowUpLeft from 'lucide-static/icons/arrow-up-left.svg?raw';
+import iArrowUpRight from 'lucide-static/icons/arrow-up-right.svg?raw';
 import iArrowUpToLine from 'lucide-static/icons/arrow-up-to-line.svg?raw';
 import iAudioLines from 'lucide-static/icons/audio-lines.svg?raw';
 import iAudioWaveform from 'lucide-static/icons/audio-waveform.svg?raw';
@@ -75,6 +79,7 @@ import iCopyPlus from 'lucide-static/icons/copy-plus.svg?raw';
 import iCrop from 'lucide-static/icons/crop.svg?raw';
 import iCrosshair from 'lucide-static/icons/crosshair.svg?raw';
 import iDock from 'lucide-static/icons/dock.svg?raw';
+import iDot from 'lucide-static/icons/dot.svg?raw';
 import iDownload from 'lucide-static/icons/download.svg?raw';
 import iDroplet from 'lucide-static/icons/droplet.svg?raw';
 import iDroplets from 'lucide-static/icons/droplets.svg?raw';
@@ -237,6 +242,8 @@ export const icons: Record<string, string> = {
 	aperture: iAperture,
 	archive: iArchive,
 	'arrow-down': iArrowDown,
+	'arrow-down-left': iArrowDownLeft,
+	'arrow-down-right': iArrowDownRight,
 	'arrow-down-to-line': iArrowDownToLine,
 	'arrow-left': iArrowLeft,
 	'arrow-left-right': iArrowLeftRight,
@@ -244,6 +251,8 @@ export const icons: Record<string, string> = {
 	'arrow-right-left': iArrowRightLeft,
 	'arrow-up': iArrowUp,
 	'arrow-up-down': iArrowUpDown,
+	'arrow-up-left': iArrowUpLeft,
+	'arrow-up-right': iArrowUpRight,
 	'arrow-up-to-line': iArrowUpToLine,
 	'audio-lines': iAudioLines,
 	'audio-waveform': iAudioWaveform,
@@ -292,6 +301,7 @@ export const icons: Record<string, string> = {
 	crop: iCrop,
 	crosshair: iCrosshair,
 	dock: iDock,
+	dot: iDot,
 	download: iDownload,
 	droplet: iDroplet,
 	droplets: iDroplets,

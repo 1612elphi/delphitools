@@ -12,10 +12,20 @@
 	border: 2px solid var(--border);
 }
 
-.dt-i2p-dir {
-	grid-template-columns: repeat(2, 1fr);
+.dt-i2p-tabs {
 	border: 0;
 	border-bottom: 2px solid var(--border);
+}
+
+.dt-i2p-tab {
+	display: flex;
+	height: crayon.size(10);
+	align-items: center;
+	justify-content: center;
+}
+
+.dt-i2p-panel {
+	margin-top: 0;
 }
 
 .dt-i2p-drop {

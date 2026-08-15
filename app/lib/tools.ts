@@ -574,7 +574,7 @@ export const toolCategories: ToolCategory[] = [
 			},
 			{
 				id: 'image-to-pdf',
-				name: 'Images ⇄ PDF',
+				name: 'Images to PDF',
 				description:
 					'Turn images into a PDF, or pages into PNGs',
 				icon: 'file-image',
@@ -583,7 +583,7 @@ export const toolCategories: ToolCategory[] = [
 			},
 			{
 				id: 'pdf-rotate-crop',
-				name: 'Rotate & Crop',
+				name: 'PDF Rotate & Crop',
 				description:
 					'Rotate or crop pages or entire documents',
 				icon: 'crop',
@@ -592,7 +592,7 @@ export const toolCategories: ToolCategory[] = [
 			},
 			{
 				id: 'pdf-page-numberer',
-				name: 'Page Numbers',
+				name: 'PDF Page Numbers',
 				description:
 					'Add page numbers or stamps to documents',
 				icon: 'file-digit',

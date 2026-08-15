@@ -4,6 +4,12 @@ import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { eq, not } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
+import {
+	Tabs,
+	TabsList,
+	TabsTrigger,
+	TabsContent,
+} from 'delphitools-v2/components/ui/tabs';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import { downloadBlob, downloadUrl } from 'delphitools-v2/lib/download';
 import { MM_TO_POINTS } from 'delphitools-v2/lib/imposition';
@@ -15,7 +21,7 @@ import {
 	type FitMode,
 	type PageOrientation,
 } from 'delphitools-v2/lib/pdf-pages';
-import { getPdfJs } from 'delphitools-v2/lib/pdfjs';
+import { loadPdfDocument } from 'delphitools-v2/lib/pdfjs';
 
 type Direction = 'to-pdf' | 'to-png';
 
@@ -125,10 +131,6 @@ export default class ImageToPdfTool extends Component {
 		this.#releaseRenders();
 	}
 
-	get isToPdf() {
-		return this.direction === 'to-pdf';
-	}
-
 	get imageCountLabel() {
 		const count = this.images.length;
 		return `${count} image${count === 1 ? '' : 's'}`;
@@ -160,8 +162,8 @@ export default class ImageToPdfTool extends Component {
 			URL.revokeObjectURL(render.url);
 	}
 
-	setDirection = (direction: Direction) => {
-		this.direction = direction;
+	setDirection = (direction: string) => {
+		this.direction = direction as Direction;
 		this.error = null;
 	};
 
@@ -419,11 +421,8 @@ export default class ImageToPdfTool extends Component {
 		this.#releaseRenders();
 		this.renders = [];
 		try {
-			const pdfjs = await getPdfJs();
 			// A copy: pdf.js detaches the buffer it is handed.
-			const doc = await pdfjs.getDocument({
-				data: bytes.slice(0),
-			}).promise;
+			const doc = await loadPdfDocument(bytes.slice(0));
 			const base = this.pdfName ?? 'pages';
 			const renders: RenderedPage[] = [];
 
@@ -487,94 +486,40 @@ export default class ImageToPdfTool extends Component {
 			{{filePaste this.readImage accept=IMAGE_ACCEPT}}
 		>
 			<div class="dt-i2p-frame">
-				<div class="segmented dt-i2p-dir">
-					<button
-						type="button"
-						class="dt-i2p-opt
-							{{if
-								(eq
-									this.direction
-									'to-pdf'
-								)
-								'is-active'
-							}}"
-						{{on
-							"click"
-							(fn
-								this.setDirection
-								"to-pdf"
-							)
-						}}
-					>
-						<Icon @name="image-plus" />
-						Images → PDF
-					</button>
-					<button
-						type="button"
-						class="dt-i2p-opt
-							{{if
-								(eq
-									this.direction
-									'to-png'
-								)
-								'is-active'
-							}}"
-						{{on
-							"click"
-							(fn
-								this.setDirection
-								"to-png"
-							)
-						}}
-					>
-						<Icon @name="file-image" />
-						PDF → PNG
-					</button>
-				</div>
+				<Tabs
+					@value={{this.direction}}
+					@onValueChange={{this.setDirection}}
+				>
+					<TabsList class="dt-i2p-tabs">
+						<TabsTrigger
+							class="dt-i2p-tab"
+							@value="to-pdf"
+						>Image to PDF</TabsTrigger>
+						<TabsTrigger
+							class="dt-i2p-tab"
+							@value="to-png"
+						>PDF to Image</TabsTrigger>
+					</TabsList>
 
-				{{#if this.isToPdf}}
-					<div
-						{{on "drop" this.dropImages}}
-						{{on "dragover" this.allowDrop}}
+					<TabsContent
+						class="dt-i2p-panel"
+						@value="to-pdf"
 					>
-						{{#unless this.images.length}}
-							<label
-								class="dt-i2p-drop"
-							>
-								<input
-									type="file"
-									accept={{IMAGE_ACCEPT}}
-									multiple
-									class="dt-sr-only"
-									{{on
-										"change"
-										this.chooseImages
-									}}
-								/>
-								<Icon
-									@name="upload"
-								/>
-								<span
-									class="dt-i2p-drop-title"
-								>Drop images
-									here</span>
-								<span
-									class="dt-i2p-drop-hint"
-								>click or paste</span>
-							</label>
-						{{/unless}}
-
-						{{#if this.images.length}}
-							<div class="dt-i2p-bar">
-								<div
-									class="dt-i2p-info"
-								>
-									<span
-										class="dt-i2p-count"
-									>{{this.imageCountLabel}}</span>
-								</div>
+						<div
+							{{on
+								"drop"
+								this.dropImages
+							}}
+							{{on
+								"dragover"
+								this.allowDrop
+							}}
+						>
+							{{#unless
+								this.images.length
+							}}
 								<label
-									class="dt-i2p-btn"
+									class="dt-i2p-drop"
 								>
 									<input
 										type="file"
@@ -587,426 +532,492 @@ export default class ImageToPdfTool extends Component {
 										}}
 									/>
 									<Icon
-										@name="image-plus"
+										@name="upload"
 									/>
-									Add
-									images
+									<span
+										class="dt-i2p-drop-title"
+									>Drop
+										images
+										here</span>
+									<span
+										class="dt-i2p-drop-hint"
+									>click
+										or
+										paste</span>
 								</label>
-								<button
-									type="button"
-									class="dt-i2p-btn"
-									{{on
-										"click"
-										this.clearImages
-									}}
-								>
-									<Icon
-										@name="trash-2"
-									/>
-									Clear
-								</button>
-								<button
-									type="button"
-									class="dt-i2p-btn is-primary"
-									disabled={{not
-										this.canBuild
-									}}
-									{{on
-										"click"
-										this.buildPdf
-									}}
-								>
-									<Icon
-										@name="file-output"
-									/>
-									Build
-									PDF
-								</button>
-							</div>
+							{{/unless}}
 
-							<div
-								class="dt-i2p-settings"
-							>
-								<label
-									class="dt-i2p-field"
-								>
-									<span
-									>Page
-										size</span>
-									<select
-										{{on
-											"change"
-											this.setPageSize
-										}}
-									>
-										{{#each
-											PAGE_SIZE_OPTIONS
-											key="id"
-											as |sizeOption|
-										}}
-											<option
-												value={{sizeOption.id}}
-												selected={{eq
-													this.pageSizeId
-													sizeOption.id
-												}}
-											>{{sizeOption.label}}</option>
-										{{/each}}
-									</select>
-								</label>
-
+							{{#if
+								this.images.length
+							}}
 								<div
-									class="dt-i2p-field"
+									class="dt-i2p-bar"
 								>
-									<span
-									>Orientation</span>
 									<div
-										class="segmented dt-i2p-orient"
+										class="dt-i2p-info"
 									>
-										{{#each
-											ORIENTATIONS
-											key="@index"
-											as |option|
-										}}
-											<button
-												type="button"
-												class="dt-i2p-opt
-													{{if
-														(eq
-															this.orientation
-															option
-														)
-														'is-active'
-													}}"
-												disabled={{this.matchSize}}
-												{{on
-													"click"
-													(fn
-														this.setOrientation
-														option
-													)
-												}}
-											>{{option}}</button>
-										{{/each}}
+										<span
+											class="dt-i2p-count"
+										>{{this.imageCountLabel}}</span>
 									</div>
-								</div>
-
-								<div
-									class="dt-i2p-field"
-								>
-									<span
-									>Fit</span>
-									<div
-										class="segmented dt-i2p-fit"
+									<label
+										class="dt-i2p-btn"
 									>
-										{{#each
-											FIT_MODES
-											key="value"
-											as |option|
-										}}
-											<button
-												type="button"
-												class="dt-i2p-opt
-													{{if
-														(eq
-															this.fitMode
-															option.value
-														)
-														'is-active'
-													}}"
-												disabled={{this.matchSize}}
-												{{on
-													"click"
-													(fn
-														this.setFitMode
-														option.value
-													)
-												}}
-											>{{option.label}}</button>
-										{{/each}}
-									</div>
-								</div>
-
-								<div
-									class="dt-i2p-field"
-								>
-									<span
-									>Margin</span>
-									<div
-										class="segmented dt-i2p-margin"
-									>
-										{{#each
-											MARGINS_MM
-											key="@index"
-											as |mm|
-										}}
-											<button
-												type="button"
-												class="dt-i2p-opt
-													{{if
-														(eq
-															this.marginMm
-															mm
-														)
-														'is-active'
-													}}"
-												{{on
-													"click"
-													(fn
-														this.setMargin
-														mm
-													)
-												}}
-											>{{this.marginLabel
-													mm
-												}}</button>
-										{{/each}}
-									</div>
-								</div>
-							</div>
-
-							<ol class="dt-i2p-grid">
-								{{#each
-									this.images
-									key="id"
-									as |image|
-								}}
-									<li
-										class="dt-i2p-cell
-											{{if
-												(eq
-													this.dragOverId
-													image.id
-												)
-												'is-drag-over'
-											}}"
-										draggable="true"
-										{{on
-											"dragstart"
-											(fn
-												this.dragStart
-												image.id
-											)
-										}}
-										{{on
-											"dragover"
-											(fn
-												this.dragOver
-												image.id
-											)
-										}}
-										{{on
-											"drop"
-											(fn
-												this.dropOnCell
-												image.id
-											)
-										}}
-										{{on
-											"dragend"
-											this.dragEnd
-										}}
-									>
-										<img
-											class="dt-i2p-thumb"
-											src={{image.url}}
-											alt={{image.file.name}}
+										<input
+											type="file"
+											accept={{IMAGE_ACCEPT}}
+											multiple
+											class="dt-sr-only"
+											{{on
+												"change"
+												this.chooseImages
+											}}
 										/>
-										<div
-											class="dt-i2p-cell-foot"
-										>
-											<span
-												class="dt-i2p-badge"
-											>{{image.file.name}}</span>
-											<button
-												type="button"
-												class="dt-i2p-tool"
-												title="Remove"
-												{{on
-													"click"
-													(fn
-														this.removeImage
-														image
-													)
-												}}
-											>
-												<Icon
-													@name="x"
-												/>
-											</button>
-										</div>
-									</li>
-								{{/each}}
-							</ol>
-						{{/if}}
-					</div>
-				{{else}}
-					<div
-						{{on "drop" this.dropPdf}}
-						{{on "dragover" this.allowDrop}}
-					>
-						{{#unless this.pdfBytes}}
-							<label
-								class="dt-i2p-drop"
-							>
-								<input
-									type="file"
-									accept={{PDF_ACCEPT}}
-									class="dt-sr-only"
-									{{on
-										"change"
-										this.choosePdf
-									}}
-								/>
-								<Icon
-									@name="upload"
-								/>
-								<span
-									class="dt-i2p-drop-title"
-								>Drop PDF here</span>
-								<span
-									class="dt-i2p-drop-hint"
-								>click to select</span>
-							</label>
-						{{/unless}}
-
-						{{#if this.pdfBytes}}
-							<div class="dt-i2p-bar">
-								<div
-									class="dt-i2p-info"
-								>
-									<span
-										class="dt-i2p-count"
-									>{{this.pdfInfoLabel}}</span>
-								</div>
-								<button
-									type="button"
-									class="dt-i2p-btn"
-									{{on
-										"click"
-										this.clearPdf
-									}}
-								>
-									<Icon
-										@name="trash-2"
-									/>
-									Clear
-								</button>
-								<button
-									type="button"
-									class="dt-i2p-btn is-primary"
-									disabled={{not
-										this.canZip
-									}}
-									{{on
-										"click"
-										this.downloadZip
-									}}
-								>
-									<Icon
-										@name="download"
-									/>
-									Download
-									zip
-								</button>
-							</div>
-
-							<div
-								class="dt-i2p-settings"
-							>
-								<div
-									class="dt-i2p-field"
-								>
-									<span
-									>Scale</span>
-									<div
-										class="segmented dt-i2p-scale"
-									>
-										{{#each
-											SCALES
-											key="value"
-											as |option|
+										<Icon
+											@name="image-plus"
+										/>
+										Add
+										images
+									</label>
+									<button
+										type="button"
+										class="dt-i2p-btn"
+										{{on
+											"click"
+											this.clearImages
 										}}
-											<button
-												type="button"
-												class="dt-i2p-opt
-													{{if
-														(eq
-															this.scale
-															option.value
-														)
-														'is-active'
-													}}"
-												{{on
-													"click"
-													(fn
-														this.setScale
-														option.value
-													)
-												}}
-											>{{option.label}}</button>
-										{{/each}}
-									</div>
+									>
+										<Icon
+											@name="trash-2"
+										/>
+										Clear
+									</button>
+									<button
+										type="button"
+										class="dt-i2p-btn is-primary"
+										disabled={{not
+											this.canBuild
+										}}
+										{{on
+											"click"
+											this.buildPdf
+										}}
+									>
+										<Icon
+											@name="file-output"
+										/>
+										Build
+										PDF
+									</button>
 								</div>
-								{{#if
-									this.rendering
-								}}
+
+								<div
+									class="dt-i2p-settings"
+								>
+									<label
+										class="dt-i2p-field"
+									>
+										<span
+										>Page
+											size</span>
+										<select
+											{{on
+												"change"
+												this.setPageSize
+											}}
+										>
+											{{#each
+												PAGE_SIZE_OPTIONS
+												key="id"
+												as |sizeOption|
+											}}
+												<option
+													value={{sizeOption.id}}
+													selected={{eq
+														this.pageSizeId
+														sizeOption.id
+													}}
+												>{{sizeOption.label}}</option>
+											{{/each}}
+										</select>
+									</label>
+
 									<div
 										class="dt-i2p-field"
 									>
 										<span
-										>Status</span>
-										<span
-											class="dt-i2p-status"
-										>Rendering…</span>
-									</div>
-								{{/if}}
-							</div>
-
-							<ol class="dt-i2p-grid">
-								{{#each
-									this.renders
-									key="page"
-									as |render|
-								}}
-									<li
-										class="dt-i2p-cell"
-									>
-										<img
-											class="dt-i2p-thumb"
-											src={{render.url}}
-											alt={{render.name}}
-										/>
+										>Orientation</span>
 										<div
-											class="dt-i2p-cell-foot"
+											class="segmented dt-i2p-orient"
+										>
+											{{#each
+												ORIENTATIONS
+												key="@index"
+												as |option|
+											}}
+												<button
+													type="button"
+													class="dt-i2p-opt
+														{{if
+															(eq
+																this.orientation
+																option
+															)
+															'is-active'
+														}}"
+													disabled={{this.matchSize}}
+													{{on
+														"click"
+														(fn
+															this.setOrientation
+															option
+														)
+													}}
+												>{{option}}</button>
+											{{/each}}
+										</div>
+									</div>
+
+									<div
+										class="dt-i2p-field"
+									>
+										<span
+										>Fit</span>
+										<div
+											class="segmented dt-i2p-fit"
+										>
+											{{#each
+												FIT_MODES
+												key="value"
+												as |option|
+											}}
+												<button
+													type="button"
+													class="dt-i2p-opt
+														{{if
+															(eq
+																this.fitMode
+																option.value
+															)
+															'is-active'
+														}}"
+													disabled={{this.matchSize}}
+													{{on
+														"click"
+														(fn
+															this.setFitMode
+															option.value
+														)
+													}}
+												>{{option.label}}</button>
+											{{/each}}
+										</div>
+									</div>
+
+									<div
+										class="dt-i2p-field"
+									>
+										<span
+										>Margin</span>
+										<div
+											class="segmented dt-i2p-margin"
+										>
+											{{#each
+												MARGINS_MM
+												key="@index"
+												as |mm|
+											}}
+												<button
+													type="button"
+													class="dt-i2p-opt
+														{{if
+															(eq
+																this.marginMm
+																mm
+															)
+															'is-active'
+														}}"
+													{{on
+														"click"
+														(fn
+															this.setMargin
+															mm
+														)
+													}}
+												>{{this.marginLabel
+														mm
+													}}</button>
+											{{/each}}
+										</div>
+									</div>
+								</div>
+
+								<ol
+									class="dt-i2p-grid"
+								>
+									{{#each
+										this.images
+										key="id"
+										as |image|
+									}}
+										<li
+											class="dt-i2p-cell
+												{{if
+													(eq
+														this.dragOverId
+														image.id
+													)
+													'is-drag-over'
+												}}"
+											draggable="true"
+											{{on
+												"dragstart"
+												(fn
+													this.dragStart
+													image.id
+												)
+											}}
+											{{on
+												"dragover"
+												(fn
+													this.dragOver
+													image.id
+												)
+											}}
+											{{on
+												"drop"
+												(fn
+													this.dropOnCell
+													image.id
+												)
+											}}
+											{{on
+												"dragend"
+												this.dragEnd
+											}}
+										>
+											<img
+												class="dt-i2p-thumb"
+												src={{image.url}}
+												alt={{image.file.name}}
+											/>
+											<div
+												class="dt-i2p-cell-foot"
+											>
+												<span
+													class="dt-i2p-badge"
+												>{{image.file.name}}</span>
+												<button
+													type="button"
+													class="dt-i2p-tool"
+													title="Remove"
+													{{on
+														"click"
+														(fn
+															this.removeImage
+															image
+														)
+													}}
+												>
+													<Icon
+														@name="x"
+													/>
+												</button>
+											</div>
+										</li>
+									{{/each}}
+								</ol>
+							{{/if}}
+						</div>
+					</TabsContent>
+
+					<TabsContent
+						class="dt-i2p-panel"
+						@value="to-png"
+					>
+						<div
+							{{on
+								"drop"
+								this.dropPdf
+							}}
+							{{on
+								"dragover"
+								this.allowDrop
+							}}
+						>
+							{{#unless
+								this.pdfBytes
+							}}
+								<label
+									class="dt-i2p-drop"
+								>
+									<input
+										type="file"
+										accept={{PDF_ACCEPT}}
+										class="dt-sr-only"
+										{{on
+											"change"
+											this.choosePdf
+										}}
+									/>
+									<Icon
+										@name="upload"
+									/>
+									<span
+										class="dt-i2p-drop-title"
+									>Drop
+										PDF
+										here</span>
+									<span
+										class="dt-i2p-drop-hint"
+									>click
+										to
+										select</span>
+								</label>
+							{{/unless}}
+
+							{{#if this.pdfBytes}}
+								<div
+									class="dt-i2p-bar"
+								>
+									<div
+										class="dt-i2p-info"
+									>
+										<span
+											class="dt-i2p-count"
+										>{{this.pdfInfoLabel}}</span>
+									</div>
+									<button
+										type="button"
+										class="dt-i2p-btn"
+										{{on
+											"click"
+											this.clearPdf
+										}}
+									>
+										<Icon
+											@name="trash-2"
+										/>
+										Clear
+									</button>
+									<button
+										type="button"
+										class="dt-i2p-btn is-primary"
+										disabled={{not
+											this.canZip
+										}}
+										{{on
+											"click"
+											this.downloadZip
+										}}
+									>
+										<Icon
+											@name="download"
+										/>
+										Download
+										zip
+									</button>
+								</div>
+
+								<div
+									class="dt-i2p-settings"
+								>
+									<div
+										class="dt-i2p-field"
+									>
+										<span
+										>Scale</span>
+										<div
+											class="segmented dt-i2p-scale"
+										>
+											{{#each
+												SCALES
+												key="value"
+												as |option|
+											}}
+												<button
+													type="button"
+													class="dt-i2p-opt
+														{{if
+															(eq
+																this.scale
+																option.value
+															)
+															'is-active'
+														}}"
+													{{on
+														"click"
+														(fn
+															this.setScale
+															option.value
+														)
+													}}
+												>{{option.label}}</button>
+											{{/each}}
+										</div>
+									</div>
+									{{#if
+										this.rendering
+									}}
+										<div
+											class="dt-i2p-field"
 										>
 											<span
-												class="dt-i2p-badge"
-											>p.
-												{{render.page}}</span>
-											<button
-												type="button"
-												class="dt-i2p-tool"
-												title="Download"
-												{{on
-													"click"
-													(fn
-														this.downloadPage
-														render
-													)
-												}}
-											>
-												<Icon
-													@name="download"
-												/>
-											</button>
+											>Status</span>
+											<span
+												class="dt-i2p-status"
+											>Rendering…</span>
 										</div>
-									</li>
-								{{/each}}
-							</ol>
-						{{/if}}
-					</div>
-				{{/if}}
+									{{/if}}
+								</div>
+
+								<ol
+									class="dt-i2p-grid"
+								>
+									{{#each
+										this.renders
+										key="page"
+										as |render|
+									}}
+										<li
+											class="dt-i2p-cell"
+										>
+											<img
+												class="dt-i2p-thumb"
+												src={{render.url}}
+												alt={{render.name}}
+											/>
+											<div
+												class="dt-i2p-cell-foot"
+											>
+												<span
+													class="dt-i2p-badge"
+												>p.
+													{{render.page}}</span>
+												<button
+													type="button"
+													class="dt-i2p-tool"
+													title="Download"
+													{{on
+														"click"
+														(fn
+															this.downloadPage
+															render
+														)
+													}}
+												>
+													<Icon
+														@name="download"
+													/>
+												</button>
+											</div>
+										</li>
+									{{/each}}
+								</ol>
+							{{/if}}
+						</div>
+					</TabsContent>
+				</Tabs>
 
 				{{#if this.error}}
 					<p

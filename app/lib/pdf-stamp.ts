@@ -64,30 +64,119 @@ export function placeText(
 }
 
 /**
- * Expand a page-number template: `{n}` = this page (after the start offset),
- * `{N}` = total pages. Unknown tokens are left as written. A bare template with
- * no token still renders (it becomes a fixed stamp on every page).
+ * Expand a page-number template: `{n}` = this page's formatted number, `{N}` =
+ * the document total. Both are pre-formatted strings so a section can render
+ * roman while the total stays arabic. Unknown tokens are left as written; a
+ * template with no token becomes a fixed stamp on every page.
  */
-export function expandNumber(
-	template: string,
-	pageNumber: number,
-	total: number,
-): string {
-	return template
-		.replace(/\{n\}/g, String(pageNumber))
-		.replace(/\{N\}/g, String(total));
+export function expandNumber(template: string, n: string, N: string): string {
+	return template.replace(/\{n\}/g, n).replace(/\{N\}/g, N);
+}
+
+/** Numeral system a section counts in. */
+export type NumeralStyle =
+	| 'arabic'
+	| 'roman-lower'
+	| 'roman-upper'
+	| 'alpha-lower'
+	| 'alpha-upper';
+
+const ROMAN: [number, string][] = [
+	[1000, 'M'],
+	[900, 'CM'],
+	[500, 'D'],
+	[400, 'CD'],
+	[100, 'C'],
+	[90, 'XC'],
+	[50, 'L'],
+	[40, 'XL'],
+	[10, 'X'],
+	[9, 'IX'],
+	[5, 'V'],
+	[4, 'IV'],
+	[1, 'I'],
+];
+
+/** Roman numeral for 1–3999; anything outside that range has no clean roman
+ *  form, so it falls back to the arabic digits. */
+function toRoman(value: number): string {
+	if (value <= 0 || value >= 4000) return String(value);
+	let n = value;
+	let out = '';
+	for (const [amount, symbol] of ROMAN) {
+		while (n >= amount) {
+			out += symbol;
+			n -= amount;
+		}
+	}
+	return out;
+}
+
+/** Bijective base-26 letters: 1→a, 26→z, 27→aa. Non-positive falls back to
+ *  the arabic digits. */
+function toAlpha(value: number): string {
+	if (value <= 0) return String(value);
+	let n = value;
+	let out = '';
+	while (n > 0) {
+		const rem = (n - 1) % 26;
+		out = String.fromCharCode(97 + rem) + out;
+		n = Math.floor((n - 1) / 26);
+	}
+	return out;
+}
+
+/** Render `value` in the given numeral system. */
+export function formatNumeral(value: number, style: NumeralStyle): string {
+	switch (style) {
+		case 'arabic':
+			return String(value);
+		case 'roman-lower':
+			return toRoman(value).toLowerCase();
+		case 'roman-upper':
+			return toRoman(value);
+		case 'alpha-lower':
+			return toAlpha(value);
+		case 'alpha-upper':
+			return toAlpha(value).toUpperCase();
+	}
 }
 
 /**
- * The 1-based label to print on the `index`-th page (0-based) given a start
- * number and whether the first page is skipped. Returns null for a skipped
- * page, so the caller draws nothing there.
+ * One numbering run. `fromPage` is the 1-based page it starts on; `startAt` is
+ * the value printed there, so a section restarts (or continues) the counter by
+ * choice of `startAt`. Each section counts in its own `style`.
  */
-export function pageLabelNumber(
-	index: number,
-	startAt: number,
-	skipFirst: boolean,
-): number | null {
-	if (skipFirst && index === 0) return null;
-	return startAt + index - (skipFirst ? 1 : 0);
+export interface NumberSection {
+	fromPage: number;
+	style: NumeralStyle;
+	startAt: number;
+}
+
+/**
+ * The formatted label for every page (0-based array of `pageCount`). A page
+ * before the first section's `fromPage` gets null — no number is drawn there.
+ * Sections are applied in `fromPage` order regardless of input order; the
+ * active section for a page is the latest one that has started.
+ */
+export function resolvePageNumbers(
+	sections: NumberSection[],
+	pageCount: number,
+): (string | null)[] {
+	const ordered = [...sections].sort((a, b) => a.fromPage - b.fromPage);
+	const labels: (string | null)[] = [];
+	for (let page = 1; page <= pageCount; page++) {
+		let active: NumberSection | null = null;
+		for (const section of ordered) {
+			if (section.fromPage <= page) active = section;
+			else break;
+		}
+		if (!active) {
+			labels.push(null);
+			continue;
+		}
+		const value = active.startAt + (page - active.fromPage);
+		labels.push(formatNumeral(value, active.style));
+	}
+	return labels;
 }

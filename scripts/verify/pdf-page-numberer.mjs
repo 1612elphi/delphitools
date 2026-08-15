@@ -66,7 +66,7 @@ await page.waitForFunction(
 );
 check('PDF loads and reports its pages', true);
 
-await page.click('.dt-ppn-go');
+await page.click('.dt-ppn-apply');
 const out = await waitForDownload(/numbered\.pdf$/);
 check('stamped PDF downloads', !!out, out?.name ?? 'no download');
 

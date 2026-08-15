@@ -30,6 +30,16 @@ const EXTRA = [
 	'lock-open',
 	'pin',
 	'pin-off',
+	// pdf-page-numberer's 3x3 position picker reads its glyphs from ANCHOR_ICON.
+	'arrow-up-left',
+	'arrow-up',
+	'arrow-up-right',
+	'arrow-left',
+	'dot',
+	'arrow-right',
+	'arrow-down-left',
+	'arrow-down',
+	'arrow-down-right',
 	...Object.values(FX_ICONS),
 	FX_ICON_FALLBACK,
 ];
