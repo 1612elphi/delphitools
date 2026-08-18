@@ -296,7 +296,8 @@ export default class MetadataStripperTool extends Component {
 							</span>
 						</label>
 						<div class="dt-strip-cell">
-							<span>Content Credentials</span>
+							<span>Content
+								Credentials</span>
 							<span
 								class="dt-strip-cell-value"
 							>

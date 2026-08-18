@@ -165,6 +165,64 @@
 	grid-template-columns: repeat(3, 1fr);
 }
 
+/* Second settings row: margins take two tracks, paper size the third. */
+.dt-prc-settings-2 {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+
+	/* Slack sits above the buttons, so inputs line up and both rows end flush. */
+	.dt-prc-applyscope {
+		margin-top: auto;
+	}
+}
+
+.dt-prc-applyscope {
+	grid-template-columns: repeat(2, 1fr);
+}
+
+/* Give the four margin inputs room; the paper picker keeps a single column. */
+.dt-prc-margins {
+	grid-column: span 2;
+}
+
+.dt-prc-insets {
+	display: grid;
+	gap: crayon.size(1);
+	grid-template-columns: repeat(4, 1fr);
+}
+
+.dt-prc-inset {
+	@include crayon.hstack(1);
+
+	align-items: center;
+
+	> span {
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+		font-weight: crayon.font-weight("medium");
+	}
+
+	input {
+		width: 100%;
+		min-width: 0;
+		padding: crayon.size(1) crayon.size(2);
+		border: 1px solid var(--border);
+		background: var(--background);
+		color: var(--foreground);
+		font: inherit;
+		font-size: crayon.font-size("sm");
+		font-variant-numeric: tabular-nums;
+
+		&:focus-visible {
+			outline: 2px solid var(--ring);
+			outline-offset: -1px;
+		}
+	}
+}
+
+.dt-prc-paper {
+	width: 100%;
+}
+
 .dt-prc-opt {
 	display: flex;
 	align-items: center;

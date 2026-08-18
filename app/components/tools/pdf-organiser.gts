@@ -11,7 +11,7 @@ import {
 	normaliseRotation,
 	parsePageRanges,
 } from 'delphitools-v2/lib/pdf-pages';
-import { getPdfJs } from 'delphitools-v2/lib/pdfjs';
+import { loadPdfDocument } from 'delphitools-v2/lib/pdfjs';
 import type { PDFDocument } from 'pdf-lib';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 
@@ -171,11 +171,9 @@ export default class PdfOrganiserTool extends Component {
 				ignoreEncryption: true,
 			});
 
-			const pdfjs = await getPdfJs();
-			const js: PDFDocumentProxy = await pdfjs.getDocument({
-				// A copy: pdf.js detaches the buffer it is handed.
-				data: bytes.slice(0),
-			}).promise;
+			const js: PDFDocumentProxy = await loadPdfDocument(
+				bytes.slice(0),
+			);
 
 			const thumbs = await this.#renderThumbs(js);
 			if (this.isDestroyed) return;

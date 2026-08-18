@@ -27,6 +27,7 @@
 @use "tools/colour-atlas";
 @use "tools/colour-converter";
 @use "tools/contrast-checker";
+@use "tools/cron-builder";
 @use "tools/decoder";
 @use "tools/doc-converter";
 @use "tools/encoder";
@@ -37,6 +38,7 @@
 @use "tools/gradient-genny";
 @use "tools/graph-calc";
 @use "tools/harmony-genny";
+@use "tools/http-status";
 @use "tools/image-clipper";
 @use "tools/image-compressor";
 @use "tools/image-converter";
@@ -44,17 +46,20 @@
 @use "tools/image-stitcher";
 @use "tools/image-tracer";
 @use "tools/image-to-pdf";
+@use "tools/json-formatter";
+@use "tools/jwt-decoder";
 @use "tools/imposer";
 @use "tools/large-type";
 @use "tools/line-height-calc";
 @use "tools/markdown-writer";
-@use "tools/matte-generator";
+@use "tools/matte-genny";
 @use "tools/meta-tag-genny";
 @use "tools/metadata-stripper";
 @use "tools/palette-collection";
 @use "tools/palette-extractor";
 @use "tools/palette-genny";
 @use "tools/paper-sizes";
+@use "tools/password-genny";
 @use "tools/paste-image";
 @use "tools/pdf-compressor";
 @use "tools/pdf-organiser";
@@ -68,7 +73,7 @@
 @use "tools/regex-tester";
 @use "tools/sci-calc";
 @use "tools/screen-recorder";
-@use "tools/scroll-generator";
+@use "tools/scroll-genny";
 @use "tools/shavian-transliterator";
 @use "tools/social-cropper";
 @use "tools/subtitle-converter";
@@ -81,6 +86,7 @@
 @use "tools/timecode-calc";
 @use "tools/typo-calc";
 @use "tools/unit-converter";
+@use "tools/uuid-genny";
 @use "tools/video-to-gif";
 @use "tools/voice-recorder";
 @use "tools/watermarker";
@@ -1636,43 +1642,67 @@ $header-height: crayon.size(14);
 
 /* ── 404 ────────────────────────────────────────────────────────────────── */
 
-.dt-404 {
-	@include crayon.vstack(0);
+/* ── 404 ──────────────────────────────────────────────────────────────────
+   Full-viewport scene that escapes the app chrome (see application.gts):
+   regular-tile repeats as a grid whose ORIGIN tile sits bottom-middle
+   (background-position 50%/100% anchors exactly one tile there), and
+   bottom-tile overlays that cell — both read the same --tile size so the
+   overlay can never drift off the grid. Card floats exact-centre above it. */
+.dt-404-page {
+	/* Origin tile centred bottom-mid, 1.5 regular tiles to each side: at most
+	   four full tiles fit the width, so the cell is a quarter viewport. */
+	--tile: 25vw;
 
-	align-items: center;
-	justify-content: center;
-	min-height: 60vh;
-	padding: crayon.size(6);
-	text-align: center;
-
-	h1 {
-		margin-bottom: crayon.size(2);
-		font-size: crayon.font-size("3xl");
-		font-weight: crayon.font-weight("bold");
-	}
-
-	p {
-		max-width: 28rem;
-		margin-bottom: crayon.size(8);
-		color: var(--muted-foreground);
-	}
-}
-
-.dt-404-mark {
+	position: fixed;
+	inset: 0;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: crayon.size(20);
-	height: crayon.size(20);
-	margin-bottom: crayon.size(6);
-	background: var(--muted);
-	border-radius: crayon.rounded("full");
+	padding: crayon.size(6);
+	background: url("/tiles/regular-tile.png") center bottom / var(--tile)
+		var(--tile) repeat;
+}
 
-	.dt-icon {
-		width: crayon.size(10);
-		height: crayon.size(10);
-		color: var(--muted-foreground);
-	}
+.dt-404-bottom-tile {
+	position: absolute;
+	bottom: 0;
+	left: 50%;
+	width: var(--tile);
+	height: var(--tile);
+
+	/* Opaque backdrop: the art's transparent pixels show the page ground,
+	   never the regular grid through it — the two tiles never overlap. */
+	background: var(--background);
+	translate: -50% 0;
+	pointer-events: none;
+}
+
+.dt-404-hero {
+	@include crayon.vstack(4);
+
+	align-items: center;
+	padding: crayon.size(10) crayon.size(12);
+	border: 2px solid var(--border);
+	background: var(--card);
+	text-align: center;
+}
+
+.dt-404-code {
+	margin: 0;
+	font-size: crayon.font-size("4xl");
+	font-weight: crayon.font-weight("bold");
+	line-height: 1;
+}
+
+.dt-404-note {
+	margin: 0;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-404-home {
+	// sits under the card stack; margin-top gives the button air
+	margin-top: crayon.size(4);
 }
 
 .dt-btn {

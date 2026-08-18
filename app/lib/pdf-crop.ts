@@ -61,3 +61,56 @@ export function intersectBox(a: CropBox, b: CropBox): CropBox | null {
 	if (right - x <= 0 || bottom - y <= 0) return null;
 	return { x, y, width: right - x, height: bottom - y };
 }
+
+/**
+ * A crop box from per-edge insets, all in points, origin bottom-left. `top`
+ * and `bottom` are distances from the respective page edges. Returns null when
+ * the remaining area collapses or any inset is negative.
+ */
+export function cropFromInsets(
+	pageW: number,
+	pageH: number,
+	left: number,
+	top: number,
+	right: number,
+	bottom: number,
+): CropBox | null {
+	if (left < 0 || top < 0 || right < 0 || bottom < 0) return null;
+	const width = pageW - left - right;
+	const height = pageH - top - bottom;
+	if (width <= 0 || height <= 0) return null;
+	return { x: left, y: bottom, width, height };
+}
+
+/** Inverse of cropFromInsets: the four edge distances of a box on its page. */
+export function insetsFromBox(
+	box: CropBox,
+	pageW: number,
+	pageH: number,
+): { left: number; top: number; right: number; bottom: number } {
+	return {
+		left: box.x,
+		bottom: box.y,
+		right: pageW - (box.x + box.width),
+		top: pageH - (box.y + box.height),
+	};
+}
+
+/**
+ * A paper-sized box centred on the page, origin bottom-left. It may extend past
+ * the page edges; the download path intersects it with the page's own crop box,
+ * so an oversized paper is safe.
+ */
+export function cropToPaper(
+	pageW: number,
+	pageH: number,
+	paperW: number,
+	paperH: number,
+): CropBox {
+	return {
+		x: (pageW - paperW) / 2,
+		y: (pageH - paperH) / 2,
+		width: paperW,
+		height: paperH,
+	};
+}

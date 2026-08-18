@@ -42,8 +42,10 @@ import iBold from 'lucide-static/icons/bold.svg?raw';
 import iBookOpen from 'lucide-static/icons/book-open.svg?raw';
 import iBox from 'lucide-static/icons/box.svg?raw';
 import iBoxSelect from 'lucide-static/icons/box-select.svg?raw';
+import iBraces from 'lucide-static/icons/braces.svg?raw';
 import iBrush from 'lucide-static/icons/brush.svg?raw';
 import iCalculator from 'lucide-static/icons/calculator.svg?raw';
+import iCalendarClock from 'lucide-static/icons/calendar-clock.svg?raw';
 import iCamera from 'lucide-static/icons/camera.svg?raw';
 import iCaptions from 'lucide-static/icons/captions.svg?raw';
 import iCaseUpper from 'lucide-static/icons/case-upper.svg?raw';
@@ -103,6 +105,7 @@ import iFileType from 'lucide-static/icons/file-type.svg?raw';
 import iFileType2 from 'lucide-static/icons/file-type-2.svg?raw';
 import iFileUp from 'lucide-static/icons/file-up.svg?raw';
 import iFilm from 'lucide-static/icons/film.svg?raw';
+import iFingerprint from 'lucide-static/icons/fingerprint.svg?raw';
 import iFlipHorizontal2 from 'lucide-static/icons/flip-horizontal-2.svg?raw';
 import iFlipVertical2 from 'lucide-static/icons/flip-vertical-2.svg?raw';
 import iFocus from 'lucide-static/icons/focus.svg?raw';
@@ -126,6 +129,7 @@ import iImagePlus from 'lucide-static/icons/image-plus.svg?raw';
 import iInfo from 'lucide-static/icons/info.svg?raw';
 import iItalic from 'lucide-static/icons/italic.svg?raw';
 import iKeyRound from 'lucide-static/icons/key-round.svg?raw';
+import iKeySquare from 'lucide-static/icons/key-square.svg?raw';
 import iLanguages from 'lucide-static/icons/languages.svg?raw';
 import iLasso from 'lucide-static/icons/lasso.svg?raw';
 import iLayers from 'lucide-static/icons/layers.svg?raw';
@@ -185,11 +189,13 @@ import iScanSearch from 'lucide-static/icons/scan-search.svg?raw';
 import iScissors from 'lucide-static/icons/scissors.svg?raw';
 import iScissorsLineDashed from 'lucide-static/icons/scissors-line-dashed.svg?raw';
 import iSearch from 'lucide-static/icons/search.svg?raw';
+import iServer from 'lucide-static/icons/server.svg?raw';
 import iSettings from 'lucide-static/icons/settings.svg?raw';
 import iShapes from 'lucide-static/icons/shapes.svg?raw';
 import iShieldCheck from 'lucide-static/icons/shield-check.svg?raw';
 import iShrink from 'lucide-static/icons/shrink.svg?raw';
 import iShuffle from 'lucide-static/icons/shuffle.svg?raw';
+import iSignature from 'lucide-static/icons/signature.svg?raw';
 import iSlash from 'lucide-static/icons/slash.svg?raw';
 import iSlidersHorizontal from 'lucide-static/icons/sliders-horizontal.svg?raw';
 import iSmartphone from 'lucide-static/icons/smartphone.svg?raw';
@@ -264,8 +270,10 @@ export const icons: Record<string, string> = {
 	'book-open': iBookOpen,
 	box: iBox,
 	'box-select': iBoxSelect,
+	braces: iBraces,
 	brush: iBrush,
 	calculator: iCalculator,
+	'calendar-clock': iCalendarClock,
 	camera: iCamera,
 	captions: iCaptions,
 	'case-upper': iCaseUpper,
@@ -325,6 +333,7 @@ export const icons: Record<string, string> = {
 	'file-type-2': iFileType2,
 	'file-up': iFileUp,
 	film: iFilm,
+	fingerprint: iFingerprint,
 	'flip-horizontal-2': iFlipHorizontal2,
 	'flip-vertical-2': iFlipVertical2,
 	focus: iFocus,
@@ -348,6 +357,7 @@ export const icons: Record<string, string> = {
 	info: iInfo,
 	italic: iItalic,
 	'key-round': iKeyRound,
+	'key-square': iKeySquare,
 	languages: iLanguages,
 	lasso: iLasso,
 	layers: iLayers,
@@ -407,11 +417,13 @@ export const icons: Record<string, string> = {
 	scissors: iScissors,
 	'scissors-line-dashed': iScissorsLineDashed,
 	search: iSearch,
+	server: iServer,
 	settings: iSettings,
 	shapes: iShapes,
 	'shield-check': iShieldCheck,
 	shrink: iShrink,
 	shuffle: iShuffle,
+	signature: iSignature,
 	slash: iSlash,
 	'sliders-horizontal': iSlidersHorizontal,
 	smartphone: iSmartphone,

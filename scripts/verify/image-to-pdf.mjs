@@ -185,8 +185,8 @@ if (matchFile) {
 
 // ── PDF → PNG ────────────────────────────────────────────────────────────
 await page.evaluate(() => {
-	[...document.querySelectorAll('.dt-i2p-dir .dt-i2p-opt')]
-		.find((b) => b.textContent.includes('PNG'))
+	[...document.querySelectorAll('.dt-i2p-tab')]
+		.find((b) => b.textContent.includes('PDF to Image'))
 		.click();
 });
 await (await page.$('.dt-i2p-drop input[type="file"]')).uploadFile(fixture);

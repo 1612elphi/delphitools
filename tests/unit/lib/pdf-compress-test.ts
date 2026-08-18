@@ -7,10 +7,19 @@ import {
 } from 'delphitools-v2/lib/pdf-compress';
 
 module('Unit | Lib | pdf-compress', function () {
-	test('the structural pass compresses streams, images, fonts and dedupes', function (assert) {
+	test('the structural pass compresses streams, images, fonts, object streams and dedupes', function (assert) {
 		assert.true(STRUCTURAL_OPTIONS['compress'], 'compress');
 		assert.true(STRUCTURAL_OPTIONS['compress-images'], 'images');
 		assert.true(STRUCTURAL_OPTIONS['compress-fonts'], 'fonts');
+		assert.true(
+			STRUCTURAL_OPTIONS['objstms'],
+			'object streams, or PDFs that already used them balloon',
+		);
+		assert.strictEqual(
+			STRUCTURAL_OPTIONS['compression-effort'],
+			100,
+			'maximum lossless Deflate effort',
+		);
 		assert.strictEqual(
 			STRUCTURAL_OPTIONS['garbage'],
 			'deduplicate',

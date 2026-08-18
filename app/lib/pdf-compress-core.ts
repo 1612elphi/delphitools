@@ -8,11 +8,24 @@ import { formatBytes, savingsPercent } from './image-compress';
 
 export { formatBytes, savingsPercent };
 
-/** MuPDF pdf_write_options for the always-on structural pass. */
+/**
+ * MuPDF pdf_write_options for the always-on structural pass.
+ *
+ * `objstms` is the one that earns its keep: without it MuPDF rewrites every
+ * object loose, so any PDF that already used compressed object streams (pdf-lib
+ * output, Acrobat, Chrome print-to-PDF — most modern files) comes out far
+ * larger. Measured on a 40-page pdf-lib document it nearly doubled (+98%) with
+ * it off and held flat with it on. `compression-effort: 100` is MuPDF 1.28's
+ * maximum-effort Deflate — lossless, so it never grows a stream, only spends
+ * more CPU to shrink it. Both keep the output readable by pdf.js, which the
+ * other PDF tools rely on.
+ */
 export const STRUCTURAL_OPTIONS: Record<string, unknown> = {
 	compress: true,
 	'compress-images': true,
 	'compress-fonts': true,
+	objstms: true,
+	'compression-effort': 100,
 	garbage: 'deduplicate',
 };
 

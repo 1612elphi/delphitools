@@ -76,21 +76,21 @@ export const toolCategories: ToolCategory[] = [
 		name: 'Social Media',
 		tools: [
 			{
-				id: 'matte-generator',
+				id: 'matte-genny',
 				name: 'Matte Generator',
 				description:
 					'Put non-square images on a square matte',
 				icon: 'square',
-				href: '/tools/matte-generator',
+				href: '/tools/matte-genny',
 				accepts: ['image/*'],
 			},
 			{
-				id: 'scroll-generator',
+				id: 'scroll-genny',
 				name: 'Seamless Scroll Generator',
 				description:
 					'Split images for Instagram carousel scrolls',
 				icon: 'gallery-vertical',
-				href: '/tools/scroll-generator',
+				href: '/tools/scroll-genny',
 				accepts: ['image/*'],
 			},
 			{
@@ -655,6 +655,24 @@ export const toolCategories: ToolCategory[] = [
 				new: true,
 			},
 			{
+				id: 'http-status',
+				name: 'HTTP Status',
+				description:
+					'Search HTTP status codes with phrases and spec references',
+				icon: 'server',
+				href: '/tools/http-status',
+				new: true,
+			},
+			{
+				id: 'password-genny',
+				name: 'Password Generator',
+				description:
+					'Generate strong passwords or multi-word passphrases',
+				icon: 'key-square',
+				href: '/tools/password-genny',
+				new: true,
+			},
+			{
 				id: 'meta-tag-genny',
 				name: 'Meta Tag Generator',
 				description: 'Generate HTML meta tags',
@@ -692,6 +710,43 @@ export const toolCategories: ToolCategory[] = [
 				icon: 'pen-line',
 				href: '/tools/markdown-writer',
 				accepts: ['.md', '.txt'],
+			},
+			{
+				id: 'uuid-genny',
+				name: 'UUID Generator',
+				description:
+					'Generate bulk UUID v4 or v7 and Nano IDs',
+				icon: 'fingerprint',
+				href: '/tools/uuid-genny',
+				new: true,
+			},
+			{
+				id: 'jwt-decoder',
+				name: 'JWT Decoder',
+				description:
+					"Decode a JWT's header, payload & claims",
+				icon: 'key-square',
+				href: '/tools/jwt-decoder',
+				new: true,
+			},
+			{
+				id: 'cron-builder',
+				name: 'Cron Builder',
+				description:
+					'Build a cron expression field by field or decode one',
+				icon: 'calendar-clock',
+				href: '/tools/cron-builder',
+				new: true,
+			},
+			{
+				id: 'json-formatter',
+				name: 'JSON Formatter',
+				description:
+					'Format or minify JSON or look at it',
+				icon: 'braces',
+				href: '/tools/json-formatter',
+				new: true,
+				accepts: ['.json'],
 			},
 		],
 	},

@@ -10,11 +10,17 @@ import { downloadBlob } from 'delphitools-v2/lib/download';
 import { normaliseRotation } from 'delphitools-v2/lib/pdf-pages';
 import {
 	boxFromPoints,
+	cropFromInsets,
+	cropToPaper,
 	dragRect,
+	insetsFromBox,
 	intersectBox,
 	type CropBox,
 } from 'delphitools-v2/lib/pdf-crop';
-import { getPdfJs } from 'delphitools-v2/lib/pdfjs';
+import { loadPdfDocument } from 'delphitools-v2/lib/pdfjs';
+import { MM_TO_POINTS } from 'delphitools-v2/lib/imposition';
+import { findPaperSize } from 'delphitools-v2/lib/paper-sizes';
+import PaperSizeCombobox from 'delphitools-v2/components/ui/paper-size-combobox';
 import type { PDFDocumentProxy, PageViewport } from 'pdfjs-dist';
 
 const ACCEPT = '.pdf,application/pdf';
@@ -49,6 +55,17 @@ export default class PdfRotateCropTool extends Component {
 	@tracked error: string | null = null;
 	@tracked busy = false;
 	@tracked loading = false;
+
+	/** Manual crop margins for the current page, in millimetres. */
+	@tracked insetLeft = '0';
+	@tracked insetTop = '0';
+	@tracked insetRight = '0';
+	@tracked insetBottom = '0';
+	/** Selected standard paper size id for crop-to-size; '' when none. */
+	@tracked paperId = '';
+	/** Current page's point dimensions at the preview's rotation, scale 1. */
+	@tracked pagePointW = 0;
+	@tracked pagePointH = 0;
 
 	/** Original bytes; pdf-lib re-parses them fresh on every export. */
 	#bytes: ArrayBuffer | null = null;
@@ -134,6 +151,48 @@ export default class PdfRotateCropTool extends Component {
 		);
 	}
 
+	get canApplyPaper() {
+		return !this.busy && !!findPaperSize(this.paperId);
+	}
+
+	/** Point value rounded to a tenth of a millimetre, as a display string. */
+	#ptToMmStr(pt: number) {
+		return String(Math.round((pt / MM_TO_POINTS) * 10) / 10);
+	}
+
+	/** Redraw the four inset fields from the current page's applied crop. */
+	#syncInsets() {
+		const crop = this.currentPage?.crop;
+		if (crop && this.pagePointW > 0 && this.pagePointH > 0) {
+			const ins = insetsFromBox(
+				crop,
+				this.pagePointW,
+				this.pagePointH,
+			);
+			this.insetLeft = this.#ptToMmStr(ins.left);
+			this.insetTop = this.#ptToMmStr(ins.top);
+			this.insetRight = this.#ptToMmStr(ins.right);
+			this.insetBottom = this.#ptToMmStr(ins.bottom);
+		} else {
+			this.insetLeft = '0';
+			this.insetTop = '0';
+			this.insetRight = '0';
+			this.insetBottom = '0';
+		}
+	}
+
+	setInset = (
+		edge: 'Left' | 'Top' | 'Right' | 'Bottom',
+		event: Event,
+	) => {
+		const value = (event.target as HTMLInputElement).value;
+		this[`inset${edge}`] = value;
+	};
+
+	setPaper = (id: string) => {
+		this.paperId = id;
+	};
+
 	pageLabel = (index: number) => `p. ${index + 1}`;
 
 	rotationClass = (page: PageState) =>
@@ -171,11 +230,10 @@ export default class PdfRotateCropTool extends Component {
 		this.error = null;
 		try {
 			const bytes = await file.arrayBuffer();
-			const pdfjs = await getPdfJs();
-			const js: PDFDocumentProxy = await pdfjs.getDocument({
+			const js: PDFDocumentProxy = await loadPdfDocument(
 				// A copy: pdf.js detaches the buffer it is handed.
-				data: bytes.slice(0),
-			}).promise;
+				bytes.slice(0),
+			);
 
 			const pages: PageState[] = [];
 			for (let n = 1; n <= js.numPages; n++) {
@@ -219,6 +277,10 @@ export default class PdfRotateCropTool extends Component {
 		this.#bytes = null;
 		this.#js = null;
 		this.#viewport = null;
+		this.paperId = '';
+		this.pagePointW = 0;
+		this.pagePointH = 0;
+		this.#syncInsets();
 	};
 
 	// ------------------------------------------------------------ preview
@@ -249,6 +311,8 @@ export default class PdfRotateCropTool extends Component {
 			if (this.isDestroyed || token !== this.#renderToken)
 				return;
 			this.#viewport = viewport;
+			this.pagePointW = base.width;
+			this.pagePointH = base.height;
 			this.preview = {
 				url: canvas.toDataURL('image/png'),
 				width: viewport.width,
@@ -256,6 +320,7 @@ export default class PdfRotateCropTool extends Component {
 			};
 			// A pending drag is in the old viewport's pixels.
 			this.pending = null;
+			this.#syncInsets();
 		} catch {
 			if (!this.isDestroyed && token === this.#renderToken) {
 				this.preview = null;
@@ -382,6 +447,87 @@ export default class PdfRotateCropTool extends Component {
 		if (this.isDestroyed) return;
 		this.pages = pages;
 		this.pending = null;
+		this.#syncInsets();
+	};
+
+	/**
+	 * Crop from the four margin fields (millimetres). Unlike the drag path the
+	 * margins are the same physical distance on every targeted page, so each
+	 * page keeps its own edges rather than a shared visible fraction.
+	 */
+	applyManualCrop = async (scope: 'page' | 'all') => {
+		const js = this.#js;
+		if (this.busy || !js) return;
+		const left = (parseFloat(this.insetLeft) || 0) * MM_TO_POINTS;
+		const top = (parseFloat(this.insetTop) || 0) * MM_TO_POINTS;
+		const right = (parseFloat(this.insetRight) || 0) * MM_TO_POINTS;
+		const bottom =
+			(parseFloat(this.insetBottom) || 0) * MM_TO_POINTS;
+
+		const targets =
+			scope === 'page'
+				? [this.current]
+				: this.pages.map((_, index) => index);
+		const pages = [...this.pages];
+		for (const index of targets) {
+			const jsPage = await js.getPage(index + 1);
+			const rotation = normaliseRotation(
+				jsPage.rotate + pages[index]!.rotation,
+			);
+			const vp = jsPage.getViewport({ scale: 1, rotation });
+			const box = cropFromInsets(
+				vp.width,
+				vp.height,
+				left,
+				top,
+				right,
+				bottom,
+			);
+			if (box) pages[index] = { ...pages[index]!, crop: box };
+		}
+		if (this.isDestroyed) return;
+		this.pages = pages;
+		this.pending = null;
+		this.#syncInsets();
+	};
+
+	/**
+	 * Crop to the selected standard paper size, centred on each page. Portrait
+	 * paper is rotated to a landscape page so the box lands the same way up as
+	 * the page; the download path clamps it to the page's own bounds.
+	 */
+	applyPaper = async (scope: 'page' | 'all') => {
+		const js = this.#js;
+		const size = findPaperSize(this.paperId);
+		if (this.busy || !js || !size) return;
+		const paperW = size.widthMm * MM_TO_POINTS;
+		const paperH = size.heightMm * MM_TO_POINTS;
+
+		const targets =
+			scope === 'page'
+				? [this.current]
+				: this.pages.map((_, index) => index);
+		const pages = [...this.pages];
+		for (const index of targets) {
+			const jsPage = await js.getPage(index + 1);
+			const rotation = normaliseRotation(
+				jsPage.rotate + pages[index]!.rotation,
+			);
+			const vp = jsPage.getViewport({ scale: 1, rotation });
+			const landscape = vp.width > vp.height;
+			const pw =
+				landscape && paperW < paperH ? paperH : paperW;
+			const ph =
+				landscape && paperW < paperH ? paperW : paperH;
+			pages[index] = {
+				...pages[index]!,
+				crop: cropToPaper(vp.width, vp.height, pw, ph),
+			};
+		}
+		if (this.isDestroyed) return;
+		this.pages = pages;
+		this.pending = null;
+		this.#syncInsets();
 	};
 
 	clearCrop = () => {
@@ -393,6 +539,7 @@ export default class PdfRotateCropTool extends Component {
 				? { ...entry, crop: null }
 				: entry,
 		);
+		this.#syncInsets();
 	};
 
 	// ------------------------------------------------------------- output
@@ -602,7 +749,7 @@ export default class PdfRotateCropTool extends Component {
 						</div>
 
 						<div class="dt-prc-field">
-							<span>Crop</span>
+							<span>Crop (drag)</span>
 							<div
 								class="segmented dt-prc-cropmode"
 							>
@@ -645,6 +792,170 @@ export default class PdfRotateCropTool extends Component {
 										this.clearCrop
 									}}
 								>Clear</button>
+							</div>
+						</div>
+					</div>
+
+					<div
+						class="dt-prc-settings dt-prc-settings-2"
+					>
+						<div
+							class="dt-prc-field dt-prc-margins"
+						>
+							<span>Crop margins (mm)</span>
+							<div
+								class="dt-prc-insets"
+							>
+								<label
+									class="dt-prc-inset"
+								>
+									<span
+									>L</span>
+									<input
+										type="number"
+										step="0.1"
+										min="0"
+										inputmode="decimal"
+										value={{this.insetLeft}}
+										{{on
+											"input"
+											(fn
+												this.setInset
+												"Left"
+											)
+										}}
+									/>
+								</label>
+								<label
+									class="dt-prc-inset"
+								>
+									<span
+									>T</span>
+									<input
+										type="number"
+										step="0.1"
+										min="0"
+										inputmode="decimal"
+										value={{this.insetTop}}
+										{{on
+											"input"
+											(fn
+												this.setInset
+												"Top"
+											)
+										}}
+									/>
+								</label>
+								<label
+									class="dt-prc-inset"
+								>
+									<span
+									>R</span>
+									<input
+										type="number"
+										step="0.1"
+										min="0"
+										inputmode="decimal"
+										value={{this.insetRight}}
+										{{on
+											"input"
+											(fn
+												this.setInset
+												"Right"
+											)
+										}}
+									/>
+								</label>
+								<label
+									class="dt-prc-inset"
+								>
+									<span
+									>B</span>
+									<input
+										type="number"
+										step="0.1"
+										min="0"
+										inputmode="decimal"
+										value={{this.insetBottom}}
+										{{on
+											"input"
+											(fn
+												this.setInset
+												"Bottom"
+											)
+										}}
+									/>
+								</label>
+							</div>
+							<div
+								class="segmented dt-prc-applyscope"
+							>
+								<button
+									type="button"
+									class="dt-prc-opt"
+									disabled={{this.busy}}
+									{{on
+										"click"
+										(fn
+											this.applyManualCrop
+											"page"
+										)
+									}}
+								>This page</button>
+								<button
+									type="button"
+									class="dt-prc-opt"
+									disabled={{this.busy}}
+									{{on
+										"click"
+										(fn
+											this.applyManualCrop
+											"all"
+										)
+									}}
+								>All pages</button>
+							</div>
+						</div>
+
+						<div class="dt-prc-field">
+							<span>Crop to size</span>
+							<PaperSizeCombobox
+								@value={{this.paperId}}
+								@onValueChange={{this.setPaper}}
+								@showCustom={{false}}
+								@triggerClass="dt-prc-paper"
+							/>
+							<div
+								class="segmented dt-prc-applyscope"
+							>
+								<button
+									type="button"
+									class="dt-prc-opt"
+									disabled={{not
+										this.canApplyPaper
+									}}
+									{{on
+										"click"
+										(fn
+											this.applyPaper
+											"page"
+										)
+									}}
+								>This page</button>
+								<button
+									type="button"
+									class="dt-prc-opt"
+									disabled={{not
+										this.canApplyPaper
+									}}
+									{{on
+										"click"
+										(fn
+											this.applyPaper
+											"all"
+										)
+									}}
+								>All pages</button>
 							</div>
 						</div>
 					</div>

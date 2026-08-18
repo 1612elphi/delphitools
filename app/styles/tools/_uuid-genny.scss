@@ -1,0 +1,227 @@
+// Styles for the uuid-genny tool.
+
+@use "../crayon-config" as crayon;
+
+.dt-uuid {
+	@include crayon.vstack(4);
+}
+
+.dt-uuid-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-uuid-bar {
+	display: flex;
+	min-height: crayon.size(12);
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-uuid-info {
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	flex-direction: column;
+	justify-content: center;
+	padding: crayon.size(2) crayon.size(4);
+}
+
+.dt-uuid-name {
+	overflow: hidden;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-uuid-meta {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-uuid-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&.is-copied {
+		color: var(--primary);
+	}
+
+	&.is-primary {
+		padding-inline: crayon.size(6);
+		background: var(--primary);
+		color: var(--primary-foreground);
+		font-weight: crayon.font-weight("semibold");
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				black
+			);
+		}
+	}
+}
+
+/* Settings as a grid of stacked label-over-control cells. */
+.dt-uuid-settings {
+	display: grid;
+	border-bottom: 1px solid var(--border);
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: repeat(auto-fit, minmax(crayon.size(32), 1fr));
+}
+
+.dt-uuid-field {
+	display: flex;
+	flex-direction: column;
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--card);
+	gap: crayon.size(1);
+
+	> span {
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+	}
+
+	input[type="number"] {
+		width: 100%;
+		padding: crayon.size(1) crayon.size(2);
+		border: 1px solid var(--border);
+		background: var(--background);
+		color: var(--foreground);
+		font: inherit;
+		font-size: crayon.font-size("sm");
+		font-variant-numeric: tabular-nums;
+
+		&:focus-visible {
+			outline: 2px solid var(--primary);
+			outline-offset: -1px;
+		}
+	}
+
+	.dt-switch {
+		margin-top: crayon.size(1);
+	}
+}
+
+.dt-uuid-options {
+	@include crayon.hstack(5);
+
+	align-items: center;
+}
+
+.dt-uuid-option {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	cursor: pointer;
+	font-size: crayon.font-size("sm");
+
+	.dt-switch {
+		// cancelling the cell's stacked-label margin inside an inline row
+		margin-top: 0;
+	}
+}
+
+/* In the top bar: intrinsic column widths, no outer segmented border (the
+   bar's own hairlines frame it), full-height buttons. */
+.dt-uuid-kinds {
+	grid-template-columns: repeat(3, auto);
+	align-self: stretch;
+	margin-block: 0;
+	border: 0;
+	border-left: 1px solid var(--border);
+
+	.dt-uuid-kind {
+		padding: 0 crayon.size(4);
+	}
+}
+
+.dt-uuid-kind {
+	min-width: 0;
+	padding: crayon.size(1) crayon.size(3);
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-uuid-row {
+	display: flex;
+	align-items: stretch;
+
+	& + & {
+		border-top: 1px solid var(--border);
+	}
+}
+
+.dt-uuid-value {
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	align-items: center;
+	overflow: hidden;
+	padding: crayon.size(2) crayon.size(4);
+	font-family: var(--font-mono);
+	font-size: crayon.font-size("sm");
+	font-variant-numeric: tabular-nums;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	user-select: text;
+}
+
+.dt-uuid-copy {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding-inline: crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&.is-copied {
+		color: var(--primary);
+	}
+}

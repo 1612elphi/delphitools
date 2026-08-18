@@ -1,75 +1,60 @@
 # STATE — delphitools working state
 
-Rewritten 2026-08-11, late in the AV/omnibox stretch. A fresh session
-should read this file, CLAUDE.md and PARITY.md before touching anything.
+Updated 2026-08-16, after the dev-encoder batch + UI passes + the 404
+scene. A fresh session should read this file, CLAUDE.md and PARITY.md
+before touching anything. Session log runs bottom-up (newest last).
 
 ## Where the repo stands
 
-- Ember app at the repo root (`v2-ember` branch). HEAD is `3ed7c6c`
-  (the four substrata stub panels ported, artboard centring fixed);
-  before it, `1dad2db` (omnibox front page, AV wave 2, transports,
-  polish), `5ac7514` (AV wave 1), `5b18251` (front-page mocks into
-  docs/frontpage/). Ruby triggers commits explicitly.
-- An UNCOMMITTED close-out stretch sits on top of `3ed7c6c` (2026-08-13):
-  the colour palette dialog (`components/colour-palette-dialog.gts` +
-  `rgbToCmyk` in colour-maths + `.dt-palette-*`/`.dt-swatch*` scss, opened
-  from the About dialog), shared `AUDIO_ACCEPT`/`VIDEO_ACCEPT` lists in
-  tools.ts wired through the five AV file inputs, hero art moved to
-  `public/heroes/` with a second piece, the real crayon glyph in the hero
-  flip tile, plus the fixes listed below. All verification green except the
-  one budget failure noted at the end of this section.
-- Verification (2026-08-13): `bun run lint` (5 checks), `bun run test`
-  (349 QUnit) and `node scripts/verify/all.mjs` (44 rigs) all green.
-     - `gradient.mjs` was rewritten this stretch. It drove
-       `div.w-56.border-l`, the right sidebar that round-3 docking deleted
-       in `8fbe785`, and crashed before its first check. It now opens the
-       Inspector MODULE from the omnibar (`openModule(page, "Inspector")`)
-       and drives `.sub-grad-*` rows by label + buttons by aria-label, on
-       the shared harness.mjs. 26 checks, ALL PASS.
-     - `static-smoke.mjs` was DELETED this stretch. It read `out/tools`,
-       the Next static-export directory the Ember build never produces
-       (build target is `dist/`), so it could not pass and its own header
-       said "delete after use". `static.mjs` supersedes it (reads `dist`,
-       shared harness, `bun run verify:static`). Its one unique check — the
-       dev rig (`window.__substrata`) not shipping in the prod build — was
-       moved into static.mjs alongside a new editor-boot check.
-- `review-fixes.mjs` was also failing before this stretch — its Edit-menu
-  driver matched button text exactly, and the items now carry their
-  shortcut hint inside the button ("Duplicate ⌘D"). Fixed to a prefix
-  match; the menu itself was working.
-- BUNDLE BUDGET (was failing, FIXED 2026-08-13, Prompt D): `static.mjs`'s
-  "app/lib stays out of the eager graph" check was failing — `main` was
-  286 kB against a 200 kB ceiling. ROOT CAUSE, from a sourcemap attribution
-  of a HEAD build (worktree at 3ed7c6c, sourcemaps on, VLQ mappings decoded
-  per source): `color-name-list` (the nearest-name dictionary) was 176 kB,
-  62% of main, and EAGER via `omni.ts` (the front-page omnibox) → both
-  `colour-parse.ts` (`detectColour` → `parseNamedColour`) and
-  `colour-names.ts` (`getColourName`) → `color-name-list/bestof`. Every
-  visitor who never typed a colour still downloaded the dictionary.
-  FIX (three edits): (1) omni.ts dynamic-imports colour-names inside the
-  async `colourAnswers`, so the dictionary loads only when a colour is
-  actually read; (2) colour-parse.ts's `detectColour` now resolves CSS
-  colour keywords through a 1x1 canvas (browser owns the list, zero data)
-  instead of `parseNamedColour`, so it no longer imports colour-names — it
-  deliberately no longer parses the fancy color-name-list names, only real
-  CSS keywords; (3) `parseNamedColour`/`NAMED_COLOUR_MAP` removed from
-  colour-names.ts as dead. colour-palette-dialog already dynamic-imports
-  colour-names. Result: `main` 286 kB → 126 kB, color-name-list absent from
-  main, `static.mjs` ALL PASS (31). `static.mjs` is excluded from all.mjs —
-  run `bun run verify:static` to see the budget check.
-- `scripts/verify/classes.mjs` is new and important: it fails when a
-  `dt-` class used in any component has no definition under app/styles.
-  It exists because a bulk stylesheet edit silently deleted an unrelated
-  rule block (see memory `scss-bulk-edit-hazard`). Never edit scss by
+- Ember app at the repo root (`v2-ember` branch). HEAD is `e6f4555`
+  (docs: DESIGN.md recovered and rewritten for Ember/Crayon). Ruby
+  triggers commits explicitly.
+- A large UNCOMMITTED stretch sits on top (~50 files), in three parts:
+     1. Ruby's own rotate-crop/imposer/organiser WIP plus the close-out:
+        `.dt-prc-settings-2` grid added, `dt-prc-paperfield` removed
+        (redundant), button alignment via `margin-top: auto` on the apply
+        scope (NOT space-between — that floats the middle input).
+     2. The dev-encoder batch (six tools via omp-batch + two Claude
+        finishers): `json-formatter`, `uuid-genny`, `jwt-decoder`,
+        `password-genny`, `cron-builder`, `http-status` — all shipped with
+        libs, rigs, unit tests and PARITY rows; 8 copy gaps filled by Ruby
+        via slopsieve (a stray apostrophe in the JWT description broke the
+        build mid-fill; fixed).
+     3. Follow-up passes: password rows render per character (digits
+        chart-3, symbols chart-2, via lib/password.ts `charKind`); the
+        `-generator`→`-genny` rename end to end (id = file basename, incl.
+        routes; matte/scroll came along); UUID Generator's Kind segmented
+        moved into the top bar and its switches fixed (the
+        `.dt-uuid-field input { width: 100% }` specificity bug had stretched
+        pills to 198px); Cron Builder's five cramped columns became full-
+        width rows on the ppn label-beside-control pattern; the 404 scene
+        (`not-found` escapes the chrome via isBare in application.gts):
+        regular-tile grid anchored bottom-middle (`background-position:
+center bottom`, `--tile: 25vw`, 4 tiles across), bottom-tile
+        covering exactly the origin cell on an opaque backdrop, hero card
+        dead-centre (404 / File not found / Back to safety).
+- Verification (2026-08-16, all green): `bun run lint` 5/5, `bun run
+test` 554 pass / 1 pre-existing skip, `node scripts/verify/classes.mjs`
+  ALL PASS (2904), `node scripts/verify/all.mjs` 59/59 rigs, `bun run
+verify:static` ALL PASS (34) on a FRESH build+prerender, main 130.8 kB.
+  Prerender writes 80 routes plus `dist/404.html` for the Pages
+  catch-all (SPA shell + 404 head; static.mjs checks it).
+- PARITY.md: tracked 82 / web 78 / backlog 33 (agents raced the summary
+  counts mid-batch; reconciled by hand — see session log).
+- Copy gaps: none outstanding. `slopsieve --list` should stay empty;
+  prompt files under docs/handoffs/ carry the literal token but are
+  gitignored and invisible to slopsieve.
+- No dependencies added this stretch; package-lock.json untouched since
+  the 2026-08-13 resync.
+- `scripts/verify/classes.mjs` fails when a `dt-`/`sub-` class used in any
+  component has no rule under app/styles. It exists because a bulk scss
+  edit once silently deleted an unrelated rule block — never edit scss by
   anchor-range slicing.
-- Copy gaps: Ruby runs `slopsieve` and has filled every gap so far; the
-  list is currently empty. Every new tool still leaves its description
-  and 4+-word strings as gaps per the global rules.
-- package-lock.json was resynced 2026-08-13 via `/opt/homebrew/bin/npm
-install --package-lock-only` (the real npm binary, 11.18.0 — bypasses
-  the fish `npm`→bun alias; `realnpm` is absent but unnecessary). Added
-  `@bjorn3/browser_wasi_shim@0.4.2`. It is tracked for CF Pages deploys.
-  This resync is part of the uncommitted stretch.
+- Stale-Vite-graph note: `bun run start` accumulates in-place edits and
+  can serve inconsistent modules; restart the dev server before trusting
+  any mid-session rig failure, and `verify:static` needs a fresh
+  `bun run build` + `bun run prerender` or og/budget checks fail
+  spuriously.
 
 ## What exists after this stretch (compact)
 
@@ -268,29 +253,29 @@ nothing for those; Ruby draws the missing art.
 
 ## Next actions
 
+1. Ruby commits the current uncommitted stretch (close-out + six tools +
+   passes + 404).
+2. AV wave 4: Video Atlas (mediainfo.js, ~2.5 MB self-hosted wasm) and
+   Video Muter (mp4box.js remux, no re-encode). Unlocks true sample rate
+   in Audio Atlas and real fps in Frame Extractor (which then also drops
+   the 30 fps assumption).
+3. Turbo-nerd pack: Morse, Braille, IPA, NATO — cheap, no deps.
+4. Sweep: every `crayon.screen("sm")` in app/styles applies at ALL widths
+   (min-width, sm:0); audit which were meant as small-viewport rules.
+
+Deferred decisions stay in the section below; the tool backlog lives in
+`docs/handoffs/tool-backlog.md` (gitignored), mirrored in PARITY.md.
+Recorded backlog decisions: Text & Typography utilities fold into the
+Text Scratchpad (`markdown-writer`), never standalone tools; Metadata
+Stripper stays plain EXIF/GPS/XMP (C2PA is detect-only, shown as a report
+row, never stripped).
+
+### Historical note
+
 The four 2026-08-13 handoff prompts (AV wave 3 recorders, the omnibox
-microtools, the v1 sticker port, the bundle-budget fix) all SHIPPED in commit
-`8d25430`; the hero-art 2.8:1 tweak is `7fb292e`. Their prompts are kept in
-`docs/handoffs/handoffs.md` for the record.
-
-Next is a fresh tool backlog: `docs/handoffs/tool-backlog.md` (gitignored),
-46 planned tools across AV, images, PDF, dev/encoding, colour, calculators,
-and the turbo-nerd lane. Mirrored into PARITY.md as 🚧 planned rows. Two
-decisions recorded there (2026-08-13):
-
-- Text & Typography tools are NOT built standalone — line/case/whitespace/
-  readability/fancy-unicode utilities fold into the Text Scratchpad
-  (`markdown-writer`) instead.
-- Metadata Stripper stays plain EXIF/GPS/XMP; no AI, no C2PA credential
-  removal.
-
-COMMITTED 2026-08-13/14: batch 1 (PDF + Images pack: pdf-organiser,
-image-to-pdf, metadata-stripper, image-compressor), Timecode Calculator, and
-the PDF/Print category split all landed in `66b6f15`; hero-art 2.8:1 is
-`7fb292e`; AV wave 3 / microtools / stickers / bundle fix are `8d25430`.
-Remaining backlog batches (order): dev-encoder pack; AV wave 4 (Video Atlas +
-Video Muter); turbo-nerd pack. Parallel one-prompt-per-agent flow; prompts in
-`docs/handoffs/handoffs.md`, backlog in `docs/handoffs/tool-backlog.md`.
+microtools, the v1 sticker port, the bundle-budget fix) all shipped in
+`8d25430`; hero-art 2.8:1 is `7fb292e`. Batch 1 (PDF + images) is
+`66b6f15`. All prompts live in `docs/handoffs/handoffs.md`.
 
 ## PDF batch (2026-08-14) — BUILT, all gates green, COMMITTED
 
@@ -409,12 +394,12 @@ work (pdf-organiser, imposer, pdfjs, vite.config, etc. — left untouched).
   four containers). Surfaced as a "Content Credentials → C2PA found / None"
   cell. A stripped image reports None afterward. Test: "flags a C2PA manifest
   by its JUMBF markers".
-  - RECONCILES with the prior decision ("no C2PA credential removal", STATE
-    line ~284 / tool-backlog line ~28): that ruled out *removal/re-signing*.
-    This is *detection* only — a report row, nothing is stripped or rewritten.
-  - **SynthID deliberately NOT added**: it is an imperceptible pixel-domain
-    watermark needing Google's proprietary detector model, not a metadata
-    marker. Nothing to byte-scan; any indicator would be a guess.
+     - RECONCILES with the prior decision ("no C2PA credential removal", STATE
+       line ~284 / tool-backlog line ~28): that ruled out _removal/re-signing_.
+       This is _detection_ only — a report row, nothing is stripped or rewritten.
+     - **SynthID deliberately NOT added**: it is an imperceptible pixel-domain
+       watermark needing Google's proprietary detector model, not a metadata
+       marker. Nothing to byte-scan; any indicator would be a guess.
 - **Images to PDF**: gave `.dt-i2p-tab` `height: crayon.size(10)` +
   flex-centre so its tab buttons match the QR (`.dt-qr-tab`) and Barcode
   (`.dt-code-tab`) generators, which were already pinned to that height. The
@@ -441,18 +426,18 @@ Housekeeping, still UNCOMMITTED on top of `efd9779`.
   code-genny, background-remover, pdf-page-numberer).
 - **pdf-page-numberer layout fix** (Ruby: "what the hell is this, looks so bad").
   Two real bugs in `_pdf-page-numberer.scss`:
-  1. `.dt-ppn-fields` used `auto-fit minmax(size(28),1fr)`, cramming
-     Font/Size/Margin/Position into narrow tracks; the 3-button segmented font
-     picker had no `min-width:0` and overflowed into the Size column. Replaced
-     with a fixed `minmax(0,1fr) minmax(0,1fr) auto` grid (Size · Margin ·
-     Position on one row), Font + Format span full width, `min-width:0` on
-     `.dt-ppn-field` and `.dt-ppn-opt`.
-  2. `.dt-ppn-controls` had `background: var(--border)`; as a stretched grid item
-     all space below the last block painted in the hairline colour (the dark
-     void). Now `background: var(--card)` with blocks divided by `& + &`
-     `border-top` hairlines. Template: Font field gets `dt-ppn-field-wide`.
-  Verified in-browser at :3000 with a synthetic 8-page PDF (screenshot). stylelint
-  + `classes.mjs` clean for `dt-ppn-*`; DESIGN.md prettier-clean.
+     1. `.dt-ppn-fields` used `auto-fit minmax(size(28),1fr)`, cramming
+        Font/Size/Margin/Position into narrow tracks; the 3-button segmented font
+        picker had no `min-width:0` and overflowed into the Size column. Replaced
+        with a fixed `minmax(0,1fr) minmax(0,1fr) auto` grid (Size · Margin ·
+        Position on one row), Font + Format span full width, `min-width:0` on
+        `.dt-ppn-field` and `.dt-ppn-opt`.
+     2. `.dt-ppn-controls` had `background: var(--border)`; as a stretched grid item
+        all space below the last block painted in the hairline colour (the dark
+        void). Now `background: var(--card)` with blocks divided by `& + &`
+        `border-top` hairlines. Template: Font field gets `dt-ppn-field-wide`.
+        Verified in-browser at :3000 with a synthetic 8-page PDF (screenshot). stylelint
+     - `classes.mjs` clean for `dt-ppn-*`; DESIGN.md prettier-clean.
 
 **WARN**: `node scripts/verify/classes.mjs` FAILS on Ruby's uncommitted
 `pdf-rotate-crop.gts` — `.dt-prc-settings-2` and `.dt-prc-paperfield` are used
@@ -543,3 +528,147 @@ border-bottom (last none). Inputs (`.dt-ppn-section-num`) and the Select trigger
 go borderless/transparent and fill their cell; remove ✕ is a flush cell. The old
 `.dt-ppn-mini`/`.dt-ppn-mini-wide` and per-field labels are gone. Verified
 in-browser (2 rows, "1, 2, 3" not truncated). Rig 4/4; gates clean.
+
+## Session 2026-08-16 — rotate-crop close-out (UNCOMMITTED)
+
+Ruby's pdf-rotate-crop WIP (margin insets, crop-to-paper-size) left two
+`classes.mjs` failures; resolved:
+
+- `.dt-prc-settings-2` now rules the second settings row as a fixed
+  `repeat(3, minmax(0, 1fr))` grid (margins span 2 tracks, paper picker 1).
+- Button alignment uses `.dt-prc-settings-2 .dt-prc-applyscope { margin-top:
+auto; }`, NOT `justify-content: space-between` on the cells. Space-between
+  floats the middle input (slack splits into both gaps), so the inputs can
+  never line up across cells. Auto margin pins the buttons to the cell bottom
+  and keeps every input 4px under its label.
+- `dt-prc-paperfield` removed from the template: redundant once alignment
+  lives on the apply scope.
+- Prettier drift fixed on `metadata-stripper.gts` and STATE.md.
+
+Verification: in-browser at :3000 (3-page A4 fixture) — inputs top-aligned
+at 355, apply buttons bottom-aligned at 426. `classes.mjs` ALL PASS (2744),
+`bun run lint` 5/5, `bun run test` 441 pass / 1 pre-existing skip, the
+rotate-crop rig 19/19, `verify:static` ALL PASS (31). Note: `verify:static`
+needs a fresh `bun run build` + `bun run prerender`; a stale dist fails the
+og-card, dev-rig-stripped and eager-graph checks spuriously ("main is 0 kB").
+
+Ready to commit: the full 11-file stretch (Ruby's 10 + the scss fix).
+
+## Session 2026-08-16 (cont.) — dev-encoder batch (UNCOMMITTED)
+
+Six tools shipped via omp-batch (kimi, shared tree) plus two Claude finisher
+agents for the two kimi runs that died mid-flight:
+
+- **json-formatter** "JSON Formatter" — source pane is a transparent-text
+  textarea over a rendered line view (line numbers + error-row highlight,
+  scroll-synced); indent 2/4/tab/minify; Text/Tree views (flattenTree in
+  json-format.ts, no recursive component); line:column parse errors (the
+  line/column grammar in the engine message is authoritative; bare positions
+  are derived back through the source). Rig 26/26.
+- **uuid-generator** "UUID Generator" — v4 + v7 (RFC 9562 bit layout by hand
+  over getRandomValues) + Nano ID (`b % 64`, no modulo bias), bulk 1–100,
+  uppercase/strip-hyphens; option changes reformat in place, never regenerate.
+  Rig 15/15, 10 unit tests.
+- **jwt-decoder** "JWT Decoder" — per-segment base64url decode (a bad segment
+  fails only its own pane), registered time claims humanised, Expired badge,
+  signature opaque by design. Rig 18/18, 15 unit tests.
+- **password-generator** "Password Generator" — password mode (classes,
+  no-lookalikes, rejection sampling) + diceware passphrase over the EFF large
+  wordlist (public/data/, lazy-fetched, cached per session; failure path has
+  a per-field error + Retry). Rig 22/22.
+- **cron-builder** "Cron Builder" — builder and reader directions over
+  lib/cron.ts (parser, describer, next-runs iterator; names JAN–DEC/SUN–SAT,
+  0/7 Sunday, dom/dow OR semantics). Rig 15/15, 35 unit tests.
+- **http-status** "HTTP Status" — 63 codes as typed static data (phrase,
+  class, RFC ref + deep link, RFC 9111 cacheability), tailwind-cheatsheet
+  anatomy, class tints on the chart tokens. Rig 17/17, 10 unit tests.
+
+Batch mechanics worth remembering:
+
+- Two of six kimi runs hit the 3600s wall mid-flight (password, cron) and one
+  silently under-delivered (json-formatter: lib + test only). Completion was
+  audited by listing the known deliverables per tool, not by trusting reports.
+- The password rig shipped by its agent had never run green: clipboard needed
+  `clipboard-sanitized-write` in the override list; a Set returned from
+  page.evaluate arrives as an array (no .has); and the wordlist failure path
+  must run before the first successful fetch because the lib caches the list
+  per session. Fixed inline, rig green.
+- image-to-pdf.mjs failure in the sweep predated the batch: the tool moved
+  from a segmented `.dt-i2p-dir` to tabs (`.dt-i2p-tab`) on 2026-08-15 and the
+  rig's direction click was never updated. Fixed; rig 12/12.
+- PARITY summary counts raced between agents and were reconciled by hand:
+  tracked 82 / web 78 / backlog 33.
+
+Gates (final, this order): build main 130.6 kB; prerender 80 routes;
+static.mjs ALL PASS (31); lint 5/5; 552 QUnit, 551 pass / 1 pre-existing
+skip; classes.mjs ALL PASS (2901); all.mjs 59/59. No dependencies added, no
+lock resync needed. Copy gaps: 8 (six registry descriptions in tools.ts,
+cron-builder arity warning, password-generator wordlist error) — run
+`slopsieve`.
+
+Follow-up (2026-08-16, Ruby): Password Generator rows now render per
+character — `charKind` in lib/password.ts (Record lookups, not Sets), digits
+`var(--chart-3)`, symbols `var(--chart-2)`, letters unmarked; every row gets
+`aria-label` with char spans `aria-hidden`. Rig grew to 25 (digit-marked
+spans in the digits-only batch, spans rebuild the string exactly, three
+colours pairwise distinct). Gates green: 554 QUnit pass, lint 5/5, classes 2901.
+
+Follow-up 2 (2026-08-16, Ruby: "those long switch pills don't do it"): the
+UUID Generator's switches edged to 198px because `.dt-uuid-field input {
+width: 100% }` out-specifies `.dt-switch` (32px). Fixed two ways: the Count
+rule is scoped to `input[type="number"]`, and the two UUID-only switches
+merged into a single Options cell as labelled inline rows
+(`.dt-uuid-options`/`.dt-uuid-option`) — pill + text label side by side.
+Password-generator never had the trap (its inputs are all ranges). Rig 15/15,
+classes 2903, lint 5/5.
+
+Also fixed 2026-08-16: an unescaped apostrophe in Ruby's JWT description
+(`'Decode a JWT's…'`) broke babel at tools.ts:726 — description is
+double-quoted now and prettier-clean.
+
+Generator→genny rename + Kind-in-bar (2026-08-16, Ruby): the four tools
+whose file basenames carried `-generator` (uuid, password, matte, scroll)
+are now `-genny` end to end — the registry loader keys components by file
+basename, so the TOOL ID and route moved too (`/tools/uuid-genny`,
+`/tools/password-genny`, `/tools/matte-genny`, `/tools/scroll-genny`);
+display names still say Generator. Rigs, package scripts, app.scss @use
+lines and PARITY rows all follow; PARITY needed a repair pass after a sed
+escape slip (literal `\`` and an ANSI sequence written in). UUID Generator
+got the layout move Ruby asked for: the Kind segmented sits in the top bar
+(flush, no outer border, intrinsic 85px columns) between the count readout
+and Copy all/Regenerate; the settings grid keeps only Count + Options.
+Gates: lint 5/5, 554 QUnit, classes 2903, uuid rig 15/15, password rig
+ALL PASS, full route sweep 79, static 31/31, main 130.8 kB.
+
+404 adjustments (2026-08-16): tile size is now `25vw` — origin tile centred
+bottom-mid with 1.5 regular tiles to each side, i.e. at most four full
+tiles across. The bottom-tile cell also carries an opaque
+`background: var(--background)`: both PNGs are RGBA, and without the
+backdrop the regular grid showed through the art's transparent pixels,
+reading as an overlap. Now neither tile paints through the other.
+
+Cron Builder UI/UX pass (2026-08-16, Ruby: "very rough"). Root cause: the
+five field cells were crammed at ~178px each into a `repeat(auto-fit)`
+settings grid, label + 4-way segmented + inputs + mono field per cell.
+Now each field is a full-width ROW (label rail 6rem, intrinsic segmented,
+args + flex free-text side container), on the ppn label-beside-control
+pattern Ruby already liked. Two footguns bit and are recorded: (1)
+`crayon.screen("sm")` is mobile-first MIN-width (breakpoints sm:0 — it
+applies at every width); crayon has no max-width mixin, so the narrow
+collapse is a literal `@media (width <= 40rem)` (stylelint demands range
+notation). (2) other tools' `screen("sm")` blocks everywhere silently apply
+to all widths too. Rig 15/15, lint 5/5, classes 2904.
+
+404 scene (2026-08-16, Ruby dropped `public/tiles/`): the not-found route now
+escapes the app chrome (application.gts gained isBare = editor | not-found)
+and renders a full-viewport TILE GRID: `regular-tile.png` repeats with
+`background-position: center bottom`, so the grid's origin tile is the one at
+50%/100% — bottom-middle exactly. `bottom-tile.png` overlays that one cell;
+page and overlay share `--tile: clamp(6rem, 16vmin, 12rem)` so they can never
+drift. Hero card (card bg, 2px border) is dead-centre: 404 / File not found
+/ Back to safety. The old frown-icon block is gone. Cloudflare Pages side:
+prerender.mjs now also writes `dist/404.html` (SPA shell + 404 head; Pages
+serves it with status 404, Ember boots and renders the scene at the unknown
+URL) and static.mjs checks its existence, title, and that a bogus route
+renders `.dt-404-page` — static rig now 34 checks. Tile art is decorative
+(`alt=""`; lint rejects the redundant role=presentation).

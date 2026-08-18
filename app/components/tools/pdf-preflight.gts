@@ -4,7 +4,7 @@ import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { modifier } from 'ember-modifier';
 import Icon from 'delphitools-v2/components/icon';
-import { getPdfJs } from 'delphitools-v2/lib/pdfjs';
+import { getPdfJs, loadPdfDocument } from 'delphitools-v2/lib/pdfjs';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import type {
 	PDFArray,
@@ -703,8 +703,7 @@ async function analyseWithPdfJs(
 	const OPS = pdfjsLib.OPS;
 	const issues: PreflightIssue[] = [];
 
-	const pdfDoc = await pdfjsLib.getDocument({ data: buffer.slice(0) })
-		.promise;
+	const pdfDoc = await loadPdfDocument(buffer.slice(0));
 
 	for (let i = 1; i <= pdfDoc.numPages; i++) {
 		const page = await pdfDoc.getPage(i);

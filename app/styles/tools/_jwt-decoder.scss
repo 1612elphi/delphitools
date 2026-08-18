@@ -1,0 +1,338 @@
+// Styles for the jwt-decoder tool.
+
+@use "../crayon-config" as crayon;
+
+.dt-jwt {
+	@include crayon.vstack(4);
+}
+
+.dt-jwt-frame {
+	border: 2px solid var(--border);
+}
+
+/* Flush action bar: tool identity left, Clear right. */
+.dt-jwt-bar {
+	display: flex;
+	min-height: crayon.size(10);
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+
+	> .dt-icon {
+		align-self: center;
+		width: crayon.size(4);
+		height: crayon.size(4);
+		margin-left: crayon.size(3);
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-jwt-name {
+	align-self: center;
+	overflow: hidden;
+	padding-inline: crayon.size(2);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("semibold");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-jwt-meta {
+	align-self: center;
+	margin-right: auto;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.dt-jwt-bar-tools {
+	display: flex;
+	align-items: stretch;
+	margin-left: auto;
+}
+
+.dt-jwt-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(3);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		pointer-events: none;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+/* The token field: a stacked label-over-control cell, always visible. */
+.dt-jwt-field {
+	display: flex;
+	flex-direction: column;
+	padding: crayon.size(2) crayon.size(3);
+	border-bottom: 2px solid var(--border);
+	gap: crayon.size(1);
+}
+
+.dt-jwt-label {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.dt-jwt-area {
+	padding: crayon.size(2);
+	border: 1px solid var(--border);
+	background: var(--background);
+	color: var(--foreground);
+	font-family: var(--font-mono);
+	font-size: crayon.font-size("sm");
+	resize: vertical;
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+/* Whole-token parse failure: the segment count shown as data. */
+.dt-jwt-banner {
+	display: flex;
+	align-items: baseline;
+	padding: crayon.size(2) crayon.size(3);
+	border-bottom: 2px solid var(--border);
+	background: color-mix(in oklch, var(--destructive) 8%, transparent);
+	gap: crayon.size(2);
+}
+
+.dt-jwt-banner-label {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.dt-jwt-banner-value {
+	color: var(--destructive);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("semibold");
+	font-variant-numeric: tabular-nums;
+}
+
+/* Decode summary as a grid of stacked label-over-value cells. */
+.dt-jwt-settings {
+	display: grid;
+	border-bottom: 1px solid var(--border);
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: repeat(auto-fit, minmax(crayon.size(32), 1fr));
+}
+
+.dt-jwt-cell {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--card);
+	gap: crayon.size(1);
+
+	> span:first-child {
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+	}
+}
+
+.dt-jwt-cell-value {
+	overflow: hidden;
+	font-size: crayon.font-size("sm");
+	font-variant-numeric: tabular-nums;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+
+	&.is-destructive {
+		color: var(--destructive);
+		font-weight: crayon.font-weight("semibold");
+	}
+}
+
+.dt-jwt-claims {
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-jwt-claim {
+	display: flex;
+	align-items: baseline;
+	padding: crayon.size(2) crayon.size(3);
+	border-bottom: 1px solid var(--border);
+	gap: crayon.size(2);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	&.is-destructive {
+		background: color-mix(
+			in oklch,
+			var(--destructive) 8%,
+			transparent
+		);
+	}
+}
+
+.dt-jwt-claim-label {
+	flex-shrink: 0;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.dt-jwt-claim-value {
+	font-size: crayon.font-size("sm");
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-jwt-badge {
+	margin-left: auto;
+	padding: 0 crayon.size(2);
+	background: var(--destructive);
+	color: var(--primary-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("semibold");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+/* Header / payload / signature panes; the signature spans both columns
+ * because the segment is shown unbroken. */
+.dt-jwt-panes {
+	display: grid;
+	grid-template-columns: 1fr;
+
+	@include crayon.screen("md") {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.dt-jwt-pane {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+
+	& + & {
+		border-top: 2px solid var(--border);
+	}
+
+	@include crayon.screen("md") {
+		&:nth-child(2) {
+			border-top: 0;
+			border-left: 2px solid var(--border);
+		}
+	}
+
+	&.is-full {
+		grid-column: 1 / -1;
+	}
+}
+
+.dt-jwt-pane-head {
+	display: flex;
+	min-height: crayon.size(10);
+	align-items: center;
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-jwt-pane-label {
+	padding-inline: crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("semibold");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.dt-jwt-pane-meta {
+	margin-left: auto;
+	padding-inline: crayon.size(2);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-jwt-copy {
+	@include crayon.hstack(1);
+
+	align-self: stretch;
+	align-items: center;
+	padding-inline: crayon.size(3);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.dt-jwt-json {
+	margin: 0;
+	padding: crayon.size(2) crayon.size(3);
+	font-family: var(--font-mono);
+	font-size: crayon.font-size("sm");
+	line-height: crayon.leading("relaxed");
+	overflow-x: auto;
+	white-space: pre;
+}
+
+.dt-jwt-err {
+	margin: 0;
+	padding: crayon.size(3);
+	color: var(--destructive);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-jwt-sig {
+	margin: 0;
+	padding: crayon.size(2) crayon.size(3);
+	color: var(--muted-foreground);
+	font-family: var(--font-mono);
+	font-size: crayon.font-size("sm");
+	overflow-wrap: anywhere;
+}

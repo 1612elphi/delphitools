@@ -11,14 +11,18 @@ import AppHeader from 'delphitools-v2/components/app-header';
 export default class ApplicationTemplate extends Component {
 	@service declare router: RouterService;
 
-	get isEditor() {
-		return this.router.currentRouteName === 'editor';
+	get isBare() {
+		// Editor owns the canvas; 404 owns the whole tiled viewport. Both
+		// route groups skip the sidebar/header chrome entirely.
+		return ['editor', 'not-found'].includes(
+			this.router.currentRouteName ?? '',
+		);
 	}
 
 	<template>
 		{{pageTitle "delphitools"}}
 
-		{{#if this.isEditor}}
+		{{#if this.isBare}}
 			{{outlet}}
 		{{else}}
 			<a href="#main-content" class="dt-skip">Skip to main

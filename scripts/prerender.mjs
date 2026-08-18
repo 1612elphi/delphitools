@@ -142,6 +142,43 @@ for (const route of routes) {
 			`  ${written}/${routes.length} (last: ${route.url} -> "${rendered}")`,
 		);
 	}
+
+	/* Cloudflare Pages serves the root 404.html (status 404) for unmatched
+	 * paths. It is the SPA shell with a 404 head: Ember boots at the unknown
+	 * URL and the catch-all route renders the tiled scene. Boot something bogus
+	 * first so a broken scene fails here, not on the edge. */
+	{
+		const page = await browser.newPage();
+		const errors = [];
+		page.on('pageerror', (e) => errors.push(e.message));
+		await page.goto(`http://localhost:${port}/no-such-page`, {
+			waitUntil: 'networkidle2',
+		});
+		const sceneRendered = await page.evaluate(
+			() => document.querySelector('.dt-404-page') !== null,
+		);
+		await page.close();
+		if (errors.length || !sceneRendered) {
+			console.error(
+				`  /no-such-page: ${errors[0] ?? '404 scene missing (.dt-404-page)'}`,
+			);
+			process.exitCode = 1;
+		}
+		writeFileSync(
+			join(dist, '404.html'),
+			withHead(
+				shell,
+				headFor({
+					title: '404 — delphitools',
+					description: 'File not found',
+					url: '/404',
+					image: '/og.png',
+					imageAlt: 'delphitools hero image',
+				}),
+			),
+		);
+		console.log('  404.html written');
+	}
 }
 
 await browser.close();

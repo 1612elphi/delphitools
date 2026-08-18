@@ -1,7 +1,10 @@
 import { module, test } from 'qunit';
 import {
 	boxFromPoints,
+	cropFromInsets,
+	cropToPaper,
 	dragRect,
+	insetsFromBox,
 	intersectBox,
 } from 'delphitools-v2/lib/pdf-crop';
 
@@ -135,6 +138,68 @@ module('Unit | Lib | pdf-crop', function () {
 				),
 				null,
 			);
+		});
+	});
+
+	module('cropFromInsets', function () {
+		test('builds a box from edge insets, origin bottom-left', function (assert) {
+			assert.deepEqual(
+				cropFromInsets(200, 300, 10, 20, 30, 40),
+				{
+					x: 10,
+					y: 40,
+					width: 160,
+					height: 240,
+				},
+			);
+		});
+
+		test('rejects a collapsed or negative box', function (assert) {
+			assert.strictEqual(
+				cropFromInsets(200, 300, 120, 0, 120, 0),
+				null,
+				'width <= 0',
+			);
+			assert.strictEqual(
+				cropFromInsets(200, 300, 0, 200, 0, 200),
+				null,
+				'height <= 0',
+			);
+			assert.strictEqual(
+				cropFromInsets(200, 300, -1, 0, 0, 0),
+				null,
+				'negative inset',
+			);
+		});
+
+		test('round-trips through insetsFromBox', function (assert) {
+			const box = cropFromInsets(200, 300, 10, 20, 30, 40)!;
+			assert.deepEqual(insetsFromBox(box, 200, 300), {
+				left: 10,
+				top: 20,
+				right: 30,
+				bottom: 40,
+			});
+		});
+	});
+
+	module('cropToPaper', function () {
+		test('centres the paper on the page', function (assert) {
+			assert.deepEqual(cropToPaper(200, 300, 100, 200), {
+				x: 50,
+				y: 50,
+				width: 100,
+				height: 200,
+			});
+		});
+
+		test('keeps a paper larger than the page for later clamping', function (assert) {
+			assert.deepEqual(cropToPaper(100, 100, 200, 200), {
+				x: -50,
+				y: -50,
+				width: 200,
+				height: 200,
+			});
 		});
 	});
 });

@@ -99,6 +99,27 @@ if (!existsSync(join(dist, 'index.html'))) {
 		);
 	}
 
+	// Cloudflare Pages' catch-all: the root 404.html must carry the SPA shell
+	// head with the 404 title, and a bogus path must render the tiled scene.
+	const notFoundPath = join(dist, '404.html');
+	check(
+		'404.html exists for the Pages catch-all',
+		existsSync(notFoundPath),
+	);
+	if (existsSync(notFoundPath)) {
+		check(
+			'404.html carries the 404 title',
+			readFileSync(notFoundPath, 'utf8').includes('<title>404'),
+		);
+	}
+	await page.goto(BASE + '/no-such-route', {
+		waitUntil: 'networkidle2',
+	});
+	check(
+		'a bogus route renders the tiled 404 scene',
+		(await page.$('.dt-404-page')) !== null,
+	);
+
 	// ── the router still works from a prerendered entry ─────────────────
 
 	await visit('/tools/px-to-rem');

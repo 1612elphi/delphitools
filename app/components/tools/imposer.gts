@@ -38,7 +38,7 @@ import {
 	type PaperSize,
 } from 'delphitools-v2/lib/imposition';
 import { findPaperSize } from 'delphitools-v2/lib/paper-sizes';
-import { getPdfJs } from 'delphitools-v2/lib/pdfjs';
+import { loadPdfDocument } from 'delphitools-v2/lib/pdfjs';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 
 type EmbeddedPage = Awaited<ReturnType<PDFDocument['embedPages']>>[number];
@@ -784,10 +784,7 @@ export default class ImposerTool extends Component {
 		this.#thumbnails.clear();
 
 		try {
-			const pdfjs = await getPdfJs();
-			const doc = await pdfjs.getDocument({
-				data: bytes.slice(),
-			}).promise;
+			const doc = await loadPdfDocument(bytes.slice());
 			void this.pdfDoc?.destroy();
 			this.pdfDoc = doc;
 			this.pdfPageCount = doc.numPages;

@@ -1,0 +1,461 @@
+// Styles for the json-formatter tool.
+
+@use "../crayon-config" as crayon;
+
+.dt-jf {
+	@include crayon.vstack(4);
+}
+
+.dt-jf-frame {
+	border: 2px solid var(--border);
+}
+
+/* Flush action bar: tool identity left, Open/Clear/Copy/Download right. */
+.dt-jf-bar {
+	display: flex;
+	min-height: crayon.size(10);
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+
+	> .dt-icon {
+		align-self: center;
+		width: crayon.size(4);
+		height: crayon.size(4);
+		margin-left: crayon.size(3);
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-jf-name {
+	align-self: center;
+	overflow: hidden;
+	padding-inline: crayon.size(2);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("semibold");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-jf-meta {
+	align-self: center;
+	margin-right: auto;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.dt-jf-bar-tools {
+	display: flex;
+	align-items: stretch;
+	margin-left: auto;
+}
+
+.dt-jf-btn {
+	display: flex;
+	align-items: center;
+	padding-inline: crayon.size(3);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&.is-copied {
+		color: var(--primary);
+	}
+
+	&.is-primary {
+		background: var(--primary);
+		color: var(--primary-foreground);
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				transparent
+			);
+			color: var(--primary-foreground);
+		}
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		pointer-events: none;
+	}
+
+	/* The Open button is a label around a hidden input; show its ring here. */
+	&:focus-within,
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+/* Settings as a grid of stacked label-over-control cells. */
+.dt-jf-settings {
+	display: grid;
+	border-bottom: 1px solid var(--border);
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: repeat(auto-fit, minmax(crayon.size(48), 1fr));
+}
+
+.dt-jf-cell {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--card);
+	gap: crayon.size(1);
+
+	> span:first-child {
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+	}
+}
+
+.dt-jf-indent {
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.dt-jf-view {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dt-jf-opt {
+	padding: crayon.size(1.5) crayon.size(2);
+	background: var(--card);
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+
+		@include crayon.hover {
+			background: var(--primary);
+		}
+	}
+
+	&:focus-visible {
+		position: relative;
+		z-index: 1;
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+/* Source / result panes. */
+.dt-jf-panes {
+	display: grid;
+	grid-template-columns: 1fr;
+
+	@include crayon.screen("md") {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.dt-jf-pane {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+
+	/* Stacked on a phone, so the divider between panes runs the other way. */
+	&.is-result {
+		border-top: 2px solid var(--border);
+
+		@include crayon.screen("md") {
+			border-top: 0;
+			border-left: 2px solid var(--border);
+		}
+	}
+}
+
+.dt-jf-pane-head {
+	display: flex;
+	min-height: crayon.size(8);
+	align-items: center;
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-jf-pane-label {
+	padding-inline: crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("semibold");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.dt-jf-pane-meta {
+	margin-left: auto;
+	padding-inline: crayon.size(2);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+}
+
+/* The source editor is a transparent-text textarea over a rendered copy of
+   its contents; the copy carries the line numbers and the error highlight.
+   Everything the text flows by — font, sizing, leading, tab stops, padding —
+   is shared between the two layers so the caret tracks what the eye sees. */
+.dt-jf-editor {
+	position: relative;
+	display: flex;
+	min-height: crayon.size(72);
+	flex: 1;
+}
+
+.dt-jf-lines {
+	position: absolute;
+	overflow: hidden;
+	pointer-events: none;
+	inset: 0;
+}
+
+.dt-jf-lines-inner {
+	display: inline-block;
+	min-width: 100%;
+	width: max-content;
+	padding: crayon.size(2) crayon.size(3);
+}
+
+.dt-jf-source,
+.dt-jf-lines-inner {
+	font-family: var(--font-mono);
+	tab-size: 8;
+	white-space: pre;
+}
+
+.dt-jf-source {
+	font-size: crayon.font-size("sm");
+	line-height: crayon.leading("relaxed");
+}
+
+/* The template's inter-row whitespace renders as text under `pre`; zeroing
+   the container's font and leading keeps those phantom lines zero-height.
+   The rows restore both. */
+.dt-jf-lines-inner {
+	font-size: 0;
+	line-height: 0;
+}
+
+.dt-jf-line {
+	display: flex;
+	min-width: 100%;
+	font-size: crayon.font-size("sm");
+	line-height: crayon.leading("relaxed");
+
+	&.is-error {
+		background: color-mix(
+			in oklch,
+			var(--destructive) 14%,
+			transparent
+		);
+	}
+}
+
+/* The number column measures in ch against the text size: the textarea's
+   left padding (calc in .dt-jf-source) is a multiple of the same ch. The
+   width holds the padding under border-box, so 4ch of digits needs 5.5ch. */
+.dt-jf-line-no {
+	flex-shrink: 0;
+	width: 5.5ch;
+	padding-right: 1.5ch;
+	color: var(--muted-foreground);
+	text-align: right;
+	user-select: none;
+}
+
+.dt-jf-line-text {
+	flex: 1;
+}
+
+/* Padding-left bodies the line-number column out from under the text. */
+.dt-jf-source {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	padding: crayon.size(2) crayon.size(3);
+	padding-left: calc(#{crayon.size(3)} + 5.5ch);
+	border: 0;
+	background: transparent;
+	caret-color: var(--foreground);
+	color: transparent;
+	overflow: auto;
+	resize: none;
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+/* Parse failure state, filling the result pane. */
+.dt-jf-error {
+	display: flex;
+	flex: 1;
+	align-items: flex-start;
+	padding: crayon.size(3);
+	background: color-mix(in oklch, var(--destructive) 8%, transparent);
+	gap: crayon.size(2);
+
+	> .dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+		flex-shrink: 0;
+		margin-top: 1px;
+		color: var(--destructive);
+	}
+}
+
+.dt-jf-error-message {
+	color: var(--destructive);
+	font-family: var(--font-mono);
+	font-size: crayon.font-size("sm");
+	overflow-wrap: anywhere;
+}
+
+.dt-jf-error-position {
+	margin-left: auto;
+	padding-left: crayon.size(3);
+	color: var(--destructive);
+	font-size: crayon.font-size("sm");
+	font-variant-numeric: tabular-nums;
+	font-weight: crayon.font-weight("semibold");
+	white-space: nowrap;
+}
+
+.dt-jf-output {
+	flex: 1;
+	padding: crayon.size(2) crayon.size(3);
+	border: 0;
+	background: var(--background);
+	color: var(--foreground);
+	font-family: var(--font-mono);
+	font-size: crayon.font-size("sm");
+	line-height: crayon.leading("relaxed");
+	overflow: auto;
+	resize: none;
+	tab-size: 8;
+	white-space: pre;
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.dt-jf-tree {
+	flex: 1;
+	max-height: 70vh;
+	overflow: auto;
+	padding-block: crayon.size(1);
+}
+
+.dt-jf-tree-row {
+	display: flex;
+	align-items: baseline;
+	padding-block: 1px;
+	padding-right: crayon.size(3);
+	font-family: var(--font-mono);
+	font-size: crayon.font-size("sm");
+	line-height: crayon.leading("relaxed");
+	gap: crayon.size(2);
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+}
+
+.dt-jf-tree-caret {
+	display: flex;
+	width: crayon.size(4);
+	height: crayon.size(4);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	align-self: center;
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(3.5);
+		height: crayon.size(3.5);
+	}
+
+	@include crayon.hover {
+		color: var(--foreground);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+/* Primitive rows get no caret; the spacer keeps the keys aligned. */
+.dt-jf-tree-leaf {
+	width: crayon.size(4);
+	height: crayon.size(4);
+	flex-shrink: 0;
+	align-self: center;
+}
+
+.dt-jf-tree-key {
+	color: var(--foreground);
+	flex-shrink: 0;
+	font-weight: crayon.font-weight("semibold");
+}
+
+.dt-jf-tree-value {
+	overflow-wrap: anywhere;
+
+	&.is-string {
+		color: var(--chart-1);
+	}
+
+	&.is-number {
+		color: var(--chart-2);
+	}
+
+	&.is-boolean {
+		color: var(--chart-4);
+	}
+
+	&.is-null {
+		color: var(--muted-foreground);
+		font-style: italic;
+	}
+}
+
+.dt-jf-tree-count {
+	color: var(--muted-foreground);
+}

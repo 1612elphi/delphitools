@@ -23,10 +23,10 @@ applicable on this surface (hardware/native or format constraint).
 
 ## Summary
 
-- **Tools tracked:** 76 (shipped, any surface)
+- **Tools tracked:** 82 (shipped, any surface)
 - **On all three surfaces:** 41
-- **Web:** 72 · **CLI:** 46 · **iOS:** 51
-- **Backlog:** 39 planned tools (web-first) — see the Backlog section at the end.
+- **Web:** 78 · **CLI:** 46 · **iOS:** 51
+- **Backlog:** 33 planned tools (web-first) — see the Backlog section at the end.
 - iOS-exclusive (native/hardware): Colour Camera, Document Scanner, Font Installer, NFC Reader/Writer
 - Web-exclusive: Pixel Picker, Text Editor (pandoc.wasm note: GPL — incompatible with the App Store, and won't run on-device on iOS, hence Document Converter I 🚧)
 - CLI-only sub-feature: `hash` (text hashing, folded into Encoding Tools elsewhere)
@@ -100,12 +100,12 @@ Picker is similarly web-only.
 
 ## Social Media
 
-| Tool (web ID)                                  |  W  |       C        |  I  | Notes          |
-| ---------------------------------------------- | :-: | :------------: | :-: | -------------- |
-| Matte Generator (`matte-generator`)            | ✅  |   ✅ `matte`   | ✅  |                |
-| Seamless Scroll Generator (`scroll-generator`) | ✅  |  ✅ `scroll`   | ✅  | carousel tiles |
-| Social Media Cropper (`social-cropper`)        | ✅  |   ✅ `crop`    | ✅  |                |
-| Watermarker (`watermarker`)                    | ✅  | ✅ `watermark` | ✅  |                |
+| Tool (web ID)                              |  W  |       C        |  I  | Notes          |
+| ------------------------------------------ | :-: | :------------: | :-: | -------------- |
+| Matte Generator (`matte-genny`)            | ✅  |   ✅ `matte`   | ✅  |                |
+| Seamless Scroll Generator (`scroll-genny`) | ✅  |  ✅ `scroll`   | ✅  | carousel tiles |
+| Social Media Cropper (`social-cropper`)    | ✅  |   ✅ `crop`    | ✅  |                |
+| Watermarker (`watermarker`)                | ✅  | ✅ `watermark` | ✅  |                |
 
 ## Typography & Text
 
@@ -150,10 +150,16 @@ Picker is similarly web-only.
 | Meta Tag Generator (`meta-tag-genny`)        | ✅  |   ✅ `meta`   | ✅  |                                                                                                                                                                                                                                                                                                                                         |
 | Regex Tester (`regex-tester`)                | ✅  |  ✅ `regex`   | ✅  |                                                                                                                                                                                                                                                                                                                                         |
 | Tailwind Cheat Sheet (`tailwind-cheatsheet`) | ✅  |      ➖       | ✅  | reference-browser UI, no CLI analog                                                                                                                                                                                                                                                                                                     |
+| HTTP Status (`http-status`)                  | ✅  |      ➖       | ➖  | new 2026-08; searchable 100–511 reference: phrase, defining RFC section (linked), default-cacheability; copy on code click                                                                                                                                                                                                              |
 | Text Scratchpad (`markdown-writer`)          | ✅  |      ➖       | ✅  | plain textarea + text-manipulation utilities; interactive editor, no CLI analog                                                                                                                                                                                                                                                         |
 | Text Editor (`text-editor`)                  | ✅  |      ➖       | ❌  | interactive editor, no CLI analog (cf. `pixel-picker`); distraction-free live-preview Markdown writer (raw ProseMirror). CommonMark + GFM (tables, strikethrough, task lists, footnotes); click-to-convert block-type gutter menu; full-screen focus mode; Markdown paste; focus highlights + typewriter; exports md/html/clipboard/pdf |
 | Cipher Decoder (`decoder`)                   | ✅  | ✅ `decipher` | ❌  | classical ciphers (distinct from base64/url decode)                                                                                                                                                                                                                                                                                     |
+| JWT Decoder (`jwt-decoder`)                  | ✅  |      ➖       | ➖  | new 2026-08; local decode of header & payload JSON, alg + iat/nbf/exp humanised, expired badge; signature opaque, not verified; no CLI/iOS analog                                                                                                                                                                                       |
 | NFC Reader/Writer (`nfc-reader-writer`)      | ➖  |      ➖       | ✅  | iOS-only (NFC hardware)                                                                                                                                                                                                                                                                                                                 |
+| UUID Generator (`uuid-genny`)                | ✅  |      ➖       | ➖  | new 2026-08; bulk UUID v4 / RFC 9562 v7 / Nano ID                                                                                                                                                                                                                                                                                       |
+| Password Generator (`password-genny`)        | ✅  |      ➖       | ➖  | new 2026-08; crypto-sampled, unbiased; classes + lookalike exclusion; EFF-wordlist passphrase; bulk list + copy                                                                                                                                                                                                                         |
+| Cron Builder (`cron-builder`)                | ✅  |      ➖       | ➖  | new 2026-08; five-field builder (per-field presets + free edit), canonical expression, plain-language reading, next five local runs; dom/dow OR; names JAN–DEC/SUN–SAT, Sunday 0 or 7                                                                                                                                                   |
+| JSON Formatter (`json-formatter`)            | ✅  |      ➖       | ➖  | new 2026-08; format/minify at 2 or 4 spaces or tabs, collapsible tree view, engine message + line:column on parse errors with the source line highlighted; .json drop/open                                                                                                                                                              |
 
 ## Calculators & Encoding
 
@@ -211,14 +217,14 @@ its row into the matching category table above and flip W to ✅.
   "textarea + text-manipulation utilities" surface.
 - Metadata Stripper stays plain EXIF/GPS/XMP; no AI, no C2PA credential removal.
 
-| Category               | Planned tools                                                                                                                                                                                                                                                                                                   |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Audio & Video          | Video Atlas · Video Muter · Audio Normaliser · Audio Extractor · Audio Speedup · Audio Converter · Video Trimmer · Video Converter · Video Compressor · Video Social Cropper · Subtitle Studio                                                                                                                  |
-| Images & Assets        | EXIF Viewer · Dithering · Blurhash / ThumbHash · Sprite Sheet Packer                                                                                                                                                                                                                                            |
-| Print & Production     | Label / Card Sheet Layout                                                                                                                                                                                                                                                                                       |
-| Other / Generators     | JSON Formatter / Viewer · Data Format Converter · JWT Decoder · UUID / NanoID Generator · Password / Passphrase Generator · Hash / Checksum (file drop) · Cron Expression Builder · Cubic-bezier / Easing Editor · Lorem Ipsum Generator · URL / Query-string Editor · HTTP Status Reference · MIME Type Lookup |
-| Colour                 | Colour Mixer / Blender · Data-viz Scale Generator · Kelvin → RGB                                                                                                                                                                                                                                                |
-| Calculators & Encoding | Aspect Ratio Calculator · Percentage Calculator · Bitwise / Binary Calculator · Roman Numeral Converter                                                                                                                                                                                                         |
-| Turbo-nerd             | IPA Transcription · Morse Encoder / Decoder · Braille Converter · NATO Phonetic                                                                                                                                                                                                                                 |
+| Category               | Planned tools                                                                                                                                                                                  |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Audio & Video          | Video Atlas · Video Muter · Audio Normaliser · Audio Extractor · Audio Speedup · Audio Converter · Video Trimmer · Video Converter · Video Compressor · Video Social Cropper · Subtitle Studio |
+| Images & Assets        | EXIF Viewer · Dithering · Blurhash / ThumbHash · Sprite Sheet Packer                                                                                                                           |
+| Print & Production     | Label / Card Sheet Layout                                                                                                                                                                      |
+| Other / Generators     | Data Format Converter · Hash / Checksum (file drop) · Cubic-bezier / Easing Editor · Lorem Ipsum Generator · URL / Query-string Editor · MIME Type Lookup                                      |
+| Colour                 | Colour Mixer / Blender · Data-viz Scale Generator · Kelvin → RGB                                                                                                                               |
+| Calculators & Encoding | Aspect Ratio Calculator · Percentage Calculator · Bitwise / Binary Calculator · Roman Numeral Converter                                                                                        |
+| Turbo-nerd             | IPA Transcription · Morse Encoder / Decoder · Braille Converter · NATO Phonetic                                                                                                                |
 
-Total: 39 planned (11 AV · 4 image · 1 PDF · 12 dev · 3 colour · 4 calc · 4 turbo-nerd).
+Total: 33 planned (11 AV · 4 image · 1 PDF · 6 dev · 3 colour · 4 calc · 4 turbo-nerd).

@@ -1,0 +1,340 @@
+// Styles for the http-status tool.
+//
+// The reference-browser anatomy mirrors _tailwind-cheatsheet.scss: a flush
+// search bar, a class filter strip, then collapsible class groups of rows.
+// The tint per class is a custom property so the chip, code and active filter
+// all share one value; the colours are the chart tokens from app.scss.
+
+@use "../crayon-config" as crayon;
+
+/* ── HTTP status ─────────────────────────────────────────────────────────── */
+
+.dt-http {
+	border: 2px solid var(--border);
+}
+
+.is-1xx {
+	--dt-http-tint: var(--chart-4);
+}
+
+.is-2xx {
+	--dt-http-tint: var(--chart-1);
+}
+
+.is-3xx {
+	--dt-http-tint: var(--chart-2);
+}
+
+.is-4xx {
+	--dt-http-tint: var(--chart-3);
+}
+
+.is-5xx {
+	--dt-http-tint: var(--destructive);
+}
+
+.dt-http-search {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-http-search-icon {
+	display: flex;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	border-right: 1px solid var(--border);
+	color: var(--muted-foreground);
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+}
+
+.dt-http-search-input {
+	min-width: 0;
+	height: crayon.size(12);
+	flex: 1;
+	padding-inline: crayon.size(4);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	outline: none;
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-http-clear {
+	padding-inline: crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: transparent;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+	transition: color 150ms;
+
+	@include crayon.hover {
+		color: var(--foreground);
+	}
+}
+
+/* .segmented alone stacks vertically — always pin the column count. */
+.dt-http-filters {
+	grid-template-columns: repeat(6, minmax(0, 1fr));
+	border-top: 0;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-http-filter {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: crayon.size(2);
+	padding: crayon.size(3) crayon.size(2);
+	background: var(--card);
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	&.is-all {
+		--dt-http-tint: var(--primary);
+
+		font-weight: crayon.font-weight("bold");
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&.is-active {
+		background: var(--dt-http-tint);
+		color: var(--card);
+
+		@include crayon.hover {
+			background: var(--dt-http-tint);
+			color: var(--card);
+		}
+	}
+}
+
+.dt-http-filter-count {
+	color: inherit;
+	font-size: crayon.font-size("xs");
+	opacity: 0.7;
+}
+
+.dt-http-tint {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	width: crayon.size(12);
+	border: 0;
+	background: color-mix(in oklch, var(--dt-http-tint) 14%, transparent);
+	color: var(--dt-http-tint);
+	font: inherit;
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+}
+
+button.dt-http-tint {
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	@include crayon.hover {
+		background: color-mix(
+			in oklch,
+			var(--dt-http-tint) 30%,
+			transparent
+		);
+	}
+}
+
+.dt-http-group {
+	border-bottom: 1px solid var(--border);
+
+	&:last-of-type {
+		border-bottom: 0;
+	}
+}
+
+.dt-http-group-head {
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	.dt-http-tint {
+		margin: crayon.size(3) 0 crayon.size(3) crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--muted) 50%, transparent);
+	}
+}
+
+.dt-http-group-name {
+	display: flex;
+	align-items: center;
+	padding: crayon.size(3) crayon.size(4);
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-http-group-meta {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	margin-left: auto;
+	padding-right: crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+/* One chevron asset serves both states: pointing down when open, rotated a
+   quarter turn when closed. */
+.dt-http-chevron {
+	width: crayon.size(4);
+	height: crayon.size(4);
+	transition: transform 150ms;
+
+	&.is-collapsed {
+		transform: rotate(-90deg);
+	}
+}
+
+.dt-http-table {
+	border-top: 1px solid var(--border);
+}
+
+.dt-http-row {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+	transition: background-color 150ms;
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--muted) 20%, transparent);
+	}
+}
+
+.dt-http-code {
+	display: flex;
+	width: crayon.size(16);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: transparent;
+	color: var(--dt-http-tint);
+	font: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+	transition: background-color 150ms;
+	font-variant-numeric: tabular-nums;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+}
+
+.dt-http-row-expand {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	align-items: center;
+	justify-content: space-between;
+	padding: crayon.size(2) crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+}
+
+.dt-http-phrase {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: crayon.font-size("sm");
+}
+
+.dt-http-detail {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: crayon.size(2) crayon.size(4);
+	padding: crayon.size(3) crayon.size(4);
+	padding-left: calc(crayon.size(12) + crayon.size(16) + 2px);
+	border-bottom: 1px solid var(--border);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+	font-size: crayon.font-size("sm");
+
+	&:last-child {
+		border-bottom: 0;
+	}
+}
+
+.dt-http-detail-label {
+	color: var(--muted-foreground);
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-http-ref {
+	display: inline-flex;
+	align-items: center;
+	gap: crayon.size(1);
+	width: fit-content;
+	color: var(--primary);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("xs");
+	text-decoration: underline;
+
+	.dt-icon {
+		width: crayon.size(3);
+		height: crayon.size(3);
+	}
+
+	@include crayon.hover {
+		color: var(--foreground);
+	}
+}
+
+.dt-http-cacheable,
+.dt-http-registry {
+	font-size: crayon.font-size("sm");
+}
+
+.dt-http-empty {
+	padding: crayon.size(12) crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	text-align: center;
+}
