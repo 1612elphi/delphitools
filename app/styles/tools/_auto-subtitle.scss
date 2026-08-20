@@ -1,0 +1,290 @@
+// Styles for the auto-subtitle tool.
+
+@use "../crayon-config" as crayon;
+
+/* ── Auto subtitle ───────────────────────────────────────────────────────── */
+
+.dt-asub {
+	@include crayon.vstack(4);
+}
+
+.dt-asub-frame {
+	border: 2px solid var(--border);
+}
+
+/* Flush action bar: file picker (grows) · Transcribe · Clear. */
+.dt-asub-bar {
+	display: flex;
+	align-items: stretch;
+	min-height: crayon.size(12);
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-asub-file {
+	@include crayon.hstack(2);
+
+	flex: 1;
+	min-width: 0;
+	align-items: center;
+	padding-inline: crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+		flex: none;
+	}
+
+	&:focus-within {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.dt-asub-filename {
+	overflow: hidden;
+	color: var(--foreground);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-asub-go {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(4);
+	border: 0;
+	border-left: 2px solid var(--border);
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("semibold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		pointer-events: none;
+	}
+
+	/* The loader glyph spins only while a run is in flight. */
+	&[aria-busy="true"] .dt-icon {
+		animation: dt-asub-spin 0.8s linear infinite;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+@keyframes dt-asub-spin {
+	to {
+		transform: rotate(1turn);
+	}
+}
+
+.dt-asub-clear {
+	display: flex;
+	align-items: center;
+	padding-inline: crayon.size(3);
+	border: 0;
+	border-left: 2px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		pointer-events: none;
+	}
+}
+
+/* Settings as a grid of stacked label-over-control cells, hairline-divided. */
+.dt-asub-settings {
+	display: grid;
+	border-bottom: 2px solid var(--border);
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: repeat(auto-fit, minmax(crayon.size(36), 1fr));
+}
+
+.dt-asub-set {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--card);
+	gap: crayon.size(1);
+}
+
+.dt-asub-label {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.dt-asub-modes {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dt-asub-format-group {
+	grid-template-columns: repeat(2, 1fr);
+}
+
+.dt-asub-mode,
+.dt-asub-format {
+	padding: crayon.size(1) crayon.size(2);
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	white-space: nowrap;
+	cursor: pointer;
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-asub-lang {
+	width: 100%;
+	padding: crayon.size(1) crayon.size(2);
+	border: 1px solid var(--border);
+	background: var(--background);
+	color: var(--foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -1px;
+	}
+}
+
+.dt-asub-toggle {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	color: var(--foreground);
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+}
+
+.dt-asub-out {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+}
+
+.dt-asub-out-head {
+	display: flex;
+	min-height: crayon.size(10);
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-asub-out-label {
+	align-self: center;
+	padding-inline: crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("semibold");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.dt-asub-status,
+.dt-asub-stats {
+	margin-left: auto;
+	align-self: center;
+	overflow: hidden;
+	padding-inline: crayon.size(2);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-asub-out-tools {
+	display: flex;
+	align-items: stretch;
+}
+
+.dt-asub-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(3);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		pointer-events: none;
+	}
+}
+
+.dt-asub-textarea {
+	min-height: crayon.size(80);
+	flex: 1;
+	padding: crayon.size(3);
+	border: 0;
+	background: color-mix(in oklch, var(--muted) 40%, transparent);
+	color: var(--foreground);
+	font-family: inherit;
+	font-size: crayon.font-size("sm");
+	font-variant-numeric: tabular-nums;
+	line-height: 1.5;
+	resize: vertical;
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.dt-asub-error {
+	padding: crayon.size(3);
+	border: 1px solid
+		color-mix(in oklch, var(--destructive) 50%, transparent);
+	background: color-mix(in oklch, var(--destructive) 10%, transparent);
+	color: var(--destructive);
+	font-size: crayon.font-size("sm");
+}

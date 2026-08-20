@@ -33,6 +33,7 @@
 		"start": "vite",
 		"test": "NODE_ENV=development vite build --mode development && ember test --path dist",
 		"verify": "node scripts/verify/all.mjs",
+		"verify:auto-subtitle": "node scripts/verify/auto-subtitle.mjs",
 		"verify:cron-builder": "node scripts/verify/cron-builder.mjs",
 		"verify:http-status": "node scripts/verify/http-status.mjs",
 		"verify:json-formatter": "node scripts/verify/json-formatter.mjs",

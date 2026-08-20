@@ -1,15 +1,15 @@
 # STATE — delphitools working state
 
-Updated 2026-08-16, after the dev-encoder batch + UI passes + the 404
-scene. A fresh session should read this file, CLAUDE.md and PARITY.md
-before touching anything. Session log runs bottom-up (newest last).
+Updated 2026-08-20, after Auto Subtitle WIP. A fresh session should read
+this file, CLAUDE.md and PARITY.md before touching anything. Session log
+runs bottom-up (newest last).
 
 ## Where the repo stands
 
 - Ember app at the repo root (`v2-ember` branch). HEAD is `e6f4555`
   (docs: DESIGN.md recovered and rewritten for Ember/Crayon). Ruby
   triggers commits explicitly.
-- A large UNCOMMITTED stretch sits on top (~50 files), in three parts:
+- A large UNCOMMITTED stretch sits on top (~50 files), in four parts:
      1. Ruby's own rotate-crop/imposer/organiser WIP plus the close-out:
         `.dt-prc-settings-2` grid added, `dt-prc-paperfield` removed
         (redundant), button alignment via `margin-top: auto` on the apply
@@ -33,17 +33,21 @@ before touching anything. Session log runs bottom-up (newest last).
 center bottom`, `--tile: 25vw`, 4 tiles across), bottom-tile
         covering exactly the origin cell on an opaque backdrop, hero card
         dead-centre (404 / File not found / Back to safety).
+     4. Auto Subtitle WIP: local Whisper transcription for audio/video,
+        subtitle export, pure word-to-cue grouping tests, and an 11-check
+        browser harness. Its focused checks and normal gates are green; the
+        aggregate rig sweep has three existing unrelated failures.
 - Verification (2026-08-16, all green): `bun run lint` 5/5, `bun run
 test` 554 pass / 1 pre-existing skip, `node scripts/verify/classes.mjs`
   ALL PASS (2904), `node scripts/verify/all.mjs` 59/59 rigs, `bun run
 verify:static` ALL PASS (34) on a FRESH build+prerender, main 130.8 kB.
   Prerender writes 80 routes plus `dist/404.html` for the Pages
   catch-all (SPA shell + 404 head; static.mjs checks it).
-- PARITY.md: tracked 82 / web 78 / backlog 33 (agents raced the summary
+- PARITY.md: tracked 83 / web 79 / backlog 33 (agents raced the summary
   counts mid-batch; reconciled by hand — see session log).
-- Copy gaps: none outstanding. `slopsieve --list` should stay empty;
-  prompt files under docs/handoffs/ carry the literal token but are
-  gitignored and invisible to slopsieve.
+- Copy gaps: none outstanding. `slopsieve --list` should stay empty; prompt
+  files under docs/handoffs/ carry the literal token but are gitignored and
+  invisible to slopsieve.
 - No dependencies added this stretch; package-lock.json untouched since
   the 2026-08-13 resync.
 - `scripts/verify/classes.mjs` fails when a `dt-`/`sub-` class used in any
@@ -253,8 +257,9 @@ nothing for those; Ruby draws the missing art.
 
 ## Next actions
 
-1. Ruby commits the current uncommitted stretch (close-out + six tools +
-   passes + 404).
+1. Re-run or diagnose the three unrelated aggregate-rig failures, then commit
+   the accumulated stretch (close-out + six tools + passes + 404 + Auto
+   Subtitle).
 2. AV wave 4: Video Atlas (mediainfo.js, ~2.5 MB self-hosted wasm) and
    Video Muter (mp4box.js remux, no re-encode). Unlocks true sample rate
    in Audio Atlas and real fps in Frame Extractor (which then also drops
@@ -672,3 +677,54 @@ serves it with status 404, Ember boots and renders the scene at the unknown
 URL) and static.mjs checks its existence, title, and that a bogus route
 renders `.dt-404-page` — static rig now 34 checks. Tile art is decorative
 (`alt=""`; lint rejects the redundant role=presentation).
+
+## Session 2026-08-20 — Auto Subtitle (UNCOMMITTED, not yet verified)
+
+New `auto-subtitle` in Audio & Video, registered with the shared combined
+audio/video accept list, styled, and represented in PARITY (tracked 83 /
+web 79). It is a local, browser-only transcription flow:
+
+- `lib/transcribe.ts` dynamically imports the already-present
+  `@huggingface/transformers` runtime, keeping its roughly 835 kB runtime out
+  of the main bundle. Fast uses `Xenova/whisper-tiny`; Reasonable uses
+  `Xenova/whisper-base`. Model weights are fetched from Hugging Face on first
+  use and rely on the browser HTTP cache; transformers.js' Cache API layer is
+  deliberately disabled for iOS Safari reliability.
+- Media is decoded, downmixed, and resampled to 16 kHz mono through Web Audio.
+  The ASR pipeline prefers WebGPU (`fp32`) and falls back to wasm (`q8`) both
+  if GPU pipeline creation fails and if inference itself fails. Whisper asks
+  for word timestamps; `wordsToCues` groups them into readable one-line cues,
+  splitting at sentence endings, 0.8 s silence, 42 characters, or six
+  seconds.
+- The tool accepts a dropped, pasted, or picked media file; supports optional
+  source language, English translation, SRT/VTT output, copy, download, and
+  progress/status reporting. Existing `lib/subtitles.ts` writes the final
+  formats.
+- Experimental is intentionally a visible but unavailable Parakeet mode:
+  `parakeet.js` is not installed, has an unreviewed API, requires WebGPU, and
+  would bring a hundreds-of-MB model. The component reports that mode as not
+  ready instead of pretending it works.
+- `tests/unit/lib/transcribe-test.ts` currently covers deterministic
+  word-to-cue grouping (empty input, sentence break, silence, character cap,
+  and zero-length spans).
+
+Follow-up close-out:
+
+- All four copy strings were supplied (card description plus decode,
+  experimental, and generic-error messages). The apostrophe in "Couldn't"
+  needed double quotes so TypeScript could parse it.
+- `scripts/verify/auto-subtitle.mjs` now has 11 lightweight checks: combined
+  media acceptance, disabled initial export controls, dropped-file intake,
+  Fast selection, language, translation, VTT selection, Experimental's
+  unavailable state, and Clear. It deliberately avoids downloading model
+  weights; add it through `verify:auto-subtitle` and it is auto-included by
+  `verify`.
+- Gates: `bun run lint` green; `bun run test` 560 pass / 1 pre-existing
+  skip; `classes.mjs` ALL PASS (2930); fresh `build:static` +
+  `verify:static` ALL PASS (34), with transformers in its own 835 kB chunk
+  and the ONNX runtime found locally.
+- The aggregate `bun run verify` could not be fully green: 57/60 rigs pass,
+  including Auto Subtitle. `chrome.mjs` still looks for the removed
+  `.dt-404 h1`; `select.mjs` ended with a Puppeteer protocol error; and
+  `tools.mjs` ended with a detached-frame error. These do not implicate Auto
+  Subtitle, but need a fresh/reproducible run before claiming a clean sweep.
