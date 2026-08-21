@@ -120,6 +120,7 @@
 		"@resvg/resvg-js": "^2.6.2",
 		"browser-fs-access": "^0.38.0",
 		"bwip-js": "^4.11.2",
+		"circle-flags": "^2.8.3",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"color-name-list": "^14.47.0",

@@ -1,5 +1,10 @@
 import { module, test } from 'qunit';
-import { wordsToCues, type Word } from 'delphitools-v2/lib/transcribe';
+import {
+	progressAggregator,
+	resolveModel,
+	wordsToCues,
+	type Word,
+} from 'delphitools-v2/lib/transcribe';
 
 const w = (text: string, start: number, end: number): Word => ({
 	text,
@@ -8,6 +13,73 @@ const w = (text: string, start: number, end: number): Word => ({
 });
 
 module('Unit | Lib | transcribe', function () {
+	test('modes resolve to the selected WebGPU models', function (assert) {
+		assert.deepEqual(resolveModel('fast', 'webgpu'), {
+			model: 'Xenova/whisper-base',
+			device: 'webgpu',
+			dtype: 'q4',
+		});
+		assert.deepEqual(resolveModel('reasonable', 'webgpu'), {
+			model: 'Xenova/whisper-small',
+			device: 'webgpu',
+			dtype: 'q4',
+		});
+		assert.deepEqual(resolveModel('accurate', 'webgpu'), {
+			model: 'onnx-community/whisper-large-v3-turbo_timestamped',
+			device: 'webgpu',
+			dtype: 'q4',
+		});
+	});
+
+	test('wasm uses q8 and rejects Accurate', function (assert) {
+		assert.deepEqual(resolveModel('fast', 'wasm'), {
+			model: 'Xenova/whisper-base',
+			device: 'wasm',
+			dtype: 'q8',
+		});
+		assert.deepEqual(resolveModel('reasonable', 'wasm'), {
+			model: 'Xenova/whisper-small',
+			device: 'wasm',
+			dtype: 'q8',
+		});
+		assert.throws(
+			() => resolveModel('accurate', 'wasm'),
+			/webgpu-required/,
+		);
+	});
+
+	test('progress sums loaded/total across concurrent files', function (assert) {
+		const seen: number[] = [];
+		const report = progressAggregator((p) => seen.push(p));
+		report({ status: 'download', file: 'a' });
+		report({
+			status: 'progress',
+			file: 'a',
+			loaded: 50,
+			total: 100,
+		});
+		report({
+			status: 'progress',
+			file: 'b',
+			loaded: 0,
+			total: 300,
+		});
+		report({
+			status: 'progress',
+			file: 'b',
+			loaded: 150,
+			total: 300,
+		});
+		report({
+			status: 'progress',
+			file: 'a',
+			loaded: 100,
+			total: 100,
+		});
+		report({ status: 'progress', file: 'c', loaded: 0, total: 0 });
+		assert.deepEqual(seen, [50, 13, 50, 63]);
+	});
+
 	test('empty input yields no cues', function (assert) {
 		assert.deepEqual(wordsToCues([]), []);
 	});

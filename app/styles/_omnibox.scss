@@ -3,9 +3,9 @@
 
 @use "crayon-config" as crayon;
 
-/* ── Omnibox ─────────────────────────────────────────────────────────────── */
+/* ── omnibox ─────────────────────────────────────────────────────────────── */
 
-/* Doodle layout: the box column centres under the hero art. */
+/* box under hero art */
 .dt-omni-zone {
 	max-width: crayon.size(168);
 	margin-inline: auto;

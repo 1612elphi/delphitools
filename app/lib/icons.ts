@@ -113,9 +113,9 @@ import iFolder from 'lucide-static/icons/folder.svg?raw';
 import iFolderMinus from 'lucide-static/icons/folder-minus.svg?raw';
 import iFolderPlus from 'lucide-static/icons/folder-plus.svg?raw';
 import iFrame from 'lucide-static/icons/frame.svg?raw';
-import iFrown from 'lucide-static/icons/frown.svg?raw';
 import iGalleryVertical from 'lucide-static/icons/gallery-vertical.svg?raw';
 import iGitCompare from 'lucide-static/icons/git-compare.svg?raw';
+import iGlobe from 'lucide-static/icons/globe.svg?raw';
 import iGrid2x2 from 'lucide-static/icons/grid-2x2.svg?raw';
 import iGrid3x3 from 'lucide-static/icons/grid-3x3.svg?raw';
 import iGrip from 'lucide-static/icons/grip.svg?raw';
@@ -341,9 +341,9 @@ export const icons: Record<string, string> = {
 	'folder-minus': iFolderMinus,
 	'folder-plus': iFolderPlus,
 	frame: iFrame,
-	frown: iFrown,
 	'gallery-vertical': iGalleryVertical,
 	'git-compare': iGitCompare,
+	globe: iGlobe,
 	'grid-2x2': iGrid2x2,
 	'grid-3x3': iGrid3x3,
 	grip: iGrip,

@@ -1,6 +1,4 @@
 // Exercises the Auto Subtitle shell without downloading Whisper weights.
-// Experimental deliberately fails locally, which verifies the unavailable-mode
-// state while keeping this normal rig lightweight.
 //
 // Usage: npm start, then node scripts/verify/auto-subtitle.mjs
 
@@ -26,6 +24,22 @@ check(
 	initial.transcribeDisabled,
 );
 check('copy is disabled before transcription', initial.copyDisabled);
+check(
+	'warning dialog is hidden until opened',
+	await page.$eval(
+		'dialog.dt-asub-warn',
+		(dialog) => !dialog.open && getComputedStyle(dialog).display === 'none',
+	),
+);
+check(
+	'empty state shows the drop zone, no grid, no progress bar',
+	await page.evaluate(
+		() =>
+			!!document.querySelector('.dt-asub-drop input[type=file]') &&
+			!document.querySelector('.dt-asub-grid') &&
+			!document.querySelector('.dt-asub-progress'),
+	),
+);
 check('download is disabled before transcription', initial.downloadDisabled);
 
 await page.evaluate(() => {
@@ -54,28 +68,38 @@ check(
 
 await page.evaluate(() => {
 	[...document.querySelectorAll('.dt-asub-mode')]
-		.find((button) => button.textContent?.includes('Fast'))
+		.find((button) => button.textContent?.includes('Rough'))
 		?.click();
 });
 check(
-	'Fast mode selects',
+	'Rough mode selects',
 	await page.$eval(
 		'.dt-asub-mode.is-active',
-		(button) => button.textContent?.trim() === 'Fast',
+		(button) => button.textContent?.trim() === 'Rough',
 	),
 );
 
-await page.focus('.dt-asub-lang');
-await page.keyboard.type('German');
+await page.click('.dt-lang-combo-trigger');
+await page.waitForSelector('.dt-lang-combo-panel .dt-command-input', {
+	timeout: 3000,
+});
+await page.type('.dt-lang-combo-panel .dt-command-input', 'germ');
+await sleep(100);
+await page.evaluate(() => {
+	[...document.querySelectorAll('.dt-lang-combo-panel .dt-command-item')]
+		.find((item) => item.dataset.value === 'German')
+		?.click();
+});
+await sleep(150);
 check(
-	'language accepts an optional source language',
-	await page.$eval('.dt-asub-lang', (input) => input.value === 'German'),
-);
-
-await page.click('.dt-asub-toggle input');
-check(
-	'translate toggle selects English output',
-	await page.$eval('.dt-asub-toggle input', (input) => input.checked),
+	'language combobox searches and picks German with its flag',
+	await page.$eval(
+		'.dt-lang-combo-trigger',
+		(trigger) =>
+			trigger.textContent?.trim() === 'German' &&
+			trigger.querySelector('img')?.getAttribute('src') === '/flags/de.svg' &&
+			trigger.querySelector('img')?.naturalWidth > 0,
+	),
 );
 
 await page.evaluate(() => {
@@ -91,19 +115,76 @@ check(
 	),
 );
 
-await page.evaluate(() => {
-	[...document.querySelectorAll('.dt-asub-mode')]
-		.find((button) => button.textContent?.includes('Experimental'))
-		?.click();
-});
-await page.click('.dt-asub-go');
-await page.waitForSelector('.dt-asub-error', { timeout: 5000 });
+const clickExperimental = () =>
+	page.evaluate(() => {
+		[...document.querySelectorAll('.dt-asub-mode')]
+			.find((button) => button.textContent?.includes('Experimental'))
+			?.click();
+	});
+const activeMode = () =>
+	page.$eval('.dt-asub-mode.is-active', (button) =>
+		button.textContent?.trim(),
+	);
+
+await clickExperimental();
+await page.waitForSelector('dialog[open].dt-asub-warn', { timeout: 3000 });
 check(
-	'Experimental mode reports its unavailable state',
+	'Experimental opens the download warning with its art',
 	await page.$eval(
-		'.dt-asub-error',
-		(error) => /Fast or Reasonable/.test(error.textContent ?? ''),
+		'dialog[open].dt-asub-warn img',
+		(img) => img.complete && img.naturalWidth > 0,
 	),
+);
+await page.click('.dt-asub-warn-btn:not(.is-primary)');
+await sleep(100);
+check(
+	'cancelling the warning keeps the previous mode',
+	!(await page.$('dialog[open].dt-asub-warn')) &&
+		(await activeMode()) === 'Rough',
+);
+
+await clickExperimental();
+await page.waitForSelector('dialog[open].dt-asub-warn', { timeout: 3000 });
+await page.click('.dt-asub-warn-btn.is-primary');
+await sleep(100);
+const confirmed = await page.evaluate(() => ({
+	open: document.querySelector('dialog.dt-asub-warn')?.open,
+	returnValue: document.querySelector('dialog.dt-asub-warn')?.returnValue,
+	active: document.querySelector('.dt-asub-mode.is-active')?.textContent?.trim(),
+}));
+check(
+	'confirming the warning selects Experimental',
+	!confirmed.open && confirmed.active === 'Experimental',
+	JSON.stringify(confirmed),
+);
+
+await page.click('.dt-asub-info');
+await page.waitForSelector('.dt-asub-infopanel', { timeout: 3000 });
+check(
+	'info popover lists the three models',
+	await page.evaluate(() => {
+		const ids = [...document.querySelectorAll('.dt-asub-model-id')].map(
+			(a) => a.textContent?.trim(),
+		);
+		const sizes = [...document.querySelectorAll('.dt-asub-model-size')].map(
+			(s) => s.textContent?.trim(),
+		);
+		return (
+			sizes.length === 3 &&
+			sizes.every((size) => /^\d+ MB$/.test(size ?? '')) &&
+			ids.length === 3 &&
+			ids.every((id) => /^Whisper \d \(/.test(id ?? '')) &&
+			[...document.querySelectorAll('.dt-asub-model-id')].every((a) =>
+				/^https:\/\/huggingface\.co\/[\w-]+\/whisper-/.test(a.href),
+			)
+		);
+	}),
+);
+await page.click('.dt-asub-out-label');
+await sleep(200);
+check(
+	'click outside closes the info popover',
+	!(await page.$('.dt-asub-infopanel')),
 );
 
 await page.click('.dt-asub-clear');
@@ -114,7 +195,7 @@ const cleared = await page.evaluate(() => ({
 	error: !!document.querySelector('.dt-asub-error'),
 }));
 check(
-	'Clear resets file and unavailable-state error',
+	'Clear resets the selected file',
 	cleared.name === 'Choose file' &&
 		cleared.transcribeDisabled &&
 		!cleared.error,

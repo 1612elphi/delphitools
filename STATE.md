@@ -1,42 +1,18 @@
 # STATE — delphitools working state
 
-Updated 2026-08-20, after Auto Subtitle WIP. A fresh session should read
+Updated 2026-08-21, after the Auto Subtitle cue grid. A fresh session should read
 this file, CLAUDE.md and PARITY.md before touching anything. Session log
 runs bottom-up (newest last).
 
 ## Where the repo stands
 
-- Ember app at the repo root (`v2-ember` branch). HEAD is `e6f4555`
-  (docs: DESIGN.md recovered and rewritten for Ember/Crayon). Ruby
-  triggers commits explicitly.
-- A large UNCOMMITTED stretch sits on top (~50 files), in four parts:
-     1. Ruby's own rotate-crop/imposer/organiser WIP plus the close-out:
-        `.dt-prc-settings-2` grid added, `dt-prc-paperfield` removed
-        (redundant), button alignment via `margin-top: auto` on the apply
-        scope (NOT space-between — that floats the middle input).
-     2. The dev-encoder batch (six tools via omp-batch + two Claude
-        finishers): `json-formatter`, `uuid-genny`, `jwt-decoder`,
-        `password-genny`, `cron-builder`, `http-status` — all shipped with
-        libs, rigs, unit tests and PARITY rows; 8 copy gaps filled by Ruby
-        via slopsieve (a stray apostrophe in the JWT description broke the
-        build mid-fill; fixed).
-     3. Follow-up passes: password rows render per character (digits
-        chart-3, symbols chart-2, via lib/password.ts `charKind`); the
-        `-generator`→`-genny` rename end to end (id = file basename, incl.
-        routes; matte/scroll came along); UUID Generator's Kind segmented
-        moved into the top bar and its switches fixed (the
-        `.dt-uuid-field input { width: 100% }` specificity bug had stretched
-        pills to 198px); Cron Builder's five cramped columns became full-
-        width rows on the ppn label-beside-control pattern; the 404 scene
-        (`not-found` escapes the chrome via isBare in application.gts):
-        regular-tile grid anchored bottom-middle (`background-position:
-center bottom`, `--tile: 25vw`, 4 tiles across), bottom-tile
-        covering exactly the origin cell on an opaque backdrop, hero card
-        dead-centre (404 / File not found / Back to safety).
-     4. Auto Subtitle WIP: local Whisper transcription for audio/video,
-        subtitle export, pure word-to-cue grouping tests, and an 11-check
-        browser harness. Its focused checks and normal gates are green; the
-        aggregate rig sweep has three existing unrelated failures.
+- Ember app at the repo root (`v2-ember` branch). HEAD is `f977449`
+  (feat: auto-subtitle tool). `f167b82` before it carries the dev-encoder
+  batch, the `-genny` rename and the 404 scene. Ruby triggers commits
+  explicitly.
+- UNCOMMITTED on top: the second Auto Subtitle pass (model tiers, Accurate
+  mode, progress aggregation, editable cue grid) — see the 2026-08-21
+  session entry at the bottom.
 - Verification (2026-08-16, all green): `bun run lint` 5/5, `bun run
 test` 554 pass / 1 pre-existing skip, `node scripts/verify/classes.mjs`
   ALL PASS (2904), `node scripts/verify/all.mjs` 59/59 rigs, `bun run
@@ -678,7 +654,7 @@ URL) and static.mjs checks its existence, title, and that a bogus route
 renders `.dt-404-page` — static rig now 34 checks. Tile art is decorative
 (`alt=""`; lint rejects the redundant role=presentation).
 
-## Session 2026-08-20 — Auto Subtitle (UNCOMMITTED, not yet verified)
+## Session 2026-08-20 — Auto Subtitle
 
 New `auto-subtitle` in Audio & Video, registered with the shared combined
 audio/video accept list, styled, and represented in PARITY (tracked 83 /
@@ -686,45 +662,158 @@ web 79). It is a local, browser-only transcription flow:
 
 - `lib/transcribe.ts` dynamically imports the already-present
   `@huggingface/transformers` runtime, keeping its roughly 835 kB runtime out
-  of the main bundle. Fast uses `Xenova/whisper-tiny`; Reasonable uses
-  `Xenova/whisper-base`. Model weights are fetched from Hugging Face on first
-  use and rely on the browser HTTP cache; transformers.js' Cache API layer is
-  deliberately disabled for iOS Safari reliability.
+  of the main bundle. Fast uses `Xenova/whisper-base`, Reasonable uses
+  `Xenova/whisper-small`, and Accurate uses
+  `onnx-community/whisper-large-v3-turbo`. Model weights are fetched from
+  Hugging Face on first use and rely on the browser HTTP cache;
+  transformers.js' Cache API layer is deliberately disabled for iOS Safari
+  reliability. One pipeline is retained between runs; a mode or device change
+  disposes it before loading the replacement.
 - Media is decoded, downmixed, and resampled to 16 kHz mono through Web Audio.
-  The ASR pipeline prefers WebGPU (`fp32`) and falls back to wasm (`q8`) both
-  if GPU pipeline creation fails and if inference itself fails. Whisper asks
-  for word timestamps; `wordsToCues` groups them into readable one-line cues,
-  splitting at sentence endings, 0.8 s silence, 42 characters, or six
-  seconds.
+  The ASR pipeline uses `q4` on WebGPU. Fast and Reasonable fall back to wasm
+  `q8` if GPU pipeline creation or inference fails. Accurate requires WebGPU
+  and does not load or fall back to its 1 GiB wasm model. Whisper asks for word
+  timestamps; `wordsToCues` groups them into readable one-line cues, splitting
+  at sentence endings, 0.8 s silence, 42 characters, or six seconds.
 - The tool accepts a dropped, pasted, or picked media file; supports optional
-  source language, English translation, SRT/VTT output, copy, download, and
-  progress/status reporting. Existing `lib/subtitles.ts` writes the final
-  formats.
-- Experimental is intentionally a visible but unavailable Parakeet mode:
-  `parakeet.js` is not installed, has an unreviewed API, requires WebGPU, and
-  would bring a hundreds-of-MB model. The component reports that mode as not
-  ready instead of pretending it works.
-- `tests/unit/lib/transcribe-test.ts` currently covers deterministic
-  word-to-cue grouping (empty input, sentence break, silence, character cap,
-  and zero-length spans).
+  source language, SRT/VTT output, copy, download, and progress/status
+  reporting. Existing `lib/subtitles.ts` writes the final formats.
+- `tests/unit/lib/transcribe-test.ts` covers the exact model/device/dtype matrix,
+  Accurate's wasm rejection, and deterministic word-to-cue grouping (empty
+  input, sentence break, silence, character cap, and zero-length spans).
 
 Follow-up close-out:
 
-- All four copy strings were supplied (card description plus decode,
-  experimental, and generic-error messages). The apostrophe in "Couldn't"
-  needed double quotes so TypeScript could parse it.
-- `scripts/verify/auto-subtitle.mjs` now has 11 lightweight checks: combined
+- The UI uses the DESIGN.md frame, flush action bar, hairline-divided settings,
+  and a stacked mobile layout. The English translation control and pipeline
+  task option were removed.
+- `scripts/verify/auto-subtitle.mjs` now has 10 lightweight checks: combined
   media acceptance, disabled initial export controls, dropped-file intake,
-  Fast selection, language, translation, VTT selection, Experimental's
-  unavailable state, and Clear. It deliberately avoids downloading model
-  weights; add it through `verify:auto-subtitle` and it is auto-included by
-  `verify`.
-- Gates: `bun run lint` green; `bun run test` 560 pass / 1 pre-existing
-  skip; `classes.mjs` ALL PASS (2930); fresh `build:static` +
+  Fast selection, language, VTT selection, Accurate selection, and Clear. It
+  deliberately avoids downloading model weights; add it through
+  `verify:auto-subtitle` and it is auto-included by `verify`.
+- Gates: `bun run lint` green; `bun run test` 562 pass / 1 pre-existing
+  skip; `classes.mjs` ALL PASS (2929); fresh `build:static` +
   `verify:static` ALL PASS (34), with transformers in its own 835 kB chunk
   and the ONNX runtime found locally.
-- The aggregate `bun run verify` could not be fully green: 57/60 rigs pass,
-  including Auto Subtitle. `chrome.mjs` still looks for the removed
-  `.dt-404 h1`; `select.mjs` ended with a Puppeteer protocol error; and
-  `tools.mjs` ended with a detached-frame error. These do not implicate Auto
-  Subtitle, but need a fresh/reproducible run before claiming a clean sweep.
+- The aggregate browser gate has 59/60 rigs passing, including Auto Subtitle.
+  `chrome.mjs` still looks for the removed `.dt-404 h1`.
+
+## Session 2026-08-21 — Auto Subtitle: progress fix + cue grid
+
+- Progress bug (Ruby: "two progresses racing"): transformers.js 3.8.1
+  dispatches `progress` per file (`hub.js:607`, fields `file`/`loaded`/
+  `total`) and the encoder and decoder onnx files download concurrently, so
+  the component showed whichever file's percentage arrived last.
+  `progressAggregator()` in `lib/transcribe.ts` keeps a per-file map and emits
+  `sum(loaded)/sum(total)`; a fresh aggregator per pipeline build. The
+  percentage can drop once when a later file joins the sum — expected. Unit
+  test covers two concurrent files plus ignored `download` and zero-total
+  events.
+- Cue grid replaces the readonly textarea: number gutter · Start · End · Text
+  per cue, hairline rows, sticky head, `max-height: size(160)` scroll.
+  Start/End commit on `change` through `parseTimestamp` (accepts `,` or `.`,
+  optional hours) and snap back to the formatted value when unparseable, so
+  the grid never shows a time the export lacks; Text updates on `input`.
+  `output` still derives from `cues`, so copy/download stay classic SRT/VTT.
+  Under 40rem the Text input spans its own row below the two timecodes.
+  Column width for `HH:MM:SS.mmm` in the mono face is `size(34)` (`size(30)`
+  clipped the last digit).
+- Info button beside the Mode label (imposer's `Popover` + `info` icon
+  pattern): lists the three modes with display names from `ModelSpec.name`
+  ("Whisper 2 (Base)", "Whisper 2 (Small)", "Whisper 3 (Large Turbo)"), each
+  linked to its Hugging Face page, plus the WebGPU note. Mode labels are
+  Rough / Decent / Experimental (ids stay `fast`/`reasonable`/`accurate`).
+  The settings grid is `auto minmax(0, 1fr) auto` so the Mode segmented
+  sizes to its labels ("Reasonable" used to overflow a 1fr third), and
+  stacks to one column under 40rem. `MODELS` is now exported from
+  `lib/transcribe.ts` so the panel cannot drift from the resolver. The popover
+  primitive has click-outside only, no Escape handler (its header comment
+  claims both); the rig closes it by clicking the Subtitles label.
+- Experimental did not work (Ruby, 2026-08-21 23:14): the component swallowed
+  the error (now `console.error`ed). Cause, verified by reading the graph I/O
+  names off the tail of each decoder onnx: `onnx-community/whisper-large-v3-
+turbo`'s decoder exports no `cross_attentions.N` outputs (Xenova/whisper-base
+  exports six), so transformers.js 3.8.1 throws "Model outputs must contain
+  cross attentions to extract timestamps" for `return_timestamps: 'word'`. Its
+  generation_config also carries large-v3's alignment heads (layers 9-23 on a
+  4-layer decoder), a second failure behind the first. Switched Experimental to
+  `onnx-community/whisper-large-v3-turbo_timestamped`: q4 encoder 425 MB +
+  decoder 334 MB, `cross_attentions.0-3`, openai's own alignment heads.
+  Unverified end to end in this session (needs the 760 MB download on a
+  WebGPU browser); Ruby to run it.
+- Experimental confirmation dialog (`ui/dialog` primitive, `.dt-asub-warn`):
+  selecting Experimental opens a modal with Ruby's sticker art and their
+  wording; `<form method="dialog">` buttons return `cancel`/`confirm`, and
+  `@onClose` reads the native `returnValue`. Confirm sets the mode and is
+  remembered for the component's lifetime (`#experimentalOk`), cancel keeps
+  the previous mode. Art: `public/art/760mb.webp` (Procreate export 2732x2048
+  RGBA -> `dt clip` 2448x1110 -> magick resize 960w -> cwebp q82, 69 kB).
+  Rig +3 checks (hidden while closed, art loaded, cancel keeps mode, confirm
+  selects). First version applied `vstack` (display: flex) to the dialog
+  element itself, which overrode the UA's `dialog:not([open]) { display:
+none }` and rendered the dialog inline under the tool; the flex layout is
+  now scoped to `&[open]`.
+- Dialog open/close zoom+fade (0.22 s, scale 0.9 -> 1, backdrop fade) is pure
+  CSS: `@starting-style` plus `display`/`overlay` transitions with
+  `allow-discrete`; reduced-motion turns it off. Probed in Chrome 151; Safari
+  17.5+ / Firefox 129+ have the same features, older browsers open and close
+  without animation.
+- Dialog buttons follow the Substrata modal footer (`.sub-modal-btn`): flush
+  row under a 2px top border, ghost Cancel (flex 1, hairline divider, accent
+  hover) and primary Proceed (flex 2, semibold), 48px tall. `.dt-asub-warn`
+  carries its own chrome (no `dt-dialog` class): tool partials are `@use`d at
+  the top of app.scss, so `.dt-dialog` at line ~1400 wins any equal-
+  specificity fight with a partial rule, e.g. its `padding: size(5)`.
+- Empty state (`.dt-asub-drop`, the Background Remover's drop-zone shape:
+  dashed 2px frame, upload icon, title, hint) replaces the cue grid while
+  there are no cues and nothing runs; the label wraps its own file input on
+  the shared accept list, drops still land on the frame handler. The title is
+  a copy gap (`slopsieve --list` shows it, sample "Drop audio or video
+  here"); the hint reuses Background Remover's "or click to select a file, or
+  paste" verbatim.
+- Bottom-edge progress bar (`.dt-asub-progress`, 2px, mirrors
+  `.dt-bg-progress`) while busy: width = aggregated download percent; at 0
+  or 100 (decode, inference, no progress events) a 30% segment slides
+  (`dt-asub-slide`), reduced-motion shows a static full bar.
+  `aria-valuenow` is omitted while indeterminate.
+- Grid focus bug (Ruby: "defocuses after one keypress"): `#patch` replaces
+  the cue object and `{{#each}}` keyed rows by identity, so the edited row was
+  torn down each keystroke. Rows are now `key="@index"`. Edited rows show a
+  small primary star after the running number: `original` is the snapshot
+  taken when a transcription lands, `altered()` compares start/end/text per
+  index. UI only, nothing exported.
+- Language is `ui/language-combobox.gts` (Popover + Command, the paper-size
+  combobox's shape): search input, Auto-detect (globe icon), a Common group of
+  the first 12 entries of Whisper's order as a 4-column flag-tile grid (the
+  colour-notation popover's tile look), then all 99 alphabetically with code.
+  `LANGUAGES` in `lib/transcribe.ts` is transformers.js' `common_whisper.js`
+  order (roughly by training-data volume); codes go to the pipeline. Flags:
+  `circle-flags` 2.8.3 (MIT, new dependency; package-lock resynced with
+  `/opt/homebrew/bin/npm install --package-lock-only`), copied by
+  `scripts/copy-flags.mjs` into `public/flags/<code>.svg` (99 files, ~1 kB
+  each; `jw` -> circle-flags `jv`, `sa` -> India's country flag) and rendered
+  as `<img>` so no SVG enters a bundle. Settings grid is `1fr auto auto`.
+  The tile rule is `.dt-command-item.dt-lang-combo-tile` because
+  `.dt-command-item` (app.scss, emitted after the partial) sets
+  `flex-direction: row` through `hstack`. Rig: opens the combobox, types
+  "germ", picks German, asserts the trigger text and a loaded `/flags/de.svg`.
+- Info panel shows each mode's download size (`ModelSpec.sizeMb`, encoder +
+  merged decoder from the hub file listings on 2026-08-22: base 142/77,
+  small 299/249, turbo 759/1085 MB for q4/q8). The panel picks the WebGPU
+  figure when `navigator.gpu` exists, else the wasm one. Note: base's q4
+  merged decoder (124 MB) is larger than its q8 (54 MB); the numbers are
+  what transformers.js 3.8.1 fetches.
+- Sonnet review (2026-08-22) found two defects, both fixed: `readFile` did
+  not bump `#token` (a file dropped mid-run let the stale run's result land
+  on the new file; it now cancels like `clear()` and resets `busy`), and the
+  progress fill's inline `width` style beat `.is-indeterminate` (the style is
+  now omitted while indeterminate).
+- Not built: row insert/delete/merge, multi-line cue text (the Text cell is an
+  `<input>`; `wordsToCues` emits single-line cues), start ≤ end / ordering
+  validation.
+- Gates: lint 5/5, `bun run test` 563 pass / 1 skip, classes.mjs 2940, rig
+  `auto-subtitle.mjs` 15/15. The download path is still not rig-covered
+  (rigs do not fetch weights).
+- Seen, not touched: "Reasonable" overflows its segmented cell at the desktop
+  width — part of the pending UI pass.

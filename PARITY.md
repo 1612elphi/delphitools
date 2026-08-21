@@ -86,18 +86,18 @@ Picker is similarly web-only.
 
 ## Audio & Video
 
-| Tool (web ID)                             |  W  |  C  |  I  | Notes                                                                                                                                                                    |
-| ----------------------------------------- | :-: | :-: | :-: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Audio Atlas (`audio-atlas`)               | ✅  | ❌  | ❌  | new 2026-08; one-file interrogation: meta, peak dBFS, BS.1770 LUFS, waveform, spectrogram                                                                                |
-| Audio Trimmer (`audio-trimmer`)           | ✅  | ❌  | ❌  | new 2026-08; drag selection, fades, wav export (`lib/audio.ts`), mp3 deferred                                                                                            |
-| Auto Subtitle (`auto-subtitle`)           | ✅  | ❌  | ❌  | new 2026-08; local Whisper via transformers.js (`lib/transcribe.ts`), fast/reasonable modes, word→cue on `lib/subtitles.ts`; experimental Parakeet mode gated on the dep |
-| Frame Extractor (`frame-extractor`)       | ✅  | ❌  | ❌  | new 2026-08; video stills + contact sheet, `<video>` + canvas                                                                                                            |
-| Screen Recorder (`screen-recorder`)       | ✅  | ❌  | ❌  | new 2026-08; getDisplayMedia + MediaRecorder, optional mic mix-in, webm download                                                                                         |
-| Subtitle Converter (`subtitle-converter`) | ✅  | ❌  | ❌  | new 2026-08; srt↔vtt + shift/scale on `lib/subtitles.ts`                                                                                                                 |
-| Timecode Calculator (`timecode-calc`)     | ✅  | ❌  | ❌  | new 2026-08; SMPTE add/subtract, drop-frame correct, misinput-proof parser on `lib/timecode.ts` (user request)                                                           |
-| Voice Recorder (`voice-recorder`)         | ✅  | ❌  | ❌  | new 2026-08; getUserMedia + MediaRecorder, level meter, pause/resume, playback, download                                                                                 |
-| Video to GIF (`video-to-gif`)             | ✅  | ❌  | ❌  | new 2026-08; canvas frames through `lib/gif.ts` `AnimatedGifEncoder`, no wasm                                                                                            |
-| Waveform Generator (`waveform-genny`)     | ✅  | ❌  | ❌  | new 2026-08; waveform → PNG/SVG at social sizes                                                                                                                          |
+| Tool (web ID)                             |  W  |  C  |  I  | Notes                                                                                                                                                          |
+| ----------------------------------------- | :-: | :-: | :-: | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Audio Atlas (`audio-atlas`)               | ✅  | ❌  | ❌  | new 2026-08; one-file interrogation: meta, peak dBFS, BS.1770 LUFS, waveform, spectrogram                                                                      |
+| Audio Trimmer (`audio-trimmer`)           | ✅  | ❌  | ❌  | new 2026-08; drag selection, fades, wav export (`lib/audio.ts`), mp3 deferred                                                                                  |
+| Auto Subtitle (`auto-subtitle`)           | ✅  | ❌  | ❌  | new 2026-08; local Whisper via transformers.js (`lib/transcribe.ts`), fast/reasonable/accurate modes, word→cue on `lib/subtitles.ts`; Accurate requires WebGPU |
+| Frame Extractor (`frame-extractor`)       | ✅  | ❌  | ❌  | new 2026-08; video stills + contact sheet, `<video>` + canvas                                                                                                  |
+| Screen Recorder (`screen-recorder`)       | ✅  | ❌  | ❌  | new 2026-08; getDisplayMedia + MediaRecorder, optional mic mix-in, webm download                                                                               |
+| Subtitle Converter (`subtitle-converter`) | ✅  | ❌  | ❌  | new 2026-08; srt↔vtt + shift/scale on `lib/subtitles.ts`                                                                                                       |
+| Timecode Calculator (`timecode-calc`)     | ✅  | ❌  | ❌  | new 2026-08; SMPTE add/subtract, drop-frame correct, misinput-proof parser on `lib/timecode.ts` (user request)                                                 |
+| Voice Recorder (`voice-recorder`)         | ✅  | ❌  | ❌  | new 2026-08; getUserMedia + MediaRecorder, level meter, pause/resume, playback, download                                                                       |
+| Video to GIF (`video-to-gif`)             | ✅  | ❌  | ❌  | new 2026-08; canvas frames through `lib/gif.ts` `AnimatedGifEncoder`, no wasm                                                                                  |
+| Waveform Generator (`waveform-genny`)     | ✅  | ❌  | ❌  | new 2026-08; waveform → PNG/SVG at social sizes                                                                                                                |
 
 ## Social Media
 
