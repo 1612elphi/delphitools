@@ -1,5 +1,8 @@
 import { tracked } from '@glimmer/tracking';
 import { modifier } from 'ember-modifier';
+import { probeVideo } from 'delphitools-v2/lib/media-probe';
+
+const DEFAULT_FPS = 30;
 
 const NOT_A_VIDEO = 'Only video files are supported.';
 const LOAD_FAILED = 'Failed to load video.';
@@ -42,9 +45,11 @@ export function resolveDuration(video: HTMLVideoElement): Promise<number> {
 
 interface VideoIntakeHooks {
 	/** after a new file passes the type check, before its URL is set */
-	onLoad?: () => void;
+	onLoad?: (file: File) => void;
 	/** once the metadata (finite duration, dimensions) is in */
 	onReady?: (video: HTMLVideoElement) => void;
+	/** read the real frame rate from the container (mediabunny, lazy) into `fps` */
+	probeFps?: boolean;
 }
 
 /**
@@ -59,8 +64,11 @@ export class VideoIntake {
 	@tracked width = 0;
 	@tracked height = 0;
 	@tracked error = '';
+	/** container frame rate when probed, else an assumed 30 */
+	@tracked fps = DEFAULT_FPS;
 
 	video: HTMLVideoElement | null = null;
+	file: File | null = null;
 
 	#hooks: VideoIntakeHooks;
 
@@ -89,9 +97,17 @@ export class VideoIntake {
 		this.duration = 0;
 		this.error = '';
 		this.fileName = file.name;
-		this.#hooks.onLoad?.();
+		this.file = file;
+		this.fps = DEFAULT_FPS;
+		this.#hooks.onLoad?.(file);
 		this.url = URL.createObjectURL(file);
+		if (this.#hooks.probeFps) void this.#probeFps(file);
 	};
+
+	async #probeFps(file: File) {
+		const probe = await probeVideo(file);
+		if (this.file === file && probe?.fps) this.fps = probe.fps;
+	}
 
 	chooseFile = (event: Event) => {
 		const input = event.target as HTMLInputElement;
@@ -135,7 +151,9 @@ export class VideoIntake {
 	clear = () => {
 		this.release();
 		this.fileName = '';
+		this.file = null;
 		this.duration = 0;
+		this.fps = DEFAULT_FPS;
 		this.error = '';
 	};
 }

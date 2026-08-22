@@ -7,6 +7,7 @@ import { downloadBlob, downloadUrl } from 'delphitools-v2/lib/download';
 import { formatTimestamp } from 'delphitools-v2/lib/subtitles';
 import { seekTo, VideoIntake } from 'delphitools-v2/lib/video';
 import { VIDEO_ACCEPT, acceptAttr } from 'delphitools-v2/lib/tools';
+import { formatFps } from 'delphitools-v2/lib/media-probe';
 
 /** Kept in step with the registry entry, which routes dropped files. */
 const ACCEPT = acceptAttr(VIDEO_ACCEPT);
@@ -16,10 +17,6 @@ const DROP_TITLE = 'Drop a video here or click to upload';
 const SHEET_COLS = 4;
 const SHEET_THUMB_WIDTH = 320;
 const SHEET_LABEL_HEIGHT = 22;
-
-// ponytail: the transport's frame step assumes 30 fps — the real rate needs
-// container parsing (wave-4 mediainfo territory).
-const FRAME_S = 1 / 30;
 
 interface Still {
 	url: string;
@@ -40,6 +37,7 @@ export default class FrameExtractorTool extends Component {
 			this.#releaseStills();
 			this.stills = [];
 		},
+		probeFps: true,
 	});
 
 	willDestroy() {
@@ -59,7 +57,7 @@ export default class FrameExtractorTool extends Component {
 	get meta() {
 		const { duration, width, height } = this.intake;
 		if (!duration) return '';
-		return `${width} × ${height} · ${formatTimestamp(duration * 1000, '.')}`;
+		return `${width} × ${height} · ${formatFps(this.intake.fps)} · ${formatTimestamp(duration * 1000, '.')}`;
 	}
 
 	get sheetProgress() {
@@ -140,7 +138,7 @@ export default class FrameExtractorTool extends Component {
 	};
 
 	jumpFrame = (direction: number) => {
-		this.jumpBy(direction * FRAME_S);
+		this.jumpBy(direction / this.intake.fps);
 	};
 
 	downloadStill = (still: Still) => {

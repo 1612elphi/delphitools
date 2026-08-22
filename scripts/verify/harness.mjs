@@ -108,3 +108,73 @@ export async function finish(browser) {
 	}
 	console.log(`\nALL PASS (${checks})`);
 }
+
+/**
+ * Records a short webm in the page (canvas captureStream + MediaRecorder, an
+ * oscillator track when `audio`) and parks it as window.__clip. Returns its
+ * byte size.
+ */
+export function makeClip(
+	page,
+	{ width = 320, height = 180, ms = 1500, audio = false, name = 'clip.webm' } = {},
+) {
+	return page.evaluate(
+		async ({ width, height, ms, audio, name }) => {
+			const canvas = document.createElement('canvas');
+			canvas.width = width;
+			canvas.height = height;
+			const ctx = canvas.getContext('2d');
+			const stream = canvas.captureStream(30);
+			let osc;
+			if (audio) {
+				const ac = new AudioContext();
+				osc = ac.createOscillator();
+				const dest = ac.createMediaStreamDestination();
+				osc.connect(dest);
+				osc.start();
+				for (const track of dest.stream.getAudioTracks()) stream.addTrack(track);
+			}
+			const recorder = new MediaRecorder(stream, {
+				mimeType: audio ? 'video/webm;codecs=vp8,opus' : 'video/webm;codecs=vp8',
+			});
+			const chunks = [];
+			recorder.ondataavailable = (e) => chunks.push(e.data);
+			const stopped = new Promise((r) => (recorder.onstop = r));
+			recorder.start(100);
+			const t0 = performance.now();
+			await new Promise((resolve) => {
+				const tick = () => {
+					const t = performance.now() - t0;
+					ctx.fillStyle = `hsl(${(t / 10) % 360} 80% 50%)`;
+					ctx.fillRect(0, 0, width, height);
+					if (t < ms) requestAnimationFrame(tick);
+					else resolve();
+				};
+				tick();
+			});
+			recorder.stop();
+			await stopped;
+			osc?.stop();
+			const blob = new Blob(chunks, { type: 'video/webm' });
+			window.__clip = new File([blob], name, { type: 'video/webm' });
+			return blob.size;
+		},
+		{ width, height, ms, audio, name },
+	);
+}
+
+/** Drops window.__clip plus any extra text files on the element at selector. */
+export function dropClip(page, selector, extra = []) {
+	return page.evaluate(
+		({ selector, extra }) => {
+			const transfer = new DataTransfer();
+			transfer.items.add(window.__clip);
+			for (const { name, text, type } of extra)
+				transfer.items.add(new File([text], name, { type }));
+			document.querySelector(selector)?.dispatchEvent(
+				new DragEvent('drop', { dataTransfer: transfer, bubbles: true }),
+			);
+		},
+		{ selector, extra },
+	);
+}

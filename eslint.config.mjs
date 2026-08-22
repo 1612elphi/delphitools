@@ -57,6 +57,7 @@ export default defineConfig([
 		'public/jxl/',
 		'public/compress/',
 		'public/mupdf/',
+		'public/mediainfo/',
 		'public/lib/imagetracer_v1.2.6.js',
 		'app/lib/pandoc/pandoc-core.js',
 		// Substrata harnesses and the dictionary builder predate this repo's

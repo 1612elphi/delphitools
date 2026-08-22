@@ -78,6 +78,7 @@
 @use "tools/shavian-transliterator";
 @use "tools/social-cropper";
 @use "tools/subtitle-converter";
+@use "tools/subtitle-studio";
 @use "tools/svg-optimiser";
 @use "tools/tailwind-cheatsheet";
 @use "tools/tailwind-shades";
@@ -88,6 +89,8 @@
 @use "tools/typo-calc";
 @use "tools/unit-converter";
 @use "tools/uuid-genny";
+@use "tools/video-atlas";
+@use "tools/video-muter";
 @use "tools/video-to-gif";
 @use "tools/voice-recorder";
 @use "tools/watermarker";

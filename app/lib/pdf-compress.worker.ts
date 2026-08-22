@@ -15,6 +15,7 @@ import {
 	STRUCTURAL_OPTIONS,
 	type CompressOptions,
 } from './pdf-compress-core';
+import { rawImport } from 'delphitools-v2/lib/raw-import';
 
 // ── minimal typings for the mupdf objects this worker touches ────────────────
 
@@ -69,18 +70,10 @@ interface MupdfModule {
 
 const MODULE_URL = '/mupdf/mupdf.js';
 
-// See lib/jxl.ts for why the import goes through `new Function`: a literal
-// specifier makes Rolldown resolve the /public path at build time (and fail),
-// and the dev server otherwise tries to transform mupdf.js as an app module.
-// eslint-disable-next-line @typescript-eslint/no-implied-eval
-const rawImport = new Function('u', 'return import(u)') as (
-	u: string,
-) => Promise<MupdfModule>;
-
 let modulePromise: Promise<MupdfModule> | null = null;
 
 function getMupdf(): Promise<MupdfModule> {
-	modulePromise ??= rawImport(MODULE_URL);
+	modulePromise ??= rawImport<MupdfModule>(MODULE_URL);
 	return modulePromise;
 }
 

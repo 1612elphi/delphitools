@@ -31,6 +31,7 @@ export const VIDEO_ACCEPT = [
 	'.mkv',
 	'.avi',
 ];
+export const SUBTITLE_ACCEPT = ['.srt', '.vtt'];
 
 /** The same list as an `accept` attribute value. */
 export const acceptAttr = (list: readonly string[]): string => list.join(',');
@@ -417,7 +418,16 @@ export const toolCategories: ToolCategory[] = [
 					'Convert, shift and rescale SRT and VTT subtitles',
 				icon: 'captions',
 				href: '/tools/subtitle-converter',
-				accepts: ['.srt', '.vtt'],
+				accepts: SUBTITLE_ACCEPT,
+				new: true,
+			},
+			{
+				id: 'subtitle-studio',
+				name: 'Subtitle Studio',
+				description: 'Burn subtitles to video',
+				icon: 'subtitles',
+				href: '/tools/subtitle-studio',
+				accepts: [...VIDEO_ACCEPT, ...SUBTITLE_ACCEPT],
 				new: true,
 			},
 			{
@@ -427,6 +437,24 @@ export const toolCategories: ToolCategory[] = [
 					'Add and subtract timecodes, drop-frame aware',
 				icon: 'clock',
 				href: '/tools/timecode-calc',
+				new: true,
+			},
+			{
+				id: 'video-atlas',
+				name: 'Video Atlas',
+				description: 'Everything about one video file',
+				icon: 'clapperboard',
+				href: '/tools/video-atlas',
+				accepts: VIDEO_ACCEPT,
+				new: true,
+			},
+			{
+				id: 'video-muter',
+				name: 'Video Muter',
+				description: 'Strip the audio from a video',
+				icon: 'volume-x',
+				href: '/tools/video-muter',
+				accepts: VIDEO_ACCEPT,
 				new: true,
 			},
 			{

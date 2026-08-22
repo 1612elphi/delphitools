@@ -94,8 +94,11 @@ Picker is similarly web-only.
 | Frame Extractor (`frame-extractor`)       | ✅  | ❌  | ❌  | new 2026-08; video stills + contact sheet, `<video>` + canvas                                                                                                  |
 | Screen Recorder (`screen-recorder`)       | ✅  | ❌  | ❌  | new 2026-08; getDisplayMedia + MediaRecorder, optional mic mix-in, webm download                                                                               |
 | Subtitle Converter (`subtitle-converter`) | ✅  | ❌  | ❌  | new 2026-08; srt↔vtt + shift/scale on `lib/subtitles.ts`                                                                                                       |
+| Subtitle Studio (`subtitle-studio`)       | ✅  | ❌  | ❌  | new 2026-08; burns SRT/VTT into video: canvas draw (`lib/subtitle-burn.ts`) + MediaRecorder real-time pass, font/size/colour/style, drag to place              |
 | Timecode Calculator (`timecode-calc`)     | ✅  | ❌  | ❌  | new 2026-08; SMPTE add/subtract, drop-frame correct, misinput-proof parser on `lib/timecode.ts` (user request)                                                 |
 | Voice Recorder (`voice-recorder`)         | ✅  | ❌  | ❌  | new 2026-08; getUserMedia + MediaRecorder, level meter, pause/resume, playback, download                                                                       |
+| Video Atlas (`video-atlas`)               | ✅  | ❌  | ❌  | new 2026-08; MediaInfo report (mediainfo.js wasm self-hosted in `public/mediainfo`): container, codecs, fps, bitrate, colour, per-stream panels                |
+| Video Muter (`video-muter`)               | ✅  | ❌  | ❌  | new 2026-08; drops audio tracks by remux (mediabunny `Conversion`, packets copied, no re-encode), MP4/MOV → MP4, WebM/MKV → WebM                               |
 | Video to GIF (`video-to-gif`)             | ✅  | ❌  | ❌  | new 2026-08; canvas frames through `lib/gif.ts` `AnimatedGifEncoder`, no wasm                                                                                  |
 | Waveform Generator (`waveform-genny`)     | ✅  | ❌  | ❌  | new 2026-08; waveform → PNG/SVG at social sizes                                                                                                                |
 

@@ -16,6 +16,7 @@ import {
 	peakDb,
 	ViewWindow,
 } from 'delphitools-v2/lib/audio';
+import { probeAudio, type AudioProbe } from 'delphitools-v2/lib/media-probe';
 import { AUDIO_ACCEPT, acceptAttr } from 'delphitools-v2/lib/tools';
 
 /** Kept in step with the registry entry, which routes dropped files. */
@@ -78,7 +79,13 @@ export default class AudioAtlasTool extends Component {
 	#startedCtxTime = 0;
 	#rafId = 0;
 
+	@tracked source: AudioProbe | null = null;
+
 	intake = new AudioIntake({
+		onLoad: (file) => {
+			this.source = null;
+			void this.#probeSource(file);
+		},
 		onDecoded: (buffer) => {
 			this.view.reset(buffer.duration);
 			this.#resetPlayback();
@@ -241,6 +248,15 @@ export default class AudioAtlasTool extends Component {
 		return htmlSafe(`left: ${pct.toFixed(3)}%`);
 	}
 
+	// The decoded buffer runs at the AudioContext's rate; the container says
+	// what the file itself was recorded at.
+	async #probeSource(file: File) {
+		const probe = await probeAudio(file);
+		if (this.isDestroyed || this.intake.fileName !== file.name)
+			return;
+		this.source = probe;
+	}
+
 	async #measureLoudness(buffer: AudioBuffer) {
 		this.lufs = null;
 		// One macrotask, so the waveform paints before the O(n) filter run.
@@ -252,7 +268,14 @@ export default class AudioAtlasTool extends Component {
 		);
 	}
 
-	// @cached: peakDb is a full-buffer scan, and the lufs arrival re-renders.
+	// peakDb is a full-buffer scan; keyed on the buffer alone so the lufs and
+	// source-probe arrivals do not rerun it.
+	@cached
+	get peak(): number {
+		const buffer = this.intake.buffer;
+		return buffer ? peakDb(channelsOf(buffer)) : -Infinity;
+	}
+
 	@cached
 	get rows(): MetaRow[] {
 		const buffer = this.intake.buffer;
@@ -261,7 +284,8 @@ export default class AudioAtlasTool extends Component {
 			this.intake.fileType ||
 			this.intake.fileName.split('.').pop()?.toUpperCase() ||
 			'';
-		const peak = peakDb(channelsOf(buffer));
+		const source = this.source;
+		const peak = this.peak;
 		const lufs = this.lufs;
 
 		return [
@@ -271,8 +295,15 @@ export default class AudioAtlasTool extends Component {
 			},
 			{
 				label: 'Sample rate',
-				value: `${buffer.sampleRate} Hz`,
+				value:
+					source &&
+					source.sampleRate !== buffer.sampleRate
+						? `${source.sampleRate} Hz (decoded at ${buffer.sampleRate})`
+						: `${source?.sampleRate ?? buffer.sampleRate} Hz`,
 			},
+			...(source?.codec
+				? [{ label: 'Codec', value: source.codec }]
+				: []),
 			{
 				label: 'Channels',
 				value: `${buffer.numberOfChannels}`,

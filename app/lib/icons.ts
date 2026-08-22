@@ -106,6 +106,7 @@ import iFileType2 from 'lucide-static/icons/file-type-2.svg?raw';
 import iFileUp from 'lucide-static/icons/file-up.svg?raw';
 import iFilm from 'lucide-static/icons/film.svg?raw';
 import iFingerprint from 'lucide-static/icons/fingerprint.svg?raw';
+import iFlame from 'lucide-static/icons/flame.svg?raw';
 import iFlipHorizontal2 from 'lucide-static/icons/flip-horizontal-2.svg?raw';
 import iFlipVertical2 from 'lucide-static/icons/flip-vertical-2.svg?raw';
 import iFocus from 'lucide-static/icons/focus.svg?raw';
@@ -211,6 +212,7 @@ import iSquareTerminal from 'lucide-static/icons/square-terminal.svg?raw';
 import iStamp from 'lucide-static/icons/stamp.svg?raw';
 import iStar from 'lucide-static/icons/star.svg?raw';
 import iStrikethrough from 'lucide-static/icons/strikethrough.svg?raw';
+import iSubtitles from 'lucide-static/icons/subtitles.svg?raw';
 import iSun from 'lucide-static/icons/sun.svg?raw';
 import iSwatchBook from 'lucide-static/icons/swatch-book.svg?raw';
 import iTag from 'lucide-static/icons/tag.svg?raw';
@@ -224,6 +226,7 @@ import iUngroup from 'lucide-static/icons/ungroup.svg?raw';
 import iUnlock from 'lucide-static/icons/unlock.svg?raw';
 import iUpload from 'lucide-static/icons/upload.svg?raw';
 import iVariable from 'lucide-static/icons/variable.svg?raw';
+import iVolumeX from 'lucide-static/icons/volume-x.svg?raw';
 import iWand2 from 'lucide-static/icons/wand-2.svg?raw';
 import iWind from 'lucide-static/icons/wind.svg?raw';
 import iX from 'lucide-static/icons/x.svg?raw';
@@ -334,6 +337,7 @@ export const icons: Record<string, string> = {
 	'file-up': iFileUp,
 	film: iFilm,
 	fingerprint: iFingerprint,
+	flame: iFlame,
 	'flip-horizontal-2': iFlipHorizontal2,
 	'flip-vertical-2': iFlipVertical2,
 	focus: iFocus,
@@ -439,6 +443,7 @@ export const icons: Record<string, string> = {
 	stamp: iStamp,
 	star: iStar,
 	strikethrough: iStrikethrough,
+	subtitles: iSubtitles,
 	sun: iSun,
 	'swatch-book': iSwatchBook,
 	tag: iTag,
@@ -452,6 +457,7 @@ export const icons: Record<string, string> = {
 	unlock: iUnlock,
 	upload: iUpload,
 	variable: iVariable,
+	'volume-x': iVolumeX,
 	'wand-2': iWand2,
 	wind: iWind,
 	x: iX,

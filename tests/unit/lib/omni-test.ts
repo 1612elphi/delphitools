@@ -28,7 +28,10 @@ module('Unit | Lib | omni', function () {
 
 		const srt = new File([''], 'film.srt', { type: '' });
 		const srtIds = toolsForFile(srt).map((t) => t.id);
-		assert.deepEqual(srtIds, ['subtitle-converter']);
+		assert.deepEqual(srtIds, [
+			'subtitle-converter',
+			'subtitle-studio',
+		]);
 	});
 
 	test('a colour input answers with the colour rows and a carry list', async function (assert) {

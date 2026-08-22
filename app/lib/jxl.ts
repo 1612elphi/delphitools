@@ -14,6 +14,7 @@
 // headers.
 
 import { JXL_ENCODE_DEFAULTS } from './jxl-defaults';
+import { rawImport } from 'delphitools-v2/lib/raw-import';
 
 interface JxlEncoderModule {
 	encode(
@@ -26,28 +27,13 @@ interface JxlEncoderModule {
 
 const CODEC_URL = '/jxl/jxl_enc.js';
 
-// Vite needs more persuasion than webpack here. `/* @vite-ignore */` only
-// suppresses analysis of a NON-literal specifier: written inline as a string,
-// Rolldown still resolves it and the build fails with UNRESOLVED_IMPORT. Moving
-// it to a variable fixes the build, but the dev server then rewrites the
-// request to `/jxl/jxl_enc.js?import` and tries to transform the emscripten
-// glue as an ES module, which fails.
-//
-// Building the import through `new Function` keeps it out of Vite's transform
-// in both modes, so dev and production take the same path. Safe here because
-// the URL is a constant, and the static export sets no CSP that would block it.
-// The body is a fixed literal and the only argument is the CODEC_URL constant
-// above; nothing reaches this from user input.
-// eslint-disable-next-line @typescript-eslint/no-implied-eval
-const rawImport = new Function('u', 'return import(u)') as (
-	u: string,
-) => Promise<{ default: (opts: unknown) => Promise<JxlEncoderModule> }>;
-
 let modulePromise: Promise<JxlEncoderModule> | null = null;
 
 export function getJxlModule(): Promise<JxlEncoderModule> {
 	modulePromise ??= (async () => {
-		const { default: factory } = await rawImport(CODEC_URL);
+		const { default: factory } = await rawImport<{
+			default: (opts: unknown) => Promise<JxlEncoderModule>;
+		}>(CODEC_URL);
 		return factory({
 			noInitialRun: true,
 			locateFile: (path: string) => `/jxl/${path}`,

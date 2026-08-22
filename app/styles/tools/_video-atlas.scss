@@ -1,0 +1,238 @@
+// Styles for the video-atlas tool: Audio Atlas's frame and cell grid around a
+// Frame Extractor stage.
+
+@use "../crayon-config" as crayon;
+
+.dt-va {
+	@include crayon.vstack(6);
+}
+
+.dt-va-frame {
+	border: 2px solid var(--border);
+	background: var(--card);
+}
+
+/* Flush action bar: file picker (grows) · status · Copy report · Clear. */
+.dt-va-bar {
+	display: flex;
+	min-height: crayon.size(12);
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-va-file {
+	@include crayon.hstack(2);
+
+	flex: 1;
+	min-width: 0;
+	align-items: center;
+	padding-inline: crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+		flex: none;
+	}
+
+	&:focus-within {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.dt-va-filename {
+	overflow: hidden;
+	min-width: 0;
+	flex: 1;
+	color: var(--foreground);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-va-status {
+	align-self: center;
+	padding-inline: crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.dt-va-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(3);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	white-space: nowrap;
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		pointer-events: none;
+	}
+}
+
+.dt-va-clear {
+	display: flex;
+	width: crayon.size(12);
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		pointer-events: none;
+	}
+}
+
+.dt-va-stage {
+	border-bottom: 1px solid var(--border);
+
+	video {
+		display: block;
+		width: 100%;
+		max-height: crayon.size(100);
+		background: #000;
+	}
+}
+
+/* Empty state, the Background Remover's drop-zone shape. */
+.dt-va-drop {
+	display: flex;
+	min-height: crayon.size(56);
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	margin: crayon.size(4);
+	padding: crayon.size(8);
+	border: 2px dashed var(--border);
+	background: var(--card);
+	color: var(--foreground);
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(12);
+		height: crayon.size(12);
+		margin-bottom: crayon.size(4);
+		color: var(--muted-foreground);
+	}
+
+	@include crayon.hover {
+		border-color: var(--primary);
+	}
+
+	&:focus-within {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.dt-va-drop-title {
+	display: block;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-va-drop-hint {
+	display: block;
+	margin-top: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+/* One panel per stream: title rail, then a cell grid of label/value pairs. */
+.dt-va-panel {
+	overflow: hidden;
+}
+
+.dt-va-panel-title {
+	margin: 0;
+	padding: crayon.size(2) crayon.size(3);
+	border-bottom: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("semibold");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+/* Cells draw their own hairlines (not the gap trick), so a short last row
+   leaves card-coloured space instead of a border-coloured block. */
+.dt-va-meta {
+	display: grid;
+	margin: 0;
+	grid-template-columns: repeat(auto-fit, minmax(crayon.size(44), 1fr));
+}
+
+.dt-va-cell {
+	min-width: 0;
+	padding: crayon.size(2) crayon.size(3);
+	border-right: 1px solid var(--border);
+	border-bottom: 1px solid var(--border);
+	background: var(--card);
+
+	dt {
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+	}
+
+	dd {
+		overflow-wrap: anywhere;
+		margin: 0;
+		font-size: crayon.font-size("sm");
+		font-variant-numeric: tabular-nums;
+	}
+}
+
+.dt-va-error {
+	margin: 0;
+	padding: crayon.size(3);
+	border: 0;
+	border-top: 1px solid var(--border);
+	background: color-mix(in oklch, var(--destructive) 10%, transparent);
+	color: var(--destructive);
+	font-size: crayon.font-size("sm");
+}

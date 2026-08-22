@@ -27,7 +27,7 @@ export function channelsOf(buffer: AudioBuffer): Float32Array[] {
 
 interface AudioIntakeHooks {
 	/** after a new file passes the type check, before decoding starts */
-	onLoad?: () => void;
+	onLoad?: (file: File) => void;
 	/** once the file is decoded */
 	onDecoded?: (buffer: AudioBuffer) => void;
 }
@@ -77,7 +77,7 @@ export class AudioIntake {
 		this.fileBytes = file.size;
 		this.fileType = file.type;
 		this.buffer = null;
-		this.#hooks.onLoad?.();
+		this.#hooks.onLoad?.(file);
 
 		try {
 			const buffer = await audioContext().decodeAudioData(

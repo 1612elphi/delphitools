@@ -21,6 +21,8 @@ ember-cli-update.json
 
 # MuPDF.js emscripten build, copied verbatim from the mupdf npm package
 /public/mupdf/
+# mediainfo.js emscripten bundle, copied by scripts/copy-mediainfo.mjs
+/public/mediainfo/
 
 # vendored MIT pandoc-wasm wrapper, copied verbatim
 /app/lib/pandoc/pandoc-core.js

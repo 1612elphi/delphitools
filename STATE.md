@@ -817,3 +817,143 @@ none }` and rendered the dialog inline under the tool; the flex layout is
   (rigs do not fetch weights).
 - Seen, not touched: "Reasonable" overflows its segmented cell at the desktop
   width — part of the pending UI pass.
+
+## Session 2026-08-22 — Subtitle Studio (UNCOMMITTED)
+
+New `subtitle-studio` in Audio & Video: burns an SRT/VTT into a video in the
+browser. Ruby's brief: Auto Subtitle's frame + multi-column table, the Frame
+Extractor's transport, move/scale/colour/font controls.
+
+- `lib/subtitle-burn.ts`: `drawSubtitle` (word wrap to 90% width, bottom-
+  centre anchor + x/y offsets, outline/box/plain, four font stacks: platform
+  sans/serif/mono plus the page's iA Writer Quattro), `activeCue`,
+  `stripTags`, `wrapLines`, `pickVideoMime`, `extensionFor`. Unit-tested
+  (wrap, active cue, tags, extension).
+- Component: `VideoIntake` + a hidden `<video>`; the stage is a canvas at the
+  video's intrinsic size that both the preview and the recorder draw through
+  (`draw()` = frame + active cue). Drag on the canvas moves the subtitle
+  (pointer deltas in CSS px become frame fractions, clamped). Settings:
+  Font (Sans/Serif/Mono/Quattro), Size 2–14% of height, Colour (native
+  picker), Style (Outline/Box/Plain), Position readout + Reset. Transport
+  is the laserdisc row (±5 s/±1 s/±frame at an assumed 30 fps). Cue grid:
+     # is a seek button, start/end read-only, text editable; the active cue's
+     row highlights during playback. One drop can carry both files.
+- Burn: `canvas.captureStream(30)` + the element's audio through a one-time
+  `createMediaElementSource` graph (gain 0 to speakers while burning, 1
+  after) into MediaRecorder (vp9/vp8 webm, Safari mp4), real-time: the
+  video plays through once, bottom-edge progress bar, result shown as
+  "webm · N.N MB" + Download in the output head. ponytail: faster-than-real-
+  time needs WebCodecs + a muxer dependency.
+- Copy gaps: five (`tools.ts` description, two drop titles, two error
+  lines); `slopsieve --list` shows them.
+- Export formats (`EXPORT_FORMATS` in the lib, a native `<select>` in the
+  bar before Burn): MP4 H.264 / HEVC / AV1, WebM VP9 / VP8 / AV1. Each is
+  probed with `MediaRecorder.isTypeSupported` per render and disabled when
+  the browser cannot encode it; the first supported one is the default.
+  Chrome 151 on this Mac answers yes to all six (HEVC only with the full
+  `hvc1.1.6.L93.B0` string). Bitrate is `bitrateFor(w, h)` = 0.12 bit per
+  pixel per frame at 30 fps, clamped 1–40 Mbps (7.5 Mbps at 1080p; the
+  MediaRecorder default is 2.5 Mbps at any size); audio 128 kbps.
+- Rig `scripts/verify/subtitle-studio.mjs` generates a 2 s webm in the page
+  (canvas captureStream + MediaRecorder), drops it with an SRT, seeks a cue,
+  picks Box, burns, and checks the result label.
+- `tests/unit/lib/omni-test.ts`: an `.srt` now routes to both Subtitle
+  Converter and Subtitle Studio (catalogue order); the expectation lists both.
+- Gates: lint 5/5 (template-lint needed `no-pointer-down-event-binding`
+  disabled on the drag canvas, and the range/colour wrappers are divs so the
+  inputs have one label each), classes.mjs 3001, tests 567, rig 7/7
+  including a real MediaRecorder burn of a 2 s generated webm.
+- Burn aborts when the tab goes to the background (`visibilitychange` →
+  reject, recorder stopped, `hidden` error): a background tab throttles rAF
+  and the canvas capture, so the file would stutter or freeze. The fast
+  path (WebCodecs) is deferred to wave 4, where `mp4box` arrives for the
+  Video Muter anyway; with MediaRecorder 1× is the ceiling.
+- Layout: the video's `W × H · duration` readout and the position readout
+  are pills over the stage (top-left / top-right); in the bar the readout
+  had squeezed the file name to one character. Settings are four cells
+  (`auto minmax(size(40), 1fr) auto auto`), so the Size slider has room.
+
+## Session 2026-08-22 — AV wave 4: Video Atlas + Video Muter (UNCOMMITTED)
+
+Dependency decision, a deviation from the wave-4 plan: `mediabunny` 1.55
+(MPL-2.0, pure JS demux/mux + WebCodecs glue) instead of `mp4box`. Its
+`Conversion` with `audio: { discard: true }` is a packet copy, and the same
+library covers the later Video Trimmer, embedded subtitle tracks and the
+Subtitle Studio fast path, so one dependency serves the whole lane. MPL is
+file-level copyleft and only binds modifications to its own files.
+`mediainfo.js` 0.3.7 (BSD-2) stays for the Atlas: the deep fields (profile,
+level, bit depth, colour primaries, bitrate mode, GOP) are MediaInfo's.
+
+- `lib/mediainfo.ts`: the emscripten bundle is self-hosted at
+  `public/mediainfo/` (`mediainfo.min.js` + 2.5 MB `MediaInfoModule.wasm` +
+  licence, copied by `scripts/copy-mediainfo.mjs`; lint/prettier-ignored)
+  and imported through the jxl/mupdf `new Function` idiom, so neither file
+  enters the Vite graph. `analyzeMedia(file)` reads in chunks via
+  `file.slice`. `sections()` turns MediaInfo tracks into titled panels of
+  label/value rows (General, Video #n, Audio #n, Text #n), only fields
+  present; `reportText()` is the clipboard form. Unit-tested on fixtures.
+- `lib/media-probe.ts` (mediabunny, dynamic import): `probeVideo` (fps from
+  `computePacketStats(200)`, size, rotation, codec, duration, audio-track
+  count), `probeAudio` (sample rate, channels, codec), `muteVideo`
+  (Conversion, WebM/MKV → WebM, else MP4; throws `mute-invalid` with the
+  discard reasons when the muxer refuses).
+- `video-atlas`: Audio Atlas's frame and cell grid around a Frame Extractor
+  stage; bar shows "N streams" and Copy report. Rig generates a webm in the
+  page, loads the wasm, checks Container/Codec/Frame size rows.
+- `video-muter`: bar with probe meta (`W × H · fps · duration · N audio
+tracks`), Mute disabled when the probe finds no audio track, progress bar
+  from `conversion.onProgress`, result row (`ext · size` + Download) and the
+  muted output playing in the stage so silence can be checked by ear. Rig
+  generates a webm with an oscillator track and remuxes it.
+- Muter output container select (Same as source / MP4 / MOV / WebM / MKV):
+  each option is enabled only when `OutputFormat.getSupportedVideoCodecs()`
+  lists the probed codec, so the remux never re-encodes (VP8 → MP4 is
+  refused, for instance). Result extension and MIME come from the format.
+- Stages paint black only behind the video/canvas box, not behind the
+  empty-state drop zone (Atlas, Muter, Studio).
+- Copy gaps: seven (two card descriptions, two drop titles, the Atlas read
+  error, the Muter no-audio status and error line).
+- Unlocks wired: `VideoIntake`/`AudioIntake` `onLoad` now receive the File.
+  Frame Extractor and Subtitle Studio probe the real fps on load (30 until it
+  answers) for the frame step and the meta readout; Audio Atlas shows the
+  container's sample rate (with "decoded at N" when the AudioContext
+  resampled) plus a Codec row. Video Atlas frame size shows the DAR as a
+  familiar name (`formatRatio`: 16:9, 9:16, 2.39:1 …).
+
+### Simplify pass (2026-08-22, four reviewers: reuse / simplification / efficiency / altitude)
+
+Applied: `VideoIntake` owns `file` and a probed `fps` (opt-in `probeFps`),
+so Frame Extractor and Subtitle Studio dropped their copies of the probe
+dance; `formatFps` lives in `lib/media-probe.ts` and is the one fps
+formatter; `VideoProbe.rotation/duration`, `AudioProbe.channels`,
+`MuteResult.audioTracks` (and its extra `getAudioTracks`) removed as
+unread; `extensionFor` removed in favour of `ExportFormat.ext`; the
+export-format table is probed once per module; Studio keeps one `style`
+object with `#patch`, derives `activeIndex` from `currentMs`, draws on
+`requestVideoFrameCallback` (rAF fallback), writes `burnPct` only on
+change, drops the `timeupdate` redraw, uses `AbortController` for the
+visibility abort, `formatBytes`, `SUBTITLE_ACCEPT`, and gained the
+`filePaste` modifier its hint promised; Atlas and Muter use the intake's
+own `chooseFile`/`drop`/`dragOver`; Atlas `sections` and Audio Atlas `peak`
+are `@cached`; module constants are referenced directly in templates; the
+`new Function` import shim is one `lib/raw-import.ts` (jxl, mupdf worker,
+mediainfo); MediaInfo specs pass functions and a `mapNum` helper; rigs
+share `makeClip`/`dropClip` from `harness.mjs`.
+Skipped: handing mediabunny's `Input` to the Muter component (keeps the
+lib boundary; a second header parse per mute is cheap), the shared
+`audioContext()` singleton in Studio (component-owned context has a clean
+close), merging the transport methods across Frame Extractor and Studio,
+memoised word-wrap per frame.
+
+Code review (2026-08-22, 7/10, no critical): two important fixes applied —
+`#stopBurn` now aborts a per-burn `AbortController` so a suspended `#burn`
+(new file, Clear, teardown) rejects instead of holding the partial
+recording and listeners until the tab is hidden; `analyzeMedia` queues
+calls behind each other because the one MediaInfo instance refuses a
+second analysis mid-read (a second drop on Video Atlas used to show the
+read error). Also: `probeVideo`/`probeAudio` import inside `try`, and
+Studio's `readAny` hands every non-subtitle file to `intake.load` so an
+empty-MIME video gets the intake's own message. Left as notes: drag scale
+when the canvas is letterboxed, `readSubs` without a token, Muter
+`chooseFile` mid-remux, Audio Atlas name-only staleness guard, unguarded
+`clipboard.writeText` in Atlas.
