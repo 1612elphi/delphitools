@@ -77,7 +77,6 @@ export function SvgOptimiserTool() {
         multipass: true,
         plugins: [
           "preset-default",
-          "removeDimensions",
           {
             name: "removeAttrs",
             params: {
