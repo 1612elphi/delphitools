@@ -84,7 +84,14 @@ export default class VideoAtlasTool extends Component {
 
 	async #copy() {
 		if (this.tracks.length === 0) return;
-		await navigator.clipboard.writeText(reportText(this.tracks));
+		try {
+			await navigator.clipboard.writeText(
+				reportText(this.tracks),
+			);
+		} catch (error) {
+			console.warn('Clipboard write refused:', error);
+			return;
+		}
 		this.copied = true;
 		clearTimeout(this.#copiedTimer);
 		this.#copiedTimer = setTimeout(

@@ -1,6 +1,7 @@
 // Subtitle rendering for the Subtitle Studio burner. The preview and the
 // export draw through the same routine on the same canvas, so the stage shows
 // what the recorder gets.
+import type { BurnCodec } from 'delphitools-v2/lib/media-convert';
 import type { Cue } from 'delphitools-v2/lib/subtitles';
 
 export type FontChoice = 'sans' | 'serif' | 'mono' | 'quattro';
@@ -80,7 +81,7 @@ export function wrapLines(
 
 /** draws `text` over whatever the canvas holds; the caller draws the frame */
 export function drawSubtitle(
-	ctx: CanvasRenderingContext2D,
+	ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
 	text: string,
 	width: number,
 	height: number,
@@ -123,7 +124,10 @@ export function drawSubtitle(
 export interface ExportFormat {
 	id: string;
 	label: string;
+	/** MediaRecorder type, the real-time path */
 	mime: string;
+	/** WebCodecs codec, the fast path */
+	codec: BurnCodec;
 	ext: 'mp4' | 'webm';
 }
 
@@ -135,49 +139,64 @@ export const EXPORT_FORMATS: ExportFormat[] = [
 		id: 'h264',
 		label: 'MP4 · H.264',
 		mime: 'video/mp4;codecs=avc1,mp4a.40.2',
+		codec: 'avc',
 		ext: 'mp4',
 	},
 	{
 		id: 'hevc',
 		label: 'MP4 · HEVC',
 		mime: 'video/mp4;codecs=hvc1.1.6.L93.B0,mp4a.40.2',
+		codec: 'hevc',
 		ext: 'mp4',
 	},
 	{
 		id: 'av1-mp4',
 		label: 'MP4 · AV1',
 		mime: 'video/mp4;codecs=av01.0.08M.08,mp4a.40.2',
+		codec: 'av1',
 		ext: 'mp4',
 	},
 	{
 		id: 'vp9',
 		label: 'WebM · VP9',
 		mime: 'video/webm;codecs=vp9,opus',
+		codec: 'vp9',
 		ext: 'webm',
 	},
 	{
 		id: 'vp8',
 		label: 'WebM · VP8',
 		mime: 'video/webm;codecs=vp8,opus',
+		codec: 'vp8',
 		ext: 'webm',
 	},
 	{
 		id: 'av1',
 		label: 'WebM · AV1',
 		mime: 'video/webm;codecs=av1,opus',
+		codec: 'av1',
 		ext: 'webm',
 	},
 ];
 
-/** every format with whether this browser's MediaRecorder can encode it */
-export function supportedFormats(): (ExportFormat & { supported: boolean })[] {
-	const can =
-		typeof MediaRecorder !== 'undefined'
-			? (mime: string) => MediaRecorder.isTypeSupported(mime)
+/**
+ * Every format with whether this browser can produce it: by WebCodecs encoder
+ * when `encoders` is given (the fast path), else by MediaRecorder type.
+ */
+export function supportedFormats(
+	encoders?: Set<BurnCodec> | null,
+): (ExportFormat & { supported: boolean })[] {
+	const can = encoders
+		? (format: ExportFormat) => encoders.has(format.codec)
+		: typeof MediaRecorder !== 'undefined'
+			? (format: ExportFormat) =>
+					MediaRecorder.isTypeSupported(
+						format.mime,
+					)
 			: () => false;
 	return EXPORT_FORMATS.map((format) => ({
 		...format,
-		supported: can(format.mime),
+		supported: can(format),
 	}));
 }
 

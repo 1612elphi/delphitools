@@ -1,25 +1,26 @@
-// Styles for the video-muter tool: flush bar, stage, result row, progress.
+// Styles for the audio-extractor tool: the Muter's bar, stage and result row,
+// with a player in the result row.
 
 @use "../crayon-config" as crayon;
 
-.dt-vm {
+.dt-ax {
 	@include crayon.vstack(6);
 }
 
-.dt-vm-frame {
+.dt-ax-frame {
 	border: 2px solid var(--border);
 	background: var(--card);
 }
 
-/* Flush action bar: file picker (grows) · status · Mute · Clear. */
-.dt-vm-bar {
+/* Flush action bar: file picker (grows) · status · format · Extract · Clear. */
+.dt-ax-bar {
 	display: flex;
 	min-height: crayon.size(12);
 	align-items: stretch;
 	border-bottom: 2px solid var(--border);
 }
 
-.dt-vm-file {
+.dt-ax-file {
 	@include crayon.hstack(2);
 
 	flex: 1;
@@ -46,7 +47,7 @@
 	}
 }
 
-.dt-vm-filename {
+.dt-ax-filename {
 	overflow: hidden;
 	min-width: 0;
 	flex: 1;
@@ -55,7 +56,7 @@
 	white-space: nowrap;
 }
 
-.dt-vm-status {
+.dt-ax-status {
 	align-self: center;
 	padding-inline: crayon.size(3);
 	color: var(--muted-foreground);
@@ -64,7 +65,24 @@
 	white-space: nowrap;
 }
 
-.dt-vm-go {
+.dt-ax-format {
+	min-width: crayon.size(32);
+	padding-inline: crayon.size(3);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: var(--card);
+	color: var(--foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.dt-ax-go {
 	@include crayon.hstack(2);
 
 	align-items: center;
@@ -94,7 +112,7 @@
 	}
 
 	&[aria-busy="true"] .dt-icon {
-		animation: dt-vm-spin 0.8s linear infinite;
+		animation: dt-ax-spin 0.8s linear infinite;
 	}
 
 	&:focus-visible {
@@ -103,31 +121,13 @@
 	}
 }
 
-/* Output container, a flush bar cell before Mute. */
-.dt-vm-format {
-	min-width: crayon.size(32);
-	padding-inline: crayon.size(3);
-	border: 0;
-	border-left: 1px solid var(--border);
-	background: var(--card);
-	color: var(--foreground);
-	font: inherit;
-	font-size: crayon.font-size("sm");
-	cursor: pointer;
-
-	&:focus-visible {
-		outline: 2px solid var(--primary);
-		outline-offset: -2px;
-	}
-}
-
-@keyframes dt-vm-spin {
+@keyframes dt-ax-spin {
 	to {
 		transform: rotate(1turn);
 	}
 }
 
-.dt-vm-clear {
+.dt-ax-clear {
 	display: flex;
 	width: crayon.size(12);
 	flex: none;
@@ -156,21 +156,15 @@
 	}
 }
 
-.dt-vm-stage video {
+.dt-ax-stage video {
 	display: block;
 	width: 100%;
 	max-height: crayon.size(100);
 	background: #000;
 }
 
-/* The block rule above would beat the UA's [hidden]; the source stays
-   mounted but unseen while a result shows. */
-.dt-vm-stage video[hidden] {
-	display: none;
-}
-
 /* Empty state, the Background Remover's drop-zone shape. */
-.dt-vm-drop {
+.dt-ax-drop {
 	display: flex;
 	min-height: crayon.size(56);
 	flex-direction: column;
@@ -202,28 +196,28 @@
 	}
 }
 
-.dt-vm-drop-title {
+.dt-ax-drop-title {
 	display: block;
 	font-size: crayon.font-size("lg");
 	font-weight: crayon.font-weight("medium");
 }
 
-.dt-vm-drop-hint {
+.dt-ax-drop-hint {
 	display: block;
 	margin-top: crayon.size(1);
 	color: var(--muted-foreground);
 	font-size: crayon.font-size("sm");
 }
 
-/* Result row: label · size · Download, flush under the stage. */
-.dt-vm-out {
+/* Result row: label · player · size · Download, flush under the stage. */
+.dt-ax-out {
 	display: flex;
 	min-height: crayon.size(12);
 	align-items: stretch;
 	border-top: 2px solid var(--border);
 }
 
-.dt-vm-out-label {
+.dt-ax-out-label {
 	align-self: center;
 	padding-inline: crayon.size(3);
 	color: var(--muted-foreground);
@@ -233,8 +227,14 @@
 	text-transform: uppercase;
 }
 
-.dt-vm-result-label {
-	margin-left: auto;
+.dt-ax-player {
+	min-width: 0;
+	flex: 1;
+	align-self: center;
+	height: crayon.size(9);
+}
+
+.dt-ax-result-label {
 	align-self: center;
 	padding-inline: crayon.size(2);
 	color: var(--muted-foreground);
@@ -243,7 +243,7 @@
 	white-space: nowrap;
 }
 
-.dt-vm-btn {
+.dt-ax-btn {
 	@include crayon.hstack(2);
 
 	align-items: center;
@@ -277,7 +277,7 @@
 	}
 }
 
-.dt-vm-error {
+.dt-ax-error {
 	margin: 0;
 	padding: crayon.size(3);
 	border: 0;
@@ -287,7 +287,7 @@
 	font-size: crayon.font-size("sm");
 }
 
-.dt-vm-progress {
+.dt-ax-progress {
 	display: block;
 	height: crayon.size(2);
 	overflow: hidden;

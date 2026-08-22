@@ -373,6 +373,30 @@ export const toolCategories: ToolCategory[] = [
 				new: true,
 			},
 			{
+				id: 'audio-extractor',
+				name: 'Audio Extractor',
+				// ∑CG: tool card description for Audio Extractor (pulls the audio track out of a video as WAV/M4A/Ogg/FLAC)
+				//   spec: <= 60 chars, one line, verb-first like the sibling entries, names WAV
+				//   sample: "Pull the audio out of a video as WAV, M4A, Ogg or FLAC"
+				description: '∑CG',
+				icon: 'file-audio',
+				href: '/tools/audio-extractor',
+				accepts: VIDEO_ACCEPT,
+				new: true,
+			},
+			{
+				id: 'audio-normaliser',
+				name: 'Audio Normaliser',
+				// ∑CG: tool card description for Audio Normaliser (BS.1770 loudness to a LUFS target, WAV out)
+				//   spec: <= 60 chars, one line, verb-first like the sibling entries, names LUFS
+				//   sample: "Bring audio to a LUFS target, export as WAV"
+				description: '∑CG',
+				icon: 'gauge',
+				href: '/tools/audio-normaliser',
+				accepts: AUDIO_ACCEPT,
+				new: true,
+			},
+			{
 				id: 'audio-trimmer',
 				name: 'Audio Trimmer',
 				description:
@@ -464,6 +488,18 @@ export const toolCategories: ToolCategory[] = [
 					'Turn video clips into looping GIFs',
 				icon: 'clapperboard',
 				href: '/tools/video-to-gif',
+				accepts: VIDEO_ACCEPT,
+				new: true,
+			},
+			{
+				id: 'video-trimmer',
+				name: 'Video Trimmer',
+				// ∑CG: tool card description for Video Trimmer (cut a video to In/Out; keyframe copy or exact re-encode)
+				//   spec: <= 60 chars, one line, verb-first like the sibling entries
+				//   sample: "Cut a video between two points, with or without re-encoding"
+				description: '∑CG',
+				icon: 'scissors',
+				href: '/tools/video-trimmer',
 				accepts: VIDEO_ACCEPT,
 				new: true,
 			},

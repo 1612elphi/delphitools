@@ -86,21 +86,24 @@ Picker is similarly web-only.
 
 ## Audio & Video
 
-| Tool (web ID)                             |  W  |  C  |  I  | Notes                                                                                                                                                          |
-| ----------------------------------------- | :-: | :-: | :-: | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Audio Atlas (`audio-atlas`)               | ✅  | ❌  | ❌  | new 2026-08; one-file interrogation: meta, peak dBFS, BS.1770 LUFS, waveform, spectrogram                                                                      |
-| Audio Trimmer (`audio-trimmer`)           | ✅  | ❌  | ❌  | new 2026-08; drag selection, fades, wav export (`lib/audio.ts`), mp3 deferred                                                                                  |
-| Auto Subtitle (`auto-subtitle`)           | ✅  | ❌  | ❌  | new 2026-08; local Whisper via transformers.js (`lib/transcribe.ts`), fast/reasonable/accurate modes, word→cue on `lib/subtitles.ts`; Accurate requires WebGPU |
-| Frame Extractor (`frame-extractor`)       | ✅  | ❌  | ❌  | new 2026-08; video stills + contact sheet, `<video>` + canvas                                                                                                  |
-| Screen Recorder (`screen-recorder`)       | ✅  | ❌  | ❌  | new 2026-08; getDisplayMedia + MediaRecorder, optional mic mix-in, webm download                                                                               |
-| Subtitle Converter (`subtitle-converter`) | ✅  | ❌  | ❌  | new 2026-08; srt↔vtt + shift/scale on `lib/subtitles.ts`                                                                                                       |
-| Subtitle Studio (`subtitle-studio`)       | ✅  | ❌  | ❌  | new 2026-08; burns SRT/VTT into video: canvas draw (`lib/subtitle-burn.ts`) + MediaRecorder real-time pass, font/size/colour/style, drag to place              |
-| Timecode Calculator (`timecode-calc`)     | ✅  | ❌  | ❌  | new 2026-08; SMPTE add/subtract, drop-frame correct, misinput-proof parser on `lib/timecode.ts` (user request)                                                 |
-| Voice Recorder (`voice-recorder`)         | ✅  | ❌  | ❌  | new 2026-08; getUserMedia + MediaRecorder, level meter, pause/resume, playback, download                                                                       |
-| Video Atlas (`video-atlas`)               | ✅  | ❌  | ❌  | new 2026-08; MediaInfo report (mediainfo.js wasm self-hosted in `public/mediainfo`): container, codecs, fps, bitrate, colour, per-stream panels                |
-| Video Muter (`video-muter`)               | ✅  | ❌  | ❌  | new 2026-08; drops audio tracks by remux (mediabunny `Conversion`, packets copied, no re-encode), MP4/MOV → MP4, WebM/MKV → WebM                               |
-| Video to GIF (`video-to-gif`)             | ✅  | ❌  | ❌  | new 2026-08; canvas frames through `lib/gif.ts` `AnimatedGifEncoder`, no wasm                                                                                  |
-| Waveform Generator (`waveform-genny`)     | ✅  | ❌  | ❌  | new 2026-08; waveform → PNG/SVG at social sizes                                                                                                                |
+| Tool (web ID)                             |  W  |  C  |  I  | Notes                                                                                                                                                                                |
+| ----------------------------------------- | :-: | :-: | :-: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Audio Atlas (`audio-atlas`)               | ✅  | ❌  | ❌  | new 2026-08; one-file interrogation: meta, peak dBFS, BS.1770 LUFS, waveform, spectrogram                                                                                            |
+| Audio Extractor (`audio-extractor`)       | ✅  | ❌  | ❌  | new 2026-08; video → WAV / M4A (AAC) / Ogg (Opus) / FLAC through mediabunny `Conversion` (video discarded, packets copied when the codec matches, else WebCodecs encode)             |
+| Audio Normaliser (`audio-normaliser`)     | ✅  | ❌  | ❌  | new 2026-08; integrated LUFS (BS.1770, `lib/audio.ts`) → gain to -14/-16/-23 with a -1 dBFS sample-peak ceiling (`lib/normalise.ts`), WAV out with the result re-measured            |
+| Audio Trimmer (`audio-trimmer`)           | ✅  | ❌  | ❌  | new 2026-08; drag selection, fades, wav export (`lib/audio.ts`), mp3 deferred                                                                                                        |
+| Auto Subtitle (`auto-subtitle`)           | ✅  | ❌  | ❌  | new 2026-08; local Whisper via transformers.js (`lib/transcribe.ts`), fast/reasonable/accurate modes, word→cue on `lib/subtitles.ts`; Accurate requires WebGPU                       |
+| Frame Extractor (`frame-extractor`)       | ✅  | ❌  | ❌  | new 2026-08; video stills + contact sheet, `<video>` + canvas                                                                                                                        |
+| Screen Recorder (`screen-recorder`)       | ✅  | ❌  | ❌  | new 2026-08; getDisplayMedia + MediaRecorder, optional mic mix-in, webm download                                                                                                     |
+| Subtitle Converter (`subtitle-converter`) | ✅  | ❌  | ❌  | new 2026-08; srt↔vtt + shift/scale on `lib/subtitles.ts`                                                                                                                             |
+| Subtitle Studio (`subtitle-studio`)       | ✅  | ❌  | ❌  | new 2026-08; burns SRT/VTT into video: canvas draw (`lib/subtitle-burn.ts`); WebCodecs via mediabunny (fast) with a MediaRecorder 1× fallback; font/size/colour/style, drag to place |
+| Timecode Calculator (`timecode-calc`)     | ✅  | ❌  | ❌  | new 2026-08; SMPTE add/subtract, drop-frame correct, misinput-proof parser on `lib/timecode.ts` (user request)                                                                       |
+| Voice Recorder (`voice-recorder`)         | ✅  | ❌  | ❌  | new 2026-08; getUserMedia + MediaRecorder, level meter, pause/resume, playback, download                                                                                             |
+| Video Atlas (`video-atlas`)               | ✅  | ❌  | ❌  | new 2026-08; MediaInfo report (mediainfo.js wasm self-hosted in `public/mediainfo`): container, codecs, fps, bitrate, colour, per-stream panels                                      |
+| Video Muter (`video-muter`)               | ✅  | ❌  | ❌  | new 2026-08; drops audio tracks by remux (mediabunny `Conversion`, packets copied, no re-encode), MP4/MOV → MP4, WebM/MKV → WebM                                                     |
+| Video to GIF (`video-to-gif`)             | ✅  | ❌  | ❌  | new 2026-08; canvas frames through `lib/gif.ts` `AnimatedGifEncoder`, no wasm                                                                                                        |
+| Video Trimmer (`video-trimmer`)           | ✅  | ❌  | ❌  | new 2026-08; In/Out + Mark from the playhead; Keyframe cut copies packets (mediabunny sinks/sources, no re-encode), Exact cut re-encodes via `Conversion` trim; container select     |
+| Waveform Generator (`waveform-genny`)     | ✅  | ❌  | ❌  | new 2026-08; waveform → PNG/SVG at social sizes                                                                                                                                      |
 
 ## Social Media
 

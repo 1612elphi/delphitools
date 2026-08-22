@@ -12,6 +12,7 @@ import {
 	sleep,
 	makeClip,
 	dropClip,
+	captureObjectUrl,
 } from './harness.mjs';
 
 const { browser, page } = await launch();
@@ -108,31 +109,8 @@ check(
 	formats.join(' '),
 );
 await page.select('.dt-ss-format', 'h264');
-
-await page.click('.dt-ss-go');
-await sleep(300);
-await page.evaluate(() => {
-	Object.defineProperty(document, 'hidden', {
-		configurable: true,
-		get: () => true,
-	});
-	document.dispatchEvent(new Event('visibilitychange'));
-});
-await page.waitForFunction(() => !!document.querySelector('.dt-ss-error'), {
-	timeout: 5000,
-});
-check(
-	'hiding the tab mid-burn aborts with an error and no result',
-	await page.evaluate(
-		() =>
-			!document.querySelector('.dt-ss-result') &&
-			!document.querySelector('.dt-ss-progress') &&
-			document.querySelector('.dt-ss-go')?.disabled === false,
-	),
-);
-await page.evaluate(() => {
-	delete document.hidden;
-});
+// Capture the result blob as it is handed to createObjectURL.
+await captureObjectUrl(page);
 
 await page.click('.dt-ss-go');
 await page.waitForFunction(
@@ -146,12 +124,42 @@ const result = await page.evaluate(() => ({
 	download: !!document.querySelector('.dt-ss-btn.is-primary'),
 }));
 check(
-	'burn produces a downloadable mp4 in the chosen format',
-	/^mp4 · [\d.]+ [KM]B$/.test(result.label ?? '') &&
+	'fast burn produces a downloadable mp4 in the chosen format',
+	/^mp4 · [\d.]+ [KM]B( · [\d.]+×)?$/.test(result.label ?? '') &&
 		!result.burnDisabled &&
 		!result.progress &&
 		result.download,
 	JSON.stringify(result),
+);
+
+const burned = await page.evaluate(async () => {
+	const blob = window.__result;
+	if (!blob) return { error: 'no blob' };
+	const video = document.createElement('video');
+	video.muted = true;
+	video.src = URL.createObjectURL(blob);
+	await new Promise((resolve, reject) => {
+		video.onloadeddata = resolve;
+		video.onerror = () => reject(new Error('decode'));
+	});
+	video.currentTime = 0.6;
+	await new Promise((resolve) => (video.onseeked = resolve));
+	const canvas = document.createElement('canvas');
+	canvas.width = video.videoWidth;
+	canvas.height = video.videoHeight;
+	const ctx = canvas.getContext('2d');
+	ctx.drawImage(video, 0, 0);
+	// The sweep is saturated colour; white text pixels sit in the bottom band.
+	const band = ctx.getImageData(0, Math.round(canvas.height * 0.8), canvas.width, Math.round(canvas.height * 0.2)).data;
+	let white = 0;
+	for (let i = 0; i < band.length; i += 4)
+		if (band[i] > 200 && band[i + 1] > 200 && band[i + 2] > 200) white++;
+	return { size: `${video.videoWidth}x${video.videoHeight}`, white, type: blob.type };
+});
+check(
+	'the burned file decodes and carries the subtitle in the bottom band',
+	burned.size === '320x180' && burned.white > 40,
+	JSON.stringify(burned),
 );
 
 await page.click('.dt-ss-clear');

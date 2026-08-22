@@ -93,6 +93,7 @@ import iExternalLink from 'lucide-static/icons/external-link.svg?raw';
 import iEye from 'lucide-static/icons/eye.svg?raw';
 import iEyeOff from 'lucide-static/icons/eye-off.svg?raw';
 import iFastForward from 'lucide-static/icons/fast-forward.svg?raw';
+import iFileAudio from 'lucide-static/icons/file-audio.svg?raw';
 import iFileCode from 'lucide-static/icons/file-code.svg?raw';
 import iFileDigit from 'lucide-static/icons/file-digit.svg?raw';
 import iFileImage from 'lucide-static/icons/file-image.svg?raw';
@@ -115,6 +116,7 @@ import iFolderMinus from 'lucide-static/icons/folder-minus.svg?raw';
 import iFolderPlus from 'lucide-static/icons/folder-plus.svg?raw';
 import iFrame from 'lucide-static/icons/frame.svg?raw';
 import iGalleryVertical from 'lucide-static/icons/gallery-vertical.svg?raw';
+import iGauge from 'lucide-static/icons/gauge.svg?raw';
 import iGitCompare from 'lucide-static/icons/git-compare.svg?raw';
 import iGlobe from 'lucide-static/icons/globe.svg?raw';
 import iGrid2x2 from 'lucide-static/icons/grid-2x2.svg?raw';
@@ -324,6 +326,7 @@ export const icons: Record<string, string> = {
 	eye: iEye,
 	'eye-off': iEyeOff,
 	'fast-forward': iFastForward,
+	'file-audio': iFileAudio,
 	'file-code': iFileCode,
 	'file-digit': iFileDigit,
 	'file-image': iFileImage,
@@ -346,6 +349,7 @@ export const icons: Record<string, string> = {
 	'folder-plus': iFolderPlus,
 	frame: iFrame,
 	'gallery-vertical': iGalleryVertical,
+	gauge: iGauge,
 	'git-compare': iGitCompare,
 	globe: iGlobe,
 	'grid-2x2': iGrid2x2,

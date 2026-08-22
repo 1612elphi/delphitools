@@ -1,45 +1,53 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
-import { eq } from 'ember-truth-helpers';
 import { htmlSafe } from '@ember/template';
+import { eq } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import { downloadUrl } from 'delphitools-v2/lib/download';
 import { formatBytes } from 'delphitools-v2/lib/image-compress';
-import { formatTimestamp } from 'delphitools-v2/lib/subtitles';
 import { VideoIntake } from 'delphitools-v2/lib/video';
 import { VIDEO_ACCEPT, acceptAttr } from 'delphitools-v2/lib/tools';
+import { probeAudio, type AudioProbe } from 'delphitools-v2/lib/media-probe';
 import {
-	formatFps,
-	type Container,
-	type VideoProbe,
-} from 'delphitools-v2/lib/media-probe';
-import {
-	CONTAINERS,
-	containerSupport,
-	muteVideo,
+	AUDIO_TARGETS,
+	audioTargetSupport,
+	extractAudio,
+	type AudioTarget,
 	type ConvertResult,
 } from 'delphitools-v2/lib/media-convert';
 
 const ACCEPT = acceptAttr(VIDEO_ACCEPT);
 
-const DROP_TITLE = 'Drop a video here';
+// ∑CG: empty-state title on the Audio Extractor stage
+//   spec: <= 32 chars, one line, parallels Frame Extractor's "Drop a video here or click to upload"
+//   sample: "Drop a video here"
+const DROP_TITLE = '∑CG';
 
-const NO_AUDIO = 'No audio track';
+// ∑CG: status line in the bar when the loaded video has no audio track, so there is nothing to extract
+//   spec: <= 24 chars, one line, states the file is silent
+//   sample: "No audio track"
+const NO_AUDIO = '∑CG';
 
-const MUTE_ERROR = "Couldn't remux. Try MP4, MOV or WEBM.";
+// ∑CG: error line when the extraction fails (unreadable container, or no encoder for the chosen target)
+//   spec: <= 48 chars, one sentence, suggests WAV as the target that always works
+//   sample: "Couldn't extract that audio. WAV always works."
+const EXTRACT_ERROR = '∑CG';
 
-export default class VideoMuterTool extends Component {
+export default class AudioExtractorTool extends Component {
 	intake = new VideoIntake({
-		onLoad: () => this.#reset(),
-		probe: true,
-		onProbe: (probe) => void this.#support(probe),
+		onLoad: (file) => {
+			this.#reset();
+			void this.#probe(file);
+		},
 		canLoad: () => !this.busy,
 	});
 
-	@tracked support: Record<Container, boolean> | null = null;
-	@tracked container: Container | '' = '';
+	/** undefined until the probe answers, null when the file has no audio */
+	@tracked probe: AudioProbe | null | undefined = undefined;
+	@tracked support: Record<AudioTarget, boolean> | null = null;
+	@tracked target: AudioTarget = 'wav';
 	@tracked busy = false;
 	@tracked pct = 0;
 	@tracked result: ConvertResult | null = null;
@@ -47,12 +55,12 @@ export default class VideoMuterTool extends Component {
 	@tracked errorCode = '';
 
 	#token = 0;
-	#muteAbort: AbortController | null = null;
+	#abort: AbortController | null = null;
 
 	willDestroy() {
 		super.willDestroy();
 		this.#token++;
-		this.#muteAbort?.abort();
+		this.#abort?.abort();
 		this.intake.release();
 		this.#releaseResult();
 	}
@@ -62,59 +70,39 @@ export default class VideoMuterTool extends Component {
 	}
 
 	get silent() {
-		return (
-			this.intake.probe !== null &&
-			this.intake.probe.audioTracks === 0
-		);
+		return this.probe === null;
 	}
 
-	get targetContainer(): Container {
-		return this.container || this.intake.probe?.container || 'mp4';
-	}
-
-	get containers() {
-		return CONTAINERS.map((c) => ({
-			...c,
-			supported: this.support?.[c.id] ?? false,
+	get targets() {
+		return AUDIO_TARGETS.map((t) => ({
+			...t,
+			supported: this.#supports(t.id),
 		}));
 	}
 
 	get ready() {
 		return (
 			!this.busy &&
-			!this.silent &&
-			this.support?.[this.targetContainer] === true
+			!!this.probe &&
+			this.#supports(this.target)
 		);
 	}
 
-	setContainer = (event: Event) => {
-		this.container = (event.target as HTMLSelectElement).value as
-			Container | '';
-		this.#releaseResult();
-	};
+	// PCM needs no encoder, so WAV is on before the support probe answers.
+	#supports(id: AudioTarget) {
+		return this.support?.[id] ?? id === 'wav';
+	}
 
 	get baseName() {
-		return this.intake.baseName || 'video';
-	}
-
-	get meta() {
-		const p = this.intake.probe;
-		if (!p) return '';
-		const parts = [`${p.width} × ${p.height}`];
-		if (p.fps) parts.push(formatFps(p.fps));
-		parts.push(formatTimestamp(this.intake.duration * 1000, '.'));
-		parts.push(
-			p.audioTracks === 1
-				? '1 audio track'
-				: `${p.audioTracks} audio tracks`,
-		);
-		return parts.join(' · ');
+		return this.intake.baseName || 'audio';
 	}
 
 	get status() {
 		if (this.busy) return `${this.pct}%`;
 		if (this.silent) return NO_AUDIO;
-		return this.meta;
+		const p = this.probe;
+		if (!p) return '';
+		return `${p.codec ?? 'audio'} · ${p.sampleRate} Hz`;
 	}
 
 	get progressStyle() {
@@ -128,24 +116,30 @@ export default class VideoMuterTool extends Component {
 
 	get errorMessage() {
 		if (this.intake.error) return this.intake.error;
-		if (this.errorCode === 'mute') return MUTE_ERROR;
+		if (this.errorCode === 'extract') return EXTRACT_ERROR;
 		return '';
 	}
 
-	async #support(probe: VideoProbe | null) {
+	async #probe(file: File) {
 		const token = ++this.#token;
-		if (!probe) {
-			this.errorCode = 'mute';
-			return;
-		}
-		const support = await containerSupport(probe.codec);
+		const probe = await probeAudio(file);
+		if (token !== this.#token) return;
+		this.probe = probe;
+		if (!probe) return;
+		const support = await audioTargetSupport(probe.codec);
 		if (token !== this.#token) return;
 		this.support = support;
 	}
 
-	mute = () => void this.#mute();
+	setTarget = (event: Event) => {
+		this.target = (event.target as HTMLSelectElement)
+			.value as AudioTarget;
+		this.#releaseResult();
+	};
 
-	async #mute() {
+	extract = () => void this.#extract();
+
+	async #extract() {
 		const file = this.intake.file;
 		if (!file || !this.ready) return;
 		const token = ++this.#token;
@@ -153,22 +147,18 @@ export default class VideoMuterTool extends Component {
 		this.pct = 0;
 		this.errorCode = '';
 		this.#releaseResult();
+		this.intake.video?.pause();
 		const abort = new AbortController();
-		this.#muteAbort = abort;
+		this.#abort = abort;
 		try {
-			const result = await muteVideo(
-				file,
-				this.targetContainer,
-				{
-					signal: abort.signal,
-					onProgress: (fraction) => {
-						if (token === this.#token)
-							this.pct = Math.round(
-								fraction * 100,
-							);
-					},
+			const result = await extractAudio(file, this.target, {
+				signal: abort.signal,
+				onProgress: (fraction) => {
+					if (token !== this.#token) return;
+					const pct = Math.round(fraction * 100);
+					if (pct !== this.pct) this.pct = pct;
 				},
-			);
+			});
 			if (token !== this.#token) return;
 			this.result = result;
 			this.resultUrl = URL.createObjectURL(result.blob);
@@ -176,9 +166,10 @@ export default class VideoMuterTool extends Component {
 		} catch (error) {
 			if (token !== this.#token) return;
 			if ((error as Error).name === 'AbortError') return;
-			console.error('Mute failed:', error);
-			this.errorCode = 'mute';
+			console.error('Extract failed:', error);
+			this.errorCode = 'extract';
 		} finally {
+			if (this.#abort === abort) this.#abort = null;
 			if (token === this.#token) this.busy = false;
 		}
 	}
@@ -187,7 +178,7 @@ export default class VideoMuterTool extends Component {
 		if (!this.result) return;
 		downloadUrl(
 			this.resultUrl,
-			`${this.baseName}-muted.${this.result.ext}`,
+			`${this.baseName}.${this.result.ext}`,
 		);
 	};
 
@@ -197,14 +188,13 @@ export default class VideoMuterTool extends Component {
 		this.result = null;
 	}
 
-	// A new file or Clear cancels a running remux; mediabunny stops decoding.
 	#reset() {
 		this.#token++;
-		this.#muteAbort?.abort();
-		this.#muteAbort = null;
+		this.#abort?.abort();
+		this.#abort = null;
 		this.#releaseResult();
+		this.probe = undefined;
 		this.support = null;
-		this.container = '';
 		this.busy = false;
 		this.pct = 0;
 		this.errorCode = '';
@@ -216,15 +206,15 @@ export default class VideoMuterTool extends Component {
 	};
 
 	<template>
-		<div class="dt-vm" {{filePaste this.intake.load accept=ACCEPT}}>
+		<div class="dt-ax" {{filePaste this.intake.load accept=ACCEPT}}>
 			<div
-				class="dt-vm-frame"
+				class="dt-ax-frame"
 				{{on "drop" this.intake.drop}}
 				{{on "dragover" this.intake.dragOver}}
 			>
-				<div class="dt-vm-bar">
+				<div class="dt-ax-bar">
 					<label
-						class="dt-vm-file"
+						class="dt-ax-file"
 						aria-label="Open video file"
 					>
 						<input
@@ -238,7 +228,7 @@ export default class VideoMuterTool extends Component {
 						/>
 						<Icon @name="film" />
 						<span
-							class="dt-vm-filename"
+							class="dt-ax-filename"
 						>{{if
 								this.intake.fileName
 								this.intake.fileName
@@ -247,45 +237,35 @@ export default class VideoMuterTool extends Component {
 					</label>
 					{{#if this.status}}
 						<span
-							class="dt-vm-status"
+							class="dt-ax-status"
 							role="status"
 						>{{this.status}}</span>
 					{{/if}}
 					<select
-						class="dt-vm-format"
-						aria-label="Output container"
-						{{on
-							"change"
-							this.setContainer
-						}}
+						class="dt-ax-format"
+						aria-label="Audio format"
+						{{on "change" this.setTarget}}
 					>
-						<option
-							value=""
-							selected={{eq
-								this.container
-								""
-							}}
-						>Same as source</option>
 						{{#each
-							this.containers key="id"
-							as |c|
+							this.targets key="id"
+							as |t|
 						}}
 							<option
-								value={{c.id}}
+								value={{t.id}}
 								disabled={{unless
-									c.supported
+									t.supported
 									true
 								}}
 								selected={{eq
-									this.container
-									c.id
+									this.target
+									t.id
 								}}
-							>{{c.label}}</option>
+							>{{t.label}}</option>
 						{{/each}}
 					</select>
 					<button
 						type="button"
-						class="dt-vm-go"
+						class="dt-ax-go"
 						disabled={{unless
 							this.ready
 							true
@@ -295,20 +275,20 @@ export default class VideoMuterTool extends Component {
 							"true"
 							"false"
 						}}
-						{{on "click" this.mute}}
+						{{on "click" this.extract}}
 					>
 						<Icon
 							@name={{if
 								this.busy
 								"loader"
-								"volume-x"
+								"file-audio"
 							}}
 						/>
-						<span>Mute</span>
+						<span>Extract</span>
 					</button>
 					<button
 						type="button"
-						class="dt-vm-clear"
+						class="dt-ax-clear"
 						disabled={{unless
 							this.hasVideo
 							true
@@ -320,26 +300,12 @@ export default class VideoMuterTool extends Component {
 					</button>
 				</div>
 
-				<div class="dt-vm-stage">
+				<div class="dt-ax-stage">
 					{{#if this.hasVideo}}
-						{{#if this.resultUrl}}
-							{{! template-lint-disable require-media-caption }}
-							<video
-								class="dt-vm-result"
-								src={{this.resultUrl}}
-								controls
-								playsinline
-								preload="metadata"
-							></video>
-						{{/if}}
 						{{! user-supplied video; there is no caption track to offer }}
 						{{! template-lint-disable require-media-caption }}
 						<video
 							src={{this.intake.url}}
-							hidden={{if
-								this.resultUrl
-								true
-							}}
 							controls
 							playsinline
 							preload="metadata"
@@ -354,7 +320,7 @@ export default class VideoMuterTool extends Component {
 							}}
 						></video>
 					{{else}}
-						<label class="dt-vm-drop">
+						<label class="dt-ax-drop">
 							<input
 								type="file"
 								class="dt-sr-only"
@@ -365,14 +331,14 @@ export default class VideoMuterTool extends Component {
 								}}
 							/>
 							<Icon
-								@name="volume-x"
+								@name="file-audio"
 							/>
 							<span
-								class="dt-vm-drop-title"
+								class="dt-ax-drop-title"
 							>{{DROP_TITLE}}</span>
 							{{! hint reused verbatim from Background Remover }}
 							<span
-								class="dt-vm-drop-hint"
+								class="dt-ax-drop-hint"
 							>or click to select a
 								file, or paste</span>
 						</label>
@@ -380,16 +346,23 @@ export default class VideoMuterTool extends Component {
 				</div>
 
 				{{#if this.result}}
-					<div class="dt-vm-out">
+					<div class="dt-ax-out">
 						<span
-							class="dt-vm-out-label"
-						>Muted</span>
+							class="dt-ax-out-label"
+						>Audio</span>
+						{{! the extracted track, so it can be checked by ear }}
+						{{! template-lint-disable require-media-caption }}
+						<audio
+							class="dt-ax-player"
+							src={{this.resultUrl}}
+							controls
+						></audio>
 						<span
-							class="dt-vm-result-label"
+							class="dt-ax-result-label"
 						>{{this.resultLabel}}</span>
 						<button
 							type="button"
-							class="dt-vm-btn is-primary"
+							class="dt-ax-btn is-primary"
 							{{on
 								"click"
 								this.download
@@ -405,14 +378,14 @@ export default class VideoMuterTool extends Component {
 
 				{{#if this.errorMessage}}
 					<p
-						class="dt-vm-error"
+						class="dt-ax-error"
 						role="alert"
 					>{{this.errorMessage}}</p>
 				{{/if}}
 
 				{{#if this.busy}}
 					<span
-						class="dt-vm-progress"
+						class="dt-ax-progress"
 						role="progressbar"
 						aria-label="Progress"
 						aria-valuemin="0"

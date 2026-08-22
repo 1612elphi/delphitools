@@ -22,6 +22,11 @@ import {
 } from 'delphitools-v2/lib/tools';
 import { formatFps } from 'delphitools-v2/lib/media-probe';
 import {
+	burnVideo,
+	encodableCodecs,
+	type BurnCodec,
+} from 'delphitools-v2/lib/media-convert';
+import {
 	DEFAULT_STYLE,
 	activeCue,
 	bitrateFor,
@@ -85,20 +90,26 @@ export default class SubtitleStudioTool extends Component {
 			this.#stopBurn();
 			this.#resetResult();
 		},
-		probeFps: true,
-		onReady: (video) => this.#fitCanvas(video),
+		onReady: (video) => {
+			this.#fitCanvas(video);
+			void this.#probeEncoders(video);
+		},
+		probe: true,
+		canLoad: () => !this.burning,
 	});
 
 	@tracked cues: Cue[] = [];
 	@tracked subsName = '';
 	@tracked style: BurnStyle = DEFAULT_STYLE;
-	@tracked playing = false;
 	@tracked currentMs = 0;
 	@tracked burning = false;
 	@tracked burnPct = 0;
 	@tracked resultUrl = '';
 	@tracked resultSize = 0;
 	@tracked resultExt = 'webm';
+	/** output seconds per wall-clock second on the fast path, 0 when unknown */
+	@tracked resultSpeed = 0;
+	@tracked encoders: Set<BurnCodec> | null = null;
 	@tracked errorCode = '';
 	@tracked formatId = '';
 
@@ -106,6 +117,7 @@ export default class SubtitleStudioTool extends Component {
 
 	#burnId = 0;
 	#burnWatcher: AbortController | null = null;
+	#subsToken = 0;
 	#audio: {
 		ctx: AudioContext;
 		dest: MediaStreamAudioDestinationNode;
@@ -131,8 +143,12 @@ export default class SubtitleStudioTool extends Component {
 		void this.#audio?.ctx.close();
 	}
 
+	// With WebCodecs the fast path decides support per encoder; without it
+	// MediaRecorder's answers stand.
 	get formats() {
-		return FORMATS;
+		return this.encoders
+			? supportedFormats(this.encoders)
+			: FORMATS;
 	}
 
 	get format() {
@@ -196,7 +212,11 @@ export default class SubtitleStudioTool extends Component {
 	}
 
 	get resultLabel() {
-		return `${this.resultExt} · ${formatBytes(this.resultSize)}`;
+		const speed =
+			this.resultSpeed > 0
+				? ` · ${this.resultSpeed.toFixed(1)}×`
+				: '';
+		return `${this.resultExt} · ${formatBytes(this.resultSize)}${speed}`;
 	}
 
 	get errorMessage() {
@@ -215,8 +235,9 @@ export default class SubtitleStudioTool extends Component {
 	};
 
 	readSubs = async (file: File) => {
+		const token = ++this.#subsToken;
 		const cues = parseSubtitles(await file.text());
-		if (this.isDestroyed) return;
+		if (this.isDestroyed || token !== this.#subsToken) return;
 		if (cues.length === 0) {
 			this.errorCode = 'subs';
 			return;
@@ -273,15 +294,21 @@ export default class SubtitleStudioTool extends Component {
 	pointerDown = (event: PointerEvent) => {
 		const canvas = this.canvas;
 		if (!canvas || this.burning || !this.cues.length) return;
+		// object-fit: contain letterboxes the canvas inside its CSS box; deltas
+		// scale against the drawn frame, not the box.
 		const rect = canvas.getBoundingClientRect();
+		const scale = Math.min(
+			rect.width / canvas.width,
+			rect.height / canvas.height,
+		);
 		this.#drag = {
 			pointerId: event.pointerId,
 			startX: event.clientX,
 			startY: event.clientY,
 			x0: this.style.x,
 			y0: this.style.y,
-			width: rect.width,
-			height: rect.height,
+			width: canvas.width * scale,
+			height: canvas.height * scale,
 		};
 		canvas.setPointerCapture(event.pointerId);
 	};
@@ -303,33 +330,14 @@ export default class SubtitleStudioTool extends Component {
 	};
 
 	togglePlayback = () => {
-		const video = this.intake.video;
-		if (!video || this.burning) return;
+		if (this.burning) return;
 		void this.#audio?.ctx.resume();
-		if (video.paused) void video.play();
-		else video.pause();
+		this.intake.togglePlayback();
 	};
 
 	syncPlaying = (event: Event) => {
-		this.playing = !(event.target as HTMLVideoElement).paused;
-		if (this.playing) this.#loop();
-	};
-
-	jumpBy = (seconds: number) => {
-		const video = this.intake.video;
-		if (!video || this.burning) return;
-		video.pause();
-		video.currentTime = Math.max(
-			0,
-			Math.min(
-				this.intake.duration,
-				video.currentTime + seconds,
-			),
-		);
-	};
-
-	jumpFrame = (direction: number) => {
-		this.jumpBy(direction / this.intake.fps);
+		this.intake.syncPlaying(event);
+		if (this.intake.playing) this.#loop();
 	};
 
 	seekRow = (index: number) => {
@@ -375,7 +383,7 @@ export default class SubtitleStudioTool extends Component {
 	// Safari 15.4+, Firefox 132+); the rAF fallback overdraws at display rate.
 	#loop = () => {
 		this.#cancelFrame();
-		if (!this.playing && !this.burning) return;
+		if (!this.intake.playing && !this.burning) return;
 		this.draw();
 		const video = this.intake.video;
 		if (video && 'requestVideoFrameCallback' in video) {
@@ -395,6 +403,17 @@ export default class SubtitleStudioTool extends Component {
 				this.#frame,
 			);
 		else cancelAnimationFrame(this.#frame);
+	}
+
+	async #probeEncoders(video: HTMLVideoElement) {
+		const file = this.intake.file;
+		const encoders = await encodableCodecs(
+			video.videoWidth,
+			video.videoHeight,
+		);
+		// WebCodecs present but no encoder is the MediaRecorder case too.
+		if (!this.isDestroyed && this.intake.file === file)
+			this.encoders = encoders?.size ? encoders : null;
 	}
 
 	#fitCanvas(video: HTMLVideoElement) {
@@ -420,12 +439,86 @@ export default class SubtitleStudioTool extends Component {
 		return this.#audio;
 	}
 
-	burn = () => void this.#burn();
+	burn = () => {
+		if (this.encoders) void this.#burnFast();
+		else void this.#burnLive();
+	};
 
-	// ponytail: real-time MediaRecorder pass (plays the video through once,
-	// webm or Safari's mp4); faster-than-real-time needs WebCodecs plus a
-	// muxer dependency.
-	async #burn() {
+	// WebCodecs path: decode → draw → encode through mediabunny, as fast as
+	// the codecs allow, independent of the tab being visible.
+	async #burnFast() {
+		const file = this.intake.file;
+		const canvas = this.canvas;
+		const format = this.format;
+		if (!file || !canvas || !format || !this.ready) return;
+		const id = ++this.#burnId;
+		this.burning = true;
+		this.burnPct = 0;
+		this.errorCode = '';
+		this.#resetResult();
+		this.intake.video?.pause();
+		const watcher = new AbortController();
+		this.#burnWatcher = watcher;
+		const cues = this.cues;
+		const style = this.style;
+		const started = performance.now();
+		try {
+			const result = await burnVideo(file, {
+				container: format.ext,
+				codec: format.codec,
+				bitrate: bitrateFor(
+					canvas.width,
+					canvas.height,
+					this.intake.fps,
+				),
+				overlay: (seconds) => {
+					const cue = activeCue(
+						cues,
+						seconds * 1000,
+					);
+					return cue
+						? (ctx, width, height) =>
+								drawSubtitle(
+									ctx,
+									cue.text,
+									width,
+									height,
+									style,
+								)
+						: null;
+				},
+				onProgress: (fraction) => {
+					if (id !== this.#burnId) return;
+					const pct = Math.round(fraction * 100);
+					if (pct !== this.burnPct)
+						this.burnPct = pct;
+				},
+				signal: watcher.signal,
+			});
+			if (id !== this.#burnId) return;
+			this.resultUrl = URL.createObjectURL(result.blob);
+			this.resultSize = result.blob.size;
+			this.resultExt = result.ext;
+			this.resultSpeed =
+				this.intake.duration /
+				((performance.now() - started) / 1000);
+			this.burnPct = 100;
+		} catch (error) {
+			if (id !== this.#burnId) return;
+			if ((error as Error).name === 'AbortError') return;
+			console.error('Burn failed:', error);
+			this.errorCode = 'burn';
+		} finally {
+			watcher.abort();
+			if (this.#burnWatcher === watcher)
+				this.#burnWatcher = null;
+			if (id === this.#burnId) this.burning = false;
+		}
+	}
+
+	// MediaRecorder path for browsers without WebCodecs: plays the video
+	// through once at 1× and records the canvas.
+	async #burnLive() {
 		const video = this.intake.video;
 		const canvas = this.canvas;
 		if (!video || !canvas || !this.ready) return;
@@ -555,6 +648,7 @@ export default class SubtitleStudioTool extends Component {
 		if (this.resultUrl) URL.revokeObjectURL(this.resultUrl);
 		this.resultUrl = '';
 		this.resultSize = 0;
+		this.resultSpeed = 0;
 		this.burnPct = 0;
 	}
 
@@ -574,7 +668,6 @@ export default class SubtitleStudioTool extends Component {
 		this.subsName = '';
 		this.errorCode = '';
 		this.currentMs = 0;
-		this.playing = false;
 		if (this.canvas) this.canvas.width = 0;
 	};
 
@@ -920,10 +1013,17 @@ export default class SubtitleStudioTool extends Component {
 					<button
 						type="button"
 						class="dt-ss-tbtn"
+						disabled={{if
+							this.burning
+							true
+						}}
 						aria-label="Back 5 seconds"
 						{{on
 							"click"
-							(fn this.jumpBy -5)
+							(fn
+								this.intake.jumpBy
+								-5
+							)
 						}}
 					>
 						<Icon @name="rewind" />
@@ -932,10 +1032,17 @@ export default class SubtitleStudioTool extends Component {
 					<button
 						type="button"
 						class="dt-ss-tbtn"
+						disabled={{if
+							this.burning
+							true
+						}}
 						aria-label="Back 1 second"
 						{{on
 							"click"
-							(fn this.jumpBy -1)
+							(fn
+								this.intake.jumpBy
+								-1
+							)
 						}}
 					>
 						<Icon @name="chevrons-left" />
@@ -944,10 +1051,17 @@ export default class SubtitleStudioTool extends Component {
 					<button
 						type="button"
 						class="dt-ss-tbtn"
+						disabled={{if
+							this.burning
+							true
+						}}
 						aria-label="Back one frame"
 						{{on
 							"click"
-							(fn this.jumpFrame -1)
+							(fn
+								this.intake.jumpFrame
+								-1
+							)
 						}}
 					>
 						<Icon @name="chevron-left" />
@@ -956,6 +1070,10 @@ export default class SubtitleStudioTool extends Component {
 					<button
 						type="button"
 						class="dt-ss-tbtn is-play"
+						disabled={{if
+							this.burning
+							true
+						}}
 						{{on
 							"click"
 							this.togglePlayback
@@ -963,13 +1081,13 @@ export default class SubtitleStudioTool extends Component {
 					>
 						<Icon
 							@name={{if
-								this.playing
+								this.intake.playing
 								"pause"
 								"play"
 							}}
 						/>
 						<span>{{if
-								this.playing
+								this.intake.playing
 								"Pause"
 								"Play"
 							}}</span>
@@ -977,10 +1095,17 @@ export default class SubtitleStudioTool extends Component {
 					<button
 						type="button"
 						class="dt-ss-tbtn"
+						disabled={{if
+							this.burning
+							true
+						}}
 						aria-label="Forward one frame"
 						{{on
 							"click"
-							(fn this.jumpFrame 1)
+							(fn
+								this.intake.jumpFrame
+								1
+							)
 						}}
 					>
 						<Icon @name="chevron-right" />
@@ -989,10 +1114,17 @@ export default class SubtitleStudioTool extends Component {
 					<button
 						type="button"
 						class="dt-ss-tbtn"
+						disabled={{if
+							this.burning
+							true
+						}}
 						aria-label="Forward 1 second"
 						{{on
 							"click"
-							(fn this.jumpBy 1)
+							(fn
+								this.intake.jumpBy
+								1
+							)
 						}}
 					>
 						<Icon @name="chevrons-right" />
@@ -1001,10 +1133,17 @@ export default class SubtitleStudioTool extends Component {
 					<button
 						type="button"
 						class="dt-ss-tbtn"
+						disabled={{if
+							this.burning
+							true
+						}}
 						aria-label="Forward 5 seconds"
 						{{on
 							"click"
-							(fn this.jumpBy 5)
+							(fn
+								this.intake.jumpBy
+								5
+							)
 						}}
 					>
 						<Icon @name="fast-forward" />

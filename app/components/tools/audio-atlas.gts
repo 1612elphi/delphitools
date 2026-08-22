@@ -252,8 +252,7 @@ export default class AudioAtlasTool extends Component {
 	// what the file itself was recorded at.
 	async #probeSource(file: File) {
 		const probe = await probeAudio(file);
-		if (this.isDestroyed || this.intake.fileName !== file.name)
-			return;
+		if (this.isDestroyed || this.intake.file !== file) return;
 		this.source = probe;
 	}
 

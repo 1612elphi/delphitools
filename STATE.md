@@ -957,3 +957,136 @@ empty-MIME video gets the intake's own message. Left as notes: drag scale
 when the canvas is letterboxed, `readSubs` without a token, Muter
 `chooseFile` mid-remux, Audio Atlas name-only staleness guard, unguarded
 `clipboard.writeText` in Atlas.
+
+Static gate (2026-08-22, fresh `build:static`): `verify:static` ALL PASS
+(34), 84 routes prerendered, main 132 kB, dist 611 files / 149 MB (largest
+file still the 20.6 MB ONNX wasm; Cloudflare caps: 20,000 files, 25 MiB per
+file). Auto Subtitle Experimental confirmed working end to end by Ruby.
+Chunks: mediabunny lands in one 674 kB lazy chunk (`assets/src-*.js`),
+pulled on the first file load by Frame Extractor, Subtitle Studio (both via
+`VideoIntake.probeFps`), Video Muter and Audio Atlas; tool chunks are
+subtitle-studio 24 kB, video-atlas 10 kB, video-muter 8 kB. `dist/mediainfo`
+(wasm + glue + licence) and the 99 flags are copied through.
+
+## Session 2026-08-22 (cont.) — Subtitle Studio fast path (UNCOMMITTED)
+
+- Review notes closed: Studio drag scales against the drawn frame (object-fit
+  letterboxing), `readSubs` has a token, a new file or Clear cancels a
+  running remux (`muteVideo` takes an AbortSignal → `conversion.cancel()`),
+  `AudioIntake` stores the File and Audio Atlas compares identity, Atlas
+  clipboard write is guarded.
+- Fast burn: `burnVideo` in `lib/media-probe.ts` runs a mediabunny
+  `Conversion` with `video.process`: each decoded `VideoSample` is drawn to
+  an OffscreenCanvas, `drawSubtitle` paints the cue, and a fresh
+  `VideoSample` (pixels copied) goes to the encoder; audio packets are
+  copied when the container carries the codec. `forceTranscode: true`,
+  bitrate from `bitrateFor(w, h, intake.fps)`. Studio picks the fast path
+  when `encodableCodecs()` (WebCodecs `canEncodeVideo` per codec, probed on
+  video ready) has answered, else the MediaRecorder 1× path; the format
+  select's support flags follow the encoder answers on the fast path.
+  `ExportFormat` gained `codec`. Result label adds the speed factor
+  (`mp4 · 13.7 KB · 5.1×` on the rig's 2 s 320×180 clip in headless Chrome
+  151, which reports all five encoders). The hidden-tab abort stays on the
+  live path only. Rig 9/9, now decoding the burned output and counting
+  white pixels in the bottom band to prove the text is in the file.
+
+## Session 2026-08-22 (cont.) — Video Trimmer (UNCOMMITTED)
+
+`video-trimmer`: In/Out timecode fields (commit through `parseTimestamp`,
+garbage snaps back) with Mark buttons from the playhead, a selection strip
+over the duration, Cut mode Keyframe/Exact, container select (the Muter's
+codec-gated list), the laserdisc transport, result row with the real cut
+points and a preview of the output in the stage. `trimVideo` in
+`lib/media-probe.ts`: Exact = mediabunny `Conversion` with `trim`
+(mediabunny re-encodes video whenever the trim starts after the first
+packet, which is what lands the cut on the frame); Keyframe = manual packet
+copy: `EncodedPacketSink.getKeyPacket(start)` picks the keyframe at or
+before In, video and audio packets are cloned with shifted timestamps into
+`EncodedVideoPacketSource`/`EncodedAudioPacketSource`, interleaved by
+timestamp so the muxer's per-track backpressure cannot stall, decoder
+configs attached to the first packet of each track. Result reports the cut
+actually made. Rig: 2.5 s generated webm, exact 0.5–1.8 → ~1.3 s file,
+keyframe → starts at the keyframe before 0.5 (MediaRecorder's first key at
+0), both decoded back for their duration. Two copy gaps (description, drop
+title, error line).
+Caught by the rig: the source `<video>` remounts when the result preview
+leaves the stage, so `loadedmetadata` fires `onReady` again; the In/Out
+reset now happens only while Out is still 0. The same remount happens in
+Video Muter (harmless there, nothing is keyed on readiness).
+
+## Session 2026-08-22 (cont.) — Audio Extractor (UNCOMMITTED)
+
+`audio-extractor`: video in, its primary audio track out as WAV (PCM s16,
+always available), M4A (AAC), Ogg (Opus) or FLAC; `extractAudio` in
+`lib/media-probe.ts` is a mediabunny `Conversion` with the video discarded
+and `audio.codec` set, so packets are copied when the source codec already
+matches and WebCodecs encodes otherwise. `audioTargetSupport` gates the
+select (PCM always, copy when codecs match, else `canEncodeAudio`). Bar
+shows `codec · sample rate` from `probeAudio`, or the no-audio status; the
+result row holds an `<audio controls>` player, the size and Download. Rig:
+generated Opus webm → WAV decoded back to ~1.5 s, then Ogg as a copied
+Opus stream. Three copy gaps (description, drop title, no-audio status,
+error line).
+
+## Session 2026-08-22 (cont.) — Audio Normaliser (UNCOMMITTED)
+
+`audio-normaliser`: AudioIntake decode, one integrated-LUFS + sample-peak
+measurement (deferred a macrotask so the bar paints first), target segmented
+-14 Streaming / -16 Podcast / -23 Broadcast, `planGain` (pure, in
+`lib/normalise.ts`) derives gain and the -1 dBFS sample-peak ceiling from
+the measurement so target changes cost nothing; a status line says when the
+ceiling capped the gain (copy gap). Normalise applies the gain to copies,
+writes WAV through `encodeWav`, re-measures the render and shows
+`wav · size · N LUFS` with a player and Download. ponytail: sample peak,
+not true peak; a 4x oversampled true-peak meter is the upgrade. Unit tests
+on a dual-mono 1 kHz sine: BS.1770 sums channel powers and K-weighting
+adds ~0.7 dB at 1 kHz, so -20 dBFS peak per channel reads -20.0 LUFS; +6 dB
+to -14, ceiling cap, silence, applyGainDb. Rig synthesises a WAV in
+the page and checks the measurement, the re-plan on target change, and the
+render (label at -14 LUFS, peak raised by the gain). Two copy gaps
+(description, drop title, limited status).
+
+### Simplify pass 2 (2026-08-22, four reviewers)
+
+Applied: `lib/media-probe.ts` keeps `loadMediabunny`/`openInput`/probes;
+everything that writes files moved to `lib/media-convert.ts` with one
+`runConversion` (validity, progress, abort wiring, execute, buffer → Blob;
+an aborted signal rejects with `AbortError`, components check
+`error.name`), one `ConvertResult`, `BURN_CODECS` once. `VideoIntake`
+owns the container probe (`probe: true`, `onProbe`, `intake.probe`), a
+`canLoad` gate that covers drop, picker and paste, and the laserdisc
+transport (`playing`, `togglePlayback`, `syncPlaying`, `jumpBy`,
+`jumpFrame`); Frame Extractor, Studio, Muter, Trimmer dropped their
+copies, and Muter/Trimmer probe the file once per load. Both stage videos
+stay mounted (source `hidden` while the result shows), so the Trimmer's
+readiness guard is gone. `burnVideo` takes `overlay(seconds)` and passes
+cue-less frames through without the canvas round trip. The Normaliser
+folds the gain into `encodeWav(channels, rate, gain)` and reports
+`measured + gain` (one pass instead of three); `planNormalise`/`applyGainDb`
+removed. Harness gained `captureObjectUrl` and `makeWav`; four rigs use
+them. Small: `markPoint`, `#supports`, `probe: undefined | null`, constants
+referenced directly in templates, `audioTargetSupport` in parallel.
+Skipped: a `MediaJob` class for the four job state machines (a rewrite of
+four components; the next refactor when a fifth tool appears), the worker
+offload for LUFS, memoised word-wrap per cue, reusing the probe's `Input`
+across actions.
+
+Code review 2 (2026-08-22, 6/10 before fixes): critical — the
+`.dt-vt-stage video { display: block }` rule beat the UA `[hidden]`, so the
+hidden source video still rendered under a result (Trimmer and Muter; now
+`video[hidden] { display: none }` in both partials). Important, all fixed:
+mediabunny rejects with `ConversionCanceledError` on cancel, so
+`runConversion` maps a rejection under an aborted signal to `AbortError`;
+Muter's `willDestroy` aborts a running remux; Studio's transport is
+disabled while burning (a jump paused the MediaRecorder source and the
+burn hung); Trimmer's transport and strip hide while a result shows;
+the keyframe copy skips decode-order leading frames whose PTS sits before
+the key packet (open GOPs muxed as negative timestamps). Minor fixed:
+audio the target container cannot carry is dropped instead of failing the
+keyframe cut; Trimmer fields always normalise on commit; an empty encoder
+Set falls back to MediaRecorder; the Normaliser's result loudness is
+labelled as measured + gain in code. Left: `probeAudio` returns null for
+both "no audio" and "unreadable". Also: an `apply()` helper that opened
+the target for writing before its transform ran truncated
+`video-trimmer.gts` (untracked, so no git copy); rewritten from the
+session's own content, all rigs green afterwards.

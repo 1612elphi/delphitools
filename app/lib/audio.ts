@@ -40,6 +40,7 @@ interface AudioIntakeHooks {
 export class AudioIntake {
 	@tracked fileName = '';
 	@tracked fileBytes = 0;
+	file: File | null = null;
 	@tracked fileType = '';
 	@tracked buffer: AudioBuffer | null = null;
 	@tracked busy = false;
@@ -74,6 +75,7 @@ export class AudioIntake {
 		this.busy = true;
 		this.error = '';
 		this.fileName = file.name;
+		this.file = file;
 		this.fileBytes = file.size;
 		this.fileType = file.type;
 		this.buffer = null;
@@ -116,6 +118,7 @@ export class AudioIntake {
 	clear = () => {
 		this.#loadToken++;
 		this.fileName = '';
+		this.file = null;
 		this.fileBytes = 0;
 		this.fileType = '';
 		this.buffer = null;
@@ -236,9 +239,11 @@ export function drawWaveform(
 }
 
 /** 16-bit PCM RIFF/WAVE, interleaved. */
+/** `gain` is linear, applied before the clamp, so a render needs no copy */
 export function encodeWav(
 	channels: Float32Array[],
 	sampleRate: number,
+	gain = 1,
 ): Uint8Array<ArrayBuffer> {
 	const channelCount = channels.length;
 	const frames = channels[0]?.length ?? 0;
@@ -268,7 +273,7 @@ export function encodeWav(
 	let offset = 44;
 	for (let i = 0; i < frames; i++) {
 		for (const channel of channels) {
-			const s = Math.max(-1, Math.min(1, channel[i]!));
+			const s = Math.max(-1, Math.min(1, channel[i]! * gain));
 			view.setInt16(
 				offset,
 				s < 0 ? s * 0x8000 : s * 0x7fff,

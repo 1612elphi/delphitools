@@ -178,3 +178,66 @@ export function dropClip(page, selector, extra = []) {
 		{ selector, extra },
 	);
 }
+
+/** Makes the page keep the last blob handed to URL.createObjectURL as window.__result. */
+export function captureObjectUrl(page) {
+	return page.evaluate(() => {
+		const original = URL.createObjectURL.bind(URL);
+		URL.createObjectURL = (blob) => {
+			window.__result = blob;
+			return original(blob);
+		};
+	});
+}
+
+/**
+ * Synthesises a 16-bit PCM WAV of a sine in the page and parks it as
+ * window.__clip (dropClip drops it). Stereo by default.
+ */
+export function makeWav(
+	page,
+	{
+		rate = 48000,
+		seconds = 3,
+		amplitude = 0.1,
+		frequency = 1000,
+		channels = 2,
+		name = 'tone.wav',
+	} = {},
+) {
+	return page.evaluate(
+		({ rate, seconds, amplitude, frequency, channels, name }) => {
+			const n = rate * seconds;
+			const frame = channels * 2;
+			const bytes = new ArrayBuffer(44 + n * frame);
+			const view = new DataView(bytes);
+			const ascii = (offset, text) => {
+				for (let i = 0; i < text.length; i++)
+					view.setUint8(offset + i, text.charCodeAt(i));
+			};
+			ascii(0, 'RIFF');
+			view.setUint32(4, 36 + n * frame, true);
+			ascii(8, 'WAVE');
+			ascii(12, 'fmt ');
+			view.setUint32(16, 16, true);
+			view.setUint16(20, 1, true);
+			view.setUint16(22, channels, true);
+			view.setUint32(24, rate, true);
+			view.setUint32(28, rate * frame, true);
+			view.setUint16(32, frame, true);
+			view.setUint16(34, 16, true);
+			ascii(36, 'data');
+			view.setUint32(40, n * frame, true);
+			for (let i = 0; i < n; i++) {
+				const v = Math.round(
+					amplitude * Math.sin((2 * Math.PI * frequency * i) / rate) * 32767,
+				);
+				for (let c = 0; c < channels; c++)
+					view.setInt16(44 + i * frame + c * 2, v, true);
+			}
+			window.__clip = new File([bytes], name, { type: 'audio/wav' });
+			return bytes.byteLength;
+		},
+		{ rate, seconds, amplitude, frequency, channels, name },
+	);
+}

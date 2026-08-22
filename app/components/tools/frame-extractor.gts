@@ -30,14 +30,15 @@ export default class FrameExtractorTool extends Component {
 	@tracked sheetBusy = false;
 	@tracked sheetDone = 0;
 	@tracked sheetCount = 12;
-	@tracked videoPlaying = false;
 
 	intake = new VideoIntake({
 		onLoad: () => {
 			this.#releaseStills();
 			this.stills = [];
 		},
-		probeFps: true,
+		probe: true,
+		// A drop mid-build would tear the video out from under the seek loop.
+		canLoad: () => !this.sheetBusy,
 	});
 
 	willDestroy() {
@@ -112,35 +113,6 @@ export default class FrameExtractorTool extends Component {
 		downloadBlob(blob, `${this.baseName}-frames.zip`);
 	}
 
-	togglePlayback = () => {
-		const video = this.intake.video;
-		if (!video) return;
-		if (video.paused) void video.play();
-		else video.pause();
-	};
-
-	// Mirrors the element's real state, so the native controls stay in sync.
-	syncPlaying = (event: Event) => {
-		this.videoPlaying = !(event.target as HTMLVideoElement).paused;
-	};
-
-	jumpBy = (seconds: number) => {
-		const video = this.intake.video;
-		if (!video) return;
-		video.pause();
-		video.currentTime = Math.max(
-			0,
-			Math.min(
-				this.intake.duration,
-				video.currentTime + seconds,
-			),
-		);
-	};
-
-	jumpFrame = (direction: number) => {
-		this.jumpBy(direction / this.intake.fps);
-	};
-
 	downloadStill = (still: Still) => {
 		downloadUrl(still.url, still.fileName);
 	};
@@ -148,13 +120,6 @@ export default class FrameExtractorTool extends Component {
 	removeStill = (still: Still) => {
 		URL.revokeObjectURL(still.url);
 		this.stills = this.stills.filter((s) => s !== still);
-	};
-
-	// intake.drop cannot see sheetBusy, and a drop mid-build would tear the
-	// video out from under the seek loop.
-	handleDrop = (event: DragEvent) => {
-		event.preventDefault();
-		if (!this.sheetBusy) this.intake.drop(event);
 	};
 
 	buildSheet = () => void this.#buildSheet();
@@ -237,7 +202,7 @@ export default class FrameExtractorTool extends Component {
 		<div class="dt-fx">
 			<div
 				class="dt-fx-frame"
-				{{on "drop" this.handleDrop}}
+				{{on "drop" this.intake.drop}}
 				{{on "dragover" this.intake.dragOver}}
 			>
 				{{#unless this.intake.url}}
@@ -347,11 +312,11 @@ export default class FrameExtractorTool extends Component {
 							}}
 							{{on
 								"play"
-								this.syncPlaying
+								this.intake.syncPlaying
 							}}
 							{{on
 								"pause"
-								this.syncPlaying
+								this.intake.syncPlaying
 							}}
 						></video>
 					</div>
@@ -364,7 +329,7 @@ export default class FrameExtractorTool extends Component {
 							{{on
 								"click"
 								(fn
-									this.jumpBy
+									this.intake.jumpBy
 									-5
 								)
 							}}
@@ -379,7 +344,7 @@ export default class FrameExtractorTool extends Component {
 							{{on
 								"click"
 								(fn
-									this.jumpBy
+									this.intake.jumpBy
 									-1
 								)
 							}}
@@ -396,7 +361,7 @@ export default class FrameExtractorTool extends Component {
 							{{on
 								"click"
 								(fn
-									this.jumpFrame
+									this.intake.jumpFrame
 									-1
 								)
 							}}
@@ -411,18 +376,18 @@ export default class FrameExtractorTool extends Component {
 							class="dt-fx-tbtn is-play"
 							{{on
 								"click"
-								this.togglePlayback
+								this.intake.togglePlayback
 							}}
 						>
 							<Icon
 								@name={{if
-									this.videoPlaying
+									this.intake.playing
 									"pause"
 									"play"
 								}}
 							/>
 							<span>{{if
-									this.videoPlaying
+									this.intake.playing
 									"Pause"
 									"Play"
 								}}</span>
@@ -434,7 +399,7 @@ export default class FrameExtractorTool extends Component {
 							{{on
 								"click"
 								(fn
-									this.jumpFrame
+									this.intake.jumpFrame
 									1
 								)
 							}}
@@ -451,7 +416,7 @@ export default class FrameExtractorTool extends Component {
 							{{on
 								"click"
 								(fn
-									this.jumpBy
+									this.intake.jumpBy
 									1
 								)
 							}}
@@ -468,7 +433,7 @@ export default class FrameExtractorTool extends Component {
 							{{on
 								"click"
 								(fn
-									this.jumpBy
+									this.intake.jumpBy
 									5
 								)
 							}}

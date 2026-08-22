@@ -1,6 +1,6 @@
 import { tracked } from '@glimmer/tracking';
 import { modifier } from 'ember-modifier';
-import { probeVideo } from 'delphitools-v2/lib/media-probe';
+import { probeVideo, type VideoProbe } from 'delphitools-v2/lib/media-probe';
 
 const DEFAULT_FPS = 30;
 
@@ -48,8 +48,12 @@ interface VideoIntakeHooks {
 	onLoad?: (file: File) => void;
 	/** once the metadata (finite duration, dimensions) is in */
 	onReady?: (video: HTMLVideoElement) => void;
-	/** read the real frame rate from the container (mediabunny, lazy) into `fps` */
-	probeFps?: boolean;
+	/** read the container (mediabunny, lazy) into `probe` and `fps` after each load */
+	probe?: boolean;
+	/** the probe's answer for the current file, null when unreadable */
+	onProbe?: (probe: VideoProbe | null) => void;
+	/** a false answer makes load/drop/paste ignore the file, e.g. mid-job */
+	canLoad?: () => boolean;
 }
 
 /**
@@ -66,6 +70,10 @@ export class VideoIntake {
 	@tracked error = '';
 	/** container frame rate when probed, else an assumed 30 */
 	@tracked fps = DEFAULT_FPS;
+	/** the container probe for the current file; null until it answers or when unreadable */
+	@tracked probe: VideoProbe | null = null;
+	/** mirrors the element's paused state for the transport */
+	@tracked playing = false;
 
 	video: HTMLVideoElement | null = null;
 	file: File | null = null;
@@ -89,6 +97,7 @@ export class VideoIntake {
 	});
 
 	load = (file: File) => {
+		if (this.#hooks.canLoad && !this.#hooks.canLoad()) return;
 		if (!file.type.startsWith('video/')) {
 			this.error = NOT_A_VIDEO;
 			return;
@@ -99,14 +108,19 @@ export class VideoIntake {
 		this.fileName = file.name;
 		this.file = file;
 		this.fps = DEFAULT_FPS;
+		this.probe = null;
+		this.playing = false;
 		this.#hooks.onLoad?.(file);
 		this.url = URL.createObjectURL(file);
-		if (this.#hooks.probeFps) void this.#probeFps(file);
+		if (this.#hooks.probe) void this.#probe(file);
 	};
 
-	async #probeFps(file: File) {
+	async #probe(file: File) {
 		const probe = await probeVideo(file);
-		if (this.file === file && probe?.fps) this.fps = probe.fps;
+		if (this.file !== file) return;
+		this.probe = probe;
+		if (probe?.fps) this.fps = probe.fps;
+		this.#hooks.onProbe?.(probe);
 	}
 
 	chooseFile = (event: Event) => {
@@ -154,6 +168,35 @@ export class VideoIntake {
 		this.file = null;
 		this.duration = 0;
 		this.fps = DEFAULT_FPS;
+		this.probe = null;
+		this.playing = false;
 		this.error = '';
+	};
+
+	// The laserdisc transport every video tool shows.
+	togglePlayback = () => {
+		const video = this.video;
+		if (!video) return;
+		if (video.paused) void video.play();
+		else video.pause();
+	};
+
+	/** bind to the element's play and pause events */
+	syncPlaying = (event: Event) => {
+		this.playing = !(event.target as HTMLVideoElement).paused;
+	};
+
+	jumpBy = (seconds: number) => {
+		const video = this.video;
+		if (!video) return;
+		video.pause();
+		video.currentTime = Math.max(
+			0,
+			Math.min(this.duration, video.currentTime + seconds),
+		);
+	};
+
+	jumpFrame = (direction: number) => {
+		this.jumpBy(direction / this.fps);
 	};
 }

@@ -18,6 +18,8 @@
 @use "tools/algebra-calc";
 @use "tools/artwork-enhancer";
 @use "tools/audio-atlas";
+@use "tools/audio-extractor";
+@use "tools/audio-normaliser";
 @use "tools/audio-trimmer";
 @use "tools/auto-subtitle";
 @use "tools/background-remover";
@@ -92,6 +94,7 @@
 @use "tools/video-atlas";
 @use "tools/video-muter";
 @use "tools/video-to-gif";
+@use "tools/video-trimmer";
 @use "tools/voice-recorder";
 @use "tools/watermarker";
 @use "tools/waveform-genny";
