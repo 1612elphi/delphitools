@@ -1477,3 +1477,21 @@ material). This is the delivery shape for future changelogs: append a
 release, fill the arrays. The sidebar brand hover now reads
 "v2.0.0 · <sha>" (VERSION exported from lib/build-flags, off
 package.json). Omnibox rig: 40 checks.
+
+## 2026-08-24: 0BSD, and the SVGO nested-svg fix
+
+Licence is Zero-Clause BSD: LICENSE carries the 0BSD grant plus a list of
+the third-party works kept in the repository under their own licences
+(shadcn-ember primitives, markdown-it-footnote, Phosphor path data, the
+pandoc-wasm wrapper, imagetracerjs, the jSquash/MuPDF/MediaInfo wasm
+builds, both fonts, circle-flags, the CMU dictionary, the EFF wordlist,
+the RawTherapee-derived LUTs) and states that artwork is the artists'.
+package.json and ACKNOWLEDGEMENTS.md follow; the front page copy already
+said 0-BSD (issue #33). ACKNOWLEDGEMENTS.md still lists the Next.js-era
+stack.
+
+SVG Optimiser: svgo's removeDimensions strips width/height from nested
+<svg> elements too (svgo/svgo#2217, delphitools #46), which resizes their
+content. The plugin is gone; `stripRootDimensions` removes the root's
+width/height only, and only when a viewBox exists to size it. Unit tests
+(4).

@@ -4,7 +4,7 @@
 	"private": true,
 	"description": "Small description for delphitools-v2 goes here",
 	"repository": "",
-	"license": "MIT",
+	"license": "0BSD",
 	"author": "",
 	"exports": {
 		"./tests/*": "./tests/*",

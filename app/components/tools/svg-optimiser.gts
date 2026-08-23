@@ -22,13 +22,32 @@ const SVGO_CONFIG: Config = {
 	multipass: true,
 	plugins: [
 		'preset-default',
-		'removeDimensions',
 		{
 			name: 'removeAttrs',
 			params: { attrs: '(data-.*)' },
 		},
 	],
 };
+
+/**
+ * The root's width/height go so the SVG sizes to its container, which is
+ * what svgo's removeDimensions did until it started stripping nested
+ * <svg> elements too (svgo/svgo#2217, delphitools #46). Root only, and
+ * only when a viewBox is there to size it.
+ */
+export function stripRootDimensions(svg: string): string {
+	const doc = new DOMParser().parseFromString(svg, 'image/svg+xml');
+	const root = doc.documentElement;
+	if (doc.querySelector('parsererror') || !root.hasAttribute('viewBox'))
+		return svg;
+	root.removeAttribute('width');
+	root.removeAttribute('height');
+	return new XMLSerializer().serializeToString(doc);
+}
+
+const stripped = (result: { data: string }) => ({
+	data: stripRootDimensions(result.data),
+});
 
 /** The image tracer hands its result over through this key. */
 const HANDOFF_KEY = 'svg-optimiser-input';
@@ -78,7 +97,7 @@ export async function optimiseSvg(
 	if (!looksLikeSvg(original)) return null;
 	try {
 		const { optimize } = await import('svgo/browser');
-		const { data } = optimize(original, SVGO_CONFIG);
+		const { data } = stripped(optimize(original, SVGO_CONFIG));
 		return statsFor(original, data);
 	} catch {
 		return null;
@@ -158,7 +177,7 @@ export default class SvgOptimiserTool extends Component {
 			const optimize = await loadOptimize();
 			if (runId !== this.#runId) return;
 
-			const { data } = optimize(svg, SVGO_CONFIG);
+			const { data } = stripped(optimize(svg, SVGO_CONFIG));
 			this.output = data;
 			this.stats = statsFor(svg, data);
 			this.#setPreview(data);

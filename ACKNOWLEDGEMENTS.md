@@ -46,4 +46,4 @@ delphitools is built on the shoulders of many excellent open source projects. Th
 
 ---
 
-This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
+This project is licensed under the Zero-Clause BSD licence (0BSD). See [LICENSE](./LICENSE) for the grant and for the third-party works that keep their own licences.
