@@ -1505,3 +1505,12 @@ at the bottom right; the flush since-row and footer bar are gone. An
 entry written "Name: text" whose Name matches a catalogue tool name
 (case-insensitive, exact) renders the name as a link to the tool with a
 star + wrench badge; anything else renders as plain text. Omnibox rig: 40.
+
+## 2026-08-24: per-tool stickers after the -genny rename
+
+The per-tool lousy sticker had gone missing under Matte Generator and
+Seamless Scroll Generator: the art was still filed under the pre-rename
+ids (`matte-generator`, `scroll-generator`). Renamed to `matte-genny` and
+`scroll-genny`; 54 tools show their sticker again. The other 38 (every
+tool added since the 1.x port, plus Substrata and Large Type) have no
+lousy art at all and render no sticker; that is drawing work, not code.
