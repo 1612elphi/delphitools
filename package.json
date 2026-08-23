@@ -48,6 +48,7 @@
 		"verify:password-genny": "node scripts/verify/password-genny.mjs",
 		"verify:pdf-compressor": "node scripts/verify/pdf-compressor.mjs",
 		"verify:static": "node scripts/verify/static.mjs",
+		"verify:text-intake": "node scripts/verify/text-intake.mjs",
 		"verify:uuid-genny": "node scripts/verify/uuid-genny.mjs",
 		"verify:workflows": "node scripts/verify/workflows.mjs"
 	},

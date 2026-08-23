@@ -6,6 +6,8 @@ import { htmlSafe } from '@ember/template';
 import { modifier } from 'ember-modifier';
 import Icon from 'delphitools-v2/components/icon';
 import DownloadLabel from 'delphitools-v2/components/download-label';
+import { TEXT_ACCEPT, acceptAttr } from 'delphitools-v2/lib/tools';
+import filePaste, { matchesAccept } from 'delphitools-v2/modifiers/file-paste';
 import {
 	Popover,
 	PopoverTrigger,
@@ -28,6 +30,7 @@ import type Owner from '@ember/owner';
 type EditorCore = typeof import('delphitools-v2/lib/editor/core');
 
 const DOC_KEY = 'delphitools-editor';
+const ACCEPT = acceptAttr(TEXT_ACCEPT);
 const SEED = '';
 // Ghost text shown in an empty document; wording carried over from the Next app.
 const PLACEHOLDER =
@@ -83,6 +86,8 @@ export default class TextEditorTool extends Component {
 
 	ed: EditorCore | null = null;
 	view: EditorView | null = null;
+	/** a file that arrived before the editor core finished loading */
+	#pendingText: string | null = null;
 	frame = 0;
 	// The document is never persisted (privacy). `dirty` tracks unsaved edits so
 	// we can warn before the page unloads. Cleared when the user exports a copy.
@@ -356,6 +361,11 @@ export default class TextEditorTool extends Component {
 				},
 			});
 			this.view = view;
+			if (this.#pendingText !== null) {
+				const text = this.#pendingText;
+				this.#pendingText = null;
+				this.#load(text);
+			}
 			this.scheduleMeasure();
 			const initialText = view.state.doc
 				.textBetween(
@@ -439,6 +449,46 @@ export default class TextEditorTool extends Component {
 		this.source = (event.target as HTMLTextAreaElement).value;
 		this.dirty = true;
 	};
+
+	/** a dropped, pasted or handed-off Markdown file replaces the document */
+	readFile = async (file: File) => {
+		if (!matchesAccept(file, ACCEPT)) return;
+		this.#load(await file.text());
+	};
+
+	drop = (event: DragEvent) => {
+		event.preventDefault();
+		const file = event.dataTransfer?.files[0];
+		if (file) void this.readFile(file);
+	};
+
+	dragOver = (event: DragEvent) => event.preventDefault();
+
+	#load(text: string) {
+		const ed = this.ed;
+		const v = this.view;
+		if (!ed || !v) {
+			this.#pendingText = text;
+			return;
+		}
+		if (this.settings.codeMode) {
+			this.source = text;
+		} else {
+			let state = ed.EditorState.create({
+				doc: ed.parseMarkdown(text),
+				plugins: ed.buildPlugins(
+					ed.schema,
+					this.settings,
+					PLACEHOLDER,
+				),
+			});
+			const fix = ed.fixTables(state);
+			if (fix) state = state.apply(fix);
+			v.updateState(state);
+			this.scheduleMeasure();
+		}
+		this.dirty = true;
+	}
 
 	currentDoc(): PMNode | null {
 		const ed = this.ed;
@@ -667,7 +717,12 @@ export default class TextEditorTool extends Component {
 	}
 
 	<template>
-		<div class={{if this.zen "dt-te-zen"}}>
+		<div
+			class={{if this.zen "dt-te-zen"}}
+			{{filePaste this.readFile accept=ACCEPT}}
+			{{on "drop" this.drop}}
+			{{on "dragover" this.dragOver}}
+		>
 			<div class="dt-te {{if this.zen 'is-zen'}}">
 				<div
 					class="dt-te-toolbar

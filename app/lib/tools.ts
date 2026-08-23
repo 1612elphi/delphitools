@@ -32,6 +32,7 @@ export const VIDEO_ACCEPT = [
 	'.avi',
 ];
 export const SUBTITLE_ACCEPT = ['.srt', '.vtt'];
+export const TEXT_ACCEPT = ['.md', '.txt', 'text/markdown', 'text/plain'];
 
 /** The same list as an `accept` attribute value. */
 export const acceptAttr = (list: readonly string[]): string => list.join(',');
@@ -542,7 +543,7 @@ export const toolCategories: ToolCategory[] = [
 				description: 'Distraction-free Markdown writer',
 				icon: 'pen-line',
 				href: '/tools/text-editor',
-				accepts: ['.md', '.txt'],
+				accepts: TEXT_ACCEPT,
 				new: true,
 			},
 			{
@@ -775,7 +776,7 @@ export const toolCategories: ToolCategory[] = [
 					'Text editor with manipulation tools',
 				icon: 'pen-line',
 				href: '/tools/markdown-writer',
-				accepts: ['.md', '.txt'],
+				accepts: TEXT_ACCEPT,
 			},
 			{
 				id: 'uuid-genny',

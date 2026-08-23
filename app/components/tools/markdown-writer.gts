@@ -8,8 +8,11 @@ import type Owner from '@ember/owner';
 import Icon from 'delphitools-v2/components/icon';
 import { downloadIcon, passAlong } from 'delphitools-v2/lib/flow-hooks';
 import { downloadText } from 'delphitools-v2/lib/download';
+import { TEXT_ACCEPT, acceptAttr } from 'delphitools-v2/lib/tools';
+import filePaste, { matchesAccept } from 'delphitools-v2/modifiers/file-paste';
 
 const STORAGE_KEY = 'delphitools-scratchpad';
+const ACCEPT = acceptAttr(TEXT_ACCEPT);
 const SAVE_DEBOUNCE_MS = 1000;
 const COPIED_MS = 1500;
 
@@ -380,6 +383,22 @@ export default class MarkdownWriterTool extends Component {
 		this.#scheduleSave();
 	};
 
+	/** a dropped, pasted or handed-off file replaces the draft */
+	readFile = async (file: File) => {
+		if (!matchesAccept(file, ACCEPT)) return;
+		if (this.content.trim() && !confirm('Replace draft?')) return;
+		this.content = await file.text();
+		this.#scheduleSave();
+	};
+
+	drop = (event: DragEvent) => {
+		event.preventDefault();
+		const file = event.dataTransfer?.files[0];
+		if (file) void this.readFile(file);
+	};
+
+	dragOver = (event: DragEvent) => event.preventDefault();
+
 	#scheduleSave() {
 		clearTimeout(this.#saveTimer);
 		if (!this.content) return;
@@ -479,7 +498,12 @@ export default class MarkdownWriterTool extends Component {
 	};
 
 	<template>
-		<div class="dt-md">
+		<div
+			class="dt-md"
+			{{filePaste this.readFile accept=ACCEPT}}
+			{{on "drop" this.drop}}
+			{{on "dragover" this.dragOver}}
+		>
 			<div class="dt-md-tabs">
 				{{#each this.panels key="id" as |panel|}}
 					<button

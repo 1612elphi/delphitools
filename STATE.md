@@ -1262,3 +1262,15 @@ the disc `aria-hidden`, markdown-writer's title follows `passAlong`. Left:
 an IndexedDB write still in flight when `exit` runs lands after the clear
 (the next boot's roll-call sweeps it). Rig: 20 checks, including a second
 tab that leaves a live bag alone and a closed tab's run being swept.
+
+## 2026-08-23: text tools take files
+
+Markdown Writer and Text Editor declared `.md`/`.txt` in the registry (the
+omnibox routed dropped files to them) but had no load path. Both now take a
+file by paste (`filePaste`), by drop on the root, and as a workflow hand-off:
+`readFile(file)` reads `file.text()`; the scratchpad replaces its draft
+(asking first when one exists), the editor replaces its ProseMirror
+document (or the source pane in code mode), and a file that lands before
+the editor core has loaded waits in `#pendingText`. `TEXT_ACCEPT` in
+lib/tools.ts is the one list for the registry and both tools. Rig:
+`scripts/verify/text-intake.mjs` (2 checks).
