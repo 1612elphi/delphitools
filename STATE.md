@@ -1359,3 +1359,42 @@ Workflow `straighten-to-pdf`: De-skewer → Images to PDF → PDF Compressor.
 Unit tests (8) and rig scripts/verify/image-deskewer.mjs (16). Not done: a
 worker for the full warp (a 12 MP output blocks ~300 ms on pointer up),
 edge auto-detection, JPEG output.
+
+## 2026-08-23: turbo-nerd pack
+
+Four text tools in Turbo-nerd Shit, built by four parallel agents that each
+owned only their lib, test, component, partial and rig; the registry
+entries, `@use` lines, PARITY rows and icons were added first so the pages
+resolved while they worked.
+
+- Morse Code (`morse-code`, lib/morse.ts): ITU-R M.1677-1 table plus the
+  customary ! & ; _ $ codes; Auto/Encode/Decode (Auto = `looksLikeMorse`);
+  decode accepts · • for dit and – — _ for dah, `/` or three spaces as a
+  word gap, U+FFFD for an unknown code; WebAudio playback at 600 Hz with
+  PARIS timing (`timings`, 1200 / wpm ms per unit), WPM 5–40. Two of the
+  agent's test expectations were wrong (`___` is O, `- . .-.-.-` is TE.);
+  fixed in the test.
+- Braille Converter (`braille-converter`, lib/braille.ts): uncontracted
+  UEB: letters, capital and caps-word indicators, numeric mode (ends at a
+  space or a non a–j character, continues through . and , per UEB 6.2, a–j
+  after a number get the grade 1 indicator ⠰ per 6.5.1), punctuation;
+  both directions; every output cell carries its dot numbers as a title.
+  No Grade 2 contractions (ponytail comment names them).
+- IPA Transcription (`ipa-transcriber`, lib/ipa.ts): the CMU dictionary
+  the Shavian tool ships, loading extracted into lib/shavian/dictionary.ts
+  (`loadCoreDictionary`, `loadFullDictionary`, `parseDictJson`; the
+  Shavian component re-exports `parseDictJson` because lib/omni.ts
+  imports it from there). ARPABET → IPA through `arpabetToIpa`; stress
+  marks from the digits with maximal onset (an approximation; compounds
+  with two CMU primaries keep the last as ˈ). Unknown words go through the
+  Shavian heuristic and render in the destructive colour (`is-guess`).
+- NATO Phonetic (`nato-phonetic`, lib/spelling-alphabets.ts): NATO/ICAO,
+  DIN 5009:2022 (city names, Umlaut + city, Eszett) and the 1996 German
+  table; Spell renders char/word pairs, Read (`unspell`) maps code words
+  back (X-ray/Xray, the two-token umlaut words); Auto = `looksSpelled`.
+  ICAO digit pronunciations (Tree, Fife, Niner) not represented.
+
+Rigs: morse-code 10, braille-converter 10, ipa-transcriber 8,
+nato-phonetic 10 (the clipboard checks need `clipboard-sanitized-write`
+in headless Chrome); tools rig now 91. Unit tests 623. Five description
+gaps in lib/tools.ts (De-skewer + the four) for slopsieve.

@@ -85,6 +85,7 @@ import iDot from 'lucide-static/icons/dot.svg?raw';
 import iDownload from 'lucide-static/icons/download.svg?raw';
 import iDroplet from 'lucide-static/icons/droplet.svg?raw';
 import iDroplets from 'lucide-static/icons/droplets.svg?raw';
+import iEar from 'lucide-static/icons/ear.svg?raw';
 import iEclipse from 'lucide-static/icons/eclipse.svg?raw';
 import iEllipsis from 'lucide-static/icons/ellipsis.svg?raw';
 import iEraser from 'lucide-static/icons/eraser.svg?raw';
@@ -172,6 +173,8 @@ import iPlay from 'lucide-static/icons/play.svg?raw';
 import iPlus from 'lucide-static/icons/plus.svg?raw';
 import iPrinter from 'lucide-static/icons/printer.svg?raw';
 import iQrCode from 'lucide-static/icons/qr-code.svg?raw';
+import iRadio from 'lucide-static/icons/radio.svg?raw';
+import iRadioTower from 'lucide-static/icons/radio-tower.svg?raw';
 import iRainbow from 'lucide-static/icons/rainbow.svg?raw';
 import iRedo2 from 'lucide-static/icons/redo-2.svg?raw';
 import iRefreshCw from 'lucide-static/icons/refresh-cw.svg?raw';
@@ -316,6 +319,7 @@ export const icons: Record<string, string> = {
 	download: iDownload,
 	droplet: iDroplet,
 	droplets: iDroplets,
+	ear: iEar,
 	eclipse: iEclipse,
 	ellipsis: iEllipsis,
 	eraser: iEraser,
@@ -403,6 +407,8 @@ export const icons: Record<string, string> = {
 	plus: iPlus,
 	printer: iPrinter,
 	'qr-code': iQrCode,
+	radio: iRadio,
+	'radio-tower': iRadioTower,
 	rainbow: iRainbow,
 	'redo-2': iRedo2,
 	'refresh-cw': iRefreshCw,

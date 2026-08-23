@@ -23,10 +23,10 @@ applicable on this surface (hardware/native or format constraint).
 
 ## Summary
 
-- **Tools tracked:** 84 (shipped, any surface)
+- **Tools tracked:** 88 (shipped, any surface)
 - **On all three surfaces:** 41
-- **Web:** 80 · **CLI:** 46 · **iOS:** 51
-- **Backlog:** 33 planned tools (web-first) — see the Backlog section at the end.
+- **Web:** 84 · **CLI:** 46 · **iOS:** 51
+- **Backlog:** 29 planned tools (web-first) — see the Backlog section at the end.
 - iOS-exclusive (native/hardware): Colour Camera, Document Scanner, Font Installer, NFC Reader/Writer
 - Web-exclusive: Pixel Picker, Text Editor (pandoc.wasm note: GPL — incompatible with the App Store, and won't run on-device on iOS, hence Document Converter I 🚧)
 - CLI-only sub-feature: `hash` (text hashing, folded into Encoding Tools elsewhere)
@@ -183,9 +183,13 @@ Picker is similarly web-only.
 
 ## Turbo-nerd
 
-| Tool (web ID)                                     |  W  |      C       |  I  | Notes |
-| ------------------------------------------------- | :-: | :----------: | :-: | ----- |
-| Shavian Transliterator (`shavian-transliterator`) | ✅  | ✅ `shavian` | ✅  |       |
+| Tool (web ID)                                     |  W  |      C       |  I  | Notes                                                                     |
+| ------------------------------------------------- | :-: | :----------: | :-: | ------------------------------------------------------------------------- |
+| Shavian Transliterator (`shavian-transliterator`) | ✅  | ✅ `shavian` | ✅  |                                                                           |
+| Morse Code (`morse-code`)                         | ✅  |      ❌      | ❌  | new 2026-08; ITU Morse both ways, WebAudio playback                       |
+| Braille Converter (`braille-converter`)           | ✅  |      ❌      | ❌  | new 2026-08; uncontracted (Grade 1) Unicode braille both ways             |
+| IPA Transcription (`ipa-transcriber`)             | ✅  |      ❌      | ❌  | new 2026-08; CMU dictionary (shared with Shavian) → IPA, General American |
+| NATO Phonetic (`nato-phonetic`)                   | ✅  |      ❌      | ❌  | new 2026-08; NATO/ICAO, DIN 5009:2022 and traditional German tables       |
 
 ---
 
@@ -233,6 +237,5 @@ its row into the matching category table above and flip W to ✅.
 | Other / Generators     | Data Format Converter · Hash / Checksum (file drop) · Cubic-bezier / Easing Editor · Lorem Ipsum Generator · URL / Query-string Editor · MIME Type Lookup                                      |
 | Colour                 | Colour Mixer / Blender · Data-viz Scale Generator · Kelvin → RGB                                                                                                                               |
 | Calculators & Encoding | Aspect Ratio Calculator · Percentage Calculator · Bitwise / Binary Calculator · Roman Numeral Converter                                                                                        |
-| Turbo-nerd             | IPA Transcription · Morse Encoder / Decoder · Braille Converter · NATO Phonetic                                                                                                                |
 
-Total: 33 planned (11 AV · 4 image · 1 PDF · 6 dev · 3 colour · 4 calc · 4 turbo-nerd).
+Total: 29 planned (11 AV · 4 image · 1 PDF · 6 dev · 3 colour · 4 calc).

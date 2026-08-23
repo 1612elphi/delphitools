@@ -18,8 +18,11 @@ import {
 	nextMarker,
 	type GlossToken,
 	type GlossWord,
-	type Dictionary,
 } from 'delphitools-v2/lib/shavian/transliterate';
+import {
+	loadCoreDictionary,
+	loadFullDictionary,
+} from 'delphitools-v2/lib/shavian/dictionary';
 import {
 	getAlternatives,
 	type Alternative,
@@ -29,7 +32,6 @@ import { getShavianLetter } from 'delphitools-v2/lib/shavian/phoneme-map';
 // wording carried over from the Next app
 const DEFAULT_TEXT = 'Mankind, be vigilant; we loved you.';
 
-const FULL_DICTIONARY_URL = '/data/shavian-dictionary-full.json';
 const COPIED_MS = 2000;
 
 export type DictStatus =
@@ -37,37 +39,8 @@ export type DictStatus =
 
 const CORE_ONLY_STATUS = 'Core dictionary only, uncommon words are guessed';
 
-export function parseDictJson(json: Record<string, string[]>): Dictionary {
-	return new Map(Object.entries(json));
-}
-
-// One request for the lifetime of the page, whatever remounts.
-let fullDictPromise: Promise<Dictionary> | null = null;
-
-function loadFullDictionary(): Promise<Dictionary> {
-	fullDictPromise ??= fetch(FULL_DICTIONARY_URL)
-		.then((response) => {
-			// fetch resolves on 404. Without this the miss reaches json(),
-			// which throws a parse error the caller reads as a bad payload,
-			// and the tool glosses every word past the 7,500-entry core with
-			// the heuristic while reporting itself ready.
-			if (!response.ok) {
-				throw new Error(
-					`${FULL_DICTIONARY_URL} returned HTTP ${response.status}`,
-				);
-			}
-			return response.json() as Promise<
-				Record<string, string[]>
-			>;
-		})
-		.then(parseDictJson)
-		.catch((error: unknown) => {
-			// A cached rejection would deny every later mount a retry.
-			fullDictPromise = null;
-			throw error;
-		});
-	return fullDictPromise;
-}
+// lib/omni.ts imports parseDictJson from here.
+export { parseDictJson } from 'delphitools-v2/lib/shavian/dictionary';
 
 /** Tooltip on the Latin row, naming the marker the next click applies. */
 export function markerTitle(marker: GlossWord['marker']): string {
@@ -316,17 +289,9 @@ export default class ShavianTransliteratorTool extends Component {
 	 * background; words the heuristic guessed are re-resolved when it lands.
 	 */
 	async #loadDictionaries() {
-		const core =
-			await import('delphitools-v2/lib/shavian/dictionary-core.json?raw');
+		const core = await loadCoreDictionary();
 		if (this.isDestroyed) return;
-		setCoreDictionary(
-			parseDictJson(
-				JSON.parse(core.default) as Record<
-					string,
-					string[]
-				>,
-			),
-		);
+		setCoreDictionary(core);
 		this.dictStatus = 'loading-full';
 		if (this.input) this.tokens = tokenise(this.input);
 

@@ -1,0 +1,179 @@
+// Styles for the ipa-transcriber tool.
+
+@use "../crayon-config" as crayon;
+
+.dt-ipa {
+	// The same green the Shavian tool reports a loaded dictionary with.
+	--dt-ipa-dict: #22c55e;
+
+	@include crayon.vstack(4);
+}
+
+.dt-ipa-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-ipa-input-pane {
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-ipa-pane-head {
+	padding: crayon.size(3) crayon.size(4) crayon.size(1);
+
+	&.is-split {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		border-bottom: 1px solid var(--border);
+	}
+}
+
+.dt-ipa-label {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+	text-transform: uppercase;
+	letter-spacing: crayon.tracking("wide");
+}
+
+.dt-ipa-status {
+	@include crayon.hstack(1.5);
+
+	align-items: center;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+
+	.dt-icon {
+		width: crayon.size(3);
+		height: crayon.size(3);
+	}
+
+	&.is-ready {
+		color: var(--dt-ipa-dict);
+	}
+
+	&.is-degraded {
+		color: var(--destructive);
+	}
+}
+
+.dt-ipa-input {
+	display: block;
+	width: 100%;
+	min-height: 6.25rem;
+	padding: crayon.size(3) crayon.size(4);
+	border: 0;
+	border-top: 1px solid var(--border);
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("base");
+	resize: none;
+
+	&:focus {
+		outline: none;
+	}
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-ipa-output {
+	min-height: 7.5rem;
+	padding: crayon.size(4);
+}
+
+.dt-ipa-text {
+	margin: 0;
+	font-size: crayon.font-size("2xl");
+	line-height: crayon.leading("relaxed");
+	overflow-wrap: anywhere;
+	white-space: pre-wrap;
+}
+
+.dt-ipa-word {
+	cursor: help;
+
+	&.is-guess {
+		color: var(--destructive);
+	}
+}
+
+.dt-ipa-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: crayon.size(1) crayon.size(4);
+	align-items: center;
+	padding: crayon.size(2) crayon.size(4);
+	border-top: 1px solid var(--border);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-ipa-legend-item {
+	@include crayon.hstack(1.5);
+
+	align-items: center;
+}
+
+.dt-ipa-dot {
+	display: block;
+	width: crayon.size(2);
+	height: crayon.size(2);
+	border-radius: crayon.rounded("full");
+
+	&.is-dict {
+		background: var(--foreground);
+	}
+
+	&.is-guess {
+		background: var(--destructive);
+	}
+}
+
+.dt-ipa-actions {
+	display: flex;
+	border-top: 2px solid var(--border);
+}
+
+.dt-ipa-copy,
+.dt-ipa-download {
+	@include crayon.hstack(2);
+
+	height: crayon.size(14);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	font: inherit;
+	font-size: crayon.font-size("base");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+}
+
+.dt-ipa-copy {
+	flex: 1;
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font-weight: crayon.font-weight("bold");
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--primary) 90%, black);
+	}
+}
+
+.dt-ipa-download {
+	padding-inline: crayon.size(6);
+	border-left: 1px solid var(--border);
+	background: transparent;
+	color: inherit;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+}

@@ -26,6 +26,7 @@
 @use "tools/background-remover";
 @use "tools/base-converter";
 @use "tools/base64-image-encoder";
+@use "tools/braille-converter";
 @use "tools/code-genny";
 @use "tools/colorblind-sim";
 @use "tools/colour-atlas";
@@ -54,12 +55,15 @@
 @use "tools/json-formatter";
 @use "tools/jwt-decoder";
 @use "tools/imposer";
+@use "tools/ipa-transcriber";
 @use "tools/large-type";
 @use "tools/line-height-calc";
 @use "tools/markdown-writer";
 @use "tools/matte-genny";
 @use "tools/meta-tag-genny";
+@use "tools/nato-phonetic";
 @use "tools/metadata-stripper";
+@use "tools/morse-code";
 @use "tools/palette-collection";
 @use "tools/palette-extractor";
 @use "tools/palette-genny";

@@ -908,6 +908,50 @@ export const toolCategories: ToolCategory[] = [
 				icon: 'languages',
 				href: '/tools/shavian-transliterator',
 			},
+			{
+				id: 'morse-code',
+				name: 'Morse Code',
+				// ∑CG: catalogue cell description for the Morse tool
+				//   spec: one clause, ≤ 60 chars, sentence case, no period; says text goes to Morse and back, with playback
+				//   sample: "Encode, decode and play Morse code"
+				description: '∑CG',
+				icon: 'radio',
+				href: '/tools/morse-code',
+				new: true,
+			},
+			{
+				id: 'braille-converter',
+				name: 'Braille Converter',
+				// ∑CG: catalogue cell description for the Braille tool
+				//   spec: one clause, ≤ 60 chars, sentence case, no period; says text goes to Unicode braille (uncontracted) and back
+				//   sample: "Turn text into braille cells and back"
+				description: '∑CG',
+				icon: 'grip-vertical',
+				href: '/tools/braille-converter',
+				new: true,
+			},
+			{
+				id: 'ipa-transcriber',
+				name: 'IPA Transcription',
+				// ∑CG: catalogue cell description for the IPA tool
+				//   spec: one clause, ≤ 60 chars, sentence case, no period; says English text is transcribed to IPA from a pronouncing dictionary
+				//   sample: "Transcribe English text into IPA"
+				description: '∑CG',
+				icon: 'ear',
+				href: '/tools/ipa-transcriber',
+				new: true,
+			},
+			{
+				id: 'nato-phonetic',
+				name: 'NATO Phonetic',
+				// ∑CG: catalogue cell description for the spelling-alphabet tool
+				//   spec: one clause, ≤ 60 chars, sentence case, no period; says text is spelled out in the NATO alphabet or German DIN 5009
+				//   sample: "Spell text out in NATO or DIN 5009 words"
+				description: '∑CG',
+				icon: 'radio-tower',
+				href: '/tools/nato-phonetic',
+				new: true,
+			},
 		],
 	},
 	{
