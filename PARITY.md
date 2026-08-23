@@ -183,13 +183,13 @@ Picker is similarly web-only.
 
 ## Turbo-nerd
 
-| Tool (web ID)                                     |  W  |      C       |  I  | Notes                                                                     |
-| ------------------------------------------------- | :-: | :----------: | :-: | ------------------------------------------------------------------------- |
-| Shavian Transliterator (`shavian-transliterator`) | ✅  | ✅ `shavian` | ✅  |                                                                           |
-| Morse Code (`morse-code`)                         | ✅  |      ❌      | ❌  | new 2026-08; ITU Morse both ways, WebAudio playback                       |
-| Braille Converter (`braille-converter`)           | ✅  |      ❌      | ❌  | new 2026-08; uncontracted (Grade 1) Unicode braille both ways             |
-| IPA Transcription (`ipa-transcriber`)             | ✅  |      ❌      | ❌  | new 2026-08; CMU dictionary (shared with Shavian) → IPA, General American |
-| NATO Phonetic (`nato-phonetic`)                   | ✅  |      ❌      | ❌  | new 2026-08; NATO/ICAO, DIN 5009:2022 and traditional German tables       |
+| Tool (web ID)                                     |  W  |      C       |  I  | Notes                                                                                                                      |
+| ------------------------------------------------- | :-: | :----------: | :-: | -------------------------------------------------------------------------------------------------------------------------- |
+| Shavian Transliterator (`shavian-transliterator`) | ✅  | ✅ `shavian` | ✅  |                                                                                                                            |
+| Morse Code (`morse-code`)                         | ✅  |      ❌      | ❌  | new 2026-08; ITU Morse both ways, WebAudio playback                                                                        |
+| Braille Converter (`braille-converter`)           | ✅  |      ❌      | ❌  | new 2026-08; uncontracted (Grade 1) Unicode braille both ways                                                              |
+| IPA Transcription (`ipa-transcriber`)             | ✅  |      ❌      | ❌  | new 2026-08; CMU dictionary (shared with Shavian) → IPA, General American                                                  |
+| NATO Phonetic (`nato-phonetic`)                   | ✅  |      ❌      | ❌  | new 2026-08; NATO/ICAO, DIN 5009:2022 and traditional German tables; interactive letter chart (Morse, semaphore, ICS flag) |
 
 ---
 

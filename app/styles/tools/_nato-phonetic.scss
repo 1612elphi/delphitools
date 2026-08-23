@@ -155,3 +155,126 @@
 		background: var(--muted);
 	}
 }
+
+/* The wall chart: one tile per letter with Morse, semaphore and the flag. */
+.dt-nato-chart-head {
+	display: flex;
+	min-height: crayon.size(10);
+	align-items: center;
+	justify-content: space-between;
+	padding-inline: crayon.size(3);
+	border-top: 2px solid var(--border);
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-nato-chart-label {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("semibold");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.dt-nato-chart-hint {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-nato-chart {
+	display: grid;
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: repeat(auto-fill, minmax(crayon.size(36), 1fr));
+}
+
+.dt-nato-tile {
+	display: grid;
+	padding: crayon.size(3);
+	border: 0;
+	background: var(--card);
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+	gap: crayon.size(1) crayon.size(3);
+	grid-template: "letter morse" auto "letter sem" auto "letter flag" 1fr "word word" auto / 1fr auto;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-used {
+		background: color-mix(
+			in oklch,
+			var(--primary) 12%,
+			var(--card)
+		);
+	}
+}
+
+.dt-nato-tile-letter {
+	align-self: center;
+	font-size: 2.5rem;
+	font-weight: crayon.font-weight("bold");
+	grid-area: letter;
+	line-height: 1;
+}
+
+.dt-nato-tile-morse {
+	display: flex;
+	min-height: crayon.size(2);
+	align-items: center;
+	justify-content: flex-end;
+	color: var(--foreground);
+	gap: 3px;
+	grid-area: morse;
+}
+
+.dt-nato-dit,
+.dt-nato-dah {
+	height: 5px;
+	background: currentcolor;
+}
+
+.dt-nato-dit {
+	width: 5px;
+}
+
+.dt-nato-dah {
+	width: 14px;
+}
+
+.dt-nato-sem {
+	width: crayon.size(8);
+	height: crayon.size(8);
+	grid-area: sem;
+	justify-self: end;
+
+	circle {
+		fill: none;
+		stroke: var(--muted-foreground);
+		stroke-width: 2;
+	}
+
+	line {
+		stroke: currentcolor;
+		stroke-width: 3.5;
+	}
+}
+
+.dt-nato-flag {
+	width: crayon.size(10);
+	height: auto;
+	place-self: end end;
+	grid-area: flag;
+}
+
+.dt-nato-tile-word {
+	overflow: hidden;
+	margin-top: crayon.size(1);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("semibold");
+	grid-area: word;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

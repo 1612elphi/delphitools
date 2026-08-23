@@ -3,9 +3,12 @@ import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { eq } from 'ember-truth-helpers';
+import { htmlSafe } from '@ember/template';
 import Icon from 'delphitools-v2/components/icon';
 import DownloadLabel from 'delphitools-v2/components/download-label';
 import { downloadText } from 'delphitools-v2/lib/download';
+import { MORSE } from 'delphitools-v2/lib/morse';
+import { flagSvg, semaphoreSvg } from 'delphitools-v2/lib/signal-flags';
 import {
 	ALPHABETS,
 	looksSpelled,
@@ -20,6 +23,11 @@ const DIRECTIONS = ['Auto', 'Spell', 'Read'] as const;
 type Direction = (typeof DIRECTIONS)[number];
 
 const isSpace = (char: string) => /\s/.test(char);
+
+const LETTERS = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
+const flag = (letter: string) => htmlSafe(flagSvg(letter));
+const semaphore = (letter: string) => htmlSafe(semaphoreSvg(letter));
+const symbols = (letter: string) => [...(MORSE[letter] ?? '')];
 
 export default class NatoPhoneticTool extends Component {
 	@tracked input = '';
@@ -51,6 +59,15 @@ export default class NatoPhoneticTool extends Component {
 			: spellText(this.input, this.alphabet);
 	}
 
+	get tiles() {
+		const typed = this.reading ? '' : this.input.toUpperCase();
+		return LETTERS.map((letter) => ({
+			letter,
+			word: this.alphabet.words[letter],
+			used: typed.includes(letter),
+		}));
+	}
+
 	setInput = (event: Event) => {
 		this.input = (event.target as HTMLTextAreaElement).value;
 	};
@@ -61,6 +78,11 @@ export default class NatoPhoneticTool extends Component {
 
 	selectDirection = (direction: Direction) => {
 		this.direction = direction;
+	};
+
+	addLetter = (letter: string) => {
+		if (this.reading) this.direction = 'Spell';
+		this.input += letter;
 	};
 
 	copy = () => {
@@ -201,6 +223,62 @@ export default class NatoPhoneticTool extends Component {
 					</button>
 				</div>
 			{{/if}}
+
+			<div class="dt-nato-chart-head">
+				<span class="dt-nato-chart-label">Chart</span>
+				<span class="dt-nato-chart-hint">Tap to spell</span>
+			</div>
+			<div class="dt-nato-chart">
+				{{#each this.tiles key="letter" as |tile|}}
+					<button
+						type="button"
+						class="dt-nato-tile
+							{{if
+								tile.used
+								'is-used'
+							}}"
+						{{on
+							"click"
+							(fn
+								this.addLetter
+								tile.letter
+							)
+						}}
+					>
+						<span
+							class="dt-nato-tile-letter"
+						>{{tile.letter}}</span>
+						<span
+							class="dt-nato-tile-morse"
+							aria-hidden="true"
+						>
+							{{#each
+								(symbols
+									tile.letter
+								)
+								key="@index"
+								as |mark|
+							}}
+								<span
+									class={{if
+										(eq
+											mark
+											"-"
+										)
+										"dt-nato-dah"
+										"dt-nato-dit"
+									}}
+								></span>
+							{{/each}}
+						</span>
+						{{semaphore tile.letter}}
+						{{flag tile.letter}}
+						<span
+							class="dt-nato-tile-word"
+						>{{tile.word}}</span>
+					</button>
+				{{/each}}
+			</div>
 		</div>
 	</template>
 }

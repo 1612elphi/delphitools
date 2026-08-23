@@ -1398,3 +1398,22 @@ Rigs: morse-code 10, braille-converter 10, ipa-transcriber 8,
 nato-phonetic 10 (the clipboard checks need `clipboard-sanitized-write`
 in headless Chrome); tools rig now 91. Unit tests 623. Five description
 gaps in lib/tools.ts (De-skewer + the four) for slopsieve.
+
+## 2026-08-23: NATO chart
+
+The NATO Phonetic tool carries the wall chart (the Outside Open poster,
+as code): 26 tiles below the converter, each with the letter, its Morse
+code (from lib/morse.ts, square dit and dah marks), the flag-semaphore
+signal (circle with two arms) and the ICS maritime signal flag. All of it
+is data in lib/signal-flags.ts: flags are built as inline SVG strings from
+the Wikipedia blazons ("azure, a saltire argent"; A and B swallowtailed,
+N chequy of sixteen, Y bendy sinister of ten via rotate + clipPath),
+semaphore is a per-letter pair of arm angles in 45° steps, receiver's
+view. Tiles are buttons: a click types that letter into the input (and
+forces Spell when the tool was reading); letters present in the input get
+a primary-tinted wash; the word row follows the selected alphabet, so DIN
+5009 shows cities under the same flags. The flag outline is stroked with
+var(--border) inside the SVG, so swallowtails read on both themes. Unit
+tests (8, incl. uniqueness of all 26 semaphore signals); the nato rig
+grew to 16 checks. Umlaut rows (Ä Ö Ü ß) have no tiles: no ICS letter
+flag exists for them.

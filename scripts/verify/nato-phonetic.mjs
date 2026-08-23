@@ -104,4 +104,48 @@ await sleep(150);
 const saved = await page.evaluate(() => window.__result?.text());
 check('Download saves the read text', saved === 'TE', String(saved));
 
+// The chart: 26 tiles that type on click; the word row follows the alphabet.
+check('chart has 26 tiles', (await page.$$('.dt-nato-tile')).length === 26);
+await setInput('');
+await page.$$eval('.dt-nato-tile', (els) => {
+	els[7].click();
+	els[8].click();
+});
+await sleep(150);
+got = await pairs();
+check(
+	'clicking H and I spells Hotel India',
+	got.join(', ') === 'H Hotel, I India',
+	got.join(', '),
+);
+check(
+	'used tiles highlight',
+	(await page.$$eval('.dt-nato-tile.is-used', (els) => els.length)) === 2,
+);
+const qFlag = await page.$eval(
+	'.dt-nato-tile:nth-child(17) .dt-nato-flag',
+	(el) => el.innerHTML,
+);
+check(
+	'Quebec flag is one yellow rectangle',
+	(qFlag.match(/<rect/g) || []).length === 1 && qFlag.includes('#f5c928'),
+	qFlag.slice(0, 60),
+);
+check(
+	'every tile has morse marks and a semaphore',
+	await page.$$eval('.dt-nato-tile', (els) =>
+		els.every(
+			(el) =>
+				el.querySelector('.dt-nato-dit, .dt-nato-dah') &&
+				el.querySelector('.dt-nato-sem circle'),
+		),
+	),
+);
+await clickLabel('DIN 5009');
+const hWord = await page.$eval(
+	'.dt-nato-tile:nth-child(8) .dt-nato-tile-word',
+	(el) => el.textContent.trim(),
+);
+check('tile words follow the alphabet', hWord === 'Hamburg', hWord);
+
 await finish(browser);
