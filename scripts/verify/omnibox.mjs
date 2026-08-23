@@ -343,7 +343,32 @@ check(
 const pill = await page.$eval('.dt-hero-pill', (el) =>
 	el.textContent.replace(/\s+/g, ' ').trim(),
 );
-check('version pill above the hero art', /^v\d+\.\d+\.\d+/.test(pill), pill);
+check(
+	'the 2.0 pill above the hero art',
+	pill === 'welcome to delphitools 2.0!',
+	pill,
+);
+await page.click('.dt-hero-pill');
+await sleep(200);
+check(
+	"pill opens the what's-new dialog",
+	await page.$eval('.dt-wn', (el) => el.open),
+);
+for (let i = 0; i < 3; i++) {
+	await page.evaluate(() =>
+		[...document.querySelectorAll('.dt-wn-btn')]
+			.find((b) => b.textContent.trim() === 'Next')
+			?.click(),
+	);
+}
+await sleep(100);
+const lastBtn = await page.$eval('.dt-wn-btn.is-primary', (el) =>
+	el.textContent.trim(),
+);
+check("the last slide ends on let's go", lastBtn === 'let\u2019s go', lastBtn);
+await page.click('.dt-wn-btn.is-primary');
+await sleep(200);
+check('closing returns to the page', await page.$eval('.dt-wn', (el) => !el.open));
 await page.click('.dt-omni-legend-btn:last-child');
 await page.waitForFunction(() => location.pathname !== '/', { timeout: 10000 });
 check(

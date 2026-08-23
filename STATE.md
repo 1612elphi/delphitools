@@ -1426,3 +1426,14 @@ colour plus an announcement line (copy gap `PILL_NOTE` in omnibox.gts).
 Versioning is semver from here on, starting at 2.0.0 for the Ember
 rewrite; `package.json` is the single source (`resolveJsonModule` turned
 on in tsconfig.json so the component imports it). Omnibox rig: 29 checks.
+
+## 2026-08-23: 2.0 pill opens a what's-new popup
+
+The hero pill is a rounded button now (the one rounded shape in the
+square system, Ruby's call) reading Ruby's dictated line, and opens a
+four-slide popup shaped like the Substrata onboarding: components/
+whats-new.gts on the ui/dialog primitive (native dialog, showModal),
+slide dots, Back/Next, the final button reusing Substrata's shipped
+label. All four slide bodies are copy gaps (SLIDE_HELLO, SLIDE_WORKFLOWS,
+SLIDE_TOOLS, SLIDE_THANKS) for slopsieve. The version chip is gone from
+the pill; package.json stays the semver source. Omnibox rig: 32 checks.

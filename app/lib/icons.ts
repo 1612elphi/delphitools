@@ -162,6 +162,7 @@ import iPanelBottom from 'lucide-static/icons/panel-bottom.svg?raw';
 import iPanelLeft from 'lucide-static/icons/panel-left.svg?raw';
 import iPanelRight from 'lucide-static/icons/panel-right.svg?raw';
 import iPanelTop from 'lucide-static/icons/panel-top.svg?raw';
+import iPartyPopper from 'lucide-static/icons/party-popper.svg?raw';
 import iPause from 'lucide-static/icons/pause.svg?raw';
 import iPenLine from 'lucide-static/icons/pen-line.svg?raw';
 import iPencil from 'lucide-static/icons/pencil.svg?raw';
@@ -396,6 +397,7 @@ export const icons: Record<string, string> = {
 	'panel-left': iPanelLeft,
 	'panel-right': iPanelRight,
 	'panel-top': iPanelTop,
+	'party-popper': iPartyPopper,
 	pause: iPause,
 	'pen-line': iPenLine,
 	pencil: iPencil,
