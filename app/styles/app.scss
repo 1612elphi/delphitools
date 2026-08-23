@@ -1634,47 +1634,6 @@ $header-height: crayon.size(14);
 	will-change: translate, scale, opacity;
 }
 
-/* the home page's way into the workflow catalogue: one flush bar */
-.dt-wf-link {
-	@include crayon.hstack(3);
-
-	align-items: center;
-	min-height: crayon.size(14);
-	margin-bottom: crayon.size(12);
-	padding-inline: crayon.size(4);
-	border: 2px solid var(--border);
-	background: var(--card);
-	color: var(--card-foreground);
-	font-size: crayon.font-size("sm");
-	font-weight: crayon.font-weight("bold");
-	text-decoration: none;
-
-	.dt-icon {
-		width: crayon.size(5);
-		height: crayon.size(5);
-		color: var(--primary);
-	}
-
-	@include crayon.hover {
-		background: var(--accent);
-		color: var(--accent-foreground);
-	}
-
-	&:focus-visible {
-		outline: 2px solid var(--ring);
-		outline-offset: -2px;
-	}
-}
-
-.dt-wf-link-count {
-	font-weight: crayon.font-weight("normal");
-	color: var(--muted-foreground);
-}
-
-.dt-wf-link-arrow {
-	margin-left: auto;
-}
-
 /* the workflow catalogue: one flush row per chain (DESIGN.md §12) */
 .dt-wf {
 	border: 2px solid var(--border);
@@ -2397,6 +2356,73 @@ $header-height: crayon.size(14);
 	&:focus-visible {
 		outline: 2px solid var(--ring);
 		outline-offset: -2px;
+	}
+}
+
+/* the flagship treatment (Substrata, Workflows): an accent wash, icon and
+   name in the accent, a shine that sweeps across on hover */
+.dt-cell.is-highlight {
+	position: relative;
+	overflow: hidden;
+	background: linear-gradient(
+		135deg,
+		color-mix(in oklch, var(--primary) 28%, var(--card)),
+		color-mix(in oklch, var(--primary) 10%, var(--card))
+	);
+
+	.dt-cell-icon,
+	.dt-cell-name {
+		color: var(--primary);
+	}
+
+	&::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(
+			115deg,
+			transparent 35%,
+			color-mix(in oklch, var(--primary) 45%, transparent) 50%,
+			transparent 65%
+		);
+		transform: translateX(-100%);
+		pointer-events: none;
+	}
+
+	@include crayon.hover {
+		background: linear-gradient(
+			135deg,
+			color-mix(in oklch, var(--primary) 36%, var(--card)),
+			color-mix(in oklch, var(--primary) 16%, var(--card))
+		);
+		color: var(--card-foreground);
+
+		&::after {
+			transition: transform 700ms ease-out;
+			transform: translateX(100%);
+		}
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dt-cell.is-highlight::after {
+		display: none;
+	}
+}
+
+/* Greatest Hits: six tracks, the two flagships span three, the three hits
+   span two, so both rows fill (an auto-fit grid left a dark track) */
+@include crayon.screen("md") {
+	.dt-grid.is-featured {
+		grid-template-columns: repeat(6, 1fr);
+
+		> .dt-cell {
+			grid-column: span 2;
+		}
+
+		> .dt-cell.is-highlight {
+			grid-column: span 3;
+		}
 	}
 }
 

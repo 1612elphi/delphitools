@@ -51,6 +51,9 @@ export interface Tool {
 	/** off-site / off-catalogue destination (App Store, GitHub) — the grid
 	 *  renders a plain new-tab anchor and no /tools/[id] page is generated */
 	external?: boolean;
+	/** a page at its own Ember route (Substrata → editor, Workflows); the
+	 *  grid and sidebar link there instead of /tools/[id] */
+	route?: string;
 	/** the flagship treatment: green accent, double-width cell, ghosted
 	 *  wordmark backdrop (Substrata) */
 	highlight?: boolean;
@@ -228,6 +231,7 @@ export const toolCategories: ToolCategory[] = [
 					'Edit, arrange and mark up images in the browser',
 				icon: 'brush',
 				href: '/editor',
+				route: 'editor',
 				accepts: ['image/*'],
 				beta: true,
 				new: true,
@@ -933,6 +937,28 @@ const featuredToolIds = [
 export const featuredTools = featuredToolIds
 	.map((id) => allTools.find((tool) => tool.id === id))
 	.filter((tool): tool is Tool => tool !== undefined);
+
+/** Not a tool, so outside the categories and the parity record; the home
+ *  page's Greatest Hits shows it beside Substrata with the same treatment. */
+const workflowsEntry: Tool = {
+	id: 'workflows',
+	name: 'Workflows',
+	// ∑CG: home-page cell description for Workflows, beside Substrata
+	//   spec: <= 60 chars, one line, says tools chain and each step hands its result to the next
+	//   sample: 'Chain tools; each step hands its result to the next'
+	description: '∑CG',
+	icon: 'workflow',
+	href: '/workflows',
+	route: 'workflows',
+	highlight: true,
+};
+
+/** the home page's Greatest Hits: the two highlighted entries first */
+export const homeFeatured: Tool[] = [
+	...featuredTools.filter((tool) => tool.highlight),
+	workflowsEntry,
+	...featuredTools.filter((tool) => !tool.highlight),
+];
 
 /**
  * Route params for every catalogue entry that has a /tools/[toolId] page —

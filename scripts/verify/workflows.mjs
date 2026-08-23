@@ -64,7 +64,7 @@ const barState = () =>
 
 const startFlow = async (name) => {
 	if (!(await page.$('.dt-wf-row'))) {
-		await page.click('.dt-wf-link');
+		await page.click('.dt-cell.is-highlight[href="/workflows"]');
 		await page.waitForSelector('.dt-wf-row', { timeout: 15000 });
 	}
 	await page.evaluate((name) => {
@@ -98,13 +98,18 @@ const buttonText = (selector) =>
 
 await visit(page, '/');
 check(
-	'home links to the workflows page and shows no bar',
-	await page.evaluate(
-		() =>
-			!!document.querySelector('.dt-wf-link') &&
+	'Greatest Hits highlights Substrata and Workflows, links Workflows to its page, no bar',
+	await page.evaluate(() => {
+		const hits = [...document.querySelectorAll('.dt-section')].find((s) =>
+			/Greatest/.test(s.querySelector('.dt-section-title')?.textContent ?? ''),
+		);
+		const cells = [...(hits?.querySelectorAll('.dt-cell.is-highlight') ?? [])];
+		return (
+			cells.map((c) => c.getAttribute('href')).join() === '/editor,/workflows' &&
 			!document.querySelector('.dt-wf-row') &&
-			!document.querySelector('.dt-flow'),
-	),
+			!document.querySelector('.dt-flow')
+		);
+	}),
 );
 await visit(page, '/workflows');
 check(

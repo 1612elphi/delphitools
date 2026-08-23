@@ -43,12 +43,36 @@ const ToolGrid: TOC<ToolGridSignature> = <template>
 						class="dt-cell-desc"
 					>{{tool.description}}</span>
 				</a>
+			{{else if tool.route}}
+				<LinkTo
+					@route={{tool.route}}
+					class="dt-cell
+						{{if
+							tool.highlight
+							'is-highlight'
+						}}"
+				>
+					<Icon
+						@name={{tool.icon}}
+						class="dt-cell-icon"
+					/>
+					<span
+						class="dt-cell-name"
+					>{{tool.name}}</span>
+					<span
+						class="dt-cell-desc"
+					>{{tool.description}}</span>
+				</LinkTo>
 			{{else}}
 				<LinkTo
 					@route="tools.tool"
 					@model={{tool.id}}
 					@query={{queryOrEmpty @query}}
-					class="dt-cell"
+					class="dt-cell
+						{{if
+							tool.highlight
+							'is-highlight'
+						}}"
 				>
 					<Icon
 						@name={{tool.icon}}

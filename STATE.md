@@ -1287,3 +1287,18 @@ numbered tiles, a primary Start cell. The home page carries one flush
 link bar to the page instead of the list; the app header names the page.
 Paste Image now declares `accepts: ['image/*']` (it always read images
 from paste and drop; the omnibox never knew). Rig: workflows 21 checks.
+
+Follow-up (same day): Workflows beside Substrata in Greatest Hits, both
+with the flagship treatment. `highlight: true` was declared on the Tool
+interface and set on Substrata, but the Ember port never implemented it
+(Substrata rendered as a plain cell and the grid linked it to
+/tools/substrata, a placeholder page). Now: `route?: string` on Tool for
+entries at their own Ember route (Substrata → editor, Workflows), which the
+grid and the sidebar's featured group link to; `homeFeatured` in
+lib/tools.ts puts the two flagships first (Workflows is a standalone entry
+outside the categories and the parity record, description as a copy gap);
+`.dt-cell.is-highlight` is an accent gradient wash with icon and name in
+the accent and a shine that sweeps across on hover (off under reduced
+motion); the Greatest Hits grid has six tracks from md up (flagships span
+three, hits span two) so both rows fill instead of leaving a dark track.
+The home link bar is gone. Rig: workflows 21 checks.

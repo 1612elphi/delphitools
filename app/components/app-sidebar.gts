@@ -260,18 +260,34 @@ export default class AppSidebar extends Component {
 								@label={{tool.name}}
 								@show={{this.collapsed}}
 							>
-								<LinkTo
-									@route="tools.tool"
-									@model={{tool.id}}
-									class="dt-nav-link dt-nav-link--featured"
-								>
-									<Icon
-										@name={{tool.icon}}
-									/>
-									<span
-										class="dt-nav-label"
-									>{{tool.name}}</span>
-								</LinkTo>
+								{{#if
+									tool.route
+								}}
+									<LinkTo
+										@route={{tool.route}}
+										class="dt-nav-link dt-nav-link--featured"
+									>
+										<Icon
+											@name={{tool.icon}}
+										/>
+										<span
+											class="dt-nav-label"
+										>{{tool.name}}</span>
+									</LinkTo>
+								{{else}}
+									<LinkTo
+										@route="tools.tool"
+										@model={{tool.id}}
+										class="dt-nav-link dt-nav-link--featured"
+									>
+										<Icon
+											@name={{tool.icon}}
+										/>
+										<span
+											class="dt-nav-label"
+										>{{tool.name}}</span>
+									</LinkTo>
+								{{/if}}
 							</NavTip>
 						{{/each}}
 					</div>
