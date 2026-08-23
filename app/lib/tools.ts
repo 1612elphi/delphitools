@@ -331,6 +331,7 @@ export const toolCategories: ToolCategory[] = [
 					'Paste and download an image from your clipboard',
 				icon: 'clipboard-paste',
 				href: '/tools/paste-image',
+				accepts: ['image/*'],
 			},
 			{
 				id: 'placeholder-genny',

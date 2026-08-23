@@ -1274,3 +1274,16 @@ document (or the source pane in code mode), and a file that lands before
 the editor core has loaded waits in `#pendingText`. `TEXT_ACCEPT` in
 lib/tools.ts is the one list for the registry and both tools. Rig:
 `scripts/verify/text-intake.mjs` (2 checks).
+
+## 2026-08-23: Workflows page
+
+`/workflows` is a page in the tool-page shape (header with the workflow
+icon, title, a copy gap for the description) over `WorkflowList`
+(`components/workflow-list.gts`, replaces the grid): one flush 2px-framed
+list, a row per chain divided by hairlines: a name cell with what goes in
+(`workflowInput`, one word from the first tool's registry entry: video,
+audio, image, PDF, text, colour), the steps as the Flow State bar's
+numbered tiles, a primary Start cell. The home page carries one flush
+link bar to the page instead of the list; the app header names the page.
+Paste Image now declares `accepts: ['image/*']` (it always read images
+from paste and drop; the omnibox never knew). Rig: workflows 21 checks.

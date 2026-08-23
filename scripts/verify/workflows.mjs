@@ -63,9 +63,13 @@ const barState = () =>
 	}));
 
 const startFlow = async (name) => {
+	if (!(await page.$('.dt-wf-row'))) {
+		await page.click('.dt-wf-link');
+		await page.waitForSelector('.dt-wf-row', { timeout: 15000 });
+	}
 	await page.evaluate((name) => {
-		[...document.querySelectorAll('.dt-flow-cell')]
-			.find((b) => b.querySelector('.dt-cell-name')?.textContent?.trim() === name)
+		[...document.querySelectorAll('.dt-wf-row')]
+			.find((b) => b.querySelector('.dt-wf-name span')?.textContent?.trim() === name)
 			?.click();
 	}, name);
 	await page.waitForSelector('.dt-flow', { timeout: 15000 });
@@ -94,13 +98,26 @@ const buttonText = (selector) =>
 
 await visit(page, '/');
 check(
-	'home lists six workflow cells and no bar',
+	'home links to the workflows page and shows no bar',
 	await page.evaluate(
 		() =>
-			document.querySelectorAll('.dt-flow-cell').length === 6 &&
+			!!document.querySelector('.dt-wf-link') &&
+			!document.querySelector('.dt-wf-row') &&
 			!document.querySelector('.dt-flow'),
 	),
 );
+await visit(page, '/workflows');
+check(
+	'the Workflows page lists six rows under its own header',
+	await page.evaluate(
+		() =>
+			document.querySelectorAll('.dt-wf-row').length === 6 &&
+			document.querySelector('.dt-header h1')?.textContent?.trim() === 'Workflows' &&
+			[...document.querySelectorAll('.dt-wf-in')].map((s) => s.textContent?.trim()).join() ===
+				'video,video,image,video,video,colour',
+	),
+);
+await visit(page, '/');
 
 // --- Paste and strip ------------------------------------------------------
 await startFlow('Paste and strip');
@@ -169,15 +186,15 @@ check(
 
 const other = await browser.newPage();
 other.on('dialog', (dialog) => void dialog.accept());
-await visit(other, '/');
+await visit(other, '/workflows');
 check(
 	'a second tab leaves a live flow\'s bag alone',
 	(await bagCount(other)) === 1,
 );
 // the second tab runs a flow of its own, captures, and closes: an orphan
 await other.evaluate(() => {
-	[...document.querySelectorAll('.dt-flow-cell')]
-		.find((b) => b.querySelector('.dt-cell-name')?.textContent?.trim() === 'Paste and strip')
+	[...document.querySelectorAll('.dt-wf-row')]
+		.find((b) => b.querySelector('.dt-wf-name span')?.textContent?.trim() === 'Paste and strip')
 		?.click();
 });
 await other.waitForSelector('.dt-flow', { timeout: 15000 });

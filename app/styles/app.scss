@@ -1634,24 +1634,143 @@ $header-height: crayon.size(14);
 	will-change: translate, scale, opacity;
 }
 
-/* home cells are buttons: a flow starts, it is not a route */
-.dt-flow-cell {
+/* the home page's way into the workflow catalogue: one flush bar */
+.dt-wf-link {
+	@include crayon.hstack(3);
+
+	align-items: center;
+	min-height: crayon.size(14);
+	margin-bottom: crayon.size(12);
+	padding-inline: crayon.size(4);
+	border: 2px solid var(--border);
+	background: var(--card);
+	color: var(--card-foreground);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	text-decoration: none;
+
+	.dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+		color: var(--primary);
+	}
+
+	@include crayon.hover {
+		background: var(--accent);
+		color: var(--accent-foreground);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -2px;
+	}
+}
+
+.dt-wf-link-count {
+	font-weight: crayon.font-weight("normal");
+	color: var(--muted-foreground);
+}
+
+.dt-wf-link-arrow {
+	margin-left: auto;
+}
+
+/* the workflow catalogue: one flush row per chain (DESIGN.md §12) */
+.dt-wf {
+	border: 2px solid var(--border);
+	background: var(--card);
+}
+
+.dt-wf-row {
+	display: flex;
 	width: 100%;
+	min-height: crayon.size(14);
+	align-items: stretch;
+	padding: 0;
 	border: 0;
+	background: none;
+	color: inherit;
 	font: inherit;
 	text-align: left;
 	cursor: pointer;
+
+	& + & {
+		border-top: 1px solid var(--border);
+	}
+
+	@include crayon.hover {
+		background: var(--accent);
+		color: var(--accent-foreground);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -2px;
+	}
 }
 
-.dt-flow-chain {
-	@include crayon.hstack(1);
+.dt-wf-name {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: crayon.size(1);
+	flex: none;
+	width: crayon.size(52);
+	padding: crayon.size(3) crayon.size(4);
+	border-right: 1px solid var(--border);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+}
 
-	flex-wrap: wrap;
+.dt-wf-in {
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("medium");
+	letter-spacing: crayon.tracking("wide");
+	text-transform: uppercase;
+	color: var(--muted-foreground);
+}
+
+.dt-wf-steps {
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	overflow-x: auto;
+}
+
+.dt-wf-step {
+	@include crayon.hstack(2);
+
 	align-items: center;
+	padding-inline: crayon.size(4);
+	font-size: crayon.font-size("sm");
+	white-space: nowrap;
+
+	& + & {
+		border-left: 1px solid var(--border);
+	}
 
 	.dt-icon {
-		width: crayon.size(3);
-		height: crayon.size(3);
+		width: crayon.size(4);
+		height: crayon.size(4);
+		color: var(--primary);
+	}
+}
+
+.dt-wf-start {
+	@include crayon.hstack(2);
+
+	flex: none;
+	align-items: center;
+	padding-inline: crayon.size(5);
+	border-left: 1px solid var(--border);
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("semibold");
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
 	}
 }
 

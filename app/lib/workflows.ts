@@ -54,6 +54,23 @@ export function workflowTools(workflow: Workflow): Tool[] {
 	return workflow.steps.flatMap((id) => getToolById(id) ?? []);
 }
 
+const INPUTS: [pattern: string, label: string][] = [
+	['video/*', 'video'],
+	['audio/*', 'audio'],
+	['image/*', 'image'],
+	['.pdf', 'PDF'],
+	['.md', 'text'],
+];
+
+/** one word for what the first step takes, from its registry entry; empty when unknown */
+export function workflowInput(workflow: Workflow): string {
+	const first = getToolById(workflow.steps[0] ?? '');
+	if (!first) return '';
+	if (first.carryColour) return 'colour';
+	const accepts = first.accepts ?? [];
+	return INPUTS.find(([pattern]) => accepts.includes(pattern))?.[1] ?? '';
+}
+
 /**
  * Which files from the bag a step takes: for each pattern in its accept list,
  * the newest file matching it, each file once, in bag order. A single-input

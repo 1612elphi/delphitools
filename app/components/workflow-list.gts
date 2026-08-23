@@ -5,6 +5,7 @@ import { service } from '@ember/service';
 import Icon from 'delphitools-v2/components/icon';
 import {
 	WORKFLOWS,
+	workflowInput,
 	workflowTools,
 	type Workflow,
 } from 'delphitools-v2/lib/workflows';
@@ -12,11 +13,19 @@ import type FlowService from 'delphitools-v2/services/flow';
 
 const ROWS = WORKFLOWS.map((workflow) => ({
 	workflow,
-	tools: workflowTools(workflow),
+	input: workflowInput(workflow),
+	steps: workflowTools(workflow).map((tool, index) => ({
+		n: index + 1,
+		tool,
+	})),
 }));
 
-/** The catalogue of workflows; a cell starts its flow. */
-export default class WorkflowGrid extends Component<{
+/**
+ * The catalogue of workflows, one flush row each: the name and what goes
+ * in, the steps as the Flow State bar's tiles, a Start cell. A row starts
+ * its flow.
+ */
+export default class WorkflowList extends Component<{
 	Element: HTMLDivElement;
 }> {
 	@service declare flow: FlowService;
@@ -34,41 +43,47 @@ export default class WorkflowGrid extends Component<{
 	};
 
 	<template>
-		<div class="dt-grid" ...attributes>
+		<div class="dt-wf" ...attributes>
 			{{#each ROWS key="workflow.id" as |row|}}
 				<button
 					type="button"
-					class="dt-cell dt-flow-cell"
+					class="dt-wf-row"
 					{{on
 						"click"
 						(fn this.start row.workflow)
 					}}
 				>
-					<Icon
-						@name="workflow"
-						class="dt-cell-icon"
-					/>
-					<span
-						class="dt-cell-name"
-					>{{row.workflow.name}}</span>
-					<span
-						class="dt-cell-desc dt-flow-chain"
-					>
-						{{#each
-							row.tools
-							as |tool index|
-						}}
-							{{#if index}}
-								<Icon
-									@name="arrow-right"
-								/>
-							{{/if}}
-							<Icon
-								@name={{tool.icon}}
-							/>
+					<span class="dt-wf-name">
+						<span
+						>{{row.workflow.name}}</span>
+						{{#if row.input}}
 							<span
-							>{{tool.name}}</span>
+								class="dt-wf-in"
+							>{{row.input}}</span>
+						{{/if}}
+					</span>
+					<span class="dt-wf-steps">
+						{{#each
+							row.steps key="n"
+							as |step|
+						}}
+							<span
+								class="dt-wf-step"
+							>
+								<span
+									class="dt-flow-n"
+								>{{step.n}}</span>
+								<Icon
+									@name={{step.tool.icon}}
+								/>
+								<span
+								>{{step.tool.name}}</span>
+							</span>
 						{{/each}}
+					</span>
+					<span class="dt-wf-start">
+						Start
+						<Icon @name="arrow-right" />
 					</span>
 				</button>
 			{{/each}}

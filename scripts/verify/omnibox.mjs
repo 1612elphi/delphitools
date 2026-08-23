@@ -34,6 +34,11 @@ check('idle: hero art renders from the manifest', !!idle.art, idle.art ?? '');
 
 // --- search --------------------------------------------------------------
 await type('palette');
+// the answers load their tool chunks on demand; under load a fixed wait is not enough
+await page.waitForFunction(
+	() => !!document.querySelector('.dt-omni-catalogue.is-dimmed'),
+	{ timeout: 10000 },
+);
 const search = await page.evaluate(() => ({
 	title: document
 		.querySelector('.dt-section-title')

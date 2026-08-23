@@ -33,6 +33,10 @@ export default class AppHeader extends Component {
 		return this.router.currentRouteName === 'index';
 	}
 
+	get isWorkflows() {
+		return this.router.currentRouteName === 'workflows';
+	}
+
 	// colour-converter is excluded because its own format picker already sets
 	// the notation for everything it shows. Same condition as the Next header.
 	get showsNotation() {
@@ -74,6 +78,14 @@ export default class AppHeader extends Component {
 						class="dt-header-icon"
 					/>
 					<h1>Home</h1>
+				</span>
+			{{else if this.isWorkflows}}
+				<span class="dt-header-title">
+					<Icon
+						@name="workflow"
+						class="dt-header-icon"
+					/>
+					<h1>Workflows</h1>
 				</span>
 			{{else}}
 				<span class="dt-header-title">
