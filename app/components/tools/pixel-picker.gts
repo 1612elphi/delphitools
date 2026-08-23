@@ -7,6 +7,7 @@ import { eq } from 'ember-truth-helpers';
 import { service } from '@ember/service';
 import { modifier } from 'ember-modifier';
 import Icon from 'delphitools-v2/components/icon';
+import { carryColour } from 'delphitools-v2/lib/colour-query';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import { rgbToHex } from 'delphitools-v2/lib/colour-maths';
 import { getColourName } from 'delphitools-v2/lib/colour-names';
@@ -40,6 +41,13 @@ export default class PixelPickerTool extends Component {
 	@tracked activeSwatch: number | null = null;
 	@tracked hoverPos: { left: number; top: number } | null = null;
 	@tracked copied: string | null = null;
+
+	/** the active swatch, for a workflow that carries a colour on */
+	get carried(): string | undefined {
+		return this.activeSwatch === null
+			? undefined
+			: this.swatches[this.activeSwatch]?.hex;
+	}
 
 	readonly p3Supported = detectP3Support();
 	readonly loupeSize = LOUPE_SIZE;
@@ -371,6 +379,7 @@ export default class PixelPickerTool extends Component {
 
 	<template>
 		<div
+			{{carryColour this.carried}}
 			class="dt-pixel"
 			{{filePaste this.readFile accept="image/*"}}
 		>

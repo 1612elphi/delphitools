@@ -67,10 +67,6 @@ export default class WorkflowList extends Component<{
 						<th
 							scope="col"
 							class="dt-wf-th"
-						>After,</th>
-						<th
-							scope="col"
-							class="dt-wf-th"
 						>Finally,</th>
 						<th
 							scope="col"

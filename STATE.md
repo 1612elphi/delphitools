@@ -1304,11 +1304,27 @@ three, hits span two) so both rows fill instead of leaving a dark track.
 The home link bar is gone. Rig: workflows 21 checks.
 
 Follow-up (same day): the workflow list is a table. Column A is the name
-with the first step's registry category under it; columns B to E are the
-four step slots under a grammar header ("Workflow", "First,", "Then...",
-"After,", "Finally,"), so tools line up by position and the numbered tiles
-went; column F is Start. The name and Start both start the flow. Cells are
+with the first step's registry category under it; columns B to D are the
+three step slots under a grammar header ("Workflow", "First,", "Then...",
+"Finally,"), so tools line up by position and the numbered tiles went;
+column E is Start. The name and Start both start the flow. Cells are
 hairline-divided, rows hover, names wrap; the table has a 880px minimum
 and scrolls inside `.dt-wf-scroll` on narrow screens; the page body is
 uncapped (header capped) to give six columns room. `SLOTS` and
 `workflowCategory` in lib/workflows.ts; `workflowInput` is gone.
+
+## 2026-08-23: more workflows
+
+Sixteen chains, grouped by the first step's category in `WORKFLOWS`:
+Audio & Video: Trim, caption, burn · Record, trim, GIF · Trim and mute ·
+Frame, cut out · Audio to subtitles · Extract and normalise · Record,
+level, transcribe. Images: Paste and strip · Cut out, crop, compress ·
+Watermark and compress · Trace and optimise · Images to PDF. PDF:
+Organise, number, compress · Crop and impose. Colour: Colour to gradient ·
+Pick, then gradient (Pixel Picker is a colour source now: `carryColour`
+on its active swatch). Each non-first step takes a file through
+`filePaste` or a colour through `carryColour`; every step saves through
+lib/download; the unit test checks the registry side. Left out on
+purpose: chains whose hand-off depends on the format the user picks
+(Doc Converter → Text Editor) and anything ending in an info-only tool
+(Video Atlas, PDF Preflight).

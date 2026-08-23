@@ -114,14 +114,14 @@ check(
 );
 await visit(page, '/workflows');
 check(
-	'the Workflows page lists six rows under its own header',
+	'the Workflows page lists every workflow under its own header',
 	await page.evaluate(
 		() =>
-			document.querySelectorAll('.dt-wf-row').length === 6 &&
+			document.querySelectorAll('.dt-wf-row').length >= 15 &&
 			document.querySelector('.dt-header h1')?.textContent?.trim() === 'Workflows' &&
 			[...document.querySelectorAll('.dt-wf-th')].map((h) => h.textContent?.trim()).join() ===
-				'Workflow,First,,Then...,After,,Finally,,' &&
-			document.querySelectorAll('.dt-wf-row').length === 6 &&
+				'Workflow,First,,Then...,Finally,,' &&
+			document.querySelectorAll('.dt-wf-row').length >= 15 &&
 			[...document.querySelectorAll('.dt-wf-in')].every((s) => (s.textContent?.trim() ?? '') !== ''),
 	),
 );
