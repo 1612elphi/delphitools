@@ -1464,3 +1464,16 @@ fill (width 0.5 viewBox units, gradients included, `fill="none"` and
 shapes with their own stroke skipped), so neighbours overlap by half the
 stroke. Applied on both SVG paths, plain download and the captioned
 compose; PNG unchanged. Unit tests (5) and rig scripts/verify/qr-genny.mjs.
+
+## 2026-08-23: standing changelog popup
+
+A second rounded pill beside the welcome pill (both in .dt-hero-pills)
+opens components/changelog-popup.gts: a "Changes since" row with a
+baseline dropdown over three tabs (Features / Fixes / Technical, the
+ui/tabs primitive). Content is app/lib/changelog.ts: `RELEASES`, one
+entry per release with `since` and three string arrays, newest first;
+Ruby writes every string (currently all empty; changelog-2.0.txt is the
+material). This is the delivery shape for future changelogs: append a
+release, fill the arrays. The sidebar brand hover now reads
+"v2.0.0 · <sha>" (VERSION exported from lib/build-flags, off
+package.json). Omnibox rig: 40 checks.

@@ -24,6 +24,7 @@ import {
 } from 'delphitools-v2/lib/omni';
 import { HERO_ART } from 'delphitools-v2/lib/hero-art';
 import WhatsNew from 'delphitools-v2/components/whats-new';
+import ChangelogPopup from 'delphitools-v2/components/changelog-popup';
 
 const PLACEHOLDER = 'Drop a file, search for a tool, paste in text';
 
@@ -278,7 +279,10 @@ export default class Omnibox extends Component<OmniboxSignature> {
 
 	<template>
 		<header class="dt-hero is-doodle">
-			<WhatsNew />
+			<div class="dt-hero-pills">
+				<WhatsNew />
+				<ChangelogPopup />
+			</div>
 			<img src={{this.art.src}} alt="" class="dt-hero-art" />
 			<h1 class="dt-sr-only">delphitools</h1>
 		</header>

@@ -14,7 +14,7 @@ import Icon from 'delphitools-v2/components/icon';
 import AboutDelphitoolsBody from 'delphitools-v2/components/about-delphitools';
 import { toolCategories, featuredTools } from 'delphitools-v2/lib/tools';
 import type { Tool, ToolCategory } from 'delphitools-v2/lib/tools';
-import { COMMIT_SHA, PRIDE } from 'delphitools-v2/lib/build-flags';
+import { COMMIT_SHA, PRIDE, VERSION } from 'delphitools-v2/lib/build-flags';
 import type SidebarService from 'delphitools-v2/services/sidebar';
 
 function matches(tool: Tool, query: string) {
@@ -151,7 +151,8 @@ export default class AppSidebar extends Component {
 								class="dt-brand-sha"
 								title="Build commit"
 							>
-								version:
+								v{{VERSION}}
+								·
 								{{this.commitSha}}
 							</span>
 						</span>

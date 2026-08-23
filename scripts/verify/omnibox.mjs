@@ -369,6 +369,41 @@ check("the last slide ends on let's go", lastBtn === 'let\u2019s go', lastBtn);
 await page.click('.dt-wn-btn.is-primary');
 await sleep(200);
 check('closing returns to the page', await page.$eval('.dt-wn', (el) => !el.open));
+check(
+	'two pills above the hero art',
+	(await page.$$('.dt-hero-pill')).length === 2,
+);
+const second = await page.$$eval('.dt-hero-pill', (els) =>
+	els[1].textContent.replace(/\s+/g, ' ').trim(),
+);
+check("the second pill reads what's new?", second === "what's new?", second);
+await page.$$eval('.dt-hero-pill', (els) => els[1].click());
+await sleep(200);
+check('it opens the changelog popup', await page.$eval('.dt-cl', (el) => el.open));
+check(
+	'with a since baseline to pick',
+	await page.$eval('.dt-cl-select', (el) => el.value === '1.0'),
+);
+check('and three tabs', (await page.$$('.dt-cl-tab')).length === 3);
+await page.evaluate(() =>
+	[...document.querySelectorAll('.dt-cl-tab')]
+		.find((b) => b.textContent.trim() === 'Technical')
+		?.click(),
+);
+await sleep(100);
+check(
+	'tabs switch',
+	await page.$eval(
+		'.dt-cl-tab[aria-selected="true"]',
+		(el) => el.textContent.trim() === 'Technical',
+	),
+);
+await page.click('.dt-cl .dt-wn-btn');
+await sleep(200);
+check(
+	'the changelog closes',
+	await page.$eval('.dt-cl', (el) => !el.open),
+);
 await page.click('.dt-omni-legend-btn:last-child');
 await page.waitForFunction(() => location.pathname !== '/', { timeout: 10000 });
 check(
