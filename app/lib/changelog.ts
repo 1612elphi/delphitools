@@ -20,6 +20,20 @@ export const RELEASES: Release[] = [
 	{
 		version: '2.0.0',
 		since: '1.0',
+		// One plain string per bullet, one bullet per line of the popup;
+		// no markdown, no trailing period convention enforced. Sample
+		// shape only (non-final wording, keep this block commented):
+		//
+		//   features: [
+		//   	'Workflows: chain tools into a sequence and carry your file between steps.',
+		//   	'Auto Subtitle: speech-to-text subtitles generated entirely in your browser.',
+		//   ],
+		//   fixes: [
+		//   	'QR Generator: exported SVGs no longer show hairline seams between modules.',
+		//   ],
+		//   technical: [
+		//   	'The stack moved from Next.js to Ember 7 with Crayon CSS, built by Vite.',
+		//   ],
 		features: [],
 		fixes: [],
 		technical: [],
