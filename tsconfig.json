@@ -2,6 +2,7 @@
 	"extends": "@ember/app-tsconfig",
 	"include": ["app", "tests", "types"],
 	"compilerOptions": {
+		"resolveJsonModule": true,
 		"allowJs": true,
 		"paths": {
 			"delphitools-v2/tests/*": ["./tests/*"],

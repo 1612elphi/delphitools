@@ -1417,3 +1417,12 @@ var(--border) inside the SVG, so swallowtails read on both themes. Unit
 tests (8, incl. uniqueness of all 26 semaphore signals); the nato rig
 grew to 16 checks. Umlaut rows (Ä Ö Ü ß) have no tiles: no ICS letter
 flag exists for them.
+
+## 2026-08-23: version pill and semver
+
+The home page carries a version pill above the hero art
+(`.dt-hero-pill` in the omnibox header): the version chip on the primary
+colour plus an announcement line (copy gap `PILL_NOTE` in omnibox.gts).
+Versioning is semver from here on, starting at 2.0.0 for the Ember
+rewrite; `package.json` is the single source (`resolveJsonModule` turned
+on in tsconfig.json so the component imports it). Omnibox rig: 29 checks.

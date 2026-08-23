@@ -340,6 +340,10 @@ check(
 	legend.join('|') === "Choose a file|Paste from clipboard|I'm feeling lucky",
 	legend.join('|'),
 );
+const pill = await page.$eval('.dt-hero-pill', (el) =>
+	el.textContent.replace(/\s+/g, ' ').trim(),
+);
+check('version pill above the hero art', /^v\d+\.\d+\.\d+/.test(pill), pill);
 await page.click('.dt-omni-legend-btn:last-child');
 await page.waitForFunction(() => location.pathname !== '/', { timeout: 10000 });
 check(

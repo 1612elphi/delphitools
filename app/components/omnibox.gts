@@ -23,8 +23,17 @@ import {
 	type OmniReading,
 } from 'delphitools-v2/lib/omni';
 import { HERO_ART } from 'delphitools-v2/lib/hero-art';
+import pkg from '../../package.json';
 
 const PLACEHOLDER = 'Drop a file, search for a tool, paste in text';
+
+// Semver from 2.0.0 on (2026-08-23); package.json carries the version.
+const VERSION = pkg.version;
+
+// ∑CG: announcement next to the version number in the pill above the hero art
+//   spec: ≤ 36 chars, sentence case, no period, all caps rendering; announces that version 2.0 of the site is live
+//   sample: "delphitools 2.0 is here"
+const PILL_NOTE = '∑CG';
 
 // Answers hold off while the user is still typing.
 const READ_DEFER_MS = 120;
@@ -277,6 +286,14 @@ export default class Omnibox extends Component<OmniboxSignature> {
 
 	<template>
 		<header class="dt-hero is-doodle">
+			<p class="dt-hero-pill">
+				<span
+					class="dt-hero-pill-version"
+				>v{{VERSION}}</span>
+				<span
+					class="dt-hero-pill-note"
+				>{{PILL_NOTE}}</span>
+			</p>
 			<img src={{this.art.src}} alt="" class="dt-hero-art" />
 			<h1 class="dt-sr-only">delphitools</h1>
 		</header>
