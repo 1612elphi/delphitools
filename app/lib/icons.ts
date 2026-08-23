@@ -234,6 +234,7 @@ import iVolumeX from 'lucide-static/icons/volume-x.svg?raw';
 import iWand2 from 'lucide-static/icons/wand-2.svg?raw';
 import iWind from 'lucide-static/icons/wind.svg?raw';
 import iWorkflow from 'lucide-static/icons/workflow.svg?raw';
+import iWrench from 'lucide-static/icons/wrench.svg?raw';
 import iX from 'lucide-static/icons/x.svg?raw';
 import iZoomIn from 'lucide-static/icons/zoom-in.svg?raw';
 import iZoomOut from 'lucide-static/icons/zoom-out.svg?raw';
@@ -470,6 +471,7 @@ export const icons: Record<string, string> = {
 	'wand-2': iWand2,
 	wind: iWind,
 	workflow: iWorkflow,
+	wrench: iWrench,
 	x: iX,
 	'zoom-in': iZoomIn,
 	'zoom-out': iZoomOut,

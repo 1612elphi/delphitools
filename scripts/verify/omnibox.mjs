@@ -381,8 +381,12 @@ await page.$$eval('.dt-hero-pill', (els) => els[1].click());
 await sleep(200);
 check('it opens the changelog popup', await page.$eval('.dt-cl', (el) => el.open));
 check(
-	'with a since baseline to pick',
-	await page.$eval('.dt-cl-select', (el) => el.value === '1.0'),
+	'with the version picked in the title',
+	await page.$eval('.dt-cl-version', (el) => el.value === '2.0.0'),
+);
+check(
+	'tool entries carry a badge and a link',
+	(await page.$$('.dt-cl-tool .dt-cl-badge')).length > 0,
 );
 check('and three tabs', (await page.$$('.dt-cl-tab')).length === 3);
 await page.evaluate(() =>
@@ -398,7 +402,7 @@ check(
 		(el) => el.textContent.trim() === 'Technical',
 	),
 );
-await page.click('.dt-cl .dt-wn-btn');
+await page.click('.dt-cl-close');
 await sleep(200);
 check(
 	'the changelog closes',

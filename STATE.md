@@ -1495,3 +1495,13 @@ SVG Optimiser: svgo's removeDimensions strips width/height from nested
 content. The plugin is gone; `stripRootDimensions` removes the root's
 width/height only, and only when a viewBox exists to size it. Unit tests
 (4).
+
+## 2026-08-24: changelog popup as a document
+
+Ruby filled lib/changelog.ts. The popup now reads as a document: a
+centred bold title with the version picker inline ("What's new in
+version [2.0.0]?", Ruby's wording), tabs, a bulleted list, a plain Close
+at the bottom right; the flush since-row and footer bar are gone. An
+entry written "Name: text" whose Name matches a catalogue tool name
+(case-insensitive, exact) renders the name as a link to the tool with a
+star + wrench badge; anything else renders as plain text. Omnibox rig: 40.

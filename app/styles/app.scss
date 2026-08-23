@@ -2324,34 +2324,35 @@ $header-height: crayon.size(14);
 }
 
 /* The changelog popup: a since-picker over the three category tabs. */
+
+/* The changelog popup reads as a document: a centred title with the
+   version picker inline, tabs, a bulleted list. Not the flush chrome. */
 .dt-cl {
-	width: min(34rem, calc(100vw - #{crayon.size(8)}));
+	width: min(36rem, calc(100vw - #{crayon.size(8)}));
+	padding: crayon.size(6) crayon.size(7) crayon.size(5);
 }
 
-.dt-cl-since {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: crayon.size(2) crayon.size(3);
-	border-bottom: 1px solid var(--border);
-	gap: crayon.size(3);
+.dt-cl-title {
+	margin: 0 0 crayon.size(5);
+	font-size: crayon.font-size("2xl");
+	font-weight: crayon.font-weight("bold");
+	line-height: 1.3;
+	text-align: center;
 }
 
-.dt-cl-since-label {
-	color: var(--muted-foreground);
-	font-size: crayon.font-size("xs");
-	font-weight: crayon.font-weight("semibold");
-	letter-spacing: 0.05em;
-	text-transform: uppercase;
-}
-
-.dt-cl-select {
-	padding: crayon.size(1) crayon.size(2);
-	border: 1px solid var(--border);
-	background: var(--background);
-	color: inherit;
+.dt-cl-version {
+	padding: 0 crayon.size(1);
+	border: 0;
+	border-bottom: 2px solid var(--primary);
+	background: none;
+	color: var(--primary);
 	font: inherit;
-	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
 }
 
 .dt-cl-tabs {
@@ -2368,19 +2369,69 @@ $header-height: crayon.size(14);
 .dt-cl-body {
 	overflow-y: auto;
 	min-height: crayon.size(40);
-	max-height: 50dvh;
-	padding: crayon.size(4) crayon.size(5);
+	max-height: 55dvh;
+	padding: crayon.size(4) 0 0;
 }
 
 .dt-cl-list {
 	margin: 0;
-	padding-left: crayon.size(4);
-	color: var(--muted-foreground);
+	padding-left: crayon.size(5);
 	font-size: crayon.font-size("sm");
 	line-height: 1.625;
+}
 
-	li + li {
-		margin-top: crayon.size(2);
+.dt-cl-item + .dt-cl-item {
+	margin-top: crayon.size(2);
+}
+
+.dt-cl-tool {
+	color: var(--foreground);
+	font-weight: crayon.font-weight("bold");
+	text-decoration: underline;
+	text-decoration-color: color-mix(
+		in oklch,
+		var(--primary) 60%,
+		transparent
+	);
+	text-underline-offset: 3px;
+
+	@include crayon.hover {
+		color: var(--primary);
+	}
+}
+
+.dt-cl-badge {
+	display: inline-flex;
+	align-items: center;
+	margin-right: crayon.size(1);
+	color: var(--primary);
+	gap: 1px;
+	vertical-align: -1px;
+
+	.dt-icon {
+		width: crayon.size(3);
+		height: crayon.size(3);
+	}
+}
+
+.dt-cl-actions {
+	display: flex;
+	justify-content: flex-end;
+	margin-top: crayon.size(5);
+}
+
+.dt-cl-close {
+	padding: crayon.size(2) crayon.size(5);
+	border: 2px solid var(--border);
+	background: var(--background);
+	color: var(--foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("semibold");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
 	}
 }
 
