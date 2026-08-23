@@ -1634,37 +1634,62 @@ $header-height: crayon.size(14);
 	will-change: translate, scale, opacity;
 }
 
-/* the workflow catalogue: one flush row per chain (DESIGN.md §12) */
+/* the workflow catalogue as a table (DESIGN.md §12): one column per step
+   slot, so tools line up by position; rows and cells hairline-divided */
+.dt-wf-scroll {
+	overflow-x: auto;
+}
+
 .dt-wf {
+	width: 100%;
+	min-width: crayon.size(220);
 	border: 2px solid var(--border);
+	border-collapse: collapse;
 	background: var(--card);
+	table-layout: fixed;
+}
+
+.dt-wf-th {
+	padding: crayon.size(2) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("medium");
+	letter-spacing: crayon.tracking("wide");
+	text-align: left;
+	text-transform: uppercase;
+	color: var(--muted-foreground);
+
+	& + & {
+		border-left: 1px solid var(--border);
+	}
+
+	&:first-child {
+		width: 26%;
+	}
+
+	&:last-child {
+		width: crayon.size(28);
+	}
+}
+
+.dt-wf-row + .dt-wf-row .dt-wf-cell {
+	border-top: 1px solid var(--border);
 }
 
 .dt-wf-row {
-	display: flex;
-	width: 100%;
-	min-height: crayon.size(14);
-	align-items: stretch;
-	padding: 0;
-	border: 0;
-	background: none;
-	color: inherit;
-	font: inherit;
-	text-align: left;
-	cursor: pointer;
-
-	& + & {
-		border-top: 1px solid var(--border);
-	}
-
 	@include crayon.hover {
 		background: var(--accent);
 		color: var(--accent-foreground);
 	}
+}
 
-	&:focus-visible {
-		outline: 2px solid var(--ring);
-		outline-offset: -2px;
+.dt-wf-cell {
+	height: crayon.size(14);
+	padding: 0;
+	vertical-align: middle;
+
+	& + & {
+		border-left: 1px solid var(--border);
 	}
 }
 
@@ -1673,12 +1698,23 @@ $header-height: crayon.size(14);
 	flex-direction: column;
 	justify-content: center;
 	gap: crayon.size(1);
-	flex: none;
-	width: crayon.size(52);
+	width: 100%;
+	height: 100%;
+	min-height: crayon.size(14);
 	padding: crayon.size(3) crayon.size(4);
-	border-right: 1px solid var(--border);
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
 	font-size: crayon.font-size("sm");
 	font-weight: crayon.font-weight("bold");
+	text-align: left;
+	cursor: pointer;
+
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -2px;
+	}
 }
 
 .dt-wf-in {
@@ -1689,47 +1725,49 @@ $header-height: crayon.size(14);
 	color: var(--muted-foreground);
 }
 
-.dt-wf-steps {
-	display: flex;
-	flex: 1;
-	min-width: 0;
-	overflow-x: auto;
-}
-
 .dt-wf-step {
-	@include crayon.hstack(2);
-
-	align-items: center;
-	padding-inline: crayon.size(4);
+	padding: crayon.size(2) crayon.size(4);
 	font-size: crayon.font-size("sm");
-	white-space: nowrap;
-
-	& + & {
-		border-left: 1px solid var(--border);
-	}
+	line-height: crayon.leading("snug");
 
 	.dt-icon {
+		display: inline-flex;
 		width: crayon.size(4);
 		height: crayon.size(4);
+		margin-right: crayon.size(2);
+		vertical-align: -0.15em;
 		color: var(--primary);
 	}
 }
 
-.dt-wf-start {
+.dt-wf-go {
 	@include crayon.hstack(2);
 
-	flex: none;
+	width: 100%;
+	height: 100%;
+	min-height: crayon.size(14);
 	align-items: center;
-	padding-inline: crayon.size(5);
-	border-left: 1px solid var(--border);
+	justify-content: center;
+	border: 0;
 	background: var(--primary);
 	color: var(--primary-foreground);
+	font: inherit;
 	font-size: crayon.font-size("sm");
 	font-weight: crayon.font-weight("semibold");
+	cursor: pointer;
 
 	.dt-icon {
 		width: crayon.size(4);
 		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--primary) 90%, black);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -2px;
 	}
 }
 

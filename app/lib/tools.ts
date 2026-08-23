@@ -943,10 +943,7 @@ export const featuredTools = featuredToolIds
 const workflowsEntry: Tool = {
 	id: 'workflows',
 	name: 'Workflows',
-	// ∑CG: home-page cell description for Workflows, beside Substrata
-	//   spec: <= 60 chars, one line, says tools chain and each step hands its result to the next
-	//   sample: 'Chain tools; each step hands its result to the next'
-	description: '∑CG',
+	description: 'Execute multi-tool procedures',
 	icon: 'workflow',
 	href: '/workflows',
 	route: 'workflows',

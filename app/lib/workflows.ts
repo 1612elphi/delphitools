@@ -1,5 +1,5 @@
 import { matchesAccept } from 'delphitools-v2/modifiers/file-paste';
-import { getToolById, type Tool } from './tools';
+import { getCategoryByToolId, getToolById, type Tool } from './tools';
 
 /**
  * A predefined chain of tools. The flow service carries each step's output
@@ -54,22 +54,13 @@ export function workflowTools(workflow: Workflow): Tool[] {
 	return workflow.steps.flatMap((id) => getToolById(id) ?? []);
 }
 
-const INPUTS: [pattern: string, label: string][] = [
-	['video/*', 'video'],
-	['audio/*', 'audio'],
-	['image/*', 'image'],
-	['.pdf', 'PDF'],
-	['.md', 'text'],
-];
-
-/** one word for what the first step takes, from its registry entry; empty when unknown */
-export function workflowInput(workflow: Workflow): string {
-	const first = getToolById(workflow.steps[0] ?? '');
-	if (!first) return '';
-	if (first.carryColour) return 'colour';
-	const accepts = first.accepts ?? [];
-	return INPUTS.find(([pattern]) => accepts.includes(pattern))?.[1] ?? '';
+/** the registry category of the first step, the workflow's home */
+export function workflowCategory(workflow: Workflow): string {
+	return getCategoryByToolId(workflow.steps[0] ?? '')?.name ?? '';
 }
+
+/** how many step columns the table shows; a chain never needs more */
+export const SLOTS = 4;
 
 /**
  * Which files from the bag a step takes: for each pattern in its accept list,

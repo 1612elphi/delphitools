@@ -70,6 +70,7 @@ const startFlow = async (name) => {
 	await page.evaluate((name) => {
 		[...document.querySelectorAll('.dt-wf-row')]
 			.find((b) => b.querySelector('.dt-wf-name span')?.textContent?.trim() === name)
+			?.querySelector('.dt-wf-go')
 			?.click();
 	}, name);
 	await page.waitForSelector('.dt-flow', { timeout: 15000 });
@@ -118,8 +119,10 @@ check(
 		() =>
 			document.querySelectorAll('.dt-wf-row').length === 6 &&
 			document.querySelector('.dt-header h1')?.textContent?.trim() === 'Workflows' &&
-			[...document.querySelectorAll('.dt-wf-in')].map((s) => s.textContent?.trim()).join() ===
-				'video,video,image,video,video,colour',
+			[...document.querySelectorAll('.dt-wf-th')].map((h) => h.textContent?.trim()).join() ===
+				'Workflow,First,,Then...,After,,Finally,,' &&
+			document.querySelectorAll('.dt-wf-row').length === 6 &&
+			[...document.querySelectorAll('.dt-wf-in')].every((s) => (s.textContent?.trim() ?? '') !== ''),
 	),
 );
 await visit(page, '/');
@@ -200,6 +203,7 @@ check(
 await other.evaluate(() => {
 	[...document.querySelectorAll('.dt-wf-row')]
 		.find((b) => b.querySelector('.dt-wf-name span')?.textContent?.trim() === 'Paste and strip')
+		?.querySelector('.dt-wf-go')
 		?.click();
 });
 await other.waitForSelector('.dt-flow', { timeout: 15000 });

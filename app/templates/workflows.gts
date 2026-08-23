@@ -10,8 +10,8 @@ export default RouteTemplate(
 		{{pageTitle "Workflows"}}
 
 		<div class="dt-tool-page">
-			<div class="dt-tool-body is-capped">
-				<header class="dt-tool-header">
+			<div class="dt-tool-body">
+				<header class="dt-tool-header is-capped">
 					<span class="dt-tool-icon">
 						<Icon @name="workflow" />
 					</span>

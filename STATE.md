@@ -1302,3 +1302,13 @@ the accent and a shine that sweeps across on hover (off under reduced
 motion); the Greatest Hits grid has six tracks from md up (flagships span
 three, hits span two) so both rows fill instead of leaving a dark track.
 The home link bar is gone. Rig: workflows 21 checks.
+
+Follow-up (same day): the workflow list is a table. Column A is the name
+with the first step's registry category under it; columns B to E are the
+four step slots under a grammar header ("Workflow", "First,", "Then...",
+"After,", "Finally,"), so tools line up by position and the numbered tiles
+went; column F is Start. The name and Start both start the flow. Cells are
+hairline-divided, rows hover, names wrap; the table has a 880px minimum
+and scrolls inside `.dt-wf-scroll` on narrow screens; the page body is
+uncapped (header capped) to give six columns room. `SLOTS` and
+`workflowCategory` in lib/workflows.ts; `workflowInput` is gone.
