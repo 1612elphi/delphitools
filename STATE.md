@@ -1328,3 +1328,14 @@ lib/download; the unit test checks the registry side. Left out on
 purpose: chains whose hand-off depends on the format the user picks
 (Doc Converter → Text Editor) and anything ending in an info-only tool
 (Video Atlas, PDF Preflight).
+
+## 2026-08-23: omnibox legend as actions
+
+The three hint cells under the omnibox ("Drop a file", "Search tools",
+"Paste anything") are buttons now: Choose a file opens a picker (the drop
+affordance for touch screens, through the same `takeFile` path as a drop),
+Paste from clipboard reads the clipboard (a file if it holds one, else its
+text into the box; the paste affordance for screens without a shortcut),
+I'm feeling lucky opens a random tool page (`route` entries go to their
+route). The search hint went; the input is the search. Omnibox rig: 28
+checks.

@@ -1,6 +1,8 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
+import { service } from '@ember/service';
+import type RouterService from '@ember/routing/router-service';
 import { htmlSafe } from '@ember/template';
 import type { SafeString } from '@ember/template';
 import { LinkTo } from '@ember/routing';
@@ -12,6 +14,7 @@ import {
 	getToolById,
 	toolCategories,
 	type Tool,
+	allTools,
 } from 'delphitools-v2/lib/tools';
 import {
 	readInput,
@@ -48,6 +51,10 @@ function formatBytes(bytes: number): string {
 }
 
 export default class Omnibox extends Component<OmniboxSignature> {
+	@service declare router: RouterService;
+
+	#picker: HTMLInputElement | null = null;
+
 	@tracked raw = '';
 	@tracked reading: OmniReading | null = null;
 	@tracked file: File | null = null;
@@ -214,6 +221,60 @@ export default class Omnibox extends Component<OmniboxSignature> {
 		this.fileTools = [];
 	};
 
+	/** the legend's file picker, for screens with nothing to drag from */
+	picker = modifier((element: HTMLInputElement) => {
+		this.#picker = element;
+		return () => {
+			this.#picker = null;
+		};
+	});
+
+	chooseFile = () => this.#picker?.click();
+
+	pickFile = (event: Event) => {
+		const input = event.target as HTMLInputElement;
+		const file = input.files?.[0];
+		if (file) this.takeFile(file);
+		input.value = '';
+	};
+
+	/** the legend's paste button, for screens without a paste shortcut: a
+	 *  file if the clipboard holds one, else its text into the box */
+	pasteClipboard = async () => {
+		try {
+			for (const item of await navigator.clipboard.read()) {
+				const type = item.types.find(
+					(t) => !t.startsWith('text/'),
+				);
+				if (!type) continue;
+				const blob = await item.getType(type);
+				const ext = type.split('/')[1] ?? 'bin';
+				this.takeFile(
+					new File([blob], `clipboard.${ext}`, {
+						type,
+					}),
+				);
+				return;
+			}
+			const text = await navigator.clipboard.readText();
+			if (!text) return;
+			this.clearFile();
+			this.raw = text;
+			this.#scheduleRead();
+		} catch {
+			// permission refused or an empty clipboard: nothing to take
+		}
+	};
+
+	/** the legend's third button: any tool page, at random */
+	feelingLucky = () => {
+		const pool = allTools.filter((tool) => !tool.external);
+		const tool = pool[Math.floor(Math.random() * pool.length)];
+		if (!tool) return;
+		if (tool.route) void this.router.transitionTo(tool.route);
+		else void this.router.transitionTo('tools.tool', tool.id);
+	};
+
 	<template>
 		<header class="dt-hero is-doodle">
 			<img src={{this.art.src}} alt="" class="dt-hero-art" />
@@ -273,15 +334,55 @@ export default class Omnibox extends Component<OmniboxSignature> {
 					</div>
 					{{#if this.isIdle}}
 						<div class="dt-omni-legend">
-							<span><Icon
+							<button
+								type="button"
+								class="dt-omni-legend-btn"
+								{{on
+									"click"
+									this.chooseFile
+								}}
+							>
+								<Icon
 									@name="file-up"
-								/>Drop a file</span>
-							<span><Icon
-									@name="search"
-								/>Search tools</span>
-							<span><Icon
+								/>Choose a file
+							</button>
+							<input
+								type="file"
+								class="dt-omni-pick"
+								aria-label="Choose a file"
+								tabindex="-1"
+								{{this.picker}}
+								{{on
+									"change"
+									this.pickFile
+								}}
+							/>
+							<button
+								type="button"
+								class="dt-omni-legend-btn"
+								{{on
+									"click"
+									this.pasteClipboard
+								}}
+							>
+								<Icon
 									@name="clipboard-paste"
-								/>Paste anything</span>
+								/>Paste from
+								clipboard
+							</button>
+							<button
+								type="button"
+								class="dt-omni-legend-btn"
+								{{on
+									"click"
+									this.feelingLucky
+								}}
+							>
+								<Icon
+									@name="dices"
+								/>I'm feeling
+								lucky
+							</button>
 						</div>
 					{{/if}}
 				{{/if}}

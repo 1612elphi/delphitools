@@ -79,6 +79,7 @@ import iCopy from 'lucide-static/icons/copy.svg?raw';
 import iCopyPlus from 'lucide-static/icons/copy-plus.svg?raw';
 import iCrop from 'lucide-static/icons/crop.svg?raw';
 import iCrosshair from 'lucide-static/icons/crosshair.svg?raw';
+import iDices from 'lucide-static/icons/dices.svg?raw';
 import iDock from 'lucide-static/icons/dock.svg?raw';
 import iDot from 'lucide-static/icons/dot.svg?raw';
 import iDownload from 'lucide-static/icons/download.svg?raw';
@@ -308,6 +309,7 @@ export const icons: Record<string, string> = {
 	'copy-plus': iCopyPlus,
 	crop: iCrop,
 	crosshair: iCrosshair,
+	dices: iDices,
 	dock: iDock,
 	dot: iDot,
 	download: iDownload,

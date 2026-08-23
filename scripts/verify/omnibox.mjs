@@ -22,7 +22,7 @@ async function type(value) {
 }
 
 const idle = await page.evaluate(() => ({
-	legend: document.querySelectorAll('.dt-omni-legend > span').length,
+	legend: document.querySelectorAll('.dt-omni-legend-btn').length,
 	sections: document.querySelectorAll('.dt-section').length,
 	art: document
 		.querySelector('.dt-hero.is-doodle .dt-hero-art')
@@ -329,5 +329,23 @@ const focused = await page.evaluate(() =>
 	document.activeElement?.classList.contains('dt-omni-input'),
 );
 check('⌘K focuses the field', focused === true);
+
+// --- legend --------------------------------------------------------------
+await visit(page, '/');
+const legend = await page.$$eval('.dt-omni-legend-btn', (buttons) =>
+	buttons.map((b) => b.textContent?.replace(/\s+/g, ' ').trim()),
+);
+check(
+	'legend: three actions under the box',
+	legend.join('|') === "Choose a file|Paste from clipboard|I'm feeling lucky",
+	legend.join('|'),
+);
+await page.click('.dt-omni-legend-btn:last-child');
+await page.waitForFunction(() => location.pathname !== '/', { timeout: 10000 });
+check(
+	'legend: feeling lucky opens a tool page',
+	await page.evaluate(() => /^\/(tools\/|editor|workflows)/.test(location.pathname)),
+	await page.evaluate(() => location.pathname),
+);
 
 await finish(browser);
