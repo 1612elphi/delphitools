@@ -1417,3 +1417,13 @@ var(--border) inside the SVG, so swallowtails read on both themes. Unit
 tests (8, incl. uniqueness of all 26 semaphore signals); the nato rig
 grew to 16 checks. Umlaut rows (Ä Ö Ü ß) have no tiles: no ICS letter
 flag exists for them.
+
+## 2026-08-23: NATO chart design pass
+
+Tile layout matches the poster: the letter at 3.75rem spans the three
+signal rows and centres on them, the Morse marks, semaphore and flag
+stack flush right, the word closes the tile bold along the bottom. Chart
+hairlines moved from gap-over-border background to per-tile box-shadows
+into the 1px gaps, because a `grid-column: auto / -1` filler spans one
+cell, not the remainder; with shadows the empty tail after Z is plain
+card and needs no filler.

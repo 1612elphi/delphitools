@@ -180,24 +180,31 @@
 	font-size: crayon.font-size("xs");
 }
 
+/* Hairlines are per-tile shadows into the 1px gaps, so the empty tail of
+   the last row stays plain card instead of gap colour. */
 .dt-nato-chart {
 	display: grid;
-	background: var(--border);
+	background: var(--card);
 	gap: 1px;
-	grid-template-columns: repeat(auto-fill, minmax(crayon.size(36), 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(crayon.size(40), 1fr));
 }
 
+/* Letter spans the three signal rows and centres on them; the word closes
+   the tile along the bottom. */
 .dt-nato-tile {
+	box-shadow:
+		-1px 0 0 var(--border),
+		0 -1px 0 var(--border);
 	display: grid;
 	padding: crayon.size(3);
 	border: 0;
 	background: var(--card);
 	color: inherit;
-	font: inherit;
-	text-align: left;
+	gap: crayon.size(2) crayon.size(4);
 	cursor: pointer;
-	gap: crayon.size(1) crayon.size(3);
-	grid-template: "letter morse" auto "letter sem" auto "letter flag" 1fr "word word" auto / 1fr auto;
+	font: inherit;
+	grid-template: "letter morse" auto "letter sem" auto "letter flag" auto "word word" 1fr / 1fr auto;
+	text-align: left;
 
 	@include crayon.hover {
 		background: var(--muted);
@@ -210,43 +217,48 @@
 			var(--card)
 		);
 	}
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
 }
 
 .dt-nato-tile-letter {
 	align-self: center;
-	font-size: 2.5rem;
+	font-size: 3.75rem;
 	font-weight: crayon.font-weight("bold");
 	grid-area: letter;
-	line-height: 1;
+	line-height: 0.85;
 }
 
 .dt-nato-tile-morse {
 	display: flex;
-	min-height: crayon.size(2);
+	min-height: 6px;
 	align-items: center;
 	justify-content: flex-end;
 	color: var(--foreground);
-	gap: 3px;
+	gap: 4px;
 	grid-area: morse;
 }
 
 .dt-nato-dit,
 .dt-nato-dah {
-	height: 5px;
+	height: 6px;
 	background: currentcolor;
 }
 
 .dt-nato-dit {
-	width: 5px;
+	width: 6px;
 }
 
 .dt-nato-dah {
-	width: 14px;
+	width: 18px;
 }
 
 .dt-nato-sem {
-	width: crayon.size(8);
-	height: crayon.size(8);
+	width: crayon.size(9);
+	height: crayon.size(9);
 	grid-area: sem;
 	justify-self: end;
 
@@ -258,22 +270,23 @@
 
 	line {
 		stroke: currentcolor;
-		stroke-width: 3.5;
+		stroke-width: 3;
 	}
 }
 
 .dt-nato-flag {
-	width: crayon.size(10);
+	width: crayon.size(12);
 	height: auto;
-	place-self: end end;
 	grid-area: flag;
+	justify-self: end;
 }
 
 .dt-nato-tile-word {
 	overflow: hidden;
+	align-self: end;
 	margin-top: crayon.size(1);
-	font-size: crayon.font-size("sm");
-	font-weight: crayon.font-weight("semibold");
+	font-size: crayon.font-size("base");
+	font-weight: crayon.font-weight("bold");
 	grid-area: word;
 	text-overflow: ellipsis;
 	white-space: nowrap;
