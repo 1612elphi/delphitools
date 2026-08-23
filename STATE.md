@@ -1437,3 +1437,19 @@ slide dots, Back/Next, the final button reusing Substrata's shipped
 label. All four slide bodies are copy gaps (SLIDE_HELLO, SLIDE_WORKFLOWS,
 SLIDE_TOOLS, SLIDE_THANKS) for slopsieve. The version chip is gone from
 the pill; package.json stays the semver source. Omnibox rig: 32 checks.
+
+## 2026-08-23: Request Builder and the Dev Tools split
+
+`request-builder` (new category Dev Tools): a form (method segments, URL,
+query and header row editors, body) that composes but never sends;
+lib/request-builder.ts renders it two ways, a cURL command (line
+continuations, POSIX single-quote escaping, -I for HEAD, -X omitted for
+GET) and a raw HTTP/1.1 request (request line from the URL, Host and
+byte-counted Content-Length derived unless overridden by an explicit
+header, LF for the clipboard). Copy per pane, no download, nothing sent.
+
+Other Tools split: new category Dev Tools takes Cron Builder, HTTP
+Status, JSON Formatter, JWT Decoder, Meta Tag Generator, Regex Tester,
+Request Builder, Tailwind Cheat Sheet, UUID Generator; Other Tools keeps
+Barcode, Cipher Decoder, Password, QR, Text Scratchpad. PARITY.md mirrors
+the split (Dev Tools table; 89 tracked, web 85).

@@ -295,10 +295,8 @@ export const toolCategories: ToolCategory[] = [
 			{
 				id: 'image-deskewer',
 				name: 'Image De-skewer',
-				// ∑CG: catalogue cell description for the de-skewer
-				//   spec: one clause, ≤ 60 chars, sentence case, no period; says a photographed page or sign is pulled square by dragging its four corners
-				//   sample: "Straighten a photographed page by its corners"
-				description: '∑CG',
+				description:
+					'Straighten an image by the corners',
 				icon: 'vector-square',
 				href: '/tools/image-deskewer',
 				accepts: ['image/*'],
@@ -718,6 +716,91 @@ export const toolCategories: ToolCategory[] = [
 		],
 	},
 	{
+		id: 'dev-tools',
+		name: 'Dev Tools',
+		tools: [
+			{
+				id: 'cron-builder',
+				name: 'Cron Builder',
+				description:
+					'Build a cron expression field by field or decode one',
+				icon: 'calendar-clock',
+				href: '/tools/cron-builder',
+				new: true,
+			},
+			{
+				id: 'http-status',
+				name: 'HTTP Status',
+				description:
+					'Search HTTP status codes with phrases and spec references',
+				icon: 'server',
+				href: '/tools/http-status',
+				new: true,
+			},
+			{
+				id: 'json-formatter',
+				name: 'JSON Formatter',
+				description:
+					'Format or minify JSON or look at it',
+				icon: 'braces',
+				href: '/tools/json-formatter',
+				new: true,
+				accepts: ['.json'],
+			},
+			{
+				id: 'jwt-decoder',
+				name: 'JWT Decoder',
+				description:
+					"Decode a JWT's header, payload & claims",
+				icon: 'key-square',
+				href: '/tools/jwt-decoder',
+				new: true,
+			},
+			{
+				id: 'meta-tag-genny',
+				name: 'Meta Tag Generator',
+				description: 'Generate HTML meta tags',
+				icon: 'tag',
+				href: '/tools/meta-tag-genny',
+			},
+			{
+				id: 'regex-tester',
+				name: 'Regex Tester',
+				description: 'Test regular expressions',
+				icon: 'regex',
+				href: '/tools/regex-tester',
+			},
+			{
+				id: 'request-builder',
+				name: 'Request Builder',
+				// ∑CG: catalogue cell description for the request builder
+				//   spec: one clause, ≤ 60 chars, sentence case, no period; says a form composes an HTTP request and hands it over as cURL or a raw request, nothing is sent
+				//   sample: "Compose a request, copy it as cURL or raw HTTP"
+				description: '∑CG',
+				icon: 'terminal',
+				href: '/tools/request-builder',
+				new: true,
+			},
+			{
+				id: 'tailwind-cheatsheet',
+				name: 'Tailwind Cheat Sheet',
+				description:
+					'Quick reference for Tailwind classes',
+				icon: 'book-open',
+				href: '/tools/tailwind-cheatsheet',
+			},
+			{
+				id: 'uuid-genny',
+				name: 'UUID Generator',
+				description:
+					'Generate bulk UUID v4 or v7 and Nano IDs',
+				icon: 'fingerprint',
+				href: '/tools/uuid-genny',
+				new: true,
+			},
+		],
+	},
+	{
 		id: 'other-tools',
 		name: 'Other Tools',
 		tools: [
@@ -739,15 +822,6 @@ export const toolCategories: ToolCategory[] = [
 				new: true,
 			},
 			{
-				id: 'http-status',
-				name: 'HTTP Status',
-				description:
-					'Search HTTP status codes with phrases and spec references',
-				icon: 'server',
-				href: '/tools/http-status',
-				new: true,
-			},
-			{
 				id: 'password-genny',
 				name: 'Password Generator',
 				description:
@@ -755,13 +829,6 @@ export const toolCategories: ToolCategory[] = [
 				icon: 'key-square',
 				href: '/tools/password-genny',
 				new: true,
-			},
-			{
-				id: 'meta-tag-genny',
-				name: 'Meta Tag Generator',
-				description: 'Generate HTML meta tags',
-				icon: 'tag',
-				href: '/tools/meta-tag-genny',
 			},
 			{
 				id: 'qr-genny',
@@ -772,21 +839,6 @@ export const toolCategories: ToolCategory[] = [
 				href: '/tools/qr-genny',
 			},
 			{
-				id: 'regex-tester',
-				name: 'Regex Tester',
-				description: 'Test regular expressions',
-				icon: 'regex',
-				href: '/tools/regex-tester',
-			},
-			{
-				id: 'tailwind-cheatsheet',
-				name: 'Tailwind Cheat Sheet',
-				description:
-					'Quick reference for Tailwind classes',
-				icon: 'book-open',
-				href: '/tools/tailwind-cheatsheet',
-			},
-			{
 				id: 'markdown-writer',
 				name: 'Text Scratchpad',
 				description:
@@ -794,43 +846,6 @@ export const toolCategories: ToolCategory[] = [
 				icon: 'pen-line',
 				href: '/tools/markdown-writer',
 				accepts: TEXT_ACCEPT,
-			},
-			{
-				id: 'uuid-genny',
-				name: 'UUID Generator',
-				description:
-					'Generate bulk UUID v4 or v7 and Nano IDs',
-				icon: 'fingerprint',
-				href: '/tools/uuid-genny',
-				new: true,
-			},
-			{
-				id: 'jwt-decoder',
-				name: 'JWT Decoder',
-				description:
-					"Decode a JWT's header, payload & claims",
-				icon: 'key-square',
-				href: '/tools/jwt-decoder',
-				new: true,
-			},
-			{
-				id: 'cron-builder',
-				name: 'Cron Builder',
-				description:
-					'Build a cron expression field by field or decode one',
-				icon: 'calendar-clock',
-				href: '/tools/cron-builder',
-				new: true,
-			},
-			{
-				id: 'json-formatter',
-				name: 'JSON Formatter',
-				description:
-					'Format or minify JSON or look at it',
-				icon: 'braces',
-				href: '/tools/json-formatter',
-				new: true,
-				accepts: ['.json'],
 			},
 		],
 	},
@@ -911,10 +926,8 @@ export const toolCategories: ToolCategory[] = [
 			{
 				id: 'morse-code',
 				name: 'Morse Code',
-				// ∑CG: catalogue cell description for the Morse tool
-				//   spec: one clause, ≤ 60 chars, sentence case, no period; says text goes to Morse and back, with playback
-				//   sample: "Encode, decode and play Morse code"
-				description: '∑CG',
+				description:
+					'Encode, decode and play Morse code',
 				icon: 'radio',
 				href: '/tools/morse-code',
 				new: true,
@@ -922,10 +935,7 @@ export const toolCategories: ToolCategory[] = [
 			{
 				id: 'braille-converter',
 				name: 'Braille Converter',
-				// ∑CG: catalogue cell description for the Braille tool
-				//   spec: one clause, ≤ 60 chars, sentence case, no period; says text goes to Unicode braille (uncontracted) and back
-				//   sample: "Turn text into braille cells and back"
-				description: '∑CG',
+				description: 'Turn text into Braille cells',
 				icon: 'grip-vertical',
 				href: '/tools/braille-converter',
 				new: true,
@@ -933,10 +943,7 @@ export const toolCategories: ToolCategory[] = [
 			{
 				id: 'ipa-transcriber',
 				name: 'IPA Transcription',
-				// ∑CG: catalogue cell description for the IPA tool
-				//   spec: one clause, ≤ 60 chars, sentence case, no period; says English text is transcribed to IPA from a pronouncing dictionary
-				//   sample: "Transcribe English text into IPA"
-				description: '∑CG',
+				description: 'Transcribe English text into IPA',
 				icon: 'ear',
 				href: '/tools/ipa-transcriber',
 				new: true,
@@ -944,10 +951,8 @@ export const toolCategories: ToolCategory[] = [
 			{
 				id: 'nato-phonetic',
 				name: 'NATO Phonetic',
-				// ∑CG: catalogue cell description for the spelling-alphabet tool
-				//   spec: one clause, ≤ 60 chars, sentence case, no period; says text is spelled out in the NATO alphabet or German DIN 5009
-				//   sample: "Spell text out in NATO or DIN 5009 words"
-				description: '∑CG',
+				description:
+					'Translate text to NATO or DIN-5009 calls',
 				icon: 'radio-tower',
 				href: '/tools/nato-phonetic',
 				new: true,

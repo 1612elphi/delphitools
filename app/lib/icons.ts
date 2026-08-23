@@ -218,6 +218,7 @@ import iSubtitles from 'lucide-static/icons/subtitles.svg?raw';
 import iSun from 'lucide-static/icons/sun.svg?raw';
 import iSwatchBook from 'lucide-static/icons/swatch-book.svg?raw';
 import iTag from 'lucide-static/icons/tag.svg?raw';
+import iTerminal from 'lucide-static/icons/terminal.svg?raw';
 import iThermometer from 'lucide-static/icons/thermometer.svg?raw';
 import iTrash2 from 'lucide-static/icons/trash-2.svg?raw';
 import iTriangle from 'lucide-static/icons/triangle.svg?raw';
@@ -453,6 +454,7 @@ export const icons: Record<string, string> = {
 	sun: iSun,
 	'swatch-book': iSwatchBook,
 	tag: iTag,
+	terminal: iTerminal,
 	thermometer: iThermometer,
 	'trash-2': iTrash2,
 	triangle: iTriangle,

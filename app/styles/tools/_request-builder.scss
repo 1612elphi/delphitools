@@ -1,0 +1,250 @@
+// Styles for the request-builder tool.
+
+@use "../crayon-config" as crayon;
+
+.dt-req-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-req-methods {
+	border-bottom: 1px solid var(--border);
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.dt-req-method {
+	min-width: 0;
+	padding: crayon.size(2) crayon.size(1);
+	background: var(--background);
+	color: var(--foreground);
+	font: inherit;
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-req-url {
+	display: block;
+	width: 100%;
+	padding: crayon.size(3) crayon.size(4);
+	border: 0;
+	border-bottom: 2px solid var(--border);
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-variant-ligatures: none;
+
+	&:focus {
+		outline: none;
+		background: color-mix(in oklch, var(--muted) 30%, transparent);
+	}
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+/* Query | headers, side by side over the hairline background. */
+.dt-req-sections {
+	display: grid;
+	border-bottom: 2px solid var(--border);
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: 1fr;
+
+	@include crayon.screen("md") {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.dt-req-section {
+	min-width: 0;
+	background: var(--card);
+}
+
+.dt-req-section-head {
+	display: flex;
+	min-height: crayon.size(9);
+	align-items: center;
+	justify-content: space-between;
+	padding-left: crayon.size(3);
+	border-bottom: 1px solid var(--border);
+
+	&.is-body {
+		background: var(--card);
+	}
+}
+
+.dt-req-label {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("semibold");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.dt-req-add {
+	@include crayon.hstack(1.5);
+
+	align-items: center;
+	align-self: stretch;
+	padding-inline: crayon.size(3);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(3.5);
+		height: crayon.size(3.5);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-req-row {
+	display: grid;
+	border-bottom: 1px solid var(--border);
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: 1fr 1fr auto;
+}
+
+.dt-req-cell {
+	min-width: 0;
+	padding: crayon.size(2) crayon.size(3);
+	border: 0;
+	background: var(--card);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+
+	&:focus {
+		outline: none;
+		background: var(--muted);
+	}
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-req-remove {
+	display: flex;
+	width: crayon.size(9);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: var(--card);
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(3.5);
+		height: crayon.size(3.5);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--destructive);
+	}
+}
+
+.dt-req-body {
+	display: block;
+	width: 100%;
+	min-height: crayon.size(20);
+	padding: crayon.size(3) crayon.size(4);
+	border: 0;
+	border-bottom: 2px solid var(--border);
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	resize: vertical;
+
+	&:focus {
+		outline: none;
+		background: color-mix(in oklch, var(--muted) 30%, transparent);
+	}
+}
+
+/* The two hand-over formats. */
+.dt-req-outs {
+	display: grid;
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: 1fr;
+
+	@include crayon.screen("lg") {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.dt-req-out {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+	background: color-mix(in oklch, var(--muted) 30%, var(--background));
+}
+
+.dt-req-out-head {
+	display: flex;
+	min-height: crayon.size(9);
+	align-items: center;
+	justify-content: space-between;
+	padding-left: crayon.size(3);
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-req-copy {
+	@include crayon.hstack(1.5);
+
+	align-items: center;
+	align-self: stretch;
+	padding-inline: crayon.size(3);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(3.5);
+		height: crayon.size(3.5);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-req-pre {
+	overflow: auto;
+	min-height: crayon.size(16);
+	flex: 1;
+	margin: 0;
+	padding: crayon.size(3) crayon.size(4);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	line-height: 1.6;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
