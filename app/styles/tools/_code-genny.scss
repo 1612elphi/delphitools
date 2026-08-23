@@ -564,19 +564,6 @@
 
 .dt-code-spinner {
 	flex-shrink: 0;
-	animation: dt-code-spin 1s linear infinite;
-}
-
-@keyframes dt-code-spin {
-	to {
-		transform: rotate(360deg);
-	}
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.dt-code-spinner {
-		animation: none;
-	}
 }
 
 .dt-code-about {

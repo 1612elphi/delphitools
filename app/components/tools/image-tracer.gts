@@ -5,7 +5,10 @@ import { fn } from '@ember/helper';
 import { service } from '@ember/service';
 import { htmlSafe } from '@ember/template';
 import { eq } from 'ember-truth-helpers';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import Icon from 'delphitools-v2/components/icon';
+import NdsLoader from 'delphitools-v2/components/ui/nds-loader';
+import { downloadText } from 'delphitools-v2/lib/download';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import {
 	Popover,
@@ -657,15 +660,11 @@ export default class ImageTracerTool extends Component {
 
 	download = () => {
 		if (!this.#rawSvg) return;
-		const blob = new Blob([this.#rawSvg], {
-			type: 'image/svg+xml',
-		});
-		const url = URL.createObjectURL(blob);
-		const link = document.createElement('a');
-		link.download = `${this.fileName.replace(/\.[^.]+$/, '')}-traced.svg`;
-		link.href = url;
-		link.click();
-		URL.revokeObjectURL(url);
+		downloadText(
+			this.#rawSvg,
+			`${this.fileName.replace(/\.[^.]+$/, '')}-traced.svg`,
+			'image/svg+xml',
+		);
 	};
 
 	copy = () => {
@@ -731,9 +730,8 @@ export default class ImageTracerTool extends Component {
 							<div
 								class="dt-trace-busy"
 							>
-								<Icon
-									class="dt-trace-spinner"
-									@name="loader-circle"
+								<NdsLoader
+									class="is-stage"
 								/>
 								{{! wording carried over from the Next app }}
 								<span>Tracing
@@ -762,10 +760,7 @@ export default class ImageTracerTool extends Component {
 								this.download
 							}}
 						>
-							<Icon
-								@name="download"
-							/>
-							Download
+							<DownloadLabel />
 						</button>
 						<button
 							type="button"
@@ -877,10 +872,7 @@ export default class ImageTracerTool extends Component {
 						{{on "click" this.retrace}}
 					>
 						{{#if this.tracing}}
-							<Icon
-								class="dt-trace-spinner"
-								@name="loader-circle"
-							/>
+							<NdsLoader />
 							Tracing…
 						{{else}}
 							<Icon

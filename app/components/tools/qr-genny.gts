@@ -5,6 +5,9 @@ import { fn } from '@ember/helper';
 import { htmlSafe } from '@ember/template';
 import { TrackedObject } from 'tracked-built-ins';
 import Icon from 'delphitools-v2/components/icon';
+import NdsLoader from 'delphitools-v2/components/ui/nds-loader';
+import DownloadLabel from 'delphitools-v2/components/download-label';
+import { downloadBlob } from 'delphitools-v2/lib/download';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import {
 	Tabs,
@@ -348,14 +351,6 @@ function blobToDataUrl(blob: Blob): Promise<string> {
 		reader.onloadend = () => resolve(reader.result as string);
 		reader.readAsDataURL(blob);
 	});
-}
-
-function saveBlob(blob: Blob, filename: string) {
-	const link = document.createElement('a');
-	link.href = URL.createObjectURL(blob);
-	link.download = filename;
-	link.click();
-	URL.revokeObjectURL(link.href);
 }
 
 function inputValue(event: Event): string {
@@ -1028,10 +1023,25 @@ export default class QrGennyTool extends Component {
 
 		const filename = `qr-code-${Date.now()}`;
 		if (!this.includeInfo) {
-			await qr.download({
-				name: filename,
-				extension: format,
-			});
+			const raw = await qr.getRawData(format);
+			if (raw === null) return;
+			// qr-code-styling resolves a string for SVG in some versions
+			const file =
+				raw instanceof Blob
+					? raw
+					: new Blob(
+							[
+								raw as unknown as BlobPart,
+							],
+							{
+								type:
+									format ===
+									'svg'
+										? 'image/svg+xml'
+										: 'image/png',
+							},
+						);
+			downloadBlob(file, `${filename}.${format}`);
 			return;
 		}
 
@@ -1039,7 +1049,7 @@ export default class QrGennyTool extends Component {
 			format === 'png'
 				? await this.#composeInfoPng()
 				: await this.#composeInfoSvg();
-		if (blob) saveBlob(blob, `${filename}.${format}`);
+		if (blob) downloadBlob(blob, `${filename}.${format}`);
 	}
 
 	copy = () => {
@@ -1147,7 +1157,7 @@ export default class QrGennyTool extends Component {
 
 		const archive = await zip.generateAsync({ type: 'blob' });
 		if (this.#destroyed) return;
-		saveBlob(archive, `qr-codes-batch-${Date.now()}.zip`);
+		downloadBlob(archive, `qr-codes-batch-${Date.now()}.zip`);
 		this.batchGenerating = false;
 	}
 
@@ -1198,9 +1208,7 @@ export default class QrGennyTool extends Component {
 										{{#if
 											this.urlChecking
 										}}
-											<Icon
-												class="dt-qr-spinner"
-												@name="loader-circle"
+											<NdsLoader
 											/>
 										{{else if
 											this.urlValid
@@ -1649,9 +1657,7 @@ export default class QrGennyTool extends Component {
 								{{else if
 									row.item.isGenerating
 								}}
-									<Icon
-										class="dt-qr-spinner"
-										@name="loader-circle"
+									<NdsLoader
 									/>
 								{{else if
 									row.item.isError
@@ -1731,19 +1737,10 @@ export default class QrGennyTool extends Component {
 								this.generateBatch
 							}}
 						>
-							{{#if
-								this.batchGenerating
-							}}
-								<Icon
-									class="dt-qr-spinner"
-									@name="loader-circle"
-								/>
-							{{else}}
-								<Icon
-									@name="package"
-								/>
-							{{/if}}
-							Generate & Download ZIP
+							<DownloadLabel
+								@label="Generate & Download ZIP"
+								@busy={{this.batchGenerating}}
+							/>
 						</button>
 					</TabsContent>
 
@@ -1784,9 +1781,8 @@ export default class QrGennyTool extends Component {
 									{{#if
 										this.generating
 									}}
-										<Icon
-											class="dt-qr-spinner is-large"
-											@name="loader-circle"
+										<NdsLoader
+											class="dt-qr-spinner is-large is-stage"
 										/>
 									{{else if
 										this.qrDataUrl
@@ -1871,10 +1867,9 @@ export default class QrGennyTool extends Component {
 											)
 										}}
 									>
-										<Icon
-											@name="download"
+										<DownloadLabel
+											@label="PNG"
 										/>
-										PNG
 									</button>
 									<button
 										type="button"
@@ -1888,10 +1883,9 @@ export default class QrGennyTool extends Component {
 											)
 										}}
 									>
-										<Icon
-											@name="download"
+										<DownloadLabel
+											@label="SVG"
 										/>
-										SVG
 									</button>
 									<button
 										type="button"
@@ -2143,7 +2137,7 @@ export default class QrGennyTool extends Component {
 												}}
 											/>
 											<label
-												class="dt-qr-toggle is-inline"
+												class="dt-qr-toggle"
 											>
 												<input
 													class="dt-qr-switch"

@@ -1,10 +1,10 @@
 import Component from '@glimmer/component';
-import { tracked } from '@glimmer/tracking';
+import { cached, tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { htmlSafe } from '@ember/template';
 import Icon from 'delphitools-v2/components/icon';
-import { colourFromUrl } from 'delphitools-v2/lib/colour-query';
+import { carryColour, colourFromUrl } from 'delphitools-v2/lib/colour-query';
 import {
 	Select,
 	SelectTrigger,
@@ -137,6 +137,7 @@ export default class ColourConverterTool extends Component {
 		return EXAMPLES.map(([label, example]) => ({ label, example }));
 	}
 
+	@cached
 	get values() {
 		return convert(this.inputFormat, this.inputValue);
 	}
@@ -211,7 +212,7 @@ export default class ColourConverterTool extends Component {
 	copyRow = (value: string) => void this.copy(value);
 
 	<template>
-		<div class="dt-cc">
+		<div class="dt-cc" {{carryColour this.values.hex}}>
 			<div class="dt-cc-input">
 				<span class="dt-cc-swatch">
 					<span

@@ -4,6 +4,7 @@ import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { modifier } from 'ember-modifier';
 import Icon from 'delphitools-v2/components/icon';
+import filePaste from 'delphitools-v2/modifiers/file-paste';
 
 export type DiffLine =
 	| { type: 'same'; text: string; oldLine: number; newLine: number }
@@ -531,6 +532,11 @@ export default class TextDiffTool extends Component {
 		this.wrap = wrap;
 	};
 
+	readFile = async (file: File) => {
+		if (file.size > MAX_FILE_BYTES) return;
+		this.setOld(await file.text());
+	};
+
 	copyPatch = () => void this.copy();
 
 	async copy() {
@@ -544,7 +550,10 @@ export default class TextDiffTool extends Component {
 	}
 
 	<template>
-		<div class="dt-td">
+		<div
+			class="dt-td"
+			{{filePaste this.readFile accept=FILE_ACCEPT}}
+		>
 			<div class="dt-td-frame">
 				<div class="dt-td-options">
 					{{#if this.hasContent}}

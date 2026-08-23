@@ -375,10 +375,8 @@ export const toolCategories: ToolCategory[] = [
 			{
 				id: 'audio-extractor',
 				name: 'Audio Extractor',
-				// ∑CG: tool card description for Audio Extractor (pulls the audio track out of a video as WAV/M4A/Ogg/FLAC)
-				//   spec: <= 60 chars, one line, verb-first like the sibling entries, names WAV
-				//   sample: "Pull the audio out of a video as WAV, M4A, Ogg or FLAC"
-				description: '∑CG',
+				description:
+					'Extract the audio out of a video file',
 				icon: 'file-audio',
 				href: '/tools/audio-extractor',
 				accepts: VIDEO_ACCEPT,
@@ -387,10 +385,7 @@ export const toolCategories: ToolCategory[] = [
 			{
 				id: 'audio-normaliser',
 				name: 'Audio Normaliser',
-				// ∑CG: tool card description for Audio Normaliser (BS.1770 loudness to a LUFS target, WAV out)
-				//   spec: <= 60 chars, one line, verb-first like the sibling entries, names LUFS
-				//   sample: "Bring audio to a LUFS target, export as WAV"
-				description: '∑CG',
+				description: 'Normalise audio loudness',
 				icon: 'gauge',
 				href: '/tools/audio-normaliser',
 				accepts: AUDIO_ACCEPT,
@@ -494,10 +489,7 @@ export const toolCategories: ToolCategory[] = [
 			{
 				id: 'video-trimmer',
 				name: 'Video Trimmer',
-				// ∑CG: tool card description for Video Trimmer (cut a video to In/Out; keyframe copy or exact re-encode)
-				//   spec: <= 60 chars, one line, verb-first like the sibling entries
-				//   sample: "Cut a video between two points, with or without re-encoding"
-				description: '∑CG',
+				description: 'Cut a video in/out style',
 				icon: 'scissors',
 				href: '/tools/video-trimmer',
 				accepts: VIDEO_ACCEPT,

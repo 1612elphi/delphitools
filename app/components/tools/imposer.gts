@@ -11,7 +11,9 @@ import type { TOC } from '@ember/component/template-only';
 import type { PDFDocument } from 'pdf-lib';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import Icon from 'delphitools-v2/components/icon';
+import NdsLoader from 'delphitools-v2/components/ui/nds-loader';
 import PaperSizeCombobox from 'delphitools-v2/components/ui/paper-size-combobox';
 import {
 	Popover,
@@ -25,6 +27,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from 'delphitools-v2/components/ui/select';
+import { downloadBlob } from 'delphitools-v2/lib/download';
 import {
 	DUPLEX_AWARE_LAYOUTS,
 	IMPOSITION_LAYOUTS,
@@ -1294,12 +1297,10 @@ export default class ImposerTool extends Component {
 				[new Uint8Array(await outputDoc.save())],
 				{ type: 'application/pdf' },
 			);
-			const url = URL.createObjectURL(blob);
-			const link = document.createElement('a');
-			link.href = url;
-			link.download = `imposed-${this.layoutId}-${this.paperSizeId}.pdf`;
-			link.click();
-			URL.revokeObjectURL(url);
+			downloadBlob(
+				blob,
+				`imposed-${this.layoutId}-${this.paperSizeId}.pdf`,
+			);
 		} catch (err) {
 			console.error(
 				'imposer: failed to generate imposed PDF',
@@ -2223,10 +2224,7 @@ export default class ImposerTool extends Component {
 					{{on "click" this.generateImposedPdf}}
 				>
 					{{#if this.isGenerating}}
-						<Icon
-							@name="loader-circle"
-							class="dt-imp-spinner"
-						/>
+						<NdsLoader />
 						{{#if this.generateProgress}}
 							{{this.generateProgress}}
 						{{else}}
@@ -2234,9 +2232,9 @@ export default class ImposerTool extends Component {
 							Generating...
 						{{/if}}
 					{{else}}
-						<Icon @name="download" />
-						{{! wording carried over from the Next app }}
-						Download Imposed PDF
+						<DownloadLabel
+							@label="Download Imposed PDF"
+						/>
 					{{/if}}
 				</button>
 

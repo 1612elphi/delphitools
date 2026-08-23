@@ -4,6 +4,8 @@ import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { eq, not } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
+import NdsLoader from 'delphitools-v2/components/ui/nds-loader';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import { downloadBlob } from 'delphitools-v2/lib/download';
 import {
@@ -260,13 +262,13 @@ export default class PdfCompressorTool extends Component {
 								this.compress
 							}}
 						>
-							<Icon
-								@name={{if
-									this.compressing
-									"loader"
-									"shrink"
-								}}
-							/>
+							{{#if this.compressing}}
+								<NdsLoader />
+							{{else}}
+								<Icon
+									@name="shrink"
+								/>
+							{{/if}}
 							{{if
 								this.compressing
 								"Compressing…"
@@ -284,10 +286,7 @@ export default class PdfCompressorTool extends Component {
 								this.download
 							}}
 						>
-							<Icon
-								@name="download"
-							/>
-							Download
+							<DownloadLabel />
 						</button>
 					</div>
 
@@ -432,8 +431,7 @@ export default class PdfCompressorTool extends Component {
 								<span
 									class="dt-pcmp-status"
 								>
-									<Icon
-										@name="loader"
+									<NdsLoader
 									/>
 									Compressing…
 								</span>

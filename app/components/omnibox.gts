@@ -7,6 +7,8 @@ import { LinkTo } from '@ember/routing';
 import { modifier } from 'ember-modifier';
 import Icon from 'delphitools-v2/components/icon';
 import ToolGrid from 'delphitools-v2/components/tool-grid';
+import WorkflowGrid from 'delphitools-v2/components/workflow-grid';
+import { WORKFLOWS } from 'delphitools-v2/lib/workflows';
 import {
 	featuredTools,
 	getToolById,
@@ -415,6 +417,16 @@ export default class Omnibox extends Component<OmniboxSignature> {
 			class="dt-omni-catalogue
 				{{if this.isFiltering 'is-dimmed'}}"
 		>
+			<section class="dt-section">
+				<h2 class="dt-section-title">
+					Workflows
+					<span
+						class="dt-section-count"
+					>{{WORKFLOWS.length}}</span>
+				</h2>
+				<WorkflowGrid />
+			</section>
+
 			<section class="dt-section">
 				<h2 class="dt-section-title">
 					Greatest Hits

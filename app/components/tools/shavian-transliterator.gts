@@ -6,6 +6,9 @@ import { eq } from 'ember-truth-helpers';
 import type Owner from '@ember/owner';
 import onClickOutside from 'ember-click-outside/modifiers/on-click-outside';
 import Icon from 'delphitools-v2/components/icon';
+import NdsLoader from 'delphitools-v2/components/ui/nds-loader';
+import DownloadLabel from 'delphitools-v2/components/download-label';
+import { downloadUrl } from 'delphitools-v2/lib/download';
 import {
 	tokenise,
 	reResolveTokens,
@@ -285,10 +288,7 @@ export async function exportGloss(tokens: GlossToken[]) {
 		canvas.height - PADDING + 8,
 	);
 
-	const link = document.createElement('a');
-	link.download = 'shavian-gloss.png';
-	link.href = canvas.toDataURL('image/png');
-	link.click();
+	downloadUrl(canvas.toDataURL('image/png'), 'shavian-gloss.png');
 }
 
 export default class ShavianTransliteratorTool extends Component {
@@ -519,10 +519,7 @@ export default class ShavianTransliteratorTool extends Component {
 							<span
 								class="dt-shav-status"
 							>
-								<Icon
-									class="dt-shav-spinner"
-									@name="loader-circle"
-								/>
+								<NdsLoader />
 								{{! wording carried over from the Next app }}
 								Loading
 								dictionary…
@@ -536,10 +533,7 @@ export default class ShavianTransliteratorTool extends Component {
 							<span
 								class="dt-shav-status"
 							>
-								<Icon
-									class="dt-shav-spinner"
-									@name="loader-circle"
-								/>
+								<NdsLoader />
 								{{! wording carried over from the Next app }}
 								Loading full
 								dictionary…
@@ -810,11 +804,9 @@ export default class ShavianTransliteratorTool extends Component {
 								this.downloadGloss
 							}}
 						>
-							<Icon
-								@name="download"
+							<DownloadLabel
+								@label="Export Gloss"
 							/>
-							{{! wording carried over from the Next app }}
-							Export Gloss
 						</button>
 					</div>
 				{{/if}}

@@ -3,7 +3,9 @@ import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { htmlSafe } from '@ember/template';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import Icon from 'delphitools-v2/components/icon';
+import { downloadUrl } from 'delphitools-v2/lib/download';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 
 const MIN_TILES = 1;
@@ -223,10 +225,7 @@ export default class ImageSplitterTool extends Component {
 	};
 
 	downloadTile = (tile: Tile) => {
-		const link = document.createElement('a');
-		link.download = `${this.fileName}-${tile.label}.png`;
-		link.href = tile.dataUrl;
-		link.click();
+		downloadUrl(tile.dataUrl, `${this.fileName}-${tile.label}.png`);
 	};
 
 	downloadAll = () => {
@@ -398,11 +397,9 @@ export default class ImageSplitterTool extends Component {
 								this.downloadAll
 							}}
 						>
-							<Icon
-								@name="download"
+							<DownloadLabel
+								@label="Download All"
 							/>
-							{{! wording carried over from the Next app }}
-							Download All
 						</button>
 					</div>
 

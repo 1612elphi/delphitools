@@ -2,7 +2,9 @@ import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import Icon from 'delphitools-v2/components/icon';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
+import { downloadText } from 'delphitools-v2/lib/download';
 import type Owner from '@ember/owner';
 import type { Config } from 'svgo/browser';
 
@@ -224,15 +226,10 @@ export default class SvgOptimiserTool extends Component {
 	copyOutput = () => void this.copy();
 
 	download = () => {
-		const blob = new Blob([this.output], { type: 'image/svg+xml' });
-		const url = URL.createObjectURL(blob);
-		const link = document.createElement('a');
-		link.download = this.fileName
+		const filename = this.fileName
 			? this.fileName.replace('.svg', '-optimized.svg')
 			: 'optimized.svg';
-		link.href = url;
-		link.click();
-		URL.revokeObjectURL(url);
+		downloadText(this.output, filename, 'image/svg+xml');
 	};
 
 	<template>
@@ -368,9 +365,9 @@ export default class SvgOptimiserTool extends Component {
 						class="dt-svgo-action is-primary"
 						{{on "click" this.download}}
 					>
-						<Icon @name="download" />
-						{{! wording carried over from the Next app }}
-						Download Optimised SVG
+						<DownloadLabel
+							@label="Download Optimised SVG"
+						/>
 					</button>
 					<button
 						type="button"

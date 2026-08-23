@@ -769,16 +769,6 @@
 	}
 }
 
-.dt-imp-spinner {
-	animation: dt-imp-spin 1s linear infinite;
-}
-
-@keyframes dt-imp-spin {
-	to {
-		transform: rotate(360deg);
-	}
-}
-
 .dt-imp-guidebtn {
 	@include crayon.hstack(2);
 
@@ -854,9 +844,5 @@
 @media (prefers-reduced-motion: reduce) {
 	.dt-imp-faces {
 		transition: none;
-	}
-
-	.dt-imp-spinner {
-		animation: none;
 	}
 }

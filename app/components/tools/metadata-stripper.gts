@@ -3,6 +3,8 @@ import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import { eq } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
+import { formatBytes } from 'delphitools-v2/lib/image-compress';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import { downloadBlob } from 'delphitools-v2/lib/download';
 import {
@@ -23,12 +25,6 @@ const MIME: Record<ImageContainer, string> = {
 
 /** Mimes canvas can re-encode without a format change. */
 const REENCODABLE = new Set(['image/png', 'image/jpeg', 'image/webp']);
-
-function formatBytes(bytes: number): string {
-	if (bytes < 1024) return `${bytes} B`;
-	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 interface StripState {
 	blob: Blob;
@@ -267,12 +263,8 @@ export default class MetadataStripperTool extends Component {
 									this.download
 								}}
 							>
-								<Icon
-									@name="download"
+								<DownloadLabel
 								/>
-								<span
-									class="dt-strip-btn-text"
-								>Download</span>
 							</button>
 						</div>
 					</div>

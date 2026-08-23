@@ -93,19 +93,9 @@
 		background: color-mix(in oklch, var(--primary) 90%, black);
 	}
 
-	&[aria-busy="true"] .dt-icon {
-		animation: dt-an-spin 0.8s linear infinite;
-	}
-
 	&:focus-visible {
 		outline: 2px solid var(--primary);
 		outline-offset: -2px;
-	}
-}
-
-@keyframes dt-an-spin {
-	to {
-		transform: rotate(1turn);
 	}
 }
 

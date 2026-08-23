@@ -5,7 +5,9 @@ import { fn } from '@ember/helper';
 import { htmlSafe } from '@ember/template';
 import { eq } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
+import { downloadUrl } from 'delphitools-v2/lib/download';
 
 /** Six digits behind a #, the only form `<input type="color">` accepts. */
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -534,10 +536,10 @@ export default class MatteGeneratorTool extends Component {
 	download = () => {
 		if (!this.resultImage) return;
 		const { width, height } = this.output;
-		const link = document.createElement('a');
-		link.download = `${this.fileName}-matte-${width}x${height}.png`;
-		link.href = this.resultImage;
-		link.click();
+		downloadUrl(
+			this.resultImage,
+			`${this.fileName}-matte-${width}x${height}.png`,
+		);
 	};
 
 	<template>
@@ -929,14 +931,9 @@ export default class MatteGeneratorTool extends Component {
 								this.download
 							}}
 						>
-							<Icon
-								@name="download"
+							<DownloadLabel
+								@label="Download {{this.output.width}} × {{this.output.height}}"
 							/>
-							{{! wording carried over from the Next app }}
-							Download
-							{{this.output.width}}
-							×
-							{{this.output.height}}
 						</button>
 					{{/if}}
 				{{else}}

@@ -2,11 +2,13 @@ import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import Icon from 'delphitools-v2/components/icon';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import { downloadUrl } from 'delphitools-v2/lib/download';
 import { AnimatedGifEncoder } from 'delphitools-v2/lib/gif';
 import { formatTimestamp } from 'delphitools-v2/lib/subtitles';
 import { seekTo, VideoIntake } from 'delphitools-v2/lib/video';
 import { VIDEO_ACCEPT, acceptAttr } from 'delphitools-v2/lib/tools';
+import filePaste from 'delphitools-v2/modifiers/file-paste';
 
 /** Kept in step with the registry entry, which routes dropped files. */
 const ACCEPT = acceptAttr(VIDEO_ACCEPT);
@@ -203,7 +205,7 @@ export default class VideoToGifTool extends Component {
 	};
 
 	<template>
-		<div class="dt-vg">
+		<div class="dt-vg" {{filePaste this.intake.load accept=ACCEPT}}>
 			<div
 				class="dt-vg-frame"
 				{{on "drop" this.handleDrop}}
@@ -371,10 +373,8 @@ export default class VideoToGifTool extends Component {
 										this.download
 									}}
 								>
-									<Icon
-										@name="download"
+									<DownloadLabel
 									/>
-									Download
 								</button>
 							</div>
 						</div>

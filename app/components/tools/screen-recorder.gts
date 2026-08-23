@@ -5,6 +5,7 @@ import { modifier } from 'ember-modifier';
 import { eq } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
 import Switch from 'delphitools-v2/components/ui/switch';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import { downloadBlob } from 'delphitools-v2/lib/download';
 import { resolveDuration } from 'delphitools-v2/lib/video';
 
@@ -408,10 +409,7 @@ export default class ScreenRecorderTool extends Component {
 								this.download
 							}}
 						>
-							<Icon
-								@name="download"
-							/>
-							Download
+							<DownloadLabel />
 						</button>
 						<button
 							type="button"

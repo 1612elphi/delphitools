@@ -217,6 +217,22 @@ export default class AppSidebar extends Component {
 								>Substrata</span>
 							</LinkTo>
 						</NavTip>
+						<NavTip
+							@label="Workflows"
+							@show={{this.collapsed}}
+						>
+							<LinkTo
+								@route="workflows"
+								class="dt-nav-link"
+							>
+								<Icon
+									@name="workflow"
+								/>
+								<span
+									class="dt-nav-label"
+								>Workflows</span>
+							</LinkTo>
+						</NavTip>
 					</div>
 				{{/unless}}
 

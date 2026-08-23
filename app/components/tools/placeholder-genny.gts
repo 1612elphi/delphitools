@@ -5,6 +5,8 @@ import { fn } from '@ember/helper';
 import { modifier } from 'ember-modifier';
 import { htmlSafe } from '@ember/template';
 import Icon from 'delphitools-v2/components/icon';
+import DownloadLabel from 'delphitools-v2/components/download-label';
+import { downloadText, downloadUrl } from 'delphitools-v2/lib/download';
 
 export type PlaceholderFormat = 'png' | 'svg';
 
@@ -138,13 +140,6 @@ export function drawPlaceholder(
 	);
 }
 
-function saveUrl(href: string, filename: string) {
-	const link = document.createElement('a');
-	link.download = filename;
-	link.href = href;
-	link.click();
-}
-
 export default class PlaceholderGennyTool extends Component {
 	@tracked widthInput = String(DEFAULT_WIDTH);
 	@tracked heightInput = String(DEFAULT_HEIGHT);
@@ -271,18 +266,11 @@ export default class PlaceholderGennyTool extends Component {
 	download = () => {
 		if (this.isPng) {
 			const url = this.#canvas?.toDataURL('image/png');
-			if (url) saveUrl(url, `${this.baseName}.png`);
+			if (url) downloadUrl(url, `${this.baseName}.png`);
 			return;
 		}
 
-		const blob = new Blob([this.svg], { type: 'image/svg+xml' });
-		const url = URL.createObjectURL(blob);
-		saveUrl(url, `${this.baseName}.svg`);
-		// The Next app revoked in the same task, which cancels the download in
-		// Chrome; a macrotask later is after the fetch has started.
-		this.#timers.push(
-			setTimeout(() => URL.revokeObjectURL(url), 0),
-		);
+		downloadText(this.svg, `${this.baseName}.svg`, 'image/svg+xml');
 	};
 
 	copyUrl = () => void this.copy();
@@ -497,9 +485,9 @@ export default class PlaceholderGennyTool extends Component {
 					class="dt-ph-download"
 					{{on "click" this.download}}
 				>
-					<Icon @name="download" />
-					Download
-					{{this.formatLabel}}
+					<DownloadLabel
+						@label="Download {{this.formatLabel}}"
+					/>
 				</button>
 				<button
 					type="button"

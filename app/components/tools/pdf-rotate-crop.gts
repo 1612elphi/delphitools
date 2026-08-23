@@ -5,6 +5,7 @@ import { fn } from '@ember/helper';
 import { eq, not } from 'ember-truth-helpers';
 import { htmlSafe } from '@ember/template';
 import Icon from 'delphitools-v2/components/icon';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import { downloadBlob } from 'delphitools-v2/lib/download';
 import { normaliseRotation } from 'delphitools-v2/lib/pdf-pages';
@@ -660,10 +661,9 @@ export default class PdfRotateCropTool extends Component {
 								this.download
 							}}
 						>
-							<Icon
-								@name="download"
+							<DownloadLabel
+								@label="Download PDF"
 							/>
-							Download PDF
 						</button>
 					</div>
 

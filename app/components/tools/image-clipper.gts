@@ -1,7 +1,9 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import Icon from 'delphitools-v2/components/icon';
+import { downloadUrl } from 'delphitools-v2/lib/download';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 
 // Error wording carried over from the Next app.
@@ -244,10 +246,7 @@ export default class ImageClipperTool extends Component {
 	download = () => {
 		const result = this.result;
 		if (!result) return;
-		const link = document.createElement('a');
-		link.download = result.fileName;
-		link.href = result.url;
-		link.click();
+		downloadUrl(result.url, result.fileName);
 	};
 
 	<template>
@@ -350,11 +349,9 @@ export default class ImageClipperTool extends Component {
 								this.download
 							}}
 						>
-							<Icon
-								@name="download"
+							<DownloadLabel
+								@label="Download PNG"
 							/>
-							{{! wording carried over from the Next app }}
-							Download PNG
 						</button>
 					</div>
 

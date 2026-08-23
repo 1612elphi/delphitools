@@ -3,7 +3,9 @@ import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import { not } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
+import { downloadUrl } from 'delphitools-v2/lib/download';
 
 const MIN_OPACITY = 1;
 const MAX_OPACITY = 20;
@@ -183,10 +185,10 @@ export default class ArtworkEnhancerTool extends Component {
 
 	download = () => {
 		if (!this.resultImage) return;
-		const link = document.createElement('a');
-		link.download = `${this.fileName || 'artwork'}-enhanced.png`;
-		link.href = this.resultImage;
-		link.click();
+		downloadUrl(
+			this.resultImage,
+			`${this.fileName || 'artwork'}-enhanced.png`,
+		);
 	};
 
 	<template>
@@ -321,11 +323,9 @@ export default class ArtworkEnhancerTool extends Component {
 								this.download
 							}}
 						>
-							<Icon
-								@name="download"
+							<DownloadLabel
+								@label="Download PNG"
 							/>
-							{{! wording carried over from the Next app }}
-							Download PNG
 						</button>
 					</div>
 				{{else}}

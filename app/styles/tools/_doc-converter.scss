@@ -481,18 +481,6 @@ $amber: crayon.color("amber-500");
 	}
 }
 
-.dt-docconv-spinner {
-	width: crayon.size(4);
-	height: crayon.size(4);
-	animation: dt-docconv-spin 1s linear infinite;
-}
-
-@keyframes dt-docconv-spin {
-	to {
-		transform: rotate(360deg);
-	}
-}
-
 .dt-docconv-progress {
 	padding: crayon.size(4);
 	border-top: 2px solid var(--border);

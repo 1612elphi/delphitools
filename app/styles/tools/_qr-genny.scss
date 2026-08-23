@@ -179,24 +179,8 @@
 }
 
 .dt-qr-spinner {
-	animation: dt-qr-spin 1s linear infinite;
-
 	&.is-large {
-		width: crayon.size(8);
-		height: crayon.size(8);
 		color: var(--muted-foreground);
-	}
-}
-
-@keyframes dt-qr-spin {
-	to {
-		transform: rotate(360deg);
-	}
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.dt-qr-spinner {
-		animation: none;
 	}
 }
 

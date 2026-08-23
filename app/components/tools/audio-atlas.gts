@@ -4,6 +4,7 @@ import { on } from '@ember/modifier';
 import { htmlSafe } from '@ember/template';
 import { modifier } from 'ember-modifier';
 import Icon from 'delphitools-v2/components/icon';
+import NdsLoader from 'delphitools-v2/components/ui/nds-loader';
 import WaveMinimap from 'delphitools-v2/components/wave-minimap';
 import {
 	AudioIntake,
@@ -18,6 +19,7 @@ import {
 } from 'delphitools-v2/lib/audio';
 import { probeAudio, type AudioProbe } from 'delphitools-v2/lib/media-probe';
 import { AUDIO_ACCEPT, acceptAttr } from 'delphitools-v2/lib/tools';
+import filePaste from 'delphitools-v2/modifiers/file-paste';
 
 /** Kept in step with the registry entry, which routes dropped files. */
 const ACCEPT = acceptAttr(AUDIO_ACCEPT);
@@ -493,7 +495,7 @@ export default class AudioAtlasTool extends Component {
 	});
 
 	<template>
-		<div class="dt-aa">
+		<div class="dt-aa" {{filePaste this.intake.load accept=ACCEPT}}>
 			<div
 				class="dt-aa-frame"
 				{{on "drop" this.intake.drop}}
@@ -519,7 +521,7 @@ export default class AudioAtlasTool extends Component {
 
 				{{#if this.intake.busy}}
 					<p class="dt-aa-status">
-						<Icon @name="loader" />
+						<NdsLoader />
 						Decoding…
 					</p>
 				{{/if}}

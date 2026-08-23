@@ -521,7 +521,7 @@ export default class RegexTesterTool extends Component {
 				<div class="dt-rx-results">
 					<div class="dt-rx-results-head">
 						<span
-							class="dt-rx-label is-inline"
+							class="dt-rx-label"
 						>{{this.countLabel}}</span>
 						<button
 							type="button"

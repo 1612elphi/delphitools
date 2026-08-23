@@ -161,27 +161,6 @@
 	padding: crayon.size(8);
 	color: var(--muted-foreground);
 	font-size: crayon.font-size("sm");
-
-	.dt-icon {
-		width: crayon.size(8);
-		height: crayon.size(8);
-	}
-}
-
-.dt-trace-spinner {
-	animation: dt-trace-spin 1s linear infinite;
-}
-
-@keyframes dt-trace-spin {
-	to {
-		transform: rotate(360deg);
-	}
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.dt-trace-spinner {
-		animation: none;
-	}
 }
 
 /* ── Action bar ──────────────────────────────────────────────────────────── */

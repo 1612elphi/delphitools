@@ -4,7 +4,9 @@ import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { htmlSafe } from '@ember/template';
 import Icon from 'delphitools-v2/components/icon';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
+import { downloadBlob, downloadUrl } from 'delphitools-v2/lib/download';
 import { buildIco, dataUrlToBytes } from 'delphitools-v2/lib/ico';
 
 const FAVICON_SIZES = [16, 32, 48, 64, 128, 180, 192, 512];
@@ -36,13 +38,6 @@ function sizeLabel(size: number): string {
 	if (size === 192) return 'Android';
 	if (size === 512) return 'PWA';
 	return `${size}×${size}`;
-}
-
-function saveUrl(href: string, filename: string) {
-	const link = document.createElement('a');
-	link.download = filename;
-	link.href = href;
-	link.click();
 }
 
 export default class FaviconGennyTool extends Component {
@@ -176,7 +171,7 @@ export default class FaviconGennyTool extends Component {
 	};
 
 	download = (favicon: GeneratedFavicon) => {
-		saveUrl(
+		downloadUrl(
 			favicon.dataUrl,
 			`favicon-${favicon.size}x${favicon.size}.png`,
 		);
@@ -205,12 +200,7 @@ export default class FaviconGennyTool extends Component {
 		const blob = new Blob([buildIco(frames)], {
 			type: 'image/x-icon',
 		});
-		const url = URL.createObjectURL(blob);
-		saveUrl(url, 'favicon.ico');
-		// Revoking in the same task can cancel the download in Chrome.
-		this.#timers.push(
-			setTimeout(() => URL.revokeObjectURL(url), 0),
-		);
+		downloadBlob(blob, 'favicon.ico');
 	};
 
 	<template>
@@ -301,10 +291,9 @@ export default class FaviconGennyTool extends Component {
 								this.downloadIco
 							}}
 						>
-							<Icon
-								@name="download"
+							<DownloadLabel
+								@label="Download .ico"
 							/>
-							Download .ico
 						</button>
 						<button
 							type="button"
@@ -314,10 +303,9 @@ export default class FaviconGennyTool extends Component {
 								this.downloadAll
 							}}
 						>
-							<Icon
-								@name="download"
+							<DownloadLabel
+								@label="Download All"
 							/>
-							Download All
 						</button>
 					</div>
 
@@ -362,15 +350,12 @@ export default class FaviconGennyTool extends Component {
 										class="dt-favicon-role"
 									>{{row.label}}</span>
 								</span>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-favicon-hint"
 								>
-									<Icon
-										@name="download"
+									<DownloadLabel
+										@label="Download PNG"
 									/>
-									Download
-									PNG
 								</span>
 							</button>
 						{{/each}}

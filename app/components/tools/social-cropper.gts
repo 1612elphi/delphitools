@@ -5,6 +5,8 @@ import { fn } from '@ember/helper';
 import { htmlSafe } from '@ember/template';
 import { eq } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
+import DownloadLabel from 'delphitools-v2/components/download-label';
+import { downloadUrl } from 'delphitools-v2/lib/download';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import {
 	SOCIAL_PLATFORMS,
@@ -254,10 +256,10 @@ export default class SocialCropperTool extends Component {
 
 	download = () => {
 		if (!this.croppedImage) return;
-		const link = document.createElement('a');
-		link.download = `${this.fileName}-${this.platform.name.toLowerCase()}-${this.ratio.label}.png`;
-		link.href = this.croppedImage;
-		link.click();
+		downloadUrl(
+			this.croppedImage,
+			`${this.fileName}-${this.platform.name.toLowerCase()}-${this.ratio.label}.png`,
+		);
 	};
 
 	<template>
@@ -445,11 +447,9 @@ export default class SocialCropperTool extends Component {
 									this.download
 								}}
 							>
-								<Icon
-									@name="download"
+								<DownloadLabel
+									@label="Download PNG"
 								/>
-								{{! wording carried over from the Next app }}
-								Download PNG
 							</button>
 						</div>
 					{{/if}}

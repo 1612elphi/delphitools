@@ -1090,3 +1090,175 @@ both "no audio" and "unreadable". Also: an `apply()` helper that opened
 the target for writing before its transform ran truncated
 `video-trimmer.gts` (untracked, so no git copy); rewritten from the
 session's own content, all rigs green afterwards.
+
+## 2026-08-23: Workflows (Flow State)
+
+A predefined chain of tools with a bar under the header. `lib/workflows.ts`
+holds six chains (`audio-to-subtitles`, `trim-caption-burn`,
+`paste-and-strip`, `trim-and-mute`, `extract-and-normalise`,
+`colour-to-gradient`); `services/flow.ts` owns the current workflow, the
+step, the bag of files earlier steps produced and the colour the current
+tool shows. The record (workflow id + step) is in sessionStorage, tab
+scoped; the files are in IndexedDB (`lib/flow-store.ts`, its own two-line
+Dexie database, name and type stored beside the blob because WebKit once
+returned stored Files as Blobs). No stragglers: the bag is cleared on
+`start`, on `exit`, and on boot whenever the tab has no record, so a closed
+tab's bag is swept by the next page load.
+
+Tools stay unaware of chains. Two hooks at the altitude every tool already
+passes through: `lib/download.ts` captures the blob into the bag instead of
+saving it while a non-final step is current (`downloadUrl` fetches the
+object URL first; `saveBlob` is the uncaptured path the bar's capture
+buttons use), and the `filePaste` modifier asks the service for pending
+files on install and hands them to the tool's own handler. Delivery rule
+(`pendingFor`): per accept pattern, the newest matching file from earlier
+steps, each file once per visit, so Subtitle Studio gets the trimmed video
+and the SRT in two calls through its existing `readAny`. Colour flows carry
+`?color=`; Colour Converter pushes `values.hex` into `flow.colour` through a
+modifier and clears it on destroy. Paste Image moved from an inline anchor
+to `downloadUrl`; the other 24 inline-anchor tools join a workflow the day
+they switch to lib/download.
+
+Pre-existing bug found by the rig and fixed at the root: Ember drops a query
+param no controller declares, so every in-app `?color=` link (omnibox
+carry included) landed on the tool's default; only a full page load ever
+carried the colour. `app/controllers/tools/tool.ts` now declares `color`
+with model scope. The omnibox rig asserts the landing, not only the href.
+
+Surfaces: `FlowState` bar in application.gts (tiles, captures with save,
+Next/Done, exit), `WorkflowGrid` section on the home catalogue, a Workflows
+group in the sidebar. Tests: `lib/workflows-test`, `services/flow-test`
+(stubbed router, real IndexedDB). Rig: `scripts/verify/workflows.mjs`
+(10 checks: start, capture, hand-off, reload restore, orphan sweep, Done,
+colour carry, exit). Left: two tabs running flows share one bag (per-tab key
+when it matters); a flow whose step has no `filePaste`/intake hook
+(`doc-converter`, `text-editor`, `text-diff`, `markdown-writer`) cannot
+receive a hand-off yet.
+
+Follow-up (same day): "Pass along". Every control that saves a file now
+renders `<DownloadLabel>` (`components/download-label.gts`): its own label
+outside a workflow, "Pass along" with an arrow while a later step waits;
+icon-only controls use `passAlong()`/`capturing()` from `lib/flow-hooks`.
+Five Sonnet agents swept the 48 tool components in parallel and moved the
+24 inline-anchor tools onto `lib/download` (the editor's `lib/editor/
+export.ts` private `downloadText` went the same way), so every tool can be
+a non-final step. `doc-converter` and `text-diff` gained a `filePaste` hook;
+`text-editor` and `markdown-writer` have no File load path at all and stay
+hand-off-blind. Hand-off bug: Audio Trimmer (and every intake tool without
+a `filePaste` modifier) never received the file because delivery only ran
+from the modifier; it is now `deliverPending()` in `lib/flow-hooks`, called
+from the modifier and from both intake constructors. `capturing` is true
+only on the current step's own tool page, so a Substrata export from
+`/editor` mid-flow still saves. Rig: Extract and normalise end to end
+(clip → extractor → "Pass along" → normaliser through its intake →
+"Download" on the last step). Audio to subtitles is redundant (Auto
+Subtitle takes video directly); left in the list as Ruby said it is neither
+here nor there.
+
+## 2026-08-23: NDS loader
+
+Every loading state renders `<NdsLoader>` (`components/ui/nds-loader.gts`,
+`styles/_nds-loader.scss`), copied verbatim from Ruby's delphicomponents
+repo (`NdsLoader/`, public domain): a 3x3 cell grid whose perimeter cells
+light in turn, `currentcolor`, `role="status"`, reduced-motion slows the
+step. `is-inline` is the delphitools size variant (16px, a size(4) icon)
+for buttons and status lines; the 28px default is for stages and overlays.
+Four Sonnet agents swept 21 tools: 23 Lucide `loader`/`loader-circle`/
+`loader-2` sites plus the five `aria-busy` buttons that swapped their icon
+name to `loader` and spun it (now `{{#if busy}}<NdsLoader
+class="is-inline" />{{else}}<Icon …/>{{/if}}`). Gone: 15 per-tool
+`@keyframes dt-<tool>-spin` blocks, their `animation:` rules and
+reduced-motion overrides, the empty spinner classes, two dead nested
+`.dt-icon` sizing rules, and the two loader icons from `lib/icons.ts`
+(226 icons). Nothing in Substrata used a loader. When delphicomponents
+updates the loader, re-copy the CSS into the partial; the `is-inline` block
+at its end is the only local addition.
+
+Follow-up (same day): the hand-off as a gesture. Every step passes its
+output along, the last one included: `capturing` no longer stops at the
+last step, so the last tool's control also reads "Pass along"; Done appears
+in the bar only once that capture exists (`finished`) and saves it
+(`flow.finish`: `saveBlob` + exit). The bar cannot press a tool's own
+action, so the tool's output is the gate. Feedback: the service keeps the
+rect of the last clicked control (one capture-phase click listener;
+lib/download has no event to hand over) and gives it to the bar's
+`captureListener`; the bar flies a disc along a quadratic arc (the curve
+sampled into translate keyframes for the Web Animations API, 520 ms, a
+size(6) disc with a background rim; Chrome
+resolves `offset-path: path()` against the element's own box, so a motion
+path was the wrong tool) into the Next slot and pulses it (160 ms); entering a flow is a plain route change, the slide only runs on
+advance (forward: out left, in from the right) and on stepping back;
+when the flight lands the service advances on its own (Next stays as the
+manual fallback after going back). The page change starts a quarter of the way into the flight: two Web
+Animations on `.dt-main` itself (out 140 ms, route swap, in 200 ms;
+forward: out left, in from the right; back mirrored; the step commits
+with the route swap so the old page keeps its label while leaving), not a
+view transition, which snapshots the document and would freeze the disc
+mid-flight. Reduced motion: plain transition, no disc. An earlier cut used `document.startViewTransition`;
+two facts from it: Chrome fires an unhandled rejection for
+`ViewTransition.ready` when a newer transition skips an older one, and the
+document is not hit-testable while a view transition runs. Gradient Genny seeds
+the carried `?color=` into every mode (first stop, top-left corner, first
+mesh point) instead of the 2D corner only; the omnibox carry had the same
+gap. Ruby's sidebar cleanup replaced the per-workflow buttons with one link
+to a `workflows` route (template still to come); the dead code behind the
+buttons is gone. Rig: 17 checks.
+
+Finale (same day): once the last step has passed its output along, the bar
+gets `is-finished`: it grows from size(12) to size(20), the button, now
+"Download & Exit" with `file-down` (label from a GPT 5.6 Terra shortlist via
+omp; Ruby found "Done" non-committal), renders larger with a slow
+inset-ring beacon (off under reduced motion), and the tool
+behind it steps back (`.dt-inset:has(> .dt-flow.is-finished) > .dt-main`:
+opacity 0.5, 4px blur, no pointer events). Done saves and exits; the exit
+cell also clears it. Rig: 18 checks.
+
+Simplify pass (2026-08-23, four reviewers: reuse, simplification,
+efficiency, altitude). Applied: one delivery site (the filePaste modifier;
+the five intake-only tools got the modifier, the intake constructors lost
+their hook), `pending()` guarded by the same on-step-page test as
+`capturing` (a detour into another paste-hook tool no longer receives the
+bag), Dexie out of the boot graph (lazy import; a localStorage flag says a
+bag exists, so visitors who never ran a flow never open IndexedDB), the
+click listener only while a flow is active, the capture in memory before
+the IndexedDB write so the flight starts at once, the four A/V tools hand
+`result.blob` over instead of fetching their object URL, `<main>` reaches
+the service through a modifier and the finale is a plain `.is-behind`
+class instead of `:has()`, `landing` moved into the service, `carryColour`
+modifier in lib/colour-query (any colour tool is a source with one
+attribute), `@cached` on `tools` and the converter's `values`, the beacon
+animates opacity on a pseudo-element, `transitionTo(route, model,
+{ queryParams })` now that the controller declares `color`, `<DownloadLabel>`
+icon on by default (53 `@icon` args gone) with `@busy` for the two
+generate-and-save buttons, `downloadIcon()` for the six icon-only controls,
+the loader's size(4) cell is the default (`is-stage` for the four block
+sites), `workflowTools` instead of a second flatMap, `reducedMotion`
+shared, `waitUntil` instead of fixed sleeps in the service test, the
+gradient seed back in the component, `downloadText` in placeholder-genny,
+one `formatBytes` (three copies gone), dead `.dt-flow-nav`, a one-line
+`workflows` template for the sidebar link. Kept: the loader's `@mode` and
+its CSS (verbatim copy), the blur on the finished tool, the last step's
+IndexedDB write (Done survives a reload), `toBlob` in gradient-genny.
+
+Code review (2026-08-23, kimi-k3 via omp, 7/10 before fixes). Critical,
+fixed: the bag was origin-wide with its lifetime keyed to one tab's record,
+so a second tab's boot sweep wiped a live flow's captures and two concurrent
+flows could deliver into each other. Now every row carries the run id of
+the flow that wrote it (`crypto.randomUUID()` at `start`, stored in the
+record and on each row, schema v2), a tab reads and clears only its own
+run, and a boot with no record asks live tabs over a BroadcastChannel
+roll-call (300 ms) and sweeps only the runs nobody answers for. Important,
+all fixed: qr-genny's `getRawData` may resolve a string for SVG (wrapped in
+a Blob); an aborted router transition (two quick navigations) and a
+cancelled flight no longer reject unhandled; the bag flag is set after a
+successful IndexedDB write, so a refused write (quota) leaves no phantom
+bag and the session continues from memory; Back/Forward onto another
+step's tool reconciles the step (`routeDidChange`); exiting or restarting
+with captures asks first (`confirm`, two words); the finale puts `inert`
+on `<main>` and focuses its one button; `downloadUrl`'s capture fetch
+falls back to a real download. Minor, fixed: `flowHooks.current` cleared
+on destroy, the click rect consumed per capture, storage access guarded,
+the disc `aria-hidden`, markdown-writer's title follows `passAlong`. Left:
+an IndexedDB write still in flight when `exit` runs lands after the clear
+(the next boot's roll-call sweeps it). Rig: 20 checks, including a second
+tab that leaves a live bag alone and a closed tab's run being swept.

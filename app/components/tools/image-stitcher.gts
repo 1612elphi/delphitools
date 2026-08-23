@@ -8,7 +8,9 @@ import { eq } from 'ember-truth-helpers';
 
 import type { TOC } from '@ember/component/template-only';
 
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import Icon from 'delphitools-v2/components/icon';
+import { downloadBlob } from 'delphitools-v2/lib/download';
 import { encodeJxl } from 'delphitools-v2/lib/jxl';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 
@@ -1158,11 +1160,10 @@ export default class ImageStitcherTool extends Component {
 			const name = this.isIndividual
 				? this.base?.name
 				: this.batchSrcs[0]?.name;
-			const link = document.createElement('a');
-			link.download = `${name || 'stitched'}-stitched.${meta.ext}`;
-			link.href = URL.createObjectURL(blob);
-			link.click();
-			URL.revokeObjectURL(link.href);
+			downloadBlob(
+				blob,
+				`${name || 'stitched'}-stitched.${meta.ext}`,
+			);
 		} catch (err) {
 			console.error('stitch export failed', err);
 		}
@@ -1755,11 +1756,9 @@ export default class ImageStitcherTool extends Component {
 								this.download
 							}}
 						>
-							<Icon
-								@name="download"
+							<DownloadLabel
+								@label="Download {{this.formatLabel}}"
 							/>
-							Download
-							{{this.formatLabel}}
 						</button>
 					</div>
 				{{/if}}

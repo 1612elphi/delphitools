@@ -168,22 +168,6 @@
 	}
 }
 
-.dt-bg-spinner {
-	animation: dt-spin 1s linear infinite;
-}
-
-@keyframes dt-spin {
-	to {
-		transform: rotate(360deg);
-	}
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.dt-bg-spinner {
-		animation: none;
-	}
-}
-
 .dt-bg-progress {
 	display: block;
 	width: 100%;

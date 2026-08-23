@@ -4,8 +4,11 @@ import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { modifier } from 'ember-modifier';
 import Icon from 'delphitools-v2/components/icon';
+import NdsLoader from 'delphitools-v2/components/ui/nds-loader';
 import { getPdfJs, loadPdfDocument } from 'delphitools-v2/lib/pdfjs';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
+import { downloadBlob } from 'delphitools-v2/lib/download';
+import { downloadIcon, passAlong } from 'delphitools-v2/lib/flow-hooks';
 import type {
 	PDFArray,
 	PDFContext,
@@ -1279,16 +1282,12 @@ export default class PdfPreflightTool extends Component {
 			bytes.byteOffset,
 			bytes.byteOffset + bytes.byteLength,
 		) as ArrayBuffer;
-		const url = URL.createObjectURL(
+		downloadBlob(
 			new Blob([buffer], {
 				type: 'application/octet-stream',
 			}),
+			`${font.name}${font.extension ?? ''}`,
 		);
-		const link = document.createElement('a');
-		link.href = url;
-		link.download = `${font.name}${font.extension ?? ''}`;
-		link.click();
-		URL.revokeObjectURL(url);
 	};
 
 	<template>
@@ -1362,10 +1361,7 @@ export default class PdfPreflightTool extends Component {
 
 				{{#if this.analysing}}
 					<div class="dt-preflight-busy">
-						<Icon
-							@name="loader-circle"
-							class="dt-preflight-spinner"
-						/>
+						<NdsLoader class="is-stage" />
 						{{! wording carried over from the Next app }}
 						<span>Analysing PDF...</span>
 					</div>
@@ -1664,6 +1660,9 @@ export default class PdfPreflightTool extends Component {
 													type="button"
 													class="dt-preflight-font-download"
 													title={{row.downloadTitle}}
+													aria-label={{passAlong
+														row.downloadTitle
+													}}
 													{{on
 														"click"
 														(fn
@@ -1673,7 +1672,8 @@ export default class PdfPreflightTool extends Component {
 													}}
 												>
 													<Icon
-														@name="download"
+														@name={{(downloadIcon
+														)}}
 													/>
 												</button>
 											{{/if}}

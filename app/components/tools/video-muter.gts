@@ -4,8 +4,10 @@ import { on } from '@ember/modifier';
 import { eq } from 'ember-truth-helpers';
 import { htmlSafe } from '@ember/template';
 import Icon from 'delphitools-v2/components/icon';
+import NdsLoader from 'delphitools-v2/components/ui/nds-loader';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
-import { downloadUrl } from 'delphitools-v2/lib/download';
+import { downloadBlob } from 'delphitools-v2/lib/download';
 import { formatBytes } from 'delphitools-v2/lib/image-compress';
 import { formatTimestamp } from 'delphitools-v2/lib/subtitles';
 import { VideoIntake } from 'delphitools-v2/lib/video';
@@ -185,8 +187,8 @@ export default class VideoMuterTool extends Component {
 
 	download = () => {
 		if (!this.result) return;
-		downloadUrl(
-			this.resultUrl,
+		downloadBlob(
+			this.result.blob,
 			`${this.baseName}-muted.${this.result.ext}`,
 		);
 	};
@@ -297,13 +299,13 @@ export default class VideoMuterTool extends Component {
 						}}
 						{{on "click" this.mute}}
 					>
-						<Icon
-							@name={{if
-								this.busy
-								"loader"
-								"volume-x"
-							}}
-						/>
+						{{#if this.busy}}
+							<NdsLoader />
+						{{else}}
+							<Icon
+								@name="volume-x"
+							/>
+						{{/if}}
 						<span>Mute</span>
 					</button>
 					<button
@@ -395,10 +397,7 @@ export default class VideoMuterTool extends Component {
 								this.download
 							}}
 						>
-							<Icon
-								@name="download"
-							/>
-							<span>Download</span>
+							<DownloadLabel />
 						</button>
 					</div>
 				{{/if}}

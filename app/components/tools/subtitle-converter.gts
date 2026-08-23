@@ -4,6 +4,7 @@ import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { eq } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import { downloadText } from 'delphitools-v2/lib/download';
 import {
@@ -524,12 +525,8 @@ export default class SubtitleConverterTool extends Component {
 										this.download
 									}}
 								>
-									<Icon
-										@name="download"
+									<DownloadLabel
 									/>
-									<span
-										class="dt-sub-btn-text"
-									>Download</span>
 								</button>
 							</div>
 						</div>

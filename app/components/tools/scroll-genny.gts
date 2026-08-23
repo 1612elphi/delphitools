@@ -5,6 +5,9 @@ import { fn } from '@ember/helper';
 import { htmlSafe } from '@ember/template';
 import { eq } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
+import DownloadLabel from 'delphitools-v2/components/download-label';
+import { downloadIcon } from 'delphitools-v2/lib/flow-hooks';
+import { downloadUrl } from 'delphitools-v2/lib/download';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 
 /** Six digits behind a #, the only form `<input type="color">` accepts. */
@@ -398,10 +401,10 @@ export default class ScrollGeneratorTool extends Component {
 	}
 
 	download = (tile: Tile) => {
-		const link = document.createElement('a');
-		link.download = `${this.fileName}-scroll-${tile.number}.png`;
-		link.href = tile.dataUrl;
-		link.click();
+		downloadUrl(
+			tile.dataUrl,
+			`${this.fileName}-scroll-${tile.number}.png`,
+		);
 	};
 
 	downloadAll = () => {
@@ -714,10 +717,9 @@ export default class ScrollGeneratorTool extends Component {
 								this.downloadAll
 							}}
 						>
-							<Icon
-								@name="download"
+							<DownloadLabel
+								@label="Download All"
 							/>
-							Download All
 						</button>
 					</div>
 
@@ -750,7 +752,8 @@ export default class ScrollGeneratorTool extends Component {
 									>Slide
 										{{tile.number}}</span>
 									<Icon
-										@name="download"
+										@name={{(downloadIcon
+										)}}
 									/>
 								</span>
 							</button>

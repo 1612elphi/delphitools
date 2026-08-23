@@ -4,7 +4,10 @@ import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { LinkTo } from '@ember/routing';
 import { eq } from 'ember-truth-helpers';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import Icon from 'delphitools-v2/components/icon';
+import { formatBytes } from 'delphitools-v2/lib/image-compress';
+import { downloadBlob, downloadUrl } from 'delphitools-v2/lib/download';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import {
 	Select,
@@ -92,12 +95,6 @@ interface ConvertedImage {
 interface Dimensions {
 	width: number;
 	height: number;
-}
-
-function formatBytes(bytes: number): string {
-	if (bytes < 1024) return `${bytes} B`;
-	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function canvasToBlob(
@@ -601,10 +598,7 @@ export default class ImageConverterTool extends Component {
 	};
 
 	download = (image: ConvertedImage) => {
-		const link = document.createElement('a');
-		link.download = image.name;
-		link.href = image.url;
-		link.click();
+		downloadUrl(image.url, image.name);
 	};
 
 	downloadZip = async () => {
@@ -613,14 +607,8 @@ export default class ImageConverterTool extends Component {
 		for (const image of this.converted) {
 			zip.file(image.name, image.blob);
 		}
-		const url = URL.createObjectURL(
-			await zip.generateAsync({ type: 'blob' }),
-		);
-		const link = document.createElement('a');
-		link.download = 'converted-images.zip';
-		link.href = url;
-		link.click();
-		URL.revokeObjectURL(url);
+		const blob = await zip.generateAsync({ type: 'blob' });
+		downloadBlob(blob, 'converted-images.zip');
 	};
 
 	<template>
@@ -1235,9 +1223,7 @@ export default class ImageConverterTool extends Component {
 								"original"
 							)
 						}}
-							<p
-								class="dt-conv-note is-inline"
-							>
+							<p class="dt-conv-note">
 								<Icon
 									@name="scaling"
 								/>
@@ -1498,12 +1484,9 @@ export default class ImageConverterTool extends Component {
 									this.downloadZip
 								}}
 							>
-								<Icon
-									@name="archive"
+								<DownloadLabel
+									@label="Download All as ZIP"
 								/>
-								{{! wording carried over from the Next app }}
-								Download All as
-								ZIP
 							</button>
 						{{/if}}
 					</div>
@@ -1550,11 +1533,8 @@ export default class ImageConverterTool extends Component {
 									)
 								}}
 							>
-								<Icon
-									@name="download"
+								<DownloadLabel
 								/>
-								{{! wording carried over from the Next app }}
-								Download
 							</button>
 						</div>
 					{{/each}}

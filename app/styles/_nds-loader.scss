@@ -1,0 +1,175 @@
+// The NDS loader from delphicomponents (NdsLoader/nds-loader.css), verbatim
+// apart from the delphitools size variant at the end.
+
+.nds-loader {
+	--nds-tick: var(--nds-step, 100ms);
+	--nds-cycle: 8;
+
+	display: inline-grid;
+	grid-template-columns: repeat(3, var(--nds-cell, 8px));
+	gap: var(--nds-gap, 2px);
+	vertical-align: middle;
+}
+
+/* span = perimeter cell (dim base, ::before/::after are lit layers), i = center, always lit */
+.nds-loader > * {
+	position: relative;
+	aspect-ratio: 1;
+	background: color-mix(
+		in srgb,
+		currentcolor calc(var(--nds-dim, 0.2) * 100%),
+		transparent
+	);
+}
+
+.nds-loader > i {
+	background: currentcolor;
+}
+
+/* --i is the cell's clockwise index from top-left. A cell's lit window is the keyframe
+	 shifted by --i steps; the negative delay starts each cell at its steady-state phase. */
+.nds-loader > span::before,
+.nds-loader > span::after {
+	position: absolute;
+	inset: 0;
+	background: currentcolor;
+	opacity: 0;
+	animation: none calc(var(--nds-cycle) * var(--nds-tick)) step-end
+		infinite;
+	animation-delay: calc((var(--i) - var(--nds-cycle)) * var(--nds-tick));
+}
+
+.nds-loader > span::before {
+	content: "";
+	animation-name: nds-snake;
+}
+
+.nds-loader[data-mode~="comet"] > span::before {
+	animation-name: nds-comet;
+}
+
+.nds-loader[data-mode~="dot"] > span::before {
+	animation-name: nds-dot;
+}
+
+.nds-loader[data-mode~="twin"] > span::before {
+	animation-name: nds-twin;
+}
+
+/* pendulum over 16 steps: the head visits cell i at step i and again at step 15 - i,
+	 one lit layer per visit, so the trail folds at the turn instead of wrapping */
+.nds-loader[data-mode~="thinking"] {
+	--nds-cycle: 16;
+}
+
+.nds-loader[data-mode~="thinking"] > span::before,
+.nds-loader[data-mode~="thinking"] > span::after {
+	animation-name: nds-swing;
+}
+
+.nds-loader[data-mode~="thinking"] > span::after {
+	content: "";
+	animation-delay: calc((-1 - var(--i)) * var(--nds-tick));
+}
+
+.nds-loader[data-mode~="reverse"]:not([data-mode~="thinking"]) > span::before {
+	animation-delay: calc(var(--i) * -1 * var(--nds-tick));
+}
+
+/* one stop per step of an 8-step cycle; 12.5% = 1 step */
+@keyframes nds-snake {
+	0% {
+		opacity: 1;
+	}
+
+	62.5%,
+	100% {
+		opacity: 0;
+	}
+}
+
+@keyframes nds-comet {
+	0% {
+		opacity: 1;
+	}
+
+	12.5% {
+		opacity: 0.65;
+	}
+
+	25% {
+		opacity: 0.4;
+	}
+
+	37.5% {
+		opacity: 0.22;
+	}
+
+	50% {
+		opacity: 0.1;
+	}
+
+	62.5%,
+	100% {
+		opacity: 0;
+	}
+}
+
+@keyframes nds-dot {
+	0% {
+		opacity: 1;
+	}
+
+	12.5%,
+	100% {
+		opacity: 0;
+	}
+}
+
+@keyframes nds-twin {
+	0% {
+		opacity: 1;
+	}
+
+	37.5% {
+		opacity: 0;
+	}
+
+	50% {
+		opacity: 1;
+	}
+
+	87.5%,
+	100% {
+		opacity: 0;
+	}
+}
+
+/* 16-step cycle: 31.25% = 5 steps */
+@keyframes nds-swing {
+	0% {
+		opacity: 1;
+	}
+
+	31.25%,
+	100% {
+		opacity: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.nds-loader {
+		--nds-step: 500ms;
+	}
+}
+
+/* delphitools: a size(4) icon by default (buttons, status lines); `is-stage`
+   restores the original 8px cell for stages and overlays */
+.nds-loader {
+	--nds-cell: 4px;
+	--nds-gap: 2px;
+}
+
+.nds-loader.is-stage {
+	--nds-cell: 8px;
+}

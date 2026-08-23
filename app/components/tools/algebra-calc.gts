@@ -4,6 +4,7 @@ import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { eq } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
+import NdsLoader from 'delphitools-v2/components/ui/nds-loader';
 
 type MathModule = typeof import('mathjs');
 
@@ -319,10 +320,7 @@ export default class AlgebraCalcTool extends Component {
 				{{on "click" this.runCalculate}}
 			>
 				{{#if this.loading}}
-					<Icon
-						class="dt-alg-spinner"
-						@name="loader-circle"
-					/>
+					<NdsLoader />
 					{{! wording carried over from the Next app }}
 					Calculating…
 				{{else}}

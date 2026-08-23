@@ -3,7 +3,10 @@ import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { eq, not } from 'ember-truth-helpers';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import Icon from 'delphitools-v2/components/icon';
+import NdsLoader from 'delphitools-v2/components/ui/nds-loader';
+import { downloadUrl } from 'delphitools-v2/lib/download';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import {
 	compressImageData,
@@ -192,10 +195,7 @@ export default class ImageCompressorTool extends Component {
 
 	download = () => {
 		if (!this.compressed) return;
-		const link = document.createElement('a');
-		link.download = this.downloadName;
-		link.href = this.compressed.url;
-		link.click();
+		downloadUrl(this.compressed.url, this.downloadName);
 	};
 
 	async #compress() {
@@ -310,10 +310,7 @@ export default class ImageCompressorTool extends Component {
 								this.download
 							}}
 						>
-							<Icon
-								@name="download"
-							/>
-							Download
+							<DownloadLabel />
 						</button>
 					</div>
 
@@ -457,8 +454,7 @@ export default class ImageCompressorTool extends Component {
 								<p
 									class="dt-ic-status"
 								>
-									<Icon
-										@name="loader"
+									<NdsLoader
 									/>
 									{{if
 										this.failed

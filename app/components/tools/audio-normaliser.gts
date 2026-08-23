@@ -4,6 +4,8 @@ import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { eq } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
+import NdsLoader from 'delphitools-v2/components/ui/nds-loader';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import { downloadBlob } from 'delphitools-v2/lib/download';
 import { formatBytes } from 'delphitools-v2/lib/image-compress';
@@ -25,15 +27,9 @@ const TARGETS: { lufs: number; label: string; hint: string }[] = [
 	{ lufs: -23, label: '-23', hint: 'Broadcast' },
 ];
 
-// ∑CG: empty-state title on the Audio Normaliser stage
-//   spec: <= 32 chars, one line, parallels Audio Atlas's drop title
-//   sample: "Drop an audio file here"
-const DROP_TITLE = '∑CG';
+const DROP_TITLE = 'Drop an audio file';
 
-// ∑CG: status line when the -1 dBFS peak ceiling holds the gain below what the target asks for
-//   spec: <= 40 chars, one line, says the gain was capped by the peak ceiling
-//   sample: "Gain capped at -1 dBFS peak"
-const LIMITED_NOTE = '∑CG';
+const LIMITED_NOTE = 'Gain capped at -1 dBFS peak';
 
 const db = (value: number, unit: string) =>
 	Number.isFinite(value) ? `${value.toFixed(1)} ${unit}` : '–';
@@ -226,13 +222,11 @@ export default class AudioNormaliserTool extends Component {
 						}}
 						{{on "click" this.normalise}}
 					>
-						<Icon
-							@name={{if
-								this.busy
-								"loader"
-								"gauge"
-							}}
-						/>
+						{{#if this.busy}}
+							<NdsLoader />
+						{{else}}
+							<Icon @name="gauge" />
+						{{/if}}
 						<span>Normalise</span>
 					</button>
 					<button
@@ -358,10 +352,7 @@ export default class AudioNormaliserTool extends Component {
 								this.download
 							}}
 						>
-							<Icon
-								@name="download"
-							/>
-							<span>Download</span>
+							<DownloadLabel />
 						</button>
 					</div>
 				{{/if}}

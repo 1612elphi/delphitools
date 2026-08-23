@@ -6,7 +6,9 @@ import { modifier } from 'ember-modifier';
 import { htmlSafe } from '@ember/template';
 import type Owner from '@ember/owner';
 import Icon from 'delphitools-v2/components/icon';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
+import { downloadUrl } from 'delphitools-v2/lib/download';
 
 export interface CropArea {
 	x: number;
@@ -375,10 +377,7 @@ export default class PasteImageTool extends Component {
 	download = () => {
 		const shot = this.current;
 		if (!shot) return;
-		const link = document.createElement('a');
-		link.href = shot.url;
-		link.download = downloadName(new Date(), shot.type);
-		link.click();
+		downloadUrl(shot.url, downloadName(new Date(), shot.type));
 	};
 
 	reset = () => {
@@ -485,11 +484,9 @@ export default class PasteImageTool extends Component {
 									this.download
 								}}
 							>
-								<Icon
-									@name="download"
+								<DownloadLabel
+									@label="Download PNG"
 								/>
-								{{! wording carried over from the Next app }}
-								Download PNG
 							</button>
 						{{/if}}
 					</div>

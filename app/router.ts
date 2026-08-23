@@ -13,5 +13,6 @@ Router.map(function () {
 		this.route('tool', { path: '/:tool_id' });
 	});
 	this.route('editor');
+	this.route('workflows');
 	this.route('not-found', { path: '/*path' });
 });

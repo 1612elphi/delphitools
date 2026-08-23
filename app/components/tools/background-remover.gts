@@ -4,7 +4,10 @@ import { on } from '@ember/modifier';
 import { htmlSafe } from '@ember/template';
 import { eq } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
+import NdsLoader from 'delphitools-v2/components/ui/nds-loader';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
+import { downloadUrl } from 'delphitools-v2/lib/download';
 import {
 	loadRemover,
 	maskToCanvas,
@@ -140,10 +143,7 @@ export default class BackgroundRemoverTool extends Component {
 
 	download = () => {
 		if (!this.resultImage) return;
-		const link = document.createElement('a');
-		link.download = 'background-removed.png';
-		link.href = this.resultImage;
-		link.click();
+		downloadUrl(this.resultImage, 'background-removed.png');
 	};
 
 	<template>
@@ -173,10 +173,9 @@ export default class BackgroundRemoverTool extends Component {
 								this.download
 							}}
 						>
-							<Icon
-								@name="download"
+							<DownloadLabel
+								@label="Download PNG"
 							/>
-							Download PNG
 						</button>
 					</div>
 					<div class="dt-bg-compare">
@@ -254,10 +253,7 @@ export default class BackgroundRemoverTool extends Component {
 							}}
 						>
 							{{#if this.isBusy}}
-								<Icon
-									@name="loader-circle"
-									class="dt-bg-spinner"
-								/>
+								<NdsLoader />
 								{{#if
 									this.isDownloading
 								}}

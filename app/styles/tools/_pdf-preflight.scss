@@ -153,24 +153,6 @@ $crop: #22c55e;
 	color: var(--muted-foreground);
 }
 
-.dt-preflight-spinner {
-	width: crayon.size(5);
-	height: crayon.size(5);
-	animation: dt-preflight-spin 1s linear infinite;
-}
-
-@keyframes dt-preflight-spin {
-	to {
-		transform: rotate(360deg);
-	}
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.dt-preflight-spinner {
-		animation: none;
-	}
-}
-
 .dt-preflight-error {
 	color: var(--destructive);
 	font-size: crayon.font-size("sm");

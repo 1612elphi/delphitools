@@ -1,4 +1,5 @@
 import { modifier } from 'ember-modifier';
+import { deliverPending } from 'delphitools-v2/lib/flow-hooks';
 
 /**
  * Hands the first pasted file matching `accept` to the handler, replacing the
@@ -27,7 +28,15 @@ export default modifier(
 		};
 
 		doc.addEventListener('paste', onPaste);
-		return () => doc.removeEventListener('paste', onPaste);
+
+		// A workflow step takes the earlier steps' output the way it takes
+		// a paste: through this handler, once the tool is on screen.
+		const cancel = deliverPending(accept, handler);
+
+		return () => {
+			cancel();
+			doc.removeEventListener('paste', onPaste);
+		};
 	},
 );
 

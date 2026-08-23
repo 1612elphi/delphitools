@@ -13,6 +13,7 @@
 @use "omnibox";
 @use "wave-minimap";
 @use "sticker-wall";
+@use "nds-loader";
 
 // One partial per tool; see app/styles/tools/.
 @use "tools/algebra-calc";
@@ -1312,6 +1313,346 @@ $header-height: crayon.size(14);
 
 	margin-left: auto;
 	align-items: center;
+}
+
+/* ── Flow State: the workflow bar under the header ─────────────────────── */
+
+/* An action bar (DESIGN.md §10): flush cells divided by 1px, a 2px rule
+   below, the primary action a filled cell at the right edge. */
+.dt-flow {
+	position: sticky;
+	z-index: 49;
+	top: $header-height;
+	display: flex;
+	min-height: crayon.size(12);
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+	background: var(--card);
+	overflow-x: auto;
+	transition: min-height 240ms ease-out;
+
+	/* the finale: the last step has passed its output along, the panel
+	   grows and Done is the one thing left to press */
+	&.is-finished {
+		min-height: crayon.size(20);
+	}
+}
+
+/* the tool behind a finished flow steps back; the save or exit brings it back */
+.dt-main.is-behind {
+	opacity: 0.5;
+	filter: blur(4px);
+	pointer-events: none;
+}
+
+.dt-main {
+	transition:
+		opacity 240ms ease-out,
+		filter 240ms ease-out;
+}
+
+.dt-flow-name {
+	@include crayon.hstack(2);
+
+	flex: none;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	white-space: nowrap;
+
+	.dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+	}
+}
+
+.dt-flow-steps {
+	display: flex;
+	flex: none;
+	margin: 0;
+	padding: 0;
+	border-right: 1px solid var(--border);
+	list-style: none;
+
+	li {
+		display: flex;
+	}
+}
+
+.dt-flow-step {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	align-self: stretch;
+	padding-inline: crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	white-space: nowrap;
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+	}
+
+	&:disabled {
+		cursor: default;
+	}
+
+	&.is-done {
+		color: var(--foreground);
+
+		@include crayon.hover {
+			background: var(--accent);
+			color: var(--accent-foreground);
+		}
+	}
+
+	&.is-current {
+		background: var(--accent);
+		color: var(--accent-foreground);
+		font-weight: crayon.font-weight("bold");
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -2px;
+	}
+}
+
+.dt-flow-icon {
+	flex: none;
+}
+
+.dt-flow-label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.dt-flow-n {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: crayon.size(5);
+	height: crayon.size(5);
+	border: 1px solid currentcolor;
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+	font-variant-numeric: tabular-nums;
+
+	.dt-icon {
+		width: crayon.size(3.5);
+		height: crayon.size(3.5);
+	}
+}
+
+.dt-flow-captures {
+	display: flex;
+	min-width: 0;
+	margin-left: auto;
+	align-items: stretch;
+}
+
+.dt-flow-capture {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	max-width: crayon.size(80);
+	padding-inline: crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	white-space: nowrap;
+	cursor: pointer;
+
+	.dt-icon {
+		flex: none;
+		width: crayon.size(5);
+		height: crayon.size(5);
+	}
+
+	@include crayon.hover {
+		background: var(--accent);
+		color: var(--accent-foreground);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -2px;
+	}
+}
+
+.dt-flow-capture-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.dt-flow-capture-size {
+	flex: none;
+	color: var(--muted-foreground);
+}
+
+.dt-flow-next {
+	@include crayon.hstack(2);
+
+	flex: none;
+	align-items: center;
+	padding-inline: crayon.size(5);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--primary) 90%, black);
+	}
+
+	&:disabled {
+		background: var(--muted);
+		color: var(--muted-foreground);
+		cursor: default;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -2px;
+	}
+}
+
+.dt-flow-exit {
+	display: inline-flex;
+	flex: none;
+	width: crayon.size(12);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+	}
+
+	@include crayon.hover {
+		background: var(--accent);
+		color: var(--accent-foreground);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -2px;
+	}
+}
+
+.dt-flow-action {
+	display: flex;
+	min-width: crayon.size(12);
+	align-items: stretch;
+}
+
+.dt-flow-next.is-done {
+	position: relative;
+	padding-inline: crayon.size(8);
+	font-size: crayon.font-size("base");
+	animation: dt-flow-appear 160ms ease-out;
+
+	.dt-icon {
+		width: crayon.size(6);
+		height: crayon.size(6);
+	}
+
+	/* the beacon fades a static ring in and out: opacity only, no repaint */
+	&::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		box-shadow: inset 0 0 0 3px
+			color-mix(
+				in oklch,
+				var(--primary-foreground) 55%,
+				transparent
+			);
+		opacity: 0;
+		animation: dt-flow-beacon 1.6s ease-in-out 160ms infinite;
+		pointer-events: none;
+	}
+}
+
+@keyframes dt-flow-beacon {
+	50% {
+		opacity: 1;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dt-flow-next.is-done,
+	.dt-flow-next.is-done::after {
+		animation: none;
+	}
+}
+
+@keyframes dt-flow-appear {
+	from {
+		opacity: 0;
+		transform: translateX(crayon.size(2));
+	}
+}
+
+/* the capture in flight from the clicked control to the Next slot; left/top
+   are the launch point, the arc is translate keyframes */
+.dt-flow-ghost {
+	position: fixed;
+	z-index: 60;
+	width: crayon.size(6);
+	height: crayon.size(6);
+	margin: calc(-1 * crayon.size(3));
+	border: 2px solid var(--background);
+	border-radius: 9999px;
+	background: var(--primary);
+	box-shadow: 0 2px 8px rgb(0 0 0 / 25%);
+	pointer-events: none;
+	will-change: translate, scale, opacity;
+}
+
+/* home cells are buttons: a flow starts, it is not a route */
+.dt-flow-cell {
+	width: 100%;
+	border: 0;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.dt-flow-chain {
+	@include crayon.hstack(1);
+
+	flex-wrap: wrap;
+	align-items: center;
+
+	.dt-icon {
+		width: crayon.size(3);
+		height: crayon.size(3);
+	}
 }
 
 .dt-badge {

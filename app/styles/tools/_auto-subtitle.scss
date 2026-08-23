@@ -84,20 +84,9 @@
 		background: color-mix(in oklch, var(--primary) 90%, black);
 	}
 
-	/* The loader glyph spins only while a run is in flight. */
-	&[aria-busy="true"] .dt-icon {
-		animation: dt-asub-spin 0.8s linear infinite;
-	}
-
 	&:focus-visible {
 		outline: 2px solid var(--primary);
 		outline-offset: -2px;
-	}
-}
-
-@keyframes dt-asub-spin {
-	to {
-		transform: rotate(1turn);
 	}
 }
 

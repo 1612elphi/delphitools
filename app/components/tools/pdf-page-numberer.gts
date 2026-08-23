@@ -5,6 +5,7 @@ import { fn, get } from '@ember/helper';
 import { eq, not } from 'ember-truth-helpers';
 import { htmlSafe } from '@ember/template';
 import Icon from 'delphitools-v2/components/icon';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import Switch from 'delphitools-v2/components/ui/switch';
 import {
 	Select,
@@ -1223,12 +1224,14 @@ export default class PdfPageNumbererTool extends Component {
 						disabled={{this.working}}
 						{{on "click" this.apply}}
 					>
-						<Icon @name="stamp" />
-						{{if
-							this.working
-							"Working…"
-							"Apply"
-						}}
+						{{#if this.working}}
+							<Icon @name="stamp" />
+							Working…
+						{{else}}
+							<DownloadLabel
+								@label="Apply"
+							/>
+						{{/if}}
 					</button>
 
 					{{#if this.error}}

@@ -4,6 +4,8 @@ import { on } from '@ember/modifier';
 import { htmlSafe } from '@ember/template';
 import { modifier } from 'ember-modifier';
 import Icon from 'delphitools-v2/components/icon';
+import NdsLoader from 'delphitools-v2/components/ui/nds-loader';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import WaveMinimap from 'delphitools-v2/components/wave-minimap';
 import { downloadBlob } from 'delphitools-v2/lib/download';
 import {
@@ -17,6 +19,7 @@ import {
 	ViewWindow,
 } from 'delphitools-v2/lib/audio';
 import { AUDIO_ACCEPT, acceptAttr } from 'delphitools-v2/lib/tools';
+import filePaste from 'delphitools-v2/modifiers/file-paste';
 
 /** Kept in step with the registry entry, which routes dropped files. */
 const ACCEPT = acceptAttr(AUDIO_ACCEPT);
@@ -367,7 +370,7 @@ export default class AudioTrimmerTool extends Component {
 	};
 
 	<template>
-		<div class="dt-at">
+		<div class="dt-at" {{filePaste this.intake.load accept=ACCEPT}}>
 			<div
 				class="dt-at-frame"
 				{{on "drop" this.intake.drop}}
@@ -393,7 +396,7 @@ export default class AudioTrimmerTool extends Component {
 
 				{{#if this.intake.busy}}
 					<p class="dt-at-status">
-						<Icon @name="loader" />
+						<NdsLoader />
 						Decoding…
 					</p>
 				{{/if}}
@@ -468,10 +471,9 @@ export default class AudioTrimmerTool extends Component {
 								this.exportWav
 							}}
 						>
-							<Icon
-								@name="download"
+							<DownloadLabel
+								@label="Export WAV"
 							/>
-							Export WAV
 						</button>
 					</div>
 

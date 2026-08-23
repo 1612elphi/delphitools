@@ -5,8 +5,10 @@ import { fn } from '@ember/helper';
 import { htmlSafe } from '@ember/template';
 import { eq } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
+import NdsLoader from 'delphitools-v2/components/ui/nds-loader';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
-import { downloadUrl } from 'delphitools-v2/lib/download';
+import { downloadBlob } from 'delphitools-v2/lib/download';
 import { formatBytes } from 'delphitools-v2/lib/image-compress';
 import { formatTimestamp, parseTimestamp } from 'delphitools-v2/lib/subtitles';
 import { VideoIntake } from 'delphitools-v2/lib/video';
@@ -32,15 +34,9 @@ const MODES: { id: Mode; label: string }[] = [
 	{ id: 'exact', label: 'Exact' },
 ];
 
-// ∑CG: empty-state title on the Video Trimmer stage
-//   spec: <= 32 chars, one line, parallels Frame Extractor's "Drop a video here or click to upload"
-//   sample: "Drop a video here"
-const DROP_TITLE = '∑CG';
+const DROP_TITLE = 'Drop a video file';
 
-// ∑CG: error line when the cut fails (unreadable container, codec the muxer refuses, encoder missing for Exact)
-//   spec: <= 48 chars, one sentence, names MP4/MOV/WebM as the formats that work
-//   sample: "Couldn't cut that file. MP4, MOV and WebM work."
-const TRIM_ERROR = '∑CG';
+const TRIM_ERROR = "Couldn't process. Try MP4, MOV or WEBM";
 
 export default class VideoTrimmerTool extends Component {
 	intake = new VideoIntake({
@@ -242,8 +238,8 @@ export default class VideoTrimmerTool extends Component {
 
 	download = () => {
 		if (!this.result) return;
-		downloadUrl(
-			this.resultUrl,
+		downloadBlob(
+			this.result.blob,
 			`${this.baseName}-${tc(this.result.start * 1000).replace(/[:.]/g, '-')}.${this.result.ext}`,
 		);
 	};
@@ -349,13 +345,13 @@ export default class VideoTrimmerTool extends Component {
 						}}
 						{{on "click" this.trim}}
 					>
-						<Icon
-							@name={{if
-								this.busy
-								"loader"
-								"scissors"
-							}}
-						/>
+						{{#if this.busy}}
+							<NdsLoader />
+						{{else}}
+							<Icon
+								@name="scissors"
+							/>
+						{{/if}}
 						<span>Trim</span>
 					</button>
 					<button
@@ -719,10 +715,7 @@ export default class VideoTrimmerTool extends Component {
 								this.download
 							}}
 						>
-							<Icon
-								@name="download"
-							/>
-							<span>Download</span>
+							<DownloadLabel />
 						</button>
 					</div>
 				{{/if}}

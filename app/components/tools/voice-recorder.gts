@@ -7,6 +7,7 @@ import { modifier } from 'ember-modifier';
 import { eq, gt, not } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
 import WaveMinimap from 'delphitools-v2/components/wave-minimap';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import { downloadBlob } from 'delphitools-v2/lib/download';
 import {
 	audioContext,
@@ -510,10 +511,7 @@ export default class VoiceRecorderTool extends Component {
 								this.download
 							}}
 						>
-							<Icon
-								@name="download"
-							/>
-							Download
+							<DownloadLabel />
 						</button>
 						<button
 							type="button"

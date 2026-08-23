@@ -1,21 +1,12 @@
 // Exports derived from the live editor doc. Markdown is canonical; HTML is
 // rendered via DOMSerializer so it matches the on-screen rendering exactly.
-// The download and print-to-PDF helpers are inlined from the Next app's
-// lib/download.ts and lib/print-pdf.ts; the editor is their only v2 user so far.
+// The print-to-PDF helper is inlined from the Next app's lib/print-pdf.ts;
+// the editor is its only v2 user so far.
 import { DOMSerializer } from 'prosemirror-model';
 import type { Node as PMNode } from 'prosemirror-model';
+import { downloadText } from 'delphitools-v2/lib/download';
 import { schema } from './schema';
 import { serializeDoc } from './markdown';
-
-function downloadText(text: string, filename: string, mimeType: string): void {
-	const url = URL.createObjectURL(new Blob([text], { type: mimeType }));
-	const link = document.createElement('a');
-	link.href = url;
-	link.download = filename;
-	link.click();
-	// Revoke on the next tick so the navigation/download has started.
-	setTimeout(() => URL.revokeObjectURL(url), 0);
-}
 
 // A clean print stylesheet injected into the document we hand to the print engine.
 const PRINT_CSS = `

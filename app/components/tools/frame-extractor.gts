@@ -3,10 +3,13 @@ import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import Icon from 'delphitools-v2/components/icon';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import { downloadBlob, downloadUrl } from 'delphitools-v2/lib/download';
+import { downloadIcon, passAlong } from 'delphitools-v2/lib/flow-hooks';
 import { formatTimestamp } from 'delphitools-v2/lib/subtitles';
 import { seekTo, VideoIntake } from 'delphitools-v2/lib/video';
 import { VIDEO_ACCEPT, acceptAttr } from 'delphitools-v2/lib/tools';
+import filePaste from 'delphitools-v2/modifiers/file-paste';
 import { formatFps } from 'delphitools-v2/lib/media-probe';
 
 /** Kept in step with the registry entry, which routes dropped files. */
@@ -199,7 +202,7 @@ export default class FrameExtractorTool extends Component {
 	};
 
 	<template>
-		<div class="dt-fx">
+		<div class="dt-fx" {{filePaste this.intake.load accept=ACCEPT}}>
 			<div
 				class="dt-fx-frame"
 				{{on "drop" this.intake.drop}}
@@ -258,13 +261,15 @@ export default class FrameExtractorTool extends Component {
 								this.buildSheet
 							}}
 						>
-							<Icon
-								@name="layout-grid"
-							/>
 							{{#if this.sheetBusy}}
+								<Icon
+									@name="layout-grid"
+								/>
 								{{this.sheetProgress}}
 							{{else}}
-								Contact sheet
+								<DownloadLabel
+									@label="Contact sheet"
+								/>
 							{{/if}}
 						</button>
 						<button
@@ -460,10 +465,9 @@ export default class FrameExtractorTool extends Component {
 									this.downloadAll
 								}}
 							>
-								<Icon
-									@name="download"
+								<DownloadLabel
+									@label="Download all"
 								/>
-								Download all
 							</button>
 						</div>
 						<ul class="dt-fx-stills">
@@ -488,7 +492,9 @@ export default class FrameExtractorTool extends Component {
 										<button
 											type="button"
 											class="dt-fx-still-btn"
-											aria-label="Download frame"
+											aria-label={{passAlong
+												"Download frame"
+											}}
 											{{on
 												"click"
 												(fn
@@ -498,7 +504,8 @@ export default class FrameExtractorTool extends Component {
 											}}
 										>
 											<Icon
-												@name="download"
+												@name={{(downloadIcon
+												)}}
 											/>
 										</button>
 										<button

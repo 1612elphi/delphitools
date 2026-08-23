@@ -5,6 +5,7 @@ import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { eq } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
+import NdsLoader from 'delphitools-v2/components/ui/nds-loader';
 import Switch from 'delphitools-v2/components/ui/switch';
 import {
 	PASSWORD_MAX_LENGTH,
@@ -548,8 +549,8 @@ export default class PasswordGeneratorTool extends Component {
 							<div
 								class="dt-pg-wordloading"
 							>
-								<Icon
-									@name="loader-circle"
+								<NdsLoader
+									class="is-stage"
 								/>
 								Loading…
 							</div>

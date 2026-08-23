@@ -6,6 +6,8 @@ import { htmlSafe } from '@ember/template';
 import { eq } from 'ember-truth-helpers';
 import { modifier } from 'ember-modifier';
 import Icon from 'delphitools-v2/components/icon';
+import NdsLoader from 'delphitools-v2/components/ui/nds-loader';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import { downloadUrl } from 'delphitools-v2/lib/download';
 import { formatBytes } from 'delphitools-v2/lib/image-compress';
@@ -762,13 +764,11 @@ export default class SubtitleStudioTool extends Component {
 						}}
 						{{on "click" this.burn}}
 					>
-						<Icon
-							@name={{if
-								this.burning
-								"loader"
-								"flame"
-							}}
-						/>
+						{{#if this.burning}}
+							<NdsLoader />
+						{{else}}
+							<Icon @name="flame" />
+						{{/if}}
 						<span>Burn</span>
 					</button>
 					<button
@@ -1174,11 +1174,8 @@ export default class SubtitleStudioTool extends Component {
 										this.downloadResult
 									}}
 								>
-									<Icon
-										@name="download"
+									<DownloadLabel
 									/>
-									<span
-									>Download</span>
 								</button>
 							{{/if}}
 						</div>

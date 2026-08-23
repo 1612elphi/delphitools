@@ -9,6 +9,8 @@ import { service } from '@ember/service';
 import { LinkTo } from '@ember/routing';
 import { modifier } from 'ember-modifier';
 import Icon from 'delphitools-v2/components/icon';
+import DownloadLabel from 'delphitools-v2/components/download-label';
+import { downloadUrl } from 'delphitools-v2/lib/download';
 import {
 	Popover,
 	PopoverTrigger,
@@ -423,10 +425,7 @@ export default class PaletteGennyTool extends Component {
 		ctx.textAlign = 'right';
 		ctx.fillText('delphi.tools', width - pad, height - pad + 5);
 
-		const link = document.createElement('a');
-		link.download = 'palette.png';
-		link.href = canvas.toDataURL('image/png');
-		link.click();
+		downloadUrl(canvas.toDataURL('image/png'), 'palette.png');
 	};
 
 	<template>
@@ -914,10 +913,9 @@ export default class PaletteGennyTool extends Component {
 								this.downloadImage
 							}}
 						>
-							<Icon
-								@name="download"
+							<DownloadLabel
+								@label="Download Image"
 							/>
-							Download Image
 						</button>
 					</div>
 				</div>

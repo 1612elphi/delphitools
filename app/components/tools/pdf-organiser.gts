@@ -4,6 +4,7 @@ import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { eq, not, or } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import { downloadBlob } from 'delphitools-v2/lib/download';
 import {
@@ -490,10 +491,9 @@ export default class PdfOrganiserTool extends Component {
 								this.downloadMerged
 							}}
 						>
-							<Icon
-								@name="download"
+							<DownloadLabel
+								@label="Download merged PDF"
 							/>
-							Download merged PDF
 						</button>
 					</div>
 
@@ -576,10 +576,9 @@ export default class PdfOrganiserTool extends Component {
 								this.downloadSplit
 							}}
 						>
-							<Icon
-								@name="scissors"
+							<DownloadLabel
+								@label={{this.splitLabel}}
 							/>
-							{{this.splitLabel}}
 						</button>
 					</div>
 

@@ -5,6 +5,7 @@ import { fn } from '@ember/helper';
 import { htmlSafe } from '@ember/template';
 import { modifier } from 'ember-modifier';
 import Icon from 'delphitools-v2/components/icon';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import {
 	Popover,
 	PopoverTrigger,
@@ -751,7 +752,10 @@ export default class TextEditorTool extends Component {
 									)
 								}}
 							>
-								Markdown (.md)
+								<DownloadLabel
+									@label="Markdown (.md)"
+									@icon={{false}}
+								/>
 							</button>
 							<button
 								type="button"
@@ -764,7 +768,10 @@ export default class TextEditorTool extends Component {
 									)
 								}}
 							>
-								HTML (.html)
+								<DownloadLabel
+									@label="HTML (.html)"
+									@icon={{false}}
+								/>
 							</button>
 							{{! wording carried over from the Next app }}
 							<button

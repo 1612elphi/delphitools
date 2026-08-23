@@ -7,6 +7,7 @@ import { htmlSafe, type SafeString } from '@ember/template';
 import Icon from 'delphitools-v2/components/icon';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import { downloadText } from 'delphitools-v2/lib/download';
+import { downloadIcon, passAlong } from 'delphitools-v2/lib/flow-hooks';
 import {
 	INDENT_OPTIONS,
 	buildTree,
@@ -318,7 +319,9 @@ export default class JsonFormatterTool extends Component {
 						<button
 							type="button"
 							class="dt-jf-btn is-primary"
-							aria-label="Download"
+							aria-label={{passAlong
+								"Download"
+							}}
 							disabled={{unless
 								this.hasResult
 								true
@@ -329,7 +332,8 @@ export default class JsonFormatterTool extends Component {
 							}}
 						>
 							<Icon
-								@name="download"
+								@name={{(downloadIcon
+								)}}
 							/>
 						</button>
 					</div>

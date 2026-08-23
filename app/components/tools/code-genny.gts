@@ -5,6 +5,9 @@ import { fn } from '@ember/helper';
 import { htmlSafe } from '@ember/template';
 import { eq } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
+import NdsLoader from 'delphitools-v2/components/ui/nds-loader';
+import DownloadLabel from 'delphitools-v2/components/download-label';
+import { downloadBlob, downloadUrl } from 'delphitools-v2/lib/download';
 import {
 	Tabs,
 	TabsList,
@@ -541,10 +544,10 @@ export default class CodeGennyTool extends Component {
 
 	download = () => {
 		if (!this.codeDataUrl) return;
-		const link = document.createElement('a');
-		link.download = `${slug(this.currentType.name)}-${Date.now()}.png`;
-		link.href = this.codeDataUrl;
-		link.click();
+		downloadUrl(
+			this.codeDataUrl,
+			`${slug(this.currentType.name)}-${Date.now()}.png`,
+		);
 	};
 
 	copy = async () => {
@@ -673,13 +676,10 @@ export default class CodeGennyTool extends Component {
 		const zipBlob = await zip.generateAsync({ type: 'blob' });
 		if (this.#destroyed) return;
 
-		const url = URL.createObjectURL(zipBlob);
-		const link = document.createElement('a');
-		link.href = url;
-		link.download = `${slug(typeInfo.name)}-batch-${Date.now()}.zip`;
-		link.click();
-		// Revoking in the same task can cancel the download in Chrome.
-		setTimeout(() => URL.revokeObjectURL(url), 0);
+		downloadBlob(
+			zipBlob,
+			`${slug(typeInfo.name)}-batch-${Date.now()}.zip`,
+		);
 
 		this.batchGenerating = false;
 	};
@@ -815,9 +815,8 @@ export default class CodeGennyTool extends Component {
 									{{#if
 										this.generating
 									}}
-										<Icon
+										<NdsLoader
 											class="dt-code-spinner"
-											@name="loader-circle"
 										/>
 									{{else if
 										this.codeDataUrl
@@ -846,10 +845,9 @@ export default class CodeGennyTool extends Component {
 											this.download
 										}}
 									>
-										<Icon
-											@name="download"
+										<DownloadLabel
+											@label="PNG"
 										/>
-										PNG
 									</button>
 									<button
 										type="button"
@@ -1127,9 +1125,8 @@ export default class CodeGennyTool extends Component {
 										"generating"
 									)
 								}}
-									<Icon
+									<NdsLoader
 										class="dt-code-spinner"
-										@name="loader-circle"
 									/>
 								{{/if}}
 								{{#if
@@ -1208,21 +1205,10 @@ export default class CodeGennyTool extends Component {
 								this.generateBatch
 							}}
 						>
-							{{#if
-								this.batchGenerating
-							}}
-								<Icon
-									class="dt-code-spinner"
-									@name="loader-circle"
-								/>
-							{{else}}
-								<Icon
-									@name="package"
-								/>
-							{{/if}}
-							{{! wording carried over from the Next app }}
-							Generate &amp; Download
-							ZIP
+							<DownloadLabel
+								@label="Generate & Download ZIP"
+								@busy={{this.batchGenerating}}
+							/>
 						</button>
 					</TabsContent>
 				</div>

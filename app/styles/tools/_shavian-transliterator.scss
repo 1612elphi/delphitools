@@ -83,16 +83,6 @@
 	}
 }
 
-.dt-shav-spinner {
-	animation: dt-shav-spin 1s linear infinite;
-}
-
-@keyframes dt-shav-spin {
-	to {
-		transform: rotate(360deg);
-	}
-}
-
 .dt-shav-input {
 	display: block;
 	width: 100%;

@@ -5,6 +5,11 @@ import { fn } from '@ember/helper';
 import { htmlSafe } from '@ember/template';
 import { eq } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
+import { formatBytes } from 'delphitools-v2/lib/image-compress';
+import NdsLoader from 'delphitools-v2/components/ui/nds-loader';
+import DownloadLabel from 'delphitools-v2/components/download-label';
+import { downloadBlob } from 'delphitools-v2/lib/download';
+import filePaste from 'delphitools-v2/modifiers/file-paste';
 import {
 	Popover,
 	PopoverTrigger,
@@ -77,22 +82,6 @@ function extractWarnings(res: PandocConvertResult): string[] {
 		}
 	}
 	return out;
-}
-
-function formatBytes(bytes: number): string {
-	if (bytes < 1024) return `${bytes} B`;
-	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function downloadBlob(blob: Blob, filename: string): void {
-	const url = URL.createObjectURL(blob);
-	const link = document.createElement('a');
-	link.href = url;
-	link.download = filename;
-	link.click();
-	// Revoke on the next tick so the download has started.
-	setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 interface FormatComboboxSignature {
@@ -767,7 +756,7 @@ export default class DocConverterTool extends Component {
 	};
 
 	<template>
-		<div class="dt-docconv">
+		<div class="dt-docconv" {{filePaste this.selectFile}}>
 			<div class="dt-docconv-frame">
 				<div class="dt-docconv-section">
 					<div class="dt-docconv-section-head">
@@ -1110,10 +1099,7 @@ export default class DocConverterTool extends Component {
 					{{on "click" this.doConvert}}
 				>
 					{{#if this.busy}}
-						<Icon
-							@name="loader-2"
-							class="dt-docconv-spinner"
-						/>
+						<NdsLoader />
 					{{/if}}
 					{{this.convertLabel}}
 				</button>
@@ -1199,10 +1185,8 @@ export default class DocConverterTool extends Component {
 									this.downloadResult
 								}}
 							>
-								<Icon
-									@name="download"
+								<DownloadLabel
 								/>
-								Download
 							</button>
 						{{/if}}
 					</div>

@@ -7,7 +7,9 @@ import { eq } from 'ember-truth-helpers';
 import type { PDFDocument } from 'pdf-lib';
 
 import Icon from 'delphitools-v2/components/icon';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import PaperSizeCombobox from 'delphitools-v2/components/ui/paper-size-combobox';
+import { downloadBlob } from 'delphitools-v2/lib/download';
 import { MM_TO_POINTS, PAPER_SIZES } from 'delphitools-v2/lib/imposition';
 import { findPaperSize } from 'delphitools-v2/lib/paper-sizes';
 import {
@@ -805,17 +807,15 @@ export default class ZineImposerTool extends Component {
 					type: 'application/pdf',
 				},
 			);
-			const url = URL.createObjectURL(blob);
-			const link = document.createElement('a');
-			link.href = url;
-			link.download = [
-				`zine-${this.foldId}-${this.paperSize.id}`,
-				this.isDuplex ? '-duplex' : '',
-				this.bleedEnabled ? '-bleed' : '',
-				'.pdf',
-			].join('');
-			link.click();
-			URL.revokeObjectURL(url);
+			downloadBlob(
+				blob,
+				[
+					`zine-${this.foldId}-${this.paperSize.id}`,
+					this.isDuplex ? '-duplex' : '',
+					this.bleedEnabled ? '-bleed' : '',
+					'.pdf',
+				].join(''),
+			);
 		} catch (err) {
 			console.error('zine pdf generation failed', err);
 		} finally {
@@ -1442,9 +1442,9 @@ export default class ZineImposerTool extends Component {
 					{{! wording carried over from the Next app }}
 					Generating PDF...
 				{{else}}
-					<Icon @name="download" />
-					{{! wording carried over from the Next app }}
-					Download Zine PDF
+					<DownloadLabel
+						@label="Download Zine PDF"
+					/>
 				{{/if}}
 			</button>
 

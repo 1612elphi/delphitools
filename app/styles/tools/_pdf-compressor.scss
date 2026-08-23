@@ -265,21 +265,8 @@
 	align-items: center;
 	color: var(--muted-foreground);
 	font-size: crayon.font-size("sm");
-
-	.dt-icon {
-		width: crayon.size(4);
-		height: crayon.size(4);
-
-		/* dt-spin keyframes are defined in _background-remover.scss (global). */
-		animation: dt-spin 1s linear infinite;
-	}
 }
 
 .dt-pcmp-idle {
 	color: var(--muted-foreground);
-}
-
-/* The Compress button is only ever disabled while a compress is running. */
-.dt-pcmp-btn.is-primary:disabled .dt-icon {
-	animation: dt-spin 1s linear infinite;
 }

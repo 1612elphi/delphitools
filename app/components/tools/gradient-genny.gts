@@ -7,10 +7,12 @@ import { htmlSafe } from '@ember/template';
 import { eq } from 'ember-truth-helpers';
 import { service } from '@ember/service';
 import { modifier } from 'ember-modifier';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import Icon from 'delphitools-v2/components/icon';
 import { colourFromUrl } from 'delphitools-v2/lib/colour-query';
 import { getColourName } from 'delphitools-v2/lib/colour-names';
 import { contrastText } from 'delphitools-v2/lib/colour-maths';
+import { downloadBlob } from 'delphitools-v2/lib/download';
 import {
 	CORNER_KEYS,
 	MIN_STOPS,
@@ -98,21 +100,35 @@ export default class GradientGennyTool extends Component {
 	@tracked draggingPoint: string | null = null;
 	@tracked gridSize: GridSize = 2;
 
+	// The carried colour (omnibox, a workflow) leads every mode: first stop,
+	// top-left corner, first mesh point.
+	readonly #carried = colourFromUrl() ?? undefined;
+
 	@tracked corners: CornerColours = {
-		topLeft: colourFromUrl() ?? '#3b82f6',
+		topLeft: this.#carried ?? '#3b82f6',
 		topRight: '#8b5cf6',
 		bottomLeft: '#10b981',
 		bottomRight: '#f59e0b',
 	};
 
 	stops: TrackedArray<ColourStop> = new TrackedArray([
-		{ id: newId(), colour: '#3b82f6', position: 0 },
+		{
+			id: newId(),
+			colour: this.#carried ?? '#3b82f6',
+			position: 0,
+		},
 		{ id: newId(), colour: '#8b5cf6', position: 100 },
 	]);
 
 	points: TrackedArray<MeshPoint> = new TrackedArray(
-		initialMeshPoints(2),
+		this.#seeded(initialMeshPoints(2)),
 	);
+
+	#seeded(points: MeshPoint[]): MeshPoint[] {
+		if (this.#carried && points[0])
+			points[0].colour = this.#carried;
+		return points;
+	}
 
 	#copiedTimer?: ReturnType<typeof setTimeout>;
 
@@ -429,7 +445,7 @@ export default class GradientGennyTool extends Component {
 		this.points.splice(
 			0,
 			this.points.length,
-			...initialMeshPoints(size),
+			...this.#seeded(initialMeshPoints(size)),
 		);
 	};
 
@@ -543,10 +559,10 @@ export default class GradientGennyTool extends Component {
 			this.state,
 		);
 
-		const link = document.createElement('a');
-		link.download = `gradient-${this.mode}.png`;
-		link.href = canvas.toDataURL('image/png');
-		link.click();
+		canvas.toBlob((blob) => {
+			if (blob)
+				downloadBlob(blob, `gradient-${this.mode}.png`);
+		}, 'image/png');
 	};
 
 	copy = async (value: string, label: string) => {
@@ -1285,8 +1301,9 @@ export default class GradientGennyTool extends Component {
 							this.downloadImage
 						}}
 					>
-						<Icon @name="download" />
-						Download PNG
+						<DownloadLabel
+							@label="Download PNG"
+						/>
 					</button>
 				</div>
 

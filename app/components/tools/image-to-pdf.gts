@@ -3,6 +3,7 @@ import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { eq, not } from 'ember-truth-helpers';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import Icon from 'delphitools-v2/components/icon';
 import {
 	Tabs,
@@ -12,6 +13,7 @@ import {
 } from 'delphitools-v2/components/ui/tabs';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import { downloadBlob, downloadUrl } from 'delphitools-v2/lib/download';
+import { downloadIcon, passAlong } from 'delphitools-v2/lib/flow-hooks';
 import { MM_TO_POINTS } from 'delphitools-v2/lib/imposition';
 import {
 	fitPlacement,
@@ -603,11 +605,9 @@ export default class ImageToPdfTool extends Component {
 											this.buildPdf
 										}}
 									>
-										<Icon
-											@name="file-output"
+										<DownloadLabel
+											@label="Build PDF"
 										/>
-										Build
-										PDF
 									</button>
 								</div>
 
@@ -911,11 +911,9 @@ export default class ImageToPdfTool extends Component {
 											this.downloadZip
 										}}
 									>
-										<Icon
-											@name="download"
+										<DownloadLabel
+											@label="Download zip"
 										/>
-										Download
-										zip
 									</button>
 								</div>
 
@@ -997,7 +995,12 @@ export default class ImageToPdfTool extends Component {
 												<button
 													type="button"
 													class="dt-i2p-tool"
-													title="Download"
+													title={{passAlong
+														"Download"
+													}}
+													aria-label={{passAlong
+														"Download"
+													}}
 													{{on
 														"click"
 														(fn
@@ -1007,7 +1010,8 @@ export default class ImageToPdfTool extends Component {
 													}}
 												>
 													<Icon
-														@name="download"
+														@name={{(downloadIcon
+														)}}
 													/>
 												</button>
 											</div>

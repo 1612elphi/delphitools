@@ -5,6 +5,8 @@ import { fn } from '@ember/helper';
 import { eq } from 'ember-truth-helpers';
 import { modifier } from 'ember-modifier';
 import Icon from 'delphitools-v2/components/icon';
+import NdsLoader from 'delphitools-v2/components/ui/nds-loader';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import { downloadBlob, downloadText } from 'delphitools-v2/lib/download';
 import {
 	AudioIntake,
@@ -13,6 +15,7 @@ import {
 	extractPeaks,
 } from 'delphitools-v2/lib/audio';
 import { AUDIO_ACCEPT, acceptAttr } from 'delphitools-v2/lib/tools';
+import filePaste from 'delphitools-v2/modifiers/file-paste';
 
 /** Kept in step with the registry entry, which routes dropped files. */
 const ACCEPT = acceptAttr(AUDIO_ACCEPT);
@@ -200,7 +203,7 @@ export default class WaveformGennyTool extends Component {
 	};
 
 	<template>
-		<div class="dt-wg">
+		<div class="dt-wg" {{filePaste this.intake.load accept=ACCEPT}}>
 			<div
 				class="dt-wg-frame"
 				{{on "drop" this.intake.drop}}
@@ -226,7 +229,7 @@ export default class WaveformGennyTool extends Component {
 
 				{{#if this.intake.busy}}
 					<p class="dt-wg-status">
-						<Icon @name="loader" />
+						<NdsLoader />
 						Decoding…
 					</p>
 				{{/if}}
@@ -260,10 +263,9 @@ export default class WaveformGennyTool extends Component {
 								this.exportSvg
 							}}
 						>
-							<Icon
-								@name="download"
+							<DownloadLabel
+								@label="SVG"
 							/>
-							SVG
 						</button>
 						<button
 							type="button"
@@ -273,10 +275,9 @@ export default class WaveformGennyTool extends Component {
 								this.exportPng
 							}}
 						>
-							<Icon
-								@name="download"
+							<DownloadLabel
+								@label="PNG"
 							/>
-							PNG
 						</button>
 					</div>
 

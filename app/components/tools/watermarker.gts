@@ -3,7 +3,9 @@ import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import Icon from 'delphitools-v2/components/icon';
+import DownloadLabel from 'delphitools-v2/components/download-label';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
+import { downloadUrl } from 'delphitools-v2/lib/download';
 
 /**
  * The base image is redrawn at full resolution and re-encoded to a data URL on
@@ -371,10 +373,10 @@ export default class WatermarkerTool extends Component {
 
 	download = () => {
 		if (!this.resultImage) return;
-		const link = document.createElement('a');
-		link.download = `${this.baseFileName}-watermarked.png`;
-		link.href = this.resultImage;
-		link.click();
+		downloadUrl(
+			this.resultImage,
+			`${this.baseFileName}-watermarked.png`,
+		);
 	};
 
 	<template>
@@ -741,10 +743,7 @@ export default class WatermarkerTool extends Component {
 								this.download
 							}}
 						>
-							<Icon
-								@name="download"
-							/>
-							Download
+							<DownloadLabel />
 						</button>
 						<button
 							type="button"

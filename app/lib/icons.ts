@@ -18,7 +18,6 @@ import iAlignStartHorizontal from 'lucide-static/icons/align-start-horizontal.sv
 import iAlignStartVertical from 'lucide-static/icons/align-start-vertical.svg?raw';
 import iAlignVerticalDistributeCenter from 'lucide-static/icons/align-vertical-distribute-center.svg?raw';
 import iAperture from 'lucide-static/icons/aperture.svg?raw';
-import iArchive from 'lucide-static/icons/archive.svg?raw';
 import iArrowDown from 'lucide-static/icons/arrow-down.svg?raw';
 import iArrowDownLeft from 'lucide-static/icons/arrow-down-left.svg?raw';
 import iArrowDownRight from 'lucide-static/icons/arrow-down-right.svg?raw';
@@ -96,8 +95,8 @@ import iFastForward from 'lucide-static/icons/fast-forward.svg?raw';
 import iFileAudio from 'lucide-static/icons/file-audio.svg?raw';
 import iFileCode from 'lucide-static/icons/file-code.svg?raw';
 import iFileDigit from 'lucide-static/icons/file-digit.svg?raw';
+import iFileDown from 'lucide-static/icons/file-down.svg?raw';
 import iFileImage from 'lucide-static/icons/file-image.svg?raw';
-import iFileOutput from 'lucide-static/icons/file-output.svg?raw';
 import iFilePlus from 'lucide-static/icons/file-plus.svg?raw';
 import iFileSearch from 'lucide-static/icons/file-search.svg?raw';
 import iFileStack from 'lucide-static/icons/file-stack.svg?raw';
@@ -141,9 +140,6 @@ import iLibrary from 'lucide-static/icons/library.svg?raw';
 import iLightbulb from 'lucide-static/icons/lightbulb.svg?raw';
 import iLineChart from 'lucide-static/icons/line-chart.svg?raw';
 import iLink from 'lucide-static/icons/link.svg?raw';
-import iLoader from 'lucide-static/icons/loader.svg?raw';
-import iLoader2 from 'lucide-static/icons/loader-2.svg?raw';
-import iLoaderCircle from 'lucide-static/icons/loader-circle.svg?raw';
 import iLock from 'lucide-static/icons/lock.svg?raw';
 import iLockOpen from 'lucide-static/icons/lock-open.svg?raw';
 import iMagnet from 'lucide-static/icons/magnet.svg?raw';
@@ -158,7 +154,6 @@ import iMinus from 'lucide-static/icons/minus.svg?raw';
 import iMonitorUp from 'lucide-static/icons/monitor-up.svg?raw';
 import iMoon from 'lucide-static/icons/moon.svg?raw';
 import iMove from 'lucide-static/icons/move.svg?raw';
-import iPackage from 'lucide-static/icons/package.svg?raw';
 import iPaintBucket from 'lucide-static/icons/paint-bucket.svg?raw';
 import iPalette from 'lucide-static/icons/palette.svg?raw';
 import iPanelBottom from 'lucide-static/icons/panel-bottom.svg?raw';
@@ -231,6 +226,7 @@ import iVariable from 'lucide-static/icons/variable.svg?raw';
 import iVolumeX from 'lucide-static/icons/volume-x.svg?raw';
 import iWand2 from 'lucide-static/icons/wand-2.svg?raw';
 import iWind from 'lucide-static/icons/wind.svg?raw';
+import iWorkflow from 'lucide-static/icons/workflow.svg?raw';
 import iX from 'lucide-static/icons/x.svg?raw';
 import iZoomIn from 'lucide-static/icons/zoom-in.svg?raw';
 import iZoomOut from 'lucide-static/icons/zoom-out.svg?raw';
@@ -251,7 +247,6 @@ export const icons: Record<string, string> = {
 	'align-start-vertical': iAlignStartVertical,
 	'align-vertical-distribute-center': iAlignVerticalDistributeCenter,
 	aperture: iAperture,
-	archive: iArchive,
 	'arrow-down': iArrowDown,
 	'arrow-down-left': iArrowDownLeft,
 	'arrow-down-right': iArrowDownRight,
@@ -329,8 +324,8 @@ export const icons: Record<string, string> = {
 	'file-audio': iFileAudio,
 	'file-code': iFileCode,
 	'file-digit': iFileDigit,
+	'file-down': iFileDown,
 	'file-image': iFileImage,
-	'file-output': iFileOutput,
 	'file-plus': iFilePlus,
 	'file-search': iFileSearch,
 	'file-stack': iFileStack,
@@ -374,9 +369,6 @@ export const icons: Record<string, string> = {
 	lightbulb: iLightbulb,
 	'line-chart': iLineChart,
 	link: iLink,
-	loader: iLoader,
-	'loader-2': iLoader2,
-	'loader-circle': iLoaderCircle,
 	lock: iLock,
 	'lock-open': iLockOpen,
 	magnet: iMagnet,
@@ -391,7 +383,6 @@ export const icons: Record<string, string> = {
 	'monitor-up': iMonitorUp,
 	moon: iMoon,
 	move: iMove,
-	package: iPackage,
 	'paint-bucket': iPaintBucket,
 	palette: iPalette,
 	'panel-bottom': iPanelBottom,
@@ -464,6 +455,7 @@ export const icons: Record<string, string> = {
 	'volume-x': iVolumeX,
 	'wand-2': iWand2,
 	wind: iWind,
+	workflow: iWorkflow,
 	x: iX,
 	'zoom-in': iZoomIn,
 	'zoom-out': iZoomOut,

@@ -1,4 +1,6 @@
+import { modifier } from 'ember-modifier';
 import { hexToRgb } from './colour-maths';
+import { flowHooks } from './flow-hooks';
 
 /**
  * The `?color=` convention for carrying a colour between tools. Moved out of
@@ -22,3 +24,17 @@ export function colourFromUrl(): string | null {
 	if (typeof window === 'undefined') return null;
 	return colourFromQuery(window.location.search);
 }
+
+/**
+ * Makes a colour tool a workflow source: `<div {{carryColour this.hex}}>`
+ * pushes whatever it shows, and the flow's Next carries it as `?color=`.
+ */
+export const carryColour = modifier(
+	(_element: Element, [hex]: [string | undefined]) => {
+		const flow = flowHooks.current;
+		if (flow) flow.colour = hex ?? null;
+		return () => {
+			if (flowHooks.current) flowHooks.current.colour = null;
+		};
+	},
+);

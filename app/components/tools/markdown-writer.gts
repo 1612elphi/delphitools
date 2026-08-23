@@ -6,6 +6,8 @@ import { eq } from 'ember-truth-helpers';
 import { modifier } from 'ember-modifier';
 import type Owner from '@ember/owner';
 import Icon from 'delphitools-v2/components/icon';
+import { downloadIcon, passAlong } from 'delphitools-v2/lib/flow-hooks';
+import { downloadText } from 'delphitools-v2/lib/download';
 
 const STORAGE_KEY = 'delphitools-scratchpad';
 const SAVE_DEBOUNCE_MS = 1000;
@@ -464,13 +466,7 @@ export default class MarkdownWriterTool extends Component {
 	};
 
 	downloadContent = () => {
-		const blob = new Blob([this.content], { type: 'text/plain' });
-		const url = URL.createObjectURL(blob);
-		const link = document.createElement('a');
-		link.download = 'scratchpad.txt';
-		link.href = url;
-		link.click();
-		URL.revokeObjectURL(url);
+		downloadText(this.content, 'scratchpad.txt', 'text/plain');
 	};
 
 	clearContent = () => {
@@ -779,14 +775,18 @@ export default class MarkdownWriterTool extends Component {
 					<button
 						type="button"
 						class="dt-md-status-btn"
-						title="Download"
-						aria-label="Download"
+						title={{passAlong "Download"}}
+						aria-label={{passAlong
+							"Download"
+						}}
 						{{on
 							"click"
 							this.downloadContent
 						}}
 					>
-						<Icon @name="download" />
+						<Icon
+							@name={{(downloadIcon)}}
+						/>
 					</button>
 					<button
 						type="button"

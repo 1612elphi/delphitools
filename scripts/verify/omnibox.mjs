@@ -91,6 +91,26 @@ check(
 );
 check('colour: carry chip names the value', colour.chip === '→ #2e7d32');
 
+// The link's href carrying the value is not the same as the router keeping
+// it: app/controllers/tools/tool.ts declares `color`, without it the
+// transition strips the query and the tool opens on its default.
+await page.evaluate(() =>
+	[...document.querySelectorAll('.dt-omni-open')]
+		.find((a) => a.getAttribute('href')?.includes('colour-converter'))
+		?.click(),
+);
+await page.waitForSelector('.dt-cc-value', { timeout: 15000 });
+const landed = await page.evaluate(() => ({
+	search: location.search,
+	value: document.querySelector('.dt-cc-value')?.value,
+}));
+check(
+	'colour: the converter opens on the carried colour',
+	landed.search === '?color=2e7d32' && landed.value === '#2e7d32',
+	JSON.stringify(landed),
+);
+await visit(page, '/');
+
 // --- unit / expression ---------------------------------------------------
 await type('18px');
 const unit = await page.evaluate(() =>

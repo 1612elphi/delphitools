@@ -138,16 +138,6 @@
 	}
 }
 
-.dt-alg-spinner {
-	animation: dt-alg-spin 1s linear infinite;
-}
-
-@keyframes dt-alg-spin {
-	to {
-		transform: rotate(360deg);
-	}
-}
-
 .dt-alg-result {
 	border-bottom: 2px solid var(--border);
 }
