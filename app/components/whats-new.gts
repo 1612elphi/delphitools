@@ -2,45 +2,26 @@ import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import { eq } from 'ember-truth-helpers';
+import { LinkTo } from '@ember/routing';
 import Dialog from 'delphitools-v2/components/ui/dialog';
 import Icon from 'delphitools-v2/components/icon';
 
 // wording dictated by Ruby verbatim
 const PILL_TEXT = 'welcome to delphitools 2.0!';
 
-// ∑CG: slide 1 of the 2.0 what's-new popup, the greeting
-//   spec: 1-3 sentences, the substrata onboarding voice; says this is version 2.0, the site was rewritten, everything still runs in the browser
-//   sample: "This is delphitools 2.0: the whole site rebuilt from the ground up. Same tools, new engine, still all in your browser."
-const SLIDE_HELLO = '∑CG';
+const EMBER_URL = 'https://emberjs.com';
+const CRAYON_URL = 'https://github.com/TeriyakiBomb/crayon';
 
-// ∑CG: slide 2 of the 2.0 what's-new popup, Workflows
-//   spec: 1-3 sentences; introduces Workflows (chained tools passing files along, the Flow State bar) and points at the Workflows page
-//   sample: "Tools can chain now. Pick a workflow and each step hands its file to the next, no downloads in between."
-const SLIDE_WORKFLOWS = '∑CG';
-
-// ∑CG: slide 3 of the 2.0 what's-new popup, the new tools
-//   spec: 1-3 sentences; mentions the newest tools (Image De-skewer, Morse, Braille, IPA, NATO chart, Substrata)
-//   sample: "New on the shelf: an image de-skewer, Morse with playback, braille, IPA transcription and a NATO chart with real signal flags."
-const SLIDE_TOOLS = '∑CG';
-
-// ∑CG: slide 4 of the 2.0 what's-new popup, the sign-off
-//   spec: 1-2 sentences; privacy unchanged (local, no tracking), thanks the visitor
-//   sample: "Everything still runs locally and nothing is tracked, ever. Thanks for being here."
-const SLIDE_THANKS = '∑CG';
-
-const SLIDES = [SLIDE_HELLO, SLIDE_WORKFLOWS, SLIDE_TOOLS, SLIDE_THANKS];
+const SLIDES = [0, 1, 2, 3];
 
 /**
  * The 2.0 announcement: a rounded pill above the hero art (the one rounded
  * shape in the square system, Ruby 2026-08-23) opening a slide popup in the
- * shape of the Substrata onboarding.
+ * shape of the Substrata onboarding. All slide copy is Ruby's wording,
+ * verbatim; the links stand where their (link) markers were.
  */
 export default class WhatsNew extends Component {
 	@tracked slide = 0;
-
-	get current() {
-		return SLIDES[this.slide] ?? SLIDES[0]!;
-	}
 
 	get atStart() {
 		return this.slide === 0;
@@ -77,13 +58,134 @@ export default class WhatsNew extends Component {
 			<d.Content class="dt-wn">
 				<h2 class="dt-sr-only">delphitools 2.0</h2>
 				<div class="dt-wn-slide">
-					<p>{{this.current}}</p>
+					{{#if (eq this.slide 0)}}
+						<p>
+							Over half a year since
+							it's initial release,
+							delphitools' roof has
+							caved in more times than
+							I'd like. This is
+							indubitably traced back
+							to decisions made by the
+							scoundrels who developed
+							the framework, and
+							certainly not my own
+							limited competence. The
+							React people shall be
+							hearing from me.
+						</p>
+						<p>
+							Nevertheless, the
+							project has been
+							thoroughly rebuilt by
+							European standards, with
+							actual brick walls, on
+							good technology this
+							time and with more
+							attention to detail. So,
+							dear reader, I'd like to
+							officially welcome you
+							to delphitools 2.0,
+							rebuilt from the ground
+							up using
+							<a
+								href={{EMBER_URL}}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="dt-wn-link"
+							>Ember 7</a>
+							and
+							<a
+								href={{CRAYON_URL}}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="dt-wn-link"
+							>Crayon CSS</a>, both
+							excellent frameworks you
+							should be checking out
+							if you are also a
+							habitual computer
+							toucher chronically ill
+							with The Internet.
+						</p>
+					{{else if (eq this.slide 1)}}
+						<p>
+							Version 2.0 comes with a
+							lot of improvements. I
+							won't spoil all of them
+							here, but do check out
+							the new Audio & Video
+							category with
+							oft-requested features
+							such as an
+							<LinkTo
+								@route="tools.tool"
+								@model="auto-subtitle"
+								class="dt-wn-link"
+							>automatic subtitle
+								generator</LinkTo>,
+							a
+							<LinkTo
+								@route="tools.tool"
+								@model="video-trimmer"
+								class="dt-wn-link"
+							>video trimmer</LinkTo>
+							and - somehow - a
+							<LinkTo
+								@route="tools.tool"
+								@model="screen-recorder"
+								class="dt-wn-link"
+							>screen recorder</LinkTo>.
+							Try them today! Or
+							don't! I won't know
+							either way!
+						</p>
+					{{else if (eq this.slide 2)}}
+						<p>
+							In addition, delphitools
+							now offers
+							<LinkTo
+								@route="workflows"
+								class="dt-wn-link"
+							>Workflows</LinkTo>!
+							These are currently
+							experimental, but let
+							you chain single tools
+							into a sequence of
+							actions that you can
+							carry your files between
+							without uploading. And
+							as you're well aware,
+							dear reader, this is
+							done without any cloud
+							capabilities at all, and
+							none of your files ever
+							leave your computer,
+							cross my heart and hope
+							to die.
+						</p>
+					{{else}}
+						<p>
+							There's more, so please,
+							make yourself at home.
+							Stay as long as you
+							like, and be sure to
+							reload the front page to
+							view the many incredible
+							donated pieces of hero
+							art by talented human
+							artists! Below that
+							you'll find the omnibox,
+							which is so much more
+							than a search bar... try
+							typing some colour codes
+							in there for a laugh.
+							Something might happen!
+						</p>
+					{{/if}}
 				</div>
 				<div class="dt-wn-dots" aria-hidden="true">
-					{{#each
-						SLIDES key="@index"
-						as |_slide index|
-					}}
+					{{#each SLIDES as |index|}}
 						<span
 							class="dt-wn-dot
 								{{if

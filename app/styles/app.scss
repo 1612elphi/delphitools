@@ -2275,6 +2275,19 @@ $header-height: crayon.size(14);
 
 	p {
 		margin: 0;
+
+		+ p {
+			margin-top: crayon.size(3);
+		}
+	}
+}
+
+.dt-wn-link {
+	text-decoration: underline;
+	text-underline-offset: 2px;
+
+	@include crayon.hover {
+		color: var(--foreground);
 	}
 }
 
