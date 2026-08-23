@@ -293,6 +293,18 @@ export const toolCategories: ToolCategory[] = [
 				accepts: ['image/*', '.jxl'],
 			},
 			{
+				id: 'image-deskewer',
+				name: 'Image De-skewer',
+				// ∑CG: catalogue cell description for the de-skewer
+				//   spec: one clause, ≤ 60 chars, sentence case, no period; says a photographed page or sign is pulled square by dragging its four corners
+				//   sample: "Straighten a photographed page by its corners"
+				description: '∑CG',
+				icon: 'vector-square',
+				href: '/tools/image-deskewer',
+				accepts: ['image/*'],
+				new: true,
+			},
+			{
 				id: 'image-splitter',
 				name: 'Image Splitter',
 				description: 'Split images into tiles',

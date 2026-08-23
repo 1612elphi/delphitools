@@ -23,9 +23,9 @@ applicable on this surface (hardware/native or format constraint).
 
 ## Summary
 
-- **Tools tracked:** 83 (shipped, any surface)
+- **Tools tracked:** 84 (shipped, any surface)
 - **On all three surfaces:** 41
-- **Web:** 79 · **CLI:** 46 · **iOS:** 51
+- **Web:** 80 · **CLI:** 46 · **iOS:** 51
 - **Backlog:** 33 planned tools (web-first) — see the Backlog section at the end.
 - iOS-exclusive (native/hardware): Colour Camera, Document Scanner, Font Installer, NFC Reader/Writer
 - Web-exclusive: Pixel Picker, Text Editor (pandoc.wasm note: GPL — incompatible with the App Store, and won't run on-device on iOS, hence Document Converter I 🚧)
@@ -74,6 +74,7 @@ Picker is similarly web-only.
 | Image Clipper (`image-clipper`)               | ✅  |      ✅ `clip`      | ✅  | trim transparent edges                                                                                                                                                                                                       |
 | Image Compressor (`image-compressor`)         | ✅  |         ❌          | ❌  | new 2026-08; MozJPEG/WebP/OxiPNG/AVIF re-encode in a worker on @jsquash wasm, AVIF gated (slow)                                                                                                                              |
 | Image Converter (`image-converter`)           | ✅  |    ✅ `convert`     | ✅  | CLI: + jxl (lossless-only) + icns (2026-07)                                                                                                                                                                                  |
+| Image De-skewer (`image-deskewer`)            | ✅  |         ❌          | ❌  | new 2026-08; four draggable corners → planar homography, bilinear resample on the main thread, aspect presets (A4, Letter, …), PNG out                                                                                       |
 | Image Splitter (`image-splitter`)             | ✅  |     ✅ `split`      | ✅  |                                                                                                                                                                                                                              |
 | Image Stitcher (`image-stitcher`)             | ✅  |     ✅ `stitch`     | ✅  | new 2026-07; edge-stitch + batch grid. CLI: flat row/col + grid; nested mosaics editor-only. iOS (2026-07): full mosaic editor + batch grid + Stitch Images intent; PNG/JPEG only — ImageIO has no WebP/JXL encoder (probed) |
 | Image Tracer (`image-tracer`)                 | ✅  |     ✅ `trace`      | ✅  | raster → SVG                                                                                                                                                                                                                 |

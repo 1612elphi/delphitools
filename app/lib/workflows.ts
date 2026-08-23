@@ -76,6 +76,11 @@ export const WORKFLOWS: Workflow[] = [
 		steps: ['image-tracer', 'svg-optimiser'],
 	},
 	{
+		id: 'straighten-to-pdf',
+		name: 'Straighten, then PDF',
+		steps: ['image-deskewer', 'image-to-pdf', 'pdf-compressor'],
+	},
+	{
 		id: 'images-to-pdf',
 		name: 'Images to PDF',
 		steps: ['image-to-pdf', 'pdf-compressor'],

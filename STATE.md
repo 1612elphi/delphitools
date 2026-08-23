@@ -1339,3 +1339,23 @@ text into the box; the paste affordance for screens without a shortcut),
 I'm feeling lucky opens a random tool page (`route` entries go to their
 route). The search hint went; the input is the search. Omnibox rig: 28
 checks.
+
+## 2026-08-23: Image De-skewer
+
+`image-deskewer` (Images & Assets): drop an image, drag four corner handles
+onto a page or sign, the quad is pulled square. lib/deskew.ts fits the
+planar homography (DLT, Gauss-Jordan) and resamples bilinear on the main
+thread; `homography` returns null for a degenerate quad (coincident
+corners, bow tie: the fit fails to reproduce the corners or the denominator
+changes sign) and `warp` then returns a transparent image. Output size is
+the longer of each opposite edge pair (`outputSize`), with aspect presets
+(Auto, A4, Letter, 1:1, 4:3, 3:2, 16:9) forcing a ratio on the long edge
+(`fitAspect`). While a handle drags the corrected pane redraws at ≤ 720 px
+per frame (`PREVIEW_EDGE`), the full-size warp runs on pointer up; the
+stages are top-anchored because the corrected pane changes height with
+every move and a centred source stage shifted under the pointer. Handles
+are buttons: arrow keys nudge 1 px, shift 10. PNG out through lib/download.
+Workflow `straighten-to-pdf`: De-skewer → Images to PDF → PDF Compressor.
+Unit tests (8) and rig scripts/verify/image-deskewer.mjs (16). Not done: a
+worker for the full warp (a 12 MP output blocks ~300 ms on pointer up),
+edge auto-detection, JPEG output.

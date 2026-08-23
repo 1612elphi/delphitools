@@ -224,6 +224,7 @@ import iUngroup from 'lucide-static/icons/ungroup.svg?raw';
 import iUnlock from 'lucide-static/icons/unlock.svg?raw';
 import iUpload from 'lucide-static/icons/upload.svg?raw';
 import iVariable from 'lucide-static/icons/variable.svg?raw';
+import iVectorSquare from 'lucide-static/icons/vector-square.svg?raw';
 import iVolumeX from 'lucide-static/icons/volume-x.svg?raw';
 import iWand2 from 'lucide-static/icons/wand-2.svg?raw';
 import iWind from 'lucide-static/icons/wind.svg?raw';
@@ -454,6 +455,7 @@ export const icons: Record<string, string> = {
 	unlock: iUnlock,
 	upload: iUpload,
 	variable: iVariable,
+	'vector-square': iVectorSquare,
 	'volume-x': iVolumeX,
 	'wand-2': iWand2,
 	wind: iWind,
