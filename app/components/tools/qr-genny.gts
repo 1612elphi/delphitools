@@ -30,6 +30,24 @@ import {
 import type QRCodeStyling from 'qr-code-styling';
 import type { Options as StylingOptions } from 'qr-code-styling';
 
+/**
+ * Same-colour outline on every filled shape: adjacent QR modules then
+ * overlap by half the stroke, which closes the antialiasing seams
+ * renderers draw between separate paths that only touch (Ruby 2026-08-23).
+ */
+export function sealSvgSeams(svg: string, strokeWidth = 0.5): string {
+	const doc = new DOMParser().parseFromString(svg, 'image/svg+xml');
+	if (doc.querySelector('parsererror')) return svg;
+	for (const el of doc.querySelectorAll('[fill]')) {
+		const fill = el.getAttribute('fill');
+		if (!fill || fill === 'none' || el.hasAttribute('stroke'))
+			continue;
+		el.setAttribute('stroke', fill);
+		el.setAttribute('stroke-width', String(strokeWidth));
+	}
+	return new XMLSerializer().serializeToString(doc);
+}
+
 type Mode = 'single' | 'wifi' | 'vcard' | 'batch';
 type DotType =
 	| 'square'
@@ -803,7 +821,9 @@ export default class QrGennyTool extends Component {
 		const raw = await qr.getRawData('svg');
 		if (!(raw instanceof Blob)) return null;
 
-		const qrSvg = (await raw.text()).replace(/<\?xml[^?]*\?>/, '');
+		const qrSvg = sealSvgSeams(
+			(await raw.text()).replace(/<\?xml[^?]*\?>/, ''),
+		);
 		const layout = this.#infoLayout(1);
 		if (!layout) return null;
 
@@ -1025,7 +1045,20 @@ export default class QrGennyTool extends Component {
 		if (!this.includeInfo) {
 			const raw = await qr.getRawData(format);
 			if (raw === null) return;
-			// qr-code-styling resolves a string for SVG in some versions
+			if (format === 'svg') {
+				// qr-code-styling resolves a string in some versions
+				const svg =
+					raw instanceof Blob
+						? await raw.text()
+						: String(raw);
+				downloadBlob(
+					new Blob([sealSvgSeams(svg)], {
+						type: 'image/svg+xml',
+					}),
+					`${filename}.svg`,
+				);
+				return;
+			}
 			const file =
 				raw instanceof Blob
 					? raw
@@ -1034,14 +1067,10 @@ export default class QrGennyTool extends Component {
 								raw as unknown as BlobPart,
 							],
 							{
-								type:
-									format ===
-									'svg'
-										? 'image/svg+xml'
-										: 'image/png',
+								type: 'image/png',
 							},
 						);
-			downloadBlob(file, `${filename}.${format}`);
+			downloadBlob(file, `${filename}.png`);
 			return;
 		}
 

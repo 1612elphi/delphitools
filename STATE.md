@@ -1453,3 +1453,14 @@ Status, JSON Formatter, JWT Decoder, Meta Tag Generator, Regex Tester,
 Request Builder, Tailwind Cheat Sheet, UUID Generator; Other Tools keeps
 Barcode, Cipher Decoder, Password, QR, Text Scratchpad. PARITY.md mirrors
 the split (Dev Tools table; 89 tracked, web 85).
+
+## 2026-08-23: QR SVG export seam sealing
+
+The exported SVG showed hairline seams between adjacent modules when
+scaled: qr-code-styling emits one path per module, and renderers
+antialias the shared edges of paths that only touch. `sealSvgSeams`
+(exported from tools/qr-genny.gts) strokes every filled shape in its own
+fill (width 0.5 viewBox units, gradients included, `fill="none"` and
+shapes with their own stroke skipped), so neighbours overlap by half the
+stroke. Applied on both SVG paths, plain download and the captioned
+compose; PNG unchanged. Unit tests (5) and rig scripts/verify/qr-genny.mjs.
