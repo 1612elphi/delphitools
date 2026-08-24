@@ -1,4 +1,4 @@
-// Headless verification for M4 colour sinks (delete after use).
+// M4 colour sinks
 import puppeteer from "puppeteer-core";
 
 const URL = process.env.EDITOR_URL ?? "http://localhost:3000/editor";
@@ -54,7 +54,7 @@ const drag = async (s0, s1) => {
   await sleep(350);
 };
 
-// 1) draw a green rect; it stays selected after the draw.
+// 1) rect stays selected
 await page.evaluate(() => {
   window.__substrata.setTool("pieces", "primitives");
   window.__substrata.toolSettings("pieces", { shape: "rectangle", fill: "#3e6b33", stroke: null, cornerRadius: 0 });
@@ -63,41 +63,41 @@ await drag({ x: 600, y: 500 }, { x: 1000, y: 700 });
 let px = await sample(800, 600);
 check("baseline: rect drawn green", px, near(px, [62, 107, 51]));
 
-// 2) pick a colour while it's selected → the fill recolours (the sink).
+// 2) pick recolours selected fill
 await page.evaluate(() => window.__substrata.colour("#cc2200"));
 await sleep(350);
 px = await sample(800, 600);
 check("sink: picked colour recolours the selected shape", px, near(px, [204, 34, 0]));
 
-// 3) one undo restores the old fill (single set = single step; draw survives).
+// 3) one undo restores fill
 await undo();
 px = await sample(800, 600);
 check("sink: one undo restores previous fill", px, near(px, [62, 107, 51]));
 let ls = await layers();
 check("sink: the shape itself survives the undo", ls.length, ls.length === 1);
 
-// 4) the pick also seeded the NEXT-draw fill (pieces settings sink).
+// 4) pick seeds next-draw fill
 await page.evaluate(() => {
   window.__substrata.select([]);
-  window.__substrata.setTool("pieces", "primitives"); // one-shot reverted after draw 1
+  window.__substrata.setTool("pieces", "primitives"); // one-shot, reverted after draw 1
 });
 await sleep(150);
 await drag({ x: 1100, y: 300 }, { x: 1400, y: 450 });
 px = await sample(1250, 375);
 check("sink: next draw uses the picked colour", px, near(px, [204, 34, 0]));
 
-// 5) picking with NO shape selected only seeds settings (no doc change / undo noise).
+// 5) deselected: settings, no undo
 await page.evaluate(() => window.__substrata.select([]));
 await sleep(150);
 await page.evaluate(() => window.__substrata.colour("#0044cc"));
 await sleep(250);
 px = await sample(800, 600);
 check("sink: deselected shape untouched by a pick", px, near(px, [62, 107, 51]));
-await undo(); // should undo the SECOND rect's draw, not a phantom fill edit
+await undo();
 ls = await layers();
 check("sink: no phantom history entry from settings-only pick", ls.length, ls.length === 1);
 
-// 6) freehand strokes recolour through the same sink.
+// 6) freehand recolours via sink
 await page.evaluate(() => {
   window.__substrata.setTool("pieces", "brush");
   window.__substrata.toolSettings("pieces", { brushSize: 36 });
@@ -105,8 +105,7 @@ await page.evaluate(() => {
 await drag({ x: 500, y: 900 }, { x: 900, y: 900 }); // stays selected after commit
 await page.evaluate(() => window.__substrata.colour("#7700aa"));
 await sleep(350);
-// sample away from the selection's corner/mid handles (stroke must STAY
-// selected for the sink to target it)
+// sample avoids selection handles
 px = await sample(620, 900);
 check("sink: freehand stroke recolours", px, near(px, [119, 0, 170]));
 

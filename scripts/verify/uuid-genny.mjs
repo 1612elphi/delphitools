@@ -1,9 +1,3 @@
-// Behavioural coverage the unit tests can't reach: the booted page, the
-// settings grid ↔ list interplay (count clamping, option reformatting without
-// regeneration), the three kinds end to end, and the copy feedback that only
-// appears once the clipboard write resolves.
-//
-// Usage: npm start, then node scripts/verify/uuid-genny.mjs
 
 import { launch, visit, check, finish, sleep } from './harness.mjs';
 
@@ -18,7 +12,7 @@ const V4 =
 	/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const NANO = /^[A-Za-z0-9_-]{21}$/;
 
-// Ember re-renders off the microtask/rAF queue; settle after every action.
+// microtask/rAF queue
 const settle = () => sleep(200);
 
 const setCount = (value) =>
@@ -39,7 +33,6 @@ const clickKind = (label) =>
 		label,
 	);
 
-// ── defaults ────────────────────────────────────────────────────────────────
 let batch = await rows();
 check(
 	'v4 by default: 10 canonical ids',
@@ -56,7 +49,6 @@ check(
 	readout,
 );
 
-// ── count ────────────────────────────────────────────────────────────────────
 await setCount(500);
 await settle();
 batch = await rows();
@@ -67,7 +59,6 @@ await settle();
 batch = await rows();
 check('count shrinks the batch', batch.length === 5, `${batch.length} rows`);
 
-// ── options reformat without regenerating ───────────────────────────────────
 const before = batch;
 await page.click('[aria-label="Uppercase"]');
 await settle();
@@ -92,7 +83,6 @@ await page.click('[aria-label="Uppercase"]');
 await page.click('[aria-label="Strip hyphens"]');
 await settle();
 
-// ── v7 ───────────────────────────────────────────────────────────────────────
 const t0 = Date.now();
 await clickKind('UUID v7');
 const t1 = Date.now();
@@ -120,7 +110,6 @@ check(
 	stamps.join(','),
 );
 
-// ── nano id ─────────────────────────────────────────────────────────────────
 await clickKind('Nano ID');
 await settle();
 batch = await rows();
@@ -138,7 +127,6 @@ check(
 	!optionCells.upper && !optionCells.hyphens,
 );
 
-// ── copy feedback ───────────────────────────────────────────────────────────
 await page.click('.dt-uuid-row .dt-uuid-copy');
 check(
 	'copying one marks its row',
@@ -165,7 +153,6 @@ check(
 );
 await sleep(1600);
 
-// ── regenerate ───────────────────────────────────────────────────────────────
 const stale = batch;
 await clickBarButton('Regenerate');
 await settle();

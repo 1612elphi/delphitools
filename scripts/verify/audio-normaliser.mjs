@@ -1,8 +1,4 @@
-// Exercises Audio Normaliser with a WAV synthesised in the page: a dual-mono
-// 1 kHz tone at -20 dBFS peak (about -20 LUFS) lifted to -14 LUFS.
-//
-// Usage: npm start, then node scripts/verify/audio-normaliser.mjs
-
+// 1khz: -20dbfs ≈ -20lufs
 import {
 	launch,
 	visit,

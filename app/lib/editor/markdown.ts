@@ -1,6 +1,3 @@
-// Markdown is the single source of truth. Custom MarkdownParser + serializer
-// (seeded from prosemirror-markdown's defaults, then extended for GFM), bound
-// to the extended schema. Public API (parseMarkdown / serializeDoc) unchanged.
 import MarkdownIt from 'markdown-it';
 import {
 	MarkdownParser,
@@ -14,12 +11,8 @@ import { schema } from './schema';
 
 type Token = ReturnType<MarkdownIt['parse']>[number];
 
-// Footnote bodies, keyed by id, captured during tokenisation (see extractFootnotes)
-// and stitched into the inline footnote nodes by the footnote_ref handler below.
 let footnoteBodies = new Map<number, Token[]>();
 
-// GFM task lists without a dependency: a tiny core rule that lifts a leading
-// "[ ] " / "[x] " off the first line of a list item onto a `checked` token attr.
 function taskListRule(md: MarkdownIt) {
 	md.core.ruler.after('inline', 'task-lists', (state) => {
 		const tokens = state.tokens;
@@ -39,7 +32,8 @@ function taskListRule(md: MarkdownIt) {
 				'checked',
 				m[1] === ' ' ? 'false' : 'true',
 			);
-			const n = m[0].length; // slice the FULL match incl. trailing space, or round-trip doubles it
+			// preserve task list roundtrips
+			const n = m[0].length;
 			inline.content = inline.content.slice(n);
 			const child = inline.children?.[0];
 			if (child && child.type === 'text')
@@ -49,10 +43,6 @@ function taskListRule(md: MarkdownIt) {
 	});
 }
 
-// The footnote plugin keeps [^id] references inline but collects the definition
-// bodies into a trailing block run. We capture each body (keyed by id) and STRIP
-// that run from the stream, so the bodies don't leak into the doc as paragraphs;
-// the footnote_ref handler then stitches each body into its inline node.
 function extractFootnotes(md: MarkdownIt) {
 	md.core.ruler.push('extract-footnotes', (state) => {
 		const tokens = state.tokens;
@@ -87,8 +77,8 @@ function extractFootnotes(md: MarkdownIt) {
 					break;
 				}
 			}
-			tokens.splice(i, j - i); // drop the whole definitions block
-			break; // only one footnote_block run, at the end
+			tokens.splice(i, j - i);
+			break;
 		}
 		return true;
 	});
@@ -98,15 +88,15 @@ const alignFromStyle = (s: string | null): string | null =>
 	s?.match(/text-align:\s*(left|center|right)/)?.[1] ?? null;
 
 const md = new MarkdownIt('commonmark', { html: false })
-	.enable(['strikethrough', 'table']) // core rules, off in the commonmark preset
+	.enable(['strikethrough', 'table'])
 	.set({ linkify: true })
-	.enable('linkify') // bare URLs → ordinary link tokens
+	.enable('linkify')
 	.use(taskListRule)
 	.use(footnotePlugin)
 	.use(extractFootnotes);
 
 const parser = new MarkdownParser(schema, md, {
-	...dP.tokens, // every CommonMark token spec, verbatim
+	...dP.tokens,
 	s: { mark: 'strikethrough' },
 	list_item: {
 		block: 'list_item',
@@ -115,9 +105,9 @@ const parser = new MarkdownParser(schema, md, {
 			return { checked: c == null ? null : c === 'true' };
 		},
 	},
-	// The ↩ back-reference the footnote plugin appends inside each body — drop it.
+	// ignore footnote backlinks
 	footnote_anchor: { ignore: true, noCloseToken: true },
-	// tables: thead/tbody have no PM node, so ignore (rows flatten into the table).
+	// table sections absent
 	table: { block: 'table' },
 	thead: { ignore: true },
 	tbody: { ignore: true },
@@ -136,8 +126,6 @@ const parser = new MarkdownParser(schema, md, {
 	},
 });
 
-// Custom handler for the inline [^id] reference: open a footnote node and parse
-// its (stitched) body into it. (tokenHandlers is internal to the parser.)
 interface ParseState {
 	openNode(type: NodeType, attrs?: Attrs): void;
 	closeNode(): void;
@@ -157,13 +145,13 @@ interface ParseState {
 	const id = (tok.meta as { id?: number } | null)?.id;
 	const body = id == null ? undefined : footnoteBodies.get(id);
 	if (body && body.length) state.parseTokens(body);
-	state.closeNode(); // createAndFill adds an empty paragraph if the body was empty
+	// prosemirror inserts empty paragraphs
+	state.closeNode();
 };
 
-// ── Serializer ──────────────────────────────────────────────────────────────
 type NodeSerializer = (typeof dS.nodes)[string];
 
-// prosemirror-markdown ships no table serializer, so we emit GFM by hand.
+// serializer lacks tables
 const alignSep = (a: unknown): string =>
 	a === 'center'
 		? ':---:'
@@ -238,7 +226,8 @@ function makeSerializer(notes: PMNode[] | null) {
 					notes.push(node);
 					state.write(`[^${notes.length}]`);
 				} else {
-					state.write('[^?]'); // body serializer: don't recurse into nested footnotes
+					// avoid nested footnotes
+					state.write('[^?]');
 				}
 			},
 		},
@@ -264,7 +253,7 @@ export function serializeDoc(doc: PMNode): string {
 			const body = bodySer
 				.serialize(bodyDoc)
 				.trim()
-				.replace(/\n/g, '\n    '); // indent continuation lines
+				.replace(/\n/g, '\n    ');
 			return `[^${i + 1}]: ${body}`;
 		});
 		out = out.replace(/\s+$/, '') + '\n\n' + defs.join('\n') + '\n';

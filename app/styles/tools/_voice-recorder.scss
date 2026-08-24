@@ -1,8 +1,4 @@
-// Styles for the voice-recorder tool.
-
 @use "../crayon-config" as crayon;
-
-/* ── Voice recorder ──────────────────────────────────────────────────────── */
 
 .dt-vr {
 	@include crayon.vstack(4);
@@ -87,7 +83,6 @@
 	color: var(--foreground);
 }
 
-/* Device picker as a stacked-cell settings row. */
 .dt-vr-fields {
 	display: grid;
 	border-bottom: 1px solid var(--border);
@@ -143,7 +138,6 @@
 	font-size: crayon.font-size("sm");
 }
 
-/* Live input level meter. */
 .dt-vr-meter {
 	position: absolute;
 	inset: 0;

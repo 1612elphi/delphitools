@@ -41,7 +41,6 @@ const MIME: Record<SubtitleFormat, string> = {
 const tc = (ms: number) => formatTimestamp(ms, '.');
 const nth = (index: number) => index + 1;
 
-// UI-only edit marker against the transcription snapshot; never exported.
 const altered = (original: Cue[], cue: Cue, index: number) => {
 	const o = original[index];
 	return (
@@ -103,8 +102,7 @@ export default class AutoSubtitleTool extends Component {
 		return MODES;
 	}
 
-	// Sizes follow the device the run would use; navigator.gpu is the sync
-	// proxy for the adapter check in lib/transcribe.
+	// match transcriber device
 	get modelRows() {
 		const device =
 			typeof navigator !== 'undefined' && 'gpu' in navigator
@@ -303,8 +301,7 @@ export default class AutoSubtitleTool extends Component {
 		});
 	};
 
-	// Unparseable input snaps back to the cue's current value on commit, so
-	// the grid never shows a time the export does not contain.
+	// reset invalid timestamp
 	#setTime(key: 'start' | 'end', index: number, event: Event) {
 		const input = event.target as HTMLInputElement;
 		const ms = parseTimestamp(input.value);

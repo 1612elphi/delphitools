@@ -16,14 +16,7 @@ export interface RailSignature {
 	Args: { vertical: boolean };
 }
 
-/**
- * Utility rail (§8) — the pinned modules at uniform height, on the canvas side
- * of the omnibar. Modules fade + rise in on pin (CSS animation, honouring
- * prefers-reduced-motion); unpinning removes them at once, because the Next
- * app's exit animation came from motion/react, which is not installed here.
- * Horizontal row for top/bottom docking, vertical column for left/right.
- * Renders nothing when empty, so the dock leaves no phantom gap.
- */
+// motion/react not installed, so entry anim is CSS
 export default class Rail extends Component<RailSignature> {
 	pinned = new TrackedExternal(subscribePins, getPinned);
 	docks = new TrackedExternal(subscribeDock, getModuleDockAll);

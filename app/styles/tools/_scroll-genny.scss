@@ -1,11 +1,5 @@
-// Styles for the scroll-genny tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
 
 @use "../crayon-config" as crayon;
-
-/* ── Scroll generator ────────────────────────────────────────────────────── */
 
 .dt-scroll {
 	display: flex;
@@ -133,7 +127,7 @@
 		padding: crayon.size(4);
 	}
 
-	/* The edge-fill controls do nothing when the strip already divides evenly. */
+	/* fill controls inert when strip divides evenly */
 	&.is-inert {
 		opacity: 0.4;
 		pointer-events: none;

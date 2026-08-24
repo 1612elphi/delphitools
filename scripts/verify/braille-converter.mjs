@@ -1,9 +1,5 @@
-// Braille Converter behavioural rig: text to cells with the capital and
-// numeric indicators, cells back to text under Auto, the caps-word indicator
-// with the direction forced, the cell hover titles, Copy and Download.
-//
-// The clipboard checks need explicit permissions; headless Chrome grants
-// them to localhost once overridden below.
+// braille-converter behavioural rig
+// headless chrome grants clipboard after overridePermissions below
 //
 // Usage: npm start, then node scripts/verify/braille-converter.mjs
 

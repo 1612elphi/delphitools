@@ -1,8 +1,5 @@
-// Styles for the screen-recorder tool.
 
 @use "../crayon-config" as crayon;
-
-/* ── Screen recorder ─────────────────────────────────────────────────────── */
 
 .dt-sr {
 	@include crayon.vstack(4);
@@ -68,7 +65,6 @@
 	color: var(--foreground);
 }
 
-/* Microphone mix-in toggle as a stacked-cell settings row. */
 .dt-sr-fields {
 	display: grid;
 	border-bottom: 1px solid var(--border);

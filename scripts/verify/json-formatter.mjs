@@ -1,9 +1,5 @@
-// json-formatter: what the unit tests cannot see — the booted two-pane tool.
-// Indent presets written into the result pane, the tree view's expand/collapse,
-// a parse failure's line:column + source-line highlight, copy feedback, a real
-// download, and the three file paths (open / drop / paste).
-//
-// Usage: npm start, then node scripts/verify/json-formatter.mjs
+// what unit tests cannot see
+// usage: npm start, then node scripts/verify/json-formatter.mjs
 //   (or `npm run verify:json-formatter`).
 
 import { mkdtempSync, writeFileSync, readFileSync, readdirSync, statSync } from 'node:fs';
@@ -21,7 +17,7 @@ await client.send('Browser.setDownloadBehavior', {
 	downloadPath: downloads,
 });
 
-// Ember re-renders off the microtask/rAF queue; settle after every action.
+// ember re-renders microtask/raf
 const settle = () => sleep(200);
 
 const typing = (text) =>
@@ -45,7 +41,7 @@ const output = () => page.$eval('.dt-jf-output', (el) => el.value);
 const source = () => page.$eval('.dt-jf-source', (el) => el.value);
 const treeRowCount = () => page.$$eval('.dt-jf-tree-row', (els) => els.length);
 
-/** Chrome writes a .crdownload first, so wait for a settled, named file. */
+// .crdownload intermediate
 async function waitForDownload(match, timeout = 15000) {
 	const until = Date.now() + timeout;
 	while (Date.now() < until) {
@@ -66,7 +62,6 @@ const TWO_SPACES = '{\n  "a": 1,\n  "b": {\n    "c": [\n      2,\n      3\n    ]
 
 await visit(page, '/tools/json-formatter');
 
-// ── defaults ──────────────────────────────────────────────────────────────
 check(
 	'defaults: 2-space indent and the text view are active',
 	await page.evaluate(() => {
@@ -84,7 +79,6 @@ check(
 	),
 );
 
-// ── indent presets ────────────────────────────────────────────────────────
 await typing(DOC);
 await settle();
 check('2 spaces formats the document', (await output()) === TWO_SPACES);
@@ -112,7 +106,6 @@ check('minify emits a single line', (await output()) === '{"a":1,"b":{"c":[2,3]}
 await clickOpt('indent', '2 spaces');
 await settle();
 
-// ── copy arms ─────────────────────────────────────────────────────────────
 await page.click('[aria-label="Copy"]');
 check(
 	'copy arms with the check state',
@@ -122,7 +115,6 @@ check(
 		.catch(() => false),
 );
 
-// ── download triggers ─────────────────────────────────────────────────────
 await page.click('[aria-label="Download"]');
 const download = await waitForDownload(/^formatted\.json$/);
 check('Download writes formatted.json', !!download, download?.name ?? 'nothing landed');
@@ -132,10 +124,9 @@ check(
 	download ? `${download.text.length} bytes` : 'no file',
 );
 
-// ── tree view ─────────────────────────────────────────────────────────────
 await clickOpt('view', 'Tree');
 await settle();
-// root, a, b, c, 0, 1 — all expanded.
+// root+a+b+c+0+1
 check('the tree lists every node', (await treeRowCount()) === 6, '6 rows');
 const counts = await page.$$eval('.dt-jf-tree-count', (els) =>
 	els.map((el) => el.textContent.replace(/\s+/g, ' ').trim()),
@@ -157,7 +148,6 @@ await page.click('.dt-jf-tree-caret');
 await settle();
 check('re-expanding restores the walk', (await treeRowCount()) === 6, '6 rows');
 
-// collapse a mid-tree container: b hides its subtree, root/a/b stay.
 await page.$$eval('.dt-jf-tree-caret', (els) => els[1]?.click());
 await settle();
 check(
@@ -173,7 +163,6 @@ check('the collapsed branch still shows its count', left[1] === '1 entries', lef
 await clickOpt('view', 'Text');
 await settle();
 
-// ── invalid JSON: message, line:column, source-line highlight ─────────────
 await typing('{\n  "a": 1,\n  "b": tru\n}');
 await settle();
 check(
@@ -202,7 +191,6 @@ check(
 	),
 );
 
-// ── open a .json file through the hidden input ────────────────────────────
 const fixture = join(downloads, 'rig-fixture.json');
 writeFileSync(fixture, '{"from":"file","nested":{"ok":true}}');
 await (await page.$('.dt-jf-bar input[type="file"]')).uploadFile(fixture);
@@ -213,7 +201,6 @@ check(
 );
 check('the file formats', (await output()) !== '', '');
 
-// ── drop a .json file ─────────────────────────────────────────────────────
 await page.$eval('.dt-jf-frame', (el) => {
 	const transfer = new DataTransfer();
 	transfer.items.add(
@@ -224,7 +211,6 @@ await page.$eval('.dt-jf-frame', (el) => {
 await sleep(400);
 check('dropping a file loads it as the source', (await source()) === '{"dropped":true}');
 
-// ── paste a .json file ────────────────────────────────────────────────────
 await page.evaluate(() => {
 	const transfer = new DataTransfer();
 	transfer.items.add(
@@ -237,7 +223,6 @@ await page.evaluate(() => {
 await sleep(400);
 check('pasting a file loads it as the source', (await source()) === '{"pasted":1}');
 
-// ── scroll sync: the rendered copy tracks the textarea ────────────────────
 const tall = JSON.stringify(Object.fromEntries(Array.from({ length: 60 }, (_, i) => [`key${i}`, i])), null, 2);
 await typing(tall);
 await settle();
@@ -253,7 +238,6 @@ check(
 	),
 );
 
-// ── clear ─────────────────────────────────────────────────────────────────
 await page.click('[aria-label="Clear"]');
 await settle();
 check('clear empties source and result', (await source()) === '' && (await output()) === '');

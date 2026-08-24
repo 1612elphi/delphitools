@@ -1,4 +1,4 @@
-// Exercises the Auto Subtitle shell without downloading Whisper weights.
+// auto-subtitle shell, no model download
 //
 // Usage: npm start, then node scripts/verify/auto-subtitle.mjs
 

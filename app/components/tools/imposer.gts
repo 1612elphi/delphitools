@@ -73,7 +73,6 @@ const LAYOUT_OPTIONS = IMPOSITION_LAYOUTS.map((layout) => ({
 	icon: LAYOUT_ICONS[layout.id] ?? 'layers',
 }));
 
-/** Layouts whose sheet is folded down the centre rather than cut apart. */
 const FOLD_LAYOUTS = new Set([
 	'saddle-stitch',
 	'perfect-bind',
@@ -82,7 +81,6 @@ const FOLD_LAYOUTS = new Set([
 
 const FALLBACK_PAPER = PAPER_SIZES[0]!;
 
-/** Preview canvas width in pixels; the height follows the sheet's aspect. */
 const PREVIEW_WIDTH = 480;
 
 function clampGrid(raw: string): number {
@@ -107,10 +105,6 @@ function effectiveSheetH(
 		: Math.max(paperSize.widthMm, paperSize.heightMm);
 }
 
-/**
- * Crop mark arms at one corner. Each arm is toggled separately so only the arms
- * pointing at the sheet edge are drawn, never the ones pointing into a gutter.
- */
 function drawCropMarkArms(
 	ctx: CanvasRenderingContext2D,
 	x: number,
@@ -223,7 +217,7 @@ function drawCropMarksOnPdfPage(
 	placements: PagePlacement[],
 	sheetHPt: number,
 ) {
-	// 18pt is a quarter inch, the trim-mark length every prepress house expects.
+	// 18pt trim marks
 	const markLen = 18;
 	const offset = 3;
 
@@ -258,7 +252,6 @@ interface MarkLine {
 	y2: string;
 }
 
-/** The same outer-edge crop marks as the canvas path, in percentage SVG units. */
 function cropMarkLines(
 	placements: PagePlacement[],
 	sheetW: number,
@@ -325,11 +318,6 @@ function blankCells(
 	}));
 }
 
-/**
- * Repaints the canvas whenever the tracked state the paint function reads
- * changes — a function modifier re-runs on any tracked value consumed in its
- * body, which is what the React version spent a useEffect dependency list on.
- */
 const paintFace = modifier(
 	(
 		canvas: HTMLCanvasElement,
@@ -348,7 +336,6 @@ interface BlankSheetFaceSignature {
 	};
 }
 
-/** The DOM template preview, used instead of the canvas when no PDF is loaded. */
 const BlankSheetFace: TOC<BlankSheetFaceSignature> = <template>
 	<div class="dt-imp-sheet">
 		<svg class="dt-imp-marks">
@@ -372,7 +359,6 @@ const BlankSheetFace: TOC<BlankSheetFaceSignature> = <template>
 		{{#each @cells key="@index" as |cell|}}
 			<div class="dt-imp-cell" style={{cell.style}}>
 				{{#if cell.isBlank}}
-					{{! wording carried over from the Next app }}
 					<span
 						class="dt-imp-cell-blank"
 					>blank</span>
@@ -601,11 +587,6 @@ export default class ImposerTool extends Component {
 		return this.result?.totalSheets ?? 0;
 	}
 
-	/**
-	 * Clamped rather than reset: changing the grid or the blank page count can
-	 * shrink the stack under the current index, which left the React version
-	 * showing nothing until the next layout change.
-	 */
 	get sheetIndex() {
 		return this.totalSheets === 0
 			? 0
@@ -636,7 +617,6 @@ export default class ImposerTool extends Component {
 		}));
 	}
 
-	/** Drives both the stack's first shadow layer and the sheet navigation. */
 	get hasMultipleSheets() {
 		return this.totalSheets > 1;
 	}
@@ -714,13 +694,11 @@ export default class ImposerTool extends Component {
 		);
 	}
 
-	// wording carried over from the Next app
 	get pageCountLabel() {
 		const pages = this.pdfPageCount;
 		return `${pages} page${pages === 1 ? '' : 's'}`;
 	}
 
-	// wording carried over from the Next app
 	get summary() {
 		const total = this.totalSheets;
 		const pages = this.sourcePages;
@@ -730,14 +708,12 @@ export default class ImposerTool extends Component {
 		);
 	}
 
-	// wording carried over from the Next app
 	get blanksNote() {
 		const blanks = this.result?.blanksAdded ?? 0;
 		if (blanks === 0) return '';
 		return ` — ${blanks} blank${blanks === 1 ? '' : 's'} added`;
 	}
 
-	// wording carried over from the Next app
 	get sideLabel() {
 		return `Sheet ${this.sheetIndex + 1} — ${this.isFlipped ? 'Back' : 'Front'}`;
 	}
@@ -759,7 +735,6 @@ export default class ImposerTool extends Component {
 		);
 	}
 
-	// wording carried over from the Next app
 	get printSteps() {
 		const edge = this.flipEdgeLabel;
 		return (this.result?.sheets ?? []).map((sheet) => {
@@ -774,8 +749,6 @@ export default class ImposerTool extends Component {
 			};
 		});
 	}
-
-	// ---------------------------------------------------------------- loading
 
 	async #loadPdf(file: File) {
 		const bytes = new Uint8Array(await file.arrayBuffer());
@@ -824,7 +797,7 @@ export default class ImposerTool extends Component {
 	selectFile = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
-		// Cleared so the same file can be picked again.
+		// reset file input
 		input.value = '';
 		if (file) this.readFile(file);
 	};
@@ -835,7 +808,7 @@ export default class ImposerTool extends Component {
 		if (file) this.readFile(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// prevent file navigation
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -851,8 +824,6 @@ export default class ImposerTool extends Component {
 		this.blankMode = true;
 		this.#thumbnails.clear();
 	};
-
-	// ------------------------------------------------------------- config
 
 	setLayout = (id: string) => {
 		this.layoutId = id;
@@ -952,8 +923,6 @@ export default class ImposerTool extends Component {
 		this.printGuideOpen = !this.printGuideOpen;
 	};
 
-	// --------------------------------------------------------- navigation
-
 	goToSheet = (index: number) => {
 		this.activeSheet = index;
 		this.isFlipped = false;
@@ -972,8 +941,7 @@ export default class ImposerTool extends Component {
 		this.isFlipped = !this.isFlipped;
 	};
 
-	// Bound on the wrapper's document rather than window so it only fires while
-	// the tool is on screen. Buttons are excluded because Space activates them.
+	// scope keyboard shortcuts
 	shortcuts = modifier((element: HTMLElement) => {
 		const onKeyDown = (event: KeyboardEvent) => {
 			const target = event.target;
@@ -1003,8 +971,6 @@ export default class ImposerTool extends Component {
 				onKeyDown,
 			);
 	});
-
-	// ------------------------------------------------------------ preview
 
 	async #renderPage(
 		pdfDoc: PDFDocumentProxy,
@@ -1042,10 +1008,7 @@ export default class ImposerTool extends Component {
 		}
 	}
 
-	/**
-	 * Every tracked value is read before the first await, so the modifier that
-	 * calls this consumes them all and repaints when any of them changes.
-	 */
+	// consume tracked dependencies
 	async #drawSheetSide(
 		canvas: HTMLCanvasElement,
 		placements: PagePlacement[],
@@ -1226,8 +1189,6 @@ export default class ImposerTool extends Component {
 		);
 	};
 
-	// ------------------------------------------------------------- export
-
 	get generateDisabled() {
 		return !this.pdfBytes || this.isGenerating;
 	}
@@ -1238,7 +1199,6 @@ export default class ImposerTool extends Component {
 		if (!bytes || !result) return;
 
 		this.isGenerating = true;
-		// wording carried over from the Next app
 		this.generateProgress = 'Loading source PDF...';
 
 		try {
@@ -1255,7 +1215,6 @@ export default class ImposerTool extends Component {
 				effectiveSheetH(paperSize, this.orientation) *
 				MM_TO_POINTS;
 
-			// wording carried over from the Next app
 			this.generateProgress = 'Embedding source pages...';
 			const embeddedPages = await outputDoc.embedPages(
 				srcDoc.getPages(),
@@ -1264,7 +1223,6 @@ export default class ImposerTool extends Component {
 			const withMarks = this.cropMarks;
 
 			result.sheets.forEach((sheet, si) => {
-				// wording carried over from the Next app
 				this.generateProgress = `Generating sheet ${si + 1} of ${result.sheets.length}...`;
 
 				for (const side of [sheet.front, sheet.back]) {
@@ -1288,11 +1246,9 @@ export default class ImposerTool extends Component {
 				}
 			});
 
-			// wording carried over from the Next app
 			this.generateProgress = 'Saving PDF...';
 
-			// Copied into a fresh buffer: pdf-lib types its output over
-			// ArrayBufferLike, which BlobPart does not accept.
+			// blobpart requires arraybuffer
 			const blob = new Blob(
 				[new Uint8Array(await outputDoc.save())],
 				{ type: 'application/pdf' },
@@ -1358,12 +1314,10 @@ export default class ImposerTool extends Component {
 								@name="upload"
 								class="dt-imp-drop-icon"
 							/>
-							{{! wording carried over from the Next app }}
 							<p
 								class="dt-imp-drop-title"
 							>Drop a PDF here, or
 								click to browse</p>
-							{{! wording carried over from the Next app }}
 							<p
 								class="dt-imp-drop-hint"
 							>or paste from clipboard</p>
@@ -1383,7 +1337,6 @@ export default class ImposerTool extends Component {
 				</div>
 
 				<div class="dt-imp-section">
-					{{! wording carried over from the Next app }}
 					<span
 						class="dt-imp-heading"
 					>Layout</span>
@@ -1502,13 +1455,11 @@ export default class ImposerTool extends Component {
 
 				<div class="dt-imp-cards">
 					<div class="dt-imp-card">
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-imp-heading"
 						>Sheet Setup</span>
 
 						<div class="dt-imp-field">
-							{{! wording carried over from the Next app }}
 							<LabelWithInfo
 								@label="Paper"
 								@info="The physical sheet your printer will use. SRA sizes include extra bleed area for trimming."
@@ -1567,7 +1518,6 @@ export default class ImposerTool extends Component {
 						{{/if}}
 
 						<div class="dt-imp-field">
-							{{! wording carried over from the Next app }}
 							<LabelWithInfo
 								@label="Orientation"
 								@info="How the sheet feeds through the printer. Landscape is usually needed for side-by-side layouts like saddle stitch."
@@ -1635,7 +1585,6 @@ export default class ImposerTool extends Component {
 						</div>
 
 						<div class="dt-imp-field">
-							{{! wording carried over from the Next app }}
 							<LabelWithInfo
 								@label="Scaling"
 								@info="How your pages are sized to fit each cell. 'Fit' shows the whole page with possible white space. 'Fill' crops to fill the cell. 'Actual' uses the original page dimensions."
@@ -1666,7 +1615,6 @@ export default class ImposerTool extends Component {
 							<div
 								class="dt-imp-field"
 							>
-								{{! wording carried over from the Next app }}
 								<LabelWithInfo
 									@label="Duplex flip"
 									@info="How your printer flips the paper for double-sided printing. Long edge is standard for most booklets. Short edge (tumble) flips top-to-bottom."
@@ -1745,7 +1693,6 @@ export default class ImposerTool extends Component {
 							<div
 								class="dt-imp-field"
 							>
-								{{! wording carried over from the Next app }}
 								<LabelWithInfo
 									@label="Copies / sheet"
 									@info="How many identical copies of your page to fit on each sheet."
@@ -1801,7 +1748,6 @@ export default class ImposerTool extends Component {
 							<div
 								class="dt-imp-field"
 							>
-								{{! wording carried over from the Next app }}
 								<LabelWithInfo
 									@label="Grid"
 									@info="Number of rows and columns for your custom page grid."
@@ -1842,12 +1788,10 @@ export default class ImposerTool extends Component {
 					</div>
 
 					<div class="dt-imp-card">
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-imp-heading"
 						>Spacing &amp; Finishing</span>
 
-						{{! wording carried over from the Next app }}
 						<SliderWithInfo
 							@label="Margins"
 							@value={{this.marginMm}}
@@ -1858,7 +1802,6 @@ export default class ImposerTool extends Component {
 							@unit="mm"
 							@info="Distance from the sheet edge to the nearest page cell. Keeps content away from the unprintable area and gives the guillotine room to trim."
 						/>
-						{{! wording carried over from the Next app }}
 						<SliderWithInfo
 							@label="Gutter"
 							@value={{this.gutterMm}}
@@ -1875,7 +1818,6 @@ export default class ImposerTool extends Component {
 								"saddle-stitch"
 							)
 						}}
-							{{! wording carried over from the Next app }}
 							<SliderWithInfo
 								@label="Creep"
 								@value={{this.creepMm}}
@@ -1892,7 +1834,6 @@ export default class ImposerTool extends Component {
 						<hr class="dt-imp-rule" />
 
 						<div class="dt-imp-toggle">
-							{{! wording carried over from the Next app }}
 							<LabelWithInfo
 								@label="Crop marks"
 								@info="Small lines printed at page corners to guide the guillotine when trimming. Essential for professional print finishing."
@@ -1910,7 +1851,6 @@ export default class ImposerTool extends Component {
 						</div>
 
 						<div class="dt-imp-toggle">
-							{{! wording carried over from the Next app }}
 							<LabelWithInfo
 								@label="Leave blanks empty"
 								@info="When a signature needs padding, this controls whether blank pages are added automatically or left as empty space on the sheet."
@@ -1931,7 +1871,6 @@ export default class ImposerTool extends Component {
 						</div>
 
 						<div class="dt-imp-toggle">
-							{{! wording carried over from the Next app }}
 							<LabelWithInfo
 								@label="Blank mode"
 								@info="Preview the imposition layout without uploading a PDF. Useful for planning your print setup."
@@ -1976,7 +1915,6 @@ export default class ImposerTool extends Component {
 												@side="top"
 												class="dt-imp-infopanel"
 											>
-												{{! wording carried over from the Next app }}
 												Page
 												count
 												must
@@ -2209,7 +2147,6 @@ export default class ImposerTool extends Component {
 					{{/if}}
 				{{else}}
 					<div class="dt-imp-empty">
-						{{! wording carried over from the Next app }}
 						<p>Select a layout to see the
 							sheet preview</p>
 					</div>
@@ -2228,7 +2165,6 @@ export default class ImposerTool extends Component {
 						{{#if this.generateProgress}}
 							{{this.generateProgress}}
 						{{else}}
-							{{! wording carried over from the Next app }}
 							Generating...
 						{{/if}}
 					{{else}}
@@ -2249,7 +2185,6 @@ export default class ImposerTool extends Component {
 					{{on "click" this.togglePrintGuide}}
 				>
 					<Icon @name="printer" />
-					{{! wording carried over from the Next app }}
 					Print Guide
 					<Icon
 						@name={{if
@@ -2267,10 +2202,8 @@ export default class ImposerTool extends Component {
 						<Icon
 							@name="scissors-line-dashed"
 						/>
-						{{! wording carried over from the Next app }}
 						<h3>Manual Duplex Printing Guide</h3>
 					</div>
-					{{! wording carried over from the Next app }}
 					<p class="dt-imp-guide-intro">If your
 						printer does not support
 						automatic duplex, follow these
@@ -2296,7 +2229,6 @@ export default class ImposerTool extends Component {
 						{{/each}}
 					</ol>
 					{{#if this.showNestingNote}}
-						{{! wording carried over from the Next app }}
 						<p
 							class="dt-imp-guide-note"
 						>After printing all sheets, nest

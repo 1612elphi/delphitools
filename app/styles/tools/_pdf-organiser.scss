@@ -1,8 +1,4 @@
-// Styles for the pdf-organiser tool.
-
 @use "../crayon-config" as crayon;
-
-/* ── PDF organiser ───────────────────────────────────────────────────────── */
 
 .dt-porg {
 	@include crayon.vstack(4);
@@ -37,7 +33,7 @@
 		);
 	}
 
-	/* the file input is visually hidden, so its focus ring has to land here */
+	/* hidden file input focus */
 	&:focus-within {
 		border-color: var(--primary);
 		outline: 2px solid var(--primary);
@@ -132,7 +128,6 @@
 	}
 }
 
-/* Split settings as a grid of stacked label-over-control cells. */
 .dt-porg-settings {
 	display: grid;
 	border-bottom: 1px solid var(--border);

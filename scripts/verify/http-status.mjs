@@ -1,15 +1,8 @@
-// http-status: the reference browser end-to-end.
-//
-// The unit tests pin the table and the filter; what they cannot cover is the
-// component wiring: live search, class filters, row expansion, click-to-copy
-// and the spec link rendering. This rig drives a real page for those.
-//
-// Usage: start `npm start`, then `node scripts/verify/http-status.mjs`.
+// needs npm start first
 
 import { launch, visit, check, sleep, finish } from './harness.mjs';
 
-// Counted from the data rather than pinned, so adding a code does not fail
-// this rig. Node strips the types, the same trick palette.mjs uses.
+// node strips .ts types
 const { HTTP_STATUSES, filterStatuses, lookupStatus } = await import(
 	'../../app/lib/http-status.ts'
 );
@@ -33,9 +26,7 @@ const clickFilter = async (label) => {
 	}, label);
 	await sleep(200);
 };
-// Meta/Control+A does not reach the field through CDP in headless Chrome, so
-// clearing happens through a real input event — that is also what Glimmer's
-// {{on "input"}} listens for.
+// cdp select-all fails headless
 const typeSearch = async (text) => {
 	await page.$eval('.dt-http-search-input', (el) => {
 		el.value = '';
@@ -44,8 +35,6 @@ const typeSearch = async (text) => {
 	await page.type('.dt-http-search-input', text);
 	await sleep(250);
 };
-
-// ── default render ──────────────────────────────────────────────────────────
 
 check(
 	'the page is the http-status tool',
@@ -72,10 +61,8 @@ check(
 			els.map((el) => Number(el.textContent.trim())),
 		)
 	).reduce((a, b) => a + b, 0) ===
-		HTTP_STATUSES.length * 2, // total + per-class sums to double
+		HTTP_STATUSES.length * 2, // total plus per-class doubles
 );
-
-// ── class filter ────────────────────────────────────────────────────────────
 
 await clickFilter('5xx');
 check(
@@ -91,7 +78,6 @@ check(
 await clickFilter('All');
 check('All restores the table', (await rowCount()) === HTTP_STATUSES.length);
 
-// Chip tap does the same as the strip: click a row's 2xx tint chip.
 await page.$$eval('.dt-http-row .dt-http-tint', (els) =>
 	els.find((el) => el.classList.contains('is-2xx'))?.click(),
 );
@@ -101,8 +87,6 @@ check(
 	(await rowCount()) === rowsFor('', 2),
 );
 await clickFilter('All');
-
-// ── search ──────────────────────────────────────────────────────────────────
 
 await typeSearch('418');
 check(
@@ -131,8 +115,6 @@ check(
 await page.click('.dt-http-clear');
 await sleep(200);
 check('Clear restores the table', (await rowCount()) === HTTP_STATUSES.length);
-
-// ── detail + copy ───────────────────────────────────────────────────────────
 
 await page.$$eval('.dt-http-code', (els) => {
 	els.find((el) => el.textContent.trim() === '200')

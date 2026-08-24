@@ -16,8 +16,6 @@ const ACCEPT = acceptAttr(TEXT_ACCEPT);
 const SAVE_DEBOUNCE_MS = 1000;
 const COPIED_MS = 1500;
 
-/* ── Case conversions ──────────────────────────────────────────────────── */
-
 export function toUpper(text: string): string {
 	return text.toUpperCase();
 }
@@ -67,8 +65,6 @@ export function toKebabCase(text: string): string {
 		.replace(/-+/g, '-');
 }
 
-/* ── Line operations ───────────────────────────────────────────────────── */
-
 export function sortLines(text: string): string {
 	return text
 		.split('\n')
@@ -94,7 +90,7 @@ export function reverseLines(text: string): string {
 	return text.split('\n').reverse().join('\n');
 }
 
-/** Fisher–Yates over a copy; the source shuffled the array it had just split. */
+// fisher–yates on a copy
 export function shuffleLines(text: string): string {
 	const lines = text.split('\n');
 	for (let i = lines.length - 1; i > 0; i--) {
@@ -125,8 +121,6 @@ export function removeLineNumbers(text: string): string {
 		.join('\n');
 }
 
-/* ── Clean up ──────────────────────────────────────────────────────────── */
-
 export function trimWhitespace(text: string): string {
 	return text
 		.split('\n')
@@ -149,7 +143,7 @@ export function removeExtraSpaces(text: string): string {
 	return text.replace(/[^\S\n]+/g, ' ');
 }
 
-/** Greedy wrap at `width` columns. A word longer than `width` gets its own line. */
+// long word gets own line
 export function wrapAt(text: string, width: number): string {
 	const lines: string[] = [];
 	let current = '';
@@ -169,14 +163,12 @@ export function encodeUrl(text: string): string {
 	return encodeURIComponent(text);
 }
 
-/** Throws on a malformed percent sequence; the caller reports that. */
+// throws on malformed percent
 export function decodeUrl(text: string): string {
 	return decodeURIComponent(text);
 }
 
-/* ── Find and replace ──────────────────────────────────────────────────── */
-
-/** Throws when `useRegex` is on and the pattern does not compile. */
+// throws on bad regex
 export function replaceIn(
 	text: string,
 	find: string,
@@ -195,7 +187,7 @@ export function replaceIn(
 		: text.replace(find, replacement);
 }
 
-/** Zero for an empty or uncompilable pattern, so the count never reads as an error. */
+// bad pattern counts zero
 export function countMatches(
 	text: string,
 	find: string,
@@ -212,8 +204,6 @@ export function countMatches(
 	}
 }
 
-/* ── Extraction ────────────────────────────────────────────────────────── */
-
 export const EXTRACT_PATTERNS = {
 	emails: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
 	urls: /https?:\/\/[^\s<>"{}|\\^`[\]]+/g,
@@ -222,23 +212,20 @@ export const EXTRACT_PATTERNS = {
 
 export type ExtractKind = keyof typeof EXTRACT_PATTERNS;
 
-/** Deduplicated, in first-seen order. */
+// first-seen order
 export function extract(text: string, kind: ExtractKind): string[] {
 	return [...new Set(text.match(EXTRACT_PATTERNS[kind]) ?? [])];
 }
 
-/* ── Panel data ────────────────────────────────────────────────────────── */
-
 interface TransformButton {
 	label: string;
 	run: (text: string) => string;
-	/** Alerted instead of thrown when `run` rejects the input. */
+	// alerted, not thrown
 	error?: string;
 	title?: string;
 	wide?: boolean;
 }
 
-// Labels and titles carried over from the Next app, verbatim.
 export const PANELS: { id: string; icon: string; label: string }[] = [
 	{ id: 'case', icon: 'case-upper', label: 'Case' },
 	{ id: 'lines', icon: 'arrow-up-down', label: 'Lines' },
@@ -323,8 +310,6 @@ export default class MarkdownWriterTool extends Component {
 		clearTimeout(this.#copiedTimer);
 	}
 
-	// The textarea's own value is the input to every transform, so the element
-	// itself is the state the handlers need.
 	registerEditor = modifier((element: HTMLTextAreaElement) => {
 		this.#editor = element;
 		return () => {
@@ -383,7 +368,6 @@ export default class MarkdownWriterTool extends Component {
 		this.#scheduleSave();
 	};
 
-	/** a dropped, pasted or handed-off file replaces the draft */
 	readFile = async (file: File) => {
 		if (!matchesAccept(file, ACCEPT)) return;
 		if (this.content.trim() && !confirm('Replace draft?')) return;
@@ -408,10 +392,7 @@ export default class MarkdownWriterTool extends Component {
 		}, SAVE_DEBOUNCE_MS);
 	}
 
-	/**
-	 * Routed through the textarea's own insertText command so the browser's undo
-	 * stack (Ctrl+Z) records the change, as the Next app did.
-	 */
+	// keeps browser undo stack
 	#applyTransform(transform: (text: string) => string) {
 		const editor = this.#editor;
 		if (!editor) return;
@@ -420,7 +401,7 @@ export default class MarkdownWriterTool extends Component {
 		editor.focus();
 		editor.select();
 		document.execCommand('insertText', false, next);
-		// Fallback where insertText is a no-op; undo is lost, the edit is not.
+		// insertText no-op fallback
 		if (editor.value !== next) editor.value = next;
 		this.content = editor.value;
 		this.#scheduleSave();
@@ -613,9 +594,8 @@ export default class MarkdownWriterTool extends Component {
 
 			{{#if (eq this.activePanel "find")}}
 				<div class="dt-md-panel">
-					<div class="dt-md-find">
-						{{! wording carried over from the Next app }}
-						<input
+									<div class="dt-md-find">
+					<input
 							type="text"
 							class="dt-md-find-input"
 							value={{this.findText}}
@@ -626,7 +606,6 @@ export default class MarkdownWriterTool extends Component {
 								this.setFindText
 							}}
 						/>
-						{{! wording carried over from the Next app }}
 						<input
 							type="text"
 							class="dt-md-find-input"
@@ -649,11 +628,9 @@ export default class MarkdownWriterTool extends Component {
 									this.setUseRegex
 								}}
 							/>
-							{{! wording carried over from the Next app }}
 							Use Regex
 						</label>
 						{{#if this.findText}}
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-md-matches"
 							>{{this.matchCount}}
@@ -717,7 +694,6 @@ export default class MarkdownWriterTool extends Component {
 							<div
 								class="dt-md-extracted-bar"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-md-extracted-count"
 								>{{this.extractedItems.length}}
@@ -734,7 +710,6 @@ export default class MarkdownWriterTool extends Component {
 									<Icon
 										@name="copy"
 									/>
-									{{! wording carried over from the Next app }}
 									Copy All
 								</button>
 							</div>
@@ -756,7 +731,6 @@ export default class MarkdownWriterTool extends Component {
 				</div>
 			{{/if}}
 
-			{{! wording carried over from the Next app }}
 			<textarea
 				class="dt-md-editor"
 				aria-label="Scratchpad"
@@ -768,14 +742,10 @@ export default class MarkdownWriterTool extends Component {
 
 			<div class="dt-md-status">
 				<div class="dt-md-stats">
-					{{! wording carried over from the Next app }}
 					<span>{{this.wordCount}} words</span>
-					{{! wording carried over from the Next app }}
 					<span>{{this.charCount}} chars</span>
-					{{! wording carried over from the Next app }}
 					<span>{{this.lineCount}} lines</span>
 					{{#if this.lastSaved}}
-						{{! wording carried over from the Next app }}
 						<span class="dt-md-saved">Saved
 							{{this.savedAt}}</span>
 					{{/if}}

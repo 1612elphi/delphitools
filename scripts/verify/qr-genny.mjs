@@ -1,7 +1,4 @@
-// QR Generator: the SVG export carries the seam-sealing outline (every
-// filled module stroked in its own colour), and still parses as SVG.
-//
-// Usage: npm start, then node scripts/verify/qr-genny.mjs
+// seam-seal: stroke=fill, 0.5 wide
 
 import {
 	launch,

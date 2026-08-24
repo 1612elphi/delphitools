@@ -1,27 +1,17 @@
-/**
- * Secure-context + platform capability detection (M0-7). Pure and SSR-safe:
- * every browser-API access is guarded so importing or calling this during the
- * static-export prerender can never throw. Returns conservative `false`s off the
- * main thread / on the server.
- *
- * Substrata needs a secure context (https/localhost) for Workers, OPFS, File
- * System Access, crypto.subtle and WebGPU (§5). Opening over file:// must
- * degrade gracefully, not crash — callers gate on these flags.
- */
+// false outside browsers
 
 export interface Capabilities {
-	/** https or localhost — gates Workers/OPFS/FS-Access/crypto.subtle/WebGPU */
 	secureContext: boolean;
-	/** COOP+COEP — only needed for the multi-thread WASM fallback, not WebGPU */
+	// wasm fallback only
 	crossOriginIsolated: boolean;
 	webgpu: boolean;
 	webgl2: boolean;
-	/** Origin Private File System */
+	// origin private filesystem
 	opfs: boolean;
-	/** File System Access API (Chromium disk pickers) */
+	// chromium file picker
 	fileSystemAccess: boolean;
 	worker: boolean;
-	/** SubtleCrypto — needed for content-addressed blob hashing */
+	// content hashing
 	cryptoSubtle: boolean;
 	createImageBitmap: boolean;
 }

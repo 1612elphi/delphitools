@@ -10,7 +10,6 @@ if (typeof module !== 'undefined') {
 		browser_args: {
 			Chrome: {
 				ci: [
-					// --no-sandbox is needed when running Chrome inside a container
 					process.env.CI ? '--no-sandbox' : null,
 					'--headless',
 					'--disable-dev-shm-usage',

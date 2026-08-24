@@ -1,9 +1,4 @@
-/**
- * Picker-card icon per FX registry type (kebab-case lucide names). A UI concern,
- * so it does not live in the effects/filters registries — but it is a plain .ts
- * rather than part of fx-panel.gts because scripts/gen-icons.mjs imports it:
- * names reached through a map are invisible to the generator's template scan.
- */
+// generator cannot scan maps
 export const FX_ICONS: Record<string, string> = {
 	brightness: 'sun',
 	contrast: 'contrast',
@@ -37,5 +32,4 @@ export const FX_ICONS: Record<string, string> = {
 	'remove-background': 'scissors',
 };
 
-/** Unknown types fall back to the add glyph. */
 export const FX_ICON_FALLBACK = 'plus';

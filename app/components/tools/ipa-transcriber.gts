@@ -14,9 +14,7 @@ import {
 import type { Dictionary } from 'delphitools-v2/lib/shavian/transliterate';
 import { transcribe, toText, type IpaToken } from 'delphitools-v2/lib/ipa';
 
-// wording carried over from the Shavian tool
 const DEFAULT_TEXT = 'Mankind, be vigilant; we loved you.';
-// wording carried over from the Shavian tool
 const CORE_ONLY_STATUS = 'Core dictionary only, uncommon words are guessed';
 const COPIED_MS = 2000;
 
@@ -104,12 +102,10 @@ export default class IpaTranscriberTool extends Component {
 			<div class="dt-ipa-frame">
 				<div class="dt-ipa-input-pane">
 					<div class="dt-ipa-pane-head">
-						{{! wording carried over from the Shavian tool }}
 						<span
 							class="dt-ipa-label"
 						>English input</span>
 					</div>
-					{{! wording carried over from the Shavian tool }}
 					<textarea
 						class="dt-ipa-input"
 						aria-label="English input"
@@ -134,7 +130,6 @@ export default class IpaTranscriberTool extends Component {
 								class="dt-ipa-status"
 							>
 								<NdsLoader />
-								{{! wording carried over from the Shavian tool }}
 								Loading
 								dictionary…
 							</span>
@@ -148,7 +143,6 @@ export default class IpaTranscriberTool extends Component {
 								class="dt-ipa-status"
 							>
 								<NdsLoader />
-								{{! wording carried over from the Shavian tool }}
 								Loading full
 								dictionary…
 							</span>
@@ -167,7 +161,6 @@ export default class IpaTranscriberTool extends Component {
 								{{this.coreOnlyStatus}}
 							</span>
 						{{else}}
-							{{! wording carried over from the Shavian tool }}
 							<span
 								class="dt-ipa-status is-ready"
 							>Dictionary ready</span>
@@ -210,7 +203,6 @@ export default class IpaTranscriberTool extends Component {
 							<span
 								class="dt-ipa-dot is-dict"
 							></span>
-							{{! wording carried over from the Shavian tool }}
 							Dictionary match
 						</span>
 						<span
@@ -219,7 +211,6 @@ export default class IpaTranscriberTool extends Component {
 							<span
 								class="dt-ipa-dot is-guess"
 							></span>
-							{{! wording carried over from the Shavian tool }}
 							Heuristic guess
 						</span>
 					</div>

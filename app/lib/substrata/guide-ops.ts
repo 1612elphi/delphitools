@@ -1,11 +1,3 @@
-/**
- * Guide mutations (rulers pass, 2026-07-07) — the action layer over the doc
- * store for ruler guidelines. Same template as artboard-ops: everything goes
- * through `update()` so add/move/remove are single undoable steps; a drag
- * brackets `beginTransient`/`commitTransient` and passes `{ transient: true }`
- * so the whole gesture coalesces to ONE step (the layer-ops convention).
- */
-
 import { update, updateTransient } from './doc-store';
 import { newId, type Guide, type SubstrataDoc } from './doc-model';
 
@@ -17,7 +9,6 @@ function write(
 	else update(mutator);
 }
 
-/** Drop a new guide. Undoable. Returns its id (the drag handle). */
 export function addGuide(axis: Guide['axis'], pos: number): string {
 	const id = newId();
 	update((doc) => ({

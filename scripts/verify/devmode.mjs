@@ -1,9 +1,3 @@
-// palette-genny's hidden export panel, opened with P.
-//
-// It is the authoring tool for lib/palette-collection.ts, so the JSON it emits
-// has to paste into that array unedited. Nothing links to the panel, so a
-// regression here is invisible until someone next adds a palette.
-
 import { launch, visit, check, sleep, finish } from './harness.mjs';
 
 const NAME = 'Ocean Sunset!!';
@@ -17,7 +11,6 @@ await visit(page, '/tools/palette-genny');
 const panel = () => page.$('.dt-export-panel');
 const json = () =>
 	page.$eval('.dt-export-json pre', (el) => el.textContent.trim());
-/** The snippet minus its trailing comma, or null if it will not parse. */
 const parsed = async () => {
 	try {
 		return JSON.parse((await json()).replace(/,$/, ''));
@@ -40,9 +33,6 @@ check(
 	'and the import button disabled',
 	await page.$eval('.dt-export-import-row button', (el) => el.disabled),
 );
-
-// ── name, slug, JSON ────────────────────────────────────────────────────────
-
 await page.type('#dt-export-name', NAME);
 await sleep(400);
 check(
@@ -71,7 +61,7 @@ check(
 		).join(),
 	entry?.colors?.join(' '),
 );
-// The collection file is an array literal, so the snippet has to paste in whole.
+// paste into array literal
 check('it ends with a comma', named.endsWith(','), named.slice(-20));
 
 await page.select('#dt-export-cat', 'keycaps');
@@ -81,9 +71,6 @@ check(
 	(await parsed())?.category === 'keycaps',
 	(await parsed())?.category,
 );
-
-// ── importing colours from text ─────────────────────────────────────────────
-
 await page.type(
 	'#dt-export-import',
 	IMPORTED.map((h) => h.slice(1)).join('\n'),
@@ -117,9 +104,6 @@ check(
 	(await parsed())?.colors?.join() === IMPORTED.join(),
 	(await parsed())?.colors?.join(' '),
 );
-
-// ── closing ─────────────────────────────────────────────────────────────────
-
 await page.keyboard.press('KeyP');
 await sleep(400);
 check('P closes it again', !(await panel()));

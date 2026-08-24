@@ -1,11 +1,4 @@
-// Styles for the tailwind-cheatsheet tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Tailwind cheatsheet ─────────────────────────────────────────────────── */
 
 .dt-twcs {
 	border: 2px solid var(--border);
@@ -145,8 +138,6 @@
 	font-size: crayon.font-size("sm");
 }
 
-/* One chevron asset serves both states: pointing down when open, rotated a
-   quarter turn when closed. */
 .dt-twcs-chevron {
 	width: crayon.size(4);
 	height: crayon.size(4);

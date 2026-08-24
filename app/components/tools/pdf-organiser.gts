@@ -18,27 +18,25 @@ import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 const ACCEPT = '.pdf,application/pdf';
 
-/** Width the page thumbnails are rendered at, in CSS pixels. */
+// css px render width
 const THUMB_WIDTH = 220;
 
 type SplitMode = 'ranges' | 'pages';
 
 interface SourceDoc {
 	name: string;
-	/** The pdf-lib parse of bytes; pdf.js gets a copy, it detaches its input. */
+	// pdf.js detaches its input
 	lib: PDFDocument;
 	pageCount: number;
 }
 
 interface PageEntry {
 	id: number;
-	/** Index into sources. */
 	source: number;
-	/** 0-based page index inside its source document. */
 	page: number;
-	/** Extra rotation applied on top of the page's own, in 90° steps. */
+	// 90° steps on page rotation
 	rotation: number;
-	/** Rendered thumbnail data URL, empty when pdf.js could not read it. */
+	// empty when pdf.js fails
 	thumb: string;
 }
 
@@ -54,7 +52,6 @@ export default class PdfOrganiserTool extends Component {
 	@tracked pages: PageEntry[] = [];
 	@tracked error: string | null = null;
 	@tracked busy = false;
-	/** Names of files still being parsed, shown while thumbs render. */
 	@tracked loading: string[] = [];
 
 	@tracked splitMode: SplitMode = 'ranges';
@@ -87,7 +84,6 @@ export default class PdfOrganiserTool extends Component {
 				error: null,
 			};
 		}
-		// An untouched field is not an error, just nothing to split yet.
 		if (this.rangeSpec.trim() === '')
 			return { groups: null, error: null };
 		try {
@@ -131,14 +127,12 @@ export default class PdfOrganiserTool extends Component {
 	sourceName = (entry: PageEntry) =>
 		this.sources[entry.source]?.name ?? '';
 
-	// ------------------------------------------------------------ intake
-
 	readFile = (file: File) => this.#addFiles([file]);
 
 	handleFileSelect = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		this.#addFiles([...(input.files ?? [])]);
-		// Choosing the same file twice must still fire a change event.
+		// re-pick same file
 		input.value = '';
 	};
 
@@ -147,7 +141,7 @@ export default class PdfOrganiserTool extends Component {
 		this.#addFiles([...(event.dataTransfer?.files ?? [])]);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// preventDefault enables drop
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -179,8 +173,7 @@ export default class PdfOrganiserTool extends Component {
 			const thumbs = await this.#renderThumbs(js);
 			if (this.isDestroyed) return;
 
-			// Captured late on purpose: files load concurrently, so the index
-			// is only valid once this source is actually appended.
+			// reads length before append
 			const sourceIndex = this.sources.length;
 			this.sources = [
 				...this.sources,
@@ -228,13 +221,10 @@ export default class PdfOrganiserTool extends Component {
 			}
 			return thumbs;
 		} catch {
-			// Encrypted without a password, or a page pdf.js chokes on: the
-			// cell falls back to an icon, and pdf-lib output still works.
+			// empty thumb shows icon
 			return Array.from({ length: js.numPages }, () => '');
 		}
 	}
-
-	// ------------------------------------------------------- page edits
 
 	rotatePage = (entry: PageEntry) => {
 		this.#replacePage(entry, {
@@ -257,8 +247,6 @@ export default class PdfOrganiserTool extends Component {
 		this.pages = [];
 		this.error = null;
 	};
-
-	// ------------------------------------------------------ drag reorder
 
 	dragStart = (id: number, event: DragEvent) => {
 		this.draggedId = id;
@@ -286,7 +274,6 @@ export default class PdfOrganiserTool extends Component {
 		event.preventDefault();
 		this.dragOverId = null;
 
-		// A file dropped on the grid is intake, not a reorder.
 		if (event.dataTransfer?.files.length) {
 			this.draggedId = null;
 			this.#addFiles([...event.dataTransfer.files]);
@@ -305,8 +292,6 @@ export default class PdfOrganiserTool extends Component {
 		next.splice(to, 0, moved!);
 		this.pages = next;
 	};
-
-	// ------------------------------------------------------------ output
 
 	async #buildDoc(entries: PageEntry[]): Promise<Uint8Array> {
 		const { PDFDocument, degrees } = await import('pdf-lib');
@@ -330,8 +315,7 @@ export default class PdfOrganiserTool extends Component {
 	}
 
 	#savePdf(bytes: Uint8Array, name: string) {
-		// Copied into a fresh buffer: pdf-lib types its output over
-		// ArrayBufferLike, which BlobPart does not accept.
+		// pdf-lib ArrayBufferLike incompatible with BlobPart
 		downloadBlob(
 			new Blob([new Uint8Array(bytes)], {
 				type: 'application/pdf',

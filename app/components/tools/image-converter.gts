@@ -45,7 +45,6 @@ const FORMATS: ImageFormat[] = [
 	'icns',
 ];
 
-/** Formats a browser will not render in an <img>, so the row shows an icon. */
 const UNPREVIEWABLE: ImageFormat[] = ['ico', 'icns', 'bmp', 'tiff', 'jxl'];
 
 const ICO_SIZES = [16, 32, 48, 64, 128, 256];
@@ -54,7 +53,6 @@ const ICO_SIZE_LIST = ICO_SIZES.join(', ');
 const ICNS_SIZE_LIST = ICNS_SIZES.join(', ');
 const SCALE_PRESETS = [25, 50, 75, 150, 200];
 
-/** ICNS OSType per edge length; sizes outside this map cannot be embedded. */
 const ICNS_TYPES: Record<number, string> = {
 	16: 'icp4',
 	32: 'icp5',
@@ -65,7 +63,6 @@ const ICNS_TYPES: Record<number, string> = {
 	1024: 'ic10',
 };
 
-// Labels carried over from the Next app.
 const QUANTISATIONS: { value: GifQuantisation; label: string }[] = [
 	{ value: 'rgb565', label: 'RGB565 (best quality)' },
 	{ value: 'rgb444', label: 'RGB444 (smaller)' },
@@ -178,7 +175,6 @@ async function resizedPngs(
 	return buffers;
 }
 
-/** BMP, uncompressed, top-down. 24-bit drops alpha; 32-bit keeps it. */
 function encodeBmp(data: ImageData, bitDepth: 24 | 32): Blob {
 	const { width, height } = data;
 	const pixels = data.data;
@@ -198,12 +194,14 @@ function encodeBmp(data: ImageData, bitDepth: 24 | 32): Blob {
 
 	view.setUint32(14, 40, true);
 	view.setInt32(18, width, true);
-	view.setInt32(22, -height, true); // negative height = top-down
+	// top-down bmp rows
+	view.setInt32(22, -height, true);
 	view.setUint16(26, 1, true);
 	view.setUint16(28, bitDepth, true);
 	view.setUint32(30, 0, true);
 	view.setUint32(34, pixelDataSize, true);
-	view.setUint32(38, 2835, true); // ~72 DPI
+	// 72 dpi
+	view.setUint32(38, 2835, true);
 	view.setUint32(42, 2835, true);
 
 	for (let y = 0; y < height; y++) {
@@ -217,13 +215,12 @@ function encodeBmp(data: ImageData, bitDepth: 24 | 32): Blob {
 				view.setUint8(offset++, pixels[i + 3]!);
 			}
 		}
-		// The pad to rowSize is already zeroed by the ArrayBuffer.
 	}
 
 	return new Blob([buffer], { type: 'image/bmp' });
 }
 
-/** ICO container: 6-byte header, 16 bytes per entry, then the PNG payloads. */
+// ico header with pngs
 function buildIco(sizes: number[], pngs: ArrayBuffer[]): Blob {
 	const headerSize = 6 + sizes.length * 16;
 	const buffer = new ArrayBuffer(
@@ -239,7 +236,7 @@ function buildIco(sizes: number[], pngs: ArrayBuffer[]): Blob {
 	sizes.forEach((size, i) => {
 		const entry = 6 + i * 16;
 		const png = pngs[i]!;
-		// 0 in the width/height byte means 256.
+		// zero encodes 256 pixels
 		view.setUint8(entry, size >= 256 ? 0 : size);
 		view.setUint8(entry + 1, size >= 256 ? 0 : size);
 		view.setUint8(entry + 2, 0);
@@ -257,7 +254,7 @@ function buildIco(sizes: number[], pngs: ArrayBuffer[]): Blob {
 	return new Blob([buffer], { type: 'image/x-icon' });
 }
 
-/** ICNS container: 'icns', big-endian file size, then type/size/PNG triples. */
+// icns big-endian png blocks
 function buildIcns(types: string[], pngs: ArrayBuffer[]): Blob {
 	const fileSize =
 		8 + pngs.reduce((sum, png) => sum + 8 + png.byteLength, 0);
@@ -375,7 +372,7 @@ export default class ImageConverterTool extends Component {
 	handleFileSelect = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		this.#addFiles([...(input.files ?? [])]);
-		// Choosing the same file twice must still fire a change event.
+		// allows same file selection
 		input.value = '';
 	};
 
@@ -384,7 +381,7 @@ export default class ImageConverterTool extends Component {
 		this.#addFiles([...(event.dataTransfer?.files ?? [])]);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// prevent dropped-file navigation
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -456,8 +453,7 @@ export default class ImageConverterTool extends Component {
 		const height = this.resizeHeight || natural.height;
 		if (!this.lockAspect) return { width, height };
 
-		// Locked with both fields filled, the width wins and the height is
-		// recomputed — as the Next app does.
+		// width overrides locked height
 		const aspect = natural.width / natural.height;
 		if (this.resizeHeight && !this.resizeWidth) {
 			return { width: Math.round(height * aspect), height };
@@ -465,7 +461,6 @@ export default class ImageConverterTool extends Component {
 		return { width, height: Math.round(width / aspect) };
 	}
 
-	/** The fill colour, or null when the format keeps its alpha channel. */
 	get backgroundFill(): string | null {
 		if (this.targetFormat === 'jpeg') return this.jpegBackground;
 		if (this.targetFormat === 'png' && !this.pngTransparency) {
@@ -633,7 +628,6 @@ export default class ImageConverterTool extends Component {
 						}}
 					/>
 					<Icon @name="upload" />
-					{{! wording carried over from the Next app }}
 					<span class="dt-conv-drop-title">Drop
 						images here</span>
 					<span class="dt-conv-drop-hint">or click
@@ -641,7 +635,6 @@ export default class ImageConverterTool extends Component {
 				</label>
 
 				<div class="dt-conv-section">
-					{{! wording carried over from the Next app }}
 					<span class="dt-conv-label">Convert to</span>
 					<div class="segmented dt-conv-formats">
 						{{#each
@@ -694,7 +687,6 @@ export default class ImageConverterTool extends Component {
 							<label
 								class="dt-conv-row"
 							>
-								{{! wording carried over from the Next app }}
 								<span>Preserve
 									transparency</span>
 								<input
@@ -713,7 +705,6 @@ export default class ImageConverterTool extends Component {
 								<label
 									class="dt-conv-row"
 								>
-									{{! wording carried over from the Next app }}
 									<span
 									>Background
 										colour</span>
@@ -744,7 +735,6 @@ export default class ImageConverterTool extends Component {
 							<div
 								class="dt-conv-slider"
 							>
-								{{! wording carried over from the Next app }}
 								<label
 									for="dt-conv-jpeg-quality"
 								>Quality</label>
@@ -767,7 +757,6 @@ export default class ImageConverterTool extends Component {
 							<label
 								class="dt-conv-row"
 							>
-								{{! wording carried over from the Next app }}
 								<span>Background
 									colour</span>
 								<span
@@ -785,7 +774,6 @@ export default class ImageConverterTool extends Component {
 									>{{this.jpegBackground}}</code>
 								</span>
 							</label>
-							{{! wording carried over from the Next app }}
 							<p
 								class="dt-conv-note"
 							>Used when input has
@@ -801,7 +789,6 @@ export default class ImageConverterTool extends Component {
 							<label
 								class="dt-conv-row"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 								>Lossless</span>
 								<input
@@ -820,7 +807,6 @@ export default class ImageConverterTool extends Component {
 								<div
 									class="dt-conv-slider"
 								>
-									{{! wording carried over from the Next app }}
 									<label
 										for="dt-conv-webp-quality"
 									>Quality</label>
@@ -852,7 +838,6 @@ export default class ImageConverterTool extends Component {
 							<label
 								class="dt-conv-row"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 								>Lossless</span>
 								<input
@@ -871,7 +856,6 @@ export default class ImageConverterTool extends Component {
 								<div
 									class="dt-conv-slider"
 								>
-									{{! wording carried over from the Next app }}
 									<label
 										for="dt-conv-jxl-quality"
 									>Quality</label>
@@ -903,7 +887,6 @@ export default class ImageConverterTool extends Component {
 							<div
 								class="dt-conv-slider"
 							>
-								{{! wording carried over from the Next app }}
 								<label
 									for="dt-conv-gif-colours"
 								>Max colours</label>
@@ -963,7 +946,6 @@ export default class ImageConverterTool extends Component {
 							<div
 								class="dt-conv-field"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-conv-sublabel"
 								>Bit depth</span>
@@ -989,7 +971,6 @@ export default class ImageConverterTool extends Component {
 										}}
 									>
 										24-bit
-										{{! wording carried over from the Next app }}
 										<span
 										>No
 											transparency</span>
@@ -1013,7 +994,6 @@ export default class ImageConverterTool extends Component {
 										}}
 									>
 										32-bit
-										{{! wording carried over from the Next app }}
 										<span
 										>With
 											alpha</span>
@@ -1028,7 +1008,6 @@ export default class ImageConverterTool extends Component {
 								"tiff"
 							)
 						}}
-							{{! wording carried over from the Next app }}
 							<p
 								class="dt-conv-note"
 							>TIFF output is
@@ -1046,7 +1025,6 @@ export default class ImageConverterTool extends Component {
 							<label
 								class="dt-conv-row"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 								>Multi-size</span>
 								<input
@@ -1062,7 +1040,6 @@ export default class ImageConverterTool extends Component {
 							{{#if
 								this.icoMultiSize
 							}}
-								{{! wording carried over from the Next app }}
 								<p
 									class="dt-conv-note"
 								>Embeds all
@@ -1072,7 +1049,6 @@ export default class ImageConverterTool extends Component {
 								<div
 									class="dt-conv-field"
 								>
-									{{! wording carried over from the Next app }}
 									<span
 										class="dt-conv-sublabel"
 									>Icon
@@ -1118,7 +1094,6 @@ export default class ImageConverterTool extends Component {
 							<label
 								class="dt-conv-row"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 								>Multi-size</span>
 								<input
@@ -1134,7 +1109,6 @@ export default class ImageConverterTool extends Component {
 							{{#if
 								this.icnsMultiSize
 							}}
-								{{! wording carried over from the Next app }}
 								<p
 									class="dt-conv-note"
 								>Embeds all
@@ -1144,7 +1118,6 @@ export default class ImageConverterTool extends Component {
 								<div
 									class="dt-conv-field"
 								>
-									{{! wording carried over from the Next app }}
 									<span
 										class="dt-conv-sublabel"
 									>Icon
@@ -1183,7 +1156,6 @@ export default class ImageConverterTool extends Component {
 					</div>
 
 					<div class="dt-conv-panel">
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-conv-label"
 						>Resize</span>
@@ -1227,7 +1199,6 @@ export default class ImageConverterTool extends Component {
 								<Icon
 									@name="scaling"
 								/>
-								{{! wording carried over from the Next app }}
 								<span>Images
 									will
 									keep
@@ -1249,7 +1220,6 @@ export default class ImageConverterTool extends Component {
 								<span
 									class="dt-conv-dim"
 								>
-									{{! wording carried over from the Next app }}
 									<label
 										for="dt-conv-width"
 									>Width</label>
@@ -1292,7 +1262,6 @@ export default class ImageConverterTool extends Component {
 								<span
 									class="dt-conv-dim"
 								>
-									{{! wording carried over from the Next app }}
 									<label
 										for="dt-conv-height"
 									>Height</label>
@@ -1309,7 +1278,6 @@ export default class ImageConverterTool extends Component {
 								</span>
 							</div>
 							{{#if this.lockAspect}}
-								{{! wording carried over from the Next app }}
 								<p
 									class="dt-conv-note"
 								>Aspect ratio
@@ -1318,9 +1286,8 @@ export default class ImageConverterTool extends Component {
 									one
 									field
 									empty to
-									auto-calculate</p>
+								auto-calculate</p>
 							{{else}}
-								{{! wording carried over from the Next app }}
 								<p
 									class="dt-conv-note"
 								>Aspect ratio
@@ -1369,7 +1336,6 @@ export default class ImageConverterTool extends Component {
 							<div
 								class="dt-conv-custom"
 							>
-								{{! wording carried over from the Next app }}
 								<label
 									for="dt-conv-percentage"
 								>Custom:</label>
@@ -1456,11 +1422,9 @@ export default class ImageConverterTool extends Component {
 						{{on "click" this.convert}}
 					>
 						{{#if this.converting}}
-							{{! wording carried over from the Next app }}
 							Converting…
 						{{else}}
 							<Icon @name="image" />
-							{{! wording carried over from the Next app }}
 							Convert to
 							{{this.formatName}}
 						{{/if}}
@@ -1471,7 +1435,6 @@ export default class ImageConverterTool extends Component {
 			{{#if this.converted.length}}
 				<div class="dt-conv-frame">
 					<div class="dt-conv-bar">
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-conv-bar-title"
 						>Converted</span>

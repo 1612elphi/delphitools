@@ -1,5 +1,3 @@
-// Styles for the audio-extractor tool: the Muter's bar, stage and result row,
-// with a player in the result row.
 
 @use "../crayon-config" as crayon;
 
@@ -12,7 +10,6 @@
 	background: var(--card);
 }
 
-/* Flush action bar: file picker (grows) · status · format · Extract · Clear. */
 .dt-ax-bar {
 	display: flex;
 	min-height: crayon.size(12);
@@ -153,7 +150,7 @@
 	background: #000;
 }
 
-/* Empty state, the Background Remover's drop-zone shape. */
+/* reuses background remover dropzone */
 .dt-ax-drop {
 	display: flex;
 	min-height: crayon.size(56);
@@ -199,7 +196,6 @@
 	font-size: crayon.font-size("sm");
 }
 
-/* Result row: label · player · size · Download, flush under the stage. */
 .dt-ax-out {
 	display: flex;
 	min-height: crayon.size(12);

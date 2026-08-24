@@ -23,8 +23,7 @@ module('Unit | Tool | palette-genny | share link', function () {
 		);
 	});
 
-	// Below the minimum the tool would render a stub, so a fresh palette is
-	// better than an honoured but unusable link.
+	// one colour renders stub
 	test('rejects a single colour', function (assert) {
 		assert.strictEqual(coloursFromQuery('?colors=1a2744'), null);
 	});

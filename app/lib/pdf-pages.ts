@@ -1,11 +1,3 @@
-/**
- * Page maths shared by the PDF tools (pdf-organiser, image-to-pdf).
- *
- * Pure TypeScript, no pdf-lib / pdf.js imports — the components own document
- * I/O; this owns parsing and geometry so it can be unit-tested without either
- * library loaded.
- */
-
 import { MM_TO_POINTS, PAPER_SIZES } from 'delphitools-v2/lib/imposition';
 
 export type FitMode = 'contain' | 'cover' | 'stretch';
@@ -23,24 +15,15 @@ export interface PageSetup {
 	height: number;
 }
 
-/** Page-size option that sizes every page to its own image. */
 export const MATCH_IMAGE_SIZE = 'match';
 
-/** Selectable fixed page sizes, portrait-first, plus the match option. */
 export const PAGE_SIZE_OPTIONS: { id: string; label: string }[] = [
 	{ id: MATCH_IMAGE_SIZE, label: 'Match image' },
 	...PAPER_SIZES.map((size) => ({ id: size.id, label: size.label })),
 ];
 
-/** CSS pixels are 96/inch, PDF points 72/inch, so a pixel is 0.75 pt. */
 export const PX_TO_POINTS = 72 / 96;
 
-/**
- * Parse a range spec like "1-3, 5, 8-6" into groups of 0-based page indices:
- * "1-3, 5" → [[0, 1, 2], [4]]. Input is 1-based and inclusive, matching how
- * people quote page ranges. Throws with a terse message on empty groups,
- * non-numbers, page 0, pages past the document, and reversed ranges.
- */
 export function parsePageRanges(spec: string, pageCount: number): number[][] {
 	const groups: number[][] = [];
 	for (const part of spec.split(',')) {
@@ -64,22 +47,14 @@ export function parsePageRanges(spec: string, pageCount: number): number[][] {
 	return groups;
 }
 
-/** One group per page — the "one file per page" split. */
 export function everyPageAlone(pageCount: number): number[][] {
 	return Array.from({ length: pageCount }, (_, index) => [index]);
 }
 
-/** Snap an angle to the nearest quarter-turn, normalised to 0/90/180/270. */
 export function normaliseRotation(degrees: number): number {
 	return (((Math.round(degrees / 90) * 90) % 360) + 360) % 360;
 }
 
-/**
- * Place an image of imgW × imgH inside an area of areaW × areaH.
- * contain: largest size that fits, centred. cover: smallest size that fills,
- * centred (overflow crops). stretch: the area exactly. All in the caller's
- * coordinate space — the caller adds its margin offset.
- */
 export function fitPlacement(
 	imgW: number,
 	imgH: number,
@@ -104,12 +79,6 @@ export function fitPlacement(
 	};
 }
 
-/**
- * Full page dimensions in points for one image. A fixed size comes from
- * PAPER_SIZES, oriented to match the image when orientation is 'auto'.
- * MATCH_IMAGE_SIZE pages are the image at CSS-pixel scale plus the margin on
- * every side — fitPlacement then lands the image back at its natural size.
- */
 export function pageSetupPt(
 	sizeId: string,
 	orientation: PageOrientation,

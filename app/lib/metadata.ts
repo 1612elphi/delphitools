@@ -1,15 +1,4 @@
-/**
- * Read and strip image metadata without touching pixel data.
- *
- * JPEG, PNG, WebP and GIF are walked structurally: metadata lives in
- * length-prefixed segments (JPEG APPn/COM), chunks (PNG, WebP) or extension
- * blocks (GIF), so removing it never requires re-encoding. Anything outside
- * these four containers returns `null` from strip/parse and the caller falls
- * back to a canvas re-encode.
- *
- * Kept by default: JFIF (APP0), Adobe transform (APP14) and the ICC colour
- * profile — all three affect how pixels render, none identifies anyone.
- */
+// structural metadata stripping
 
 export type ImageContainer = 'jpeg' | 'png' | 'webp' | 'gif';
 
@@ -28,19 +17,18 @@ export interface MetadataReport {
 	format: ImageContainer | null;
 	entries: MetadataEntry[];
 	gps: GpsFix | null;
-	/** A C2PA / Content Credentials manifest is embedded. */
+	// c2pa manifest found
 	c2pa: boolean;
 }
 
 export interface StripResult {
 	format: ImageContainer;
 	data: Uint8Array;
-	/** Segment/chunk names dropped, for the "what was removed" list. */
 	removed: string[];
 }
 
 export interface StripOptions {
-	/** Keep the ICC colour profile (default true). */
+	// defaults to true
 	keepColourProfile?: boolean;
 }
 
@@ -61,7 +49,6 @@ function ascii(bytes: Uint8Array): string {
 	return String.fromCharCode(...bytes);
 }
 
-/** Naive scan for an ASCII needle in a byte array. */
 function bytesIndexOf(data: Uint8Array, needle: string): number {
 	const last = data.length - needle.length;
 	outer: for (let i = 0; i <= last; i++) {
@@ -99,9 +86,6 @@ function detectFormat(data: Uint8Array): ImageContainer | null {
 	return null;
 }
 
-/* ── TIFF / EXIF ─────────────────────────────────────────────────────────── */
-
-/** Numeric type codes carry the unit size; ASCII and undefined are 1. */
 const TIFF_TYPE_SIZE: Record<number, number> = {
 	1: 1,
 	2: 1,
@@ -131,8 +115,7 @@ function readTiffValue(
 	const unit = TIFF_TYPE_SIZE[type];
 	if (!unit) return undefined;
 	const byteLength = unit * count;
-	// Four bytes or fewer sit inline in the entry; longer values are offsets
-	// from the TIFF header start.
+	// values <=4 bytes inline
 	const at =
 		byteLength <= 4
 			? entryValueOffset
@@ -140,7 +123,6 @@ function readTiffValue(
 	if (at + byteLength > view.byteLength) return undefined;
 
 	if (type === 2) {
-		// ASCII: trim at the first NUL.
 		let end = at;
 		while (end < at + byteLength && view.getUint8(end) !== 0) end++;
 		return latin1(view, at, end - at);
@@ -184,7 +166,6 @@ function readTiffValue(
 		return count === 1 ? values[0]! : values;
 	}
 	if (type === 7 && count <= 64) {
-		// Small UNDEFINED blobs (UserComment prefix territory): latin1.
 		return latin1(view, at, count);
 	}
 	return undefined;
@@ -199,7 +180,6 @@ function readIfd(
 	if (offset <= 0 || base + offset + 2 > view.byteLength) return null;
 	const fields: TiffFields = { values: new Map() };
 	const count = view.getUint16(base + offset, little);
-	// A corrupt count must not walk the whole file.
 	if (count > 512) return null;
 	for (let i = 0; i < count; i++) {
 		const entry = base + offset + 2 + i * 12;
@@ -237,7 +217,6 @@ interface ParsedExif {
 	hasThumbnail: boolean;
 }
 
-/** Parses the TIFF structure inside an EXIF/eXIf payload. */
 function parseTiff(view: DataView, base: number): ParsedExif | null {
 	if (base + 8 > view.byteLength) return null;
 	const order = latin1(view, base, 2);
@@ -284,7 +263,7 @@ function parseTiff(view: DataView, base: number): ParsedExif | null {
 			out.hasMakerNote = exif.values.has(0x927c);
 			const comment = exif.values.get(0x9286);
 			if (typeof comment === 'string') {
-				// UserComment starts with an 8-byte charset id, usually ASCII.
+				// usercomment has charset prefix
 				const trimmed = comment
 					.replace(/^ASCII\0{3}/, '')
 					.replace(/\0+$/, '');
@@ -351,7 +330,6 @@ function gpsDetail(gps: GpsFix): string {
 	return out;
 }
 
-/** Appends the human-readable entries for one parsed EXIF block. */
 function exifEntries(exif: ParsedExif, gps: GpsFix | null): MetadataEntry[] {
 	const entries: MetadataEntry[] = [];
 	const f = exif.fields;
@@ -398,15 +376,10 @@ function exifEntries(exif: ParsedExif, gps: GpsFix | null): MetadataEntry[] {
 	return entries;
 }
 
-/* ── JPEG ────────────────────────────────────────────────────────────────── */
-
 interface JpegSegment {
 	marker: number;
-	/** Start of the 0xFF byte. */
 	start: number;
-	/** One past the segment payload. */
 	end: number;
-	/** Payload start (after marker + length), or -1 for standalone markers. */
 	payloadStart: number;
 }
 
@@ -417,16 +390,16 @@ function jpegSegments(data: Uint8Array): JpegSegment[] {
 		data.byteLength,
 	);
 	const segments: JpegSegment[] = [];
-	let i = 2; // past SOI
+	let i = 2;
 	while (i + 1 < data.length) {
 		if (data[i] !== 0xff) break;
 		let marker = data[i + 1]!;
-		// Fill bytes before a marker.
+		// skip marker fill bytes
 		while (marker === 0xff && i + 2 < data.length) {
 			i++;
 			marker = data[i + 1]!;
 		}
-		// Standalone markers carry no length field.
+		// standalone markers lack length
 		if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd9)) {
 			segments.push({
 				marker,
@@ -444,7 +417,7 @@ function jpegSegments(data: Uint8Array): JpegSegment[] {
 		if (end > data.length) break;
 		segments.push({ marker, start: i, end, payloadStart: i + 4 });
 		i = end;
-		// Everything after SOS is entropy-coded scan data; stop walking.
+		// sos begins entropy data
 		if (marker === 0xda) break;
 	}
 	return segments;
@@ -547,7 +520,7 @@ function stripJpeg(data: Uint8Array, keepColour: boolean): StripResult {
 		} else if (seg.marker === 0xfe) {
 			drop = 'Comment (COM)';
 		} else if (app >= 3 && app <= 15 && app !== 14) {
-			// APP0 (JFIF) and APP14 (Adobe) stay: both steer decoding.
+			// app0/app14 affect decoding
 			drop = `Application data (APP${app})`;
 		}
 		if (drop) {
@@ -557,12 +530,10 @@ function stripJpeg(data: Uint8Array, keepColour: boolean): StripResult {
 		}
 		copiedThrough = seg.end;
 	}
-	// Scan data (or a metadata-less tail) is copied through untouched.
+	// preserve scan data
 	parts.push(data.slice(copiedThrough));
 	return { format: 'jpeg', data: concat(parts), removed: [...removed] };
 }
-
-/* ── PNG ─────────────────────────────────────────────────────────────────── */
 
 const PNG_METADATA_CHUNKS: Record<string, string> = {
 	tEXt: 'Text (tEXt)',
@@ -681,12 +652,10 @@ function stripPng(data: Uint8Array, keepColour: boolean): StripResult {
 	return { format: 'png', data: concat(parts), removed: [...removed] };
 }
 
-/* ── WebP ────────────────────────────────────────────────────────────────── */
-
 interface RiffChunk {
 	fourcc: string;
 	start: number;
-	/** End including the pad byte. */
+	// riff chunks include padding
 	end: number;
 	dataStart: number;
 	dataLength: number;
@@ -726,7 +695,7 @@ function parseWebp(data: Uint8Array, report: MetadataReport): void {
 	let icc = false;
 	for (const chunk of riffChunks(data)) {
 		if (chunk.fourcc === 'EXIF') {
-			// The payload is a bare TIFF header; some writers keep "Exif\0\0".
+			// webp exif header optional
 			const skip =
 				ascii(
 					data.subarray(
@@ -773,11 +742,11 @@ function stripWebp(data: Uint8Array, keepColour: boolean): StripResult {
 			continue;
 		}
 		if (chunk.fourcc === 'VP8X') {
-			// The canvas flags must stop advertising chunks we dropped.
+			// clear dropped-chunk flags
 			const fixed = data.slice(chunk.start, chunk.end);
 			if (!keepColour) fixed[8]! &= ~0x20;
-			fixed[8]! &= ~0x08; // EXIF flag
-			fixed[8]! &= ~0x04; // XMP flag
+			fixed[8]! &= ~0x08; // exif flag
+			fixed[8]! &= ~0x04; // xmp flag
 			parts.push(fixed);
 		} else {
 			parts.push(data.slice(chunk.start, chunk.end));
@@ -794,9 +763,7 @@ function stripWebp(data: Uint8Array, keepColour: boolean): StripResult {
 	};
 }
 
-/* ── GIF ─────────────────────────────────────────────────────────────────── */
-
-/** Copies GIF sub-blocks (size-prefixed runs ending in a zero byte). */
+// gif length-prefixed blocks
 function subBlocksEnd(data: Uint8Array, at: number): number {
 	let i = at;
 	while (i < data.length) {
@@ -810,7 +777,7 @@ function subBlocksEnd(data: Uint8Array, at: number): number {
 function parseGif(data: Uint8Array, report: MetadataReport): void {
 	forGifBlocks(data, (kind, start, end) => {
 		if (kind === 'comment') {
-			// Sub-blocks: each run is length-prefixed; the size bytes are not text.
+			// skip block size bytes
 			let text = '';
 			let j = start;
 			while (j < end) {
@@ -850,7 +817,7 @@ function forGifBlocks(
 	let i = 13 + gctSize;
 	while (i < data.length) {
 		const introducer = data[i]!;
-		if (introducer === 0x3b) break; // trailer
+		if (introducer === 0x3b) break;
 		if (introducer === 0x21) {
 			const label = data[i + 1]!;
 			if (label === 0xfe) {
@@ -870,14 +837,14 @@ function forGifBlocks(
 				if (id === 'XMP Data') visit('xmp', i, end);
 				i = end;
 			} else {
-				// GCE and other extensions: fixed or sub-block bodies.
+				// gce has fixed length
 				i =
 					label === 0xf9
 						? i + 2 + 5
 						: subBlocksEnd(data, i + 2);
 			}
 		} else if (introducer === 0x2c) {
-			// Image descriptor: 9 bytes, optional local colour table, LZW data.
+			// skip image data blocks
 			const lctFlag = data[i + 9]! & 0x80;
 			const lctSize = lctFlag
 				? 3 * 2 ** ((data[i + 9]! & 0x07) + 1)
@@ -948,17 +915,13 @@ function stripGif(data: Uint8Array): StripResult {
 		}
 		break;
 	}
-	// Any trailing bytes (shouldn't happen after the trailer) stay attached.
 	if (i < data.length) parts.push(data.slice(i));
 	return { format: 'gif', data: concat(parts), removed: [...removed] };
 }
 
-/* ── Public API ──────────────────────────────────────────────────────────── */
-
 export function parseMetadata(data: Uint8Array): MetadataReport {
 	const format = detectFormat(data);
-	// C2PA / Content Credentials embed a JUMBF manifest: superbox type "jumb",
-	// label "c2pa". Both byte strings co-occur only in a real manifest.
+	// c2pa manifest markers
 	const c2pa =
 		bytesIndexOf(data, 'jumb') !== -1 &&
 		bytesIndexOf(data, 'c2pa') !== -1;
@@ -970,7 +933,7 @@ export function parseMetadata(data: Uint8Array): MetadataReport {
 	return report;
 }
 
-/** Structural strip. Returns null for containers this module cannot edit. */
+// null for unknown containers
 export function stripMetadata(
 	data: Uint8Array,
 	options: StripOptions = {},

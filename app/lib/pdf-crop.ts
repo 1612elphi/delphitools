@@ -1,11 +1,3 @@
-/**
- * Crop-box maths for pdf-rotate-crop, kept free of pdf.js/pdf-lib so the
- * conversions stay unit-testable. A CropBox is in PDF user-space points:
- * pdf.js `viewport.convertToPdfPoint` produces corners in that space and
- * pdf-lib `page.setCropBox` consumes it, so boxes survive page rotation
- * unchanged.
- */
-
 export interface CropBox {
 	x: number;
 	y: number;
@@ -13,7 +5,6 @@ export interface CropBox {
 	height: number;
 }
 
-/** Normalise a pointer drag into a rect clamped inside maxW × maxH px. */
 export function dragRect(
 	x1: number,
 	y1: number,
@@ -34,7 +25,6 @@ export function dragRect(
 	};
 }
 
-/** Bounding box of two opposite corners, order-independent. */
 export function boxFromPoints(
 	ax: number,
 	ay: number,
@@ -49,10 +39,7 @@ export function boxFromPoints(
 	};
 }
 
-/**
- * Overlap of two boxes, or null when they do not. Touching edges count as
- * disjoint: a zero-area CropBox is invalid PDF.
- */
+// pdf boxes require area
 export function intersectBox(a: CropBox, b: CropBox): CropBox | null {
 	const x = Math.max(a.x, b.x);
 	const y = Math.max(a.y, b.y);
@@ -62,11 +49,7 @@ export function intersectBox(a: CropBox, b: CropBox): CropBox | null {
 	return { x, y, width: right - x, height: bottom - y };
 }
 
-/**
- * A crop box from per-edge insets, all in points, origin bottom-left. `top`
- * and `bottom` are distances from the respective page edges. Returns null when
- * the remaining area collapses or any inset is negative.
- */
+// pdf points, bottom-left origin
 export function cropFromInsets(
 	pageW: number,
 	pageH: number,
@@ -82,7 +65,6 @@ export function cropFromInsets(
 	return { x: left, y: bottom, width, height };
 }
 
-/** Inverse of cropFromInsets: the four edge distances of a box on its page. */
 export function insetsFromBox(
 	box: CropBox,
 	pageW: number,
@@ -96,11 +78,7 @@ export function insetsFromBox(
 	};
 }
 
-/**
- * A paper-sized box centred on the page, origin bottom-left. It may extend past
- * the page edges; the download path intersects it with the page's own crop box,
- * so an oversized paper is safe.
- */
+// callers clip overflow
 export function cropToPaper(
 	pageW: number,
 	pageH: number,

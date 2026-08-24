@@ -198,24 +198,8 @@ import {
 	type SnapBox,
 } from 'delphitools-v2/lib/substrata/snap-engine';
 
-/**
- * Fabric mount + the doc→Fabric render loop (M1). The whole controller runs
- * inside ONE element modifier — the Ember shape of the Next component's single
- * mount effect. The canvas is a render target driven entirely by the document
- * store — it subscribes and reconciles on every doc change (M1-3). Raster
- * import (drop/paste) mutates the doc, never the canvas directly.
- */
 
-/**
- * Layout strategy for "transform separately" selections (Affinity-style): the
- * ActiveSelection's box fits ONLY the ANCHOR child (index 0 — the first id in
- * the selection store), so Fabric's native border + handles sit on the anchor
- * object while the other members get lightweight overlay boxes. Because the
- * box centre == the anchor's centre, the own-centre separate-rotation keeps
- * the anchor glued to its handles through rotations.
- */
-// (inherits FitContentLayout's static `type` — it's only a serialisation key,
-// and this layout manager is never persisted)
+// fabric serialization key
 class AnchorBoxLayout extends FitContentLayout {
 	calcBoundingBox(
 		objects: FabricObject[],
@@ -229,8 +213,6 @@ class AnchorBoxLayout extends FitContentLayout {
 	}
 }
 
-/** Ruler band thickness in screen px (the bands paint at the end of the
- *  after:render pass; see the rulers section in mount). */
 const RULER_PX = 22;
 
 interface Inset {
@@ -240,12 +222,6 @@ interface Inset {
 	left: number;
 }
 
-/**
- * The chrome painted OVER the canvas element: the ruler bands (top-left, on
- * the overlay context) and the omnibar / rail docks (absolutely positioned
- * siblings, each sized to the edge it is docked to). Fitting into the raw
- * element centres the artboard under that chrome instead of in the free area.
- */
 function chromeInset(wrap: HTMLElement, rulers: boolean): Inset {
 	const inset: Inset = {
 		top: rulers ? RULER_PX : 0,
@@ -259,8 +235,6 @@ function chromeInset(wrap: HTMLElement, rulers: boolean): Inset {
 		[];
 	for (const dock of docks) {
 		const r = dock.getBoundingClientRect();
-		// A dock is pinned to one edge and sized by its content on that axis,
-		// so its own rect IS the occupied thickness there.
 		if (dock.classList.contains('is-top'))
 			inset.top = Math.max(inset.top, r.height);
 		else if (dock.classList.contains('is-bottom'))
@@ -273,13 +247,8 @@ function chromeInset(wrap: HTMLElement, rulers: boolean): Inset {
 	return inset;
 }
 
-/** Fit the artboard within the viewport with a little padding, centred in the
- *  area the chrome leaves free. */
 function fitView(canvas: Canvas, artboard: Artboard, inset: Inset): void {
 	const pad = 0.92;
-	// Cap the total inset: two opposing docks wider than the canvas would
-	// otherwise starve the fit area down to the 1px floor and park the artboard
-	// in a corner at ~0 zoom.
 	const cap = (a: number, b: number, size: number): [number, number] => {
 		const total = a + b;
 		const max = size * 0.8;
@@ -296,8 +265,7 @@ function fitView(canvas: Canvas, artboard: Artboard, inset: Inset): void {
 	canvas.setViewportTransform([z, 0, 0, z, tx, ty]);
 }
 
-// Fabric internals the touch-cancel path and the perf HUD reach into. Shapes
-// verified against fabric 7.4 (SelectableCanvas/Canvas privates).
+// fabric 7.4 internals
 interface FabricInternals {
 	_currentTransform?: {
 		target?: FabricObject;
@@ -320,17 +288,10 @@ export default class FabricCanvas extends Component {
 		if (!el) return;
 
 		const canvas = new Canvas(el, {
-			// Native multi-select (M2): shift-click membership + rubber-band box.
 			selection: true,
 			preserveObjectStacking: true,
-			// Draw selection controls AFTER the artboard clipPath so a layer's
-			// handles stay visible even when its content is dragged off the
-			// canvas (clipped).
+			// show controls above clip
 			controlsAboveOverlay: true,
-			// Dev diagnostic (?dpr1): render at CSS resolution — the
-			// discriminator that caught iPad WebKit's paint-volume
-			// rendering-update downshift (2026-07-11); kept for device-perf
-			// triage alongside the ?hud overlay.
 			...(import.meta.env.DEV &&
 			new URLSearchParams(window.location.search).has('dpr1')
 				? { enableRetinaScaling: false }
@@ -340,12 +301,6 @@ export default class FabricCanvas extends Component {
 		const state = createReconcileState();
 		let maskDocId: string | null = null;
 
-		// ── selection chrome (backdrop-sketch parity) ─────────────────────────
-		// Square 8px paper-filled handles with a primary 1.5px border, primary
-		// selection border, and a CIRCULAR rotate handle on Fabric's stem.
-		// Controls are shared through ownDefaults (Fabric's documented pattern
-		// for one shared control set) — NOTE for M2 text: Textbox needs its own
-		// control set, so this shared record must become per-kind then.
 		const sharedControls =
 			controlsUtils.createObjectDefaultControls();
 		sharedControls.mtr.render = controlsUtils.renderCircleControl;
@@ -373,7 +328,6 @@ export default class FabricCanvas extends Component {
 					controls: sharedControls,
 				},
 			);
-			// recolour objects that already exist (theme flips re-run this)
 			for (const [id, obj] of state.byId) {
 				if (id !== '__artboard__') obj.set(chrome);
 			}
@@ -383,9 +337,7 @@ export default class FabricCanvas extends Component {
 			canvas.requestRenderAll();
 		};
 		applySelectionChrome();
-		// Overlay ink cache: the after:render pass runs every frame (rulers are
-		// on by default), and getComputedStyle forces a style resolve — resolve
-		// the CSS-var palette once and invalidate on theme flips only.
+		// avoid per-frame style reads
 		let themeInk: {
 			foreground: string;
 			primary: string;
@@ -418,17 +370,10 @@ export default class FabricCanvas extends Component {
 			attributeFilter: ['class'],
 		});
 
-		// Suppresses the canvas→store echo while WE drive the canvas selection
-		// programmatically (store→canvas apply, commit-time rebuild). Without
-		// it, a group id selected in the panel would bounce back as its leaf
-		// ids.
+		// suppress selection echo
 		let squelchSelectionEvents = false;
 
-		/** Store ids → the SELECTABLE leaf objects they cover (group ids expand
-		 *  to their visible, unlocked leaf members — groups are folders). Flags
-		 *  are composed from the DOC ROOT, so a hidden/locked ancestor above the
-		 *  selected node excludes its leaves (matching the reconciler). */
-		const selectedLeafObjects = (): FabricObject[] => {
+				const selectedLeafObjects = (): FabricObject[] => {
 			const doc = getSnapshot();
 			if (!doc) return [];
 			const effective = new Map(
@@ -457,14 +402,8 @@ export default class FabricCanvas extends Component {
 			return out;
 		};
 
-		// ActiveSelections WE built in separate mode (anchor-box layout) — the
-		// overlay and the rebuild guard key off membership here.
 		const anchorStyled = new WeakSet<ActiveSelection>();
 
-		// Apply the selection store onto the canvas. Runs on selection change
-		// AND after every reconcile, so a layer selected the instant it's
-		// created (e.g. on import) gets its controls once its Fabric object
-		// exists — the post-update subscriber alone can race object creation.
 		const applySelection = () => {
 			const objs = selectedLeafObjects();
 			const current = canvas.getActiveObjects();
@@ -473,13 +412,7 @@ export default class FabricCanvas extends Component {
 			const sameSet =
 				objs.length === current.length &&
 				objs.every((o) => current.includes(o));
-			// A live multi-selection must also match the CURRENT transform
-			// mode. CRUCIAL: convert IN PLACE (swap the layout manager +
-			// re-layout), never discard/rebuild — applySelection runs
-			// synchronously inside Fabric's own mouse handlers (selection
-			// events → store → here), and swapping the active object out from
-			// under a mid-flight mousedown leaves Fabric driving a zombie
-			// selection (ghost chrome, garbage child coords).
+			// preserve active fabric selection
 			if (
 				sameSet &&
 				active instanceof ActiveSelection &&
@@ -497,9 +430,6 @@ export default class FabricCanvas extends Component {
 				canvas.requestRenderAll();
 				return;
 			}
-			// Same object set + right mode → leave the live selection alone
-			// (breaks the loop with the canvas events; never rebuilds an AS
-			// mid-use).
 			if (sameSet) return;
 			squelchSelectionEvents = true;
 			try {
@@ -533,12 +463,7 @@ export default class FabricCanvas extends Component {
 		const render = () => {
 			const doc = getSnapshot();
 			if (!doc) return;
-			// A live ActiveSelection holds its children in selection-RELATIVE
-			// coords, while reconcile writes doc-ABSOLUTE transforms — running
-			// it into grouped children corrupts their positions (visibly, and a
-			// later drag would then commit garbage). Tear the selection down
-			// first (squelched; Fabric bakes coords back), reconcile onto
-			// ungrouped objects, rebuild from the store.
+			// selection uses relative coordinates
 			if (
 				canvas.getActiveObject() instanceof
 				ActiveSelection
@@ -551,11 +476,7 @@ export default class FabricCanvas extends Component {
 				}
 			}
 			reconcile(canvas, doc, state);
-			// Drop selected ids whose layers are gone (e.g. undoing an import).
 			pruneSelection(new Set(collectIds(doc.layers)));
-			// A pixel mask is scene-space at artboard resolution — a resized
-			// artboard OR a different document invalidates it (undo/redo keeps
-			// the doc id, so masks correctly survive history moves).
 			const pxSel = getPixelSelection();
 			if (
 				pxSel &&
@@ -570,8 +491,6 @@ export default class FabricCanvas extends Component {
 			applySelection();
 		};
 
-		// Zoom-% cycle state: 100% → fit → last manual zoom. Reset by any
-		// manual zoom.
 		let cycleStep = -1;
 		let cycleAnchor = 1;
 		const resetCycle = () => {
@@ -595,19 +514,8 @@ export default class FabricCanvas extends Component {
 			reportZoom(canvas.getZoom());
 		};
 
-		// ── Touch-gesture resolution drop ────────────────────────────────────
-		// iPad Safari paces its rendering updates against canvas backing
-		// volume: two retina canvases hold rAF at ~13fps under a 120Hz touch
-		// stream; the same canvases at 1× run ~43fps (device-probed
-		// 2026-07-11, rafprobe + HUD). So: full resolution at rest, 1× while a
-		// touch/pen gesture MOVES, crisp restore shortly after release. Armed
-		// on touch-down but tripped only by movement, so taps never flash a
-		// soft frame. Mouse input never triggers it — desktop presents retina
-		// at 60fps just fine.
-		// ponytail: binary retina↔1× and canvas-area gestures only; a
-		// fractional pixel-budget cap and panel-slider coverage are the
-		// upgrade path.
 		const retinaAtRest = canvas.enableRetinaScaling;
+		// reduce touch backing resolution
 		const resDropEnabled =
 			navigator.maxTouchPoints > 1 &&
 			retinaAtRest &&
@@ -643,8 +551,6 @@ export default class FabricCanvas extends Component {
 			touchPointersDown = Math.max(0, touchPointersDown - 1);
 			if (touchPointersDown === 0 && resDropped) {
 				window.clearTimeout(restoreTimer);
-				// brief grace so consecutive strokes don't thrash the backing
-				// store
 				restoreTimer = window.setTimeout(() => {
 					resDropped = false;
 					canvas.enableRetinaScaling =
@@ -686,10 +592,6 @@ export default class FabricCanvas extends Component {
 				canvas.upperCanvasEl.style.cursor = c;
 		};
 
-		// ── viewport: zoom + pan ─────────────────────────────────────────────
-		// True while two-finger touch navigation owns the pointer stream (the
-		// nav block below, after the gesture handlers it has to defuse).
-		// Hoisted so every tool gesture can refuse to start under it.
 		let navActive = false;
 		const ZMIN = 0.02;
 		const ZMAX = 64;
@@ -723,7 +625,6 @@ export default class FabricCanvas extends Component {
 				reportZoom(canvas.getZoom());
 			},
 			cycle: () => {
-				// 100% → fit → the zoom that was active before cycling began.
 				if (cycleStep === -1)
 					cycleAnchor = canvas.getZoom();
 				cycleStep = (cycleStep + 1) % 3;
@@ -751,24 +652,18 @@ export default class FabricCanvas extends Component {
 			},
 		});
 
-		// M6: export renders through the reconciler's fabric scene
-		// (export-source bridge — the orchestrator/estimate call
-		// renderForExport, we own fabric).
 		registerExportRenderer((opts) => {
 			const doc = getSnapshot();
 			return doc
 				? renderExport(canvas, state, doc, opts)
 				: null;
 		});
-		// M3-15: rasterize bakes through the reconciler's live objects
 		registerLayerBaker((id) => {
 			const doc = getSnapshot();
 			const layer = doc ? findLayer(doc.layers, id) : null;
 			return layer ? bakeLayerObject(state, layer) : null;
 		});
 
-		// Wheel: ⌘/Ctrl (or trackpad pinch) zooms to the cursor; plain wheel
-		// pans.
 		const onWheel = (e: WheelEvent) => {
 			e.preventDefault();
 			if (e.ctrlKey || e.metaKey) {
@@ -797,7 +692,6 @@ export default class FabricCanvas extends Component {
 		};
 		wrap.addEventListener('wheel', onWheel, { passive: false });
 
-		// Space-drag to pan.
 		const isInteractive = (t: EventTarget | null) => {
 			const target = t as HTMLElement | null;
 			return (
@@ -819,12 +713,10 @@ export default class FabricCanvas extends Component {
 				!isInteractive(e.target)
 			) {
 				spaceHeld = true;
-				canvas.skipTargetFind = true; // pan cleanly without grabbing objects
+				canvas.skipTargetFind = true;
 				setCanvasCursor('grab');
 				e.preventDefault();
 			}
-			// crop mode: Escape returns to the plain MOVE sub (the crop
-			// persists — it's doc content; only the editing mode ends)
 			if (
 				e.code === 'Escape' &&
 				!isInteractive(e.target) &&
@@ -833,8 +725,6 @@ export default class FabricCanvas extends Component {
 				setActiveSub('move', 'move');
 				e.preventDefault();
 			}
-			// pixel selection: Escape deselects, Enter fires the DEFAULT action
-			// (extract — the ratified popup default)
 			if (!isInteractive(e.target) && getPixelSelection()) {
 				if (e.code === 'Escape') {
 					clearPixelSelection();
@@ -849,24 +739,16 @@ export default class FabricCanvas extends Component {
 			if (e.code === 'Space') {
 				spaceHeld = false;
 				panning = false;
-				// restore the ACTIVE tool's targeting/cursor, not MOVE's
 				applyToolMode();
 			}
 		};
 		window.addEventListener('keydown', onKeyDown);
 		window.addEventListener('keyup', onKeyUp);
 
-		// ── tool modes ───────────────────────────────────────────────────────
-		// PIECES' Primitives/Brush/Pencil subs are DRAWING modes: pointer drags
-		// author layers instead of grabbing objects (skipTargetFind) or
-		// rubber-banding (selection=false). Every other tool keeps MOVE-style
-		// interaction (stub tools set state only).
 		const shapeModeActive = () =>
 			getActiveTool() === 'pieces' &&
 			(getActiveSubs().pieces === 'primitives' ||
 				getActiveSubs().pieces === 'pieces');
-		// the Pieces HEAD sub is the preset-shapes gallery — it always draws
-		// the picked symbol, whatever the primitives bloom last set shape to
 		const effectivePieces = () => {
 			const s = getToolSettings().pieces;
 			return getActiveSubs().pieces === 'pieces'
@@ -893,9 +775,6 @@ export default class FabricCanvas extends Component {
 				: null;
 		};
 		const applyToolMode = () => {
-			// pixel-SELECT subtools are drawing-style modes too: gestures
-			// author a mask, never grab objects. Leaving SELECT drops the
-			// selection (v1).
 			if (getActiveTool() !== 'select' && getPixelSelection())
 				clearPixelSelection();
 			const draw =
@@ -904,8 +783,6 @@ export default class FabricCanvas extends Component {
 				selectSub() !== null;
 			canvas.skipTargetFind = draw || spaceHeld;
 			canvas.selection = !draw;
-			// TEXT keeps normal targeting (click selects, dbl-click edits) but
-			// an I-beam signals click-to-type on empty canvas.
 			setCanvasCursor(
 				draw
 					? 'crosshair'
@@ -918,16 +795,10 @@ export default class FabricCanvas extends Component {
 		};
 		const unsubscribeTool = subscribeTool(() => {
 			applyToolMode();
-			// crop-mode chrome shows/hides with the subtool
 			canvas.requestRenderAll();
 		});
 		applyToolMode();
 
-		// ── PIECES drag-to-draw (M2-7) ───────────────────────────────────────
-		// One transient gesture per drag: the layer is created on the first
-		// move past the threshold, reshaped live, committed as ONE undo step on
-		// release. A click without a drag creates nothing (commitTransient sees
-		// no change).
 		let draft: { start: Pt; layer: ShapeLayer | null } | null =
 			null;
 		canvas.on('mouse:down', (opt) => {
@@ -961,8 +832,6 @@ export default class FabricCanvas extends Component {
 						transform: built.transform,
 					}
 				: createShapeLayer({
-						// symbol layers name themselves after their preset
-						// (Heart, Cog, …)
 						name:
 							built.params.shape ===
 							'symbol'
@@ -991,21 +860,10 @@ export default class FabricCanvas extends Component {
 			commitTransient();
 			if (drawn) {
 				setSelection([drawn.id]);
-				// one-shot tools (Figma convention, Ruby 2026-07-11): a
-				// committed shape hands back to MOVE, so the next empty tap
-				// deselects instead of arming another draw. Brush/Pencil chain
-				// — a tap draws nothing there, so they have no empty-tap
-				// problem to fix.
 				setActiveSub('move', 'move');
 			}
 		});
 
-		// ── TEXT (M2) ────────────────────────────────────────────────────────
-		// Click empty canvas → create a text layer (current settings + style
-		// preset, ONE undo step) and drop straight into editing — no
-		// placeholder wording ever renders (the layer starts empty; abandoning
-		// it deletes it). Clicking an object falls through to normal select /
-		// dbl-click edit.
 		canvas.on('mouse:down', (opt) => {
 			if (
 				spaceHeld ||
@@ -1023,8 +881,6 @@ export default class FabricCanvas extends Component {
 				ts.text.fontSize,
 			);
 			const layer = createTextLayer({
-				// standard vocabulary default — replaced by the typed content on
-				// exit
 				name: 'Text',
 				text: '',
 				fontFamily: ts.text.fontFamily,
@@ -1039,10 +895,8 @@ export default class FabricCanvas extends Component {
 			});
 			appendLayer(layer);
 			setSelection([layer.id]);
-			// enter editing once the reconciler has created the object
+			// wait for reconciled text
 			requestAnimationFrame(() => {
-				// a second finger turned this tap into navigation — abandon the
-				// layer
 				if (navActive) {
 					deleteLayers([layer.id]);
 					return;
@@ -1055,29 +909,18 @@ export default class FabricCanvas extends Component {
 			});
 		});
 
-		// The second controlled Fabric→doc path (after object:modified): commit
-		// the typed text when in-canvas editing ends. Empty text = an abandoned
-		// layer — remove it. The layer NAME follows the content (data, not
-		// copy).
 		canvas.on('text:editing:exited', (e) => {
 			const obj = e.target;
 			if (!(obj instanceof SubstrataText)) return;
 			const id = getLayerIdForObject(obj);
 			if (!id) return;
 			const text = (obj.text ?? '').trim();
-			// one-shot (Figma convention, Ruby 2026-07-11): leaving a text edit
-			// — committed or abandoned — hands back to MOVE, so the next empty
-			// tap deselects instead of spawning another text layer.
 			if (getActiveTool() === 'text')
 				setActiveSub('move', 'move');
 			if (text === '') {
 				deleteLayers([id]);
 				return;
 			}
-			// Fabric anchors the LEFT edge while typing (it mutates `left` as
-			// the text grows) — adopt the visual centre into the doc transform
-			// or the text snaps back to the click point when the reconciler
-			// re-syncs.
 			const doc = getSnapshot();
 			const layer = doc ? findLayer(doc.layers, id) : null;
 			const c = obj.getCenterPoint();
@@ -1096,13 +939,6 @@ export default class FabricCanvas extends Component {
 			});
 		});
 
-		// ── Brush/Pencil freehand (M2-2) ─────────────────────────────────────
-		// The live stroke previews on the TOP CONTEXT (drawn in the
-		// after:render overlay below) and hits the doc exactly ONCE on release
-		// — no transient machinery, one undo step by construction. Raw points
-		// are collected from coalesced pointer events; real pressure only from
-		// a pen (SPEC §Pieces — Firefox reports pressure 0 on pointerup, so
-		// non-positive values fall back too).
 		const pressureOf = (e: Event): number => {
 			const pe = e as PointerEvent;
 			return pe.pointerType === 'pen' && pe.pressure > 0
@@ -1137,14 +973,14 @@ export default class FabricCanvas extends Component {
 				const p = canvas.getScenePoint(ce);
 				liveStroke.pts.push([p.x, p.y, pressureOf(ce)]);
 			}
-			canvas.requestRenderAll(); // preview renders in the after:render overlay
+			canvas.requestRenderAll();
 		});
 		canvas.on('mouse:up', () => {
 			if (!liveStroke) return;
 			const { sub, pts, simulate } = liveStroke;
 			liveStroke = null;
-			canvas.requestRenderAll(); // clear the preview
-			if (pts.length < 2) return; // a tap draws nothing
+			canvas.requestRenderAll();
+			if (pts.length < 2) return;
 			const s = getToolSettings().pieces;
 			const options = freehandOptions(sub, s, simulate);
 			const { points, cx, cy } = centreRawPoints(
@@ -1187,12 +1023,6 @@ export default class FabricCanvas extends Component {
 			if (spaceHeld) setCanvasCursor('grab');
 		});
 
-		// ── SELECT: pixel selections (M2-10, ratified 2026-07-07) ────────────
-		// Marquee drags a rect, lasso collects a polygon (optionally
-		// edge-snapped), wand click flood-fills the ACTIVE layer's solo render
-		// (global mode = "superflood" colour select). Gestures author a
-		// scene-space mask into the transient pixel-selection store; the ants +
-		// drafts draw in after:render.
 		let marqueeDraft: {
 			x0: number;
 			y0: number;
@@ -1204,7 +1034,6 @@ export default class FabricCanvas extends Component {
 			field: ReturnType<typeof sobelField> | null;
 		} | null = null;
 
-		// wrap-relative screen px → scene coords (unrounded)
 		const sceneXY = (
 			px: number,
 			py: number,
@@ -1215,9 +1044,6 @@ export default class FabricCanvas extends Component {
 				y: (py - vpt[5]) / vpt[3],
 			};
 		};
-		// Solo-render the active layer at artboard scale for pixel sampling
-		// (the M6 renderExport path — filters/effects included, checker
-		// excluded).
 		const sampleActiveLayer = (): ImageData | null => {
 			const doc = getSnapshot();
 			const id = getActiveLayerId();
@@ -1244,7 +1070,6 @@ export default class FabricCanvas extends Component {
 		): { x: number; y: number } => {
 			if (!field) return { x: p.x, y: p.y };
 			const s = getToolSettings().select;
-			// search radius scales with the sensitivity setting (4–20 scene px)
 			return snapToEdge(
 				field,
 				p.x,
@@ -1253,12 +1078,7 @@ export default class FabricCanvas extends Component {
 			);
 		};
 
-		// SELECT gestures are claimed at DOM CAPTURE phase (the guides pattern,
-		// wired into the same wrap listeners below): Fabric's own mousedown-on-
-		// empty DISCARDS the active object before canvas events fire, which
-		// would drop the layer selection the wand samples and the extract/cut
-		// gate reads — pixel selections must never disturb the layer selection
-		// (PS semantics).
+		// preserve active layer selection
 		const selectPointerDown = (px: number, py: number): boolean => {
 			const sub = selectSub();
 			if (!sub) return false;
@@ -1272,8 +1092,6 @@ export default class FabricCanvas extends Component {
 				};
 			} else if (sub === 'lasso') {
 				const s = getToolSettings().select;
-				// magnetic: one Sobel field per gesture, over the active
-				// layer's pixels
 				const img = s.magnetic
 					? sampleActiveLayer()
 					: null;
@@ -1283,7 +1101,6 @@ export default class FabricCanvas extends Component {
 					field,
 				};
 			} else {
-				// wand: click selects — no drag phase
 				const doc = getSnapshot();
 				if (!doc) return true;
 				const img = sampleActiveLayer();
@@ -1292,10 +1109,7 @@ export default class FabricCanvas extends Component {
 					return true;
 				}
 				const s = getToolSettings().select;
-				// pixels cover [i, i+1) and the mask fns floor their seed —
-				// rounding here would shift right/bottom-half clicks into the
-				// NEXT pixel and push edge clicks out of bounds
-				// (review-caught)
+				// preserve pixel hit test
 				const mask =
 					s.wandMode === 'global'
 						? globalMask(
@@ -1318,7 +1132,6 @@ export default class FabricCanvas extends Component {
 		const selectPointerMove = (px: number, py: number): void => {
 			if (!marqueeDraft && !lassoDraft) return;
 			if (!selectSub()) {
-				// tool switched mid-drag (keyboard) — the gesture dies with it
 				marqueeDraft = null;
 				lassoDraft = null;
 				canvas.requestRenderAll();
@@ -1350,8 +1163,6 @@ export default class FabricCanvas extends Component {
 				const d = marqueeDraft;
 				marqueeDraft = null;
 				if (doc) {
-					// a bare click (no meaningful drag) clears instead of
-					// selecting dust
 					if (
 						Math.abs(d.x1 - d.x0) < 2 ||
 						Math.abs(d.y1 - d.y0) < 2
@@ -1393,9 +1204,6 @@ export default class FabricCanvas extends Component {
 			canvas.requestRenderAll();
 		};
 
-		// Marching-ant crawl: a slow phase tick that only runs while a
-		// selection exists (the after:render pass draws the dashes with this
-		// offset).
 		let antPhase = 0;
 		let antTimer: number | null = null;
 		const syncAntTimer = () => {
@@ -1416,13 +1224,8 @@ export default class FabricCanvas extends Component {
 				canvas.requestRenderAll();
 			},
 		);
-		// the store outlives the component — a remount must resume the crawl
 		syncAntTimer();
 
-		// Canvas → store: reflect the user's canvas selection (leaf ids —
-		// clicking the canvas selects layers, not their groups; group selection
-		// comes from the Layers panel). Squelched while WE drive the canvas
-		// programmatically.
 		const syncSelectionToStore = () => {
 			if (squelchSelectionEvents) return;
 			const ids = canvas
@@ -1435,13 +1238,8 @@ export default class FabricCanvas extends Component {
 		canvas.on('selection:updated', syncSelectionToStore);
 		canvas.on('selection:cleared', syncSelectionToStore);
 
-		/** Absolute doc transform read off an object's COMPOSED matrix —
-		 *  correct even while the object sits inside an ActiveSelection (whose
-		 *  transform it includes). qrDecompose folds flips into scale signs;
-		 *  split them back out. translateX/Y is the absolute centre (our x/y
-		 *  convention). Skew from scaling a mixed-rotation selection is dropped
-		 *  — accepted v1 limit. */
-		const absoluteTransformOf = (obj: FabricObject): Transform => {
+				// use composed selection transform
+				const absoluteTransformOf = (obj: FabricObject): Transform => {
 			const d = fabricUtil.qrDecompose(
 				obj.calcTransformMatrix(),
 			);
@@ -1456,26 +1254,11 @@ export default class FabricCanvas extends Component {
 			};
 		};
 
-		// The one controlled Fabric → doc path: commit transforms after a
-		// drag/scale/rotate ends. The doc stays authoritative; reconcile
-		// re-syncs.
 		canvas.on('object:modified', (e) => {
 			const target = e.target;
 			if (!target) return;
 
 			if (target instanceof ActiveSelection) {
-				// Multi-selection gesture: read every child's ABSOLUTE
-				// transform from its composed matrix and commit them as ONE
-				// undo step. NEVER discard the selection in here —
-				// _discardActiveObject sees the discarded object as the
-				// still-current transform target and re-runs
-				// endCurrentTransform → re-fires object:modified → infinite
-				// recursion (SelectableCanvas.ts:1295; the stack overflow also
-				// aborts Fabric's `_currentTransform = null`, leaving the bbox
-				// glued to the cursor). The commit defers one microtask so the
-				// doc-emit → render() → selection teardown/rebuild runs after
-				// Fabric's mouseup has fully completed and the transform is
-				// closed.
 				const entries = target
 					.getObjects()
 					.flatMap((obj) => {
@@ -1494,6 +1277,7 @@ export default class FabricCanvas extends Component {
 								]
 							: [];
 					});
+				// defer fabric selection commit
 				queueMicrotask(() => setTransforms(entries));
 				return;
 			}
@@ -1511,26 +1295,10 @@ export default class FabricCanvas extends Component {
 			});
 		});
 
-		// Layers move freely; the canvas clipPath (set in reconcile) hides
-		// anything past the artboard edge, so no position constraint is needed
-		// here.
 
-		// ── snapping + smart guides + grid (M2-12) ───────────────────────────
-		// object:moving gets a scene-space correction against the artboard
-		// edges/centre, sibling bboxes, and (when on) the grid; matched lines
-		// draw on the top context. Threshold FEELS in screen px, so it divides
-		// by zoom. Unrotated-bbox approximation (documented in snap-engine.ts).
 		const SNAP_SCREEN_PX = 6;
 		let activeGuides: { v: number[]; h: number[] } | null = null;
 
-		// ── transform separately (the shared MOVE/SELECT setting) ────────────
-		// With "Separate" on, rotating/scaling a multi-selection transforms
-		// each child about its OWN centre: per frame, the child's
-		// selection-local matrix is rewritten to G⁻¹ · T(cᵢ) · D · T(-cᵢ) · Wᵢ
-		// — Wᵢ its world matrix at gesture start, cᵢ its centre, D the
-		// gesture's rotation/scale delta, G the live selection matrix. The
-		// commit path composes G · local, so it needs no special casing.
-		// Translation is identical either way (not intercepted).
 		let separateBase: {
 			world: Map<
 				FabricObject,
@@ -1565,6 +1333,7 @@ export default class FabricCanvas extends Component {
 					: null;
 		});
 
+		// transform members independently
 		const transformSeparately = (
 			target: FabricObject,
 			kind: 'rotate' | 'scale',
@@ -1605,9 +1374,8 @@ export default class FabricCanvas extends Component {
 			for (const child of target.getObjects()) {
 				const W = separateBase.world.get(child);
 				if (!W) continue;
-				const cx = W[4]; // a world matrix's translation is the child's centre
+				const cx = W[4];
 				const cy = W[5];
-				// T(c) · D · T(-c), collapsed
 				const about: [
 					number,
 					number,
@@ -1636,10 +1404,6 @@ export default class FabricCanvas extends Component {
 			}
 		};
 
-		// Live drag read-out (the sketch's dimbadge): move → X/Y · scale →
-		// W × H · rotate → angle. Rides in MOUSE vicinity (Ruby's call), not
-		// under the bbox. px/py are viewport coords. Values are data (numbers +
-		// units).
 		let dragBadge: {
 			target: FabricObject;
 			kind: 'move' | 'scale' | 'rotate';
@@ -1661,10 +1425,6 @@ export default class FabricCanvas extends Component {
 		});
 		canvas.on('object:rotating', (e) => {
 			const target = e.target;
-			// ⇧ snaps rotation to 45° steps — applied BEFORE the separate-mode
-			// correction and the badge, so both read the snapped angle. Objects
-			// and selections use centre origins, so a plain angle write spins
-			// in place.
 			if (target && 'shiftKey' in e.e && e.e.shiftKey) {
 				target.set({
 					angle:
@@ -1728,8 +1488,6 @@ export default class FabricCanvas extends Component {
 			const field = g.snap
 				? buildSnapField(doc.artboard, others)
 				: { v: [] as number[], h: [] as number[] };
-			// dragged-out guidelines are first-class snap targets (when
-			// visible)
 			if (g.snap && g.guides) {
 				for (const gd of doc.guides)
 					(gd.axis === 'x'
@@ -1768,26 +1526,14 @@ export default class FabricCanvas extends Component {
 		};
 		canvas.on('mouse:up', clearGuides);
 
-		// ── rulers + drag-out guides (2026-07-07 ratification) ───────────────
-		// Rulers are 22px screen-space bands (backdrop sketch) drawn at the END
-		// of the after:render pass; guides are DOC content (doc.guides) drawn
-		// with the overlay. Gestures are claimed with a CAPTURE-phase
-		// pointerdown on the wrap div — it runs before Fabric's own
-		// upper-canvas listeners, so ruler drag-outs and guide grabs never
-		// fight tool guards or object targeting.
-		const GUIDE_GRAB_PX = 4; // screen-px slop for grabbing an existing guide
-		// Pick a "nice" scene step (1/2/5 × 10^n) at least `min` scene units
-		// wide.
+		// screen pixels
+		const GUIDE_GRAB_PX = 4;
 		const niceStep = (min: number): number => {
 			const pow = 10 ** Math.floor(Math.log10(min));
 			for (const m of [1, 2, 5])
 				if (m * pow >= min) return m * pow;
 			return 10 * pow;
 		};
-		// id === null → a new guide being dragged out (doc write happens on
-		// drop); id set → an existing guide moving via the transient path (ONE
-		// undo step). `cross` = the pointer's OTHER-axis wrap px — the
-		// gap-pills ride it.
 		let guideDrag: {
 			id: string | null;
 			axis: 'x' | 'y';
@@ -1796,13 +1542,9 @@ export default class FabricCanvas extends Component {
 		} | null = null;
 		let guideHover = false;
 
-		// The wrap rect is stable mid-gesture — cache it per claimed drag
-		// instead of forcing layout geometry on every pointermove (cleared on
-		// release).
+		// avoid gesture layout reads
 		let claimRect: DOMRect | null = null;
 		const wrapPoint = (e: PointerEvent) => {
-			// the cache only applies while a gesture owns the pointer — hover
-			// paths (no claim) always measure fresh
 			const r =
 				claimedPointerId !== null && claimRect
 					? claimRect
@@ -1812,8 +1554,6 @@ export default class FabricCanvas extends Component {
 				py: e.clientY - r.top,
 			};
 		};
-		// one inverse (sceneXY, defined with the SELECT gestures) serves all
-		// screen→scene needs; guides round because guide positions are integers
 		const scenePos = (
 			axis: 'x' | 'y',
 			px: number,
@@ -1831,7 +1571,6 @@ export default class FabricCanvas extends Component {
 			const doc = getSnapshot();
 			if (!doc || !getGuides().guides) return null;
 			const vt = canvas.viewportTransform;
-			// last added wins (drawn on top)
 			for (let i = doc.guides.length - 1; i >= 0; i--) {
 				const g = doc.guides[i];
 				if (!g) continue;
@@ -1853,14 +1592,9 @@ export default class FabricCanvas extends Component {
 			return null;
 		};
 
-		// ── MOVE·Crop (ratified 2026-07-07: NON-DESTRUCTIVE layer crop) ──────
-		// A stored crop rect on the layer (doc truth, layer space); the
-		// reconciler clips what renders via an object clipPath. Handle drags
-		// claim at the DOM capture listener below (the guides pattern) so
-		// Fabric never fights them; plain clicks fall through — layer targeting
-		// stays live in crop mode.
 		const CROP_GRAB_PX = 6;
-		const CROP_MIN = 8; // layer px
+		// layer pixels
+		const CROP_MIN = 8;
 		const cropModeActive = () =>
 			getActiveTool() === 'move' &&
 			getActiveSubs().move === 'crop';
@@ -1870,11 +1604,7 @@ export default class FabricCanvas extends Component {
 			t: Transform;
 			crop: CropRect;
 		};
-		/** The single selected layer crop can edit: intrinsic dims
-		 *  (raster/shape/freehand; a line's 0-height axis disqualifies it) and
-		 *  NO rotation. ponytail: axis-aligned crop UI on a rotated layer needs
-		 *  oriented maths — v1 skips crop editing there entirely. */
-		const cropTarget = (): CropTarget | null => {
+				const cropTarget = (): CropTarget | null => {
 			const doc = getSnapshot();
 			const ids = getSelectedLayerIds();
 			const onlyId = ids[0];
@@ -1897,11 +1627,8 @@ export default class FabricCanvas extends Component {
 				},
 			};
 		};
-		/** Layer-space (origin = content top-left) → screen, axis-aligned (crop
-		 *  skips rotated layers). Flips negate the effective scale, so
-		 *  projected edges can come out swapped — consumers normalise with
-		 *  min/max. */
-		const cropProject = (tgt: CropTarget) => {
+				// normalize flipped crop bounds
+				const cropProject = (tgt: CropTarget) => {
 			const vt = canvas.viewportTransform;
 			const ex = tgt.t.scaleX * (tgt.t.flipX ? -1 : 1);
 			const ey = tgt.t.scaleY * (tgt.t.flipY ? -1 : 1);
@@ -1922,9 +1649,6 @@ export default class FabricCanvas extends Component {
 					vt[5],
 			};
 		};
-		// hx/hy ∈ −1|0|1: which crop edges the grabbed handle drives
-		// (layer-space left/right, top/bottom); the 8 handles are corners +
-		// edge midpoints.
 		let cropDrag: {
 			id: string;
 			hx: number;
@@ -1933,10 +1657,7 @@ export default class FabricCanvas extends Component {
 			dims: CropTarget['dims'];
 			t: Transform;
 		} | null = null;
-		/** Hit-test the 8 handles; on a hit, open the transient gesture and set
-		 *  cropDrag (returns true so the capture listener claims the pointer).
-		 */
-		const cropClaim = (px: number, py: number): boolean => {
+				const cropClaim = (px: number, py: number): boolean => {
 			const tgt = cropTarget();
 			if (!tgt) return false;
 			const m = cropProject(tgt);
@@ -1985,8 +1706,6 @@ export default class FabricCanvas extends Component {
 		const cropDragMove = (px: number, py: number): void => {
 			if (!cropDrag) return;
 			if (!cropModeActive()) {
-				// subtool switched mid-drag — end the gesture, keep what it
-				// reached
 				cropDrag = null;
 				commitTransient();
 				claimedPointerId = null;
@@ -2038,9 +1757,7 @@ export default class FabricCanvas extends Component {
 						dims.height,
 					) - start.y;
 			}
-			// round EDGES, not extents — rounding x and w independently can
-			// push the far edge one px past dims (x 100.5→101 while w
-			// 299.5→300)
+			// preserve crop bounds
 			const rx = Math.round(x);
 			const ry = Math.round(y);
 			setCrop(
@@ -2055,11 +1772,6 @@ export default class FabricCanvas extends Component {
 			);
 		};
 
-		// One pointer owns a claimed gesture at a time (review-hardened): a
-		// second touch can't overwrite an in-flight drag, moves/ups from other
-		// pointers are ignored, and pointercancel (touch handoff to
-		// scroll/pinch, pen out of range) ends the gesture instead of gluing it
-		// to a buttonless pointer.
 		let claimedPointerId: number | null = null;
 		const onGuidePointerDown = (e: PointerEvent) => {
 			if (
@@ -2072,10 +1784,10 @@ export default class FabricCanvas extends Component {
 			claimRect = wrap.getBoundingClientRect();
 			const { px, py } = wrapPoint(e);
 			const g = getGuides();
-			const inH = py < RULER_PX; // top band → horizontal guide (axis "y")
-			const inV = px < RULER_PX; // left band → vertical guide (axis "x")
+			const inH = py < RULER_PX;
+			const inV = px < RULER_PX;
 			if (g.rulers && (inH || inV)) {
-				if (inH && inV) return; // corner box: no drag origin
+				if (inH && inV) return;
 				const axis: 'x' | 'y' = inV ? 'x' : 'y';
 				guideDrag = {
 					id: null,
@@ -2084,9 +1796,6 @@ export default class FabricCanvas extends Component {
 					cross: axis === 'x' ? py : px,
 				};
 			} else if (selectSub()) {
-				// pixel-SELECT gestures claim here too — Fabric's own mousedown
-				// would discard the active object (the layer the wand/extract
-				// path needs)
 				if (selectPointerDown(px, py)) {
 					claimedPointerId = e.pointerId;
 					e.preventDefault();
@@ -2094,9 +1803,6 @@ export default class FabricCanvas extends Component {
 				}
 				return;
 			} else if (cropModeActive() && cropClaim(px, py)) {
-				// MOVE·Crop handle drag — claimed before Fabric (cursor set
-				// inside cropClaim); a miss falls through to guide grab, then
-				// Fabric.
 				claimedPointerId = e.pointerId;
 				e.preventDefault();
 				e.stopPropagation();
@@ -2105,10 +1811,7 @@ export default class FabricCanvas extends Component {
 			} else if (getActiveTool() === 'move') {
 				const hit = guideAt(px, py);
 				if (!hit) return;
-				// position tracks LOCALLY during the drag (reconcile never
-				// reads doc.guides, so per-move transient doc writes were pure
-				// waste); the overlay prefers guideDrag.pos and the doc is
-				// written once on drop
+				// defer guide persistence
 				const current = getSnapshot()?.guides.find(
 					(gd) => gd.id === hit.id,
 				);
@@ -2122,9 +1825,9 @@ export default class FabricCanvas extends Component {
 				return;
 			}
 			claimedPointerId = e.pointerId;
-			guideHover = false; // the drag cursor owns the affordance now
+			guideHover = false;
 			e.preventDefault();
-			e.stopPropagation(); // Fabric never sees this press
+			e.stopPropagation();
 			setCanvasCursor(
 				guideDrag.axis === 'x'
 					? 'ew-resize'
@@ -2164,8 +1867,6 @@ export default class FabricCanvas extends Component {
 				}
 				return;
 			}
-			// hover affordance: resize cursor near a grabbable guide (MOVE
-			// tool)
 			if (getActiveTool() !== 'move' || spaceHeld || panning)
 				return;
 			const { px, py } = wrapPoint(e);
@@ -2182,7 +1883,7 @@ export default class FabricCanvas extends Component {
 				);
 			} else if (!hit && guideHover) {
 				guideHover = false;
-				applyToolMode(); // restores the tool's cursor + targeting state
+				applyToolMode();
 			}
 		};
 		const onGuidePointerUp = (e: PointerEvent) => {
@@ -2195,37 +1896,29 @@ export default class FabricCanvas extends Component {
 			}
 			if (cropDrag) {
 				cropDrag = null;
-				commitTransient(); // ONE undo step for the whole handle drag
+				commitTransient();
 				applyToolMode();
 				canvas.requestRenderAll();
 				return;
 			}
-			if (!guideDrag) return; // wand click: claimed, no drag phase
+			if (!guideDrag) return;
 			const drag = guideDrag;
 			guideDrag = null;
 			const { px, py } = wrapPoint(e);
-			// dropping back onto the origin ruler (or its parallel band)
-			// deletes
 			const inBand =
 				drag.axis === 'x'
 					? px < RULER_PX
 					: py < RULER_PX;
 			if (drag.id === null) {
 				if (!inBand) {
-					// one undo step
 					addGuide(
 						drag.axis,
 						scenePos(drag.axis, px, py),
 					);
-					// dragging a guide out while guides are hidden would write
-					// invisible doc content — auto-show them instead (the PS
-					// convention)
 					if (!getGuides().guides)
 						toggleGuide('guides');
 				}
 			} else {
-				// the whole move (or ruler-drop removal) is one plain op = one
-				// undo step
 				if (inBand) removeGuide(drag.id);
 				else
 					setGuidePos(
@@ -2244,28 +1937,14 @@ export default class FabricCanvas extends Component {
 			lassoDraft = null;
 			if (cropDrag) {
 				cropDrag = null;
-				// keep the crop the drag reached — still exactly one undo step
 				commitTransient();
 			}
-			// a cancelled guide move wrote nothing — the guide simply stays put
 			guideDrag = null;
 			applyToolMode();
 			canvas.requestRenderAll();
 		};
 
-		// ── two-finger touch navigation: pan + pinch zoom ────────────────────
-		// Procreate convention: one finger (or pencil) is always the active
-		// tool; the moment a SECOND finger lands on the canvas, navigation owns
-		// the gesture until every finger lifts. Whatever the first finger
-		// started is CANCELLED, not committed — claimed wrap gestures through
-		// their existing pointercancel path, drawing drafts by
-		// discard/rollback, an in-flight fabric transform by restoring its own
-		// `original` pose, and fabric's touch gesture via a synthetic touchend
-		// (its documented lifecycle end). Pens never navigate: pencil + one
-		// finger keeps drawing. Registered BEFORE the guide/SELECT claim
-		// listeners on the same node so stopImmediatePropagation can keep the
-		// second finger from claiming.
-		// ponytail: no inertia, no double-tap zoom — upgrade path if missed.
+		// cancel drawing before navigation
 		const navTouches = new Map<number, { x: number; y: number }>();
 		let navPrev: { cx: number; cy: number; dist: number } | null =
 			null;
@@ -2278,13 +1957,11 @@ export default class FabricCanvas extends Component {
 					}),
 				);
 			}
-			liveStroke = null; // freehand draft never touched the doc — drop it
+			liveStroke = null;
 			if (draft) {
 				draft = null;
-				rollbackTransient(); // half-drawn shape: restore the pre-gesture doc
+				rollbackTransient();
 			}
-			// a text tap that just entered editing: exiting empty deletes the
-			// layer
 			const active = canvas.getActiveObject();
 			if (
 				active instanceof SubstrataText &&
@@ -2295,11 +1972,8 @@ export default class FabricCanvas extends Component {
 			}
 			const transform = internals._currentTransform;
 			if (transform?.target) {
-				// restore the pose fabric snapshotted at gesture start and
-				// suppress the object:modified commit — the nudge never
-				// happened. originX/Y are gesture bookkeeping, not object pose
-				// — setting them would re-anchor.
 				const pose = { ...(transform.original ?? {}) };
+				// fabric origin is transient
 				delete pose['originX'];
 				delete pose['originY'];
 				transform.target.set(pose);
@@ -2307,14 +1981,11 @@ export default class FabricCanvas extends Component {
 				transform.actionPerformed = false;
 			}
 			if (internals.mainTouchId !== undefined) {
-				// end fabric's touch gesture through its own lifecycle:
-				// __onMouseUp, doc-listener teardown, mainTouchId cleared.
-				// Plain object — fabric only reads changedTouches/touches plus
-				// the noop methods below.
 				const pos = [...navTouches.values()][0] ?? {
 					x: 0,
 					y: 0,
 				};
+				// end fabric touch lifecycle
 				internals._onTouchEnd({
 					type: 'touchend',
 					touches: [],
@@ -2349,8 +2020,7 @@ export default class FabricCanvas extends Component {
 				e.stopImmediatePropagation();
 			}
 		};
-		// fabric's touchstart listener sits on the upper canvas — swallow new
-		// touch starts while navigating so it can't open a fresh gesture
+		// block fabric touch starts
 		const onNavTouchStart = (e: TouchEvent) => {
 			if (!navActive) return;
 			if (e.cancelable) e.preventDefault();
@@ -2411,7 +2081,7 @@ export default class FabricCanvas extends Component {
 			if (!navTouches.delete(e.pointerId)) return;
 			if (!navActive) return;
 			e.stopImmediatePropagation();
-			navPrev = null; // a remaining finger re-anchors on its next move
+			navPrev = null;
 			if (navTouches.size === 0) navActive = false;
 		};
 		wrap.addEventListener('pointerdown', onNavPointerDown, {
@@ -2439,15 +2109,9 @@ export default class FabricCanvas extends Component {
 		window.addEventListener('pointerup', onGuidePointerUp);
 		window.addEventListener('pointercancel', onGuidePointerCancel);
 
-		// Draw pass: grid (when on) + the matched smart guides, in viewport
-		// space on the top context. Skipped entirely when there's nothing to
-		// draw so the top context stays fabric's own (rubber-band selector
-		// etc.).
 		canvas.on('after:render', () => {
 			const g = getGuides();
 			const showGrid = g.grid;
-			// separate-mode members (beyond the anchor, which wears the real
-			// chrome) each get an independent overlay box, Affinity-style
 			const activeObj = canvas.getActiveObject();
 			const sepMembers =
 				activeObj instanceof ActiveSelection &&
@@ -2456,10 +2120,7 @@ export default class FabricCanvas extends Component {
 					: null;
 			const ctx = canvas.contextTop;
 			if (!ctx) return;
-			// ALWAYS clear before deciding whether to draw — an early return
-			// here leaves the previous frame's chrome as a frozen stain on the
-			// top canvas (member boxes that "don't move", accumulating per
-			// deselect).
+			// clear stale overlay chrome
 			canvas.clearContext(ctx);
 			const doc = getSnapshot();
 			const showRulers = g.rulers;
@@ -2489,8 +2150,6 @@ export default class FabricCanvas extends Component {
 			const sy = (y: number) => y * z + vt[5];
 			const ink = (themeInk ??= readThemeInk());
 
-			// Live freehand stroke — the exact outline the commit will produce,
-			// filled in scene space under the viewport transform.
 			if (liveStroke) {
 				const s = getToolSettings().pieces;
 				const d = outlineToPathD(
@@ -2544,9 +2203,6 @@ export default class FabricCanvas extends Component {
 				ctx.restore();
 			}
 
-			// Pixel selection: marching ants (white underlay + crawling black
-			// dash) and the live marquee/lasso drafts, all in scene space under
-			// the viewport transform so they track pan/zoom exactly.
 			if (pixelSel || marqueeDraft || lassoDraft) {
 				ctx.save();
 				ctx.transform(z, 0, 0, z, vt[4], vt[5]);
@@ -2604,8 +2260,6 @@ export default class FabricCanvas extends Component {
 					}
 				}
 				ctx.restore();
-				// anchor the contextual popup under the selection bbox
-				// (wrap-relative)
 				if (pixelSel) {
 					const b = pixelSel.bounds;
 					reportSelectionAnchor(
@@ -2633,10 +2287,6 @@ export default class FabricCanvas extends Component {
 				}
 			}
 
-			// User guidelines — solid primary, full viewport span (smart guides
-			// stay dashed-destructive so the two never read as the same thing).
-			// A guide mid-drag over its delete band (the origin ruler) dims to
-			// signal it.
 			if (userGuides.length || guideDrag) {
 				const lines: {
 					axis: 'x' | 'y';
@@ -2700,11 +2350,6 @@ export default class FabricCanvas extends Component {
 				}
 				ctx.restore();
 
-				// Gap-pills (backdrop sketch): while a guide drags, unit-less
-				// px distances to its nearest neighbours (same-axis guides +
-				// artboard edges) ride the pointer's cross-axis position —
-				// solid destructive pills, white 9.5px bold tabular numerals
-				// (numbers = data).
 				if (guideDrag) {
 					const axis = guideDrag.axis;
 					const pos = Math.round(guideDrag.pos);
@@ -2797,7 +2442,6 @@ export default class FabricCanvas extends Component {
 			}
 
 			if (activeGuides) {
-				// smart guides read dashed-destructive per the backdrop sketch
 				ctx.save();
 				ctx.strokeStyle = ink.destructive;
 				ctx.setLineDash([4, 4]);
@@ -2816,12 +2460,6 @@ export default class FabricCanvas extends Component {
 			}
 
 			if (sepMembers) {
-				// fresh corners each frame (calcACoords skips the setCoords
-				// cache, so the boxes track mid-gesture without extra
-				// bookkeeping). NOTE: a grouped object's aCoords live in its
-				// PARENT plane (v7 coordinate model) — i.e. selection-relative
-				// here — so compose with the selection's matrix to reach scene
-				// coords, or the boxes render as origin-anchored phantoms.
 				const selMatrix = (
 					activeObj as ActiveSelection
 				).calcTransformMatrix();
@@ -2829,6 +2467,7 @@ export default class FabricCanvas extends Component {
 				ctx.strokeStyle = ink.primary;
 				ctx.lineWidth = 1;
 				for (const child of sepMembers) {
+					// fabric v7 parent coordinates
 					const c = child.calcACoords();
 					const pts = [
 						c.tl,
@@ -2841,9 +2480,6 @@ export default class FabricCanvas extends Component {
 							selMatrix,
 						),
 					);
-					// a member fully OUTSIDE the artboard renders as nothing
-					// (the canvas clip) — dash + dim its box so it reads as
-					// "selected, but off-canvas" instead of a phantom rectangle
 					const xs2 = pts.map((p) => p.x);
 					const ys2 = pts.map((p) => p.y);
 					const offCanvas =
@@ -2871,13 +2507,6 @@ export default class FabricCanvas extends Component {
 				ctx.restore();
 			}
 
-			// MOVE·Crop chrome: dimmed veil over the layer's cropped-away
-			// regions (four rects covering bounds-minus-crop — a full veil
-			// would darken OTHER layers), crop border, 8 handles (6px
-			// paper/primary squares, the MOVE handle look). Axis-aligned by
-			// construction — crop editing skips rotated layers (cropTarget) —
-			// and flips just swap projected corners, hence the min/max
-			// normalising. No eligible selection ⇒ nothing draws.
 			if (cropInfo) {
 				const { dims, crop } = cropInfo;
 				const m = cropProject(cropInfo);
@@ -2915,28 +2544,28 @@ export default class FabricCanvas extends Component {
 						by0,
 						bx1 - bx0,
 						cy0 - by0,
-					); // above
+					);
 				if (by1 > cy1)
 					ctx.fillRect(
 						bx0,
 						cy1,
 						bx1 - bx0,
 						by1 - cy1,
-					); // below
+					);
 				if (cx0 > bx0)
 					ctx.fillRect(
 						bx0,
 						cy0,
 						cx0 - bx0,
 						cy1 - cy0,
-					); // left
+					);
 				if (bx1 > cx1)
 					ctx.fillRect(
 						cx1,
 						cy0,
 						bx1 - cx1,
 						cy1 - cy0,
-					); // right
+					);
 				ctx.strokeStyle = ink.primary;
 				ctx.lineWidth = 1;
 				ctx.strokeRect(cx0, cy0, cx1 - cx0, cy1 - cy0);
@@ -2969,8 +2598,6 @@ export default class FabricCanvas extends Component {
 			}
 
 			if (dragBadge) {
-				// the sketch's dimbadge as a cursor-following pill (offset
-				// below-right, flipping inside the viewport at the edges)
 				const t = dragBadge.target;
 				let text: string;
 				if (dragBadge.kind === 'move') {
@@ -3001,11 +2628,6 @@ export default class FabricCanvas extends Component {
 				ctx.restore();
 			}
 
-			// Rulers — LAST so they overpaint guide/grid ends. 22px cream bands
-			// with hairline inner edges (backdrop sketch); ticks + labels are
-			// scene units through the live viewport (nice 1/2/5 steps, majors
-			// labelled). The sketch's static strip has no labels; muted 9px
-			// Quattro tabular-nums is its documented headroom convention.
 			if (showRulers) {
 				const W = canvas.getWidth();
 				const H = canvas.getHeight();
@@ -3021,8 +2643,6 @@ export default class FabricCanvas extends Component {
 				ctx.strokeStyle = border;
 				ctx.lineWidth = 1;
 				ctx.beginPath();
-				// horizontal ruler (scene x): ticks grow up from the band's
-				// inner edge
 				const iX0 = Math.ceil(
 					(RULER_PX - vt[4]) / z / minor,
 				);
@@ -3037,7 +2657,6 @@ export default class FabricCanvas extends Component {
 						RULER_PX - (isMajor ? 12 : 6),
 					);
 				}
-				// vertical ruler (scene y)
 				const iY0 = Math.ceil(
 					(RULER_PX - vt[5]) / z / minor,
 				);
@@ -3052,21 +2671,18 @@ export default class FabricCanvas extends Component {
 						py,
 					);
 				}
-				// inner hairlines + corner box
 				ctx.moveTo(0, RULER_PX - 0.5);
 				ctx.lineTo(W, RULER_PX - 0.5);
 				ctx.moveTo(RULER_PX - 0.5, 0);
 				ctx.lineTo(RULER_PX - 0.5, H);
 				ctx.stroke();
-				// labels on majors (numbers = data, not copy)
 				ctx.fillStyle = muted;
 				ctx.font =
 					'9px "iA Writer Quattro", ui-monospace, monospace';
 				ctx.textBaseline = 'top';
 				ctx.textAlign = 'left';
-				// majors are integer multiples of `major` — round away i*minor
-				// float dust
 				for (
+					// remove tick rounding error
 					let i = Math.ceil(iX0 / 5) * 5;
 					i <= iX1;
 					i += 5
@@ -3097,29 +2713,19 @@ export default class FabricCanvas extends Component {
 			}
 		});
 
-		// Toggling grid/snap re-renders immediately (grid shows/hides).
 		const unsubscribeGuides = subscribeGuides(() =>
 			canvas.requestRenderAll(),
 		);
-		// Toggling Group/Separate swaps a live multi-selection's layout +
-		// overlay.
 		const unsubscribeToolSettings = subscribeToolSettings(() => {
 			applySelection();
 			canvas.requestRenderAll();
 		});
 
-		// Store → canvas: reflect the selection store onto the canvas.
-		// id-equality guards on both sides keep this from looping with the
-		// events above.
+		// prevent selection feedback loop
 		const unsubscribeSelection = subscribeSelection(applySelection);
 
-		// M4: picked colours flow to the pieces fill setting + the active
-		// shape/freehand layer's fill (one-way; see colour-sink.ts).
 		const stopColourSink = startColourSink();
 
-		// Dev-only debug rig for selection-chrome bugs — console + automation.
-		// window.__substrata.{selection, layers, select, setSeparate} (dev
-		// builds only).
 		let stopPerfHud: (() => void) | null = null;
 		if (import.meta.env.DEV) {
 			const toScreen = (x: number, y: number) => {
@@ -3185,7 +2791,6 @@ export default class FabricCanvas extends Component {
 									.kind,
 								name: e.layer
 									.name,
-								// layers-tree QA: shows nesting
 								parent:
 									parentIdOf(
 										doc.layers,
@@ -3215,7 +2820,7 @@ export default class FabricCanvas extends Component {
 								crop:
 									e.layer
 										.crop ??
-									null, // crop QA
+									null,
 							};
 						},
 					);
@@ -3247,8 +2852,6 @@ export default class FabricCanvas extends Component {
 							: null,
 					};
 				},
-				// M3 filter QA: add a filter to a layer's stack + sample a
-				// rendered pixel (screen-space px) off the lower canvas.
 				fx: (
 					layerId: string,
 					type: string,
@@ -3272,8 +2875,6 @@ export default class FabricCanvas extends Component {
 						value,
 						{ transient },
 					),
-				// M2-7 PIECES QA: drive the tool + settings the drag-to-draw
-				// reads.
 				setTool: (tool: ToolId, sub?: string) => {
 					setActiveTool(tool);
 					if (sub) setActiveSub(tool, sub);
@@ -3288,15 +2889,11 @@ export default class FabricCanvas extends Component {
 				) => updateToolSettings(tool, patch),
 				shapeParams: setShapeParams,
 				textProps: setTextProps,
-				// layers-tree QA: drive reparenting/grouping/opacity ops
-				// directly
 				moveLayer,
 				groupLayers,
 				setOpacity,
-				setCrop, // crop QA
+				setCrop,
 
-				// text-props QA: raw object-level typography off the doc
-				// (absent = default)
 				textDump: (id: string) => {
 					const doc = getSnapshot();
 					const l = doc
@@ -3312,10 +2909,7 @@ export default class FabricCanvas extends Component {
 							}
 						: null;
 				},
-				// M4 colour QA: drive the picker store (flows through the
-				// sink).
 				colour: setHex,
-				// M3 effects QA: same pair over the effects[] stack.
 				effect: (
 					layerId: string,
 					type: string,
@@ -3343,12 +2937,7 @@ export default class FabricCanvas extends Component {
 					begin: beginTransient,
 					commit: commitTransient,
 				},
-				// rulers pass QA: dump the doc's guides + flip the workspace
-				// prefs
 				toggleGuidePref: toggleGuide,
-				// SELECT QA: author a raster layer through the real import
-				// pipeline (drawn rects in one canvas → File → importImageFile)
-				// so extract/cut have a raster to act on headlessly
 				addRaster: async (
 					w: number,
 					h: number,
@@ -3401,10 +2990,7 @@ export default class FabricCanvas extends Component {
 						at ? { at } : undefined,
 					);
 				},
-				// M3-15 QA: rasterize a layer through the real bake pipeline
 				rasterize: rasterizeLayer,
-				// M5 QA: .substrata round-trip without file pickers (bytes
-				// in/out)
 				packScene: async () => {
 					const doc = getSnapshot();
 					if (!doc) return null;
@@ -3423,7 +3009,6 @@ export default class FabricCanvas extends Component {
 						),
 					);
 				},
-				// SELECT QA: dump the pixel selection + drive the ops directly
 				pixelSelection: () => {
 					const s = getPixelSelection();
 					return (
@@ -3443,8 +3028,6 @@ export default class FabricCanvas extends Component {
 					deselect: () => clearPixelSelection(),
 				},
 				guides: () => getSnapshot()?.guides ?? [],
-				// sample a top-context (overlay) pixel — rulers/guides draw
-				// there, not on the lower canvas samplePixel reads
 				sampleTop: (sxp: number, syp: number) => {
 					const dpr =
 						window.devicePixelRatio || 1;
@@ -3457,9 +3040,6 @@ export default class FabricCanvas extends Component {
 						).data,
 					);
 				},
-				// M6 export QA: the pure clamp maths + run the full pipeline
-				// headlessly (no download) and report the blob's vitals + a
-				// decoded pixel probe.
 				resolveDims: resolveExportDims,
 				exportBlob: async (
 					opts?: Partial<ExportOptions>,
@@ -3481,8 +3061,6 @@ export default class FabricCanvas extends Component {
 							ok: false,
 							reason: outcome.reason,
 						};
-					// decode the produced blob and sample RGBA at fractional
-					// coords
 					const probe: number[][] = [];
 					try {
 						const bitmap =
@@ -3543,7 +3121,6 @@ export default class FabricCanvas extends Component {
 							}
 						}
 					} catch {
-						// jxl blobs aren't browser-decodable — vitals only
 					}
 					return {
 						ok: true,
@@ -3578,9 +3155,6 @@ export default class FabricCanvas extends Component {
 							).data,
 					);
 				},
-				// Preview-downscale probe: the rendered element's size vs the
-				// original's (they differ exactly while a filter gesture
-				// renders the ≤1.5 MP proxy).
 				elementSizes: (layerId: string) => {
 					const o = state.byId.get(
 						layerId,
@@ -3607,11 +3181,6 @@ export default class FabricCanvas extends Component {
 						],
 					};
 				},
-				// bg-removal test seam (M7): inject a synthetic matte for a
-				// raster layer — rects (natural-pixel coords) are the OPAQUE
-				// regions, everything else goes transparent. Lets the harness
-				// verify the composite/toggle/undo wiring without downloading
-				// the model.
 				setMatte: (
 					layerId: string,
 					rects: {
@@ -3660,8 +3229,6 @@ export default class FabricCanvas extends Component {
 							) ?? null,
 					};
 				},
-				// magic-resize (M7-8) — the op the Canvas size modal's reflow
-				// path calls
 				resizeReflow: (w: number, h: number) =>
 					resizeArtboardReflow({
 						width: w,
@@ -3669,11 +3236,6 @@ export default class FabricCanvas extends Component {
 					}),
 			};
 
-			// On-device perf HUD (?hud): the four numbers that separate "the
-			// browser throttles rAF" from "pointer events arrive late" from
-			// "rendering is genuinely expensive here". DOM overlay (not canvas)
-			// so it stays legible even while the canvas janks. Debug chrome,
-			// dev builds only.
 			if (
 				new URLSearchParams(window.location.search).has(
 					'hud',
@@ -3693,14 +3255,9 @@ export default class FabricCanvas extends Component {
 				let lastMoveTs = 0;
 				let latencyMs = 0;
 				let latencyN = 0;
-				// pipeline-stage counters: where does the 120/s input rate
-				// drop?
 				let touchMoves = 0;
 				let objMoving = 0;
 				let rraCalls = 0;
-				// true per-event cost of fabric's move processing — the work
-				// suspected of starving WebKit's rendering updates at 120Hz
-				// input
 				let evMs = 0;
 				let evN = 0;
 				const origOnMouseMoveHud =
@@ -3752,20 +3309,17 @@ export default class FabricCanvas extends Component {
 					coalesced +=
 						e.getCoalescedEvents?.()
 							.length ?? 1;
-					lastMoveTs = e.timeStamp; // same clock as performance.now()
+					lastMoveTs = e.timeStamp;
 				};
 				window.addEventListener(
 					'pointermove',
 					onHudMove,
 					{ passive: true },
 				);
-				// main-thread busy meter: longtask coverage where supported,
-				// plus a 4ms setTimeout-chain drift sampler (Safari lacks
-				// longtask) — lateness beyond the nested-timer clamp ≈ time the
-				// thread was busy that turn
 				let busyMs = 0;
 				let ltMs = 0;
 				let ltSupported = false;
+				// safari lacks longtask entries
 				let po: PerformanceObserver | null = null;
 				try {
 					po = new PerformanceObserver((list) => {
@@ -3858,18 +3412,11 @@ export default class FabricCanvas extends Component {
 		}
 
 		const unsubscribe = subscribe(render);
-		// LUT strips load async — re-render when one arrives so its look pops
-		// in (filter-sync's signature carries the epoch).
 		const unsubscribeLuts = subscribeLuts(render);
-		// Same for bg-removal mattes — EffectsImage's isCacheDirty carries the
-		// epoch.
 		const unsubscribeMattes = subscribeMattes(render);
 		render();
 		fit();
 
-		// Restore the last autosaved project ONLY if the user opted into local
-		// storage; otherwise start a fresh scene. Async — the canvas shows the
-		// void for a few ms until the doc resolves.
 		let cancelled = false;
 		void (async () => {
 			if (getSnapshot()) return;
@@ -3887,14 +3434,7 @@ export default class FabricCanvas extends Component {
 				fit();
 				return;
 			}
-			// Nothing restored → the session starts EMPTY (no document, no
-			// canvas) and the New-scene dialog is the way in: blank at chosen
-			// dims, or a scene built from an uploaded image (Ruby 2026-07-12).
-			// First visits see the onboarding flow first (it hands over on
-			// close). Dismissing without choosing falls back to a default blank
-			// via ensureScene(). Under automation the default doc lands
-			// immediately instead — every headless harness boots exactly this
-			// state and would deadlock behind the overlay.
+			// automation bypasses onboarding
 			if (navigator.webdriver) {
 				setDoc(createEmptyDoc());
 				fit();
@@ -3905,10 +3445,6 @@ export default class FabricCanvas extends Component {
 			);
 		})();
 
-		// Autosave lifecycle follows the opt-in preference: enabling persists
-		// the current scene + its rasters and starts autosaving; disabling
-		// stops and purges the local copy (privacy hangup — off means no
-		// trace).
 		let stopAutosave: (() => void) | null = null;
 		const syncPersistence = () => {
 			const on = getPersistenceEnabled();
@@ -3929,9 +3465,6 @@ export default class FabricCanvas extends Component {
 		const ro = new ResizeObserver(fit);
 		ro.observe(wrap);
 
-		// Drop-to-import, with a visible drop-target highlight while files
-		// hover (the affordance the clarity review flagged — drop worked but
-		// was mute).
 		const setDropHint = (on: boolean) =>
 			dropHint?.classList.toggle('hidden', !on);
 		const onDragOver = (e: DragEvent) => {
@@ -3957,21 +3490,12 @@ export default class FabricCanvas extends Component {
 		wrap.addEventListener('dragleave', onDragLeave);
 		wrap.addEventListener('drop', onDrop);
 
-		// Unsaved-work guard: with local storage opted OUT, closing/reloading
-		// the tab silently discards the session — the one unrecoverable path a
-		// casual user hits. (Opted in, the debounced autosave covers it.)
 		const onBeforeUnload = (e: BeforeUnloadEvent) => {
 			if (canUndo() && !getPersistenceEnabled())
 				e.preventDefault();
 		};
 		window.addEventListener('beforeunload', onBeforeUnload);
 
-		// Right-click → context menu (Ruby 2026-07-03), via Fabric's own
-		// contextmenu canvas event (it hit-tests once and hands us the target).
-		// A hit inside the current selection keeps it (menu acts on all), any
-		// other layer becomes the selection; blank space opens the CANVAS menu
-		// with the scene point (paste/place land there). Native menu suppressed
-		// either way.
 		canvas.on('contextmenu', ({ e, target }) => {
 			e.preventDefault();
 			const me = e as MouseEvent;
@@ -3983,7 +3507,6 @@ export default class FabricCanvas extends Component {
 				});
 				return;
 			}
-			// a live multi-selection hit → menu on the whole selection
 			if (
 				target === canvas.getActiveObject() &&
 				target instanceof ActiveSelection
@@ -4031,10 +3554,7 @@ export default class FabricCanvas extends Component {
 			registerExportRenderer(null);
 			registerLayerBaker(null);
 			ro.disconnect();
-			// an unmount mid crop-drag must not leak the open transient —
-			// commit it (still one undo step) so isGestureActive() can't stay
-			// true forever; guide moves are local-until-drop and write nothing
-			// until release
+			// commit active crop transient
 			if (cropDrag) commitTransient();
 			guideDrag = null;
 			cropDrag = null;
@@ -4143,16 +3663,12 @@ export default class FabricCanvas extends Component {
 			{{this.mount}}
 			{{filePaste this.paste accept="image/*"}}
 		>
-			{{! Ruby's graffiti wordmark, tiled faintly across the void (the
-				fabric canvases are transparent outside the artboard). CSS mask
-				over a foreground-coloured layer keeps it theme-aware. }}
-			<div
+						<div
 				class="sub-canvas-wordmark"
 				aria-hidden="true"
 			></div>
 			<canvas></canvas>
-			{{! drop-target highlight — toggled imperatively while files hover }}
-			<div
+						<div
 				class="sub-canvas-drop-hint hidden"
 				aria-hidden="true"
 			></div>

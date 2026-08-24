@@ -1,5 +1,3 @@
-// Headless verification for M2-2 Brush/Pencil freehand (delete after use).
-// Pattern from .verify-pieces.mjs: real mouse drags + window.__substrata rig.
 import puppeteer from "puppeteer-core";
 
 const URL = process.env.EDITOR_URL ?? "http://localhost:3000/editor";
@@ -47,7 +45,6 @@ const undo = async () => {
   await sleep(300);
 };
 
-// stroke along scene waypoints, then deselect (handles render on the lower canvas)
 const stroke = async (waypoints) => {
   const [first, ...rest] = waypoints.map(([x, y]) => toPage(x, y));
   await page.mouse.move(first.x, first.y);
@@ -61,7 +58,6 @@ const stroke = async (waypoints) => {
 
 const WHITE = [255, 255, 255];
 
-// 1) BRUSH: fat green horizontal stroke.
 await page.evaluate(() => {
   window.__substrata.setTool("pieces", "brush");
   window.__substrata.toolSettings("pieces", { fill: "#3e6b33", brushSize: 36 });
@@ -82,7 +78,6 @@ await undo();
 ls = await layers();
 check("brush: ONE undo removes the stroke", ls.length, ls.length === 0);
 
-// 2) PENCIL: thin magenta diagonal; width clearly smaller than the brush.
 await page.evaluate(() => {
   window.__substrata.setTool("pieces", "pencil");
   window.__substrata.toolSettings("pieces", { fill: "#cc00cc", pencilSize: 8 });
@@ -95,7 +90,6 @@ check("pencil: filled on the stroke", px, near(px, [204, 0, 204]));
 px = await sample(700, 315);
 check("pencil: thin — clean 15px off-line", px, near(px, WHITE));
 
-// 3) MOVE round-trip on the pencil stroke.
 await page.evaluate(() => window.__substrata.setTool("move"));
 const id = (await layers())[0].id;
 await page.evaluate((lid) => window.__substrata.select([lid]), id);
@@ -105,7 +99,6 @@ await sleep(250);
 ls = await layers();
 check("move: nudge shifts the stroke", ls[0]?.scene.x, Math.abs(ls[0].scene.x - 701) < 8);
 
-// 4) tap in brush mode draws nothing.
 await page.evaluate(() => window.__substrata.setTool("pieces", "brush"));
 const tap = toPage(1400, 1100);
 await page.mouse.click(tap.x, tap.y);
@@ -113,7 +106,6 @@ await sleep(250);
 ls = await layers();
 check("brush: bare tap draws nothing", ls.length, ls.length === 1);
 
-// 5) eyeball: a squiggle + the pencil line, layers panel closed.
 await page.evaluate(() => window.__substrata.toolSettings("pieces", { fill: "#e8b13c", brushSize: 28 }));
 await stroke([[400, 800], [550, 700], [700, 900], [850, 700], [1000, 900], [1150, 750]]);
 await page.screenshot({ path: `${OUT}/freehand-eyeball.png` });

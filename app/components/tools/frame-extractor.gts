@@ -12,7 +12,7 @@ import { VIDEO_ACCEPT, acceptAttr } from 'delphitools-v2/lib/tools';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import { formatFps } from 'delphitools-v2/lib/media-probe';
 
-/** Kept in step with the registry entry, which routes dropped files. */
+// match registry intake
 const ACCEPT = acceptAttr(VIDEO_ACCEPT);
 
 const DROP_TITLE = 'Drop a video here or click to upload';
@@ -40,7 +40,7 @@ export default class FrameExtractorTool extends Component {
 			this.stills = [];
 		},
 		probe: true,
-		// A drop mid-build would tear the video out from under the seek loop.
+		// lock intake during sheet
 		canLoad: () => !this.sheetBusy,
 	});
 
@@ -155,8 +155,7 @@ export default class FrameExtractorTool extends Component {
 		}
 
 		for (let i = 0; i < n; i++) {
-			// Mid-segment sampling: frame 0 is often black, the last
-			// frame often blank.
+			// avoid boundary frames
 			const time = (duration * (i + 0.5)) / n;
 			await seekTo(video, time);
 			if (this.isDestroyed) return;

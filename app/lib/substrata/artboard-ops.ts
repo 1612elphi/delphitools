@@ -1,15 +1,7 @@
-/**
- * Artboard mutations — the action layer over the doc store for the Canvas size
- * modal. Goes through `update()`, so resizing/recolouring the artboard is a
- * single undoable step for free. One-way: mutates the doc; the reconciler
- * re-renders the artboard rect + re-clips the canvas.
- */
-
 import { update } from './doc-store';
 import type { Artboard, Layer } from './doc-model';
 import { isGroup } from './layer-tree';
 
-/** Patch the artboard (width/height/resolution/background/…). Undoable. */
 export function setArtboard(patch: Partial<Artboard>): void {
 	update((doc) => ({
 		...doc,
@@ -18,21 +10,9 @@ export function setArtboard(patch: Partial<Artboard>): void {
 	}));
 }
 
-/** Nearest artboard anchor per axis — 0 | ½ | 1 of the span, i.e. the corners,
- *  edge midpoints and centre (the ratified M7-8 anchor set, decomposed). */
 const anchorOf = (c: number, span: number): number =>
 	c < span / 4 ? 0 : c > (3 * span) / 4 ? 1 : 0.5;
 
-/**
- * Magic resize (M7-8; Ruby's 2026-07-08 ratification: ANCHOR + PROPORTIONAL).
- * One `update()` — artboard patch + layer reflow + guide rescale — so the whole
- * resize is a single undoable step. Every leaf layer (hidden/locked included:
- * this is a document-level op, not a selection op) scales by the smaller axis
- * factor and keeps its offset from its nearest artboard anchor, scaled; groups
- * stay identity (folder semantics) and recurse. Guides rescale proportionally
- * along their axis. Angles, flips and crops ride along untouched — a documented
- * v1 approximation, per the Substrata scope philosophy.
- */
 export function resizeArtboardReflow(
 	patch: Partial<Artboard> & { width: number; height: number },
 ): void {

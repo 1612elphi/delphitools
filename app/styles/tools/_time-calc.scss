@@ -1,11 +1,4 @@
-// Styles for the time-calc tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Time calculator ─────────────────────────────────────────────────────── */
 
 .dt-tc {
 	display: flex;
@@ -87,8 +80,7 @@
 }
 
 .dt-tc-panel {
-	/* The panel is a focus target, and its own ring would double the section
-	   borders it sits inside. */
+	/* ring doubles section borders */
 	outline-offset: -2px;
 }
 

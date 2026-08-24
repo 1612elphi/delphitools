@@ -22,32 +22,9 @@ import {
 } from 'delphitools-v2/lib/substrata/select-ops';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 
-/**
- * Contextual pixel-selection popup (M2-10, ratified 2026-07-07): while a pixel
- * selection exists, a small action strip floats under its bounds — extract
- * (the DEFAULT action, also Enter) · cut (destructive) · invert · grow ·
- * shrink · deselect (also Escape). Action words are standard graphics
- * vocabulary = functional chrome (BLEND_OPTIONS precedent). Extract/cut gate
- * on a raster active layer (the FX non-raster precedent; auto-rasterize is
- * M3-15's business).
- *
- * The canvas reports the anchor (wrap-relative screen coords) from its
- * after:render pass via `reportSelectionAnchor` — the popup itself never
- * touches Fabric. Plain absolutely-positioned div, NOT a popover primitive:
- * this is a persistent mini-toolbar; dismiss/focus-trap semantics would fight
- * it.
- */
-
 let anchor = { x: 0, y: 0, epoch: -1 };
 const anchorListeners = new Set<() => void>();
 
-/**
- * Canvas → popup: bottom-centre of the selection bbox, wrap-relative px.
- * `epoch` is the selection's, so the popup can tell an anchor computed for the
- * CURRENT selection from a stale one — it renders only once its own selection
- * has been measured, instead of flashing at 0,0 (or at the previous
- * selection's spot) for however many frames the canvas takes to catch up.
- */
 export function reportSelectionAnchor(
 	x: number,
 	y: number,
@@ -76,7 +53,6 @@ export default class SelectionPopup extends Component {
 	sel = new TrackedExternal(subscribePixelSelection, getPixelSelection);
 	doc = new TrackedExternal(subscribe, getSnapshot);
 	anchor = new TrackedExternal(subscribeAnchor, getAnchor);
-	// the extract/cut gate reads the active layer — re-render when it changes
 	active = new TrackedExternal(subscribeSelection, getActiveLayerId);
 
 	willDestroy() {
@@ -97,8 +73,7 @@ export default class SelectionPopup extends Component {
 	}
 
 	get ready() {
-		// canOperateOnActive reads the doc + active layer stores directly; the
-		// tracked reads here are what re-run this getter when either changes
+		// track store dependencies
 		const doc = this.doc.current;
 		const active = this.active.current;
 		return doc !== null && active !== null && canOperateOnActive();
@@ -119,7 +94,6 @@ export default class SelectionPopup extends Component {
 	<template>
 		{{#if this.visible}}
 			<div class="sub-selpop" style={{this.posStyle}}>
-				{{! standard graphics vocabulary = functional chrome (not authored copy) }}
 				<button
 					type="button"
 					class="sub-selpop-btn is-primary"

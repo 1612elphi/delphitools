@@ -25,17 +25,11 @@ const ROWS = WORKFLOWS.map((workflow) => {
 	};
 });
 
-/**
- * The catalogue of workflows as a table: the name and category in the
- * first column, one column per step slot so the tools line up by
- * position, Start at the end. The name and Start both start the flow.
- */
 export default class WorkflowList extends Component<{
 	Element: HTMLDivElement;
 }> {
 	@service declare flow: FlowService;
 
-	/** starting over drops the running flow's captures; ask first */
 	start = (workflow: Workflow) => {
 		const { flow } = this;
 		if (

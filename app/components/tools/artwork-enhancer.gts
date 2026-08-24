@@ -12,11 +12,8 @@ const MAX_OPACITY = 20;
 const MIN_SCALE = 1;
 const MAX_SCALE = 4;
 
-// One random byte per channel per pixel is redrawn on every slider step, so a
-// large image would otherwise queue a full pass per input event during a drag.
 const RENDER_DEBOUNCE_MS = 120;
 
-/** Opaque RGBA noise, written in place over an ImageData buffer. */
 export function fillNoise(
 	data: Uint8ClampedArray,
 	random: () => number = Math.random,
@@ -29,11 +26,6 @@ export function fillNoise(
 	}
 }
 
-/**
- * Size of the noise buffer for a given blockiness. Above 1 the noise is
- * generated smaller than the artwork and drawn back up with smoothing off,
- * which is what makes the grain coarse.
- */
 export function noiseDimensions(
 	width: number,
 	height: number,
@@ -106,7 +98,7 @@ export default class ArtworkEnhancerTool extends Component {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) this.readFile(file);
-		// Choosing the same file twice must still fire a change event.
+		// allow same-file selection.
 		input.value = '';
 	};
 
@@ -116,7 +108,7 @@ export default class ArtworkEnhancerTool extends Component {
 		if (file?.type.startsWith('image/')) this.readFile(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// prevent drop navigation.
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -203,7 +195,6 @@ export default class ArtworkEnhancerTool extends Component {
 							<div
 								class="dt-art-control-head"
 							>
-								{{! wording carried over from the Next app }}
 								<label
 									for="dt-art-opacity"
 								>Noise Opacity</label>
@@ -224,7 +215,6 @@ export default class ArtworkEnhancerTool extends Component {
 									this.setOpacity
 								}}
 							/>
-							{{! wording carried over from the Next app }}
 							<p
 								class="dt-art-hint"
 							>Classic trick uses 2%
@@ -235,7 +225,6 @@ export default class ArtworkEnhancerTool extends Component {
 							<div
 								class="dt-art-control-head"
 							>
-								{{! wording carried over from the Next app }}
 								<label
 									for="dt-art-scale"
 								>Noise Scale</label>
@@ -256,7 +245,6 @@ export default class ArtworkEnhancerTool extends Component {
 									this.setNoiseScale
 								}}
 							/>
-							{{! wording carried over from the Next app }}
 							<p
 								class="dt-art-hint"
 							>Higher = blockier noise</p>
@@ -267,7 +255,6 @@ export default class ArtworkEnhancerTool extends Component {
 						<div
 							class="dt-art-preview-head"
 						>
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-art-preview-title"
 							>Preview</span>
@@ -344,7 +331,6 @@ export default class ArtworkEnhancerTool extends Component {
 							}}
 						/>
 						<Icon @name="upload" />
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-art-drop-title"
 						>Drop your artwork here</span>
@@ -356,10 +342,8 @@ export default class ArtworkEnhancerTool extends Component {
 			</div>
 
 			<div class="dt-art-note">
-				{{! wording carried over from the Next app }}
 				<p class="dt-art-note-title">About this
 					technique</p>
-				{{! wording carried over from the Next app }}
 				<p>Adding colour noise at low opacity with
 					overlay blend mode is a classic digital
 					art trick. It adds subtle texture and

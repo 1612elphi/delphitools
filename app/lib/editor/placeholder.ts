@@ -1,5 +1,3 @@
-// Ghost placeholder shown when the document is a single empty block. Rendered as
-// a CSS ::before on the empty block (see .dt-empty in app/styles/app.scss).
 import { Plugin } from 'prosemirror-state';
 import { Decoration, DecorationSet } from 'prosemirror-view';
 

@@ -6,7 +6,7 @@ export function parseDictJson(json: Record<string, string[]>): Dictionary {
 	return new Map(Object.entries(json));
 }
 
-// One request per tier for the lifetime of the page, whatever remounts.
+// one request per tier for page lifetime
 let coreDictPromise: Promise<Dictionary> | null = null;
 let fullDictPromise: Promise<Dictionary> | null = null;
 
@@ -27,10 +27,7 @@ export function loadCoreDictionary(): Promise<Dictionary> {
 export function loadFullDictionary(): Promise<Dictionary> {
 	fullDictPromise ??= fetch(FULL_DICTIONARY_URL)
 		.then((response) => {
-			// fetch resolves on 404. Without this the miss reaches json(),
-			// which throws a parse error the caller reads as a bad payload,
-			// and the tool glosses every word past the 7,500-entry core with
-			// the heuristic while reporting itself ready.
+			// fetch resolves on 404, check ok before json
 			if (!response.ok) {
 				throw new Error(
 					`${FULL_DICTIONARY_URL} returned HTTP ${response.status}`,
@@ -42,7 +39,7 @@ export function loadFullDictionary(): Promise<Dictionary> {
 		})
 		.then(parseDictJson)
 		.catch((error: unknown) => {
-			// A cached rejection would deny every later mount a retry.
+			// cached rejection blocks later retries
 			fullDictPromise = null;
 			throw error;
 		});

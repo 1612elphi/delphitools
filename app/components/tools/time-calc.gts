@@ -31,7 +31,6 @@ export interface FormatValues {
 	human: string;
 }
 
-// Zone names and labels carried over from the Next app, verbatim.
 export const TIMEZONES: { value: string; label: string }[] = [
 	{ value: 'UTC', label: 'UTC' },
 	{ value: 'America/New_York', label: 'New York' },
@@ -82,10 +81,7 @@ const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 60 * MINUTE_MS;
 const DAY_MS = 24 * HOUR_MS;
 
-/**
- * A month is a flat thirty days here, carried over from the Next app. Calendar
- * month arithmetic would land "31 January + 1 month" somewhere in March.
- */
+// flat 30-day month
 export const MS_PER_UNIT: Record<TimeUnit, number> = {
 	minutes: MINUTE_MS,
 	hours: HOUR_MS,
@@ -108,23 +104,18 @@ const EMPTY_VALUES: FormatValues = {
 
 const ARITHMETIC_PLACEHOLDER = '2024-01-01 00:00:00';
 
-/** Wording carried over from the Next app. */
 const ADD_TIMEZONE_PLACEHOLDER = 'Add timezone...';
 
 function pad(value: number): string {
 	return value.toString().padStart(2, '0');
 }
 
-/** `2024-01-01 00:00:00` in local time, the shape the human field takes. */
+// local time
 export function toHumanDate(date: Date): string {
 	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
-/**
- * Null for anything that does not parse. The Next app checked only isNaN on the
- * parsed number, so a unix value past the Date range produced an Invalid Date
- * whose toISOString() then threw a RangeError; the getTime() check stops that.
- */
+// out-of-range parseInt: invalid date
 export function parseToDate(value: string, format: TimeFormat): Date | null {
 	const trimmed = value.trim();
 	if (!trimmed) return null;
@@ -140,14 +131,11 @@ export function parseToDate(value: string, format: TimeFormat): Date | null {
 			);
 			break;
 		}
-		// Date's own parser handles both. RFC 822 is not in the ECMA-262
-		// grammar, but every browser engine accepts it, and this tool only
-		// ever runs in one.
+		// browsers accept non-ecma-262 rfc 822
 		case 'iso':
 		case 'rfc822':
 			date = new Date(trimmed);
 			break;
-		// Accepts "2024-01-01 00:00:00" as well as the T-separated form.
 		case 'human':
 			date = new Date(trimmed.replace(' ', 'T'));
 			break;
@@ -161,9 +149,7 @@ export function dateToFormats(date: Date): FormatValues {
 		unix: Math.floor(date.getTime() / 1000).toString(),
 		unixMs: date.getTime().toString(),
 		iso: date.toISOString(),
-		// ECMA-262 fixes toUTCString at "Mon, 01 Jan 2024 00:00:00 GMT",
-		// English abbreviations and all, which is the RFC 822 date RSS 2.0
-		// asks for with the four-digit year RSS also allows.
+		// ecma-262 fixes rfc 822 shape
 		rfc822: date.toUTCString(),
 		human: toHumanDate(date),
 	};
@@ -202,7 +188,6 @@ export function timezoneOffset(date: Date, timeZone: string): string {
 	}
 }
 
-/** Wording and thresholds carried over from the Next app, line for line. */
 export function relativeTime(date: Date, now: Date): string {
 	const difference = date.getTime() - now.getTime();
 	const distance = Math.abs(difference);
@@ -305,7 +290,6 @@ export default class TimeCalcTool extends Component {
 		});
 	}
 
-	/** The parsed instant, for the relative-time line under the table. */
 	get currentDate() {
 		if (!this.hasValue) return null;
 		const ms = Number.parseInt(this.values.unixMs, 10);
@@ -421,10 +405,7 @@ export default class TimeCalcTool extends Component {
 			return;
 		}
 
-		// Every field but the one being typed in. Overwriting that one puts
-		// the canonical form under the caret the moment a prefix parses, and
-		// the rest of the keystrokes land after it: typing an ISO date gave
-		// "2001-01-31T23:00:00.000Z025-08-09T11:45:30Z".
+		// overwriting mangles typed input
 		this.values = { ...dateToFormats(date), [format]: value };
 	};
 
@@ -480,7 +461,6 @@ export default class TimeCalcTool extends Component {
 		<div class="dt-tc">
 			<div class="dt-tc-now">
 				<div class="dt-tc-now-head">
-					{{! wording carried over from the Next app }}
 					<span class="dt-tc-label">Current Time</span>
 				</div>
 				<div class="dt-tc-now-body">
@@ -505,7 +485,6 @@ export default class TimeCalcTool extends Component {
 						class="dt-tc-tab"
 						@value="timezones"
 					>Timezones</TabsTrigger>
-					{{! wording carried over from the Next app }}
 					<TabsTrigger
 						class="dt-tc-tab"
 						@value="arithmetic"
@@ -581,7 +560,6 @@ export default class TimeCalcTool extends Component {
 							>{{this.error}}</p>
 						{{/if}}
 
-						{{! wording carried over from the Next app }}
 						<button
 							type="button"
 							class="dt-tc-wide"
@@ -595,7 +573,6 @@ export default class TimeCalcTool extends Component {
 							<div
 								class="dt-tc-relative"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-tc-label"
 								>Relative</span>
@@ -611,7 +588,6 @@ export default class TimeCalcTool extends Component {
 						@value="timezones"
 					>
 						<div class="dt-tc-section">
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-tc-label"
 							>Add Timezone</span>
@@ -695,7 +671,6 @@ export default class TimeCalcTool extends Component {
 							{{/each}}
 						</div>
 
-						{{! wording carried over from the Next app }}
 						<p class="dt-tc-note">Times
 							update live. Add up to 6
 							timezones.</p>
@@ -706,7 +681,6 @@ export default class TimeCalcTool extends Component {
 						@value="arithmetic"
 					>
 						<div class="dt-tc-section">
-							{{! wording carried over from the Next app }}
 							<label
 								class="dt-tc-label"
 								for="dt-tc-base"
@@ -737,7 +711,6 @@ export default class TimeCalcTool extends Component {
 						</div>
 
 						<div class="dt-tc-section">
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-tc-label"
 							>Operation</span>
@@ -788,7 +761,6 @@ export default class TimeCalcTool extends Component {
 						</div>
 
 						<div class="dt-tc-section">
-							{{! wording carried over from the Next app }}
 							<label
 								class="dt-tc-label"
 								for="dt-tc-amount"
@@ -843,7 +815,6 @@ export default class TimeCalcTool extends Component {
 								<div
 									class="dt-tc-results-head"
 								>
-									{{! wording carried over from the Next app }}
 									<span
 										class="dt-tc-label"
 									>Result</span>

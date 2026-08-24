@@ -1,9 +1,3 @@
-// ARRANGE module (substrata): align to the artboard, distribute, rotate and
-// flip over the whole selection, each as ONE undo step.
-// Needs `npm start` on :3000.
-//
-// Regression guard: the module was registered with an empty ModuleStub body
-// through the Ember port, so the panel opened blank.
 import { BASE, check, finish, launch, openModule, sleep } from './harness.mjs';
 
 const { browser, page } = await launch({ viewport: { width: 1500, height: 950 } });
@@ -39,7 +33,6 @@ const armed = await page.evaluate(() => ({
 check("three sections render", JSON.stringify(armed.titles) === '["Align","Distribute","Rotate & flip"]', JSON.stringify(armed.titles));
 check("twelve action cells", armed.buttons === 12, `${armed.buttons} cells`);
 check("every cell has a glyph", armed.glyphs === 12, `${armed.glyphs}/12`);
-// distribute needs 3+ sized layers; with one selected only its two cells grey out
 check("distribute greys out under 3 layers", armed.disabled === 2, `${armed.disabled} disabled`);
 
 const clickCell = async (aria) => {
@@ -48,12 +41,11 @@ const clickCell = async (aria) => {
 };
 const scene = async () => (await page.evaluate(() => window.__substrata.layers()))[0].scene;
 
-// align left: a 200-wide layer lands with its centre at half its width
 await clickCell("Left align");
 let s = await scene();
 check("left align snaps to the artboard edge", Math.abs(s.x - 100) < 0.5, JSON.stringify(s));
 
-// centre align (hor) on the default 2000-wide artboard
+// artboard is 2000 wide
 await clickCell("Centre align (hor)");
 s = await scene();
 check("centre align (hor) snaps to the artboard middle", Math.abs(s.x - 1000) < 0.5, JSON.stringify(s));
@@ -62,12 +54,10 @@ await clickCell("Bottom align");
 s = await scene();
 check("bottom align snaps to the artboard foot", Math.abs(s.y - 1450) < 0.5, JSON.stringify(s));
 
-// rotate is per-layer, around its own centre
 await clickCell("Rotate right");
 const angle = await page.evaluate(() => window.__substrata.selection().box?.angle);
 check("rotate right turns the layer 90°", angle === 90, String(angle));
 
-// flip is a toggle and the cell reflects it
 await clickCell("Flip horizontal");
 const flipped = await page.evaluate(() => ({
   active: !!document.querySelector('.sub-arr-btn[aria-label="Flip horizontal"]')?.classList.contains("is-active"),
@@ -79,7 +69,6 @@ const unflipped = await page.evaluate(
 );
 check("flip toggles back off", unflipped);
 
-// one undo per action: the bottom-align above moved exactly one layer
 await page.keyboard.down("Meta");
 await page.keyboard.press("z");
 await page.keyboard.up("Meta");
@@ -87,7 +76,6 @@ await sleep(400);
 const afterUndo = await page.evaluate(() => window.__substrata.selection().box?.angle);
 check("each action is one undo step", afterUndo === 90, `angle=${afterUndo}`);
 
-// three layers enable distribute, and it spreads their centres evenly
 await add(100, 100, "#cc2200", { x: 300, y: 900 });
 await add(100, 100, "#e8b13c", { x: 700, y: 900 });
 await sleep(500);

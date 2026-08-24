@@ -11,11 +11,7 @@ export type DiffLine =
 	| { type: 'del'; text: string; oldLine: number }
 	| { type: 'add'; text: string; newLine: number };
 
-/**
- * The LCS table is (n + 1) × (m + 1) Int32s and the panes are capped by byte
- * size alone, so two 100k-line files would ask for 40 TB. Past this many cells
- * the middle section is reported as a wholesale replacement instead.
- */
+/** (n+1)×(m+1) Int32 LCS table; 100k×100k lines = 40 tb. above this the middle is wholesale-replaced */
 const MAX_CELLS = 4_000_000;
 
 function diffMiddle(a: string[], b: string[], offset: number): DiffLine[] {
@@ -92,13 +88,12 @@ function diffMiddle(a: string[], b: string[], offset: number): DiffLine[] {
 	return out;
 }
 
-/** Line-level diff, oldest line first, numbered from one on both sides. */
+/** oldest first; line nums from 1 both sides */
 export function diffLines(oldText: string, newText: string): DiffLine[] {
 	const a = oldText.split('\n');
 	const b = newText.split('\n');
 
-	// Identical head and tail lines belong to every LCS, so trimming them keeps
-	// the result and shrinks the table quadratically.
+	// shared head/tail trimmed; shrinks lcs table quadratically
 	let head = 0;
 	while (head < a.length && head < b.length && a[head] === b[head])
 		head++;
@@ -155,7 +150,7 @@ export function diffStats(diff: DiffLine[]): {
 	return { added, removed };
 }
 
-/** The clipboard payload: a context diff, carried over from the Next app. */
+/** context-diff format for clipboard */
 export function diffPatch(diff: DiffLine[]): string {
 	return diff
 		.map((line) => {
@@ -177,8 +172,7 @@ export interface DiffRow {
 export function diffRows(diff: DiffLine[]): DiffRow[] {
 	return diff.map((line) => ({
 		type: line.type,
-		// U+2212 for deletions, so the marker column lines up under a monospaced
-		// plus sign. Carried over from the Next app.
+		// U+2212 aligns under monospaced + sign
 		marker:
 			line.type === 'add'
 				? '+'
@@ -187,7 +181,7 @@ export function diffRows(diff: DiffLine[]): DiffRow[] {
 					: ' ',
 		oldNum: line.type === 'add' ? '' : String(line.oldLine),
 		newNum: line.type === 'del' ? '' : String(line.newLine),
-		// An empty line still needs one row's worth of height.
+		// empty line still a row tall
 		text: line.text || ' ',
 	}));
 }
@@ -197,22 +191,13 @@ const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const FILE_ACCEPT =
 	'text/*,.txt,.md,.json,.csv,.log,.xml,.yaml,.yml,.html,.css,.js,.ts,.tsx,.jsx';
 
-/**
- * Holds off the diff while the user is still typing, replacing the Next app's
- * useDeferredValue. The panes stay bound to the raw text, so typing never waits
- * on an O(n·m) table.
- */
+/** typing defers diff; panes bound to raw text, no o(n·m) wait */
 const DEFER_MS = 120;
 
 /**
- * In word-wrap mode one logical line can occupy several visual rows, so the
- * gutter's fixed line-height stops tracking the textarea. An invisible mirror
- * of the same text at the same content width gives each line's real height,
- * which is copied onto the matching gutter cell.
- *
- * The heights go straight onto the DOM rather than into tracked state: the
- * gutter is rendered earlier in this same template, and writing to state that
- * the current render pass already read is a backtracking rerender error.
+ * word wrap breaks fixed line-height; mirrored text at same width yields real
+ * row heights. written to DOM direct, not tracked state (gutter renders earlier
+ * this pass → backtracking rerender).
  */
 const alignGutter = modifier(
 	(
@@ -296,12 +281,10 @@ class TextPane extends Component<TextPaneSignature> {
 		return FILE_ACCEPT;
 	}
 
-	/** "Paste old text here...", wording carried over from the Next app. */
 	get placeholder() {
 		return `Paste ${this.args.label.toLowerCase()} here...`;
 	}
 
-	/** Wording carried over from the Next app. */
 	get copyLabel() {
 		return `Copy ${this.args.label.toLowerCase()} to clipboard`;
 	}
@@ -319,8 +302,7 @@ class TextPane extends Component<TextPaneSignature> {
 	}
 
 	readFile = async (file: File) => {
-		// Silently ignored above the cap, as in the Next app: the LCS table
-		// grows with the square of the line count.
+		// skip above cap; lcs is o(n²) in lines
 		if (file.size > MAX_FILE_BYTES) return;
 		this.args.onChange(await file.text());
 	};
@@ -329,7 +311,7 @@ class TextPane extends Component<TextPaneSignature> {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) void this.readFile(file);
-		// Reset, so choosing the same file twice still fires a change event.
+		// reset; same file re-fires change
 		input.value = '';
 	};
 
@@ -341,7 +323,7 @@ class TextPane extends Component<TextPaneSignature> {
 		this.args.onChange('');
 	};
 
-	// The gutter has its own scrollbar hidden, so it has to be driven from here.
+	// gutter scrollbar hidden; drive scroll here
 	syncScroll = (event: Event) => {
 		const textarea = event.target as HTMLTextAreaElement;
 		const gutter = textarea
@@ -358,7 +340,6 @@ class TextPane extends Component<TextPaneSignature> {
 				await navigator.clipboard.readText(),
 			);
 		} catch {
-			// Clipboard read denied or unsupported; nothing to report.
 		}
 	}
 
@@ -380,10 +361,7 @@ class TextPane extends Component<TextPaneSignature> {
 			<div class="dt-td-pane-head">
 				<span class="dt-td-pane-label">{{@label}}</span>
 				<div class="dt-td-pane-tools">
-					{{! The name sits on the label, not the input:
-						the visible word is dropped below the sm
-						breakpoint, and display:none text names
-						nothing. }}
+					{{! name on label: visible word hidden below sm; display:none names nothing }}
 					<label
 						class="dt-td-btn is-wide"
 						aria-label="Open file"
@@ -398,7 +376,6 @@ class TextPane extends Component<TextPaneSignature> {
 							}}
 						/>
 						<Icon @name="upload" />
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-td-btn-text"
 						>Open</span>
@@ -564,7 +541,6 @@ export default class TextDiffTool extends Component {
 								<span
 									class="dt-td-chip is-add"
 								></span>
-								{{! wording carried over from the Next app }}
 								{{this.stats.added}}
 								added
 							</span>
@@ -574,7 +550,6 @@ export default class TextDiffTool extends Component {
 								<span
 									class="dt-td-chip is-del"
 								></span>
-								{{! wording carried over from the Next app }}
 								{{this.stats.removed}}
 								removed
 							</span>
@@ -606,7 +581,6 @@ export default class TextDiffTool extends Component {
 								)
 							}}
 						>
-							{{! wording carried over from the Next app }}
 							No wrap
 						</button>
 						<button
@@ -629,21 +603,18 @@ export default class TextDiffTool extends Component {
 								)
 							}}
 						>
-							{{! wording carried over from the Next app }}
 							Word wrap
 						</button>
 					</div>
 				</div>
 
 				<div class="dt-td-panes">
-					{{! wording carried over from the Next app }}
 					<TextPane
 						@label="Old Text"
 						@value={{this.oldText}}
 						@onChange={{this.setOld}}
 						@wrap={{this.wrap}}
 					/>
-					{{! wording carried over from the Next app }}
 					<TextPane
 						@label="New Text"
 						@value={{this.newText}}
@@ -654,7 +625,6 @@ export default class TextDiffTool extends Component {
 				</div>
 
 				<div class="dt-td-output-head">
-					{{! wording carried over from the Next app }}
 					<span
 						class="dt-td-output-label"
 					>Differences</span>
@@ -674,7 +644,6 @@ export default class TextDiffTool extends Component {
 								"copy"
 							}}
 						/>
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-td-btn-text"
 						>{{if
@@ -688,7 +657,6 @@ export default class TextDiffTool extends Component {
 				<div class="dt-td-output">
 					{{#if this.hasContent}}
 						{{#if this.allSame}}
-							{{! wording carried over from the Next app }}
 							<p
 								class="dt-td-empty"
 							>Texts are identical.</p>
@@ -725,7 +693,6 @@ export default class TextDiffTool extends Component {
 							</div>
 						{{/if}}
 					{{else}}
-						{{! wording carried over from the Next app }}
 						<p class="dt-td-empty">Paste
 							text on both sides to
 							see the differences.</p>
@@ -733,7 +700,6 @@ export default class TextDiffTool extends Component {
 				</div>
 			</div>
 
-			{{! wording carried over from the Next app }}
 			<p class="dt-td-credit">
 				contributed by
 				<a

@@ -1,10 +1,3 @@
-// The document model and the tree walks over it. Everything here is pure data
-// in, pure data out, and everything here fails quietly when it breaks: a render
-// list in the wrong order still renders, a doc that aliases the default
-// artboard still opens, a rebuilt branch that shares nothing still draws the
-// right picture and only costs history size. So these tests check the order,
-// the identity of the objects that come back, and that the input is untouched.
-
 import { module, test } from 'qunit';
 import {
 	DEFAULT_ARTBOARD,
@@ -42,7 +35,6 @@ interface Flags {
 	opacity?: number;
 }
 
-/** A leaf with a caller-chosen id, so the assertions can name what they mean. */
 function leaf(id: string, flags: Flags = {}): ShapeLayer {
 	return {
 		...createShapeLayer({
@@ -80,10 +72,7 @@ function group(id: string, children: Layer[], flags: Flags = {}): GroupLayer {
 	};
 }
 
-/**
- * a · g[ b · h[ c ] · d ] · e
- * doc order a g b h c d e · leaves a b c d e · panel order e g d h c b a
- */
+// a·g[b·h[c]·d]·e; doc a g b h c d e; panel e g d h c b a
 function fixture() {
 	const a = leaf('a');
 	const b = leaf('b');
@@ -110,9 +99,7 @@ module('Unit | Substrata | doc-model', function () {
 		);
 	});
 
-	// DEFAULT_ARTBOARD is a module constant. Handing it out by reference would
-	// mean the first canvas resize of the session changes the size every later
-	// scene opens at.
+	// shared constant; resize would mutate every later scene
 	test('the artboard is copied, never the shared default', function (assert) {
 		const doc = createEmptyDoc();
 		assert.notStrictEqual(doc.artboard, DEFAULT_ARTBOARD);
@@ -143,8 +130,6 @@ module('Unit | Substrata | doc-model', function () {
 			flipX: false,
 			flipY: false,
 		});
-		// A shared constant here would make dragging one layer drag every layer
-		// that was created with the default transform.
 		assert.notStrictEqual(identityTransform(), identityTransform());
 	});
 
@@ -212,8 +197,6 @@ module('Unit | Substrata | doc-model', function () {
 			}
 		});
 
-		// Hoisting the empty stack to a shared constant would give every layer
-		// in the scene one filter list: adding a blur to one blurs them all.
 		test('no two layers share a filter or effect stack', function (assert) {
 			const one = raster();
 			const two = raster();
@@ -344,8 +327,7 @@ module('Unit | Substrata | doc-model', function () {
 	});
 
 	module('stampLoadedDoc', function () {
-		/** A doc as it comes back off a persistence surface: schema v1, written
-		 *  before guides existed, so the key is absent rather than empty. */
+		// schema v1; guides key absent not empty
 		function loadedV1(): SubstrataDoc {
 			const doc = createEmptyDoc('old');
 			return JSON.parse(
@@ -463,8 +445,7 @@ module('Unit | Substrata | layer-tree', function () {
 			assert.strictEqual(f.layers[0], f.a, 'the input list');
 		});
 
-		// History keeps a snapshot per edit. If a rename rebuilt the whole tree,
-		// every undo step would hold a full copy of the scene.
+		// full rebuild would balloon undo memory
 		test('rebuilds only the path down to a nested layer', function (assert) {
 			const f = fixture();
 			const next = mapLayerInTree(f.layers, 'c', (l) => ({
@@ -623,8 +604,7 @@ module('Unit | Substrata | layer-tree', function () {
 			);
 		});
 
-		// null and undefined are different answers: null is "at the root", which
-		// setSiblingOrder writes into, undefined is "not in this document".
+		// null = at root, undefined = not in doc
 		test('separates a root layer from one that is not in the tree', function (assert) {
 			const f = fixture();
 			assert.strictEqual(
@@ -697,8 +677,7 @@ module('Unit | Substrata | layer-tree', function () {
 			assert.deepEqual(leafRenderList([]), []);
 		});
 
-		// 0.5 × 0.5 × 0.5 = 0.125, and every factor is a power of two, so this
-		// is exact in binary and can be asserted without a tolerance.
+		// powers of two; exact in binary
 		test('multiplies opacity down through every group', function (assert) {
 			const c = leaf('c', { opacity: 0.5 });
 			const b = leaf('b');
@@ -809,8 +788,7 @@ module('Unit | Substrata | layer-tree', function () {
 			);
 		});
 
-		// The panel draws top-down, the document stacks bottom-up. lastChild is
-		// the bottom of a level, which is where the └ elbow goes.
+		// panel top-down, doc bottom-up; lastChild gets └
 		test('marks the bottom of each level as the last child', function (assert) {
 			const rows = flattenForPanel(
 				fixture().layers,

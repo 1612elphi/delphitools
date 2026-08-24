@@ -1,21 +1,8 @@
-/**
- * SubstrataText — the IText the reconciler instantiates for text layers.
- * Adds the style PLATE (pill/rectangle behind the glyphs, Ruby's 2026-07-06
- * text styles): `_getCacheCanvasDimensions` pads the cache by the plate's
- * padding (the EffectsImage precedent — cacheTranslation centring absorbs it)
- * and `drawObject` paints the rounded plate in object-local space before the
- * text renders. Selection bbox stays the TEXT's — the plate is dressing, like
- * an effect (clicking its overhang doesn't hit; accepted v1).
- *
- * In-canvas editing is native IText; the doc catches up on editing:exited
- * (fabric-canvas wires it). ⚠️ Imports Fabric — keep behind ssr:false.
- */
-
+// fabric requires browser
 import { IText } from 'fabric';
 import type { TextPlate } from './doc-model';
 
 export class SubstrataText extends IText {
-	/** set by sync (which also dirties the cache on change) */
 	plate: TextPlate | null = null;
 
 	override _getCacheCanvasDimensions() {

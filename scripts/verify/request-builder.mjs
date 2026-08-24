@@ -1,6 +1,4 @@
-// Request Builder: fill the form, read both hand-over formats, copy one.
-//
-// Usage: npm start, then node scripts/verify/request-builder.mjs
+// usage: npm start, then node scripts/verify/request-builder.mjs
 
 import { launch, visit, check, finish, sleep, BASE } from './harness.mjs';
 
@@ -73,7 +71,7 @@ check(
 check('raw request counts the body', http.includes('Content-Length: 17'));
 check('blank line before the body', http.includes('\n\n{"name":"delphi"}'));
 
-// Removing the header row drops it from both formats.
+// removing the header row drops it from both formats
 await page.click('.dt-req-section.is-headers .dt-req-remove');
 await sleep(100);
 check(

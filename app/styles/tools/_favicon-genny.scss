@@ -1,11 +1,4 @@
-// Styles for the favicon-genny tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Favicon generator ───────────────────────────────────────────────────── */
 
 .dt-favicon-frame {
 	border: 2px solid var(--border);
@@ -35,7 +28,7 @@
 		);
 	}
 
-	/* the file input is visually hidden, so its focus ring has to land here */
+	// hidden file input; ring lands here
 	&:focus-within {
 		border-color: var(--primary);
 		outline: 2px solid var(--primary);
@@ -125,8 +118,7 @@
 	}
 }
 
-/* White behind the thumbnail, because a transparent PNG on the dark theme
-   otherwise shows nothing at all. */
+// white bg for transparent pngs in dark mode
 .dt-favicon-thumb {
 	display: block;
 	flex-shrink: 0;

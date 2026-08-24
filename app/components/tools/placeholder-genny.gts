@@ -23,7 +23,6 @@ const DEFAULT_HEIGHT = 600;
 const DEFAULT_BACKGROUND = '#e2e2e2';
 const DEFAULT_FOREGROUND = '#666666';
 
-/** The `max` the Next app put on both number inputs. */
 const MAX_DIMENSION = 4096;
 
 const COPIED_MS = 1500;
@@ -43,13 +42,7 @@ export function isHexColour(value: string): boolean {
 	return HEX.test(value.trim());
 }
 
-/**
- * The Next app fed the raw field straight to the canvas and into the SVG, so a
- * half-typed hex painted black and an unbalanced quote broke the markup.
- *
- * Shorthand is expanded because `<input type="color">` rejects anything but the
- * six-digit form and silently falls back to black.
- */
+// type=color needs six-digit hex
 export function safeColour(value: string, fallback: string): string {
 	const hex = value.trim();
 	if (!isHexColour(hex)) return fallback;
@@ -61,17 +54,13 @@ export function safeColour(value: string, fallback: string): string {
 		.join('')}`;
 }
 
-/**
- * The Next app took `parseInt(value) || 800` and left the result unclamped, so
- * typing 99999 asked for a 99999px canvas that most browsers refuse to allocate.
- */
+// browsers refuse huge canvases
 export function parseSize(value: string, fallback: number): number {
 	const parsed = Number.parseInt(value, 10);
 	if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
 	return Math.min(parsed, MAX_DIMENSION);
 }
 
-/** An eighth of the shorter side, matching the Next app. */
 export function placeholderFontSize(width: number, height: number): number {
 	return Math.min(width, height) / 8;
 }
@@ -84,7 +73,6 @@ export function placeholderLabel(
 	return text || `${width} × ${height}`;
 }
 
-/** XML text and attribute escaping; the Next app interpolated raw. */
 export function escapeXml(value: string): string {
 	return value
 		.replace(/&/g, '&amp;')
@@ -104,10 +92,7 @@ export function placeholderSvg(spec: PlaceholderSpec): string {
 </svg>`;
 }
 
-/**
- * btoa() throws on any code point above U+00FF, so the Next app's `btoa(svg)`
- * failed outright for custom text with an em dash or a CJK glyph.
- */
+// btoa throws above U+00FF
 export function base64Utf8(value: string): string {
 	const bytes = new TextEncoder().encode(value);
 	let binary = '';
@@ -203,7 +188,7 @@ export default class PlaceholderGennyTool extends Component {
 		return `placeholder-${this.width}x${this.height}`;
 	}
 
-	/** safeColour has already rejected anything that is not a hex literal. */
+	// safeColour guarantees hex literal
 	get backgroundStyle() {
 		return htmlSafe(`background-color: ${this.background}`);
 	}
@@ -212,10 +197,7 @@ export default class PlaceholderGennyTool extends Component {
 		return htmlSafe(`background-color: ${this.foreground}`);
 	}
 
-	/**
-	 * Repaints whenever anything the drawing reads changes — the modifier body
-	 * consumes the same tracked state, so no dependency list is needed.
-	 */
+	// autotracked: no dependency list
 	paint = modifier((element: HTMLCanvasElement) => {
 		this.#canvas = element;
 		drawPlaceholder(element, this.spec);
@@ -431,7 +413,6 @@ export default class PlaceholderGennyTool extends Component {
 			</div>
 
 			<div class="dt-ph-text">
-				{{! wording carried over from the Next app }}
 				<label
 					class="dt-ph-label"
 					for="dt-ph-custom"

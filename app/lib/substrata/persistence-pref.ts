@@ -1,12 +1,4 @@
-/**
- * Persistence preference — opt-in local storage (M1-9). Privacy-first hard rule:
- * NOTHING is written to the browser (IndexedDB doc/blobs) until the user
- * explicitly turns local storage ON. Off by default. The only thing ever stored
- * for an opted-out user is nothing at all — the preference key is written on
- * opt-in and REMOVED on opt-out, so "off" leaves zero trace.
- *
- * SSR-safe; defaults to false off the main thread / on the server.
- */
+/** persist only after opt-in */
 
 const KEY = 'substrata:persist';
 
@@ -28,7 +20,7 @@ export function setPersistenceEnabled(enabled: boolean): void {
 			if (enabled) localStorage.setItem(KEY, '1');
 			else localStorage.removeItem(KEY);
 		} catch {
-			/* private mode / blocked storage — preference just won't persist */
+			// ignore storage errors
 		}
 	}
 	for (const l of listeners) l();

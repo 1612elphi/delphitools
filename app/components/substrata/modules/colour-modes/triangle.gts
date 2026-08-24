@@ -12,29 +12,10 @@ import {
 	type ColourSnapshot,
 } from 'delphitools-v2/lib/substrata/colour-store';
 
-/**
- * Colour mode 2 — HSV TRIANGLE. A masked conic hue ring (drag to set hsv.h from
- * the angle) with an inscribed SV triangle that rotates with the hue; dragging
- * inside the triangle sets saturation + value via barycentric coordinates.
- * Ported from sketches/pickers.html §"2 · HSV TRIANGLE".
- *
- * Geometry is authored here (angle ↔ hue, barycentric ↔ s/v, closest-point
- * clamping); colour maths comes from colour-hsv. The triangle fill is drawn per
- * pixel to a canvas so every (s,v) reads true; interaction runs off the same
- * corner geometry, so the knob always sits under the colour it names. Pointer
- * handling is custom (angle + barycentric), so this mode does not use the shared
- * pointer-area modifier.
- */
+const RING_OUTER = 0.5;
+const RING_KNOB_R = 0.45;
+const TRI_R = 0.33;
 
-// Geometry, as fractions of the square wrap (centre = 0.5, 0.5). The ring mask
-// is transparent to 56% and opaque past 58% of the box's farthest-corner radius
-// (≈0.707 of the width), so its inner edge sits near 0.40 of the width.
-const RING_OUTER = 0.5; // outer radius (the circle edge)
-const RING_KNOB_R = 0.45; // ring-knob radius (mid-band)
-const TRI_R = 0.33; // SV-triangle circumradius (fits inside the ring hole)
-
-// Canvas backing = display px × SS; drawn larger then down-scaled for smoother
-// triangle edges without per-pixel feathering.
 const WHEEL_PX = 168;
 const SS = 2;
 
@@ -45,17 +26,13 @@ interface Pt {
 	y: number;
 }
 
-/** Conic angle (from north, clockwise) → matches `conic-gradient(from 90deg…)`. */
 const hueToConic = (h: number): number => wrapHue(450 - h);
 
-/** Normalised point about the centre → hue (0–360), inverse of hueToConic. */
 function pointToHue(nx: number, ny: number): number {
 	const conic = Math.atan2(nx - 0.5, -(ny - 0.5)) * DEG;
 	return wrapHue(450 - conic);
 }
 
-/** The three SV-triangle corners for a hue, in normalised coords. The pure-hue
- *  corner points toward that hue on the ring; white/black trail at ±120°. */
 function triCorners(hue: number): { hueC: Pt; white: Pt; black: Pt } {
 	const conic = hueToConic(hue);
 	const at = (offset: number): Pt => {
@@ -68,7 +45,6 @@ function triCorners(hue: number): { hueC: Pt; white: Pt; black: Pt } {
 	return { hueC: at(0), white: at(120), black: at(240) };
 }
 
-/** Barycentric weights of p w.r.t. triangle (a, b, c). Order matches corners. */
 function bary(p: Pt, a: Pt, b: Pt, c: Pt): [number, number, number] {
 	const v0x = b.x - a.x;
 	const v0y = b.y - a.y;
@@ -97,7 +73,6 @@ function closestOnSeg(p: Pt, a: Pt, b: Pt): Pt {
 	return { x: a.x + abx * t, y: a.y + aby * t };
 }
 
-/** Nearest point on/in the triangle (p itself if already inside). */
 function clampToTri(p: Pt, a: Pt, b: Pt, c: Pt): Pt {
 	const [wa, wb, wc] = bary(p, a, b, c);
 	if (wa >= 0 && wb >= 0 && wc >= 0) return p;
@@ -118,24 +93,17 @@ function clampToTri(p: Pt, a: Pt, b: Pt, c: Pt): Pt {
 	return best;
 }
 
-/** Normalised point → (s, v) via the SV triangle for the given hue. */
 function pointToSV(p: Pt, hue: number): { s: number; v: number } {
 	const { hueC, white, black } = triCorners(hue);
 	const q = clampToTri(p, hueC, white, black);
 	const weights = bary(q, hueC, white, black);
 	const wa = Math.max(0, weights[0]);
 	const wb = Math.max(0, weights[1]);
-	const v = clamp01(wa + wb); // 1 − blackWeight
+	const v = clamp01(wa + wb);
 	const s = v > 1e-4 ? clamp01(wa / v) : 0;
 	return { s, v };
 }
 
-/**
- * Repaint the triangle fill when the hue changes. A function modifier re-runs
- * on every invalidation of the tracked state its argument came from, not only
- * when the value differs (React's dependency array did the latter), so an s/v
- * drag would otherwise redraw 113k pixels per pointermove for the same hue.
- */
 const paintTriangle = modifier((canvas: HTMLCanvasElement, [hue]: [number]) => {
 	const painted = canvas as HTMLCanvasElement & { _hue?: number };
 	if (painted._hue === hue) return;
@@ -169,11 +137,10 @@ const paintTriangle = modifier((canvas: HTMLCanvasElement, [hue]: [number]) => {
 			const v2y = py + 0.5 - ay;
 			const d20 = v2x * v0x + v2y * v0y;
 			const d21 = v2x * v1x + v2y * v1y;
-			const wb = (d11 * d20 - d01 * d21) * inv; // white weight
-			const wc = (d00 * d21 - d01 * d20) * inv; // black weight
-			const wa = 1 - wb - wc; // pure-hue weight
-			if (wa < 0 || wb < 0 || wc < 0) continue; // outside → transparent
-			// colour = wa·hue + wb·white + wc·black (black contributes nothing)
+			const wb = (d11 * d20 - d01 * d21) * inv;
+			const wc = (d00 * d21 - d01 * d20) * inv;
+			const wa = 1 - wb - wc;
+			if (wa < 0 || wb < 0 || wc < 0) continue;
 			const i = (py * W + px) * 4;
 			data[i] = Math.round(wa * hr + wb * 255);
 			data[i + 1] = Math.round(wa * hg + wb * 255);
@@ -217,9 +184,7 @@ export default class TriangleMode extends Component<TriangleModeSignature> {
 			this.#drag = 'ring';
 		else return;
 		el.setPointerCapture(event.pointerId);
-		// Same bracket the shared pointer-area modifier applies: with the
-		// colour sink live every move streams a fill edit into the doc, so
-		// begin/commit coalesce the drag into ONE undo step.
+		// coalesce drag undo
 		beginTransient();
 		this.#write(nx, ny);
 	};
@@ -235,7 +200,7 @@ export default class TriangleMode extends Component<TriangleModeSignature> {
 	};
 
 	onPointerUp = (event: PointerEvent) => {
-		if (!this.#drag) return; // a press that hit neither ring nor triangle
+		if (!this.#drag) return;
 		this.#drag = null;
 		(event.currentTarget as HTMLElement).releasePointerCapture?.(
 			event.pointerId,
@@ -243,8 +208,6 @@ export default class TriangleMode extends Component<TriangleModeSignature> {
 		commitTransient();
 	};
 
-	// Custom pointer geometry (angle + barycentric) rather than the shared
-	// modifier, so the surface binds its own listeners.
 	surface = modifier((element: HTMLElement) => {
 		element.addEventListener('pointerdown', this.onPointerDown);
 		element.addEventListener('pointermove', this.onPointerMove);
@@ -270,7 +233,6 @@ export default class TriangleMode extends Component<TriangleModeSignature> {
 		};
 	});
 
-	/** Knob placements — pure functions of the current colour. */
 	get ringKnob() {
 		const conic = hueToConic(this.hue) / DEG;
 		return {
@@ -282,9 +244,9 @@ export default class TriangleMode extends Component<TriangleModeSignature> {
 	get triKnob() {
 		const { hsv } = this.args.colour;
 		const { hueC, white, black } = triCorners(this.hue);
-		const wa = hsv.s * hsv.v; // pure-hue weight
-		const wb = hsv.v * (1 - hsv.s); // white weight
-		const wc = 1 - hsv.v; // black weight
+		const wa = hsv.s * hsv.v;
+		const wb = hsv.v * (1 - hsv.s);
+		const wc = 1 - hsv.v;
 		return {
 			x: wa * hueC.x + wb * white.x + wc * black.x,
 			y: wa * hueC.y + wb * white.y + wc * black.y,
@@ -299,13 +261,10 @@ export default class TriangleMode extends Component<TriangleModeSignature> {
 				aria-label="HSV triangle"
 				{{this.surface}}
 			>
-				{{! hue ring — conic gradient masked to a donut }}
 				<div
 					class="sub-cp-ring"
 					aria-hidden="true"
 				></div>
-				{{! SV triangle fill (rotates with the hue); the buffer is 2× for
-					crisp edges, the CSS box pins it to the wrap }}
 				<canvas
 					class="sub-cp-tri"
 					aria-hidden="true"

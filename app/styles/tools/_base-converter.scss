@@ -1,14 +1,6 @@
-// Styles for the base-converter tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
 
-/* ── Base converter ──────────────────────────────────────────────────────── */
-
-/* The vendored tabs primitive carries no styles of its own yet, so the list and
-   the triggers are dressed here through the classes this tool passes in. */
+/* vendored tabs primitive ships without styles */
 .dt-bc-tabs {
 	display: grid;
 	gap: 1px;
@@ -45,7 +37,6 @@
 	border: 2px solid var(--border);
 }
 
-/* The tabs primitive makes the panel focusable, so the ring has to be visible. */
 .dt-bc-content:focus-visible {
 	outline: 2px solid var(--primary);
 	outline-offset: -2px;
@@ -55,8 +46,6 @@
 	display: block;
 	font-weight: crayon.font-weight("bold");
 }
-
-/* Converter table */
 
 .dt-bc-row {
 	display: flex;
@@ -161,16 +150,12 @@
 	font-size: crayon.font-size("sm");
 }
 
-/* Bit toggle */
-
 .dt-bc-bits {
 	padding: crayon.size(4);
 	border-top: 2px solid var(--border);
 }
 
-/* `.segmented` draws a 1px frame on all four edges; the row bleeds to the panel
-   edges instead, so the side rules would double the panel's own border. Both
-   classes are needed on the selector to outrank `.segmented` itself. */
+/* .segmented frame doubles panel border */
 .segmented.dt-bc-bit-grid {
 	margin-top: crayon.size(3);
 	margin-inline: crayon.size(-4);
@@ -211,8 +196,6 @@
 	}
 }
 
-/* Bitwise panel */
-
 .dt-bc-block {
 	padding: crayon.size(4);
 	border-bottom: 2px solid var(--border);
@@ -222,8 +205,7 @@
 	}
 }
 
-/* The option and reference grids bleed to the block's padding on three sides,
-   so only the top rule of `.segmented`'s frame is wanted. */
+/* only .segmented top rule needed; grids bleed to edges */
 .segmented.dt-bc-ops,
 .segmented.dt-bc-ref {
 	margin: crayon.size(3) crayon.size(-4) crayon.size(-4);
@@ -308,8 +290,6 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
-
-/* Reference */
 
 .segmented.dt-bc-ref {
 	grid-template-columns: repeat(2, 1fr);

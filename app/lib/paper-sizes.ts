@@ -1,5 +1,4 @@
-// Every `!` below is a regex capture group the match above proved present;
-// noUncheckedIndexedAccess cannot see that.
+// regex groups are verified
 const INCH_TO_MM = 25.4;
 
 export interface PaperSize {
@@ -470,8 +469,6 @@ export const paperSizeGroups: PaperGroup[] = [
 	},
 ];
 
-// Fraction formatting utilities
-
 const FRACTIONS: Record<number, string> = {
 	0: '',
 	0.125: '⅛',
@@ -486,9 +483,7 @@ const FRACTIONS: Record<number, string> = {
 export function formatFraction(inches: number): string {
 	const whole = Math.floor(inches);
 	const decimal = inches - whole;
-	// Find closest 1/8
 	const eighths = Math.round(decimal * 8) / 8;
-	// Check if it's within tolerance (0.01")
 	if (
 		Math.abs(decimal - eighths) < 0.01 &&
 		FRACTIONS[eighths] !== undefined
@@ -496,7 +491,6 @@ export function formatFraction(inches: number): string {
 		const frac = FRACTIONS[eighths];
 		return whole > 0 ? `${whole}${frac}` : frac || '0';
 	}
-	// Decimal fallback
 	return inches.toFixed(2);
 }
 
@@ -506,8 +500,6 @@ export function formatDimensions(size: PaperSize, unit: 'mm' | 'in'): string {
 	}
 	return `${formatFraction(size.widthIn)} × ${formatFraction(size.heightIn)}"`;
 }
-
-// Search utilities
 
 export type SearchResult =
 	| { type: 'name'; query: string }
@@ -519,7 +511,6 @@ export function parseSearchQuery(query: string): SearchResult {
 	const trimmed = query.trim().toLowerCase();
 	if (!trimmed) return { type: 'none' };
 
-	// Try pixels with DPI: "1920x1080 @ 300dpi" or "1920x1080 300dpi"
 	const pixelMatch = trimmed.match(
 		/^(\d+)\s*[x×]\s*(\d+)\s*[@]?\s*(\d+)\s*dpi$/i,
 	);
@@ -532,7 +523,6 @@ export function parseSearchQuery(query: string): SearchResult {
 		};
 	}
 
-	// Try dimensions with units: "210x297mm" or "8.5x11in" or "8.5 x 11""
 	const dimMatch = trimmed.match(
 		/^([\d.]+)\s*[x×]\s*([\d.]+)\s*(mm|in|"|'')?$/,
 	);
@@ -547,7 +537,7 @@ export function parseSearchQuery(query: string): SearchResult {
 				heightMm: h * 25.4,
 			};
 		}
-		// Default to mm, or if numbers look like inches (both < 50), treat as inches
+		// infer small inches
 		if (!unitStr && w < 50 && h < 50) {
 			return {
 				type: 'dimensions',
@@ -558,7 +548,6 @@ export function parseSearchQuery(query: string): SearchResult {
 		return { type: 'dimensions', widthMm: w, heightMm: h };
 	}
 
-	// Otherwise treat as name search
 	return { type: 'name', query: trimmed };
 }
 
@@ -576,7 +565,6 @@ function calculateSizeDistance(
 	targetWidthMm: number,
 	targetHeightMm: number,
 ): number {
-	// Euclidean distance in mm
 	const dw = size.widthMm - targetWidthMm;
 	const dh = size.heightMm - targetHeightMm;
 	return Math.sqrt(dw * dw + dh * dh);
@@ -606,7 +594,6 @@ export function findClosestSizes(
 			targetWidthMm,
 		);
 
-		// Use the better orientation
 		const useRotated = rotatedDistance < normalDistance;
 		const distance = Math.min(normalDistance, rotatedDistance);
 
@@ -625,7 +612,7 @@ export function findClosestSizes(
 	return withDistance.slice(0, limit);
 }
 
-/** Flat array of every paper size from all groups (deduplicated by id, first occurrence wins). */
+// first id wins
 const ALL_SIZES: PaperSize[] = (() => {
 	const seen = new Set<string>();
 	const result: PaperSize[] = [];
@@ -640,7 +627,6 @@ const ALL_SIZES: PaperSize[] = (() => {
 	return result;
 })();
 
-/** Look up a paper size by id across all groups. */
 export function findPaperSize(id: string): PaperSize | undefined {
 	return ALL_SIZES.find((s) => s.id === id);
 }

@@ -1,19 +1,4 @@
-/**
- * Filter factories (M3-4 Tier-0 + Tier-1): doc `Filter` instances → Fabric
- * filter objects, with ALL param→value scaling centralised here so the
- * registry's slider ranges (filters.ts) map to render values in one place.
- * Tier 0 = Fabric built-ins (verified against the installed 7.4.0 source:
- *   Brightness/Contrast/Saturation/Vibrance −1..1 · HueRotation rotation −1..1
- *   (×π rad) · Blur 0..1 relative (visual extent ≈ blur × 0.12 × min side) ·
- *   Noise ~0..255 (shader divides by 255) · Gamma [r,g,b] · Pixelate px).
- * Tier 1 = the custom shaders in filter-shaders.ts, which take PRE-NORMALISED
- * props (0–1 ranges, [r,g,b] 0–1 vec3s) — the scaling all happens here.
- *
- * Every registry type now renders; an unknown type returns null and simply
- * moves no pixels. Adding a renderer stays additive — one entry in FACTORIES.
- *
- * ⚠️ Imports Fabric — client-only, keep behind the ssr:false dynamic boundary.
- */
+// client-only fabric import
 
 import { filters as fabricFilters } from 'fabric';
 import type { FabricImage } from 'fabric';
@@ -35,8 +20,6 @@ import {
 } from './filter-shaders';
 import { ensureLut, getLoadedLut, isLutLook } from './lut-data';
 
-// Filter classes live under fabric's `filters` namespace (only the backends
-// are flat exports).
 const {
 	Blur,
 	Brightness,
@@ -54,10 +37,8 @@ const {
 	Vibrance,
 } = fabricFilters;
 
-/** Instance type of any Fabric filter, derived from where it's consumed. */
 export type FabricFilter = FabricImage['filters'][number];
 
-/** Diagonal-gain ColorMatrix (identity except per-channel RGB multipliers). */
 function gainMatrix(r: number, g: number, b: number): FabricFilter {
 	// prettier-ignore
 	return new ColorMatrix({ matrix: [
@@ -72,16 +53,11 @@ const kernel = (matrix: number[]) => () => new Convolute({ matrix });
 
 type Params = Record<string, number | string>;
 const num = (p: Params, key: string): number => Number(p[key]) || 0;
-/** "#rrggbb" → [r,g,b] 0–1 (what the custom shaders take as vec3 uniforms). */
 const vec3 = (p: Params, key: string, fallback: Vec3): Vec3 => {
 	const rgb = hexToRgb(String(p[key] ?? ''));
 	return rgb ? [rgb.r / 255, rgb.g / 255, rgb.b / 255] : fallback;
 };
 
-/**
- * One factory per renderable type. `size` is the source raster's pixel size —
- * needed only where a px-labelled slider meets a relative Fabric value (blur).
- */
 const FACTORIES: Record<
 	string,
 	(
@@ -89,9 +65,7 @@ const FACTORIES: Record<
 		size: { width: number; height: number },
 	) => FabricFilter | null
 > = {
-	// /200 not /100: Fabric adds brightness×255 and its contrast curve goes
-	// vertical near ±1, so a full slider maps to ±0.5 — anything hotter blows
-	// mid-grey to white by half-throw. QA-taste knob.
+	// fabric brightness uses /200
 	brightness: (p) =>
 		new Brightness({ brightness: num(p, 'amount') / 200 }),
 	contrast: (p) => new Contrast({ contrast: num(p, 'amount') / 200 }),
@@ -100,14 +74,10 @@ const FACTORIES: Record<
 	vibrance: (p) => new Vibrance({ vibrance: num(p, 'amount') / 100 }),
 	'hue-rotate': (p) =>
 		new HueRotation({ rotation: num(p, 'angle') / 180 }),
-	// Linear gain, ±2 stops across the slider (amount 50 = one stop) — SPEC §9
-	// says gain, not a tone curve. QA-taste knob: the /50 stop scale.
 	exposure: (p) => {
 		const gain = Math.pow(2, num(p, 'amount') / 50);
 		return gainMatrix(gain, gain, gain);
 	},
-	// Warm/cool linear R/B gain, NOT Kelvin (SPEC §9). ±0.25 channel swing at
-	// full slider — QA-taste knob.
 	temperature: (p) => {
 		const t = num(p, 'amount') / 100;
 		return gainMatrix(1 + 0.25 * t, 1, 1 - 0.25 * t);
@@ -123,9 +93,7 @@ const FACTORIES: Record<
 				num(p, 'blue') || 1,
 			],
 		}),
-	// Fabric Blur is relative to image size; its visual extent ≈ blur × 0.12 ×
-	// min(w,h) px (Blur.getBlurValue × sample spread), so this keeps the slider's
-	// px label honest per-image.
+	// fabric blur is relative
 	'gaussian-blur': (p, size) =>
 		new Blur({
 			blur: Math.min(
@@ -138,7 +106,6 @@ const FACTORIES: Record<
 						)),
 			),
 		}),
-	// Amount lerps the kernel identity→classic (t=1 is the textbook kernel).
 	sharpen: (p) => {
 		const t = num(p, 'amount') / 100;
 		return new Convolute({
@@ -163,7 +130,6 @@ const FACTORIES: Record<
 			blocksize: Math.max(2, Math.round(num(p, 'blockSize'))),
 		}),
 
-	// ── Tier-1 customs (filter-shaders.ts; props pre-normalised here) ──────────
 	levels: (p) =>
 		new SubstrataLevels({
 			inBlack: num(p, 'inBlack') / 255,
@@ -201,11 +167,6 @@ const FACTORIES: Record<
 			magentaGreen: num(p, 'magentaGreen') / 100,
 			yellowBlue: num(p, 'yellowBlue') / 100,
 		}),
-	// The look table lives beside the preset shelf (filters.ts) so each look is
-	// tuned in one place; an unknown preset id renders nothing rather than lying.
-	// LUT looks (lut-data.ts) load async: an unloaded strip kicks its fetch and
-	// renders nothing — the load bumps lutEpoch, filter-sync's signature flips,
-	// and the look pops in.
 	'film-sim': (p) => {
 		const preset = String(p.preset);
 		const intensity = num(p, 'intensity') / 100;
@@ -227,14 +188,8 @@ const FACTORIES: Record<
 	},
 };
 
-/** True when a registry type has a Tier-0 renderer (UI can flag pending ones). */
 export const isRenderableFilter = (type: string): boolean => type in FACTORIES;
 
-/**
- * Build the Fabric filter chain for a layer's doc stack, in stack order,
- * skipping disabled and not-yet-renderable entries. Missing params fall back to
- * the registry defaults, so the factory never guesses its own.
- */
 export function buildFabricFilters(
 	stack: readonly Filter[],
 	size: { width: number; height: number },

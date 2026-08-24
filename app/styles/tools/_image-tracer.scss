@@ -1,11 +1,4 @@
-// Styles for the image-tracer tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Image tracer ────────────────────────────────────────────────────────── */
 
 .dt-trace {
 	@include crayon.vstack(4);
@@ -41,7 +34,7 @@
 		);
 	}
 
-	/* the file input is visually hidden, so its focus ring has to land here */
+	/* ring for visually-hidden input */
 	&:focus-within {
 		border-color: var(--primary);
 		outline: 2px solid var(--primary);
@@ -61,8 +54,6 @@
 	color: var(--muted-foreground);
 	font-size: crayon.font-size("sm");
 }
-
-/* ── Toolbar ─────────────────────────────────────────────────────────────── */
 
 .dt-trace-bar {
 	display: flex;
@@ -134,8 +125,6 @@
 	}
 }
 
-/* ── Preview ─────────────────────────────────────────────────────────────── */
-
 .dt-trace-stage {
 	display: flex;
 	min-height: crayon.size(70);
@@ -162,8 +151,6 @@
 	color: var(--muted-foreground);
 	font-size: crayon.font-size("sm");
 }
-
-/* ── Action bar ──────────────────────────────────────────────────────────── */
 
 .dt-trace-actions {
 	display: flex;
@@ -220,8 +207,6 @@
 		opacity: 0.4;
 	}
 }
-
-/* ── Preset bar ──────────────────────────────────────────────────────────── */
 
 .dt-trace-presetbar {
 	display: flex;
@@ -334,10 +319,7 @@
 	}
 }
 
-/* ── Control panels ──────────────────────────────────────────────────────── */
-
-/* the two-class form is deliberate: .segmented lands later in app.scss and its
-   1px border would otherwise win against a single-class rule here */
+/* two-class specificity beats .segmented */
 .dt-trace > .dt-trace-grid {
 	border-width: 2px;
 }
@@ -401,14 +383,13 @@
 	align-items: center;
 	font-size: crayon.font-size("sm");
 
-	/* the Tooltip root is a block div; it sits inline beside the label here */
+	/* tooltip root is block */
 	[data-slot="tooltip"] {
 		display: inline-flex;
 	}
 }
 
-/* two classes, because the tool partials are @use'd above the chrome in
-   app.scss and a single class would lose the cascade to .dt-select-trigger */
+/* two classes beat .dt-select-trigger */
 .dt-trace-field .dt-select-trigger {
 	width: 100%;
 }
@@ -447,8 +428,6 @@
 .dt-trace-tip {
 	max-width: 200px;
 }
-
-/* ── Stepper ─────────────────────────────────────────────────────────────── */
 
 .dt-trace-stepper {
 	display: flex;
@@ -499,8 +478,6 @@
 	font-variant-numeric: tabular-nums;
 }
 
-/* ── Colour count card ───────────────────────────────────────────────────── */
-
 .dt-trace-card {
 	@include crayon.vstack(2);
 
@@ -549,8 +526,6 @@
 	line-height: 1;
 }
 
-/* ── Segmented pickers ───────────────────────────────────────────────────── */
-
 .dt-trace-strokes {
 	grid-template-columns: repeat(6, 1fr);
 }
@@ -592,13 +567,10 @@
 	background: currentcolor;
 }
 
-/* ── Advanced ────────────────────────────────────────────────────────────── */
-
 .dt-trace-advanced {
 	border: 2px solid var(--border);
 
-	/* the details element supplies the outer frame; this is the rule under
-	   the summary */
+	/* details supplies outer frame */
 	.dt-trace-grid {
 		border-width: 2px 0 0;
 	}

@@ -6,7 +6,6 @@ import { drawWaveform, type WaveformPeaks } from 'delphitools-v2/lib/audio';
 export interface WaveMinimapSignature {
 	Element: HTMLCanvasElement;
 	Args: {
-		/** full-file peaks — the overview never zooms */
 		peaks: WaveformPeaks;
 		duration: number;
 		viewStart: number;
@@ -15,16 +14,9 @@ export interface WaveMinimapSignature {
 	};
 }
 
-// A press-and-release narrower than this reads as a click: pan the current
-// window there instead of collapsing it.
+// click threshold seconds
 const DRAG_THRESHOLD_S = 0.02;
 
-/**
- * The overview strip over a zoomable waveform: the full clip with the
- * visible window marked. Drag selects a new window, a click pans the
- * window's centre, a double click resets to the whole clip. The Audio
- * Atlas and Audio Trimmer both mount one.
- */
 export default class WaveMinimap extends Component<WaveMinimapSignature> {
 	#dragging = false;
 	#anchorS = 0;
@@ -114,7 +106,6 @@ export default class WaveMinimap extends Component<WaveMinimapSignature> {
 		const now = this.#timeAt(canvas, event.clientX);
 		if (Math.abs(now - this.#anchorS) >= DRAG_THRESHOLD_S) return;
 
-		// A click: keep the window width, recentre it.
 		const width = this.args.viewEnd - this.args.viewStart;
 		if (width >= this.args.duration) return;
 		let from = now - width / 2;
@@ -127,7 +118,6 @@ export default class WaveMinimap extends Component<WaveMinimapSignature> {
 	};
 
 	<template>
-		{{! drag selects the zoom window; zoom buttons are the keyboard path }}
 		{{! template-lint-disable no-pointer-down-event-binding }}
 		<canvas
 			class="dt-wmm"

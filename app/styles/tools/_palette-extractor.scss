@@ -1,18 +1,10 @@
-// Styles for the palette-extractor tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
 
 @use "../crayon-config" as crayon;
-
-/* ── Palette extractor ───────────────────────────────────────────────────── */
 
 .dt-extract-frame {
 	border: 2px solid var(--border);
 }
 
-/* Empty state: the whole panel is the file input's label, so a click anywhere
-   opens the picker and a drop anywhere loads the file. */
 .dt-extract-drop {
 	display: block;
 	padding: crayon.size(8);
@@ -44,8 +36,6 @@
 	font-size: crayon.font-size("sm");
 }
 
-/* Swatch strip: full-bleed columns on a wide viewport, a grid once the columns
-   stop fitting. */
 .dt-extract-strip {
 	position: relative;
 	display: flex;
@@ -70,8 +60,7 @@
 		grid-template-columns: repeat(3, 1fr);
 	}
 
-	/* The re-extract pass blocks the main thread; the dim is the only feedback
-	   that it started. */
+	// main-thread block, no spinner feedback
 	&.is-busy {
 		opacity: 0.6;
 	}
@@ -94,7 +83,6 @@
 		flex: 1.5;
 	}
 
-	/* A grid cell cannot widen, so a tapped one lifts instead. */
 	.is-grid &.is-selected {
 		z-index: 1;
 		outline: 4px solid rgb(255 255 255 / 60%);
@@ -103,15 +91,12 @@
 		box-shadow: 0 25px 50px -12px rgb(0 0 0 / 25%);
 	}
 
-	/* Hover expands a column and reveals its copy button. A touch device has no
-	   hover, so there the selected state does both. */
 	.is-row:not(.is-touch) &:hover {
 		flex: 1.5;
 	}
 }
 
-/* Centred pill rather than a full-bleed overlay: the swatch around it is the
-   tap target that reveals it, so the button must not cover that. */
+// must not cover swatch tap target
 .dt-extract-swatch-copy {
 	@include crayon.hstack(2);
 
@@ -139,7 +124,7 @@
 		background 200ms,
 		transform 200ms;
 
-	/* Invisible and unclickable together, so a first tap reaches the swatch. */
+	// first tap must reach swatch
 	pointer-events: none;
 
 	.dt-icon {
@@ -186,7 +171,6 @@
 	}
 }
 
-/* Controls row: source thumbnail, strategy, re-extract, count. */
 .dt-extract-controls {
 	display: flex;
 	min-height: crayon.size(16);
@@ -308,7 +292,6 @@
 	font-weight: crayon.font-weight("bold");
 }
 
-/* Export + list blocks */
 .dt-extract-export,
 .dt-extract-list {
 	padding: crayon.size(4);

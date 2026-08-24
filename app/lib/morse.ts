@@ -1,5 +1,4 @@
-// ITU-R M.1677-1 section 1.1. The ! & ; _ $ codes are not in the
-// recommendation; they are the customary amateur-radio codes.
+// itu-r exception: !;&_$
 export const MORSE: Record<string, string> = {
 	A: '.-',
 	B: '-...',
@@ -75,7 +74,6 @@ export function encode(text: string): string {
 		.join(' / ');
 }
 
-/** Words of letter codes, with the alternative dit/dah glyphs normalised. */
 function words(morse: string): string[][] {
 	return morse
 		.trim()
@@ -103,7 +101,7 @@ export interface Timing {
 	ms: number;
 }
 
-// PARIS timing: 50 units per word, so one unit is 1200 / wpm ms.
+// paris: 50 units/word
 export function timings(morse: string, wpm: number): Timing[] {
 	const unit = 1200 / wpm;
 	const out: Timing[] = [];

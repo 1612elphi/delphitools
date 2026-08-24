@@ -1,11 +1,5 @@
-// Styles for the sci-calc tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
 
 @use "../crayon-config" as crayon;
-
-/* ── Scientific calculator ───────────────────────────────────────────────── */
 
 .dt-sci {
 	max-width: 28rem;
@@ -15,8 +9,6 @@
 .dt-sci-frame {
 	border: 2px solid var(--border);
 }
-
-/* Angle mode + history */
 
 .dt-sci-head {
 	display: flex;
@@ -83,8 +75,6 @@
 	}
 }
 
-/* Display */
-
 .dt-sci-display {
 	@include crayon.vstack(2);
 
@@ -149,8 +139,6 @@
 	}
 }
 
-/* History panel */
-
 .dt-sci-history {
 	max-height: crayon.size(48);
 	overflow-y: auto;
@@ -196,10 +184,7 @@
 	text-align: center;
 }
 
-/* Keypad */
-
-/* `.segmented` draws a 1px frame on all four edges; the panel border already
-   covers those, so both classes are on the selector to outrank it. */
+/* segmented frame would double panel border */
 .segmented.dt-sci-keypad {
 	grid-template-columns: repeat(5, 1fr);
 	border: 0;
@@ -278,7 +263,6 @@
 		}
 	}
 
-	/* The one double-height key: last column, spanning the final two rows. */
 	&.is-equals {
 		height: auto;
 		grid-row: span 2;
@@ -295,8 +279,6 @@
 		}
 	}
 }
-
-/* Constants picker */
 
 .dt-sci-constants {
 	width: 20rem;

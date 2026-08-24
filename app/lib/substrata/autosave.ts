@@ -1,13 +1,3 @@
-/**
- * Autosave + restore (M1-9). Best-effort local recovery cache — NOT the durable
- * source of truth (that's the exported file, §5). Debounced write of the active
- * doc to IndexedDB on every change; on load, restore the most-recently-updated
- * project and rehydrate its rasters. Secure-context only — no-ops over file://.
- *
- * Single-project autosave for now; the project manager (M5) builds on the same
- * projects store.
- */
-
 import { getDB } from './db';
 import { getSnapshot, subscribe } from './doc-store';
 import {
@@ -23,7 +13,6 @@ function hasIDB(): boolean {
 	return typeof indexedDB !== 'undefined';
 }
 
-/** Persistence writes are hard-gated on the opt-in preference. */
 function canPersist(): boolean {
 	return hasIDB() && getPersistenceEnabled();
 }
@@ -49,7 +38,6 @@ export function rasterHashes(layers: Layer[]): string[] {
 	return out;
 }
 
-/** Rehydrate a stored doc's rasters and forward-stamp it. */
 async function hydrateProject(doc: SubstrataDoc): Promise<SubstrataDoc> {
 	await Promise.all(
 		rasterHashes(doc.layers).map((h) => hydrateRaster(h)),
@@ -57,8 +45,6 @@ async function hydrateProject(doc: SubstrataDoc): Promise<SubstrataDoc> {
 	return stampLoadedDoc(doc);
 }
 
-/** Load the most-recently-updated project + rehydrate its rasters, or null.
- *  Only when the user has opted into local storage. */
 export async function loadLatestProject(): Promise<SubstrataDoc | null> {
 	if (!canPersist()) return null;
 	const rec = await getDB().projects.orderBy('updatedAt').last();
@@ -71,7 +57,6 @@ export interface RecentProject {
 	updatedAt: number;
 }
 
-/** Newest-first project rows for the Scene ▸ Open-recent list. */
 export async function listRecentProjects(limit = 6): Promise<RecentProject[]> {
 	if (!canPersist()) return [];
 	const recs = await getDB()
@@ -86,14 +71,12 @@ export async function listRecentProjects(limit = 6): Promise<RecentProject[]> {
 	}));
 }
 
-/** Load one stored project by id (rasters rehydrated), or null. */
 export async function loadProject(id: string): Promise<SubstrataDoc | null> {
 	if (!canPersist()) return null;
 	const rec = await getDB().projects.get(id);
 	return rec ? hydrateProject(rec.doc) : null;
 }
 
-/** On opt-in: persist the current scene + all its rasters so a reload restores. */
 export async function persistAll(doc: SubstrataDoc): Promise<void> {
 	if (!canPersist()) return;
 	await Promise.all(
@@ -102,7 +85,6 @@ export async function persistAll(doc: SubstrataDoc): Promise<void> {
 	await saveProject(doc);
 }
 
-/** On opt-out: purge the local copy so turning storage off leaves no trace. */
 export async function clearPersistedData(): Promise<void> {
 	if (!hasIDB()) return;
 	const db = getDB();
@@ -114,9 +96,6 @@ export async function clearPersistedData(): Promise<void> {
 	]);
 }
 
-/** Recovery snapshots (M5, ratified 2026-07-07: retention ~20 on the same
- *  debounce). Insurance against a corrupted latest-project write — no UI yet
- *  (ponytail: recovery surface is a later nicety; the data is what matters). */
 const SNAPSHOT_KEEP = 20;
 
 async function saveSnapshot(doc: SubstrataDoc): Promise<void> {
@@ -141,7 +120,6 @@ async function saveSnapshot(doc: SubstrataDoc): Promise<void> {
 	}
 }
 
-/** Subscribe to the doc store and persist (debounced). Returns a stop fn. */
 export function startAutosave(debounceMs = 800): () => void {
 	let timer: ReturnType<typeof setTimeout> | null = null;
 	const flush = () => {

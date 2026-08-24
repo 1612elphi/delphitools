@@ -1,20 +1,10 @@
-// Styles for the unit-converter tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Unit converter ──────────────────────────────────────────────────────── */
 
 .dt-uc {
 	@include crayon.vstack(3);
 }
 
-/* The vendored tabs primitive carries no styles of its own yet, so the list and
-   the triggers are dressed here through the classes this tool passes in.
-   Seven categories in one row is unreadable on a phone, so the row wraps to two
-   below the small breakpoint; the Next app kept all seven and let them squeeze. */
+// vendored tabs primitive has no styles; row wraps below sm breakpoint
 .dt-uc-tabs {
 	display: grid;
 	gap: 1px;

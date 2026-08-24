@@ -38,11 +38,10 @@ function near(assert: Assert, actual: number, expected: number, what: string) {
 	);
 }
 
-/** Round for deepEqual on point lists; `+ 0` folds -0 so 0 compares equal. */
+/** +0 folds -0 so deepEqual on point lists compares 0 equal */
 const r6 = (n: number) => Math.round(n * 1e6) / 1e6 + 0;
 const xy = (pts: readonly Pt[]) => pts.map((p) => [r6(p.x), r6(p.y)]);
 
-/** Shortest signed distance between two bearings, degrees. */
 function angleGap(a: number, b: number): number {
 	return ((((a - b) % 360) + 540) % 360) - 180;
 }
@@ -60,11 +59,7 @@ const PATH_ARGS: Record<string, number> = {
 	z: 0,
 };
 
-/**
- * Absolute endpoint of every command in an SVG path d. Curve control points
- * are ignored, so this is a subset of the real bbox — enough to catch a path
- * that is off the grid or truncated, and it needs no DOM to measure.
- */
+/** svg path absolute endpoints; control points ignored, so bbox subset */
 function pathEndpoints(d: string): Pt[] {
 	const tokens = d.match(/[A-Za-z]|-?\d*\.?\d+/g) ?? [];
 	const pts: Pt[] = [];
@@ -109,7 +104,7 @@ function pathEndpoints(d: string): Pt[] {
 			}
 		}
 		pts.push({ x, y });
-		// a repeated moveto argument pair is an implicit lineto
+		// svg spec: extra moveto args are implicit lineto
 		if (key === 'm') cmd = relative ? 'l' : 'L';
 	}
 	return pts;
@@ -117,9 +112,7 @@ function pathEndpoints(d: string): Pt[] {
 
 module('Unit | Substrata | geometry', function () {
 	module('shape-geometry', function () {
-		// The -PI/2 start and the sign of the step are the whole convention:
-		// first vertex straight up, then clockwise in y-down screen space. A
-		// port that dropped the offset would render every polygon rotated.
+		// -pi/2 start, clockwise in y-down: dropping offset rotates every polygon
 		test('a four-sided polygon is a diamond with its first vertex up', function (assert) {
 			assert.deepEqual(xy(polygonPoints(4, 100)), [
 				[0, -100],
@@ -165,14 +158,11 @@ module('Unit | Substrata | geometry', function () {
 			assert.strictEqual(polygonPoints(2, 10).length, 3);
 			assert.strictEqual(polygonPoints(0, 10).length, 3);
 			assert.strictEqual(polygonPoints(-5, 10).length, 3);
-			// a star of n points is 2n vertices, so the same clamp doubles
 			assert.strictEqual(starPoints(2, 10, 5).length, 6);
 			assert.strictEqual(starPoints(5, 10, 5).length, 10);
 		});
 
-		// sync.ts assigns this array straight onto a fabric Polygon, which
-		// mutates points in place (setDimensions). A memoised return would let
-		// one layer's fabric object rewrite every other polygon's geometry.
+		// fabric Polygon.setDimensions mutates points in place; memoised return would corrupt
 		test('polygon points are a fresh array every call', function (assert) {
 			const a = polygonPoints(6, 40);
 			const b = polygonPoints(6, 40);
@@ -226,8 +216,7 @@ module('Unit | Substrata | geometry', function () {
 			);
 		});
 
-		// Documented as one-dimensional. Align/distribute divides by these, so
-		// a port that clamped height to 1 "to be safe" would shift every line.
+		// align/distribute divides by these; clamping height to 1 shifts lines
 		test('a line has zero height', function (assert) {
 			assert.deepEqual(
 				shapeDims({ shape: 'line', length: 80 }),
@@ -238,8 +227,7 @@ module('Unit | Substrata | geometry', function () {
 			);
 		});
 
-		// The vertex bbox, not the circumscribed circle: a triangle on a flat
-		// bottom is 2r*cos30 wide and r + r*sin30 tall, so 150 not 200.
+		// vertex bbox not circumscribed circle; triangle 2r*cos30 wide, r(1+sin30) tall
 		test('polygon dims are the vertex bbox, not the circle', function (assert) {
 			const tri = shapeDims({
 				shape: 'polygon',
@@ -254,7 +242,7 @@ module('Unit | Substrata | geometry', function () {
 			);
 			near(assert, tri.height, 150, 'triangle height');
 
-			// pentagon: 2r*sin72 across the widest pair, r*(1 + cos36) tall
+			// pentagon 2r*sin72 wide, r*(1+cos36) tall
 			const pent = shapeDims({
 				shape: 'polygon',
 				sides: 5,
@@ -268,7 +256,6 @@ module('Unit | Substrata | geometry', function () {
 				'pentagon height',
 			);
 
-			// a square's vertices reach the circle on both axes
 			assert.deepEqual(
 				shapeDims({
 					shape: 'polygon',
@@ -291,9 +278,7 @@ module('Unit | Substrata | geometry', function () {
 			);
 		});
 
-		// Deliberate asymmetry with polygon/star: a symbol reports the whole
-		// 256 grid, not the glyph's own bbox, because sync.ts maps the grid
-		// onto the dragged box (width / SYMBOL_GRID).
+		// symbol reports 256 grid not glyph bbox; sync.ts maps grid onto drag box
 		test('a symbol reports its grid box', function (assert) {
 			assert.deepEqual(
 				shapeDims({
@@ -332,9 +317,7 @@ module('Unit | Substrata | geometry', function () {
 			});
 		});
 
-		// The outline, not the input: a 100px stroke of size 8 measures 8 tall
-		// and ~108 wide because the round cap adds half the width at each end.
-		// Measuring rawPoints instead would give 100 x 0.
+		// round cap adds half width each end; rawPoints would give 100×0
 		test('layerDims measures a freehand outline, not its raw points', function (assert) {
 			const options = {
 				size: 8,
@@ -382,8 +365,7 @@ module('Unit | Substrata | geometry', function () {
 			});
 		});
 
-		// Null is the signal align/distribute and the inspector use to skip a
-		// layer; 0 x 0 would look like a real, collapsible size.
+		// null signals skip; 0×0 would look like a real size
 		test('text and group have no intrinsic dims', function (assert) {
 			const text = createTextLayer({
 				name: 't',
@@ -464,8 +446,7 @@ module('Unit | Substrata | geometry', function () {
 			);
 		});
 
-		// Inclusive: exactly one threshold away still snaps. The pair either
-		// side of the boundary is what catches a < / <= flip.
+		// pair either side of boundary catches </<= flip
 		test('the threshold is inclusive', function (assert) {
 			const field = { v: [500], h: [] };
 			const at = computeSnap(
@@ -485,10 +466,9 @@ module('Unit | Substrata | geometry', function () {
 			assert.deepEqual(past.v, [], 'and draws no guide');
 		});
 
-		// Left/centre/right all probe; the nearest one wins even though the
-		// centre is what the caller thinks of as the object's position.
+		// nearest of left/centre/right wins
 		test('an edge wins over the centre when it is nearer', function (assert) {
-			// centre 300 is 5 from line 305, right edge 350 is 2 from line 352
+			// centre 300 → 305 is 5; right edge 350 → 352 is 2
 			const result = computeSnap(
 				{ x: 300, y: 0, w: 100, h: 0 },
 				{ v: [305, 352], h: [] },
@@ -500,7 +480,7 @@ module('Unit | Substrata | geometry', function () {
 		});
 
 		test('an equal-distance tie goes to the earlier probe', function (assert) {
-			// left edge 50 -> 55 and centre 100 -> 105 are both +5
+			// left edge 50→55 and centre 100→105 are both +5
 			const result = computeSnap(
 				{ x: 100, y: 0, w: 100, h: 0 },
 				{ v: [55, 105], h: [] },
@@ -511,8 +491,7 @@ module('Unit | Substrata | geometry', function () {
 			assert.deepEqual(result.v, [55], 'the left edge line');
 		});
 
-		// A box already on a line reports the guide with a zero delta, so the
-		// overlay keeps drawing while the object rests there.
+		// zero-delta reports guide so overlay keeps drawing
 		test('an aligned box still reports its guides', function (assert) {
 			assert.deepEqual(
 				computeSnap(
@@ -538,7 +517,7 @@ module('Unit | Substrata | geometry', function () {
 		});
 
 		test('the grid snaps on its own, with no candidate lines', function (assert) {
-			// probes 253/303/353 are all 3 past a multiple of 10; first wins
+			// probes 253/303/353 are 3 past a multiple of 10
 			assert.deepEqual(
 				computeSnap(
 					{ x: 303, y: 303, w: 100, h: 50 },
@@ -551,7 +530,7 @@ module('Unit | Substrata | geometry', function () {
 		});
 
 		test('the nearer of grid and candidate line wins', function (assert) {
-			// left edge 250 is on the grid and 2 from line 252
+			// left edge 250 on grid, 2 from line 252
 			assert.deepEqual(
 				computeSnap(
 					{ x: 300, y: 0, w: 100, h: 0 },
@@ -562,8 +541,7 @@ module('Unit | Substrata | geometry', function () {
 				[250],
 				'grid beats the line',
 			);
-			// left edge 250 is on the grid, but the centre is on line 300...
-			// which is also a grid multiple, so move the line off the grid
+			// centre 300 is on both grid and line; move line off grid
 			assert.deepEqual(
 				computeSnap(
 					{ x: 304, y: 0, w: 100, h: 0 },
@@ -588,15 +566,14 @@ module('Unit | Substrata | geometry', function () {
 			}
 		});
 
-		// The correction has to land a probe exactly on the line it reports,
-		// or the object comes to rest beside the guide it drew.
+		// correction must land probe on reported line else object rests off-guide
 		test('applying the correction puts a probe on the reported line', function (assert) {
 			const field = buildSnapField(ARTBOARD, [
 				{ x: 320, y: 240, w: 80, h: 40 },
 			]);
 			for (let x = 200; x < 260; x += 0.5) {
 				const box: SnapBox = { x, y: 0, w: 100, h: 0 };
-				// grid 10 with threshold 8 means every position snaps
+				// grid 10 threshold 8 → every position snaps
 				const result = computeSnap(box, field, 10, 8);
 				assert.true(
 					Math.abs(result.dx) <= 8,
@@ -639,9 +616,7 @@ module('Unit | Substrata | geometry', function () {
 			);
 		});
 
-		// The |cos| + |sin| length is the point of the whole function: with a
-		// plain unit vector 45 degrees would stop at 0.146/0.854 and leave the
-		// corners flat.
+		// |cos|+|sin| length: unit vector stops 45° at 0.146/0.854, corners flat
 		test('45 degrees runs corner to corner', function (assert) {
 			assert.deepEqual(angleToCoords(45), {
 				x1: 0,
@@ -651,8 +626,7 @@ module('Unit | Substrata | geometry', function () {
 			});
 		});
 
-		// Same length rule, seen from the far end: the widest overshoot is at
-		// 22.5 degrees, 0.5 + (1 + sqrt2)/4 = 1.1036 -> 1.104 at three places.
+		// widest overshoot 22.5°: 0.5+(1+√2)/4=1.1036, rounds 1.104
 		test('oblique angles overshoot the unit box by at most 0.104', function (assert) {
 			assert.deepEqual(angleToCoords(22.5), {
 				x1: -0.104,
@@ -691,8 +665,7 @@ module('Unit | Substrata | geometry', function () {
 			}
 		});
 
-		// Rounding a tiny negative yields -0, which survives into the stored
-		// doc and prints as "-0" wherever the coords are shown raw.
+		// rounding tiny negative yields -0; prints as "-0" when shown raw
 		test('a rounded-away negative comes out as positive zero', function (assert) {
 			assert.true(
 				Object.is(angleToCoords(180).x2, 0),
@@ -723,8 +696,7 @@ module('Unit | Substrata | geometry', function () {
 			assert.deepEqual(angleToCoords(720), angleToCoords(0));
 		});
 
-		// The outer % 360 is what stops a hair under 360 rounding up to 360,
-		// which the angle stepper would then show as an out-of-range value.
+		// outer % 360 else a hair under 360 rounds to 360 and stepper shows out-of-range
 		test('coordsToAngle never returns 360', function (assert) {
 			assert.strictEqual(
 				coordsToAngle({
@@ -805,8 +777,7 @@ module('Unit | Substrata | geometry', function () {
 			assert.strictEqual(presetShape(''), undefined);
 		});
 
-		// sync.ts falls back to "M0,0" for a d it cannot use, so a truncated
-		// vendored string renders an invisible layer rather than throwing.
+		// sync.ts falls back to M0,0 on bad d; truncated string → invisible layer not throw
 		test('every path is one closed d string', function (assert) {
 			for (const shape of PRESET_SHAPES) {
 				assert.true(
@@ -820,8 +791,7 @@ module('Unit | Substrata | geometry', function () {
 			}
 		});
 
-		// sync.ts scales symbols by width / SYMBOL_GRID with no translation,
-		// so a path drawn off the 0-256 grid lands outside the dragged box.
+		// sync.ts scales by width/SYMBOL_GRID no translation; off-grid path lands outside box
 		test('every path is drawn on the 256 grid and fills most of it', function (assert) {
 			assert.strictEqual(SYMBOL_GRID, 256);
 			for (const shape of PRESET_SHAPES) {

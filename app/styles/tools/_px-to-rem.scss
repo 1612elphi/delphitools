@@ -1,11 +1,4 @@
-// Styles for the px-to-rem tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── PX to REM ───────────────────────────────────────────────────────────── */
 
 .dt-ptr {
 	border: 2px solid var(--border);

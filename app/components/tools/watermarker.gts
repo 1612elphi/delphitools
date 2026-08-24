@@ -7,11 +7,7 @@ import DownloadLabel from 'delphitools-v2/components/download-label';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import { downloadUrl } from 'delphitools-v2/lib/download';
 
-/**
- * The base image is redrawn at full resolution and re-encoded to a data URL on
- * every slider step, so a drag would otherwise queue one full pass per input
- * event.
- */
+// full res re-encode per input
 const RENDER_DEBOUNCE_MS = 120;
 
 const LOAD_FAILED = 'Image could not be read. Try another file?';
@@ -21,11 +17,7 @@ export type Position =
 
 export type BlendMode = 'normal' | 'multiply' | 'screen' | 'overlay';
 
-/**
- * Canvas has no `normal` composite operation. The Next app assigned the raw
- * mode name and relied on the spec's "ignore an unparseable value", which left
- * the default in place; this states the default instead.
- */
+// canvas: 'normal' invalid, use source-over
 const COMPOSITE: Record<BlendMode, GlobalCompositeOperation> = {
 	normal: 'source-over',
 	multiply: 'multiply',
@@ -40,7 +32,7 @@ export const BLEND_MODES: { id: BlendMode; label: string }[] = [
 	{ id: 'overlay', label: 'Overlay' },
 ];
 
-/** The arrows are the Next app's labels; `name` is for screen readers. */
+// arrows visual, name = a11y
 export const POSITIONS: { id: Position; label: string; name: string }[] = [
 	{ id: 'tl', label: '↖', name: 'Top left' },
 	{ id: 'tc', label: '↑', name: 'Top centre' },
@@ -62,18 +54,15 @@ export interface Placement {
 
 export interface PlacementOptions {
 	position: Position;
-	/** Watermark width as a percentage of the base width. */
+	/** % of base width */
 	scale: number;
-	/** Inset from each edge as a percentage of the base dimension. */
+	/** % inset per edge */
 	padding: number;
-	/** Fractions in 0–1, used only when position is `random`. */
+	/** 0–1, only when random */
 	random: { x: number; y: number };
 }
 
-/**
- * Where the watermark lands on the base image, in base-image pixels. The
- * watermark keeps its own aspect ratio; only its width is driven by `scale`.
- */
+// base-image px; aspect kept; scale → width only
 export function watermarkPlacement(
 	baseWidth: number,
 	baseHeight: number,
@@ -177,10 +166,7 @@ export default class WatermarkerTool extends Component {
 		}));
 	}
 
-	/**
-	 * Decodes into an `Image` up front, so the render pass is synchronous and
-	 * a slider drag does not re-decode both files per frame.
-	 */
+	// pre-decode so render is sync
 	#load(
 		file: File,
 		onReady: (image: HTMLImageElement, url: string) => void,
@@ -195,8 +181,7 @@ export default class WatermarkerTool extends Component {
 				onReady(image, url);
 				this.queueRender();
 			};
-			// The Next version left a failed decode silent: the drop zone stayed
-			// up and no preview ever appeared.
+			// surface decode failure
 			image.onerror = this.fail;
 			image.src = url;
 		};
@@ -225,7 +210,7 @@ export default class WatermarkerTool extends Component {
 		});
 	};
 
-	/** A paste fills the empty slot: base first, watermark once that is set. */
+	// paste fills base first
 	readPasted = (file: File) => {
 		if (this.baseUrl) this.readMark(file);
 		else this.readBase(file);
@@ -235,7 +220,7 @@ export default class WatermarkerTool extends Component {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) this.readBase(file);
-		// Choosing the same file twice must still fire a change event.
+		// same file twice still fires change
 		input.value = '';
 	};
 
@@ -258,7 +243,7 @@ export default class WatermarkerTool extends Component {
 		if (file?.type.startsWith('image/')) this.readMark(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// else browser navigates to file
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -388,7 +373,6 @@ export default class WatermarkerTool extends Component {
 				<div class="dt-wm-slots">
 					<div class="dt-wm-slot">
 						<div class="dt-wm-slot-head">
-							{{! wording carried over from the Next app }}
 							<span>Base Image</span>
 						</div>
 						{{#if this.baseUrl}}
@@ -446,11 +430,9 @@ export default class WatermarkerTool extends Component {
 								<Icon
 									@name="upload"
 								/>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-wm-drop-title"
 								>Drop image here</span>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-wm-drop-hint"
 								>or click to
@@ -461,7 +443,6 @@ export default class WatermarkerTool extends Component {
 
 					<div class="dt-wm-slot">
 						<div class="dt-wm-slot-head">
-							{{! wording carried over from the Next app }}
 							<span>Watermark (PNG)</span>
 						</div>
 						{{#if this.markUrl}}
@@ -519,12 +500,10 @@ export default class WatermarkerTool extends Component {
 								<Icon
 									@name="upload"
 								/>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-wm-drop-title"
 								>Drop watermark
 									here</span>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-wm-drop-hint"
 								>transparent PNG</span>
@@ -535,7 +514,6 @@ export default class WatermarkerTool extends Component {
 
 				{{#unless this.bothLoaded}}
 					<p class="dt-wm-hint">
-						{{! wording carried over from the Next app }}
 						Paste an image to load it
 						directly.
 					</p>
@@ -552,7 +530,6 @@ export default class WatermarkerTool extends Component {
 			{{#if this.bothLoaded}}
 				<div class="dt-wm-frame">
 					<div class="dt-wm-section">
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-wm-label"
 						>Position</span>
@@ -606,7 +583,6 @@ export default class WatermarkerTool extends Component {
 
 					<div class="dt-wm-sliders">
 						<div class="dt-wm-slider">
-							{{! wording carried over from the Next app }}
 							<label
 								for="dt-wm-opacity"
 							>Opacity</label>
@@ -628,7 +604,6 @@ export default class WatermarkerTool extends Component {
 						</div>
 
 						<div class="dt-wm-slider">
-							{{! wording carried over from the Next app }}
 							<label
 								for="dt-wm-size"
 							>Size</label>
@@ -650,7 +625,6 @@ export default class WatermarkerTool extends Component {
 						</div>
 
 						<div class="dt-wm-slider">
-							{{! wording carried over from the Next app }}
 							<label
 								for="dt-wm-padding"
 							>Padding</label>
@@ -673,7 +647,6 @@ export default class WatermarkerTool extends Component {
 					</div>
 
 					<div class="dt-wm-section">
-						{{! wording carried over from the Next app }}
 						<span class="dt-wm-label">Blend
 							Mode</span>
 						<div
@@ -708,7 +681,6 @@ export default class WatermarkerTool extends Component {
 							<div
 								class="dt-wm-slot-head"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 								>Preview</span>
 							</div>

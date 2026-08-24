@@ -14,7 +14,6 @@ import {
 import { RELEASES, type Release } from 'delphitools-v2/lib/changelog';
 import { allTools, type Tool } from 'delphitools-v2/lib/tools';
 
-// wording dictated by Ruby verbatim
 const PILL_TEXT = "what's new?";
 
 const TOOLS_BY_NAME = new Map(
@@ -23,13 +22,11 @@ const TOOLS_BY_NAME = new Map(
 
 interface Entry {
 	line: string;
-	/** set when the text before the first colon names a catalogue tool */
 	tool?: Tool;
 	lead: string;
 	rest: string;
 }
 
-/** "Name: text" entries whose name is a tool get a badge and a link. */
 function parse(line: string): Entry {
 	const colon = line.indexOf(': ');
 	if (colon === -1) return { line, lead: line, rest: '' };
@@ -40,11 +37,6 @@ function parse(line: string): Entry {
 
 const entries = (lines: string[]) => lines.map(parse);
 
-/**
- * The standing changelog pill beside the 2.0 welcome pill. The content is
- * lib/changelog.ts, all of it Ruby's wording; the title's version picker
- * chooses the release.
- */
 export default class ChangelogPopup extends Component {
 	@tracked release: Release = RELEASES[0]!;
 
@@ -67,7 +59,6 @@ export default class ChangelogPopup extends Component {
 				{{PILL_TEXT}}
 			</button>
 			<d.Content class="dt-wn dt-cl">
-				{{! title wording dictated by Ruby verbatim }}
 				<h2 class="dt-cl-title">
 					What's new in version
 					<select

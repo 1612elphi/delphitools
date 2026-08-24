@@ -53,26 +53,7 @@ import type {
 } from 'delphitools-v2/lib/substrata/doc-model';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 
-/**
- * The one context menu (right-click; Ruby 2026-07-03), mounted by the shell
- * and opened by any surface via the context-menu store. Two bodies: LAYER
- * (canvas hit / panel row — acts on the target ids) and CANVAS (blank space —
- * paste/place at the scene point, view + guides + canvas actions). Item labels
- * are standard editor vocabulary = functional chrome (BLEND_OPTIONS precedent).
- *
- * PORT NOTE: the source anchors the vendored Popover to a zero-size "virtual
- * point" span at the click coordinates (PopoverAnchor asChild), relying on
- * Radix's anchor-overrides-trigger positioning. The Ember Popover port
- * (components/ui/popover.gts) never wires PopoverAnchor into the
- * floating-ui trigger element at all — only PopoverTrigger does — so a
- * coordinate-anchored menu never resolves through it (positionContent bails
- * out on a null triggerElement). This is a plain `position: fixed` div
- * instead, driven directly by the context-menu store and positioned with the
- * same floating-ui middleware (offset/flip/shift) against a virtual
- * reference element, with `ember-click-outside` + an Escape listener for
- * dismissal — the same behaviour, without depending on the primitive's
- * trigger-anchored assumption.
- */
+// ember popover lacks anchors
 export class LayerContextMenu extends Component {
 	menu = new TrackedExternal(subscribeLayerMenu, getLayerMenu);
 	doc = new TrackedExternal(subscribe, getSnapshot);
@@ -109,10 +90,6 @@ export class LayerContextMenu extends Component {
 
 	preventContextMenu = (event: Event) => event.preventDefault();
 
-	// Portal-free virtual-point anchor: a zero-size floating-ui reference at
-	// the click coordinates, flip/shift-collided against the viewport like the
-	// source's PopoverContent. Re-runs whenever the menu store hands it a new
-	// state object (open, or repositioned by a second right-click).
 	position = modifier(
 		(element: HTMLElement, [menu]: [MenuState | null]) => {
 			if (!menu) return;
@@ -192,9 +169,6 @@ interface LayerMenuBodySignature {
 }
 
 class LayerMenuBody extends Component<LayerMenuBodySignature> {
-	// Group when the selection shares ONE sibling list (the panel-footer rule);
-	// ordering shares the same constraint.
-	// several findLayer walks per call, ~11 template read-sites
 	@cached
 	get data(): LayerMenuData | null {
 		const { menu, doc } = this.args;
@@ -213,8 +187,6 @@ class LayerMenuBody extends Component<LayerMenuBodySignature> {
 			ids.every((id) => list.some((l) => l.id === id));
 		const canGroup = ids.length >= 2 && sameSiblings;
 		const canUngroup = ids.length === 1 && isGroup(primary);
-		// Rasterize (M3-15): bake vector/text content so the raster pipelines
-		// (filters/effects, SELECT cut) apply. Standard vocabulary chrome.
 		const rasterizableIds = ids.filter((id) => {
 			const l = findLayer(doc.layers, id);
 			return l !== null && canRasterize(l);
@@ -454,7 +426,6 @@ class CanvasMenuBody extends Component<CanvasMenuBodySignature> {
 		closeLayerMenu();
 	};
 
-	// toggles stay open — the checkmark is the feedback
 	onToggleGrid = () => toggleGuide('grid');
 	onToggleSnap = () => toggleGuide('snap');
 
@@ -531,12 +502,11 @@ interface ItemSignature {
 	Args: {
 		icon: string;
 		label: string;
-		/** keyboard combo, shown right-aligned — only for combos the keymap delivers */
 		hint?: string;
 		onClick: () => void;
 		disabled?: boolean;
 		destructive?: boolean;
-		/** menu-toggle rows (Grid/Snap): renders role=menuitemcheckbox + the check glyph */
+		/** checkbox menu role */
 		isToggle?: boolean;
 		checked?: boolean;
 	};

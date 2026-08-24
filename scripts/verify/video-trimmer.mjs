@@ -1,9 +1,3 @@
-// Exercises Video Trimmer with a webm generated in the page (canvas +
-// oscillator through MediaRecorder): an exact cut (re-encode) and a keyframe
-// cut (packet copy), each decoded back to check its length.
-//
-// Usage: npm start, then node scripts/verify/video-trimmer.mjs
-
 import {
 	launch,
 	visit,

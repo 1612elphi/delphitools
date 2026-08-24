@@ -1,4 +1,4 @@
-// fabric-canvas wrap + overlay chrome, and the pixel-selection popup.
+// canvas wrap + overlay chrome
 
 .sub-canvas-wrap {
 	position: relative;
@@ -9,7 +9,6 @@
 	min-block-size: 0;
 }
 
-// the graffiti wordmark tiled across the void, theme-aware via mask
 .sub-canvas-wordmark {
 	pointer-events: none;
 	position: absolute;
@@ -33,7 +32,6 @@
 	}
 }
 
-// ── pixel-selection popup ──────────────────────────────────────────────────
 .sub-selpop {
 	position: absolute;
 	z-index: 30;

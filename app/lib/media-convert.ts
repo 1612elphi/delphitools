@@ -1,15 +1,10 @@
-// Remux, burn, trim and extract through mediabunny: one `runConversion` for
-// the Conversion-based actions, a manual packet copy for the keyframe trim.
-// Cancellation is the platform's: an aborted signal rejects with AbortError.
 import {
 	loadMediabunny,
 	openInput,
 	type Container,
 } from 'delphitools-v2/lib/media-probe';
 
-// Structural views of mediabunny's Conversion and Output: Conversion has a
-// private constructor and Output is generic over its target, so InstanceType
-// cannot name either.
+// mediabunny classes require structural types
 interface ConversionLike {
 	readonly isValid: boolean;
 	readonly discardedTracks: readonly {
@@ -56,7 +51,6 @@ async function outputFormat(id: Container) {
 	}
 }
 
-/** the containers that can carry this video codec as-is, no re-encode */
 export async function containerSupport(
 	codec: string | null,
 ): Promise<Record<Container, boolean>> {
@@ -86,10 +80,6 @@ function outputBlob(output: BufferOutput, type: string): Blob {
 	return new Blob([buffer], { type });
 }
 
-/**
- * Validity check, progress, abort wiring and execution shared by every
- * Conversion-based action. Rejects with AbortError when `signal` aborts.
- */
 async function runConversion(
 	conversion: ConversionLike,
 	output: BufferOutput,
@@ -112,8 +102,7 @@ async function runConversion(
 		() => void conversion.cancel(),
 		{ once: true },
 	);
-	// mediabunny rejects with its own ConversionCanceledError on cancel; the
-	// contract here is the platform's AbortError.
+	// converts cancellation to aborterror
 	try {
 		await conversion.execute();
 	} catch (error) {
@@ -127,10 +116,6 @@ async function runConversion(
 const ext = (format: { fileExtension: string }) =>
 	format.fileExtension.replace(/^\./, '');
 
-/**
- * Rewrites the file into `container` without its audio tracks. Video packets
- * are copied, not re-encoded; pick a container `containerSupport` allows.
- */
 export async function muteVideo(
 	file: File,
 	container: Container,
@@ -158,7 +143,6 @@ export async function muteVideo(
 export const BURN_CODECS = ['avc', 'hevc', 'vp9', 'vp8', 'av1'] as const;
 export type BurnCodec = (typeof BURN_CODECS)[number];
 
-/** the WebCodecs video encoders this browser has; null without WebCodecs */
 export async function encodableCodecs(
 	width: number,
 	height: number,
@@ -182,18 +166,10 @@ export type Overlay = (
 export interface BurnOptions extends ConvertControls {
 	container: Container;
 	codec: BurnCodec;
-	/** bits per second */
 	bitrate: number;
-	/** the painter for the frame at `seconds`, or null to pass the frame through untouched */
 	overlay: (seconds: number) => Overlay | null;
 }
 
-/**
- * Decodes every frame through WebCodecs, lets `overlay` paint over it, encodes
- * and muxes; audio packets are copied when the container carries the codec,
- * else re-encoded. Runs as fast as the decoder and encoder allow, and does
- * not depend on the tab being visible.
- */
 export async function burnVideo(
 	file: File,
 	options: BurnOptions,
@@ -212,8 +188,6 @@ export async function burnVideo(
 			forceTranscode: true,
 			process: (sample) => {
 				const paint = options.overlay(sample.timestamp);
-				// Frames without an overlay go back as they are: no canvas
-				// round trip for the stretches between cues.
 				if (!paint) return sample;
 				const { displayWidth: w, displayHeight: h } =
 					sample;
@@ -228,8 +202,7 @@ export async function burnVideo(
 				}
 				sample.draw(ctx, 0, 0, w, h);
 				paint(ctx, w, h);
-				// A fresh sample copies the pixels now; returning the canvas
-				// itself would let the next frame overwrite it.
+				// samples must own pixels
 				return new m.VideoSample(canvas, {
 					timestamp: sample.timestamp,
 					duration: sample.duration,
@@ -249,16 +222,15 @@ export async function burnVideo(
 }
 
 export interface TrimOptions extends ConvertControls {
-	/** seconds into the source */
 	start: number;
 	end: number;
-	/** keyframe: copy packets from the keyframe at or before `start`, no re-encode; exact: re-encode from `start` */
+	// exact trimming re-encodes video
 	mode: 'keyframe' | 'exact';
 	container: Container;
 }
 
 export interface TrimResult extends ConvertResult {
-	/** the cut actually made, seconds into the source */
+	// actual trim start
 	start: number;
 	end: number;
 }
@@ -273,8 +245,6 @@ export async function trimVideo(
 	const output = new m.Output({ format, target: new m.BufferTarget() });
 
 	if (options.mode === 'exact') {
-		// mediabunny re-encodes video whenever the trim starts after the first
-		// packet, which is what makes the cut land on the frame.
 		const conversion = await m.Conversion.init({
 			input,
 			output,
@@ -310,8 +280,7 @@ export async function trimVideo(
 
 	const videoSource = new m.EncodedVideoPacketSource(video.codec);
 	output.addVideoTrack(videoSource, { rotation: video.rotation });
-	// containerSupport only vets the video codec; audio the container
-	// cannot carry is dropped rather than failing the cut.
+	// unsupported audio is dropped
 	const audioCodec =
 		audio?.codec &&
 		(format.getSupportedAudioCodecs() as string[]).includes(
@@ -339,8 +308,6 @@ export async function trimVideo(
 	]);
 	await output.start();
 
-	// The muxer interleaves by timestamp and applies backpressure per track,
-	// so both tracks advance together rather than one after the other.
 	const videoPackets = videoSink.packets(key)[Symbol.asyncIterator]();
 	const audioPackets =
 		audioSink && audioStart
@@ -359,9 +326,7 @@ export async function trimVideo(
 				v = { done: true, value: undefined };
 				continue;
 			}
-			// Decode order can yield leading frames whose PTS sits before the
-			// key packet (open GOPs); they reference the dropped GOP and would
-			// mux as negative timestamps.
+			// open gops precede keyframes
 			if (vTs < from) {
 				v = await videoPackets.next();
 				continue;
@@ -413,7 +378,6 @@ export const AUDIO_TARGETS: {
 	label: string;
 	codec: 'pcm-s16' | 'aac' | 'opus' | 'flac';
 	ext: string;
-	/** mediabunny reports application/ogg for Ogg; these are the audio types */
 	mime: string;
 }[] = [
 	{
@@ -460,7 +424,6 @@ async function audioOutputFormat(id: AudioTarget) {
 	}
 }
 
-/** targets this browser can produce: PCM always, the rest by copy or WebCodecs encoder */
 export async function audioTargetSupport(
 	sourceCodec: string | null,
 ): Promise<Record<AudioTarget, boolean>> {
@@ -478,7 +441,6 @@ export async function audioTargetSupport(
 	return out;
 }
 
-/** Writes the primary audio track alone; packets are copied when the codec already matches. */
 export async function extractAudio(
 	file: File,
 	target: AudioTarget,

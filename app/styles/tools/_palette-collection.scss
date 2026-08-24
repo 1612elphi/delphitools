@@ -1,17 +1,10 @@
-// Styles for the palette-collection tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
 
 @use "../crayon-config" as crayon;
-
-/* ── Palette collection ──────────────────────────────────────────────────── */
 
 .dt-collection {
 	border: 2px solid var(--border);
 }
 
-/* Search bar + result count */
 .dt-collection-search {
 	display: flex;
 	align-items: stretch;
@@ -47,8 +40,7 @@
 			color: var(--muted-foreground);
 		}
 
-		// The Next app's raw input had no focus ring at all; every other input in
-		// the v2 app draws one.
+		// v1 input lacked ring; v2 has one
 		&:focus-visible {
 			outline: 2px solid var(--ring);
 			outline-offset: 2px;
@@ -66,7 +58,7 @@
 	white-space: nowrap;
 }
 
-/* Category filter: All spans two cells, so 1 + 10 buttons fill two rows of six. */
+// grid: 2-row × 6 layout
 .dt-collection-filter {
 	border-bottom: 2px solid var(--border);
 }
@@ -132,7 +124,6 @@
 	font-weight: crayon.font-weight("bold");
 }
 
-/* Card grid — hairline dividers via a 1px gap over the border colour. */
 .dt-collection-body {
 	padding: crayon.size(4);
 }
@@ -240,9 +231,7 @@
 	text-align: center;
 }
 
-// No `display`: app.scss loads the tool partials before its own `.dt-icon`
-// rule, so anything set here at the same specificity loses. The icon stays
-// inline-flex and the parent's text-align centres it.
+// partials load before .dt-icon rule
 .dt-collection-empty-icon {
 	width: crayon.size(12);
 	height: crayon.size(12);
@@ -250,7 +239,6 @@
 	opacity: 0.5;
 }
 
-/* Footer link across to the generator */
 .dt-collection-foot {
 	display: flex;
 	align-items: stretch;

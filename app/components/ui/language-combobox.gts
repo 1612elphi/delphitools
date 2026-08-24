@@ -1,9 +1,4 @@
-// Whisper source-language picker for the auto-subtitle tool: a Popover holding
-// a Command list, the paper-size combobox's shape. Auto-detect first, then the
-// most common languages as a flag-tile grid (the colour-notation popover's
-// shape), then everything alphabetically. Styling hooks are `.dt-lang-combo*`
-// in app/styles/tools/_auto-subtitle.scss; flags are circle-flags SVGs copied
-// to public/flags by scripts/copy-flags.mjs.
+// styled in _auto-subtitle.scss; flags from scripts/copy-flags.mjs
 
 import { array, fn } from '@ember/helper';
 import { guidFor } from '@ember/object/internals';
@@ -37,7 +32,7 @@ const flagSrc = (code: string) => `/flags/${code}.svg`;
 export interface LanguageComboboxSignature {
 	Element: HTMLButtonElement;
 	Args: {
-		/** a Whisper language code, or '' for auto-detect */
+		/** '' = auto-detect */
 		value: string;
 		onValueChange: (code: string) => void;
 	};

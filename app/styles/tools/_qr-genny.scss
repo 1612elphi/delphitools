@@ -1,16 +1,7 @@
-// Styles for the qr-genny tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
 
-/* ── QR generator ────────────────────────────────────────────────────────── */
-
 .dt-qr {
-	/* Green has no semantic token in the theme; the Next app used Tailwind's
-	   green-600, and the dark value is its 500 step for contrast on a dark
-	   ground. */
+	/* no theme green; tailwind 600/500 */
 	--dt-qr-ok: oklch(62.7% 0.194 149.2);
 
 	display: flex;
@@ -22,8 +13,7 @@
 	}
 }
 
-/* The vendored tabs primitive carries no styles of its own, so the list and the
-   triggers are dressed here through the classes this tool passes in. */
+/* vendored tabs ship unstyled */
 .dt-qr-tabs {
 	display: grid;
 	gap: 1px;
@@ -76,8 +66,6 @@
 		border-bottom: 0;
 	}
 }
-
-/* ── shared form pieces ──────────────────────────────────────────────────── */
 
 .dt-qr-field {
 	display: flex;
@@ -184,8 +172,6 @@
 	}
 }
 
-/* ── buttons ─────────────────────────────────────────────────────────────── */
-
 .dt-qr-chip {
 	display: flex;
 	min-height: crayon.size(9);
@@ -257,7 +243,7 @@
 		opacity: 0.5;
 	}
 
-	/* the file input inside the upload label is visually hidden */
+	/* input hidden, ring here */
 	&:focus-within,
 	&:focus-visible {
 		outline: 2px solid var(--primary);
@@ -287,10 +273,7 @@
 	}
 }
 
-/* ── single mode ─────────────────────────────────────────────────────────── */
-
-/* `.segmented` draws a 1px frame on all four edges and is declared after these
-   partials in app.scss, so every override needs both classes to outrank it. */
+/* outranks later .segmented rules */
 .segmented.dt-qr-presets {
 	margin: 0 crayon.size(-4) crayon.size(-4);
 	border-inline: 0;
@@ -301,8 +284,6 @@
 		grid-template-columns: repeat(6, 1fr);
 	}
 }
-
-/* ── wifi panel ──────────────────────────────────────────────────────────── */
 
 .dt-qr-password {
 	position: relative;
@@ -363,7 +344,7 @@
 	}
 }
 
-/* A native checkbox drawn as a switch; the v2 app has no Switch primitive. */
+/* no Switch primitive yet */
 .dt-qr-switch {
 	position: relative;
 	width: crayon.size(9);
@@ -403,8 +384,6 @@
 	}
 }
 
-/* ── vcard panel ─────────────────────────────────────────────────────────── */
-
 .dt-qr-vcard {
 	overflow-x: auto;
 	padding: crayon.size(3);
@@ -414,8 +393,6 @@
 	font-size: crayon.font-size("xs");
 	white-space: pre-wrap;
 }
-
-/* ── batch panel ─────────────────────────────────────────────────────────── */
 
 .dt-qr-batch-row {
 	display: flex;
@@ -449,8 +426,6 @@
 	display: flex;
 	gap: crayon.size(2);
 }
-
-/* ── preview and options columns ─────────────────────────────────────────── */
 
 .dt-qr-main {
 	display: grid;
@@ -603,10 +578,7 @@
 	}
 }
 
-/* ── options accordion ───────────────────────────────────────────────────── */
-
-/* Native <details> instead of an Accordion primitive: the v2 app has none, and
-   open/close, keyboard and the disclosure semantics come from the element. */
+/* no Accordion primitive yet */
 .dt-qr-group {
 	margin-inline: crayon.size(-4);
 	border-top: 1px solid var(--border);
@@ -695,8 +667,6 @@
 	grid-template-columns: repeat(2, 1fr);
 }
 
-/* ── colour rows ─────────────────────────────────────────────────────────── */
-
 .dt-qr-colour {
 	display: flex;
 	align-items: stretch;
@@ -782,8 +752,6 @@
 	}
 }
 
-/* ── logo panel ──────────────────────────────────────────────────────────── */
-
 .dt-qr-logo-row {
 	display: flex;
 	align-items: center;
@@ -835,15 +803,13 @@
 		color: var(--primary);
 	}
 
-	/* the file input is visually hidden, so its focus ring has to land here */
+	/* input hidden, ring here */
 	&:focus-within {
 		border-color: var(--primary);
 		outline: 2px solid var(--primary);
 		outline-offset: 2px;
 	}
 }
-
-/* ── acknowledgement block ───────────────────────────────────────────────── */
 
 .dt-qr-about {
 	padding: crayon.size(4);

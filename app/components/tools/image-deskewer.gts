@@ -21,9 +21,7 @@ import {
 } from 'delphitools-v2/lib/deskew';
 
 const FILE_ACCEPT = 'image/*';
-// wording carried over from Metadata Stripper
 const LOAD_FAILED = 'This file could not be read as an image.';
-/** Long edge of the live preview while a corner is dragged. */
 const PREVIEW_EDGE = 720;
 const CORNERS = ['Top left', 'Top right', 'Bottom right', 'Bottom left'];
 
@@ -57,6 +55,7 @@ export default class ImageDeskewerTool extends Component {
 	@tracked dragging = -1;
 	@tracked busy = false;
 	@tracked error = '';
+	@tracked fileOver = false;
 
 	#source: ImageData | null = null;
 	#result: HTMLCanvasElement | null = null;
@@ -77,7 +76,6 @@ export default class ImageDeskewerTool extends Component {
 		return this.quad!.map((p) => `${p.x},${p.y}`).join(' ');
 	}
 
-	/** Everything outside the quad, for the evenodd shade. */
 	get shade() {
 		const [tl, tr, br, bl] = this.quad!;
 		return (
@@ -86,7 +84,6 @@ export default class ImageDeskewerTool extends Component {
 		);
 	}
 
-	/** The source canvas redraws when a new image replaces the old one. */
 	source = modifier((canvas: HTMLCanvasElement) => {
 		canvas.width = this.width;
 		canvas.height = this.height;
@@ -119,6 +116,7 @@ export default class ImageDeskewerTool extends Component {
 			ctx.drawImage(bitmap, 0, 0);
 			bitmap.close();
 			if (this.isDestroying) return;
+			this.#cancelDrag();
 			this.#source = ctx.getImageData(
 				0,
 				0,
@@ -139,23 +137,29 @@ export default class ImageDeskewerTool extends Component {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) this.readFile(file);
-		// Choosing the same file twice must still fire a change event.
 		input.value = '';
 	};
 
 	handleDrop = (event: DragEvent) => {
 		event.preventDefault();
+		this.fileOver = false;
 		const file = event.dataTransfer?.files[0];
 		if (file) this.readFile(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
-	allowDrop = (event: DragEvent) => {
+	handleDragOver = (event: DragEvent) => {
+		if (!event.dataTransfer?.types.includes('Files')) return;
 		event.preventDefault();
+		this.fileOver = true;
+	};
+
+	handleDragLeave = () => {
+		this.fileOver = false;
 	};
 
 	clear = () => {
 		cancelAnimationFrame(this.#frame);
+		this.#cancelDrag();
 		this.#source = null;
 		this.quad = null;
 		this.fileName = '';
@@ -183,8 +187,13 @@ export default class ImageDeskewerTool extends Component {
 		this.quad = next;
 	}
 
-	// Capture on the handle keeps the moves coming once the pointer leaves it.
+	#cancelDrag() {
+		this.#drag = null;
+		this.dragging = -1;
+	}
+
 	startDrag = (index: number, event: PointerEvent) => {
+		if (event.button !== 0) return;
 		const handle = event.currentTarget as HTMLElement;
 		const rect = handle.parentElement!.getBoundingClientRect();
 		if (!rect.width) return;
@@ -197,6 +206,7 @@ export default class ImageDeskewerTool extends Component {
 		this.dragging = index;
 		handle.setPointerCapture(event.pointerId);
 		event.preventDefault();
+		handle.focus();
 	};
 
 	moveDrag = (event: PointerEvent) => {
@@ -235,7 +245,6 @@ export default class ImageDeskewerTool extends Component {
 		this.#queue(true);
 	};
 
-	/** One draw per frame; a preview draw is downscaled, a full one is the output. */
 	#queue(full: boolean) {
 		cancelAnimationFrame(this.#frame);
 		this.#frame = requestAnimationFrame(() => this.#draw(full));
@@ -286,9 +295,11 @@ export default class ImageDeskewerTool extends Component {
 			{{filePaste this.readFile accept=FILE_ACCEPT}}
 		>
 			<div
-				class="dt-dsk-frame"
+				class="dt-dsk-frame
+					{{if this.fileOver 'is-dragging'}}"
 				{{on "drop" this.handleDrop}}
-				{{on "dragover" this.allowDrop}}
+				{{on "dragover" this.handleDragOver}}
+				{{on "dragleave" this.handleDragLeave}}
 			>
 				{{#if this.quad}}
 					<div class="dt-dsk-bar">
@@ -365,7 +376,8 @@ export default class ImageDeskewerTool extends Component {
 
 					<div class="dt-dsk-settings">
 						<div class="dt-dsk-cell">
-							<span>Aspect</span>
+							<span>Output aspect
+								ratio</span>
 							<div
 								class="segmented dt-dsk-aspects"
 							>
@@ -427,7 +439,6 @@ export default class ImageDeskewerTool extends Component {
 							<div
 								class="dt-dsk-stage-wrap"
 							>
-								{{! pointerdown starts a drag here rather than standing in for a click, which is what the rule guards against }}
 								{{! template-lint-disable no-pointer-down-event-binding }}
 								<div
 									class="dt-dsk-stage
@@ -461,8 +472,10 @@ export default class ImageDeskewerTool extends Component {
 											vector-effect="non-scaling-stroke"
 										/>
 									</svg>
+									{{! preserve pointer capture }}
 									{{#each
 										this.quad
+										key="@index"
 										as |corner index|
 									}}
 										<button
@@ -500,6 +513,10 @@ export default class ImageDeskewerTool extends Component {
 											}}
 											{{on
 												"pointercancel"
+												this.endDrag
+											}}
+											{{on
+												"lostpointercapture"
 												this.endDrag
 											}}
 											{{on
@@ -547,7 +564,6 @@ export default class ImageDeskewerTool extends Component {
 							}}
 						/>
 						<Icon @name="upload" />
-						{{! wording carried over from Metadata Stripper }}
 						<span
 							class="dt-dsk-drop-title"
 						>Drop an image here</span>
@@ -557,14 +573,14 @@ export default class ImageDeskewerTool extends Component {
 							paste</span>
 					</label>
 				{{/if}}
-			</div>
 
-			{{#if this.error}}
-				<p
-					class="dt-dsk-error"
-					role="alert"
-				>{{this.error}}</p>
-			{{/if}}
+				{{#if this.error}}
+					<p
+						class="dt-dsk-error"
+						role="alert"
+					>{{this.error}}</p>
+				{{/if}}
+			</div>
 		</div>
 	</template>
 }

@@ -1,12 +1,3 @@
-// Workflows: the home catalogue starts a flow; a tool's "Pass along" captures
-// its output into IndexedDB, flies into the bar and advances the flow with a
-// view transition; a reload restores bar and bag; a fresh tab sweeps an
-// orphaned bag; Done appears only once the last step has passed its output
-// along and then saves it; a colour flow carries `?color=`; an intake tool
-// without a paste modifier takes the hand-off through the intake.
-//
-// Usage: npm start, then node scripts/verify/workflows.mjs
-
 import {
 	launch,
 	visit,
@@ -77,7 +68,6 @@ const startFlow = async (name) => {
 	await sleep(400);
 };
 
-/** Clicks the tool's own "Pass along" control; false when there is none. */
 const passAlong = () =>
 	page.evaluate(() => {
 		const button = [...document.querySelectorAll('.dt-main button')].find((el) =>
@@ -87,7 +77,6 @@ const passAlong = () =>
 		return !!button;
 	});
 
-/** The slide between steps has finished. */
 const flowSettled = () =>
 	page.waitForFunction(
 		() => document.querySelector('.dt-main')?.getAnimations().length === 0,
@@ -127,7 +116,6 @@ check(
 );
 await visit(page, '/');
 
-// --- Paste and strip ------------------------------------------------------
 await startFlow('Paste and strip');
 let state = await barState();
 check(
@@ -199,7 +187,6 @@ check(
 	'a second tab leaves a live flow\'s bag alone',
 	(await bagCount(other)) === 1,
 );
-// the second tab runs a flow of its own, captures, and closes: an orphan
 await other.evaluate(() => {
 	[...document.querySelectorAll('.dt-wf-row')]
 		.find((b) => b.querySelector('.dt-wf-name span')?.textContent?.trim() === 'Paste and strip')
@@ -265,7 +252,6 @@ check(
 	)) && (await bagCount(page)) === 0,
 );
 
-// --- Colour to gradient ---------------------------------------------------
 await visit(page, '/');
 await startFlow('Colour to gradient');
 await page.$eval('.dt-cc-value', (input) => {
@@ -303,9 +289,7 @@ check(
 	),
 );
 
-// --- Extract and normalise ------------------------------------------------
-// An AudioIntake tool with no filePaste modifier (Audio Normaliser) takes the
-// hand-off through the intake itself.
+// no filePaste → intake hand-off
 await visit(page, '/');
 await startFlow('Extract and normalise');
 await makeClip(page, { audio: true, ms: 1500, name: 'tone.webm' });

@@ -1,14 +1,5 @@
-// Password Generator behavioural rig.
-//
-// Drives /tools/password-genny in headless Chrome: both modes, the
-// character-class guarantee, the lookalike exclusion (deterministic in
-// digits-only mode), the list/copy flow, and the wordlist failure path
-// (the fetch is failed by request interception, then Retried for real).
-//
-// The clipboard checks need explicit permissions; headless Chrome grants
-// them to localhost once overridden below.
-//
-// Usage: npm start, then node scripts/verify/password-genny.mjs
+// clipboard needs localhost override
+// npm start, node scripts/verify/password-genny.mjs
 
 import { launch, visit, check, finish, sleep, BASE } from './harness.mjs';
 import {
@@ -29,7 +20,7 @@ const DEFAULT_POOL = buildCharset({
 const { browser, page } = await launch({
 	ignore: [
 		/password-genny: wordlist fetch failed/,
-		// the rig itself answers the first fetch with a 500
+		// first fetch rig-failed
 		/Failed to load resource: the server responded with a status of 500/,
 	],
 });
@@ -54,9 +45,6 @@ check(
 	(await page.$eval('.dt-tool-header h1', (el) => el.textContent)) ===
 		'Password Generator',
 );
-
-// ── Password mode defaults ────────────────────────────────────────────────
-
 const firstRows = await rows();
 check('a batch renders on load', firstRows.length === 10, `${firstRows.length} rows`);
 check(
@@ -76,9 +64,6 @@ check(
 		`${passwordEntropy(16, DEFAULT_POOL.length).toFixed(1)} bits`,
 	) && (await strength()).includes('Very strong'),
 );
-
-// ── Length slider ─────────────────────────────────────────────────────────
-
 await page.evaluate(() => {
 	const slider = document.querySelector(
 		'.dt-pg-field.is-length input[type="range"]',
@@ -94,9 +79,6 @@ await page.waitForFunction(
 	{ timeout: 5000 },
 );
 check('length slider resizes every row', true, 'all rows at 32');
-
-// ── Class toggles and the at-least-one guarantee ──────────────────────────
-
 await page.click('[role="switch"][aria-label="Lowercase"]');
 await page.click('[role="switch"][aria-label="Uppercase"]');
 await page.click('[role="switch"][aria-label="Symbols"]');
@@ -155,9 +137,6 @@ check(
 	true,
 	'pool 84 → 89 in the readout',
 );
-
-// ── Bulk list + clipboard ─────────────────────────────────────────────────
-
 await page.click('.dt-pg-countbtn:nth-child(3)');
 await page.waitForFunction(
 	(n) => document.querySelectorAll('.dt-pg-value').length === n,
@@ -209,12 +188,7 @@ check(
 	(await page.evaluate(() => navigator.clipboard.readText())) ===
 		(await rows())[0],
 );
-
-// ── Passphrase mode ───────────────────────────────────────────────────────
-// The wordlist is fetched lazily on first passphrase entry and cached for the
-// session, so the failure path has to run on the FIRST entry: intercept, fail
-// the fetch, then retry for real.
-
+// lazy wordlist, fail first entry
 await page.setRequestInterception(true);
 let failWordlist = true;
 page.on('request', (request) => {

@@ -1,14 +1,12 @@
-// Shavian letter metadata
 export interface ShavianLetter {
-	shavian: string; // Unicode character
-	name: string; // Keyword name (peep, bib, etc.)
-	ipa: string; // IPA representation
+	shavian: string;
+	name: string;
+	ipa: string;
 	category: 'consonant' | 'vowel' | 'ligature';
 }
 
-// Complete Shavian alphabet — 48 letters + ligatures
+// 48 letters + ligatures
 export const SHAVIAN_LETTERS: ShavianLetter[] = [
-	// Tall consonants (unvoiced)
 	{ shavian: '𐑐', name: 'peep', ipa: 'p', category: 'consonant' },
 	{ shavian: '𐑑', name: 'tot', ipa: 't', category: 'consonant' },
 	{ shavian: '𐑒', name: 'kick', ipa: 'k', category: 'consonant' },
@@ -17,7 +15,6 @@ export const SHAVIAN_LETTERS: ShavianLetter[] = [
 	{ shavian: '𐑕', name: 'so', ipa: 's', category: 'consonant' },
 	{ shavian: '𐑖', name: 'sure', ipa: 'ʃ', category: 'consonant' },
 	{ shavian: '𐑗', name: 'church', ipa: 'tʃ', category: 'consonant' },
-	// Deep consonants (voiced)
 	{ shavian: '𐑚', name: 'bib', ipa: 'b', category: 'consonant' },
 	{ shavian: '𐑛', name: 'dead', ipa: 'd', category: 'consonant' },
 	{ shavian: '𐑜', name: 'gag', ipa: 'ɡ', category: 'consonant' },
@@ -26,18 +23,14 @@ export const SHAVIAN_LETTERS: ShavianLetter[] = [
 	{ shavian: '𐑟', name: 'zoo', ipa: 'z', category: 'consonant' },
 	{ shavian: '𐑠', name: 'measure', ipa: 'ʒ', category: 'consonant' },
 	{ shavian: '𐑡', name: 'judge', ipa: 'dʒ', category: 'consonant' },
-	// Tall sonorants
 	{ shavian: '𐑘', name: 'yea', ipa: 'j', category: 'consonant' },
 	{ shavian: '𐑢', name: 'woe', ipa: 'w', category: 'consonant' },
-	// Deep sonorants
 	{ shavian: '𐑙', name: 'hung', ipa: 'ŋ', category: 'consonant' },
 	{ shavian: '𐑣', name: 'ha-ha', ipa: 'h', category: 'consonant' },
-	// Nasals and liquids
 	{ shavian: '𐑥', name: 'mime', ipa: 'm', category: 'consonant' },
 	{ shavian: '𐑯', name: 'nun', ipa: 'n', category: 'consonant' },
 	{ shavian: '𐑤', name: 'loll', ipa: 'l', category: 'consonant' },
 	{ shavian: '𐑮', name: 'roar', ipa: 'r', category: 'consonant' },
-	// Short vowels
 	{ shavian: '𐑨', name: 'ash', ipa: 'æ', category: 'vowel' },
 	{ shavian: '𐑩', name: 'ado', ipa: 'ə', category: 'vowel' },
 	{ shavian: '𐑪', name: 'on', ipa: 'ɒ', category: 'vowel' },
@@ -45,7 +38,6 @@ export const SHAVIAN_LETTERS: ShavianLetter[] = [
 	{ shavian: '𐑦', name: 'if', ipa: 'ɪ', category: 'vowel' },
 	{ shavian: '𐑧', name: 'egg', ipa: 'ɛ', category: 'vowel' },
 	{ shavian: '𐑳', name: 'up', ipa: 'ʌ', category: 'vowel' },
-	// Long vowels
 	{ shavian: '𐑱', name: 'ate', ipa: 'eɪ', category: 'vowel' },
 	{ shavian: '𐑰', name: 'eat', ipa: 'iː', category: 'vowel' },
 	{ shavian: '𐑲', name: 'ice', ipa: 'aɪ', category: 'vowel' },
@@ -64,10 +56,8 @@ export const SHAVIAN_LETTERS: ShavianLetter[] = [
 	{ shavian: '𐑿', name: 'yew', ipa: 'juː', category: 'vowel' },
 ];
 
-// ARPABET to Shavian mapping
-// CMU dict uses ARPABET with stress markers (0, 1, 2) on vowels — strip stress before lookup
+// vowels carry stress digits
 const ARPABET_TO_SHAVIAN: Record<string, string> = {
-	// Consonants
 	P: '𐑐',
 	T: '𐑑',
 	K: '𐑒',
@@ -92,7 +82,6 @@ const ARPABET_TO_SHAVIAN: Record<string, string> = {
 	N: '𐑯',
 	L: '𐑤',
 	R: '𐑮',
-	// Vowels
 	AE: '𐑨',
 	AH0: '𐑩',
 	AH: '𐑳',
@@ -111,11 +100,9 @@ const ARPABET_TO_SHAVIAN: Record<string, string> = {
 	AW: '𐑬',
 	AO: '𐑷',
 	ER: '𐑼',
-	// Merged sequences
-	YUW: '𐑿', // yew ligature (Y + UW)
+	YUW: '𐑿',
 };
 
-// ARPABET to IPA mapping
 const ARPABET_TO_IPA: Record<string, string> = {
 	P: 'p',
 	T: 't',
@@ -159,18 +146,16 @@ const ARPABET_TO_IPA: Record<string, string> = {
 	AW: 'aʊ',
 	AO: 'ɔː',
 	ER: 'ɚ',
-	// Merged sequences
-	YUW: 'juː', // yew ligature
+	YUW: 'juː',
 };
 
-// Strip stress markers from ARPABET vowels: "AH1" → "AH", "AH0" → "AH0" (special case for schwa)
 export function normalizeArpabet(code: string): string {
-	// AH with stress 0 is schwa (𐑩), AH with stress 1/2 is strut (𐑳)
+	// ah0=schwa ah=strut
 	if (code.startsWith('AH')) {
 		return code.endsWith('0') ? 'AH0' : 'AH';
 	}
-	// IY with stress 0 is kit (𐑦), IY with stress 1/2 is fleece (𐑰)
-	// Per Shavian spelling rule 11: final unstressed -y/-ie is 𐑦 not 𐑰
+	// iy0=kit iy=fleece
+	// shavian rule 11
 	if (code.startsWith('IY')) {
 		return code.endsWith('0') ? 'IY0' : 'IY';
 	}
@@ -185,28 +170,25 @@ export function arpabetToIpa(code: string): string | undefined {
 	return ARPABET_TO_IPA[normalizeArpabet(code)];
 }
 
-// Voicing pairs for consonant alternatives
 export const CONSONANT_GROUPS: string[][] = [
-	['𐑐', '𐑚'], // peep / bib
-	['𐑑', '𐑛'], // tot / dead
-	['𐑒', '𐑜'], // kick / gag
-	['𐑓', '𐑝'], // fee / vow
-	['𐑔', '𐑞'], // thigh / they
-	['𐑕', '𐑟'], // so / zoo
-	['𐑖', '𐑠'], // sure / measure
-	['𐑗', '𐑡'], // church / judge
-	['𐑥', '𐑯', '𐑙'], // mime / nun / hung (nasals)
-	['𐑤', '𐑮'], // loll / roar (liquids)
-	['𐑘', '𐑢'], // yea / woe (glides)
-	['𐑣'], // ha-ha (alone)
+	['𐑐', '𐑚'],
+	['𐑑', '𐑛'],
+	['𐑒', '𐑜'],
+	['𐑓', '𐑝'],
+	['𐑔', '𐑞'],
+	['𐑕', '𐑟'],
+	['𐑖', '𐑠'],
+	['𐑗', '𐑡'],
+	['𐑥', '𐑯', '𐑙'],
+	['𐑤', '𐑮'],
+	['𐑘', '𐑢'],
+	['𐑣'],
 ];
 
-// All vowel Shavian characters (for vowel alternatives — show all vowels)
 export const VOWEL_CHARS: string[] = SHAVIAN_LETTERS.filter(
 	(l) => l.category === 'vowel',
 ).map((l) => l.shavian);
 
-// Look up letter metadata by character
 const SHAVIAN_BY_CHAR = new Map<string, ShavianLetter>(
 	SHAVIAN_LETTERS.map((l) => [l.shavian, l]),
 );

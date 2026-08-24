@@ -1,24 +1,10 @@
-// graph-calc draws its own plot surface: mafs is React-only, so the axes,
-// grid, ticks, curve sampling and the shaded inequality region are all hand
-// written SVG here. None of that is reachable from a render check — the tool
-// renders a full plane with the default entry even when the sampler is broken.
-//
-// The sampler ends a run wherever the function is undefined or crosses an
-// asymptote. Without that, tan(x) draws one continuous path that falls
-// vertically through every pole, which looks like a plotted line rather than a
-// bug. The subpath count is the cheapest thing that tells the two apart.
-//
-// Usage: npm start, then node scripts/verify/graph.mjs
+// needs npm start first
 
 import { launch, visit, check, finish, sleep } from './harness.mjs';
 
 const { browser, page } = await launch();
 
-/**
- * The expression field is seeded with the default entry and its value is a
- * template binding, so typing appends. Setting the value and dispatching input
- * is what a paste does, and it replaces the whole expression.
- */
+// typing appends; set+input replaces
 async function setExpression(text) {
 	await page.evaluate((value) => {
 		const input = document.querySelector('.dt-graph-input');
@@ -59,7 +45,7 @@ function readCurve() {
 await visit(page, '/tools/graph-calc');
 await sleep(500);
 
-// mathjs is ~700 kB and loads dynamically, so nothing plots until it resolves.
+// mathjs ~700kb, loads dynamic
 const initial = await readCurve();
 check(
 	'the default entry plots once mathjs loads',
@@ -86,7 +72,7 @@ check(
 	`${sin.points} points, ${sin.span} px tall ${sin.error ?? ''}`,
 );
 
-// Six poles inside the default window, so seven runs.
+// 6 poles → 7 runs
 await setExpression('tan(x)');
 const tan = await readCurve();
 check(
@@ -111,10 +97,7 @@ check(
 	broken.error ?? 'no error shown',
 );
 
-// ── pan and zoom ────────────────────────────────────────────────────────
-//
-// The viewBox is fixed pixel space; panning and zooming move the x and y
-// bounds, which the range fields show.
+// pan/zoom shifts range bounds
 
 await setExpression('sin(x)');
 const ranges = () =>

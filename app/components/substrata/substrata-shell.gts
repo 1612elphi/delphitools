@@ -29,20 +29,8 @@ import {
 
 const EDGES: ReadonlySet<string> = new Set(['top', 'bottom', 'left', 'right']);
 
-/**
- * Top-level composition of the editor surface: top bar over the canvas area,
- * with the omnibar, utility rail and free-floating panels layered above the
- * canvas (round-3 docking — the left/right sidebars are gone).
- *
- * Drag-to-dock rides the shared dnd manager (lib/dnd.ts — the Next shell's
- * root DndContext): grips in module headers + the omnibar are the draggables.
- * An omnibar drag targets the four edge zones; a MODULE drag targets the rail
- * strip (re-dock) or — anywhere else — floats the panel at the drop point
- * (round 3: the canvas itself is the target).
- */
 export default class SubstrataShell extends Component {
 	mount = modifier((root: HTMLElement) => {
-		// Restore the persisted dock/rail/pin layout after mount.
 		hydrateLayoutPrefs();
 
 		const offStart = dndManager.monitor.addEventListener(
@@ -73,9 +61,6 @@ export default class SubstrataShell extends Component {
 								true,
 							);
 						} else {
-							// free drop: land the panel's header under the pointer
-							// (float-drop coordinates are relative to the canvas
-							// area)
 							const area =
 								root.querySelector(
 									'.sub-shell-canvas-area',
@@ -142,29 +127,19 @@ export default class SubstrataShell extends Component {
 	<template>
 		<div class="sub-shell" {{this.mount}} {{editorShortcuts}}>
 			<TopBar />
-			{{! degraded-context banner — renders nothing on https/localhost }}
 			<SecureContextNotice />
 			<div class="sub-shell-body">
 				<div class="sub-shell-canvas-area">
 					<FabricCanvas />
 					<Omnibar />
-					{{! free-floating panels (round 3) — mini when idle, full
-						on hover/focus, clamp to hold }}
 					<FloatLayer />
-					{{! pixel-selection action strip — anchored by the canvas
-						per frame }}
 					<SelectionPopup />
-					{{! starter card while the scene is empty }}
 					<EmptyHint />
-					{{! drag-to-dock drop targets — render only mid-drag }}
 					<DockZones />
 				</div>
 			</div>
 			<ModalHost />
-			{{! right-click layer menu — ONE instance; canvas + layers panel
-				open it }}
 			<LayerContextMenu />
-			{{! sub-768px viewports: dismissible banner }}
 			<SmallScreenNotice />
 		</div>
 	</template>

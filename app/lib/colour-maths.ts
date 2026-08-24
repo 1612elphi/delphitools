@@ -1,28 +1,11 @@
-/**
- * Colour conversions shared by the Colour tools.
- *
- * The Next app repeated these per tool — palette-genny carried its own copy
- * under a "kept for local use" comment, and colour-converter and
- * colour-notation had a second and third. This is the one copy; both
- * directions live here so the round-trip tools do not grow a fourth.
- *
- * Every triple is [0-255, 0-255, 0-255] for RGB unless the name says otherwise.
- * Whites are D65, matching CSS.
- */
-
 export type Triple = [number, number, number];
 
-// ── sRGB ────────────────────────────────────────────────────────────────────
-
-/** `#aabbcc` or `aabbcc`; null for anything else, including 3- and 8-digit. */
 export function hexToRgb(hex: string): Triple | null {
 	const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
 	if (!m) return null;
-	// three groups, and exec returned non-null
 	return [parseInt(m[1]!, 16), parseInt(m[2]!, 16), parseInt(m[3]!, 16)];
 }
 
-/** Clamps and rounds, so an out-of-gamut conversion still yields valid hex. */
 export function rgbToHex(r: number, g: number, b: number): string {
 	return (
 		'#' +
@@ -36,13 +19,11 @@ export function rgbToHex(r: number, g: number, b: number): string {
 	);
 }
 
-/** sRGB 0–255 to linear-light 0–1. */
 export function srgbToLinear(c: number): number {
 	c /= 255;
 	return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
 }
 
-/** Linear-light 0–1 back to sRGB, clamped and rounded to 0–255. */
 export function linearToSrgb(c: number): number {
 	const v =
 		c <= 0.0031308
@@ -51,9 +32,6 @@ export function linearToSrgb(c: number): number {
 	return Math.round(Math.max(0, Math.min(255, v * 255)));
 }
 
-// ── HSL and HSV ─────────────────────────────────────────────────────────────
-
-/** [hue 0–360, saturation 0–100, lightness 0–100]. */
 export function rgbToHsl(r: number, g: number, b: number): Triple {
 	r /= 255;
 	g /= 255;
@@ -106,7 +84,6 @@ export function hslToRgb(h: number, s: number, l: number): Triple {
 	];
 }
 
-/** [hue 0–360, saturation 0–100, value 0–100]. */
 export function rgbToHsv(r: number, g: number, b: number): Triple {
 	r /= 255;
 	g /= 255;
@@ -132,8 +109,6 @@ export function rgbToHsv(r: number, g: number, b: number): Triple {
 	}
 	return [h * 360, s * 100, max * 100];
 }
-
-// ── CIE XYZ, LAB and LCH ────────────────────────────────────────────────────
 
 export function rgbToXyz(r: number, g: number, b: number): Triple {
 	const lr = srgbToLinear(r),
@@ -176,20 +151,16 @@ export function labToXyz(l: number, a: number, b: number): Triple {
 	return [XN * f(fx), YN * f(fy), ZN * f(fz)];
 }
 
-/** Polar form of LAB or OKLAB: [L, chroma, hue 0–360]. */
 export function labToLch(l: number, a: number, b: number): Triple {
 	let h = (Math.atan2(b, a) * 180) / Math.PI;
 	if (h < 0) h += 360;
 	return [l, Math.sqrt(a * a + b * b), h];
 }
 
-/** Inverse of labToLch; also serves OKLCH to OKLAB. */
 export function lchToLab(l: number, c: number, h: number): Triple {
 	const rad = (h * Math.PI) / 180;
 	return [l, c * Math.cos(rad), c * Math.sin(rad)];
 }
-
-// ── OKLAB and OKLCH ─────────────────────────────────────────────────────────
 
 export function rgbToOklab(r: number, g: number, b: number): Triple {
 	const lr = srgbToLinear(r),
@@ -211,7 +182,6 @@ export function rgbToOklab(r: number, g: number, b: number): Triple {
 	];
 }
 
-/** Linear-light sRGB, unclamped, so callers can see how far out of gamut a value is. */
 function oklabToLinearRgb(L: number, a: number, b: number): Triple {
 	const l = Math.pow(L + 0.3963377774 * a + 0.2158037573 * b, 3);
 	const m = Math.pow(L - 0.1055613458 * a - 0.0638541728 * b, 3);
@@ -227,16 +197,6 @@ export function oklabToRgb(L: number, a: number, b: number): Triple {
 	return oklabToLinearRgb(L, a, b).map(linearToSrgb) as Triple;
 }
 
-/**
- * The largest chroma that still fits in sRGB at this lightness and hue, found
- * by bisection. The sRGB solid is convex in OKLab, so a ray out from the
- * neutral axis crosses its surface once and the search cannot land in a hole.
- * 0.5 is above the whole gamut: the most saturated sRGB colour is blue, at
- * chroma 0.313.
- *
- * Callers scale by this rather than clamping the channels afterwards, because
- * per-channel clamping moves hue and lightness as well as chroma.
- */
 export function maxOklchChroma(l: number, h: number): number {
 	let lo = 0;
 	let hi = 0.5;
@@ -251,14 +211,10 @@ export function maxOklchChroma(l: number, h: number): number {
 	return lo;
 }
 
-/** sRGB 0–255 to OKLCH, as [L 0–1, chroma, hue 0–360]. */
 export function rgbToOklch(r: number, g: number, b: number): Triple {
 	return labToLch(...rgbToOklab(r, g, b));
 }
 
-// ── YCbCr ───────────────────────────────────────────────────────────────────
-
-/** ITU-R BT.601, studio swing, rounded to integers. */
 export function rgbToYcbcr(r: number, g: number, b: number): Triple {
 	return [
 		Math.round(16 + (65.481 * r + 128.553 * g + 24.966 * b) / 255),
@@ -267,12 +223,6 @@ export function rgbToYcbcr(r: number, g: number, b: number): Triple {
 	];
 }
 
-/**
- * Naive device CMYK (no profile, no black generation beyond the plain K pull),
- * percentages 0–100. This is the arithmetic every "what is this in CMYK"
- * readout uses; it is NOT a print-accurate separation, which needs an ICC
- * profile for the target press.
- */
 export function rgbToCmyk(
 	r: number,
 	g: number,
@@ -285,9 +235,6 @@ export function rgbToCmyk(
 	return [pct(r), pct(g), pct(b), Math.round(k * 100)];
 }
 
-// ── Contrast ────────────────────────────────────────────────────────────────
-
-/** WCAG relative luminance, 0–1. */
 export function luminance(r: number, g: number, b: number): number {
 	const [lr, lg, lb] = [r, g, b].map((c) => {
 		c /= 255;
@@ -298,7 +245,6 @@ export function luminance(r: number, g: number, b: number): number {
 	return 0.2126 * lr + 0.7152 * lg + 0.0722 * lb;
 }
 
-/** WCAG 2.1 contrast ratio, 1–21. Null if either string is not a hex colour. */
 export function contrastRatio(one: string, two: string): number | null {
 	const rgbOne = hexToRgb(one);
 	const rgbTwo = hexToRgb(two);
@@ -312,10 +258,6 @@ export function contrastRatio(one: string, two: string): number | null {
 	);
 }
 
-/**
- * Black or white, whichever reads on the given fill. The 0.4 threshold is the
- * Next app's, not the WCAG midpoint — it biases toward black text.
- */
 export function contrastText(hex: string): string {
 	const rgb = hexToRgb(hex);
 	if (!rgb) return '#000000';

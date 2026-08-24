@@ -1,11 +1,5 @@
-// pdf-organiser: merge, rotate, delete, drag-reorder and split, checked
-// against the PDFs it writes.
-//
-// Fixtures are written by node with the same pdf-lib the app uses — alpha.pdf
-// (3 A4 pages) and beta.pdf (2 Letter pages), so page sizes in the merged
-// output prove the order the pages travelled in.
-//
-// Usage: npm start, then node scripts/verify/pdf-organiser.mjs
+// page sizes prove merge order
+// npm start, node scripts/verify/pdf-organiser.mjs
 
 import {
 	mkdtempSync,
@@ -44,7 +38,7 @@ const beta = await makePdf('beta.pdf', 'BETA', LETTER, 2);
 
 const downloads = mkdtempSync(join(tmpdir(), 'dt-porg-dl-'));
 
-/** Chrome writes a .crdownload first, so wait for a settled, named file. */
+// wait past .crdownload
 async function waitForDownload(match, timeout = 30000) {
 	const until = Date.now() + timeout;
 	while (Date.now() < until) {
@@ -69,8 +63,7 @@ await client.send('Browser.setDownloadBehavior', {
 });
 
 await visit(page, '/tools/pdf-organiser');
-// One file at a time: the grid follows load order, and the checks below
-// need to know which file leads.
+// load order fixes grid order
 await (await page.$('.dt-porg-drop input[type="file"]')).uploadFile(alpha);
 await page.waitForFunction(
 	() => document.querySelectorAll('.dt-porg-cell').length === 3,
@@ -94,7 +87,6 @@ check(
 	count.trim(),
 );
 
-// Rotate alpha p.1 (+90°).
 await page.click('.dt-porg-cell .dt-porg-tool[title="Rotate"]');
 const rotated = await page.$eval(
 	'.dt-porg-cell .dt-porg-thumb',
@@ -106,7 +98,6 @@ check(
 	rotated.trim().replace(/\s+/g, ' '),
 );
 
-// Delete beta p.2 (the last cell) — 4 pages remain.
 await page.click('.dt-porg-cell:last-child .dt-porg-tool[title="Delete"]');
 await page.waitForFunction(
 	() => document.querySelectorAll('.dt-porg-cell').length === 4,
@@ -118,9 +109,7 @@ const badgeOrder = () =>
 	page.$$eval('.dt-porg-badge', (els) => els.map((el) => el.textContent));
 const before = await badgeOrder();
 
-// Drag the first cell (alpha p.1) onto the third (alpha p.3): a move, not a
-// swap. Synthetic DragEvents carry a real DataTransfer, which is all the
-// handlers read.
+// synthetic dragevents suffice
 await page.evaluate(() => {
 	const cells = [...document.querySelectorAll('.dt-porg-cell')];
 	const dataTransfer = new DataTransfer();
@@ -138,8 +127,6 @@ check(
 	after.join('|') === 'p. 2|p. 3|p. 1|p. 1',
 	`${before.join('|')} → ${after.join('|')}`,
 );
-
-// ── merge ────────────────────────────────────────────────────────────────
 await page.click('.dt-porg-btn.is-primary');
 const merged = await waitForDownload(/-merged\.pdf$/);
 check('merged PDF downloads', !!merged, merged?.name ?? 'nothing landed');
@@ -151,7 +138,7 @@ if (merged) {
 		const { width } = p.getSize();
 		return Math.round(width);
 	});
-	// alpha ×3 (A4, 595pt) in the dragged order, then beta p.1 (Letter).
+	// 595=a4, 612=letter
 	check(
 		'merged order follows the grid',
 		sizes.join(',') === '595,595,595,612',
@@ -163,8 +150,6 @@ if (merged) {
 		`page 3 rotation ${doc.getPage(2).getRotation().angle}`,
 	);
 }
-
-// ── split: one range ─────────────────────────────────────────────────────
 await page.type('.dt-porg-field input[type="text"]', '1-2');
 await sleep(300);
 await page.click('.dt-porg-splitgo');
@@ -175,7 +160,6 @@ if (part) {
 	check('the range part has 2 pages', doc.getPageCount() === 2);
 }
 
-// ── split: every page ────────────────────────────────────────────────────
 await page.evaluate(() => {
 	[...document.querySelectorAll('.dt-porg-opt')]
 		.find((b) => b.textContent.trim() === 'Every page')
@@ -196,7 +180,6 @@ if (zip) {
 	);
 }
 
-// ── a bad range reports and disables ─────────────────────────────────────
 await page.evaluate(() => {
 	[...document.querySelectorAll('.dt-porg-opt')]
 		.find((b) => b.textContent.trim() === 'By ranges')
@@ -205,7 +188,7 @@ await page.evaluate(() => {
 await page.waitForSelector('.dt-porg-field input[type="text"]', {
 	timeout: 5000,
 });
-// value= alone does not fire input; typing the replacement does.
+// value= fires no input
 await page.evaluate(() => {
 	document.querySelector('.dt-porg-field input[type="text"]').value = '';
 });

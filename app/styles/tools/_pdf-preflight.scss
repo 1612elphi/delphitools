@@ -1,22 +1,12 @@
-// Styles for the pdf-preflight tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
 
-/* ── PDF preflight ───────────────────────────────────────────────────────── */
-
-// Severity has no theme token, so the tailwind scale stands in at the steps the
-// Next app used. Red does have one (--destructive), but the four states have to
-// read as one set.
+// no severity theme token
 $error: crayon.color("red-500");
 $warning: crayon.color("amber-500");
 $info: crayon.color("blue-500");
 $pass: crayon.color("green-500");
 
-// The box overlays are drawn on the canvas from the same three literals in
-// pdf-preflight.gts; the legend has to match them.
+// matches pdf-preflight.gts overlays
 $trim: #3b82f6;
 $bleed: #ef4444;
 $crop: #22c55e;
@@ -28,8 +18,6 @@ $crop: #22c55e;
 .dt-preflight-frame {
 	border: 2px solid var(--border);
 }
-
-/* Drop zone */
 
 .dt-preflight-drop {
 	display: block;
@@ -60,7 +48,7 @@ $crop: #22c55e;
 		background: color-mix(in oklch, var(--primary) 5%, transparent);
 	}
 
-	/* the file input is visually hidden, so its focus ring has to land here */
+	/* hidden file input focus */
 	&:focus-within {
 		border-color: var(--primary);
 		outline: 2px solid var(--primary);
@@ -80,8 +68,6 @@ $crop: #22c55e;
 	color: var(--muted-foreground);
 	font-size: crayon.font-size("sm");
 }
-
-/* Loaded file */
 
 .dt-preflight-file {
 	display: flex;
@@ -141,8 +127,6 @@ $crop: #22c55e;
 	}
 }
 
-/* Progress and errors */
-
 .dt-preflight-busy {
 	@include crayon.hstack(3);
 
@@ -157,8 +141,6 @@ $crop: #22c55e;
 	color: var(--destructive);
 	font-size: crayon.font-size("sm");
 }
-
-/* Two-panel report */
 
 .dt-preflight-report {
 	display: grid;
@@ -181,8 +163,6 @@ $crop: #22c55e;
 	font-size: crayon.font-size("base");
 	font-weight: crayon.font-weight("bold");
 }
-
-/* Page preview */
 
 .dt-preflight-stage {
 	overflow: hidden;
@@ -302,8 +282,6 @@ $crop: #22c55e;
 	}
 }
 
-/* Shared report sections */
-
 .dt-preflight-section {
 	@include crayon.vstack(4);
 
@@ -329,7 +307,6 @@ $crop: #22c55e;
 	text-transform: uppercase;
 }
 
-/* A flush list bleeds to the section edges, as the Next app's -mx-4 did. */
 .dt-preflight-list {
 	border-block: 1px solid var(--border);
 
@@ -446,8 +423,6 @@ $crop: #22c55e;
 		color: var(--foreground);
 	}
 }
-
-/* Verdict, badges, summary */
 
 .dt-preflight-verdict {
 	@include crayon.hstack(3);
@@ -575,8 +550,6 @@ $crop: #22c55e;
 	font-variant-numeric: tabular-nums;
 }
 
-/* Fonts */
-
 .dt-preflight-font {
 	display: flex;
 	align-items: stretch;
@@ -649,8 +622,6 @@ $crop: #22c55e;
 		color: var(--foreground);
 	}
 }
-
-/* Taxiway */
 
 .dt-preflight-taxiway {
 	@include crayon.hstack(3);

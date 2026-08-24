@@ -1,10 +1,3 @@
-// The sidebar below the 768px breakpoint, where it becomes an off-canvas
-// drawer over a full-screen scrim.
-//
-// The resize case is here because it was a real bug: crossing back to desktop
-// left the scrim in place, covering the whole layout with an invisible sheet
-// that swallowed every click. The service unit tests cover the state machine;
-// this covers the DOM it produces.
 
 import { launch, visit, check, sleep, finish } from './harness.mjs';
 
@@ -57,13 +50,11 @@ check(
 );
 check('and the panel slides in', open.offCanvas >= 0, `left=${open.offCanvas}`);
 
-// Near the right edge, not the element centre: the scrim spans the viewport,
-// so its midpoint is behind the open drawer panel.
+// scrim midpoint sits behind the open drawer
 await page.mouse.click(MOBILE.width - 20, MOBILE.height / 2);
 await sleep(500);
 check('tapping the scrim closes it', (await drawer()).open !== 'true');
 
-// The bug: growing past the breakpoint with the drawer open.
 await page.click(TOGGLE);
 await sleep(400);
 await page.setViewport(DESKTOP);

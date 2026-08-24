@@ -26,17 +26,15 @@ import type { PDFDocumentProxy, PageViewport } from 'pdfjs-dist';
 
 const ACCEPT = '.pdf,application/pdf';
 
-/** Width the page-strip thumbnails are rendered at, in CSS pixels. */
 const THUMB_WIDTH = 96;
 const PREVIEW_MAX_W = 720;
 const PREVIEW_MAX_H = 980;
-/** A drag shorter than this is a click, not a crop. */
 const MIN_DRAG_PX = 4;
 
 interface PageState {
-	/** Extra rotation on top of the page's own, in 90° steps. */
+	/** 90° steps atop page's own */
 	rotation: number;
-	/** Kept area in the page's user-space points; null keeps the page whole. */
+	/** user-space pts; null = whole */
 	crop: CropBox | null;
 	thumb: string;
 }
@@ -57,25 +55,24 @@ export default class PdfRotateCropTool extends Component {
 	@tracked busy = false;
 	@tracked loading = false;
 
-	/** Manual crop margins for the current page, in millimetres. */
+	/** crop margins, mm */
 	@tracked insetLeft = '0';
 	@tracked insetTop = '0';
 	@tracked insetRight = '0';
 	@tracked insetBottom = '0';
-	/** Selected standard paper size id for crop-to-size; '' when none. */
+	/** paper size id; '' = none */
 	@tracked paperId = '';
-	/** Current page's point dimensions at the preview's rotation, scale 1. */
+	/** points, at preview rotation */
 	@tracked pagePointW = 0;
 	@tracked pagePointH = 0;
 
-	/** Original bytes; pdf-lib re-parses them fresh on every export. */
+	/** pdf-lib re-parses per export */
 	#bytes: ArrayBuffer | null = null;
 	#js: PDFDocumentProxy | null = null;
-	/** Viewport of the current preview, for px ↔ point conversion. */
 	#viewport: PageViewport | null = null;
-	/** Last drag start in preview px, while the pointer is down. */
+	/** drag start, preview px */
 	#dragStart: { x: number; y: number } | null = null;
-	/** Latest-wins guard for overlapping preview renders. */
+	/** latest-wins preview renders */
 	#renderToken = 0;
 
 	get loaded() {
@@ -109,7 +106,6 @@ export default class PdfRotateCropTool extends Component {
 		);
 	}
 
-	/** The current page's applied crop, drawn back over the preview. */
 	get existingCropStyle() {
 		const crop = this.currentPage?.crop;
 		const viewport = this.#viewport;
@@ -156,12 +152,11 @@ export default class PdfRotateCropTool extends Component {
 		return !this.busy && !!findPaperSize(this.paperId);
 	}
 
-	/** Point value rounded to a tenth of a millimetre, as a display string. */
+	/** rounded to 0.1mm */
 	#ptToMmStr(pt: number) {
 		return String(Math.round((pt / MM_TO_POINTS) * 10) / 10);
 	}
 
-	/** Redraw the four inset fields from the current page's applied crop. */
 	#syncInsets() {
 		const crop = this.currentPage?.crop;
 		if (crop && this.pagePointW > 0 && this.pagePointH > 0) {
@@ -199,15 +194,13 @@ export default class PdfRotateCropTool extends Component {
 	rotationClass = (page: PageState) =>
 		page.rotation ? `is-rot-${page.rotation}` : '';
 
-	// ------------------------------------------------------------ intake
-
 	readFile = (file: File) => void this.#load(file);
 
 	handleFileSelect = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) void this.#load(file);
-		// Choosing the same file twice must still fire a change event.
+		// allow re-picking same file
 		input.value = '';
 	};
 
@@ -221,7 +214,7 @@ export default class PdfRotateCropTool extends Component {
 		if (file) void this.#load(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// default drop navigates
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -232,7 +225,7 @@ export default class PdfRotateCropTool extends Component {
 		try {
 			const bytes = await file.arrayBuffer();
 			const js: PDFDocumentProxy = await loadPdfDocument(
-				// A copy: pdf.js detaches the buffer it is handed.
+				// pdf.js detaches input buffer
 				bytes.slice(0),
 			);
 
@@ -284,8 +277,6 @@ export default class PdfRotateCropTool extends Component {
 		this.#syncInsets();
 	};
 
-	// ------------------------------------------------------------ preview
-
 	async #renderPreview() {
 		const js = this.#js;
 		const page = this.currentPage;
@@ -319,7 +310,7 @@ export default class PdfRotateCropTool extends Component {
 				width: viewport.width,
 				height: viewport.height,
 			};
-			// A pending drag is in the old viewport's pixels.
+			// stale viewport px
 			this.pending = null;
 			this.#syncInsets();
 		} catch {
@@ -334,8 +325,6 @@ export default class PdfRotateCropTool extends Component {
 		this.current = index;
 		void this.#renderPreview();
 	};
-
-	// ----------------------------------------------------------- rotation
 
 	#rotate(delta: number, page: PageState): PageState {
 		return {
@@ -359,8 +348,6 @@ export default class PdfRotateCropTool extends Component {
 		);
 		void this.#renderPreview();
 	};
-
-	// --------------------------------------------------------------- crop
 
 	#eventPoint(event: PointerEvent) {
 		const bounds = (
@@ -405,11 +392,7 @@ export default class PdfRotateCropTool extends Component {
 		this.#dragStart = null;
 	};
 
-	/**
-	 * The pending rect is preview pixels; fractions of the viewport survive
-	 * the per-page conversion, so "all pages" crops every page to the same
-	 * visible region even when page sizes or rotations differ.
-	 */
+	/** preview fractions: same visible region per page */
 	applyCrop = async (scope: 'page' | 'all') => {
 		const pending = this.pending;
 		const viewport = this.#viewport;
@@ -451,11 +434,7 @@ export default class PdfRotateCropTool extends Component {
 		this.#syncInsets();
 	};
 
-	/**
-	 * Crop from the four margin fields (millimetres). Unlike the drag path the
-	 * margins are the same physical distance on every targeted page, so each
-	 * page keeps its own edges rather than a shared visible fraction.
-	 */
+	/** uniform mm per page */
 	applyManualCrop = async (scope: 'page' | 'all') => {
 		const js = this.#js;
 		if (this.busy || !js) return;
@@ -492,11 +471,7 @@ export default class PdfRotateCropTool extends Component {
 		this.#syncInsets();
 	};
 
-	/**
-	 * Crop to the selected standard paper size, centred on each page. Portrait
-	 * paper is rotated to a landscape page so the box lands the same way up as
-	 * the page; the download path clamps it to the page's own bounds.
-	 */
+	/** portrait rotated for landscape */
 	applyPaper = async (scope: 'page' | 'all') => {
 		const js = this.#js;
 		const size = findPaperSize(this.paperId);
@@ -543,8 +518,6 @@ export default class PdfRotateCropTool extends Component {
 		this.#syncInsets();
 	};
 
-	// ------------------------------------------------------------- output
-
 	download = async () => {
 		if (this.busy || !this.#bytes) return;
 		this.busy = true;
@@ -569,7 +542,7 @@ export default class PdfRotateCropTool extends Component {
 					);
 				}
 				if (state.crop) {
-					// Never widen the page: stay inside what it already shows.
+					// never exceed current cropbox
 					const box = intersectBox(
 						state.crop,
 						page.getCropBox(),
@@ -584,8 +557,7 @@ export default class PdfRotateCropTool extends Component {
 					}
 				}
 			});
-			// Copied into a fresh buffer: pdf-lib types its output over
-			// ArrayBufferLike, which BlobPart does not accept.
+			// BlobPart rejects ArrayBufferLike view
 			downloadBlob(
 				new Blob([new Uint8Array(await doc.save())], {
 					type: 'application/pdf',
@@ -977,8 +949,7 @@ export default class PdfRotateCropTool extends Component {
 									alt="Page preview"
 									draggable="false"
 								/>
-								{{! drag cropping needs the down event; the
-									thumbnail strip is the keyboard path }}
+								{{! keyboard path: thumbnail strip }}
 								{{! template-lint-disable no-pointer-down-event-binding }}
 								<div
 									class="dt-prc-crop-layer"

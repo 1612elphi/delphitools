@@ -1,57 +1,14 @@
-/**
- * RMBG-1.4 background removal, through transformers.js.
- *
- * Everything here runs in the browser. The model weights are fetched from the
- * Hugging Face hub on first use and left to the browser's HTTP cache;
- * transformers.js has its own Cache API layer and it is switched off, because
- * it is unreliable on iOS Safari.
- *
- * The ONNX runtime is a different matter from the weights. transformers.js
- * falls back to a jsdelivr URL only when nothing has set `wasmPaths`, and a
- * bundler that can resolve the binary sets it: Rolldown emits
- * ort-wasm-simd-threaded.jsep.wasm into the build and rewrites the reference,
- * exactly as Turbopack does for the Next app. Both builds therefore self-host
- * the same 21.6 MB binary, byte for byte. Nothing here has to arrange that,
- * but a build that suddenly stops emitting it has silently moved the runtime
- * onto a CDN.
- *
- * The import is dynamic so none of this reaches the main bundle: it is roughly
- * 835 kB of JavaScript, plus that binary, before a single weight is
- * downloaded, and 55 tools that do not need it would otherwise pay for it.
- *
- * ponytail: inference runs on the main thread, so the wasm path janks. A
- * worker is the upgrade if that becomes the complaint.
- */
-
-/**
- * RMBG-1.4, the same model Substrata's lib/substrata/bg-removal.ts uses, so
- * the two share hub files in the browser cache. Licence is CC BY-NC-ND and is
- * acknowledged in ACKNOWLEDGEMENTS.md.
- *
- * The Next tool carries a second "precise" mode behind a flag pinned to false,
- * waiting on RMBG-2.0 becoming public. It is not ported: the branch renders
- * nothing today, and the model id it names does not resolve.
- */
 export const MODEL_ID = 'briaai/RMBG-1.4';
 
-/**
- * Half precision, not fp32. Same weights, and on this model it is a strictly
- * better trade: the download drops from 176 MB to 88 MB and a WebGPU run of the
- * delphi logo went from 24s to 10s, with the resulting matte identical to three
- * significant figures. The q8 build halves it again to 44 MB and also matched,
- * but quantisation costs edge precision in a way one stylised test image will
- * not show, so it is not the default without someone looking at photographs.
- */
+// fp16 preserves edge detail
 const DTYPE = 'fp16';
 
 export type Device = 'webgpu' | 'wasm';
 
 export interface LoadProgress {
-	/** 0-100, only while weights are downloading. */
 	percent: number;
 }
 
-/** The shape of a mask as transformers.js hands it back. */
 interface MaskImage {
 	width: number;
 	height: number;
@@ -73,19 +30,13 @@ type Pipeline = ((image: string) => Promise<SegmentationResult[]>) & {
 	dispose?: () => void;
 };
 
-/**
- * Builds the segmentation pipeline, preferring WebGPU.
- *
- * The fallback is tried on load failure and again on the first run: a pipeline
- * can compile on WebGPU and then fail inside OrtRun, which Substrata's port
- * hit and the standalone Next tool does not handle.
- */
 export async function loadRemover(
 	onProgress: (progress: LoadProgress) => void,
 ): Promise<Remover> {
 	const { pipeline, env } = await import('@huggingface/transformers');
 
 	env.allowLocalModels = false;
+	// disable unreliable ios cache
 	env.useBrowserCache = false;
 
 	const progress_callback = (event: {
@@ -125,8 +76,7 @@ export async function loadRemover(
 				return await pipe(image);
 			} catch (error) {
 				if (device === 'wasm') throw error;
-				// Compiled on WebGPU, failed inside the run. Rebuild
-				// once on wasm rather than surfacing a crash.
+				// webgpu run can fail
 				pipe.dispose?.();
 				device = 'wasm';
 				pipe = await build('wasm');
@@ -137,7 +87,6 @@ export async function loadRemover(
 	};
 }
 
-/** A mask as a canvas, whatever shape transformers.js returned it in. */
 export function maskToCanvas(mask: MaskImage): HTMLCanvasElement {
 	if (typeof mask.toCanvas === 'function') return mask.toCanvas();
 
@@ -147,7 +96,7 @@ export function maskToCanvas(mask: MaskImage): HTMLCanvasElement {
 	const ctx = canvas.getContext('2d');
 	if (!ctx) throw new Error('no 2d context');
 
-	// Single-channel grey, so each source byte fills one RGBA pixel.
+	// expand grayscale to rgba
 	const image = ctx.createImageData(mask.width, mask.height);
 	for (let i = 0; i < mask.data.length; i++) {
 		const value = mask.data[i]!;
@@ -160,11 +109,6 @@ export function maskToCanvas(mask: MaskImage): HTMLCanvasElement {
 	return canvas;
 }
 
-/**
- * The source image with the mask's red channel written into its alpha, as a
- * PNG data URL. The mask is scaled to the source, because the model works at
- * its own resolution.
- */
 export function applyMask(
 	source: HTMLImageElement,
 	mask: HTMLCanvasElement,

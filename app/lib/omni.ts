@@ -1,9 +1,3 @@
-// The omnibox's reading of typed, pasted, or dropped input: tool search,
-// file→tool routing over the registry's `accepts` field, and microtool
-// answers. Detection guards are cheap and synchronous; the answer bodies that
-// need real logic import the owning tool's module on demand, so the front
-// page never carries a tool chunk (or mathjs) it has not been asked for.
-
 import { allTools, getToolById, type Tool } from './tools';
 import { detectColour } from './colour-parse';
 import {
@@ -21,25 +15,20 @@ import type { CategoryKey } from 'delphitools-v2/components/tools/unit-converter
 
 export interface OmniAnswer {
 	toolId: string;
-	/** monospace answer text; empty when the row is only swatches */
 	value: string;
 	swatches?: string[];
-	/** a small image preview (QR code, etc.) */
 	image?: string;
-	/** query params the row's arrow carries into the tool */
 	query?: Record<string, string>;
 }
 
 export interface OmniReading {
 	answers: OmniAnswer[];
-	/** tools that take the value without an inline answer */
 	carry: Tool[];
 	carryQuery: Record<string, string>;
 }
 
 const MAX_ANSWERS = 6;
 
-/** Case-insensitive substring match over names and descriptions. */
 export function searchTools(query: string): Tool[] {
 	const q = query.trim().toLowerCase();
 	if (!q) return [];
@@ -50,7 +39,6 @@ export function searchTools(query: string): Tool[] {
 	);
 }
 
-/** Every tool whose `accepts` matches the dropped file, in catalogue order. */
 export function toolsForFile(file: File): Tool[] {
 	return allTools.filter((tool) =>
 		tool.accepts
@@ -59,10 +47,7 @@ export function toolsForFile(file: File): Tool[] {
 	);
 }
 
-/**
- * A bare digit run reads as a number (bases, timestamp), not as prefixless
- * hex — `123456` is far more often a count than a colour.
- */
+// ignore numeric hex
 function readColourHex(input: string): string | null {
 	if (/^\d+$/.test(input)) return null;
 	const rgb = detectColour(input);
@@ -74,7 +59,7 @@ function push(
 	toolId: string,
 	answer: Omit<OmniAnswer, 'toolId'>,
 ) {
-	// A tool absent from the registry must not produce a ghost row.
+	// omit unregistered tools
 	if (getToolById(toolId)) answers.push({ toolId, ...answer });
 }
 
@@ -84,9 +69,7 @@ async function colourAnswers(hex: string): Promise<OmniAnswer[]> {
 	const rgb = detectColour(hex)!;
 	const [r, g, b] = rgb;
 
-	// color-name-list (~176 kB) loads only when a colour is actually read, so it
-	// stays out of the eager front-page bundle. Same on-demand rule as the rest
-	// of this module's answer bodies.
+	// defer 176kb color names
 	const { getColourName } = await import('./colour-names');
 	push(answers, 'colour-atlas', {
 		value: `${getColourName(hex)} · ${hex}`,
@@ -159,8 +142,7 @@ async function unitAnswers(input: string): Promise<OmniAnswer[]> {
 		if (!info) return [];
 		const px = info.toPx(value, 16);
 
-		// typo-calc's formatValue pads to fixed decimals for its table; a row
-		// wants `1.125`, not `1.12500`.
+		// trim fixed decimals
 		const trim = (n: number) => String(parseFloat(n.toFixed(4)));
 
 		const answers: OmniAnswer[] = [];
@@ -268,8 +250,7 @@ function timeAnswers(input: string): OmniAnswer[] {
 	return answers;
 }
 
-// Digits, operators and grouping only — and at least one infix operator, so a
-// plain number is a number, not an expression.
+// require infix operators
 const EXPRESSION_SHAPE = /^[\d\s+\-*/^().,%!]+$/;
 const HAS_OPERATOR = /\d\s*[+\-*/^%]/;
 
@@ -305,8 +286,7 @@ async function algebraAnswers(input: string): Promise<OmniAnswer[]> {
 	const { compute } =
 		await import('delphitools-v2/components/tools/algebra-calc');
 	const math = await import('mathjs');
-	// solve is variable-agnostic; this label is the first letter and only
-	// mislabels non-polynomial input (which mathjs then rejects anyway).
+	// infer first variable
 	const variable = /[a-zA-Z]/.exec(input)?.[0] ?? 'x';
 	try {
 		const output = compute(math, 'solve', input, variable);
@@ -410,8 +390,7 @@ async function encodingAnswers(input: string): Promise<OmniAnswer[]> {
 	let decoded: string | null = null;
 	let mode: 'base64' | 'url' | null = null;
 
-	// Requiring a length multiple of 4 skips unpadded Base64; that is the noise
-	// floor, not an oversight.
+	// reject unpadded base64
 	if (
 		input.length >= BASE64_MIN_LEN &&
 		input.length % 4 === 0 &&
@@ -424,7 +403,7 @@ async function encodingAnswers(input: string): Promise<OmniAnswer[]> {
 				mode = 'base64';
 			}
 		} catch {
-			// Not valid Base64; keep looking.
+			decoded = null;
 		}
 	}
 
@@ -508,13 +487,7 @@ async function shavianAnswers(input: string): Promise<OmniAnswer[]> {
 const MIN_TEXT_WORDS = 4;
 const MIN_CIPHER_CHARS = 12;
 const CIPHER_PREVIEW_CHARS = 40;
-// classifyAndDecode ranks by shape confidence, not readability — a Base32
-// decode of plain ciphertext outranks the Caesar decode, and englishLikeness
-// alone cannot veto it: on a mostly-non-letter string the chi-squared half
-// scores near-perfect (0.89 for binary garbage), while an ALL-CAPS true
-// decode manages only 0.40 (the common-word half misses uppercase). So:
-// binary garbage dies on the printable-ASCII gate, and the likeness floor
-// sits below the all-caps case.
+// rank structural confidence first
 const CIPHER_CONFIDENCE = 1.2;
 const CIPHER_FLOOR = 0.35;
 const CIPHER_PRINTABLE_FLOOR = 0.9;
@@ -576,11 +549,6 @@ async function textAnswers(input: string): Promise<OmniAnswer[]> {
 	return answers;
 }
 
-/**
- * Every microtool answer for the input, or null when nothing reads it and
- * the omnibox should fall back to plain search. Async because answer bodies
- * load their tool's chunk on demand — callers guard staleness themselves.
- */
 export async function readInput(raw: string): Promise<OmniReading | null> {
 	const input = raw.trim();
 	if (!input) return null;

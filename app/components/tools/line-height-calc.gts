@@ -11,7 +11,6 @@ export interface Ratio {
 	use: string;
 }
 
-// Wording carried over from the Next app.
 export const RATIOS: Ratio[] = [
 	{ name: 'Tight', ratio: 1.2, use: 'Headings, large text' },
 	{ name: 'Snug', ratio: 1.375, use: 'Subheadings' },
@@ -24,20 +23,15 @@ const GOLDEN_RATIO = 1.618;
 const OPTIMAL_RATIO = 1.5;
 const PREVIEW_RATIOS = [1.2, 1.5, 2];
 
-/** The preview never sets type larger than this, however big the input. */
 const PREVIEW_MAX_PX = 24;
 
 const COPIED_MS = 1500;
 
-// Wording carried over from the Next app. Held here rather than inline in the
-// template because the formatter wraps long lines, and the em dash and phi both
-// matter.
 const OPTIMAL_NOTE = '1.5× ratio — optimal for body text';
 const GOLDEN_NOTE = 'φ (1.618) — harmonious proportions';
 const PANGRAM =
 	'The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.';
 
-/** Line height in px, one decimal, as the Next app prints it. */
 export function lineHeightPx(fontSize: number, ratio: number): string {
 	return (fontSize * ratio).toFixed(1);
 }
@@ -177,7 +171,6 @@ export default class LineHeightCalcTool extends Component {
 				</div>
 
 				<div class="dt-lh-rec">
-					{{! wording carried over from the Next app }}
 					<span class="dt-lh-cap">Golden Ratio</span>
 					<span
 						class="dt-lh-value"
@@ -215,7 +208,6 @@ export default class LineHeightCalcTool extends Component {
 
 			<div class="dt-lh-block">
 				<div class="dt-lh-head">
-					{{! wording carried over from the Next app }}
 					<span class="dt-lh-heading">Common
 						Ratios</span>
 				</div>

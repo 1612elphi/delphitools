@@ -28,7 +28,6 @@ import ChangelogPopup from 'delphitools-v2/components/changelog-popup';
 
 const PLACEHOLDER = 'Drop a file, search for a tool, paste in text';
 
-// Answers hold off while the user is still typing.
 const READ_DEFER_MS = 120;
 
 interface AnswerRow {
@@ -41,7 +40,6 @@ interface AnswerRow {
 
 interface OmniboxSignature {
 	Blocks: {
-		/** rendered under the box, above the sections (the tagline) */
 		default: [];
 	};
 }
@@ -85,7 +83,6 @@ export default class Omnibox extends Component<OmniboxSignature> {
 
 	shuffle = () => {
 		if (!this.canShuffle) return;
-		// A draw over the other indices, so shuffle always changes the art.
 		let next = Math.floor(Math.random() * (HERO_ART.length - 1));
 		if (next >= this.artIndex) next++;
 		this.artIndex = next;
@@ -110,7 +107,7 @@ export default class Omnibox extends Component<OmniboxSignature> {
 				swatches: (answer.swatches ?? []).map(
 					(hex) => ({
 						hex,
-						// generated hex strings, never user input
+						// trusted generated hex
 						style: htmlSafe(
 							`background:${hex}`,
 						),
@@ -131,13 +128,11 @@ export default class Omnibox extends Component<OmniboxSignature> {
 		return this.reading?.carryQuery ?? {};
 	}
 
-	/** The chip on carry cells: where the value goes when the cell is opened. */
 	get carryLabel(): string {
 		const colour = this.carryQuery['color'];
 		return colour ? `→ #${colour}` : '';
 	}
 
-	/** Search results when nothing answered; file matches when a file is in. */
 	get matches(): Tool[] {
 		if (this.file) return this.fileTools;
 		if (this.reading) return [];
@@ -205,7 +200,7 @@ export default class Omnibox extends Component<OmniboxSignature> {
 		if (file) this.takeFile(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// prevent dropped-file navigation
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -223,7 +218,6 @@ export default class Omnibox extends Component<OmniboxSignature> {
 		this.fileTools = [];
 	};
 
-	/** the legend's file picker, for screens with nothing to drag from */
 	picker = modifier((element: HTMLInputElement) => {
 		this.#picker = element;
 		return () => {
@@ -240,8 +234,6 @@ export default class Omnibox extends Component<OmniboxSignature> {
 		input.value = '';
 	};
 
-	/** the legend's paste button, for screens without a paste shortcut: a
-	 *  file if the clipboard holds one, else its text into the box */
 	pasteClipboard = async () => {
 		try {
 			for (const item of await navigator.clipboard.read()) {
@@ -263,12 +255,9 @@ export default class Omnibox extends Component<OmniboxSignature> {
 			this.clearFile();
 			this.raw = text;
 			this.#scheduleRead();
-		} catch {
-			// permission refused or an empty clipboard: nothing to take
-		}
+		} catch {}
 	};
 
-	/** the legend's third button: any tool page, at random */
 	feelingLucky = () => {
 		const pool = allTools.filter((tool) => !tool.external);
 		const tool = pool[Math.floor(Math.random() * pool.length)];
@@ -486,7 +475,6 @@ export default class Omnibox extends Component<OmniboxSignature> {
 				</div>
 			{{/if}}
 
-			{{! the page's tagline sits under the box, doodle style }}
 			{{yield}}
 		</div>
 

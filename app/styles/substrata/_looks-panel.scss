@@ -1,14 +1,9 @@
-// Substrata LOOKS panel — the film-sim / LUT gallery.
-//
-// The Tailwind of components/substrata/modules/looks-panel.tsx, one class per
-// element. Sizes are the literal Tailwind values (h-8 = 32px, text-[10.5px],
-// size-3.5 = 14px).
+// tailwind of looks-panel.tsx
 
 .sub-looks {
 	display: flex;
 	flex-direction: column;
-	// the 16-card gallery outgrows a natural-height bloom; in the rail the
-	// 300px box wins and this cap is inert
+	// gallery outgrows bloom height
 	block-size: 100%;
 	max-block-size: min(560px, calc(100vh - 140px));
 	font-size: 12px;

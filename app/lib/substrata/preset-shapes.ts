@@ -1,20 +1,10 @@
-/**
- * Preset shape registry (Pieces gallery, ratified 2026-07-07: "arrows, simple
- * symbols like heart, cross, cog, cloud etc"). Path data vendored from
- * Phosphor Icons v2.1.1 "fill" weight (MIT — see ACKNOWLEDGEMENTS.md), each a
- * single <path> on a 256×256 grid, holes counter-wound for nonzero winding
- * (never force evenodd). The 256 GRID (not the glyph bbox) maps onto the
- * dragged box, so proportions stay consistent across symbols. Display names
- * are standard vocabulary = functional chrome (SHAPE_NAMES precedent).
- */
+// mit phosphor icons v2.1.1
 
 export const SYMBOL_GRID = 256;
 
 export interface PresetShape {
 	id: string;
-	/** standard-vocabulary display name (layer name + gallery title/aria) */
 	name: string;
-	/** single-path d on the 256×256 grid */
 	d: string;
 }
 

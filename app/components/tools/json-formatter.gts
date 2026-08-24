@@ -36,7 +36,6 @@ interface SourceLine {
 	isError: boolean;
 }
 
-/** A tree row with its indentation resolved for the style attribute. */
 type ViewRow = FlatTreeRow & { rowStyle: SafeString };
 
 export default class JsonFormatterTool extends Component {
@@ -47,9 +46,7 @@ export default class JsonFormatterTool extends Component {
 	@tracked copied: string | null = null;
 	@tracked collapsedPaths: ReadonlySet<string> = new Set();
 
-	// The editor is a transparent-text textarea over a rendered copy of the
-	// source, the only way to highlight one line inside an editable field.
-	// These keep the copy in step with the textarea's scroll.
+	// sync rendered editor backdrop
 	@tracked scrollTop = 0;
 	@tracked scrollLeft = 0;
 
@@ -113,7 +110,7 @@ export default class JsonFormatterTool extends Component {
 		const errorLine = this.error?.line ?? null;
 		return this.source.split('\n').map((line, index) => {
 			const number = index + 1;
-			// A space keeps an empty row at full height.
+			// preserve empty row height
 			return {
 				number,
 				text: line === '' ? ' ' : line,
@@ -176,7 +173,7 @@ export default class JsonFormatterTool extends Component {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) this.readFile(file);
-		// Choosing the same file twice must still fire a change event.
+		// allow file reselection
 		input.value = '';
 	};
 
@@ -186,7 +183,7 @@ export default class JsonFormatterTool extends Component {
 		if (file) this.readFile(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// block dropped-file navigation
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};

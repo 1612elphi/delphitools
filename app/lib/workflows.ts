@@ -1,20 +1,13 @@
 import { matchesAccept } from 'delphitools-v2/modifiers/file-paste';
 import { getCategoryByToolId, getToolById, type Tool } from './tools';
 
-/**
- * A predefined chain of tools. The flow service carries each step's output
- * (captured in lib/download.ts) to the next step's intake (delivered by the
- * filePaste modifier), so the tools themselves never know they are in a chain.
- */
 export interface Workflow {
 	id: string;
 	name: string;
 	steps: string[];
 }
 
-// Every step after the first must take a file through filePaste or a
-// colour through carryColour, and every step but the last must save through
-// lib/download; the unit test checks the registry side of that.
+// workflow contracts in tests
 export const WORKFLOWS: Workflow[] = [
 	{
 		id: 'trim-caption-burn',
@@ -111,25 +104,17 @@ export function getWorkflowById(id: string): Workflow | undefined {
 	return WORKFLOWS.find((workflow) => workflow.id === id);
 }
 
-/** The registry entries for the steps; an unknown id is dropped (the unit test rejects it). */
 export function workflowTools(workflow: Workflow): Tool[] {
 	return workflow.steps.flatMap((id) => getToolById(id) ?? []);
 }
 
-/** the registry category of the first step, the workflow's home */
 export function workflowCategory(workflow: Workflow): string {
 	return getCategoryByToolId(workflow.steps[0] ?? '')?.name ?? '';
 }
 
-/** how many step columns the table shows; a chain never needs more */
 export const SLOTS = 3;
 
-/**
- * Which files from the bag a step takes: for each pattern in its accept list,
- * the newest file matching it, each file once, in bag order. A single-input
- * tool gets one file; Subtitle Studio (`video/*,.srt,.vtt`) gets the trimmed
- * video and the SRT. No accept list takes the newest file of any kind.
- */
+/** select latest accepted files */
 export function pendingFor<T extends { file: File }>(
 	bag: T[],
 	accept?: string,

@@ -1,18 +1,13 @@
-// Sticker port regression: per-tool sticker renders when art exists and
-// disappears entirely when it does not; wall renders all five stickers.
-
 import { BASE, check, finish, launch, sleep, visit } from "./harness.mjs";
 
 const { browser, page } = await launch();
 
-// Tool that definitely has lousy art.
 await visit(page, "/tools/qr-genny");
 await page.evaluate(() => {
 	const el = document.querySelector(".dt-tool-sticker");
 	if (el) el.scrollIntoView({ block: "center" });
 });
-// The img lazy-loads once scrolled into view; wait for a real decode, then
-// let the tracked `loaded` flag re-render (drops `.is-hidden`).
+// lazy load: wait decode then loaded flag drops is-hidden
 await page.waitForFunction(
 	() => {
 		const img = document.querySelector(".dt-tool-sticker .dt-sticker-img");
@@ -32,8 +27,7 @@ const qrVisible = await page.evaluate(
 );
 check("qr-genny per-tool sticker renders and loads", hasQrBtn && qrVisible);
 
-// Audio & Video tool added after the v1 port: no lousy art, so the whole
-// sticker block must remove itself after the image 404s.
+// no lousy art: image 404 removes whole sticker block
 await visit(page, "/tools/audio-atlas");
 await page.evaluate(() => {
 	const el = document.querySelector(".dt-tool-sticker");
@@ -60,7 +54,6 @@ check(
 );
 check("audio-atlas sticker block collapses", atlas.collapsed);
 
-// Verify a second AV tool as required by the prompt.
 await visit(page, "/tools/subtitle-converter");
 await page.evaluate(() => {
 	const el = document.querySelector(".dt-tool-sticker");
@@ -72,7 +65,6 @@ const noSubBtn = await page.evaluate(
 );
 check("subtitle-converter per-tool sticker degrades to nothing", noSubBtn);
 
-// Home-page sticker bin.
 await visit(page, "/");
 await page.evaluate(() => {
 	const el = document.querySelector(".dt-sticker-wall");

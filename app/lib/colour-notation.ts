@@ -44,10 +44,6 @@ export const COLOUR_NOTATIONS: {
 	{ id: 'ycbcr', label: 'YCbCr', example: 'ycbcr(131, 186, 68)' },
 ];
 
-/**
- * Format a hex colour string in the given notation.
- * Returns the hex string unchanged if parsing fails.
- */
 export function formatColour(hex: string, notation: ColourNotation): string {
 	if (notation === 'hex') return hex;
 

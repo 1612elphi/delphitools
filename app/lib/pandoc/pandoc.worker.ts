@@ -1,9 +1,3 @@
-/* Web Worker that hosts the pandoc WebAssembly engine off the main thread.
- *
- * The worker is the boundary for the heavy work: instantiating the 58 MB module
- * and running conversions (a synchronous wasm call) here keeps the UI responsive.
- * The main thread talks to it only via the message protocol below.
- */
 import { createPandocInstance } from './pandoc-core.js';
 import type {
 	PandocInstance,
@@ -28,8 +22,7 @@ type OutMessage =
 	| { type: 'result'; id: number; ok: true; data: unknown }
 	| { type: 'result'; id: number; ok: false; error: string };
 
-// A `/// <reference lib="webworker" />` would leak into the whole program and
-// clash with lib.dom, so the worker global is typed locally instead.
+// webworker lib clashes lib.dom
 declare const self: {
 	onmessage: ((event: MessageEvent<InMessage>) => void) | null;
 	postMessage(message: OutMessage): void;

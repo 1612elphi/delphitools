@@ -17,8 +17,7 @@ module('Unit | Service | sidebar', function (hooks) {
 	hooks.beforeEach(clearCookies);
 	hooks.afterEach(clearCookies);
 
-	// The cookie is read in the constructor, so every test sets it before the
-	// first lookup rather than in beforeEach.
+	// cookie read in constructor; set before first lookup
 	const lookup = (ctx: object) =>
 		(
 			ctx as { owner: { lookup(n: string): SidebarService } }
@@ -42,8 +41,7 @@ module('Unit | Service | sidebar', function (hooks) {
 		assert.true(lookup(this).open);
 	});
 
-	// The parse is anchored to a cookie boundary; a plain substring match would
-	// read this decoy and collapse the sidebar.
+	// cookie parse anchored to boundary; substring decoy test
 	test('ignores a different cookie whose name ends in the same suffix', function (assert) {
 		document.cookie = `x_${COOKIE}=false; path=/`;
 		assert.true(lookup(this).open);
@@ -70,8 +68,7 @@ module('Unit | Service | sidebar', function (hooks) {
 		);
 	});
 
-	// Growing past the breakpoint with the drawer open would otherwise leave its
-	// full-screen scrim covering the desktop layout.
+	// scrim would cover desktop layout
 	test('crossing back to desktop closes the drawer', function (assert) {
 		const sidebar = lookup(this);
 		sidebar.setMobile(true);

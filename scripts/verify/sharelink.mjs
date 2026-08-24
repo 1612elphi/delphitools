@@ -1,15 +1,11 @@
-// palette-genny's ?colors= share link, as the Next app minted them.
-//
-// Links are already in the wild, so the parse has to keep accepting both the
-// escaped-# and bare-hex spellings, and a link that has been truncated or
-// mangled has to fall back to a fresh palette rather than a one-swatch stub.
+// share link parser for ?colors= param
+// must accept escaped-# and bare-hex, fall back on truncation
 
 import { launch, visit, check, sleep, finish } from './harness.mjs';
 
 const DEFAULT_COUNT = 5;
 
-// expect: the hexes the link must produce, or null for "fall back to a random
-// palette", which is every case where fewer than two hexes survive the parse.
+// expect: hexes, or null = fall back to random palette (<2 survive parse)
 const CASES = [
 	{
 		label: 'escaped #',
@@ -26,8 +22,7 @@ const CASES = [
 	{ label: 'no param', query: '', expect: null },
 ];
 
-// One browser per case: a share link is only ever the first thing a visitor
-// loads, so each has to be read on a cold start rather than a client transition.
+// cold start per case, links are first-visit only
 for (const { label, query, expect } of CASES) {
 	const { browser, page } = await launch();
 	await visit(page, `/tools/palette-genny${query}`);

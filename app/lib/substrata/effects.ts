@@ -1,22 +1,3 @@
-/**
- * Effect registry — the single, extensible source of truth for effects (the
- * family drop shadow belongs to: things that work on any layer kind and can draw
- * OUTSIDE the layer bounds, as opposed to filters, which stay inside the visible
- * pixels — see filters.ts for that registry). Adding a new effect = add one
- * entry here; the document model only stores instances (Effect) that reference
- * a `type`. This is the "other library" that declares whether each effect
- * renders inner or outer, so the doc model needs neither two hard-coded arrays
- * nor a per-instance phase flag.
- *
- * The inner/outer classification is frozen (schema v1) and descriptive: the
- * renderer (effect-render.ts) routes per type, with stroke split across both
- * passes by its `position` param. `params` carries the typed spec/defaults the
- * FX panel renders AND the renderer's defaults (syncImageEffects merges them
- * into every instance — declared once here, never re-typed in the painters).
- * Labels are standard layer-style terms — functional chrome per Ruby's call
- * (the BLEND_OPTIONS precedent), not authored copy.
- */
-
 import type { EffectPhase } from './doc-model';
 import type { FxDefinition, ParamSpec } from './param-spec';
 
@@ -111,9 +92,7 @@ export const EFFECT_REGISTRY: Record<string, EffectDefinition> = {
 			},
 		],
 	},
-	// Stroke is nominally "outer", but `position` (outer|inner|centre, M3) lets a
-	// single registered type cover all three — which a hard inner/outer array split
-	// could not express.
+	// renderer splits stroke phases
 	stroke: {
 		type: 'stroke',
 		phase: 'outer',
@@ -219,11 +198,7 @@ export const EFFECT_REGISTRY: Record<string, EffectDefinition> = {
 			},
 		],
 	},
-	// Remove Background (M7) — an async ML bake, not a painted style: EffectsImage
-	// alpha-multiplies the cached ML matte (bg-removal.ts, keyed by the
-	// layer's blobHash) into the content BEFORE the painted effects, so shadows/
-	// glows stamp the cutout silhouette. Paramless — the FX panel renders a
-	// bespoke status body for this type, and effect-render's switches ignore it.
+	// process before effects
 	'remove-background': {
 		type: 'remove-background',
 		phase: 'inner',

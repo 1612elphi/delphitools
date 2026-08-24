@@ -37,10 +37,6 @@ import {
 	SPECTRUM_LO,
 } from 'delphitools-v2/lib/substrata/colour-spectrum';
 
-/**
- * Float comparison where `expected` is written as the arithmetic that produces
- * it, so the assertion carries the derivation rather than a copied constant.
- */
 function near(
 	assert: Assert,
 	actual: number,
@@ -54,7 +50,7 @@ function near(
 	);
 }
 
-/** Every 17th byte: 0, 17, … 255, so 255 itself is covered. */
+// every 17th byte; covers 255
 const BYTE_SWEEP = Array.from({ length: 16 }, (_, i) => i * 17);
 
 module('Unit | Substrata | colour-convert', function () {
@@ -94,7 +90,7 @@ module('Unit | Substrata | colour-convert', function () {
 			rgbToHex({ r: 255, g: 255, b: 255 }),
 			'#ffffff',
 		);
-		// Single-digit channels need the zero pad, or the string loses a byte.
+		// zero pad else loses a byte
 		assert.strictEqual(rgbToHex({ r: 1, g: 2, b: 3 }), '#010203');
 	});
 
@@ -127,8 +123,7 @@ module('Unit | Substrata | colour-convert', function () {
 			'round trip over the whole 0..1 sweep',
 		);
 
-		// The two branches are only continuous if the thresholds match; a port
-		// that copied one and not the other shows up as a step here.
+		// port mismatch shows as step at threshold
 		near(
 			assert,
 			linearToSrgb(srgbToLinear(0.04045)),
@@ -206,8 +201,7 @@ module('Unit | Substrata | colour-convert', function () {
 			'h is 53.13 degrees',
 		);
 
-		// atan2 returns negatives below the a axis; the hue must come back as
-		// 270, not -90, or every blue-violet lands in the wrong quadrant.
+		// atan2 returns negatives; hue must be 270 not -90
 		near(
 			assert,
 			oklabToOklch({ L: 0.5, a: 0.1, b: 0 }).h,
@@ -288,10 +282,7 @@ module('Unit | Substrata | colour-convert', function () {
 		});
 	});
 
-	// The matrices do not cancel exactly for equal channels, so grey keeps a
-	// chroma around 2e-8 and a hue of ~89.9 degrees rather than 0. Anything
-	// reading hue back off a grey swatch gets that number, which is why the
-	// picker stores HSV instead (see colour-hsv.ts).
+	// matrices don't cancel for grey; picker stores HSV (colour-hsv.ts)
 	test('grey has no chroma, and therefore no meaningful hue', function (assert) {
 		for (const v of [0, 64, 128, 200, 255]) {
 			const oklch = rgbToOklch({ r: v, g: v, b: v });
@@ -460,8 +451,6 @@ module('Unit | Substrata | colour-hsv', function () {
 		);
 	});
 
-	// #1a2744 is (26, 39, 68): max = b, min = r, so hue runs off the blue
-	// branch and every component below is hand-derivable from those three.
 	test('reads a mid-tone blue as hand-computed HSV and HSL', function (assert) {
 		const navy: RGB = { r: 0x1a, g: 0x27, b: 0x44 };
 
@@ -497,8 +486,7 @@ module('Unit | Substrata | colour-hsv', function () {
 	});
 
 	test('reads the hue of a colour whose maximum is red and whose blue exceeds green', function (assert) {
-		// ((g - b) / d) % 6 is negative here; without the +360 the picker's hue
-		// ring would jump to the far side for every magenta.
+		// (g-b)/d % 6 negative; +360 avoids hue wrap
 		assert.strictEqual(rgbToHsv({ r: 255, g: 0, b: 255 }).h, 300);
 		assert.strictEqual(rgbToHsl({ r: 255, g: 0, b: 255 }).h, 300);
 		near(
@@ -535,7 +523,7 @@ module('Unit | Substrata | colour-hsv', function () {
 				}
 			}
 		}
-		// One byte apart at most: the two paths round at different points.
+		// paths round at different points
 		assert.true(worst <= 1, `worst drift ${worst} at ${offender}`);
 		assert.deepEqual(hsvToHsl({ h: 0, s: 1, v: 1 }), {
 			h: 0,
@@ -559,9 +547,7 @@ module('Unit | Substrata | colour-hsv', function () {
 		assert.strictEqual(hsvToHsl({ h: -40, s: 1, v: 1 }).h, -40);
 	});
 
-	// The four converters do no range checking; callers hold the 0..1 / 0..255
-	// contract. Pinned because a caller that stops clamping gets these values
-	// rather than an exception.
+	// converters do no range checking; callers clamp
 	test('out-of-range input is passed through, not clamped', function (assert) {
 		assert.deepEqual(hsvToRgb({ h: 0, s: 1, v: 2 }), {
 			r: 510,
@@ -650,15 +636,12 @@ module('Unit | Substrata | colour-prism', function () {
 	});
 
 	test('the violet end rolls off to 30 per cent intensity', function (assert) {
-		// At 380 the roll-off factor is 0.3, and the 0.8 display gamma turns
-		// that into round(255 * 0.3 ** 0.8) = 97 on both lit channels.
 		assert.deepEqual(wavelengthToRgb(380), {
 			r: Math.round(255 * Math.pow(0.3, 0.8)),
 			g: 0,
 			b: Math.round(255 * Math.pow(0.3, 0.8)),
 		});
 		assert.strictEqual(wavelengthToRgb(380).b, 97, 'which is 97');
-		// The roll-off stops at 420, so blue is at full there.
 		assert.strictEqual(wavelengthToRgb(420).b, 255);
 	});
 
@@ -678,7 +661,6 @@ module('Unit | Substrata | colour-prism', function () {
 			g: 0,
 			b: 0,
 		});
-		// Half haze on pure red: 0 + (255 - 0) * 0.5 rounds up to 128.
 		assert.deepEqual(prismColour(645, { watts: 1, ntu: 0.5 }), {
 			r: 255,
 			g: 128,
@@ -722,16 +704,14 @@ module('Unit | Substrata | colour-prism', function () {
 			prismHex(550, { watts: 0, ntu: 0 }),
 			'#000000',
 		);
-		// 460 nm is r=0, g=123: the red channel needs the pad.
+		// r=0 needs the zero pad
 		assert.strictEqual(
 			prismHex(460, { watts: 1, ntu: 0 }),
 			'#007BFF',
 		);
 	});
 
-	// The intensity roll-off is linear in wavelength and goes negative past
-	// ~814 nm, and Math.pow of a negative base with a fractional exponent is
-	// NaN. Nothing guards it, so callers must keep the input inside the reel.
+	// pow(negative, 0.8) is NaN; callers clamp input
 	test('far outside the reel the colour becomes NaN', function (assert) {
 		assert.strictEqual(
 			wavelengthToRgb(800).r,
@@ -753,7 +733,7 @@ module('Unit | Substrata | colour-spectrum', function () {
 	const flat = (n: number, v: number): number[] =>
 		Array.from({ length: n }, () => v);
 
-	/** n bands, all dark except the listed indices. */
+	// all dark except the listed indices
 	function lit(n: number, ...indices: number[]): number[] {
 		const bands = flat(n, 0);
 		for (const i of indices) bands[i] = 1;
@@ -781,8 +761,7 @@ module('Unit | Substrata | colour-spectrum', function () {
 	});
 
 	test('a flat SPD renders the same colour at any band count', function (assert) {
-		// An equal-energy SPD is illuminant E, which under the D65 matrix comes
-		// out warm rather than neutral, so the answer is not 255,255,255.
+		// equal-energy SPD under D65 is warm, not 255,255,255
 		const white = { r: 255, g: 230, b: 225 };
 		for (const n of [1, 2, 4, 32, 64]) {
 			assert.deepEqual(
@@ -791,8 +770,7 @@ module('Unit | Substrata | colour-spectrum', function () {
 				`${n} bands`,
 			);
 		}
-		// The n === 1 shortcut in the interpolator has to agree with the
-		// general path at any other level too.
+		// n===1 shortcut must match general path
 		assert.deepEqual(
 			spectrumToRgb([0.5]),
 			spectrumToRgb(flat(8, 0.5)),
@@ -841,7 +819,6 @@ module('Unit | Substrata | colour-spectrum', function () {
 	});
 
 	test('a single lit band lands in the channel its wavelength belongs to', function (assert) {
-		// 16 bands centre on 390, 410 … 690.
 		const blue = spectrumToRgb(lit(16, 3));
 		assert.strictEqual(bandCentre(3, 16), 450, 'band 3 is 450 nm');
 		assert.true(
@@ -886,8 +863,6 @@ module('Unit | Substrata | colour-spectrum', function () {
 		);
 		assert.true(magenta.r >= red.r, `r ${magenta.r} >= ${red.r}`);
 		assert.true(magenta.b >= blue.b, `b ${magenta.b} >= ${blue.b}`);
-		// Neither lobe alone gets both ends up; that is the whole point of
-		// integrating the curve rather than picking a wavelength.
 		assert.true(red.b < 150, `red lobe alone has b ${red.b}`);
 		assert.true(blue.r < 150, `blue lobe alone has r ${blue.r}`);
 	});

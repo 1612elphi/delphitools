@@ -1,5 +1,3 @@
-// Styles for the uuid-genny tool.
-
 @use "../crayon-config" as crayon;
 
 .dt-uuid {
@@ -83,7 +81,6 @@
 	}
 }
 
-/* Settings as a grid of stacked label-over-control cells. */
 .dt-uuid-settings {
 	display: grid;
 	border-bottom: 1px solid var(--border);
@@ -141,13 +138,12 @@
 	font-size: crayon.font-size("sm");
 
 	.dt-switch {
-		// cancelling the cell's stacked-label margin inside an inline row
+		// override stacked-label margin
 		margin-top: 0;
 	}
 }
 
-/* In the top bar: intrinsic column widths, no outer segmented border (the
-   bar's own hairlines frame it), full-height buttons. */
+// bar hairlines frame; segmented drops its border
 .dt-uuid-kinds {
 	grid-template-columns: repeat(3, auto);
 	align-self: stretch;

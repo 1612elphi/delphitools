@@ -1,13 +1,3 @@
-/**
- * HSV / HSL ↔ sRGB for the colour picker's basic modes (hue cube, HSV triangle,
- * RGB/HSL sliders). Pure maths, framework-free. Channels: H∈[0,360), S/V/L∈[0,1],
- * RGB 0–255. Complements colour-convert.ts (sRGB↔OKLCH), which has no HSV/HSL.
- *
- * The picker stores HSV internally: hue and saturation survive value→0 and
- * saturation→0, which round-tripping through RGB would silently lose (grey has
- * no recoverable hue). So drags on the SV square keep the chosen hue steady.
- */
-
 import type { RGB } from './colour-convert';
 
 export interface HSV {
@@ -131,7 +121,6 @@ export function rgbToHsl({ r, g, b }: RGB): HSL {
 	return { h, s, l };
 }
 
-/** HSV → HSL (both hue-based; shares the hue). */
 export function hsvToHsl({ h, s, v }: HSV): HSL {
 	const l = v * (1 - s / 2);
 	const sl = l === 0 || l === 1 ? 0 : (v - l) / Math.min(l, 1 - l);

@@ -9,14 +9,12 @@ import {
 	type FieldParse,
 } from 'delphitools-v2/lib/cron';
 
-/** Parse helper that asserts the expression is valid and returns it narrowed. */
 function mustParse(expr: string): Extract<CronParse, { ok: true }> {
 	const p = parseCron(expr);
 	if (!p.ok) throw new Error(`expected "${expr}" to parse`);
 	return p;
 }
 
-/** Narrow a field parse so value assertions need no type guard. */
 function mustOk(parse: FieldParse): Extract<FieldParse, { ok: true }> {
 	if (!parse.ok)
 		throw new Error(
@@ -25,7 +23,6 @@ function mustOk(parse: FieldParse): Extract<FieldParse, { ok: true }> {
 	return parse;
 }
 
-/** Narrow to a failed field parse for per-field error assertions. */
 function mustFail(parse: FieldParse): Extract<FieldParse, { ok: false }> {
 	if (parse.ok)
 		throw new Error(`expected "${parse.source}" not to parse`);
@@ -97,7 +94,7 @@ module('Unit | Lib | cron', function () {
 				step: 10,
 			});
 
-			// Vixie: a bare value with a step runs to the field's end.
+			// vixie: bare value with step runs to end
 			const bareParse = parseField('5/10', minuteRule);
 			assert.true(bareParse.ok);
 			const bare = mustOk(bareParse);
@@ -190,7 +187,7 @@ module('Unit | Lib | cron', function () {
 				['* * * * 8', 4, 'Out of range'],
 				['* * * FOO *', 3, 'Unknown name'],
 				['* * * * JAX', 4, 'Unknown name'],
-				// JAN belongs to month, SUN to day-of-week: crossed is Wrong field.
+				// jan=month, sun=dow; crossed=wrong field
 				['* * * * JAN', 4, 'Wrong field'],
 				['* * * MON 1', 3, 'Wrong field'],
 				['*/0 * * * *', 0, 'Bad step'],
@@ -214,7 +211,6 @@ module('Unit | Lib | cron', function () {
 					reason,
 					expr,
 				);
-				// the rest of the fields still parsed cleanly
 				assert.true(
 					p.fields.every(
 						(other, i) =>
@@ -300,7 +296,7 @@ module('Unit | Lib | cron', function () {
 
 		test('weekday schedules skip the weekend', function (assert) {
 			const p = mustParse('30 9 * * MON-FRI');
-			// Friday 2026-08-14 09:45 — the next hit is Monday.
+			// fri 2026-08-14, next hit monday
 			const runs = nextRuns(
 				p,
 				3,
@@ -315,8 +311,7 @@ module('Unit | Lib | cron', function () {
 
 		test('day-of-month OR day-of-week when both are restricted', function (assert) {
 			const p = mustParse('0 0 13 * 5');
-			// Sunday 2026-08-16: neither the 13th nor a Friday. The first hit
-			// proves OR — dom-only would wait for Sep 13.
+			// neither 13th nor friday; first hit proves or
 			const runs = nextRuns(p, 12, new Date(2026, 7, 16));
 			assert.strictEqual(
 				fmt(runs[0]!),
@@ -354,7 +349,7 @@ module('Unit | Lib | cron', function () {
 		});
 
 		test('Sunday 0 and 7 schedule identically', function (assert) {
-			const from = new Date(2026, 7, 16); // a Sunday, 00:00
+			const from = new Date(2026, 7, 16); // sunday
 			const byZero = nextRuns(
 				mustParse('0 0 * * 0'),
 				2,
@@ -383,7 +378,7 @@ module('Unit | Lib | cron', function () {
 				p,
 				3,
 				new Date(2026, 7, 14, 10, 0),
-			); // Friday
+			); // friday
 			assert.deepEqual(runs.map(fmt), [
 				'2026-08-14 17:45',
 				'2026-08-17 09:45',

@@ -1,13 +1,3 @@
-/**
- * `.substrata` file format (M5, SPEC §13): a STORE-mode zip of
- *   manifest.json          — { formatVersion, doc } (the whole SubstrataDoc)
- *   blobs/<sha256>         — each referenced raster as PNG
- * The exported file is durable truth (§5): everything a scene needs, no
- * browser storage involved. fflate STORE mode because the PNGs inside are
- * already compressed. ponytail: packs on the main thread — STORE is a memcpy;
- * a worker is the upgrade if multi-hundred-MB scenes ever jank.
- */
-
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 import { stampLoadedDoc, type SubstrataDoc } from './doc-model';
 import { rasterHashes } from './autosave';
@@ -24,7 +14,7 @@ export async function packSubstrata(doc: SubstrataDoc): Promise<Blob> {
 	};
 	for (const hash of new Set(rasterHashes(doc.layers))) {
 		const canvas = getRaster(hash);
-		if (!canvas) continue; // undecoded raster: the doc still opens, layer re-hydrates elsewhere
+		if (!canvas) continue;
 		const blob = await canvasToBlob(canvas);
 		files[`blobs/${hash}`] = new Uint8Array(
 			await blob.arrayBuffer(),
@@ -35,9 +25,6 @@ export async function packSubstrata(doc: SubstrataDoc): Promise<Blob> {
 	});
 }
 
-/** Unpack + validate a .substrata file: hydrates its rasters into the cache
- *  (hash-verified — a tampered/corrupt blob is skipped, never mis-keyed) and
- *  returns the forward-stamped doc. Throws on a malformed manifest. */
 export async function unpackSubstrata(
 	data: ArrayBuffer,
 ): Promise<SubstrataDoc> {
@@ -65,10 +52,8 @@ export async function unpackSubstrata(
 			.filter(([name]) => name.startsWith('blobs/'))
 			.map(async ([name, bytes]) => {
 				const hash = name.slice('blobs/'.length);
-				// fflate entries are VIEWS into the whole zip buffer — copy the slice
-				// out before hashing or we'd digest the entire archive
+				// avoid hashing zip archive
 				const standalone = new Uint8Array(bytes);
-				// content-addressed integrity: the name must be the content's hash
 				if (
 					(await sha256Hex(standalone.buffer)) !==
 					hash

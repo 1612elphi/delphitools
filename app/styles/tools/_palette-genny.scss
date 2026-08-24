@@ -1,17 +1,10 @@
-// Styles for the palette-genny tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
 
 @use "../crayon-config" as crayon;
-
-/* ── Palette generator ───────────────────────────────────────────────────── */
 
 .dt-palette-frame {
 	border: 2px solid var(--border);
 }
 
-/* Periodic-table columns: flush, hairline-divided, one column per colour. */
 .dt-palette-swatches {
 	display: flex;
 	gap: 1px;
@@ -57,7 +50,6 @@
 		aspect-ratio: 1;
 	}
 
-	/* the real input sits invisible over the fill so the whole area opens the picker */
 	input[type="color"] {
 		position: absolute;
 		inset: 0;
@@ -162,7 +154,6 @@
 	}
 }
 
-/* Controls row */
 .dt-palette-controls {
 	display: flex;
 	min-height: crayon.size(16);
@@ -305,7 +296,6 @@
 	}
 }
 
-/* Export + list blocks */
 .dt-palette-export,
 .dt-palette-list {
 	padding: crayon.size(4);
@@ -458,8 +448,6 @@
 		font-family: inherit;
 	}
 }
-
-/* ── Palette export panel (hidden dev mode, press P) ─────────────────────── */
 
 .dt-export-panel {
 	@include crayon.vstack(4);

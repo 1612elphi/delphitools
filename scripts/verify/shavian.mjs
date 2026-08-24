@@ -1,15 +1,6 @@
-// The transliterator glosses in two tiers: a 7,500-word core imported with the
-// tool, then the 125k-entry CMU dictionary fetched from public/data. When the
-// second tier does not arrive, every word past the core is spelled out by a
-// letter-by-letter heuristic — "vigilant" becomes v-ɪ-g-ɪ-l-æ-n-t instead of
-// /ˈvɪdʒələnt/ — and the tool still renders a full, plausible-looking gloss.
-//
-// That is exactly what shipped: the 5.4 MB asset was left behind in the port
-// and no gate noticed, because nothing imports it and fetch resolves on 404.
-// This rig drives the default sentence, whose words sit on both sides of the
-// core boundary, and fails if any of them is a guess.
-//
-// Usage: npm start, then node scripts/verify/shavian.mjs
+// two-tier gloss: 7.5k core then 125k cmu fetched from public/data
+// missing tier falls back to letter-by-letter heuristic silently
+// 5.4mb asset was dropped in port, fetch resolves on 404 so no gate noticed
 
 import { launch, visit, check, finish, sleep } from './harness.mjs';
 
@@ -64,8 +55,7 @@ check(
 		: `${gloss.words.length} words, none guessed`,
 );
 
-// "vigilant" is outside the core, so its gloss is proof the fetched tier is
-// the one answering: the heuristic has no way to reach dʒ from the letter g.
+// "vigilant" is outside 7.5k core; heuristic can't reach dʒ from g
 const vigilant = await page.evaluate(() => {
 	const word = [...document.querySelectorAll('.dt-shav-word')].find(
 		(w) =>

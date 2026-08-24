@@ -1,8 +1,5 @@
-// Styles for the audio-trimmer tool.
 
 @use "../crayon-config" as crayon;
-
-/* ── Audio trimmer ───────────────────────────────────────────────────────── */
 
 .dt-at {
 	@include crayon.vstack(4);
@@ -37,7 +34,7 @@
 		);
 	}
 
-	/* the file input is visually hidden, so its focus ring has to land here */
+	/* hidden input focus lands here */
 	&:focus-within {
 		border-color: var(--primary);
 		outline: 2px solid var(--primary);
@@ -143,7 +140,6 @@
 	}
 }
 
-/* Trim settings as a grid of stacked label-over-input cells. */
 .dt-at-fields {
 	display: grid;
 	border-bottom: 1px solid var(--border);
@@ -183,7 +179,6 @@
 	}
 }
 
-/* Zoom toolbar, flush above the minimap it acts on. */
 .dt-at-viewbar {
 	display: flex;
 	min-height: crayon.size(8);

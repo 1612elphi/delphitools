@@ -1,11 +1,8 @@
-// The transcriber reads the same two dictionary tiers as the Shavian tool, so
-// the same failure applies: a missing full tier leaves every word past the
-// core to the letter-by-letter heuristic while the page still looks right.
-// "vigilant" is outside the core and the heuristic cannot reach dʒ from a g,
-// so its transcription proves the fetched tier answers.
-//
-// Usage: npm start, then node scripts/verify/ipa-transcriber.mjs
-// SHOT=path.png also saves a full-page screenshot.
+// shares dictionary tiers with shavian
+// missing full tier falls back to per-letter heuristic
+// "vigilant" needs fetched tier, not reachable from g
+// usage: npm start, then node scripts/verify/ipa-transcriber.mjs
+// shot=path.png also saves a full-page screenshot
 
 import {
 	launch,

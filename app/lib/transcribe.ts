@@ -1,12 +1,3 @@
-/**
- * Local speech-to-text for the auto-subtitle tool, through transformers.js.
- *
- * Everything runs in the browser. Whisper weights are fetched from the Hugging
- * Face hub on first use and left to the browser's HTTP cache (transformers.js'
- * own Cache API layer is off — unreliable on iOS Safari), the same setup
- * lib/bg-removal.ts uses, so the two share the ONNX runtime binary. The import
- * is dynamic so the ~835 kB runtime never reaches the main bundle.
- */
 import type { Cue } from 'delphitools-v2/lib/subtitles';
 
 export type Mode = 'fast' | 'reasonable' | 'accurate';
@@ -17,7 +8,7 @@ interface ModelSpec {
 	model: string;
 	name: string;
 	webgpuOnly?: boolean;
-	/** encoder + merged decoder download, MB, per device (q4 on WebGPU, q8 on wasm); hub file sizes as of 2026-08-22 */
+	/** per-device model sizes */
 	sizeMb: Record<Device, number>;
 }
 
@@ -32,9 +23,7 @@ export const MODELS: Record<Mode, ModelSpec> = {
 		name: 'Whisper 2 (Small)',
 		sizeMb: { webgpu: 299, wasm: 249 },
 	},
-	// The plain onnx-community/whisper-large-v3-turbo export has no
-	// cross_attentions outputs and carries large-v3's alignment heads, so
-	// return_timestamps: 'word' throws; the _timestamped export fixes both.
+	// plain export lacks timestamps
 	accurate: {
 		model: 'onnx-community/whisper-large-v3-turbo_timestamped',
 		name: 'Whisper 3 (Large Turbo)',
@@ -43,9 +32,6 @@ export const MODELS: Record<Mode, ModelSpec> = {
 	},
 };
 
-// Whisper's 99 languages in transformers.js' order (common_whisper.js), which
-// is roughly by training-data volume; the combobox takes its Common group
-// from the head of this list.
 export const LANGUAGES: { code: string; name: string }[] = [
 	{ code: 'en', name: 'English' },
 	{ code: 'zh', name: 'Chinese' },
@@ -167,37 +153,22 @@ export function resolveModel(mode: Mode, device: Device): ModelResolution {
 
 export interface TranscribeOptions {
 	mode: Mode;
-	/** a Whisper language name/code (e.g. "english"), or undefined to auto-detect */
 	language?: string;
-	/** 0-100 while weights download */
 	onProgress?: (percent: number) => void;
 }
 
-/** A word with its span in seconds, as Whisper hands it back. */
 export interface Word {
 	text: string;
 	start: number;
 	end: number;
 }
 
-// One comfortable subtitle line; longer runs split. Netflix/BBC style caps a
-// line near 42 chars. ponytail: single line, no two-line wrap — players wrap
-// long cues, and a mid-cue break is a later refinement.
 const MAX_CHARS = 42;
-const MAX_DURATION = 6000; // ms — a cue this long is hard to read
-const GAP_BREAK = 0.8; // s of silence forces a new cue
+const MAX_DURATION = 6000;
+const GAP_BREAK = 0.8;
 
-// Sentence-final punctuation, allowing a trailing quote/bracket.
 const SENTENCE_END = /[.!?…]["')\]]?$/;
 
-/**
- * Groups Whisper's per-word timestamps into subtitle cues. Pure and
- * deterministic — the one piece of real logic here, covered by unit tests.
- *
- * A cue closes before adding a word when the silence gap is long, or the line
- * would overflow, or the cue would run too long; and after adding a word that
- * ends a sentence.
- */
 export function wordsToCues(words: Word[]): Cue[] {
 	const cues: Cue[] = [];
 	let buf: Word[] = [];
@@ -234,7 +205,6 @@ export function wordsToCues(words: Word[]): Cue[] {
 	return cues;
 }
 
-// The shape transformers.js returns for an ASR run with word timestamps.
 interface AsrChunk {
 	text: string;
 	timestamp: [number | null, number | null];
@@ -244,7 +214,6 @@ interface AsrOutput {
 	chunks?: AsrChunk[];
 }
 
-/** Whisper chunks → words, carrying the cursor forward across null timestamps. */
 function readWords(out: AsrOutput): Word[] {
 	const words: Word[] = [];
 	let cursor = 0;
@@ -259,7 +228,6 @@ function readWords(out: AsrOutput): Word[] {
 	return words;
 }
 
-/** Decode any audio/video file to the 16 kHz mono PCM Whisper expects. */
 async function toMono16k(file: File): Promise<Float32Array> {
 	const ctx = new AudioContext();
 	let decoded: AudioBuffer;
@@ -268,8 +236,7 @@ async function toMono16k(file: File): Promise<Float32Array> {
 	} finally {
 		void ctx.close();
 	}
-	// OfflineAudioContext with 1 channel downmixes to mono and resamples to
-	// its own rate on render — no manual resampler needed.
+	// offline context resamples mono
 	const frames = Math.max(1, Math.ceil(decoded.duration * 16000));
 	const offline = new OfflineAudioContext(1, frames, 16000);
 	const src = offline.createBufferSource();
@@ -307,8 +274,7 @@ type PipelineBuilder = (
 	},
 ) => Promise<unknown>;
 
-// transformers.js reports progress per file, and the encoder/decoder onnx
-// files download concurrently; summing loaded/total gives one percentage.
+// transformers report per-file progress
 export function progressAggregator(
 	onPercent: (percent: number) => void,
 ): ProgressCallback {
@@ -369,7 +335,6 @@ async function webGpuAvailable(): Promise<boolean> {
 	}
 }
 
-/** Transcribes a media file to subtitle cues. */
 export async function transcribe(
 	file: File,
 	options: TranscribeOptions,
@@ -382,6 +347,7 @@ export async function transcribe(
 
 	const { pipeline, env } = await import('@huggingface/transformers');
 	env.allowLocalModels = false;
+	// ios safari cache failure
 	env.useBrowserCache = false;
 
 	const build = (resolution: ModelResolution) =>

@@ -1,55 +1,18 @@
-/**
- * Filter registry — the filters[] counterpart of effects.ts: the single source
- * of truth for the INSIDE-only, per-layer adjustments (the family Gaussian blur
- * and Levels belong to — they transform the layer's visible pixels and never
- * draw outside them; that's the filter/effect line). The v1 list is the SPEC §9
- * contract: Tier 0 = Fabric built-ins, Tier 1 = the four custom GLSL filters.
- *
- * `category` is UI taxonomy ONLY — how the FX panel's add-picker groups the
- * pipeline. "filter" = every adjustment, spatial AND colour (brightness, blur,
- * levels…). "colour" = the film-sim/LUT family (Ruby's third layer-property
- * type, category name TBD): whole-image looks picked from PRESETS named after
- * film stocks and movies — the preset names are authored copy → \u2211CG gaps.
- * Both live in the SAME doc array (layer.filters) and composite in array
- * order; the doc model doesn't know the difference.
- *
- * Rendering is LIVE for every entry: tier 0 maps to Fabric built-ins, tier 1
- * to the custom shaders in filter-shaders.ts — both via filter-factory.ts
- * (which owns ALL unit scaling). Labels are standard graphics terms —
- * functional chrome per Ruby's call, not authored copy; British spelling
- * (type keys keep Fabric/CSS-adjacent spellings).
- */
-
 import type { FxDefinition, ParamSpec } from './param-spec';
 
-/** UI grouping for the add-picker / pipeline zones — not a doc-model concept. */
 export type FilterCategory = 'colour' | 'filter';
 
 export interface FilterDefinition extends FxDefinition {
 	category: FilterCategory;
-	/** SPEC §9: 0 = Fabric built-in, 1 = custom GLSL (+ Canvas2D fallback). */
 	tier: 0 | 1;
 }
 
-/**
- * The film-sim preset shelf. Each entry becomes a card in the add-picker's
- * colour group and a swatch in the film-sim block's preset grid. `swatch` is a
- * representative placeholder gradient (visual data — replaced by real
- * LUT-derived looks in M3); `label` is a film-stock/movie-inspired NAME =
- * authored copy, so every one is a \u2211CG gap for slopsieve.
- * The shelf size (8, matching the sketch's presets grid) is a placeholder count.
- */
 export interface FilmSimPreset {
 	id: string;
 	label: string;
-	/** gradient stops, light → dark (placeholder look) */
 	swatch: [string, string, string];
 }
 
-// Preset names authored by Claude per Ruby's explicit grant (2026-07-03,
-// "you're allowed to write names for them") — the ONE sanctioned exception to
-// the no-copy rule; Ruby may rename any of them. Looks are inspired by popular
-// film stocks / grades without using trademarked stock names.
 export const FILM_SIM_PRESETS: FilmSimPreset[] = [
 	{
 		id: 'sim-01',
@@ -93,31 +56,13 @@ export const FILM_SIM_PRESETS: FilmSimPreset[] = [
 	},
 ];
 
-/**
- * The render side of each look (M3 film-sim engine): a lift/gamma/gain +
- * saturation grade fed to SubstrataFilmSim. Lives HERE beside the preset shelf
- * so a look is tuned in one place (swatch + grade together). Values are
- * curated starting points — taste QA is Ruby's.
- */
 export interface FilmSimGrade {
-	/** added to shadows, per channel 0–1 */
 	lift: [number, number, number];
-	/** per-channel multiplier (highlights) */
 	gain: [number, number, number];
-	/** per-channel power curve (<1 brightens) */
 	gamma: [number, number, number];
-	/** 0 = mono, 1 = unchanged, >1 = boosted */
 	sat: number;
 }
 
-/**
- * Apply a grade to raw RGBA pixels in place — the ONE implementation of the
- * film-sim maths outside the GPU: SubstrataFilmSim's Canvas2D fallback and the
- * looks panel's thumbnail renderer both call it (keeping this module
- * fabric-free so panels can import it outside the canvas boundary).
- * Mirrors the GLSL exactly: lift/gain → clamp → per-channel gamma → saturation
- * about Rec.709 luma → intensity mix with the original.
- */
 export function applyGradeToImageData(
 	data: Uint8ClampedArray,
 	grade: FilmSimGrade,
@@ -146,56 +91,48 @@ export function applyGradeToImageData(
 }
 
 export const FILM_SIM_GRADES: Record<string, FilmSimGrade> = {
-	// Golden Hour — warm gold wash, soft shadows, gentle glow
 	'sim-01': {
 		lift: [0.05, 0.03, 0],
 		gain: [1.06, 1.0, 0.86],
 		gamma: [0.94, 0.98, 1.05],
 		sat: 1.1,
 	},
-	// Blockbuster — teal shadows, orange highlights, punchy mids
 	'sim-02': {
 		lift: [0, 0.035, 0.055],
 		gain: [1.09, 1.0, 0.85],
 		gamma: [1.05, 1.0, 0.97],
 		sat: 1.12,
 	},
-	// Matinee — lifted flat blacks, faded pastel warmth
 	'sim-03': {
 		lift: [0.09, 0.08, 0.075],
 		gain: [1.0, 0.98, 0.94],
 		gamma: [0.9, 0.9, 0.93],
 		sat: 0.8,
 	},
-	// Nocturne — cool blue cast, deepened mids
 	'sim-04': {
 		lift: [0, 0.012, 0.05],
 		gain: [0.9, 0.96, 1.08],
 		gamma: [1.1, 1.05, 0.97],
 		sat: 0.85,
 	},
-	// Gelatin Silver — true monochrome with a punchy print curve
 	'sim-05': {
 		lift: [0.01, 0.01, 0.01],
 		gain: [1.03, 1.03, 1.03],
 		gamma: [1.1, 1.1, 1.1],
 		sat: 0,
 	},
-	// Evergreen — green-leaning mids, soft warm-off highlights
 	'sim-06': {
 		lift: [0.012, 0.03, 0.012],
 		gain: [0.96, 1.05, 0.93],
 		gamma: [1.0, 0.95, 1.02],
 		sat: 1.05,
 	},
-	// Vapourwave — magenta lift, cyan-tinged highlights, saturated
 	'sim-07': {
 		lift: [0.07, 0.02, 0.09],
 		gain: [1.05, 0.93, 1.1],
 		gamma: [0.92, 1.0, 0.9],
 		sat: 1.15,
 	},
-	// Carousel — deep warm reds, amber mids, rich contrast
 	'sim-08': {
 		lift: [0.025, 0.005, 0],
 		gain: [1.1, 0.97, 0.88],
@@ -204,9 +141,6 @@ export const FILM_SIM_GRADES: Record<string, FilmSimGrade> = {
 	},
 };
 
-// Duotone preset-pair names (title/aria on the pair swatches): each ≤ 14 chars,
-// an evocative two-colour look name; Title Case; British spelling; all eight
-// distinct. Each pair reads shadow → highlight.
 export const DUOTONE_PAIRS: {
 	id: string;
 	label: string;
@@ -305,7 +239,6 @@ const gammaChannel = (key: string, label: string): ParamSpec => ({
 });
 
 export const FILTER_REGISTRY: Record<string, FilterDefinition> = {
-	// ── colour adjustments (filters, Tier 0) ───────────────────────────────────
 	brightness: {
 		type: 'brightness',
 		category: 'filter',
@@ -320,7 +253,6 @@ export const FILTER_REGISTRY: Record<string, FilterDefinition> = {
 		label: 'Contrast',
 		params: [amount()],
 	},
-	// Linear gain, mapped to a ColorMatrix in M3 (BUILD-PLAN M3-4).
 	exposure: {
 		type: 'exposure',
 		category: 'filter',
@@ -347,7 +279,6 @@ export const FILTER_REGISTRY: Record<string, FilterDefinition> = {
 		category: 'filter',
 		tier: 0,
 		label: 'Hue rotate',
-		// slider, not stepper — clicking ± through 360 degrees is clunky (Ruby QA)
 		params: [
 			{
 				kind: 'slider',
@@ -361,7 +292,6 @@ export const FILTER_REGISTRY: Record<string, FilterDefinition> = {
 			},
 		],
 	},
-	// Warm/cool linear R/B gain, NOT Kelvin (SPEC §9).
 	temperature: {
 		type: 'temperature',
 		category: 'filter',
@@ -390,9 +320,7 @@ export const FILTER_REGISTRY: Record<string, FilterDefinition> = {
 		label: 'Invert',
 		params: [],
 	},
-	// M3-5 RATIFIED (Ruby, 2026-07-03): threshold/posterise ship as custom
-	// shaders (SubstrataThreshold/SubstrataPosterise) — tier 1, not the Fabric
-	// built-ins SPEC §9 mistook them for.
+	// custom shader filters
 	threshold: {
 		type: 'threshold',
 		category: 'filter',
@@ -429,7 +357,6 @@ export const FILTER_REGISTRY: Record<string, FilterDefinition> = {
 		],
 	},
 
-	// ── colour adjustments (filters, Tier 1 customs) ───────────────────────────
 	levels: {
 		type: 'levels',
 		category: 'filter',
@@ -451,9 +378,6 @@ export const FILTER_REGISTRY: Record<string, FilterDefinition> = {
 			level('outWhite', 'Out white', 255),
 		],
 	},
-	// M3-7 RATIFIED (Ruby, 2026-07-03): three sliders, one region — shifts are
-	// midtone-weighted (fade out of shadows/highlights). Slider-end labels are
-	// Photoshop's own conventional terms.
 	'colour-balance': {
 		type: 'colour-balance',
 		category: 'filter',
@@ -489,8 +413,6 @@ export const FILTER_REGISTRY: Record<string, FilterDefinition> = {
 			},
 		],
 	},
-	// M3-9 RATIFIED (Ruby, 2026-07-03): preset colour pairs above the custom
-	// pickers. Pairs QUICK-SET the two colour params (pairs kind = virtual).
 	duotone: {
 		type: 'duotone',
 		category: 'filter',
@@ -527,7 +449,6 @@ export const FILTER_REGISTRY: Record<string, FilterDefinition> = {
 		],
 	},
 
-	// ── spatial / texture filters ──────────────────────────────────────────────
 	'gaussian-blur': {
 		type: 'gaussian-blur',
 		category: 'filter',
@@ -546,8 +467,6 @@ export const FILTER_REGISTRY: Record<string, FilterDefinition> = {
 			},
 		],
 	},
-	// Amount interpolates the convolution kernel identity→full (100 = the
-	// classic kernel); edge-detect stays paramless (Ruby QA: doesn't need one).
 	sharpen: {
 		type: 'sharpen',
 		category: 'filter',
@@ -576,8 +495,7 @@ export const FILTER_REGISTRY: Record<string, FilterDefinition> = {
 		label: 'Noise',
 		params: [
 			pct('amount', 'Amount', 25),
-			// mono = one grain across RGB (film-like); colour = per-channel grain
-			// (sensor-like). Default mono — matches pre-param docs' rendered look.
+			// mono shares rgb grain
 			{
 				kind: 'select',
 				key: 'mode',
@@ -627,10 +545,6 @@ export const FILTER_REGISTRY: Record<string, FilterDefinition> = {
 		],
 	},
 
-	// ── colour: the film-sim / LUT family (Ruby's third property type) ─────────
-	// ONE type; the look is the `preset` param (one-per-type ⇒ one sim per layer;
-	// picking another preset switches it). The real LUT engine + per-preset
-	// grades are M3; intensity mixes the graded result over the original.
 	'film-sim': {
 		type: 'film-sim',
 		category: 'colour',
@@ -651,9 +565,6 @@ export const FILTER_REGISTRY: Record<string, FilterDefinition> = {
 			pct('intensity', 'Intensity', 100),
 		],
 	},
-	// NOTE: SPEC §9 also lists "Colour Overlay/Tint" at Tier 0 — that concept is
-	// already ratified as the `colour-overlay` INNER EFFECT (effects.ts), which
-	// works on any layer kind; it is deliberately not duplicated here.
 };
 
 export const getFilterDef = (type: string): FilterDefinition | undefined =>

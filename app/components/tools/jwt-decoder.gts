@@ -70,7 +70,6 @@ export default class JwtDecoderTool extends Component {
 		return signature.error ?? `${signature.bytes} bytes`;
 	}
 
-	/** No exp claim means there is nothing the badge can speak about. */
 	get expClaim() {
 		return (
 			this.decoded?.timeClaims.find(

@@ -21,7 +21,7 @@ interface SizeOption {
 	label: string;
 }
 
-/** Longest-edge caps for image downscaling; 0 keeps full resolution. */
+// 0 = full resolution
 const MAX_SIZES: SizeOption[] = [
 	{ value: 0, label: 'Full' },
 	{ value: 2400, label: '2400' },
@@ -75,12 +75,10 @@ export default class PdfCompressorTool extends Component {
 		return savingsPercent(this.source.size, this.compressed.size);
 	}
 
-	/** True when the output grew — nothing was left to squeeze out. */
 	get isLarger(): boolean {
 		return (this.savings ?? 0) > 0;
 	}
 
-	/** Signed badge: −45% saves, +12% grows, ±0% breaks even. */
 	get savingsLabel(): string {
 		const savings = this.savings;
 		if (savings === null) return '';
@@ -122,7 +120,7 @@ export default class PdfCompressorTool extends Component {
 		if (file) void this.#setSource(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// preventDefault enables drop
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -135,7 +133,6 @@ export default class PdfCompressorTool extends Component {
 		this.#bytes = await file.arrayBuffer();
 	}
 
-	/** A setting changed: the shown result is now stale, so drop it. */
 	#invalidate() {
 		this.compressed = null;
 		this.failed = false;
@@ -182,7 +179,7 @@ export default class PdfCompressorTool extends Component {
 		this.compressing = true;
 		this.failed = false;
 		try {
-			// A copy: the worker transfers (detaches) the buffer it is handed.
+			// worker detaches its buffer
 			const result = await compressPdf(bytes.slice(0), {
 				recompressImages: this.recompressImages,
 				quality: this.quality,

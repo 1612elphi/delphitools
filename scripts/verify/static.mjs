@@ -1,13 +1,6 @@
-// The built and prerendered output, not the dev server.
-//
-// Two things only exist here. Prerendering writes a per-route index.html with
-// that route's own head tags, which is the whole reason an Ember SPA can be
-// scraped at all. And app/lib/jxl.ts loads an emscripten codec through a
-// `new Function` import, specifically because the dev server and the production
-// bundler disagree about literal dynamic specifiers — so passing in dev proves
-// nothing about the build.
-//
-// Usage: npm run build && npm run prerender, then node scripts/verify/static.mjs
+// tests built output, not dev server
+// prerendered index.html carries per-route head tags for scraping
+// jxl.ts dynamic import: dev and prod bundlers disagree on specifiers
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -32,8 +25,6 @@ if (!existsSync(join(dist, 'index.html'))) {
 		await page.waitForSelector('.dt-main', { timeout: 15000 });
 		await sleep(400);
 	};
-
-	// ── prerendered entry points ────────────────────────────────────────
 
 	const ROUTES = [
 		{ path: '/', title: 'Home', og: '/og.png' },
@@ -74,14 +65,13 @@ if (!existsSync(join(dist, 'index.html'))) {
 			seen.header === route.title,
 			seen.header,
 		);
-		// The prerendered markup is replaced by Ember's render, not appended to.
+		// ember replaces prerendered markup, doesn't append
 		check(
 			`${route.path} has one header, not two`,
 			seen.headers === 1,
 			`${seen.headers}`,
 		);
-		// The card sits beside the route's own index.html, so a scraper that
-		// only reads the HTML at the URL still finds the right image.
+		// og card beside route's index.html, scraper finds it in html
 		check(
 			`${route.path} points at its own share card`,
 			seen.og === route.og,
@@ -99,8 +89,7 @@ if (!existsSync(join(dist, 'index.html'))) {
 		);
 	}
 
-	// Cloudflare Pages' catch-all: the root 404.html must carry the SPA shell
-	// head with the 404 title, and a bogus path must render the tiled scene.
+	// pages catch-all: 404.html must carry spa shell head
 	const notFoundPath = join(dist, '404.html');
 	check(
 		'404.html exists for the Pages catch-all',
@@ -119,8 +108,6 @@ if (!existsSync(join(dist, 'index.html'))) {
 		'a bogus route renders the tiled 404 scene',
 		(await page.$('.dt-404-page')) !== null,
 	);
-
-	// ── the router still works from a prerendered entry ─────────────────
 
 	await visit('/tools/px-to-rem');
 	await page.evaluate(() => {
@@ -148,12 +135,7 @@ if (!existsSync(join(dist, 'index.html'))) {
 		`${navigated.rows} rows`,
 	);
 
-	// ── the editor's dev rig does not ship ──────────────────────────────
-	//
-	// fabric-canvas installs window.__substrata behind import.meta.env.DEV;
-	// every substrata harness in this directory drives it. A build that keeps
-	// it exposes the whole document model to any page script.
-
+	// window.__substrata dev-only via import.meta.env.DEV; shipping exposes doc model
 	await page.goto(`${BASE}/editor`, { waitUntil: 'networkidle2' });
 	const booted = await page
 		.waitForSelector('canvas.upper-canvas', { timeout: 15000 })
@@ -167,13 +149,7 @@ if (!existsSync(join(dist, 'index.html'))) {
 	const assets = join(dist, 'assets');
 	const emitted = readdirSync(assets);
 
-	// ── tools are split out of main ─────────────────────────────────────
-	//
-	// components/tools/registry.ts globs this directory, so a tool with no
-	// chunk of its own means the glob stopped expanding into per-file
-	// imports. Both states build and run identically; only the output shows
-	// it.
-
+	// registry.ts globs; missing chunk = glob stopped expanding
 	const toolIds = readdirSync(join(root, 'app/components/tools'))
 		.filter((name) => name.endsWith('.gts'))
 		.map((name) => name.slice(0, -'.gts'.length));
@@ -189,16 +165,8 @@ if (!existsSync(join(dist, 'index.html'))) {
 		`${toolIds.length} tools${unsplit.length ? `, still in main: ${unsplit.join(' ')}` : ''}`,
 	);
 
-	// The other half of the split is staticAppPaths in ember-cli-build.mjs.
-	// Without it every module under app/lib joins @embroider/virtual/compat-
-	// modules, which app.ts imports eagerly, and the Shavian dictionary and
-	// colour-name list are back on the first load: 570 kB against an 82 kB
-	// main. No chunk name changes, so a byte budget is what catches it.
-	//
-	// The floor is the other half of the budget: `npm run test` writes a test
-	// build over dist/ whose main is a 56-byte stub, and a check with no floor
-	// reads that as a pass.
-
+	// staticAppPaths: without it app/lib eager-loads, main balloons 82kb to 570kb
+	// npm run test overwrites dist with 56-byte stub main, so floor check too
 	const mainJs = emitted.find((name) => /^main-.*\.js$/.test(name));
 	const mainBytes = mainJs ? statSync(join(assets, mainJs)).size : 0;
 	check(
@@ -207,15 +175,8 @@ if (!existsSync(join(dist, 'index.html'))) {
 		`main is ${(mainBytes / 1e3).toFixed(0)} kB`,
 	);
 
-	// ── the shavian dictionary ships with the build ─────────────────────
-	//
-	// It is fetched at runtime from public/, not imported, so nothing in the
-	// module graph refers to it and a build with the file missing succeeds.
-	// The transliterator then falls back to its 7,500-entry core plus a
-	// letter-by-letter heuristic and still reports itself ready: "vigilant"
-	// glosses as v-i-g-i-l-a-n-t rather than /ˈvɪdʒələnt/. The file was in
-	// fact left behind in the port, and every gate passed.
-
+	// fetched at runtime from public/, so missing file builds fine
+	// missing falls back to 7.5k core + heuristic, reports ready anyway
 	const dictionary = join(dist, 'data/shavian-dictionary-full.json');
 	const dictBytes = existsSync(dictionary)
 		? statSync(dictionary).size
@@ -226,14 +187,7 @@ if (!existsSync(join(dist, 'index.html'))) {
 		dictBytes ? `${(dictBytes / 1e6).toFixed(1)} MB` : 'missing',
 	);
 
-	// ── the ONNX runtime ships with the build ───────────────────────────
-	//
-	// transformers.js only falls back to a jsdelivr URL when nothing has set
-	// wasmPaths, and a bundler that can resolve the binary sets it. Rolldown
-	// does, and so does Turbopack for the Next app: both emit the identical
-	// 21.6 MB binary. A build that stops emitting it has quietly moved the
-	// runtime onto a CDN, which is the sort of thing nobody notices.
-
+	// transformers.js falls back to jsdelivr when wasmPaths unset; bundlers emit same 21.6mb binary
 	const ortWasm = emitted.filter((name) =>
 		/^ort-wasm.*\.wasm$/.test(name),
 	);
@@ -268,13 +222,10 @@ if (!existsSync(join(dist, 'index.html'))) {
 		);
 	}
 
-	// ── the jxl codec, against the built bundle ─────────────────────────
-
 	await visit('/');
 	const jxl = await page.evaluate(async () => {
 		try {
-			// Exactly what app/lib/jxl.ts does: a runtime import the
-			// bundler must not have rewritten.
+			// jxl.ts does runtime import bundler must not rewrite
 			const load = new Function('u', 'return import(u)');
 			const { default: factory } =
 				await load('/jxl/jxl_enc.js');
@@ -320,7 +271,7 @@ if (!existsSync(join(dist, 'index.html'))) {
 		jxl.error ?? `${jxl.size} bytes`,
 	);
 	if (!jxl.error) {
-		// FF 0A is a bare codestream; "JXL " at offset 4 is the ISOBMFF box.
+		// ff 0a = bare codestream; jxl at offset 4 = isobmff box
 		const raw = jxl.head.slice(0, 2).join() === '255,10';
 		const boxed = jxl.head.slice(4, 8).join() === '74,88,76,32';
 		check(

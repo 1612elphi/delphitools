@@ -1,13 +1,4 @@
-// Substrata layers panel + layer context menu.
-//
-// The panel is the LayersBody/LayersCount port (module box supplies the
-// header; this file is the body only). The context menu is a plain
-// fixed-position div, not the vendored Popover primitive — see
-// layer-context-menu.gts for why (PopoverAnchor doesn't feed the trigger
-// element the Popover's floating-ui positioning reads, so a virtual-point
-// anchor never resolves through it).
-
-// ── layers list ──────────────────────────────────────────────────────────
+// menu not popover: layer-context-menu.gts
 
 .sub-layers {
 	display: flex;
@@ -31,8 +22,6 @@
 	font-size: 12px;
 	color: var(--muted-foreground);
 }
-
-// ── row ──────────────────────────────────────────────────────────────────
 
 .sub-layers-row {
 	position: relative;
@@ -71,7 +60,6 @@
 	border-left: 6px solid var(--primary);
 }
 
-// depth gutter: ancestor continuation guides, then this row's tree elbow
 .sub-layers-row-indent {
 	display: flex;
 	flex-shrink: 0;
@@ -250,8 +238,6 @@
 	opacity: 1;
 }
 
-// ── footer: blend/opacity + action bar ──────────────────────────────────
-
 .sub-layers-footer {
 	flex-shrink: 0;
 	border-top: 2px solid var(--border);
@@ -356,8 +342,7 @@
 	}
 }
 
-// .dt-sr-only's rules inlined: a @use'd partial cannot @extend a selector
-// that only exists later in app.scss
+// sr-only defined after @use
 .sub-layers-upload-input {
 	position: absolute;
 	width: 1px;
@@ -396,10 +381,6 @@
 		height: 16px;
 	}
 }
-
-// ── layer context menu ──────────────────────────────────────────────────
-// A plain fixed-position div (not the vendored Popover — see the .gts file
-// header comment), positioned by floating-ui against a virtual point anchor.
 
 .sub-ctx {
 	position: fixed;

@@ -7,19 +7,7 @@ import type { ModifierLike, WithBoundArgs } from '@glint/template';
 import type { TOC } from '@ember/component/template-only';
 
 /**
- * Modal dialog over the native <dialog> element.
- *
- * Written locally rather than vendored from shadcn-ember, which is the source
- * for the other primitives here. Its dialog is 421 lines that rebuild the modal
- * behaviour by hand — `role="dialog"`, `aria-modal`, a portal, its own Escape
- * handler. `showModal()` gets focus trapping, Escape, the top layer and
- * ::backdrop from the browser, so the wrapper only has to own open/close state
- * and returning focus to the trigger.
- *
- *   <Dialog as |d|>
- *     <button {{d.focusOnClose}} {{on "click" d.open}}>About</button>
- *     <d.Content class="dt-dialog">…<button {{on "click" d.close}}>×</button></d.Content>
- *   </Dialog>
+ * local not vendored: showModal() gives focus trap, escape, top layer
  */
 
 interface ContentSignature {
@@ -34,7 +22,7 @@ interface ContentSignature {
 }
 
 const Content: TOC<ContentSignature> = <template>
-	{{! the browser only reveals this once showModal() is called }}
+	{{! hidden until showModal() }}
 	<dialog {{@register}} {{on "close" @onClose}} ...attributes>
 		{{yield}}
 	</dialog>
@@ -42,7 +30,6 @@ const Content: TOC<ContentSignature> = <template>
 
 export interface DialogSignature {
 	Args: {
-		/** Called with the dialog's returnValue when it closes. */
 		onClose?: (returnValue: string) => void;
 	};
 	Blocks: {
@@ -51,7 +38,6 @@ export interface DialogSignature {
 				isOpen: boolean;
 				open: () => void;
 				close: () => void;
-				/** Put on the trigger so focus returns to it on close. */
 				focusOnClose: ModifierLike<{
 					Element: HTMLElement;
 				}>;
@@ -93,8 +79,7 @@ export default class Dialog extends Component<DialogSignature> {
 		this.#element?.close();
 	};
 
-	// Fires for every close path, including Escape and a form[method=dialog],
-	// so the state and the refocus live here rather than in `close`.
+	// fires for escape, form[method=dialog], and .close()
 	handleClose = () => {
 		this.isOpen = false;
 		this.#trigger?.focus();

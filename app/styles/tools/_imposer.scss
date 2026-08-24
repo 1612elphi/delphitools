@@ -1,11 +1,4 @@
-// Styles for the imposer tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Print imposer ───────────────────────────────────────────────────────── */
 
 .dt-imp {
 	@include crayon.vstack(6);
@@ -14,8 +7,6 @@
 .dt-imp-frame {
 	border: 2px solid var(--border);
 }
-
-/* ── Upload ──────────────────────────────────────────────────────────────── */
 
 .dt-imp-upload {
 	position: relative;
@@ -38,7 +29,7 @@
 		);
 	}
 
-	/* the file input is visually hidden, so its focus ring has to land here */
+	/* ring for visually-hidden input */
 	&:focus-within {
 		border-color: var(--primary);
 		outline: 2px solid var(--primary);
@@ -89,8 +80,7 @@
 	font-size: crayon.font-size("sm");
 }
 
-/* Outside the drop label rather than inside its text: a button nested in a
-   label is a second interactive target for the same activation. */
+/* nested button double-fires */
 .dt-imp-remove {
 	position: absolute;
 	top: crayon.size(6);
@@ -107,8 +97,6 @@
 		color: var(--foreground);
 	}
 }
-
-/* ── Configuration ───────────────────────────────────────────────────────── */
 
 .dt-imp-section {
 	@include crayon.vstack(1.5);
@@ -155,8 +143,6 @@
 	@include crayon.vstack(1.5);
 }
 
-/* ── Label with an info popover ──────────────────────────────────────────── */
-
 .dt-imp-labelinfo {
 	@include crayon.hstack(1);
 
@@ -193,8 +179,6 @@
 	font-size: crayon.font-size("xs");
 	line-height: crayon.leading("relaxed");
 }
-
-/* ── Layout combobox ─────────────────────────────────────────────────────── */
 
 .dt-imp-layout-trigger {
 	@include crayon.hstack(3);
@@ -238,7 +222,7 @@
 	font-size: crayon.font-size("xs");
 }
 
-/* The vendored popover publishes no trigger width, so the panel sets its own. */
+/* popover publishes no width */
 .dt-imp-layout-panel {
 	width: min(34rem, calc(100vw - #{crayon.size(8)}));
 	padding: crayon.size(1);
@@ -307,8 +291,6 @@
 	height: crayon.size(4);
 	color: var(--primary);
 }
-
-/* ── Controls ────────────────────────────────────────────────────────────── */
 
 .dt-imp-combo {
 	width: 100%;
@@ -449,7 +431,7 @@
 	text-align: center;
 }
 
-/* A native checkbox drawn as a switch; the v2 app has no Switch primitive. */
+/* checkbox switch; no primitive */
 .dt-imp-switch {
 	position: relative;
 	width: crayon.size(9);
@@ -483,8 +465,6 @@
 		transform: translateX(crayon.size(4));
 	}
 }
-
-/* ── Preview ─────────────────────────────────────────────────────────────── */
 
 .dt-imp-summary {
 	padding: crayon.size(4);
@@ -582,8 +562,7 @@
 	object-fit: contain;
 }
 
-/* The sheet is paper, so it stays white in both themes and carries its own
-   ink colours rather than the theme tokens. */
+/* white in both themes */
 .dt-imp-sheet {
 	position: relative;
 	width: 100%;
@@ -654,8 +633,6 @@
 	color: #777;
 	font-size: 10px;
 }
-
-/* ── Navigation ──────────────────────────────────────────────────────────── */
 
 .dt-imp-nav {
 	@include crayon.hstack(2);
@@ -731,8 +708,6 @@
 	font-weight: crayon.font-weight("medium");
 }
 
-/* ── Actions ─────────────────────────────────────────────────────────────── */
-
 .dt-imp-actions {
 	display: flex;
 	min-height: crayon.size(14);
@@ -791,8 +766,6 @@
 		background: var(--muted);
 	}
 }
-
-/* ── Print guide ─────────────────────────────────────────────────────────── */
 
 .dt-imp-guide {
 	@include crayon.vstack(3);

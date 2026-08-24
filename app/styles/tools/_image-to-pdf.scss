@@ -1,8 +1,4 @@
-// Styles for the image-to-pdf tool.
-
 @use "../crayon-config" as crayon;
-
-/* ── Image ⇄ PDF ─────────────────────────────────────────────────────────── */
 
 .dt-i2p {
 	@include crayon.vstack(4);
@@ -53,7 +49,7 @@
 		);
 	}
 
-	/* the file input is visually hidden, so its focus ring has to land here */
+	/* ring for visually-hidden input */
 	&:focus-within {
 		border-color: var(--primary);
 		outline: 2px solid var(--primary);
@@ -142,7 +138,6 @@
 	}
 }
 
-/* Settings as a grid of stacked label-over-control cells. */
 .dt-i2p-settings {
 	display: grid;
 	border-bottom: 1px solid var(--border);

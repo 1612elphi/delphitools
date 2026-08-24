@@ -13,11 +13,6 @@ import { COLOUR_NOTATIONS } from 'delphitools-v2/lib/colour-notation';
 import type { ColourNotation } from 'delphitools-v2/lib/colour-notation';
 import type ColourNotationService from 'delphitools-v2/services/colour-notation';
 
-/**
- * The header control for the site-wide colour notation, replacing the Next
- * app's ColourNotationSelector. Every Colour tool reads the same service, so a
- * value copied from one matches the next.
- */
 export default class ColourNotationSelector extends Component {
 	@service declare colourNotation: ColourNotationService;
 
@@ -66,7 +61,6 @@ export default class ColourNotationSelector extends Component {
 				class="dt-notation-popover"
 				@align="end"
 			>
-				{{! wording carried over from the Next app }}
 				<span class="dt-notation-label">Colour Notation</span>
 				<div class="dt-notation-grid">
 					{{#each

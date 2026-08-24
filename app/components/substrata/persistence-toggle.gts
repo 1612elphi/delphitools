@@ -9,12 +9,6 @@ import {
 import { toast } from 'delphitools-v2/lib/substrata/toast';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 
-/**
- * Opt-in local-storage toggle (M1-9). Off by default; until the user turns it
- * on, Substrata writes nothing to the browser. Turning it off purges the local
- * copy. Provisional placement in the right dock; its real home is the top-bar
- * save-status / Scene menu (gated).
- */
 export default class PersistenceToggle extends Component {
 	enabled = new TrackedExternal(
 		subscribePersistence,

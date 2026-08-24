@@ -20,20 +20,6 @@ import {
 import { layerDims } from 'delphitools-v2/lib/substrata/shape-geometry';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 
-/**
- * Arrange module — the merged Align + Rotate panel: align · distribute ·
- * rotate · flip over the WHOLE selection (groups expand to their leaves).
- * Align snaps every selected layer to the ARTBOARD edges/centres; distribute
- * (≥3) spreads the selection's centres evenly between its outermost two;
- * rotate/flip act on each layer around its own centre. Every action commits
- * through setTransforms — ONE undo step no matter how many layers move.
- *
- * Align uses each layer's own (unrotated) box — a rotation-aware bounding-box
- * align, and rotate-as-a-unit around the selection's common centre, are later
- * refinements.
- */
-
-/** Rotation angles stay in [0, 360). */
 const wrap360 = (a: number) => ((a % 360) + 360) % 360;
 
 interface Dims {
@@ -54,17 +40,14 @@ function dimsOf(layer: Layer): Dims | null {
 interface IconBtnSignature {
 	Element: HTMLButtonElement;
 	Args: {
-		/** kebab-case lucide name */
 		icon: string;
 		aria: string;
 		onClick: () => void;
 		disabled?: boolean;
-		/** marks a live toggle (flip), not a one-shot action */
 		active?: boolean;
 	};
 }
 
-/** A flush segmented action cell. */
 const IconBtn: TOC<IconBtnSignature> = <template>
 	<button
 		type="button"
@@ -96,9 +79,6 @@ export class ArrangeBody extends Component {
 		return doc && id ? findLayer(doc.layers, id) : null;
 	}
 
-	/** The selection's LEAF layers (groups are folders — their members
-	 *  arrange), filtered by ROOT-composed effective flags: hidden or
-	 *  (ancestor-)locked leaves never move. */
 	@cached
 	get leaves(): Layer[] {
 		const doc = this.doc;
@@ -124,7 +104,6 @@ export class ArrangeBody extends Component {
 		return out;
 	}
 
-	/** Raster + shape leaves have dimensions; text joins align/distribute later. */
 	@cached
 	get sized(): Layer[] {
 		return this.leaves.filter((l) => dimsOf(l) !== null);
@@ -230,7 +209,6 @@ export class ArrangeBody extends Component {
 		this.#active.unsubscribe();
 	}
 
-	// Wording carried over from the Next app.
 	<template>
 		{{#if this.primary}}
 			<div class="sub-arr">

@@ -25,7 +25,6 @@ import {
 
 const KEY = 'flow';
 const CHANNEL = 'flow';
-/** how long a boot without a record waits for live tabs to answer the roll-call */
 const ROLL_CALL_MS = 300;
 
 interface FlowRecord {
@@ -40,11 +39,7 @@ const SLIDE_PX = 48;
 const OUT_MS = 140;
 const IN_MS = 200;
 
-/**
- * The main column leaves one way, the route swaps, the new column comes in
- * from the other side. Not a view transition: that snapshots the document
- * and would freeze the capture disc mid-flight over it.
- */
+// avoid view transition snapshots
 async function slide(
 	main: HTMLElement,
 	direction: Direction,
@@ -60,7 +55,7 @@ async function slide(
 	);
 	await out.finished.catch(() => undefined);
 	await swap();
-	// Ember renders the new route after the transition resolves.
+	// wait for ember render
 	await new Promise((resolve) => setTimeout(resolve, 0));
 	main.animate(
 		[
@@ -87,39 +82,23 @@ function writeRecord(record: FlowRecord | null): void {
 		if (record) sessionStorage.setItem(KEY, JSON.stringify(record));
 		else sessionStorage.removeItem(KEY);
 	} catch {
-		// storage blocked: the flow still runs from memory
+		// retain in-memory flow
 	}
 }
 
 const isAborted = (error: unknown) =>
 	(error as { name?: string } | null)?.name === 'TransitionAborted';
 
-/**
- * The active workflow: which step is current, the bag of files earlier steps
- * produced, and the colour the current tool is showing. The record (workflow
- * id, step, run id) is in sessionStorage, tab-scoped; the files are in
- * IndexedDB, origin-scoped and tagged with the run id, so two tabs never
- * read each other's bag and a boot with no record sweeps only the runs no
- * live tab answers a BroadcastChannel roll-call for.
- *
- * Every step passes its output along, the last one included: a capture on
- * a non-final step advances the flow once the bar's flight has landed, a
- * capture on the last step makes `finished` true and the finale saves it.
- */
 export default class FlowService extends Service {
 	@service declare router: RouterService;
 
 	@tracked workflow: Workflow | null = null;
 	@tracked step = 0;
 	@tracked files: FlowFile[] = [];
-	/** pushed by colour sources (lib/colour-query's carryColour); carried as `?color=` */
 	@tracked colour: string | null = null;
-	/** a capture is in flight towards the bar's action slot */
 	@tracked landing = false;
-	/** this flow's rows in the store; empty outside a flow */
 	runId = '';
 
-	/** set by the bar: animates a capture into the Next slot, resolves when the page may move */
 	captureListener: ((origin: DOMRect | null) => Promise<void>) | null =
 		null;
 
@@ -161,7 +140,6 @@ export default class FlowService extends Service {
 		if (flowHooks.current === this) flowHooks.current = null;
 	}
 
-	/** the main column, for the slide between steps */
 	main = modifier((element: HTMLElement) => {
 		this.#main = element;
 		return () => {
@@ -169,10 +147,6 @@ export default class FlowService extends Service {
 		};
 	});
 
-	// Inside a flow: the last clicked control is where a capture's flight
-	// starts (lib/download.ts has no event to hand over), the route is
-	// reconciled after Back/Forward, and roll-calls from booting tabs are
-	// answered so they leave this run's rows alone.
 	#listen(on: boolean) {
 		if (typeof document === 'undefined') return;
 		const channel = this.#openChannel();
@@ -209,7 +183,6 @@ export default class FlowService extends Service {
 			});
 	};
 
-	/** a boot with no record: delete the runs no live tab answers for */
 	async #sweep() {
 		if (!hasBag()) return;
 		const alive = new Set<string>();
@@ -244,8 +217,7 @@ export default class FlowService extends Service {
 		this.#lastClick = control?.getBoundingClientRect() ?? null;
 	};
 
-	// Back/Forward or a pasted URL lands on another step's tool: follow it.
-	// A tool outside the workflow is a detour and changes nothing.
+	// retain workflow on detours
 	#syncStep = () => {
 		const workflow = this.workflow;
 		const id = this.router.currentRoute?.params?.['tool_id'];
@@ -284,7 +256,6 @@ export default class FlowService extends Service {
 		return this.step >= this.tools.length - 1;
 	}
 
-	/** what the current step has produced so far */
 	get captured(): FlowFile[] {
 		return this.files.filter((item) => item.step === this.step);
 	}
@@ -297,17 +268,14 @@ export default class FlowService extends Service {
 			: this.captured.length > 0;
 	}
 
-	/** the last step has passed its output along; the finale can save it */
 	get finished() {
 		return this.isLast && this.captured.length > 0;
 	}
 
-	/** the finale: finished, and the flight has landed */
 	get finale() {
 		return this.finished && !this.landing;
 	}
 
-	/** the current tool page is the current step's; a detour elsewhere neither captures nor receives */
 	get onStepPage() {
 		return (
 			this.router.currentRoute?.params?.['tool_id'] ===
@@ -340,7 +308,6 @@ export default class FlowService extends Service {
 		return this.#go(this.step + 1, 'forward');
 	};
 
-	/** saves the last step's newest capture and leaves the flow */
 	finish = () => {
 		const last = this.captured.at(-1);
 		if (!this.finished || !last) return;
@@ -360,7 +327,6 @@ export default class FlowService extends Service {
 		if (run) await clearFlowFiles(run);
 	};
 
-	/** no direction: a plain route change (entering a flow) */
 	#go(step: number, direction?: Direction): Promise<void> {
 		const target = this.tools[step];
 		if (!this.workflow || !target) return Promise.resolve();
@@ -368,9 +334,7 @@ export default class FlowService extends Service {
 			target.carryColour && this.colour
 				? { color: colourToQuery(this.colour) }
 				: {};
-		// The step commits with the route swap, so the old page keeps its
-		// step (and its "Pass along" label) while it slides out. A second
-		// navigation during the first aborts it; that is not an error here.
+		// commit step during swap
 		const swap = async () => {
 			this.step = step;
 			this.#delivered.clear();
@@ -392,10 +356,7 @@ export default class FlowService extends Service {
 		const origin = this.#lastClick;
 		this.#lastClick = null;
 		const step = this.step;
-		// In memory first, so the flight starts now; the IndexedDB copy (a
-		// disk write of the whole file) catches up and patches the id. A
-		// refused write (quota) keeps the session going from memory; only
-		// a reload would lose the file.
+		// preserve capture before persistence
 		const item: FlowFile = { id: -++this.#provisional, step, file };
 		this.files = [...this.files, item];
 		void addFlowFile(this.runId, step, file)
@@ -411,12 +372,12 @@ export default class FlowService extends Service {
 				if (this.workflow && !this.isLast)
 					await this.advance();
 			} catch {
-				// a cancelled flight or an aborted transition; the state is set
+				// errors intentionally ignored
 			}
 		})();
 	}
 
-	/** earlier steps' files for a step that accepts `accept`, each delivered once per visit */
+	// one delivery per visit
 	async pending(accept?: string): Promise<File[]> {
 		await this.#ready;
 		if (!this.workflow || !this.onStepPage) return [];

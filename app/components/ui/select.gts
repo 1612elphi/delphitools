@@ -2,22 +2,12 @@
 // restyled onto Crayon. The context plumbing, floating-ui positioning and the
 // portal are kept; Tailwind class strings become .dt-select* hooks.
 //
-// Three divergences from upstream:
+// divergences from upstream:
+// - upstream has no key handling
+// - teardown reads destroyed provider
+// - group/label/separator dropped
 //
-// 1. Upstream's listbox cannot be operated from a keyboard at all — the items
-//    are plain divs with a click handler and no key handling anywhere. This
-//    adds the roving aria-activedescendant that role="listbox" implies:
-//    arrows, Home/End, Enter, Escape, and focus returning to the trigger.
-// 2. SelectTrigger's teardown read `this.context` again, which throws when the
-//    whole subtree unmounts because the provider goes first. Same shape as the
-//    bug already fixed in the vendored command.gts. The setter is captured at
-//    registration instead.
-// 3. SelectGroup, SelectLabel, SelectSeparator and the two scroll buttons are
-//    dropped — nothing here uses them, and the content already scrolls itself.
-//    They are ~10 lines each in the upstream registry entry if wanted.
-//
-// The open/close animation is load-bearing: SelectContent unmounts on
-// animationend, so without the keyframes in app.scss it opens and never closes.
+// SelectContent unmounts on animationend
 
 import { on } from '@ember/modifier';
 import { htmlSafe } from '@ember/template';
@@ -46,7 +36,7 @@ interface SelectItemRecord {
 	id: string;
 	value: string;
 	disabled: boolean;
-	/** Read lazily: the label is the item's rendered text. */
+	// lazy: post-render text
 	label: () => string;
 }
 
@@ -79,10 +69,9 @@ interface ContextRegistry {
 
 export interface SelectSignature {
 	Args: {
-		/** Controlled value. Leave off to let the component hold its own. */
 		value?: string;
 		defaultValue?: string;
-		/** Label to show before anything has been picked from the list. */
+		// placeholder before selection
 		valueLabel?: string;
 		onValueChange?: (value: string) => void;
 		disabled?: boolean;
@@ -119,7 +108,6 @@ class Select extends Component<SelectSignature> {
 
 	open = () => {
 		if (this.args.disabled) return;
-		// Arrowing starts from the current selection, not the top of the list.
 		this.activeValue =
 			this.value || this.enabledItems[0]?.value || '';
 		this.isRendered = true;
@@ -136,7 +124,7 @@ class Select extends Component<SelectSignature> {
 		this.triggerElement?.focus();
 	};
 
-	/** Close without pulling focus back, for a click that landed elsewhere. */
+	// no focus return
 	dismiss = () => {
 		this.isOpen = false;
 	};
@@ -156,7 +144,7 @@ class Select extends Component<SelectSignature> {
 		this.activeValue = value;
 	};
 
-	/** `to` is a step, or one end of the list. Movement does not wrap. */
+	// movement does not wrap
 	move = (to: number | 'first' | 'last') => {
 		const list = this.enabledItems;
 		if (list.length === 0) return;
@@ -241,10 +229,7 @@ interface SelectTriggerSignature {
 class SelectTrigger extends Component<SelectTriggerSignature> {
 	@consume(SelectContext) context!: ContextRegistry[typeof SelectContext];
 
-	// Captured at construction for two reasons: reading `this.context` in the
-	// teardown throws on a whole-subtree unmount, because the provider is
-	// destroyed first; and reading it in the body would re-run the modifier on
-	// every state change, churning the element in and out.
+	// provider destroyed first in teardown
 	#setElement = this.context.setTriggerElement;
 
 	registerElement = modifier((element: HTMLElement) => {
@@ -340,8 +325,7 @@ class SelectContent extends Component<SelectContentSignature> {
 	}
 
 	handleClickOutside = () => {
-		// Not close(): that pulls focus back to the trigger, which is wrong
-		// when the click landed somewhere else entirely.
+		// close() refocuses trigger
 		this.context.dismiss();
 	};
 
@@ -381,8 +365,6 @@ class SelectContent extends Component<SelectContentSignature> {
 		event.preventDefault();
 	};
 
-	// The listbox takes focus so key events land here rather than on whatever
-	// the trigger left focused.
 	takeFocus = modifier((element: HTMLElement) => {
 		element.focus();
 	});
@@ -424,7 +406,6 @@ class SelectContent extends Component<SelectContentSignature> {
 				<div
 					class="dt-select-content"
 					role="listbox"
-					{{! only mounted while open, so it is the tab stop for as long as it exists }}
 					tabindex="0"
 					aria-activedescendant={{this.activeId}}
 					data-state={{if
@@ -469,11 +450,7 @@ class SelectItem extends Component<SelectItemSignature> {
 	id = `dt-select-item-${uid++}`;
 	element: HTMLElement | null = null;
 
-	// Captured at construction, not read inside the modifier below. `context`
-	// is a cached getter that recomputes on every arrow key, and a modifier
-	// body that reads it re-runs each time — unregistering and re-registering
-	// this item, which writes to `items` after SelectContent has already read
-	// it. Glimmer rejects that as a backtracking update.
+	// glimmer backtracking write risk
 	#register = this.context.register;
 	#unregister = this.context.unregister;
 
@@ -490,8 +467,7 @@ class SelectItem extends Component<SelectItemSignature> {
 		this.context.selectValue(this.args.value, this.label());
 	};
 
-	// Pointer movement drives the same active item the arrows do, so the two
-	// cannot disagree about what Enter would pick.
+	// one active source
 	handlePointerMove = () => {
 		if (!this.args.disabled)
 			this.context.setActive(this.args.value);
@@ -511,7 +487,6 @@ class SelectItem extends Component<SelectItemSignature> {
 		return () => this.#unregister(record);
 	});
 
-	// Scroll the active item into view when the arrows move past the edge.
 	reveal = modifier((element: HTMLElement, [active]: [boolean]) => {
 		if (active) element.scrollIntoView({ block: 'nearest' });
 	});

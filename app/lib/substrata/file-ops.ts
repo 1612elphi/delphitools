@@ -1,15 +1,3 @@
-/**
- * Scene file operations (M5): New / Open / Save / Save-a-copy over the
- * `.substrata` format (substrata-file.ts), delivered through browser-fs-access
- * (FS Access picker on Chromium, download/input fallback elsewhere — the
- * ratified M5 dep). The exported file is durable truth (§5); browser storage
- * stays strictly opt-in and untouched here.
- *
- * A held FileSystemHandle makes Save overwrite the opened/last-saved file;
- * Save-a-copy always asks. ponytail: the handle is session-scoped — persisting
- * it (db.handles) is a later nicety.
- */
-
 import { fileOpen, fileSave } from 'browser-fs-access';
 import {
 	createEmptyDoc,
@@ -32,7 +20,6 @@ function sceneFileName(doc: SubstrataDoc): string {
 	return `${slugifySceneName(doc.name)}.substrata`;
 }
 
-/** Guard destructive scene swaps: the doc-store history dies with the doc. */
 function confirmDiscard(): boolean {
 	const doc = getSnapshot();
 	if (!doc || (doc.layers.length === 0 && doc.guides.length === 0))
@@ -42,27 +29,20 @@ function confirmDiscard(): boolean {
 
 export function newScene(): void {
 	if (!confirmDiscard()) return;
-	// dimensions come from the New-scene dialog; createScene() lands the doc
 	openModal('new-scene');
 }
 
-/** New-scene dialog apply: fresh doc at the chosen artboard, history reset. */
 export function createScene(artboard: Artboard): void {
 	handle = null;
 	setDoc(createEmptyDoc('', artboard));
 }
 
-/** Dismissing the New-scene dialog while the session is still doc-less
- *  (fresh boots start EMPTY — no canvas until you choose) falls back to a
- *  default blank scene so the editor is never stranded without a document. */
 export function ensureScene(): void {
 	if (getSnapshot()) return;
 	createScene({ ...DEFAULT_ARTBOARD });
 	viewport.fit();
 }
 
-/** Scene ▸ Open recent: swap to a stored project (same discard guard as
- *  New/Open — the doc-store history dies with the doc). */
 export async function openRecent(id: string): Promise<void> {
 	const current = getSnapshot();
 	if (current?.id === id) return;
@@ -85,19 +65,17 @@ export async function openScene(): Promise<void> {
 			description: 'Substrata scene',
 		});
 	} catch {
-		return; // picker dismissed
+		return;
 	}
 	let doc: SubstrataDoc;
 	try {
 		doc = await unpackSubstrata(await file.arrayBuffer());
 	} catch {
-		// corrupt / not a .substrata — the current scene is untouched
 		toast('open-failed');
 		return;
 	}
 	handle = file.handle ?? null;
 	setDoc(doc);
-	// opted-in browser storage adopts the opened scene (rasters included)
 	if (getPersistenceEnabled()) void persistAll(doc);
 }
 
@@ -118,6 +96,5 @@ export async function saveScene(asCopy = false): Promise<void> {
 		if (!asCopy && saved) handle = saved;
 		toast('saved');
 	} catch {
-		// picker dismissed — not an error
 	}
 }

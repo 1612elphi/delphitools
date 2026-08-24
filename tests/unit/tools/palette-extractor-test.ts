@@ -6,7 +6,6 @@ import {
 } from 'delphitools-v2/components/tools/palette-extractor';
 import type { Triple } from 'delphitools-v2/lib/colour-maths';
 
-/** Pinned so the seeding is the same on every run. */
 function fixedRandom(seed = 1) {
 	let state = seed;
 	return () => {
@@ -15,7 +14,6 @@ function fixedRandom(seed = 1) {
 	};
 }
 
-/** Three tight, well-separated blobs in OKLAB. */
 function blobs(): Triple[] {
 	const centres: Triple[] = [
 		[0.2, -0.1, -0.1],
@@ -71,7 +69,6 @@ module('Unit | Tool | palette-extractor', function () {
 			);
 			assert.strictEqual(clusters.length, 3);
 
-			// Each blob centre should have a centroid sitting on it.
 			for (const centre of [
 				[0.2, -0.1, -0.1],
 				[0.6, 0, 0],

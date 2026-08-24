@@ -1,10 +1,4 @@
-/* Curated catalogue of the pandoc formats we surface in the Document Converter.
- *
- * Pandoc supports ~40 input and ~60 output formats; exposing all of them is
- * overwhelming. We split into Tier 1 (everyday) and Tier 2 (power-user, shown
- * under "More formats"). PDF is intentionally absent: pandoc cannot produce PDF
- * in the wasm sandbox (it needs an external engine). See the dossier.
- */
+/* pdf needs external engine */
 
 export type FormatKind = 'text' | 'binary' | 'pdf';
 
@@ -12,15 +6,12 @@ export interface PandocFormat {
 	/** pandoc -f/-t identifier */
 	id: string;
 	label: string;
-	/** one-line descriptor shown under the label in the picker */
 	subtitle: string;
-	/** download file extension (no dot) */
+	/** download extension, no dot */
 	ext: string;
 	kind: FormatKind;
 	tier: 1 | 2;
-	/** usable as a source format */
 	input: boolean;
-	/** usable as a target format */
 	output: boolean;
 }
 
@@ -28,7 +19,6 @@ export const AUTO_DETECT = 'auto';
 
 // prettier-ignore
 export const FORMATS: PandocFormat[] = [
-	// ── Tier 1 — everyday ──────────────────────────────────────────────────
 	{ id: 'markdown', label: 'Markdown', subtitle: "Pandoc's extended Markdown", ext: 'md', kind: 'text', tier: 1, input: true, output: true },
 	{ id: 'gfm', label: 'Markdown (GitHub)', subtitle: 'GFM — tables, tasks, footnotes', ext: 'md', kind: 'text', tier: 1, input: true, output: true },
 	{ id: 'commonmark', label: 'Markdown (CommonMark)', subtitle: 'Strict CommonMark spec', ext: 'md', kind: 'text', tier: 1, input: true, output: true },
@@ -41,7 +31,6 @@ export const FORMATS: PandocFormat[] = [
 	{ id: 'latex', label: 'LaTeX', subtitle: 'TeX source · .tex', ext: 'tex', kind: 'text', tier: 1, input: true, output: true },
 	{ id: 'plain', label: 'Plain text', subtitle: 'Unformatted text · .txt', ext: 'txt', kind: 'text', tier: 1, input: false, output: true },
 
-	// ── Tier 2 — power-user ────────────────────────────────────────────────
 	{ id: 'rst', label: 'reStructuredText', subtitle: 'Python docs · .rst', ext: 'rst', kind: 'text', tier: 2, input: true, output: true },
 	{ id: 'org', label: 'Org mode', subtitle: 'Emacs Org · .org', ext: 'org', kind: 'text', tier: 2, input: true, output: true },
 	{ id: 'mediawiki', label: 'MediaWiki', subtitle: 'Wikipedia markup', ext: 'wiki', kind: 'text', tier: 2, input: true, output: true },
@@ -72,7 +61,6 @@ export function isBinaryFormat(id: string): boolean {
 export const inputFormats = FORMATS.filter((f) => f.input);
 export const outputFormats = FORMATS.filter((f) => f.output);
 
-/** Guess a pandoc input format from a filename extension. */
 export function guessFormatFromFilename(filename: string): string | null {
 	const ext = filename.split('.').pop()?.toLowerCase() ?? '';
 	const map: Record<string, string> = {
@@ -101,11 +89,7 @@ export function guessFormatFromFilename(filename: string): string | null {
 	return map[ext] ?? null;
 }
 
-/**
- * File types we recognise but pandoc cannot read as input. Lets us reject them
- * up front with a clear message instead of the cryptic "received binary data"
- * error pandoc throws when fed a binary it can't parse.
- */
+/* pandoc error "received binary data" is cryptic */
 const UNREADABLE_INPUT: Record<string, string> = {
 	pdf: 'PDF',
 	png: 'PNG image',
@@ -138,17 +122,11 @@ const UNREADABLE_INPUT: Record<string, string> = {
 	mov: 'video file',
 };
 
-/** Friendly label if the file is a type pandoc can't read as input, else null. */
 export function unreadableInputLabel(filename: string): string | null {
 	const ext = filename.split('.').pop()?.toLowerCase() ?? '';
 	return UNREADABLE_INPUT[ext] ?? null;
 }
 
-/**
- * Best-effort guess of a pandoc input format from pasted text content. Used when
- * the source is left on "Auto-detect" and there's no filename to go on. Falls
- * back to Markdown, which is the most forgiving reader.
- */
 export function guessFormatFromContent(text: string): string {
 	const t = text.replace(/^\uFEFF/, '').trimStart();
 	if (!t) return 'markdown';

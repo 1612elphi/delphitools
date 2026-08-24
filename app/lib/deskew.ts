@@ -1,16 +1,11 @@
-/**
- * Perspective correction: a quadrilateral drawn on the source becomes the
- * output rectangle. The transform is the planar homography fitted to the
- * four corner pairs (Hartley & Zisserman, Multiple View Geometry, §4.1,
- * the direct linear transform with h33 fixed to 1).
- */
+/** direct linear transform. */
 
 export interface Point {
 	x: number;
 	y: number;
 }
 
-/** Corners in source pixels, clockwise from top-left. */
+/** clockwise source corners. */
 export type Quad = [Point, Point, Point, Point];
 
 export interface Size {
@@ -20,7 +15,7 @@ export interface Size {
 
 export interface Aspect {
 	label: string;
-	/** long edge over short edge; null keeps the measured size */
+	/** long-to-short ratio. */
 	ratio: number | null;
 }
 
@@ -34,7 +29,6 @@ export const ASPECTS: Aspect[] = [
 	{ label: '16:9', ratio: 16 / 9 },
 ];
 
-/** The starting quad: the image with each edge pulled in by `inset`. */
 export function insetQuad(width: number, height: number, inset = 0.12): Quad {
 	const dx = width * inset;
 	const dy = height * inset;
@@ -48,7 +42,6 @@ export function insetQuad(width: number, height: number, inset = 0.12): Quad {
 
 const dist = (p: Point, q: Point) => Math.hypot(q.x - p.x, q.y - p.y);
 
-/** The longer of each opposite edge pair, so no edge is downsampled. */
 export function outputSize(quad: Quad): Size {
 	const [tl, tr, br, bl] = quad;
 	return {
@@ -63,7 +56,6 @@ export function outputSize(quad: Quad): Size {
 	};
 }
 
-/** Forces `ratio` on the measured size, keeping its orientation and long edge. */
 export function fitAspect(size: Size, ratio: number | null): Size {
 	if (ratio === null) return size;
 	if (size.width >= size.height) {
@@ -78,17 +70,7 @@ export function fitAspect(size: Size, ratio: number | null): Size {
 	};
 }
 
-/**
- * The eight coefficients a..h of the map from an output pixel (u, v) of a
- * width × height rectangle to the source pixel (x, y):
- *
- *   x = (a·u + b·v + c) / (g·u + h·v + 1)
- *   y = (d·u + e·v + f) / (g·u + h·v + 1)
- *
- * Null when the quad is degenerate (a corner on another, three in a line,
- * a bow tie): the fit does not reproduce the corners, or the denominator
- * changes sign over the rectangle.
- */
+/** output-to-source homography. */
 export function homography(
 	quad: Quad,
 	width: number,
@@ -136,7 +118,7 @@ type Coefficients = [
 	number,
 ];
 
-/** Gauss-Jordan with partial pivoting on an n × (n + 1) augmented matrix. */
+/** gauss-jordan pivoting. */
 function solve(m: number[][]): number[] {
 	const n = m.length;
 	for (let col = 0; col < n; col++) {
@@ -162,10 +144,6 @@ function solve(m: number[][]): number[] {
 	return m.map((row, i) => row[n]! / row[i]!);
 }
 
-/**
- * Resamples `quad` out of `source` into a width × height image, bilinear.
- * Transparent when the quad is degenerate.
- */
 export function warp(
 	source: ImageData,
 	quad: Quad,
@@ -186,8 +164,7 @@ export function warp(
 	let o = 0;
 
 	for (let v = 0; v < height; v++) {
-		// Pixel centres map to pixel centres; the numerators and the
-		// denominator are affine in u, so each row is three additions per pixel.
+		// sample pixel centres
 		const vc = v + 0.5;
 		let xn = a * 0.5 + b * vc + c;
 		let yn = d * 0.5 + e * vc + f;

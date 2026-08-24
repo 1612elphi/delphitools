@@ -1,6 +1,4 @@
-// substrata-shell, dock zones, float layer, notices, empty hint, modal host.
-
-// full-viewport, fixed editor box — no page scroll; the canvas owns pan/zoom
+// canvas owns pan/zoom
 .sub-editor-viewport {
 	position: fixed;
 	inset: 0;
@@ -34,7 +32,6 @@
 	flex: 1;
 }
 
-// ── empty-scene starter card ───────────────────────────────────────────────
 .sub-empty-hint {
 	pointer-events: none;
 	position: absolute;
@@ -88,7 +85,6 @@
 	color: var(--muted-foreground);
 }
 
-// ── drag-to-dock drop zones ────────────────────────────────────────────────
 .sub-dock-zones {
 	pointer-events: none;
 	position: absolute;
@@ -124,7 +120,6 @@
 	}
 }
 
-// ── free-floating panels ───────────────────────────────────────────────────
 .sub-float-panel {
 	position: absolute;
 	z-index: 35;
@@ -144,7 +139,6 @@
 	}
 }
 
-// ── notices ────────────────────────────────────────────────────────────────
 .sub-secure-notice {
 	border-block-end: 1px solid var(--border);
 	background-color: var(--muted);
@@ -198,7 +192,6 @@
 	}
 }
 
-// ── modal host (native <dialog>) ───────────────────────────────────────────
 .sub-modal {
 	padding: 0;
 	border: none;
@@ -301,7 +294,6 @@
 	}
 }
 
-// ── canvas-size modal ──────────────────────────────────────────────────────
 .sub-csm-choose {
 	padding: 16px;
 }
@@ -368,7 +360,6 @@
 	color: var(--muted-foreground);
 }
 
-// segmented groups bleed to the frame edges
 .sub-csm-presets {
 	grid-template-columns: repeat(3, minmax(0, 1fr));
 	margin-inline: -16px;
@@ -515,7 +506,6 @@
 	}
 }
 
-// ── onboarding modal ───────────────────────────────────────────────────────
 .sub-onb-slide {
 	min-block-size: 188px;
 	padding: 20px;

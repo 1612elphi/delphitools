@@ -1,11 +1,4 @@
-// Styles for the paste-image tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Paste image ─────────────────────────────────────────────────────────── */
 
 .dt-pi {
 	display: flex;
@@ -13,7 +6,7 @@
 	gap: crayon.size(4);
 }
 
-/* The scratch canvas the crop is drawn on; never shown. */
+/* offscreen crop canvas */
 .dt-pi-canvas {
 	display: none;
 }
@@ -135,7 +128,7 @@
 	pointer-events: none;
 }
 
-/* The spread shadow is the dimmed surround; the crop itself stays unpainted. */
+/* spread shadow dims surround */
 .dt-pi-crop {
 	position: absolute;
 	box-shadow: 0 0 0 9999px rgb(0 0 0 / 65%);

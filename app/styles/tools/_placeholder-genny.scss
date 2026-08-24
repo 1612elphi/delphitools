@@ -1,11 +1,4 @@
-// Styles for the placeholder-genny tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Placeholder generator ───────────────────────────────────────────────── */
 
 .dt-ph {
 	border: 2px solid var(--border);
@@ -131,8 +124,7 @@
 	font-size: crayon.font-size("sm");
 }
 
-/* The native swatch is transparent and stacked over a painted square, because
-   `input[type="color"]` will not take a border on WebKit. */
+/* webkit color-input border bug */
 .dt-ph-swatch {
 	position: relative;
 	display: block;

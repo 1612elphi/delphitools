@@ -1,11 +1,4 @@
-// Styles for the tailwind-shades tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Tailwind shade generator ────────────────────────────────────────────── */
 
 .dt-shades {
 	border: 2px solid var(--border);
@@ -31,7 +24,6 @@
 	font-weight: crayon.font-weight("bold");
 }
 
-/* Picker cell and hex field share one box, divided by a hairline. */
 .dt-shades-combo {
 	display: flex;
 	align-items: stretch;
@@ -44,7 +36,6 @@
 	width: crayon.size(12);
 	flex-shrink: 0;
 
-	/* the real input sits invisible over the fill so the whole cell opens it */
 	input[type="color"] {
 		position: absolute;
 		inset: 0;
@@ -116,7 +107,6 @@
 	padding: crayon.size(4) crayon.size(4) crayon.size(2);
 }
 
-/* Flush strip, one cell per level, no gaps. */
 .dt-shades-strip {
 	display: flex;
 	height: crayon.size(20);

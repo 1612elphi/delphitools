@@ -25,9 +25,7 @@ module('Unit | Tool | colour-converter', function () {
 		}
 	});
 
-	// Within one 8-bit step, not exact: the table shows OKLCH hue to one
-	// decimal place, which is not enough to pin a saturated colour to the same
-	// byte. Same drift as the Next app, which prints at the same precision.
+	// oklch hue printed at 1dp; can't pin a saturated colour to the same byte
 	test('round-trips a spread of colours through every format', function (assert) {
 		const hexes = [
 			'#000000',
@@ -76,8 +74,7 @@ module('Unit | Tool | colour-converter', function () {
 		}
 	});
 
-	// hexToRgb is strict about length; the other formats route through the
-	// shared three-number pattern instead.
+	// hexToRgb is length-strict; others share the three-number pattern
 	test('rejects three- and eight-digit hex', function (assert) {
 		assert.strictEqual(convert('hex', '#fff'), null);
 		assert.strictEqual(convert('hex', '#3b82f6ff'), null);

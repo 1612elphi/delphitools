@@ -1,17 +1,9 @@
-// Styles for the pixel-picker tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Pixel picker ────────────────────────────────────────────────────────── */
 
 .dt-pixel-frame {
 	border: 2px solid var(--border);
 }
 
-/* Full-bleed inside the frame: the drop target is the whole empty panel. */
 .dt-pixel-drop {
 	display: flex;
 	flex-direction: column;
@@ -81,8 +73,7 @@
 	cursor: pointer;
 }
 
-/* A native checkbox drawn as a switch: the v2 app has no Switch primitive yet
-   and one control does not warrant one. */
+/* no Switch primitive yet */
 .dt-pixel-p3-input {
 	position: relative;
 	width: crayon.size(9);
@@ -322,8 +313,7 @@
 	}
 }
 
-/* The whole swatch-and-name area selects the row, so the copy and remove
-   buttons beside it need no click-stopping of their own. */
+/* no click-stop needed here */
 .dt-pixel-row-select {
 	display: flex;
 	min-width: 0;

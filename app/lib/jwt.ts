@@ -1,17 +1,6 @@
-/**
- * Local JWT decoding: split, base64url-decode, pretty-print, and read the
- * registered time claims. Nothing is verified — the signature is reported as
- * opaque bytes, exactly like any other segment of unknown provenance.
- *
- * Malformed input never throws out of `decodeJwt`: the segment count surfaces
- * as `kind: 'segments'`, and a bad header/payload/signature carries a short
- * reason on its own segment while the others still decode.
- */
-
 export type SegmentError = 'not base64url' | 'not JSON' | 'not an object';
 
 export interface JwtJsonSegment {
-	/** Decoded byte count; null when the segment is not base64url. */
 	bytes: number | null;
 	value: Record<string, unknown> | null;
 	pretty: string | null;
@@ -31,7 +20,6 @@ export interface JwtTimeClaim {
 	label: 'Issued' | 'Not before' | 'Expires';
 	seconds: number;
 	absolute: string;
-	/** Strict comparison against the decode moment. */
 	past: boolean;
 }
 
@@ -65,7 +53,6 @@ const MONTHS = [
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-/** `16 Aug 2026, 14:03:12` — absolute wall time in the local zone. */
 export function formatAbsolute(date: Date): string {
 	const day = pad(date.getDate());
 	const month = MONTHS[date.getMonth()];
@@ -75,7 +62,6 @@ export function formatAbsolute(date: Date): string {
 	return `${day} ${month} ${date.getFullYear()}, ${time}`;
 }
 
-/** base64url → bytes; padding re-added, `=` tolerated, anything else fails. */
 export function base64UrlToBytes(segment: string): Uint8Array | null {
 	const unpadded = segment.replace(/=+$/, '');
 	if (/[^A-Za-z0-9_-]/.test(unpadded) || unpadded.length % 4 === 1)
@@ -139,7 +125,6 @@ const CLAIMS: { key: TimeClaimKey; label: JwtTimeClaim['label'] }[] = [
 	{ key: 'exp', label: 'Expires' },
 ];
 
-/** iat/nbf/exp present as finite numbers, humanised against `now`. */
 export function readTimeClaims(
 	payload: Record<string, unknown>,
 	now: Date,

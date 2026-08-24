@@ -1,13 +1,3 @@
-// Runs every rig in this directory against a dev server and reports the tally.
-//
-// Three rigs are excluded. static.mjs drives the built output rather than the
-// dev server and needs `npm run build:static` first. bg-removal.mjs downloads
-// roughly 44 MB of model weights and runs inference, and pdf-compressor.mjs
-// downloads the ~10 MB MuPDF wasm on its first compress. Each has its own npm
-// script.
-//
-// Usage: npm start in one shell, then npm run verify.
-
 import { readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,8 +9,11 @@ const here = dirname(fileURLToPath(import.meta.url));
 const SKIP = new Set([
 	'all.mjs',
 	'harness.mjs',
+	// needs build:static first
 	'static.mjs',
+	// ~44 mb model download
 	'bg-removal.mjs',
+	// ~10 mb mupdf wasm
 	'pdf-compressor.mjs',
 ]);
 
@@ -67,7 +60,6 @@ if (!reachable) {
 	}
 }
 
-/** Output is buffered and only printed on failure, so a green run stays quiet. */
 function run(path) {
 	return new Promise((resolve) => {
 		const child = spawn(process.execPath, [path], {

@@ -31,8 +31,7 @@ export default class BackgroundRemoverTool extends Component {
 	willDestroy() {
 		super.willDestroy();
 		this.#destroyed = true;
-		// The weights are tens of megabytes of GPU or wasm memory; leaving them
-		// attached to a torn-down component keeps them for the tab's lifetime.
+		// release model memory
 		this.#remover?.dispose();
 		this.#remover = null;
 	}
@@ -69,7 +68,7 @@ export default class BackgroundRemoverTool extends Component {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) this.readFile(file);
-		// Choosing the same file twice must still fire a change event.
+		// reset permits reselect
 		input.value = '';
 	};
 
@@ -109,8 +108,7 @@ export default class BackgroundRemoverTool extends Component {
 							this.percent = percent;
 					},
 				);
-				// Unmounted mid-download: free what just finished
-				// building rather than holding it for the tab.
+				// dispose after teardown
 				if (this.#destroyed) {
 					remover.dispose();
 					return;

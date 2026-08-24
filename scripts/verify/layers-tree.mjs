@@ -1,7 +1,5 @@
-// Headless verification for the Layers-tree pass: cross-parent moveLayer +
-// effective (composed) group opacity. Ops-level — panel drag simulation
-// through dnd-kit is brittle, so layer-ops are driven via window.__substrata.
-// Rig pattern from .verify-select.mjs. Needs `npm run dev` on :3000.
+// window.__substrata ops (dnd-kit drag sim brittle)
+// needs `npm run dev` on :3000
 import puppeteer from "puppeteer-core";
 
 const URL = process.env.EDITOR_URL ?? "http://localhost:3000/editor";
@@ -37,8 +35,7 @@ const parents = async () => {
 };
 const sample = async (sx, sy) => {
   const p = toPage(sx, sy);
-  // settle first: reconcile paints on rAF, so a read straight after an op
-  // races the render and samples the previous frame (flaked ~50%)
+  // reconcile paints on rAF (flaked ~50%)
   await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
   return page.evaluate(([x, y]) => window.__substrata.samplePixel(x, y), [p.x - rect.left, p.y - rect.top]);
 };
@@ -50,8 +47,7 @@ const undo = async () => {
   await sleep(350);
 };
 const drag = async (x0, y0, x1, y1) => {
-  // every drag in this harness draws — re-arm per draw (shapes are one-shot
-  // since 2026-07-11: a commit hands the tool back to MOVE)
+  // shapes revert to move after commit
   await page.evaluate(() => window.__substrata.setTool("pieces", "primitives"));
   const a = toPage(x0, y0);
   const b = toPage(x1, y1);
@@ -62,7 +58,7 @@ const drag = async (x0, y0, x1, y1) => {
   await sleep(250);
 };
 
-// ── setup: three rects at the root (pieces drag-to-draw) ─────────────────────
+// setup: three root rects
 await page.evaluate(() => {
   window.__substrata.setTool("pieces", "primitives");
   window.__substrata.toolSettings("pieces", { shape: "rectangle", fill: "#cc2222" });
@@ -74,12 +70,12 @@ let ls = await layers();
 check("setup: three root rects", ls.map((l) => l.parent).join(","), ls.length === 3 && ls.every((l) => l.parent === null));
 const [r1, r2, r3] = ls.map((l) => l.id);
 
-// ── group two via the layer-ops path (the panel footer calls the same op) ────
+// group two (panel footer uses same op)
 const gid = await page.evaluate((ids) => window.__substrata.groupLayers(ids), [r1, r2]);
 let p = await parents();
 check("group: r1+r2 nest under the new group", `${p[r1]},${p[r2]},${p[r3]}`, !!gid && p[r1] === gid && p[r2] === gid && p[r3] === null);
 
-// ── moveLayer INTO the group ─────────────────────────────────────────────────
+// moveLayer into group
 await page.evaluate(([id, parent]) => window.__substrata.moveLayer(id, parent, 2), [r3, gid]);
 p = await parents();
 check("moveLayer: r3 moved INTO the group", p[r3], p[r3] === gid);
@@ -88,8 +84,8 @@ await undo();
 p = await parents();
 check("moveLayer in: ONE undo restores root", p[r3], p[r3] === null);
 
-// ── moveLayer OUT to root (doc index 0 = bottom of the stack) ────────────────
-await page.evaluate(([id, parent]) => window.__substrata.moveLayer(id, parent, 2), [r3, gid]); // re-nest
+// moveLayer out (index 0 = stack bottom)
+await page.evaluate(([id, parent]) => window.__substrata.moveLayer(id, parent, 2), [r3, gid]);
 await page.evaluate((id) => window.__substrata.moveLayer(id, null, 0), r1);
 p = await parents();
 ls = await layers();
@@ -99,8 +95,8 @@ await undo();
 p = await parents();
 check("moveLayer out: ONE undo re-nests", p[r1], p[r1] === gid);
 
-// ── cycle guard: a group must never enter its own descendant ─────────────────
-const g2 = await page.evaluate((ids) => window.__substrata.groupLayers(ids), [r1, r2]); // inner group inside gid
+// cycle guard
+const g2 = await page.evaluate((ids) => window.__substrata.groupLayers(ids), [r1, r2]);
 await page.evaluate(([id, parent]) => window.__substrata.moveLayer(id, parent, 0), [gid, g2]);
 p = await parents();
 check(
@@ -109,10 +105,10 @@ check(
   p[r1] === g2 && p[r2] === g2 && p[r3] === gid && Object.keys(p).length === 3,
 );
 
-// ── effective group opacity: 0.5 × 0.5 composes to 0.25 over white ───────────
+// 0.5 × 0.5 = 0.25 over white
 await page.evaluate(() => window.__substrata.toolSettings("pieces", { fill: "#000000" }));
-await drag(1200, 900, 1600, 1200); // b1 — sampled at its centre (1400,1050)
-await drag(200, 1200, 400, 1400); // b2 — a second member so the pair can group
+await drag(1200, 900, 1600, 1200);
+await drag(200, 1200, 400, 1400);
 ls = await layers();
 const [b1, b2] = ls.slice(-2).map((l) => l.id);
 const gOp = await page.evaluate((ids) => window.__substrata.groupLayers(ids), [b1, b2]);

@@ -1,7 +1,4 @@
-// Paper-size picker shared by the zine imposer and the print imposer: a
-// Popover holding a Command list, with the whole paper-size catalogue grouped
-// by series. Styling hooks are `.dt-paper-combo*`, defined in
-// app/styles/tools/_zine-imposer.scss.
+// styled in _zine-imposer.scss
 
 import { fn } from '@ember/helper';
 import { guidFor } from '@ember/object/internals';
@@ -26,11 +23,7 @@ import {
 } from 'delphitools-v2/components/ui/popover';
 import { findPaperSize, paperSizeGroups } from 'delphitools-v2/lib/paper-sizes';
 
-/**
- * Command matches on the item's `value`, so it carries the label plus the
- * series — searching "ISO A" finds the whole series, and the A4 that appears in
- * both Common and ISO A stays two distinct values.
- */
+// series in value for search + uniq (A4 in Common and ISO A)
 const GROUPS = paperSizeGroups.map((group) => ({
 	id: group.id,
 	heading: group.label,
@@ -50,13 +43,9 @@ export interface PaperSizeComboboxSignature {
 	Args: {
 		value: string;
 		onValueChange: (id: string) => void;
-		/** Offer "Infer from PDF" as the first entry. */
 		showInfer?: boolean;
-		/** Offer "Custom…" as the last entry. */
 		showCustom?: boolean;
-		/** Whether a PDF has been read, which changes the infer label. */
 		hasInferred?: boolean;
-		/** The inferred size's label, shown when infer is selected. */
 		inferredLabel?: string;
 		triggerClass?: string;
 		contentClass?: string;
@@ -122,12 +111,10 @@ export default class PaperSizeCombobox extends Component<PaperSizeComboboxSignat
 				class="dt-paper-combo-panel {{@contentClass}}"
 			>
 				<Command>
-					{{! wording carried over from the Next app }}
 					<CommandInput
 						@placeholder="Search paper sizes…"
 					/>
 					<CommandList>
-						{{! wording carried over from the Next app }}
 						<CommandEmpty>No paper size
 							found.</CommandEmpty>
 
@@ -152,7 +139,6 @@ export default class PaperSizeCombobox extends Component<PaperSizeComboboxSignat
 												'is-dim'
 											}}"
 									/>
-									{{! wording carried over from the Next app }}
 									<span
 									>Infer
 										from

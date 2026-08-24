@@ -9,26 +9,21 @@ import DownloadLabel from 'delphitools-v2/components/download-label';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import { downloadUrl } from 'delphitools-v2/lib/download';
 
-/** Six digits behind a #, the only form `<input type="color">` accepts. */
+// input type=color needs #rrggbb
 const HEX = /^#[0-9a-f]{6}$/i;
 
-/**
- * The matte is redrawn at output resolution — up to 8192px wide — and
- * re-encoded to a data URL on every change, so a slider drag would otherwise
- * queue one full pass per input event.
- */
+// full-res re-encode per change
 const RENDER_DEBOUNCE_MS = 120;
 
-/** Longest edge of the live DOM preview, in CSS pixels. */
+// css pixels
 const MAX_PREVIEW = 280;
 
-/** Radius of the blurred backdrop on the output canvas. */
 const BACKDROP_BLUR_PX = 50;
 
-/** Oversampling of the blurred backdrop, so its own edges stay off-canvas. */
+// blurred edges stay off-canvas
 const BACKDROP_OVERSCAN = 1.2;
 
-/** How much darker the gradient's second stop is than its first. */
+// second stop darker
 const GRADIENT_FALLOFF = -30;
 
 const MIN_RATIO = 1;
@@ -68,7 +63,7 @@ const PRESET_COLOURS = [
 	'#0a0a0a',
 ];
 
-/** The presets that need dark text on the `+` cell. */
+// need dark + text
 const LIGHT_COLOURS = ['#ffffff', '#f5f5f5', '#fafafa'];
 
 export interface Rgb {
@@ -87,7 +82,6 @@ export interface Rect extends Size {
 	y: number;
 }
 
-/** Canvas size for one output width at one aspect ratio. */
 export function outputDimensions(
 	outputSize: number,
 	ratioW: number,
@@ -99,7 +93,6 @@ export function outputDimensions(
 	};
 }
 
-/** The same shape, scaled so its longer edge is `max` CSS pixels. */
 export function previewSize(max: number, ratioW: number, ratioH: number): Size {
 	const longer = Math.max(ratioW, ratioH);
 	return {
@@ -108,7 +101,6 @@ export function previewSize(max: number, ratioW: number, ratioH: number): Size {
 	};
 }
 
-/** The source image scaled to fit inside the matte, centred, inset by `padding`. */
 export function fitInside(
 	imageWidth: number,
 	imageHeight: number,
@@ -129,7 +121,6 @@ export function fitInside(
 	};
 }
 
-/** The source image scaled to cover the matte with overscan, centred. */
 export function coverRect(
 	imageWidth: number,
 	imageHeight: number,
@@ -163,10 +154,7 @@ export function rgbCss(colour: Rgb): string {
 	return `rgb(${colour.r}, ${colour.g}, ${colour.b})`;
 }
 
-/**
- * Whole-image average, taken by letting the canvas downscale to a single
- * pixel. Null when the 2d context is unavailable.
- */
+// canvas downscale to 1px
 function averageColour(image: HTMLImageElement): Rgb | null {
 	const canvas = document.createElement('canvas');
 	canvas.width = 1;
@@ -176,7 +164,7 @@ function averageColour(image: HTMLImageElement): Rgb | null {
 
 	ctx.drawImage(image, 0, 0, 1, 1);
 	const data = ctx.getImageData(0, 0, 1, 1).data;
-	// A 1×1 buffer always has its four bytes.
+	// 1px buffer, 4 bytes
 	return { r: data[0]!, g: data[1]!, b: data[2]! };
 }
 
@@ -228,7 +216,6 @@ export default class MatteGeneratorTool extends Component {
 	}
 
 	get swapTitle() {
-		// wording carried over from the Next app
 		return this.isSquare
 			? 'Square — nothing to rotate'
 			: `Rotate to ${this.ratioH}:${this.ratioW}`;
@@ -258,7 +245,7 @@ export default class MatteGeneratorTool extends Component {
 		}));
 	}
 
-	/** `<input type="color">` resets itself on a value it cannot parse. */
+	// input resets unparseable value
 	get pickerValue() {
 		return HEX.test(this.matteColour)
 			? this.matteColour
@@ -268,7 +255,7 @@ export default class MatteGeneratorTool extends Component {
 	get swatches() {
 		return PRESET_COLOURS.map((colour) => ({
 			colour,
-			// Every entry is a literal from PRESET_COLOURS.
+			// literals from PRESET_COLOURS
 			style: htmlSafe(`background-color: ${colour}`),
 			isActive: colour === this.matteColour,
 		}));
@@ -283,7 +270,6 @@ export default class MatteGeneratorTool extends Component {
 		);
 	}
 
-	/** Background of the live preview box: solid, gradient, or the blurred image. */
 	get previewStyle() {
 		const { width, height } = this.preview;
 		let background = '';
@@ -301,8 +287,7 @@ export default class MatteGeneratorTool extends Component {
 			background = `background: linear-gradient(135deg, ${from}, ${to});`;
 		}
 
-		// Both dimensions are arithmetic on the ratio inputs, which are clamped
-		// integers, and the colours are a validated hex or numeric rgb().
+		// all values already validated
 		return htmlSafe(
 			`width: ${width}px; height: ${height}px; ${background}`,
 		);
@@ -332,8 +317,7 @@ export default class MatteGeneratorTool extends Component {
 					averageColour(image) ?? this.dominant;
 				this.queueRender();
 			};
-			// The Next version dropped a failed decode on the floor: the drop
-			// zone stayed up with no file name and no reason given.
+			// next app dropped decode failures
 			image.onerror = this.fail;
 			image.src = dataUrl;
 		};
@@ -345,7 +329,7 @@ export default class MatteGeneratorTool extends Component {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) this.readFile(file);
-		// Choosing the same file twice must still fire a change event.
+		// same file twice refires change
 		input.value = '';
 	};
 
@@ -355,7 +339,7 @@ export default class MatteGeneratorTool extends Component {
 		if (file?.type.startsWith('image/')) this.readFile(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// else browser navigates to file
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -579,7 +563,6 @@ export default class MatteGeneratorTool extends Component {
 							<div
 								class="dt-matte-section"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-matte-label"
 								>Style</span>
@@ -624,7 +607,6 @@ export default class MatteGeneratorTool extends Component {
 								<div
 									class="dt-matte-section"
 								>
-									{{! wording carried over from the Next app }}
 									<span
 										class="dt-matte-label"
 									>Matte
@@ -672,7 +654,6 @@ export default class MatteGeneratorTool extends Component {
 											/>
 										</span>
 									</div>
-									{{! wording carried over from the Next app }}
 									<p
 										class="dt-matte-hint"
 									>Click
@@ -696,7 +677,6 @@ export default class MatteGeneratorTool extends Component {
 							<div
 								class="dt-matte-section"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-matte-label"
 								>Aspect Ratio</span>
@@ -799,7 +779,6 @@ export default class MatteGeneratorTool extends Component {
 							<div
 								class="dt-matte-section"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-matte-label"
 								>Output Width</span>
@@ -831,7 +810,6 @@ export default class MatteGeneratorTool extends Component {
 								<div
 									class="dt-matte-row"
 								>
-									{{! wording carried over from the Next app }}
 									<input
 										type="number"
 										class="dt-matte-number is-wide"
@@ -854,7 +832,6 @@ export default class MatteGeneratorTool extends Component {
 								<div
 									class="dt-matte-head"
 								>
-									{{! wording carried over from the Next app }}
 									<label
 										for="dt-matte-padding"
 									>Padding</label>
@@ -879,7 +856,6 @@ export default class MatteGeneratorTool extends Component {
 						</div>
 
 						<div class="dt-matte-side">
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-matte-label"
 							>Preview</span>
@@ -952,11 +928,9 @@ export default class MatteGeneratorTool extends Component {
 							}}
 						/>
 						<Icon @name="upload" />
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-matte-drop-title"
 						>Drop image here</span>
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-matte-drop-hint"
 						>or click to select, or paste</span>

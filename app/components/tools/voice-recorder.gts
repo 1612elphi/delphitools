@@ -57,9 +57,7 @@ export default class VoiceRecorderTool extends Component {
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
-		// Enumerate upfront: with a previously granted permission the picker
-		// is populated before the first take. Pre-permission entries have
-		// empty deviceIds and are dropped; the refresh in start fills them in.
+		// pre-permission deviceIds are empty
 		void this.#refreshDevices();
 	}
 
@@ -281,8 +279,7 @@ export default class VoiceRecorderTool extends Component {
 	#stopRecording() {
 		const recorder = this.#recorder;
 		if (recorder) {
-			// Detach first: callers (clear, willDestroy) discard the take,
-			// so the async onstop must not finish it after the fact.
+			// discard in-flight take on detach
 			recorder.ondataavailable = null;
 			recorder.onstop = null;
 			recorder.onpause = null;
@@ -290,7 +287,6 @@ export default class VoiceRecorderTool extends Component {
 			try {
 				recorder.stop();
 			} catch {
-				// Already stopped or never started.
 			}
 		}
 		this.#recorder = null;
@@ -324,7 +320,7 @@ export default class VoiceRecorderTool extends Component {
 	};
 
 	togglePause = () => {
-		// State bookkeeping lives in the recorder's onpause/onresume handlers.
+		// state set in onpause/onresume
 		if (this.status === 'recording') this.#recorder?.pause();
 		else if (this.status === 'paused') this.#recorder?.resume();
 	};
@@ -337,7 +333,6 @@ export default class VoiceRecorderTool extends Component {
 			try {
 				source.stop();
 			} catch {
-				// Already stopped.
 			}
 			this.#source = null;
 		}

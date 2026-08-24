@@ -1,68 +1,23 @@
-/**
- * Effect compositor (M3 effects engine) — pure Canvas2D, fabric-free. Paints a
- * layer's `effects[]` around its rendered content inside the object's cache
- * canvas, in the ratified composite order:
- *
- *   outer effects (behind) → content (+filters) → inner effects (in front,
- *   clipped to the content's alpha) → [opacity/blend apply at the cache blit].
- *
- * Everything works in DEVICE space (the cache canvas' pixels) under an identity
- * transform — a file-wide contract: paintEffects sets it on the cache ctx, and
- * getScratch hands out reset contexts. The one primitive is the canvas shadow
- * trick: painting a source far off-canvas with shadowOffsetX pulled back leaves
- * only its (optionally blurred, colour-tinted) silhouette — blur, tint,
- * dilation and erosion all compose from it, so there is no per-pixel work and
- * no ctx.filter dependency (Safari lacks it; shadow* is universal, and it's
- * what Fabric itself uses).
- *
- * Params arrive COMPLETE: syncImageEffects merges registry defaults before the
- * stack reaches an EffectsImage (the filter-factory convention — the renderer
- * never guesses its own), so painters read them bare. The registry's `phase`
- * field is descriptive taxonomy; the renderer routes per type, with stroke
- * split across both passes by its `position` param.
- *
- * Array order = apply order = paint order (the filters-stack convention,
- * ratified 2026-07-03): the panel's TOP effect paints first, so an outer
- * effect at the top sits deepest behind the content.
- *
- * Approximations (all deliberate, all bounded by the cache-size cap):
- * ponytail: dilation/erosion = a fixed 24-stamp ring — facets on very large
- * width×zoom; upgrade = multi-ring or an SDF pass if Ruby's QA minds.
- * ponytail: scalar blur uses the mean of kx/ky — non-uniform layer scale makes
- * a blur that should be elliptical render round.
- */
-
 import type { Effect } from './doc-model';
 
-/** Scene-px → device-px factors + the blit transform the offsets must undo. */
 export interface EffectGeom {
 	kx: number;
 	ky: number;
-	/** object's total rotation (deg) — baked offsets counter-rotate so shadow
-	 *  direction stays scene-absolute (light doesn't rotate with the layer) */
 	angle: number;
 	flipX: boolean;
 	flipY: boolean;
 }
 
-/** Type narrowing only — params are default-merged upstream, never absent. */
 const num = (v: number | string | undefined): number =>
 	typeof v === 'number' ? v : 0;
 const str = (v: number | string | undefined): string =>
 	typeof v === 'string' ? v : '';
 
-/** Stroke position + effective ring radius (centre straddles the edge). */
 const strokeGeom = (p: Effect['params']): { pos: string; r: number } => {
 	const pos = str(p.position);
 	return { pos, r: num(p.width) * (pos === 'centre' ? 0.5 : 1) };
 };
 
-/**
- * Max distance (scene px) the stack reaches OUTSIDE the layer bounds — the
- * cache-canvas padding. 0 when nothing overflows. Canvas shadowBlur `b` is
- * σ = b/2, still ~2% alpha at distance b — count it at 1.2× so a max-blur
- * shadow fades out inside the pad instead of clipping to a hard seam.
- */
 const BLUR_REACH = 1.2;
 export function effectsReach(effects: readonly Effect[]): number {
 	let r = 0;
@@ -93,12 +48,6 @@ export function effectsReach(effects: readonly Effect[]): number {
 	return r === 0 ? 0 : Math.ceil(r) + 2;
 }
 
-/**
- * Pooled scratch canvases (0 = the content layer the EffectsImage renders,
- * 1/2 = the painters' working surfaces). Returned reset: identity transform,
- * source-over, alpha 1, cleared. ponytail: the pool holds its high-water size
- * (bounded by Fabric's cache cap, ~2 MP each); shrink-on-idle if memory matters.
- */
 const pool: HTMLCanvasElement[] = [];
 export function getScratch(
 	i: number,
@@ -108,7 +57,8 @@ export function getScratch(
 	const c = pool[i] ?? (pool[i] = document.createElement('canvas'));
 	const resized = c.width !== w || c.height !== h;
 	if (resized) {
-		c.width = w; // resizing also resets all context state, clear included
+		// canvas resize resets state
+		c.width = w;
 		c.height = h;
 	}
 	const ctx = c.getContext('2d')!;
@@ -119,8 +69,6 @@ export function getScratch(
 	return ctx;
 }
 
-/** Paint src far off-canvas so only its shadow — a colour-tinted, blurred
- *  silhouette at (dx, dy) — lands on ctx. Honours the caller's compositeOp. */
 const OFF = 1e5;
 function stampShadow(
 	ctx: CanvasRenderingContext2D,
@@ -141,8 +89,6 @@ function stampShadow(
 	ctx.restore();
 }
 
-/** Draw src onto ctx at a given alpha, optionally stacked (n blits of alpha a
- *  composite to 1−(1−a)ⁿ — the glow intensity ramp). */
 function blit(
 	ctx: CanvasRenderingContext2D,
 	src: HTMLCanvasElement,
@@ -160,11 +106,6 @@ const UNIT_RING = Array.from({ length: RING }, (_, i) => {
 	return [Math.cos(a), Math.sin(a)] as const;
 });
 
-/** Morphological dilation by r: tint the silhouette ONCE into tmp, then union
- *  it across the ring — the shadow render is paid once, the stamps are blits.
- *  ponytail: repeated stamps treat alpha as near-binary — 50%-alpha content
- *  dilates to ~opaque and erodes to ~nothing (stroke on translucent pixels
- *  degrades); a threshold pass on tmp if that ever matters. */
 function dilate(
 	dst: CanvasRenderingContext2D,
 	src: CanvasImageSource,
@@ -178,8 +119,6 @@ function dilate(
 		dst.drawImage(tmp.canvas, ux * r, uy * r);
 }
 
-/** Morphological erosion by r, onto a fresh scratch: copy src, then intersect
- *  with ring-shifted copies of it. */
 function erode(
 	dst: CanvasRenderingContext2D,
 	src: CanvasImageSource,
@@ -191,7 +130,6 @@ function erode(
 	dst.globalCompositeOperation = 'source-over';
 }
 
-/** The content's silhouette filled flat: colour ∧ content alpha. */
 function tintContent(
 	colour: string,
 	content: HTMLCanvasElement,
@@ -205,8 +143,6 @@ function tintContent(
 	return b;
 }
 
-/** tintContent minus a blurred/offset silhouette of the content — the classic
- *  inner-shadow/glow field (the alpha ops commute, so mask-then-subtract). */
 function carve(
 	colour: string,
 	content: HTMLCanvasElement,
@@ -221,9 +157,6 @@ function carve(
 	return b.canvas;
 }
 
-/** Scene-space offset → cache-local device px: the cache blit re-applies the
- *  object's rotation + flips, so bake their inverse (rotate first, then flip —
- *  the inverse composition order of fabric's rotate∘flip transform). */
 function bakedOffset(
 	ox: number,
 	oy: number,
@@ -237,10 +170,6 @@ function bakedOffset(
 	return { dx: dx * g.kx, dy: dy * g.ky };
 }
 
-/**
- * The engine: paint the enabled stack around `content` (the layer rendered to
- * a device-space scratch matching ctx's canvas) onto the cache ctx.
- */
 export function paintEffects(
 	ctx: CanvasRenderingContext2D,
 	content: HTMLCanvasElement,
@@ -256,7 +185,6 @@ export function paintEffects(
 	ctx.restore();
 }
 
-/** Outer pass — painted before (so behind) the content. */
 function paintBehind(
 	ctx: CanvasRenderingContext2D,
 	content: HTMLCanvasElement,
@@ -318,16 +246,13 @@ function paintBehind(
 				0,
 				1,
 			);
-			// Double blit: combined alpha 2a−a², so intensity ramps softly to solid.
+			// increase glow opacity
 			blit(ctx, b.canvas, a, 2);
 			break;
 		}
 		case 'stroke': {
 			const { pos, r } = strokeGeom(p);
 			if (pos === 'inner') break;
-			// Dilated silhouette straight onto the cache; the content re-covers the
-			// interior. ponytail: semi-transparent content shows the stroke beneath —
-			// subtract the eroded interior first if that ever reads wrong.
 			dilate(
 				ctx,
 				content,
@@ -340,7 +265,6 @@ function paintBehind(
 	}
 }
 
-/** Inner pass — painted after the content, every result masked to its alpha. */
 function paintInFront(
 	ctx: CanvasRenderingContext2D,
 	content: HTMLCanvasElement,
@@ -396,7 +320,6 @@ function paintInFront(
 		case 'stroke': {
 			const { pos, r } = strokeGeom(p);
 			if (pos === 'outer') break;
-			// Ring = silhouette minus its erosion.
 			const b = getScratch(1, content.width, content.height);
 			stampShadow(b, content, str(p.colour), 0, 0, 0, 1);
 			const c = getScratch(2, content.width, content.height);

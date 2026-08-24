@@ -11,13 +11,11 @@ import { buildIco, dataUrlToBytes } from 'delphitools-v2/lib/ico';
 
 const FAVICON_SIZES = [16, 32, 48, 64, 128, 180, 192, 512];
 
-/** The sizes that go into favicon.ico; the rest ship as loose PNGs. */
 const ICO_SIZES = [16, 32, 48, 64];
 
-/** Preview cap, so 512 does not blow the row height out. */
 const PREVIEW_MAX = 48;
 
-/** Staggered so the browser does not drop all but the first download. */
+// avoid download suppression
 const DOWNLOAD_GAP_MS = 100;
 
 const HTML_SNIPPET = `<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -65,8 +63,7 @@ export default class FaviconGennyTool extends Component {
 				favicon,
 				label: sizeLabel(favicon.size),
 				dimensions: `${favicon.size}×${favicon.size}`,
-				// px is derived from FAVICON_SIZES, so the style string
-				// never carries anything a caller supplied.
+				// derived dimensions only
 				boxStyle: htmlSafe(
 					`width: ${px + 8}px; height: ${px + 8}px`,
 				),
@@ -105,7 +102,7 @@ export default class FaviconGennyTool extends Component {
 		if (file?.type.startsWith('image/')) this.readFile(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// prevent drop navigation
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -117,8 +114,6 @@ export default class FaviconGennyTool extends Component {
 		this.loadFailed = false;
 	};
 
-	// The Next version left `generating` true forever when an image failed to
-	// decode, so a file with an image mime type but junk bytes hung the tool.
 	fail = () => {
 		this.generating = false;
 		this.sourceImage = null;
@@ -126,10 +121,6 @@ export default class FaviconGennyTool extends Component {
 		this.loadFailed = true;
 	};
 
-	/**
-	 * One canvas, resized per size. Centre-crops to a square first, so a
-	 * portrait or landscape source keeps its middle rather than squashing.
-	 */
 	generate = (imageDataUrl: string) => {
 		this.generating = true;
 		const image = new Image();
@@ -233,7 +224,6 @@ export default class FaviconGennyTool extends Component {
 								alt="Source"
 							/>
 						</span>
-						{{! wording carried over from the Next app }}
 						<p>Image will be centre-cropped
 							to a square for each
 							size.</p>
@@ -254,7 +244,6 @@ export default class FaviconGennyTool extends Component {
 							}}
 						/>
 						<Icon @name="upload" />
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-favicon-drop-title"
 						>Drop image here</span>
@@ -272,14 +261,12 @@ export default class FaviconGennyTool extends Component {
 				{{/if}}
 
 				{{#if this.generating}}
-					{{! wording carried over from the Next app }}
 					<p class="dt-favicon-status">Generating
 						favicons…</p>
 				{{/if}}
 
 				{{#if this.favicons.length}}
 					<div class="dt-favicon-bar is-actions">
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-favicon-bar-title"
 						>Generated Favicons</span>
@@ -362,7 +349,6 @@ export default class FaviconGennyTool extends Component {
 					</div>
 
 					<div class="dt-favicon-snippet">
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-favicon-snippet-label"
 						>HTML Snippet</span>

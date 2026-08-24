@@ -1,13 +1,6 @@
 import type { TOC } from '@ember/component/template-only';
 import ColourPaletteDialog from 'delphitools-v2/components/colour-palette-dialog';
 
-// Body of the About dialog. Kept as its own component because Substrata's
-// Help > About pane renders the same content, as in the Next app: one source
-// for the copy, contributor and thanks lists.
-//
-// All prose here is carried over verbatim. The "Built with" list is the one
-// thing that changes for v2, because the stack itself changed.
-
 const CONTRIBUTORS = [
 	{ name: 'Himanshu Balani', url: 'https://github.com/himanshubalani' },
 	{ name: 'Mahmoud Ashraf', url: 'https://github.com/SNO7E-G' },

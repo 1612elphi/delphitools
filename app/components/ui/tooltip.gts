@@ -3,8 +3,7 @@
 // hover/focus lifecycle are kept verbatim, the Tailwind class strings are
 // replaced with .dt-tooltip* hooks styled in app/styles/app.scss.
 //
-// Upstream rendered identical markup in both arms of the @asChild branch in
-// TooltipTrigger; collapsed to one here.
+// @asChild branch collapsed upstream
 
 import { on } from '@ember/modifier';
 import { htmlSafe } from '@ember/template';
@@ -163,10 +162,7 @@ class TooltipTrigger extends Component<TooltipTriggerSignature> {
 		<span
 			class="dt-tooltip-trigger {{@class}}"
 			data-slot="tooltip-trigger"
-			{{! focusin/focusout rather than focus/blur: those two do not bubble, so a
-          focusable element nested inside the trigger (a link, a button) would
-          never open the tooltip for keyboard users. Diverges from upstream
-          shadcn-ember, which assumes the trigger is itself the focusable. }}
+			{{! focus/blur don't bubble }}
 			{{on "focusout" this.handleBlur}}
 			{{on "focusin" this.handleFocus}}
 			{{on "mouseenter" this.handleMouseEnter}}
@@ -293,8 +289,7 @@ class TooltipContent extends Component<TooltipContentSignature> {
 		const side = this.actualSide;
 		const styles: string[] = [];
 
-		// For top/bottom placement, arrow x is set by floating-ui, y is at the edge
-		// For left/right placement, arrow y is set by floating-ui, x is at the edge
+		// floating-ui sets x; edge y
 		if (side === 'top' || side === 'bottom') {
 			if (this.arrowX != null) {
 				styles.push(`left: ${this.arrowX}px`);

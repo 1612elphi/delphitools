@@ -1,13 +1,4 @@
-/**
- * Accept lists for the media tools, shared by the registry's `accepts` (which
- * routes omnibox drops) and by the tools' own file inputs, so the picker and
- * the drop target can never disagree.
- *
- * The extensions are not redundant with the wildcard: iOS maps `audio/*` to
- * the system's known audio UTIs, and formats it has no UTI for — Ogg, Opus —
- * grey out in the Files picker. Naming the extensions widens that set. (iPad,
- * 2026-08-11: neither .ogg nor .mp3 was selectable with a bare `audio/*`.)
- */
+// ios requires extensions
 export const AUDIO_ACCEPT = [
 	'audio/*',
 	'.mp3',
@@ -34,10 +25,8 @@ export const VIDEO_ACCEPT = [
 export const SUBTITLE_ACCEPT = ['.srt', '.vtt'];
 export const TEXT_ACCEPT = ['.md', '.txt', 'text/markdown', 'text/plain'];
 
-/** The same list as an `accept` attribute value. */
 export const acceptAttr = (list: readonly string[]): string => list.join(',');
 
-/** kebab-case lucide-static icon name, resolved by <Icon> */
 export type IconName = string;
 
 export interface Tool {
@@ -48,24 +37,11 @@ export interface Tool {
 	href: string;
 	beta?: boolean;
 	new?: boolean;
-	/** off-site / off-catalogue destination (App Store, GitHub) — the grid
-	 *  renders a plain new-tab anchor and no /tools/[id] page is generated */
 	external?: boolean;
-	/** a page at its own Ember route (Substrata → editor, Workflows); the
-	 *  grid and sidebar link there instead of /tools/[id] */
 	route?: string;
-	/** the flagship treatment: green accent, double-width cell, ghosted
-	 *  wordmark backdrop (Substrata) */
 	highlight?: boolean;
-	/** tool page drops the max-w-4xl cap for the COMPONENT (header stays
-	 *  capped) — for tools whose display wants the whole main column; the
-	 *  component re-caps whatever chrome it wants narrow (Large Type) */
 	wide?: boolean;
-	/** file types the tool ingests (`.srt` / `image/*` forms, as in an
-	 *  accept attribute) — the omnibox routes dropped files by this */
 	accepts?: string[];
-	/** reads `?color=` on load (lib/colour-query), so omnibox links to it
-	 *  carry the detected colour */
 	carryColour?: boolean;
 }
 
@@ -223,8 +199,6 @@ export const toolCategories: ToolCategory[] = [
 		name: 'Images & Assets',
 		tools: [
 			{
-				// the editor lives at its own route — no /tools/[id] page (see
-				// generateStaticParams filter); description is Ruby's billboard line
 				id: 'substrata',
 				name: 'Substrata',
 				description:
@@ -773,10 +747,7 @@ export const toolCategories: ToolCategory[] = [
 			{
 				id: 'request-builder',
 				name: 'Request Builder',
-				// ∑CG: catalogue cell description for the request builder
-				//   spec: one clause, ≤ 60 chars, sentence case, no period; says a form composes an HTTP request and hands it over as cURL or a raw request, nothing is sent
-				//   sample: "Compose a request, copy it as cURL or raw HTTP"
-				description: '∑CG',
+				description: 'Compose a cURL or HTTP request',
 				icon: 'terminal',
 				href: '/tools/request-builder',
 				new: true,
@@ -964,7 +935,6 @@ export const toolCategories: ToolCategory[] = [
 		name: 'Elsewhere',
 		tools: [
 			{
-				// descriptions reuse the retired download-card's shipped lines
 				id: 'ios-app',
 				name: 'delphitools for iOS',
 				description:
@@ -988,7 +958,6 @@ export const toolCategories: ToolCategory[] = [
 
 export const allTools = toolCategories.flatMap((category) => category.tools);
 
-// Featured tools for "Delphi's Greatest Hits" section
 const featuredToolIds = [
 	'substrata',
 	'qr-genny',
@@ -999,8 +968,6 @@ export const featuredTools = featuredToolIds
 	.map((id) => allTools.find((tool) => tool.id === id))
 	.filter((tool): tool is Tool => tool !== undefined);
 
-/** Not a tool, so outside the categories and the parity record; the home
- *  page's Greatest Hits shows it beside Substrata with the same treatment. */
 const workflowsEntry: Tool = {
 	id: 'workflows',
 	name: 'Workflows',
@@ -1011,18 +978,12 @@ const workflowsEntry: Tool = {
 	highlight: true,
 };
 
-/** the home page's Greatest Hits: the two highlighted entries first */
 export const homeFeatured: Tool[] = [
 	...featuredTools.filter((tool) => tool.highlight),
 	workflowsEntry,
 	...featuredTools.filter((tool) => !tool.highlight),
 ];
 
-/**
- * Route params for every catalogue entry that has a /tools/[toolId] page —
- * entries living at their own route (Substrata → /editor) or off-site are left
- * out. Used by the page and by its og.png card, which must generate in lockstep.
- */
 export function toolPageParams(): { toolId: string }[] {
 	return allTools
 		.filter((tool) => tool.href.startsWith('/tools/'))

@@ -6,30 +6,11 @@ import { concat, hash } from '@ember/helper';
 import { and, or } from 'ember-truth-helpers';
 import type { TOC } from '@ember/component/template-only';
 
-/**
- * Peelable stickers: the home-page wall and the per-tool "lousy" sticker.
- *
- * v1 drove the fold with GSAP; this port replaces that with a CSS keyframe
- * (lift/rotate/fade) so the feature does not pull in a runtime animation
- * dependency for one self-contained flourish. Reduced motion skips the
- * animation and just downloads the high-res PNG.
- *
- * The wall stickers and the per-tool series are transparent die-cut PNGs.
- * New tools added after the v1 port have no lousy art yet; StickerButton
- * renders nothing when the image 404s, so there is no broken image or empty
- * frame for those tools.
- */
-
 interface Sticker {
-	/** Base file name in /public/stickers (without extension). */
 	file: string;
-	/** Human label for the download filename + screen readers. */
 	label: string;
-	/** Resting tilt. */
 	rot: number;
-	/** Responsive display width. */
 	width: string;
-	/** Cross-axis placement on the wall. */
 	align: 'flex-start' | 'center' | 'flex-end';
 }
 
@@ -90,15 +71,10 @@ function downloadSticker(file: string) {
 	a.remove();
 }
 
-// v1 also rendered an SVG filter that painted a mirrored grey "flap" for the
-// fold. The CSS-only peel has no flap, so the filter is deliberately not
-// ported; resurrect it from c6c6e6d~1 if the fold ever comes back.
-
 interface StickerButtonSignature {
 	Element: HTMLButtonElement;
 	Args: {
 		sticker: Sticker;
-		/** Optional caption rendered beneath the sticker once it loads. */
 		caption?: string;
 	};
 }
@@ -185,19 +161,13 @@ class StickerButton extends Component<StickerButtonSignature> {
 
 interface PeelStickerSignature {
 	Args: {
-		/** Tool ID for the per-tool lousy sticker series. */
 		tool: string;
-		/** Optional override for the screen-reader/download label. */
 		label?: string;
 	};
 }
 
 const TOOL_STICKER_CAPTION = 'Have a sticker! Peel it off to download.';
 
-/**
- * A single peelable sticker for a tool page. Renders nothing at all when the
- * tool has no lousy art (the image 404s and StickerButton hides itself).
- */
 const PeelSticker: TOC<PeelStickerSignature> = <template>
 	<StickerButton
 		@sticker={{hash

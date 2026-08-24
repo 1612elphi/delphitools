@@ -1,11 +1,4 @@
-// Styles for the markdown-writer tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Markdown writer ─────────────────────────────────────────────────────── */
 
 .dt-md {
 	border: 2px solid var(--border);
@@ -71,9 +64,7 @@
 	border-bottom: 2px solid var(--border);
 }
 
-/* `.segmented` draws a 1px frame on all four edges; the row bleeds to the panel
-   edges instead, so the side and top rules would double the panel's own. Both
-   classes are needed on the selector to outrank `.segmented` itself. */
+/* bleed past segmented frame: both classes needed for specificity */
 .segmented.dt-md-actions {
 	grid-template-columns: repeat(2, 1fr);
 	border-inline: 0;

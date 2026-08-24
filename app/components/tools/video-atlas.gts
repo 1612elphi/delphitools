@@ -182,7 +182,6 @@ export default class VideoAtlasTool extends Component {
 
 				<div class="dt-va-stage">
 					{{#if this.hasVideo}}
-						{{! user-supplied video; there is no caption track to offer }}
 						{{! template-lint-disable require-media-caption }}
 						<video
 							src={{this.intake.url}}
@@ -214,7 +213,7 @@ export default class VideoAtlasTool extends Component {
 							<span
 								class="dt-va-drop-title"
 							>{{DROP_TITLE}}</span>
-							{{! hint reused verbatim from Background Remover }}
+							{{! wording duplicated in background-remover }}
 							<span
 								class="dt-va-drop-hint"
 							>or click to select a

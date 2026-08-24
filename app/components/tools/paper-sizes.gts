@@ -19,9 +19,8 @@ import {
 
 const UNIT_KEY = 'paperSizeUnit';
 const PREVIEW_HEIGHT = 280;
-/** The preview leaves this much room around the largest sheet. */
 const PREVIEW_MARGIN = 40;
-/** A4's long edge, so a single small sheet is not scaled up to fill the box. */
+// a4 long edge, stops small sheet filling box
 const MIN_REFERENCE_MM = 297;
 const POINTS_PER_INCH = 72;
 const INCH_TO_MM = 25.4;
@@ -30,15 +29,10 @@ export const DPI_OPTIONS = [72, 150, 300, 600];
 
 export type Slot = 0 | 1;
 
-/** Same size, allowing for two series sharing an id. */
 export function isSameSize(a: PaperSize | null, b: PaperSize): boolean {
 	return a?.id === b.id && a.series === b.series;
 }
 
-/**
- * Millimetres to preview pixels, sized so the larger of the two sheets fits the
- * box.
- */
 export function previewScale(largestMm: number): number {
 	return (PREVIEW_HEIGHT - PREVIEW_MARGIN) / largestMm;
 }
@@ -79,7 +73,6 @@ const SizeDetails: TOC<DetailsSignature> = <template>
 		<div class="dt-paper-detail-meta">{{@details.meta}}</div>
 		<div class="dt-paper-detail-grid">
 			<div class="dt-paper-detail-cell">
-				{{! wording carried over from the Next app }}
 				<div
 					class="dt-paper-detail-cell-label"
 				>Millimetres</div>
@@ -88,7 +81,6 @@ const SizeDetails: TOC<DetailsSignature> = <template>
 				>{{@details.mm}}</div>
 			</div>
 			<div class="dt-paper-detail-cell">
-				{{! wording carried over from the Next app }}
 				<div
 					class="dt-paper-detail-cell-label"
 				>Inches</div>
@@ -98,7 +90,6 @@ const SizeDetails: TOC<DetailsSignature> = <template>
 			</div>
 		</div>
 	{{else}}
-		{{! wording carried over from the Next app }}
 		<div class="dt-paper-detail-empty">No size selected</div>
 	{{/if}}
 </template>;
@@ -145,7 +136,6 @@ export default class PaperSizesTool extends Component {
 		return this.searchResult.type === 'pixels' || this.hasUpload;
 	}
 
-	/** Target in millimetres for a dimension or pixel search; null otherwise. */
 	get searchTargetMm(): { width: number; height: number } | null {
 		const result = this.searchResult;
 		if (result.type === 'pixels') {
@@ -189,7 +179,6 @@ export default class PaperSizesTool extends Component {
 		}));
 	}
 
-	/** The searched-for size as the matches banner prints it. */
 	get matchTargetLabel() {
 		const result = this.searchResult;
 		if (result.type === 'pixels') {
@@ -299,8 +288,6 @@ export default class PaperSizesTool extends Component {
 		this.matchesOpen = !this.matchesOpen;
 	};
 
-	// Selection alternates between the two slots, so a second click compares
-	// rather than replaces.
 	select = (size: PaperSize) => {
 		if (this.nextSlot === 0) this.first = size;
 		else this.second = size;
@@ -314,7 +301,6 @@ export default class PaperSizesTool extends Component {
 
 	setSearchQuery = (event: Event) => {
 		this.searchQuery = (event.target as HTMLInputElement).value;
-		// A hand-typed query is no longer describing the uploaded file.
 		this.#clearUpload();
 	};
 
@@ -338,7 +324,7 @@ export default class PaperSizesTool extends Component {
 	readFile = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
-		// Cleared so the same file can be picked again.
+		// re-pick same file
 		input.value = '';
 		if (!file) return;
 		if (file.type.startsWith('image/')) this.#readImage(file);
@@ -367,8 +353,7 @@ export default class PaperSizesTool extends Component {
 			);
 			if (pdf.getPageCount() === 0) return;
 			const { width, height } = pdf.getPage(0).getSize();
-			// A PDF is measured in points, so the search goes straight to mm and
-			// the pixel dimensions that drive the DPI row do not apply.
+			// pdf points, not pixels
 			this.#clearUpload();
 			const widthMm = Math.round(
 				(width / POINTS_PER_INCH) * INCH_TO_MM,
@@ -378,7 +363,6 @@ export default class PaperSizesTool extends Component {
 			);
 			this.searchQuery = `${widthMm}x${heightMm}mm`;
 		} catch {
-			// A file pdf-lib cannot open leaves the search as it was.
 		}
 	}
 
@@ -387,7 +371,6 @@ export default class PaperSizesTool extends Component {
 			<div class="dt-paper-panel">
 				<div class="dt-paper-bar">
 					<div class="dt-paper-bar-label">
-						{{! wording carried over from the Next app }}
 						<span>Unit</span>
 					</div>
 					<div class="segmented dt-paper-units">
@@ -447,7 +430,6 @@ export default class PaperSizesTool extends Component {
 							<Icon
 								@name="layout-grid"
 							/>
-							{{! wording carried over from the Next app }}
 							Side by Side
 						</button>
 						<button
@@ -466,7 +448,6 @@ export default class PaperSizesTool extends Component {
 							}}
 						>
 							<Icon @name="layers" />
-							{{! wording carried over from the Next app }}
 							Overlay
 						</button>
 					</div>
@@ -494,7 +475,6 @@ export default class PaperSizesTool extends Component {
 								></span></span>
 						{{/if}}
 						{{#unless this.hasSelection}}
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-paper-empty"
 							>Select sizes below to
@@ -548,7 +528,6 @@ export default class PaperSizesTool extends Component {
 										style={{this.firstBoxStyle}}
 									></span>
 								{{else}}
-									{{! wording carried over from the Next app }}
 									<span
 										class="dt-paper-empty"
 									>Click a
@@ -587,7 +566,6 @@ export default class PaperSizesTool extends Component {
 										style={{this.secondBoxStyle}}
 									></span>
 								{{else}}
-									{{! wording carried over from the Next app }}
 									<span
 										class="dt-paper-empty"
 									>Click a
@@ -617,14 +595,12 @@ export default class PaperSizesTool extends Component {
 						<span
 							class="dt-paper-legend-swatch is-first"
 						></span>
-						{{! wording carried over from the Next app }}
 						<span>First selection</span>
 					</span>
 					<span class="dt-paper-legend-item">
 						<span
 							class="dt-paper-legend-swatch is-second"
 						></span>
-						{{! wording carried over from the Next app }}
 						<span>Second selection</span>
 					</span>
 				</div>
@@ -637,7 +613,6 @@ export default class PaperSizesTool extends Component {
 							class="dt-paper-search-icon"
 							@name="search"
 						/>
-						{{! wording carried over from the Next app }}
 						<input
 							type="text"
 							class="dt-paper-search-input"
@@ -665,7 +640,6 @@ export default class PaperSizesTool extends Component {
 					</span>
 					<label class="dt-paper-upload">
 						<Icon @name="upload" />
-						{{! wording carried over from the Next app }}
 						Upload
 						<input
 							type="file"
@@ -680,7 +654,6 @@ export default class PaperSizesTool extends Component {
 
 				{{#if this.showDpi}}
 					<div class="dt-paper-dpi">
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-paper-dpi-label"
 						>DPI</span>
@@ -719,7 +692,6 @@ export default class PaperSizesTool extends Component {
 			{{#if this.matchRows}}
 				<div class="dt-paper-panel">
 					<div class="dt-paper-matches-head">
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-paper-matches-title"
 						>Closest matches for
@@ -767,7 +739,6 @@ export default class PaperSizesTool extends Component {
 										{{#if
 											match.isBest
 										}}
-											{{! wording carried over from the Next app }}
 											<span
 												class="dt-paper-badge"
 											>Best</span>

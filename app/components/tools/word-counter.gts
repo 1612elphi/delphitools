@@ -18,12 +18,10 @@ const READING_WPM = 200;
 const SPEAKING_WPM = 150;
 const COPIED_MS = 1500;
 
-// Wording carried over from the Next app. Held here rather than inline in the
-// template because the formatter wraps long attribute values, and a placeholder
-// keeps the line break it is given.
+// formatter wraps long attribute values
 const PLACEHOLDER = 'Start typing or paste your text here...';
 
-/** Under a minute reads as whole seconds, a minute or more as whole minutes. */
+// < 1 min reads as seconds
 function pace(words: number, wordsPerMinute: number): string {
 	const minutes = words / wordsPerMinute;
 	return minutes < 1
@@ -50,14 +48,13 @@ export function countText(text: string): TextStats {
 		charactersNoSpaces: text.replace(/\s/g, '').length,
 		sentences,
 		paragraphs,
-		// Empty text counts as no lines at all, not as one blank one.
+		// empty text = 0 lines
 		lines: text ? text.split(/\n/).length : 0,
 		readingTime: pace(words, READING_WPM),
 		speakingTime: pace(words, SPEAKING_WPM),
 	};
 }
 
-/** The clipboard payload, carried over from the Next app line for line. */
 export function statsReport(stats: TextStats): string {
 	return `Words: ${stats.words}
 Characters: ${stats.characters}

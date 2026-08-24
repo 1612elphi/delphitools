@@ -1,12 +1,5 @@
-// pdf-compressor: load an image-heavy PDF, recompress its images with MuPDF in
-// the browser, download the result, and check it is a smaller, valid PDF with
-// its pages intact. The resize/quality maths is unit-tested (lib/pdf-compress);
-// this proves the end-to-end wiring (self-hosted wasm loads, the image walk
-// runs, a smaller file comes back and the "N images" readout shows).
-//
-// Excluded from all.mjs — the first compress downloads the ~10 MB MuPDF wasm.
-// Run on its own: npm start, then node scripts/verify/pdf-compressor.mjs
-//   (or `npm run verify:pdf-compressor`).
+// excluded from all.mjs: ~10mb wasm fetch
+// npm run verify:pdf-compressor
 
 import {
 	mkdtempSync,
@@ -21,8 +14,7 @@ import { PDFDocument } from 'pdf-lib';
 import * as mupdf from 'mupdf';
 import { launch, visit, check, finish, sleep } from './harness.mjs';
 
-// An image-heavy PDF: a big high-quality JPEG drawn on every page. This is the
-// case the structural pass barely helps and image recompression is for.
+// fixture: image-heavy, compressible
 async function makeImagePdf() {
 	const [w, h] = [1600, 1200];
 	const pix = new mupdf.Pixmap(mupdf.ColorSpace.DeviceRGB, [0, 0, w, h], false);
@@ -89,8 +81,6 @@ await page.waitForFunction(
 );
 check('image PDF loads', true, `${src.size} bytes in`);
 
-// Loading a file must NOT start a compress: nothing runs until Compress is
-// clicked (the result stays idle, no image readout).
 await sleep(500);
 const autoStarted = await page.evaluate(
 	() =>
@@ -99,8 +89,7 @@ const autoStarted = await page.evaluate(
 );
 check('does not auto-compress on load', !autoStarted);
 
-// Click Compress. The first run fetches the ~10 MB wasm in the worker, so give
-// it room; the "N images" readout appears once it finishes.
+// first compress fetches wasm
 await clickText('Compress');
 await page.waitForFunction(
 	() => document.querySelector('.dt-pcmp-substat') !== null,

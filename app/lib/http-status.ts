@@ -1,39 +1,19 @@
-/**
- * Static HTTP status code table for the http-status reference tool.
- *
- * Sources: RFC 9110 §15 carries most codes; the rest come from their own RFCs
- * (WebDAV, Early Hints, Transparent Content Negotiation, RFC 6585, RFC 7725...).
- * `ref` is the defining reference ("RFC 9110 §15.3.1"); `url` is that section in
- * the canonical rfc-editor HTML. The default-cacheability set is RFC 9111 §3's
- * list, verbatim.
- *
- * Phrases and refs are data, not copy — no per-code prose anywhere here.
- */
-
-/** 1..5, the leading digit of every status code. */
 export type StatusClass = 1 | 2 | 3 | 4 | 5;
 
-/** RFC 9110 §15.4.6 and §15.4.7 mark 305 deprecated and 306 unused; §15.5.19
- *  reserves 418 without assigning semantics. */
 export type RegistryStatus = 'standard' | 'deprecated' | 'unused';
 
 export interface HttpStatus {
 	code: number;
-	/** The official reason phrase, exactly as registered. */
 	phrase: string;
 	class: StatusClass;
-	/** Defining reference, e.g. "RFC 9110 §15.3.1". */
 	ref: string;
-	/** Deep link to that section in the rfc-editor HTML. */
 	url: string;
-	/** Default-cacheable per RFC 9111 §3 (heuristics may still apply). */
 	cacheable: boolean;
 	registered: RegistryStatus;
 }
 
 export interface StatusClassInfo {
 	class: StatusClass;
-	/** The RFC 9110 §15.1 class name, e.g. "Redirection". */
 	name: string;
 }
 
@@ -45,7 +25,6 @@ export const STATUS_CLASSES: StatusClassInfo[] = [
 	{ class: 5, name: 'Server Error' },
 ];
 
-/** The codes RFC 9111 §3 defines as being cacheable by default. */
 export const DEFAULT_CACHEABLE: readonly number[] = [
 	200, 203, 204, 206, 300, 301, 308, 404, 405, 410, 414, 501,
 ];
@@ -152,10 +131,6 @@ export interface StatusClassGroup {
 	items: HttpStatus[];
 }
 
-/**
- * The table narrowed to one class (or all), then to codes or phrases matching
- * `search` case-insensitively. Groups with no matches are dropped.
- */
 export function filterStatuses(
 	search: string,
 	activeClass: StatusClass | null,
@@ -189,7 +164,6 @@ export function filterStatuses(
 	);
 }
 
-/** Exact code lookup, for the omnibox and one-off references. */
 export function lookupStatus(code: number): HttpStatus | null {
 	return HTTP_STATUSES.find((status) => status.code === code) ?? null;
 }

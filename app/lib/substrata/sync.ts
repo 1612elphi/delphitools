@@ -1,20 +1,3 @@
-/**
- * Document → Fabric reconciler (M1-3). STRICT one-way: the doc model is the only
- * source of truth (§5/§12); this diffs the live Fabric scene against the doc and
- * creates/updates/removes objects to match. Fabric is never read back as truth —
- * interactive edits (M1-10) commit to the doc and re-enter through here.
- *
- * v1 renders the artboard + raster layers. GROUPS FLATTEN AWAY (M2): they are
- * organisational folders (layer-tree.ts) — the reconciler walks the leaf list
- * in doc order and composes each leaf's EFFECTIVE visibility/lock from its
- * ancestors. Tier-0 pixel filters render via filter-sync (M3); text/shape
- * rendering, Tier-1 filters, and effects are added additively in later
- * milestones; an unhandled layer kind is skipped, never half-rendered.
- *
- * Convention: a layer's transform.x/y is the object CENTRE in scene coordinates
- * (objects use originX/originY = "center").
- */
-
 import type { Canvas, FabricObject } from 'fabric';
 import {
 	Ellipse,
@@ -49,7 +32,6 @@ import { syncImageEffects, syncImageFilters } from './filter-sync';
 
 const ARTBOARD_KEY = '__artboard__';
 
-/** Build the transparency-checker tile (2×2 of 10px squares) for a theme. */
 function checkerSource(dark: boolean): HTMLCanvasElement {
 	const [a, b] = dark ? ['#404040', '#333333'] : ['#ffffff', '#cccccc'];
 	const c = document.createElement('canvas');
@@ -64,12 +46,6 @@ function checkerSource(dark: boolean): HTMLCanvasElement {
 	return c;
 }
 
-/**
- * Cached checkerboard Pattern for a transparent artboard (background === null).
- * Lives in artboard space, so it pans/zooms with the canvas and layers composite
- * over it (revealing transparency wherever nothing is painted). Theme-aware,
- * rebuilt when the light/dark class flips.
- */
 function getCheckerPattern(state: ReconcileState): Pattern {
 	const dark =
 		typeof document !== 'undefined' &&
@@ -86,8 +62,6 @@ function getCheckerPattern(state: ReconcileState): Pattern {
 	return state.checker.pattern;
 }
 
-/** Reverse map (Fabric object → layer id) so canvas events can resolve the layer
- *  without Fabric becoming a source of truth. WeakMap so disposed objects GC. */
 const layerIdOf = new WeakMap<FabricObject, string>();
 
 export function getLayerIdForObject(obj: FabricObject): string | undefined {
@@ -95,9 +69,7 @@ export function getLayerIdForObject(obj: FabricObject): string | undefined {
 }
 
 export interface ReconcileState {
-	/** layer id (or ARTBOARD_KEY) → its Fabric object */
 	byId: Map<string, FabricObject>;
-	/** cached transparency checker (rebuilt on theme flip) */
 	checker?: { dark: boolean; pattern: Pattern };
 }
 
@@ -114,7 +86,6 @@ export function reconcile(
 	const desired: FabricObject[] = [];
 	const seen = new Set<string>([ARTBOARD_KEY]);
 
-	// Artboard background (always at the back, non-interactive).
 	let artboard = byId.get(ARTBOARD_KEY) as Rect | undefined;
 	if (!artboard) {
 		artboard = new Rect({
@@ -130,7 +101,6 @@ export function reconcile(
 		top: 0,
 		width: doc.artboard.width,
 		height: doc.artboard.height,
-		// A colour fills opaque; a null (transparent) background shows the checker.
 		fill: doc.artboard.background ?? getCheckerPattern(state),
 		originX: 'left',
 		originY: 'top',
@@ -138,12 +108,6 @@ export function reconcile(
 	artboard.setCoords();
 	desired.push(artboard);
 
-	// Clip the whole canvas to the artboard: it's a frame. Layers can be positioned
-	// freely (dragged past an edge), but only the part inside the artboard renders —
-	// the same crop export uses, made visible while editing. This is the artboard
-	// boundary, NOT a layer mask (the no-masks rule, §6/§11, is about per-layer
-	// masking as an editing feature). The canvas clipPath is viewport-transformed
-	// by Fabric, so it tracks pan/zoom.
 	const clip = (
 		canvas.clipPath instanceof Rect
 			? canvas.clipPath
@@ -158,7 +122,6 @@ export function reconcile(
 	clip.setCoords();
 	canvas.clipPath = clip;
 
-	// Leaf layers in document order (groups flatten; flags compose down the tree).
 	for (const entry of leafRenderList(doc.layers)) {
 		const obj = syncLayer(
 			canvas,
@@ -174,7 +137,6 @@ export function reconcile(
 		}
 	}
 
-	// Drop Fabric objects whose layer no longer exists.
 	for (const [key, obj] of byId) {
 		if (!seen.has(key)) {
 			canvas.remove(obj);
@@ -182,7 +144,6 @@ export function reconcile(
 		}
 	}
 
-	// Restack to match document order (first in `desired` ends up at the back).
 	for (const obj of desired) canvas.bringObjectToFront(obj);
 
 	canvas.requestRenderAll();
@@ -191,14 +152,11 @@ export function reconcile(
 function syncLayer(
 	canvas: Canvas,
 	layer: Layer,
-	/** effective flags — the layer's own composed with its group ancestors' */
 	visible: boolean,
 	locked: boolean,
-	/** effective opacity — layer.opacity × its group ancestors' (leafRenderList) */
 	opacity: number,
 	byId: Map<string, FabricObject>,
 ): FabricObject | null {
-	// Every leaf kind renders (raster/shape/freehand/text); groups flatten.
 	const obj =
 		layer.kind === 'raster'
 			? syncRasterContent(canvas, layer, byId)
@@ -218,8 +176,7 @@ function syncLayer(
 							)
 						: null;
 	if (!obj) return null;
-	// Never clobber a live in-canvas edit — the doc catches up on
-	// editing:exited (the second controlled Fabric→doc path).
+	// preserve active text edits
 	if (obj instanceof SubstrataText && obj.isEditing) return obj;
 
 	const t = layer.transform;
@@ -236,14 +193,10 @@ function syncLayer(
 		globalCompositeOperation: layer.blendMode,
 		originX: 'center',
 		originY: 'center',
-		// MOVE interaction: a layer is selectable/draggable unless (effectively)
-		// locked. Interactive edits commit back to the doc via object:modified (the
-		// one controlled Fabric→doc path); the doc stays authoritative.
 		selectable: !locked,
 		evented: !locked,
 	});
 	if (layer.kind === 'raster') {
-		// FX stacks (M3): both signature-diffed inside, so this is cheap per pass.
 		syncImageFilters(obj as EffectsImage, layer.filters);
 		syncImageEffects(obj as EffectsImage, layer.effects);
 	}
@@ -252,22 +205,9 @@ function syncLayer(
 	return obj;
 }
 
-/** One clip Rect per object, updated in place (the rasterHashOf pattern) so
- *  reconcile passes never churn instances. */
 const cropRectOf = new WeakMap<FabricObject, Rect>();
 
-/**
- * Non-destructive layer crop (MOVE·Crop): layer.crop → an object clipPath
- * Rect. Fabric positions an object's clipPath in the OBJECT's own coordinate
- * plane — centre-origin, INTRINSIC units (verified against installed 7.4.0:
- * createClipPathLayer applies clipPath.transform(ctx) on the cache ctx where
- * _render draws geometry centred at the origin; needsItsOwnCache returns true
- * for any clipPath, so caching is guaranteed) — so the crop rect, whose doc
- * origin is the content's top-left, shifts by −dims/2. Crop is only
- * meaningful where layerDims is non-null (raster/shape/freehand).
- * ponytail: the selection bbox intentionally stays the full uncropped bounds —
- * bbox-shrinking crop is the upgrade.
- */
+/** fabric crop coordinates local */
 function syncCropClip(obj: FabricObject, layer: Layer): void {
 	const crop = layer.crop;
 	const dims = crop ? layerDims(layer) : null;
@@ -298,9 +238,6 @@ function syncCropClip(obj: FabricObject, layer: Layer): void {
 	}
 }
 
-/** The hash each fabric image was built from — a raster layer's content is
- *  immutable PER HASH, but ops may repoint the layer to a NEW hash (SELECT's
- *  destructive cut bakes a holed copy). WeakMap so disposed objects GC. */
 const rasterHashOf = new WeakMap<FabricObject, string>();
 
 function syncRasterContent(
@@ -309,19 +246,18 @@ function syncRasterContent(
 	byId: Map<string, FabricObject>,
 ): FabricObject | null {
 	const src = getRaster(layer.blobHash);
-	if (!src) return null; // not decoded yet — a later reconcile will pick it up
+	if (!src) return null; // skip undecoded rasters
 
 	let obj = byId.get(layer.id) as EffectsImage | undefined;
 	if (obj && rasterHashOf.get(obj) !== layer.blobHash) {
-		// hash repointed (cut/bake) — rebuild like a shape-kind change so filters/
-		// effects re-sync against the new pixels from a clean slate
+		// rebuild changed raster source
 		canvas.remove(obj);
 		byId.delete(layer.id);
 		obj = undefined;
 	}
 	if (!obj) {
 		obj = new EffectsImage(src);
-		obj.sourceHash = layer.blobHash; // keys the bg-removal matte cache (M7)
+		obj.sourceHash = layer.blobHash; // identifies matte cache
 		rasterHashOf.set(obj, layer.blobHash);
 		byId.set(layer.id, obj);
 		layerIdOf.set(obj, layer.id);
@@ -330,8 +266,6 @@ function syncRasterContent(
 	return obj;
 }
 
-/** Doc Gradient → fabric Gradient. Relative 0–1 coords map straight onto
- *  fabric's "percentage" gradientUnits (resolved against object dims). */
 function toFabricFill(
 	fill: ShapeLayer['fill'],
 ): string | FabricGradient<unknown, 'linear' | 'radial'> {
@@ -348,18 +282,11 @@ function toFabricFill(
 	});
 }
 
-/** Parsed+simplified command lists per symbol id — static content, parsed
- *  once (reconcile calls symbolPath on EVERY pass for every symbol layer;
- *  re-tokenizing SVG strings per frame-ish is waste). transformPath maps to
- *  fresh arrays (verified pure), so sharing the simplified source is safe. */
 const simplifiedSymbolCache = new Map<
 	string,
 	ReturnType<typeof fabricPathUtil.makePathSimpler>
 >();
 
-/** A preset symbol's path commands, its 256 GRID scaled onto width×height
- *  (grid mapping keeps proportions consistent across symbols; arcs survive
- *  because makePathSimpler lowers everything to line/curve commands first). */
 function symbolPath(symbolId: string, width: number, height: number) {
 	let simple = simplifiedSymbolCache.get(symbolId);
 	if (!simple) {
@@ -406,10 +333,6 @@ function buildShapeObject(p: ShapeParams): FabricObject {
 	}
 }
 
-/** In-place geometry update (all verified against fabric 7.4.0: Ellipse._set
- *  doubles rx/ry into width/height, Line._set recomputes on coord props,
- *  Polyline.setDimensions is public). Params stay INTRINSIC — the transform
- *  scales them — so a settings edit rebuilds geometry, not scale. */
 function updateShapeGeometry(obj: FabricObject, p: ShapeParams): void {
 	switch (p.shape) {
 		case 'rectangle':
@@ -446,7 +369,6 @@ function updateShapeGeometry(obj: FabricObject, p: ShapeParams): void {
 			break;
 		}
 		case 'symbol': {
-			// in-place path swap (drag-to-draw reshapes every move — no churn)
 			(obj as Path)._setPath(
 				symbolPath(p.symbolId, p.width, p.height),
 				true,
@@ -457,19 +379,11 @@ function updateShapeGeometry(obj: FabricObject, p: ShapeParams): void {
 	obj.set('dirty', true);
 }
 
-/** Geometry identity per freehand Path — the doc is immutable, so reference
- *  equality on rawPoints/strokeOptions is the change signal (no JSON of
- *  hundreds of points per reconcile pass). */
 const freehandBuiltFor = new WeakMap<
 	FabricObject,
 	{ pts: unknown; opts: unknown }
 >();
 
-/** Freehand stroke → fabric.Path of the perfect-freehand outline (fill-only —
- *  the stroke's body IS a filled polygon). Points are layer-local (centre-
- *  normalised at commit), so the Path centres like every other kind. A stroke's
- *  geometry is immutable after commit; a rebuild only happens if a future
- *  editor mutates points/options. */
 function syncFreehandContent(
 	canvas: Canvas,
 	layer: FreehandLayer,
@@ -491,7 +405,7 @@ function syncFreehandContent(
 		const d = outlineToPathD(
 			strokeOutline(layer.rawPoints, layer.strokeOptions),
 		);
-		if (!d) return null; // degenerate stroke (fewer than 3 outline points)
+		if (!d) return null; // skip degenerate strokes
 		obj = new Path(d);
 		freehandBuiltFor.set(obj, {
 			pts: layer.rawPoints,
@@ -505,9 +419,6 @@ function syncFreehandContent(
 	return obj;
 }
 
-/** Text layer → SubstrataText (IText + style plate). Content props set every
- *  pass (cheap — fabric no-ops unchanged values); the plate is compared so
- *  its cache-pad/dirty only churn on real changes. */
 function syncTextContent(
 	canvas: Canvas,
 	layer: TextLayer,
@@ -520,9 +431,7 @@ function syncTextContent(
 		layerIdOf.set(obj, layer.id);
 		canvas.add(obj);
 	}
-	// Font/size/style apply even MID-EDIT (Ruby 2026-07-06: a font click must
-	// restyle the text you're typing); only `text` itself stays fabric's until
-	// editing:exited commits it (syncLayer also skips transform while editing).
+	// apply styles during editing
 	if (!obj.isEditing) obj.set({ text: layer.text });
 	obj.set({
 		fontFamily: resolveFontCss(layer.fontFamily),
@@ -530,14 +439,12 @@ function syncTextContent(
 		fill: layer.fill,
 		stroke: layer.stroke?.colour ?? null,
 		strokeWidth: layer.stroke?.width ?? 0,
-		// object-level typography (M2-1) — optional fields default here so
-		// pre-existing docs render unchanged; applies mid-edit like font/size
 		textAlign: layer.align ?? DEFAULT_TEXT_PROPS.align,
 		lineHeight: layer.lineHeight ?? DEFAULT_TEXT_PROPS.lineHeight,
 		charSpacing:
 			layer.charSpacing ?? DEFAULT_TEXT_PROPS.charSpacing,
 		direction: layer.direction ?? DEFAULT_TEXT_PROPS.direction,
-		// outline style has a transparent fill — keep the editing caret visible
+		// preserve outline caret visibility
 		cursorColor: layer.stroke?.colour ?? layer.fill,
 	});
 	if (JSON.stringify(obj.plate) !== JSON.stringify(layer.plate)) {
@@ -547,9 +454,6 @@ function syncTextContent(
 	return obj;
 }
 
-/** Fabric object kind per layer, so a params.shape change recreates instead of
- *  mis-mutating (not reachable from the tool today — shape type is fixed at
- *  draw time — but cheap to be correct about). */
 const shapeKindOf = new WeakMap<FabricObject, ShapeParams['shape']>();
 
 function syncShapeContent(
@@ -574,7 +478,6 @@ function syncShapeContent(
 		updateShapeGeometry(obj, p);
 	}
 	obj.set({
-		// A line renders stroke-only; fill would paint nothing but costs a fill pass.
 		fill: p.shape === 'line' ? null : toFabricFill(layer.fill),
 		stroke: layer.stroke?.colour ?? null,
 		strokeWidth: layer.stroke?.width ?? 0,
@@ -583,21 +486,7 @@ function syncShapeContent(
 	return obj;
 }
 
-// ── export render (M6) ───────────────────────────────────────────────────────
-
-/**
- * Render the artboard (or one layer soloed) to a fresh canvas at an exact
- * pixel multiplier, independent of the live pan/zoom. Uses Fabric's
- * toCanvasElement — its crop box is in VIEWPORT coordinates and its multiplier
- * composes with the current zoom (verified against installed 7.4.0 source) —
- * under a temporarily-identity viewportTransform, so the output dims are the
- * exact integer product artboard×scale (aiming through the live vpt floors a
- * float product one pixel short at many zooms). Controls are skipped by
- * toCanvasElement (skipControlsDrawing); a live ActiveSelection is safe —
- * children render through their full composed transform in the static path.
- * Everything mutated here (vpt, solo visibility, the artboard rect's checker
- * fill) is snapshotted and restored.
- */
+/** prevent fabric export rounding */
 export function renderExport(
 	canvas: Canvas,
 	state: ReconcileState,
@@ -611,9 +500,6 @@ export function renderExport(
 	const artboardObj = state.byId.get(ARTBOARD_KEY);
 	const savedVisible = new Map<FabricObject, boolean>();
 
-	// Solo: show only the target's leaves. The target itself is forced visible
-	// (soloing a hidden layer means "show me this layer"), but flags INSIDE the
-	// subtree still apply — a hidden child of a soloed group stays hidden.
 	if (opts.soloLayerId) {
 		const target = findLayer(doc.layers, opts.soloLayerId);
 		const keep = new Set<string>();
@@ -633,9 +519,6 @@ export function renderExport(
 
 	const savedArtboardVisible = artboardObj?.visible;
 	const savedArtboardFill = artboardObj?.fill;
-	// Never export the transparency checker: a solo export is transparent
-	// offscreen by contract, and a null background is real alpha in the file —
-	// unless the format can't carry alpha (flatten colour).
 	if (artboardObj) {
 		if (opts.soloLayerId) artboardObj.visible = false;
 		else if (doc.artboard.background === null) {
@@ -645,12 +528,6 @@ export function renderExport(
 		}
 	}
 
-	// Render under an IDENTITY viewport so the output dims are the exact
-	// integer product artboard×scale — aiming through the live transform made
-	// fabric floor (W·zoom)·(scale/zoom), which lands one pixel short at many
-	// zooms (review-caught: the wand's mask domain must equal the artboard).
-	// toCanvasElement restores the vpt it reads at entry; we restore the real
-	// one right after, and the requestRenderAll below repaints against it.
 	const savedVpt = canvas.viewportTransform;
 	canvas.viewportTransform = [1, 0, 0, 1, 0, 0];
 	let el: HTMLCanvasElement;
@@ -671,25 +548,12 @@ export function renderExport(
 			artboardObj.visible = savedArtboardVisible;
 		artboardObj.set('fill', savedArtboardFill ?? null);
 	}
-	// toCanvasElement fired after:render under the export viewport — the
-	// top-context overlay (grid/guides) may have redrawn at export zoom; queue a
-	// real frame so it repaints against the live viewport.
+	// repaint overlays after export
 	canvas.requestRenderAll();
 	return el;
 }
 
-// ── rasterize bake (M3-15) ───────────────────────────────────────────────────
-
-/**
- * Render ONE layer's content to a tight standalone canvas for rasterize:
- * angle temporarily zeroed (it survives on the layer transform — never baked),
- * opacity forced to 1 (it stays a live layer property; baking it would
- * double-apply). Uses FabricObject.toCanvasElement, which sizes by
- * boundingRect + shadow allowance — text PLATES draw outside the text bbox
- * (cache-padded), so they get an INVISIBLE shadow whose blur inflates the
- * bake canvas symmetrically (fabric's own bounds mechanism; the shadow paints
- * nothing at alpha 0).
- */
+/** include text plate bounds */
 export function bakeLayerObject(
 	state: ReconcileState,
 	layer: Layer,

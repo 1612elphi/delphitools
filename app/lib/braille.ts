@@ -1,8 +1,4 @@
-// Uncontracted (Grade 1) braille, one cell per character. Indicators and
-// punctuation follow the Rules of Unified English Braille (ICEB, 2013):
-// §6 numeric mode, §7 punctuation, §8 capitalisation.
-// ponytail: no Grade 2 / UEB contractions; the upgrade path is a contraction
-// pass over each word ahead of the per-character lookup in toBraille.
+// ueb grade 1
 
 const BLANK = 0x2800;
 
@@ -46,8 +42,7 @@ const PUNCT_OF = new Map([...PUNCT_CELLS].map(([char, c]) => [c, char]));
 const CAPITAL = cell('6');
 const NUMBER = cell('3456');
 const GRADE1 = cell('56');
-// UEB §7.6: the opening quote shares a cell with the question mark; position
-// in the word decides which it is.
+// ueb §7.6
 const OPEN_QUOTE = cell('236');
 const CLOSE_QUOTE = cell('356');
 
@@ -65,7 +60,7 @@ export function toBraille(text: string): string {
 			continue;
 		}
 		if (/^[A-Za-z]/.test(token)) {
-			// UEB §6.5.1: a–j straight after a number would read as digits
+			// ueb §6.5.1
 			if (numeric && /^[A-Ja-j]/.test(token)) out += GRADE1;
 			numeric = false;
 			const capsWord =
@@ -79,7 +74,7 @@ export function toBraille(text: string): string {
 			}
 			continue;
 		}
-		// UEB §6.2: numeric mode continues through a decimal point or comma
+		// ueb §6.2
 		numeric = numeric && (token === '.' || token === ',');
 		if (token === '"')
 			out += atWordStart(out) ? OPEN_QUOTE : CLOSE_QUOTE;
@@ -153,7 +148,6 @@ export function fromBraille(cells: string): string {
 
 export const looksLikeBraille = (text: string) => /[\u2800-\u28ff]/.test(text);
 
-/** Dot numbers of one cell, "1-3-5"; "" for the blank cell or a non-cell. */
 export function dots(pattern: string): string {
 	const mask = (pattern.codePointAt(0) ?? 0) - BLANK;
 	if (mask <= 0 || mask > 0xff) return '';

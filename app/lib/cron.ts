@@ -1,33 +1,12 @@
-/**
- * Standard five-field cron expressions: parse, describe, and iterate run times.
- *
- * Fields: minute (0-59) · hour (0-23) · day of month (1-31) · month (1-12 or
- * JAN-DEC) · day of week (0-7 or SUN-SAT; 0 and 7 are both Sunday). Names are
- * three letters, case-insensitive. Lists (`,`), ranges (`-`) and steps (`/`)
- * follow the Vixie grammar: a step applies to `*`, a range, or a single value
- * (which then steps to the field's end — `9/30` is `9-59/30`). Wrap-around
- * ranges (`FRI-MON`) are rejected, as in Vixie cron.
- *
- * When BOTH day-of-month and day-of-week are restricted (not `*`), a run
- * happens when EITHER matches — the standard OR semantics each next-run check
- * applies inside nextRuns(). A restricted `*`-less field that the calendar can
- * never satisfy (e.g. 31 February) simply yields no run for that day rule.
- *
- * Everything is local-time: the iterator walks real calendar days, so 29 Feb
- * occurs only in leap years and DST edges resolve through Date (a wall-clock
- * minute that does not exist locally shifts forward).
- */
+/** vixie cron semantics. */
 
 export type FieldKind = 'minute' | 'hour' | 'dom' | 'month' | 'dow';
 
 export interface FieldRule {
 	kind: FieldKind;
-	/** short UI label */
 	label: string;
 	min: number;
-	/** highest number a user may type (7 for day-of-week) */
 	max: number;
-	/** highest number after normalisation (6 for day-of-week — 7 folds to 0) */
 	rangeMax: number;
 	names?: Record<string, number>;
 }
@@ -124,7 +103,6 @@ export const FIELD_RULES: FieldRule[] = [
 ];
 
 export interface ParseIssue {
-	/** two or three words — the value and legal range sit in `data` */
 	text:
 		| 'Empty item'
 		| 'Bad syntax'
@@ -136,11 +114,6 @@ export interface ParseIssue {
 	data?: string;
 }
 
-/**
- * Structural shape of a field, derived from its syntax (not its value set), so
- * the describer can phrase `* /5` as "every 5 minutes" rather than a 12-item
- * list. A single value with a step folds into a range ending at rangeMax.
- */
 export type FieldShape =
 	| { kind: 'star' }
 	| { kind: 'step'; step: number }
@@ -152,12 +125,9 @@ export type FieldParse =
 	| {
 			ok: true;
 			source: string;
-			/** sorted, unique, normalised values */
 			values: number[];
-			/** the bare `*` — every value, unrestricted */
 			any: boolean;
 			shape: FieldShape;
-			/** normalised source: names to numbers, 7 to 0, a/n to a-max/n */
 			canon: string;
 	  }
 	| { ok: false; source: string; error: ParseIssue };
@@ -165,11 +135,6 @@ export type FieldParse =
 const DIGITS = /^\d+$/;
 const LETTERS = /^[a-z]+$/i;
 
-/**
- * Tracks single values already emitted into the canon so `0,7` (two spellings
- * of Sunday) collapses to `0` instead of `0,0`. Ranges are never collapsed —
- * their text says more than their value list.
- */
 interface CanonState {
 	parts: string[];
 	singles: number[];
@@ -195,7 +160,6 @@ function atom(token: string, rule: FieldRule): Atom {
 		const hit =
 			lower.length === 3 ? rule.names?.[lower] : undefined;
 		if (hit !== undefined) return { value: hit };
-		// A name the map of one named field carries, typed into the other.
 		const other =
 			rule.kind === 'month'
 				? DOW_NAMES
@@ -220,7 +184,6 @@ function atom(token: string, rule: FieldRule): Atom {
 	return { error: { text: 'Bad syntax', data: token } };
 }
 
-/** Day-of-week folds 7 onto 0; every other field normalises to itself. */
 function norm(rule: FieldRule, n: number): number {
 	return rule.kind === 'dow' && n === 7 ? 0 : n;
 }
@@ -316,7 +279,7 @@ export function parseField(source: string, rule: FieldRule): FieldParse {
 			if ('error' in a)
 				return { ok: false, source, error: a.error };
 			lo = a.value;
-			// Vixie: `a/n` steps from a to the field's end.
+			// vixie single-value step
 			hi = step > 1 ? rule.rangeMax : a.value;
 		}
 
@@ -340,7 +303,6 @@ export function parseField(source: string, rule: FieldRule): FieldParse {
 			}
 		}
 
-		// Shape only survives when the field is exactly one item.
 		if (items.length === 1) {
 			if (star && step === 1) singleShape = { kind: 'star' };
 			else if (star) singleShape = { kind: 'step', step };
@@ -378,7 +340,6 @@ export type CronParse =
 	| { ok: true; fields: FieldParse[]; fieldCount: 5; expression: string }
 	| { ok: false; fields: FieldParse[]; fieldCount: number };
 
-/** Split, then parse every field independently so errors per-field collect. */
 export function parseCron(input: string): CronParse {
 	const parts = input.trim().split(/\s+/).filter(Boolean);
 	if (parts.length !== 5) {
@@ -398,9 +359,6 @@ export function parseCron(input: string): CronParse {
 	};
 }
 
-/* ── Description ─────────────────────────────────────────────────────────── */
-
-/** "9, 12 and 18" */
 function joinList(parts: string[]): string {
 	if (parts.length === 1) return parts[0]!;
 	if (parts.length === 2) return `${parts[0]} and ${parts[1]}`;
@@ -408,7 +366,6 @@ function joinList(parts: string[]): string {
 	return `${tail} and ${parts[parts.length - 1]}`;
 }
 
-/** Contiguous value runs collapse to "a–b"; anything else is a list. */
 function joinValues(values: number[], name?: (n: number) => string): string {
 	const label = name ?? String;
 	if (values.length >= 2) {
@@ -425,7 +382,6 @@ function joinValues(values: number[], name?: (n: number) => string): string {
 	return joinList(values.map((v) => label(v)));
 }
 
-/** "during hours 9–17" — empty for an unrestricted hour field. */
 function hourClause(field: FieldParse): string {
 	if (!field.ok || field.any) return '';
 	const s = field.shape;
@@ -472,7 +428,6 @@ function timeClause(minute: FieldParse, hour: FieldParse): string {
 	return hourOk ? `${base} ${hc}` : `${base} past every hour`;
 }
 
-/** "on day 1 of the month" — empty when unrestricted. */
 function domText(dom: FieldParse): string {
 	if (!dom.ok || dom.any) return '';
 	const values = dom.values;
@@ -480,7 +435,6 @@ function domText(dom: FieldParse): string {
 	return `on ${suffix} ${joinValues(values)} of the month`;
 }
 
-/** "on weekdays" / "on Monday and Friday" — empty when unrestricted. */
 function dowText(dow: FieldParse): string {
 	if (!dow.ok || dow.any) return '';
 	const values = dow.values;
@@ -493,16 +447,11 @@ function dowText(dow: FieldParse): string {
 	return `on ${joinList(values.map(single))}`;
 }
 
-/** "in January and March" — empty when unrestricted. */
 function monthText(month: FieldParse): string {
 	if (!month.ok || month.any) return '';
 	return `in ${joinValues(month.values, (m) => MONTH_LONG[m]!)}`;
 }
 
-/**
- * Plain-language reading assembled from the parsed fields. Both day fields
- * restricted joins with "or", mirroring the OR the scheduler applies.
- */
 export function describeCron(fields: FieldParse[]): string {
 	const [minute, hour, dom, month, dow] = fields as [
 		FieldParse,
@@ -524,21 +473,8 @@ export function describeCron(fields: FieldParse[]): string {
 	return parts.join(' ');
 }
 
-/* ── Next runs ───────────────────────────────────────────────────────────── */
-
-/**
- * Worst-case wait for a satisfiable expression is just under five years:
- * `0 0 29 2 *` from March 2101 reaches February 2104 (the 2100 non-leap
- * year). Past this cap the expression can never fire (31 February) and the
- * caller gets whatever has collected — possibly nothing.
- */
 const MAX_SCAN_DAYS = 366 * 5;
 
-/**
- * The next `count` run times strictly after `from`, local timezone. Walks
- * calendar days so a leap-day expression costs ~1500 day checks rather than
- * a million minute increments.
- */
 export function nextRuns(
 	parse: { ok: true; fields: FieldParse[] },
 	count: number,
@@ -572,8 +508,7 @@ export function nextRuns(
 		}
 		const domHit = domAny || domSet.has(day.getDate());
 		const dowHit = dowAny || dowSet.has(day.getDay());
-		// Standard cron: both restricted → either may match; only one
-		// restricted → that one must.
+		// cron days use or
 		const runsToday =
 			domAny && dowAny
 				? true

@@ -8,15 +8,11 @@ import filePaste from 'delphitools-v2/modifiers/file-paste';
 interface EncodedImage {
 	id: string;
 	name: string;
-	/** The full data URL, which doubles as the preview src. */
 	base64: string;
 	size: number;
 }
 
-/**
- * Above this the base64 text is long enough to stall the tab while the
- * textarea lays it out, so the file is refused rather than read.
- */
+// limits textarea cost
 const MAX_BYTES = 5 * 1024 * 1024;
 
 const COPIED_MS = 2000;
@@ -27,7 +23,6 @@ export function formatSize(bytes: number): string {
 	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/** The payload after the `data:image/png;base64,` prefix. */
 export function rawBase64(dataUrl: string): string {
 	return dataUrl.split(',')[1] ?? '';
 }
@@ -47,7 +42,6 @@ export default class Base64ImageEncoderTool extends Component {
 
 	get countLabel() {
 		const n = this.images.length;
-		// wording carried over from the Next app
 		return `${n} image${n === 1 ? '' : 's'} encoded`;
 	}
 
@@ -67,13 +61,11 @@ export default class Base64ImageEncoderTool extends Component {
 		this.error = null;
 
 		if (!file.type.startsWith('image/')) {
-			// wording carried over from the Next app
 			this.error = `Invalid file type: ${file.name}. Please upload an image file.`;
 			return;
 		}
 
 		if (file.size > MAX_BYTES) {
-			// wording carried over from the Next app
 			this.error = `File ${file.name} is too large (${formatSize(file.size)}). Max allowed size is 5MB to prevent browser freeze.`;
 			return;
 		}
@@ -91,7 +83,6 @@ export default class Base64ImageEncoderTool extends Component {
 			];
 		};
 		reader.onerror = () => {
-			// wording carried over from the Next app
 			this.error = `Failed to read file ${file.name}`;
 		};
 		reader.readAsDataURL(file);
@@ -101,7 +92,7 @@ export default class Base64ImageEncoderTool extends Component {
 		const input = event.target as HTMLInputElement;
 		for (const file of Array.from(input.files ?? []))
 			this.readFile(file);
-		// Reset, so choosing the same file twice still fires a change event.
+		// reset permits reselect
 		input.value = '';
 	};
 
@@ -182,7 +173,6 @@ export default class Base64ImageEncoderTool extends Component {
 						}}
 					/>
 					<Icon @name="upload" />
-					{{! wording carried over from the Next app }}
 					<span class="dt-b64-drop-title">Drop
 						images here</span>
 					<span class="dt-b64-drop-hint">or click

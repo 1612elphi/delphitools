@@ -27,7 +27,6 @@ export type CategoryKey =
 	| 'area'
 	| 'volume';
 
-// Unit names, symbols and factors carried over from the Next app, verbatim.
 export const UNIT_CATEGORIES: Record<CategoryKey, UnitCategory> = {
 	length: {
 		name: 'Length',
@@ -377,7 +376,7 @@ export const CATEGORY_KEYS = Object.keys(UNIT_CATEGORIES) as CategoryKey[];
 
 const COPIED_MS = 1500;
 
-/** Through the category's base unit. Zero if either unit is not in the category. */
+// zero for unknown units
 export function convertUnit(
 	category: CategoryKey,
 	value: number,
@@ -392,7 +391,6 @@ export function convertUnit(
 	return toDef.fromBase(fromDef.toBase(value));
 }
 
-/** Every unit in the category, from one reading. Null if the reading is not a number. */
 export function conversions(
 	category: CategoryKey,
 	value: string,
@@ -408,7 +406,6 @@ export function conversions(
 	return results;
 }
 
-/** Eight significant figures, dropping to exponent form at either extreme. */
 export function formatNumber(num: number): string {
 	if (num === 0) return '0';
 	if (Math.abs(num) < 0.0001 || Math.abs(num) >= 1e9) {
@@ -464,8 +461,7 @@ export default class UnitConverterTool extends Component {
 				name: unit.name,
 				symbol: unit.symbol,
 				isActive,
-				// The row being typed in keeps the raw text, so a
-				// half-written "1." is not rewritten under the caret.
+				// half-typed "1." stays
 				value: isActive ? this.inputValue : display,
 				copyText: display || this.inputValue,
 				isEmpty: !display && !this.inputValue,
@@ -509,7 +505,6 @@ export default class UnitConverterTool extends Component {
 						this.categories key="key"
 						as |option|
 					}}
-						{{! wording carried over from the Next app }}
 						<TabsTrigger
 							class="dt-uc-tab"
 							@value={{option.key}}

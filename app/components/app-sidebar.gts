@@ -24,8 +24,6 @@ function matches(tool: Tool, query: string) {
 	);
 }
 
-// A nav link shows its own label when the sidebar is expanded, so the tooltip
-// is only rendered on the icon-only rail.
 const NavTip: TOC<{
 	Args: { label: string; show: boolean };
 	Blocks: { default: [] };
@@ -63,9 +61,6 @@ export default class AppSidebar extends Component {
 		return featuredTools.filter((t) => matches(t, this.query));
 	}
 
-	// Alphabetical within each category, and categories with no match drop out.
-	// Entries with their own route (Substrata) already have an item beside
-	// Home, so the category lists skip them.
 	get categories(): ToolCategory[] {
 		return toolCategories.flatMap((cat) => {
 			const tools = cat.tools
@@ -96,7 +91,6 @@ export default class AppSidebar extends Component {
 	};
 
 	<template>
-		{{! Mobile scrim: the drawer sits over the page rather than beside it }}
 		{{#if this.sidebar.openMobile}}
 			<button
 				type="button"
@@ -122,7 +116,6 @@ export default class AppSidebar extends Component {
 						src="/delphi-lowlod.png"
 						width="64"
 						height="64"
-						{{! decorative: the link already carries the wordmark as text }}
 						alt=""
 						class="dt-brand-logo
 							{{if
@@ -207,7 +200,6 @@ export default class AppSidebar extends Component {
 								>Home</span>
 							</LinkTo>
 						</NavTip>
-						{{! the editor is more than a tool, so it sits with Home }}
 						<NavTip
 							@label="Substrata"
 							@show={{this.collapsed}}
@@ -393,7 +385,6 @@ export default class AppSidebar extends Component {
 				</Dialog>
 			</div>
 
-			{{! click target on the sidebar's outer edge, as shadcn's SidebarRail }}
 			<button
 				type="button"
 				class="dt-sidebar-rail"

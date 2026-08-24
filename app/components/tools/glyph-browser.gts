@@ -59,12 +59,10 @@ const FORMATS: { id: GlyphFormat; label: string }[] = [
 	{ id: 'js', label: 'JS' },
 ];
 
-/** The grid stops here; the Emoji category alone is over a thousand glyphs. */
 const MAX_GLYPHS = 400;
 
 const COPIED_MS = 1500;
 
-/** Every code point in the category, ranges expanded and concatenated. */
 export function codesForCategory(name: string): number[] {
 	const category = CATEGORIES.find((c) => c.name === name);
 	if (!category) return [];
@@ -76,7 +74,6 @@ export function codesForCategory(name: string): number[] {
 	return codes;
 }
 
-/** Matches the glyph itself, or any substring of its hex or `u+hex` form. */
 export function filterCodes(codes: number[], search: string): number[] {
 	if (!search) return codes;
 	const lower = search.toLowerCase();
@@ -104,15 +101,13 @@ export function codeText(code: number, format: GlyphFormat): string {
 		case 'css':
 			return `\\${hex}`;
 		case 'js':
-			// Above the BMP a four-digit escape is not a code point, so the
-			// braced form is the only one that round-trips.
+			// astral escapes need braces
 			return code <= 0xffff
 				? `\\u${hex.padStart(4, '0')}`
 				: `\\u{${hex}}`;
 	}
 }
 
-/** The glyph category whose range contains the code point, if any. */
 export function categoryForCode(code: number): string | null {
 	for (const category of CATEGORIES) {
 		for (const [start, end] of category.ranges) {
@@ -122,7 +117,6 @@ export function categoryForCode(code: number): string | null {
 	return null;
 }
 
-/** Describe a single glyph or U+XXXX string for the omnibox. */
 export function describeGlyph(
 	input: string,
 ): { char: string; label: string; category: string } | null {
@@ -199,8 +193,6 @@ export default class GlyphBrowserTool extends Component {
 				isCopied:
 					this.copiedFormat === 'grid' &&
 					this.copiedChar === char,
-				// Only the open popover renders its content, so the other
-				// 399 glyphs need no per-format state built for them.
 				formats: isOpen
 					? FORMATS.map((format) => ({
 							id: format.id,

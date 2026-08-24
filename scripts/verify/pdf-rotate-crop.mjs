@@ -1,11 +1,5 @@
-// pdf-rotate-crop: per-page and rotate-all rotation, drag-box crop applied to
-// one page or to all, checked against the PDF the tool writes.
-//
-// The fixture is three A4 pages written by node with pdf-lib. Crop assertions
-// use the dragged fractions of the page, so they hold within sub-pixel mouse
-// rounding (±2 pt).
-//
-// Usage: npm start, then node scripts/verify/pdf-rotate-crop.mjs
+// crop tolerance ±2pt
+// npm start, node scripts/verify/pdf-rotate-crop.mjs
 
 import {
 	mkdtempSync,
@@ -36,7 +30,7 @@ const fixture = join(mkdtempSync(join(tmpdir(), 'dt-prc-')), 'three.pdf');
 
 const downloads = mkdtempSync(join(tmpdir(), 'dt-prc-dl-'));
 
-/** Chrome writes a .crdownload first, so wait for a settled, named file. */
+// wait past .crdownload
 async function waitForDownload(match, timeout = 30000) {
 	const until = Date.now() + timeout;
 	while (Date.now() < until) {
@@ -53,14 +47,14 @@ async function waitForDownload(match, timeout = 30000) {
 	return null;
 }
 
-/** Empty the dir between steps so a wait cannot match the previous file. */
+// avoid matching previous download
 function clearDownloads() {
 	for (const name of readdirSync(downloads)) {
 		rmSync(join(downloads, name));
 	}
 }
 
-/** Drag a crop box over the preview, fractions of its width/height. */
+// fractions of box
 async function dragCrop(fx1, fy1, fx2, fy2) {
 	const box = await (await page.$('.dt-prc-crop-layer')).boundingBox();
 	await page.mouse.move(
@@ -115,9 +109,6 @@ const applyDisabled = await page.$$eval(
 	(els) => els.slice(0, 2).every((b) => b.disabled),
 );
 check('apply stays disabled without a drag', applyDisabled);
-
-// ── rotation ─────────────────────────────────────────────────────────────
-// Page 1 right, then everything left: page 1 back to 0, the rest at 270.
 await page.$$eval('.dt-prc-rotate button[title="Rotate right"]', (els) =>
 	els[0].click(),
 );
@@ -156,9 +147,7 @@ check(
 		!/is-rot/.test(rotClasses.split('|')[0]),
 	rotClasses.replace(/\s+/g, ' '),
 );
-
-// ── crop the current page ────────────────────────────────────────────────
-// Let the post-rotation preview settle: a late render clears a pending drag.
+// late render clears drag
 await sleep(600);
 await dragCrop(0.25, 0.25, 0.75, 0.75);
 const pendingShown = await page
@@ -212,8 +201,6 @@ if (out) {
 		`${pages[1].getCropBox().width.toFixed(1)}×${pages[1].getCropBox().height.toFixed(1)}`,
 	);
 }
-
-// ── crop every page from a rotated one ───────────────────────────────────
 clearDownloads();
 await page.$$eval('.dt-prc-cell', (els) => els[1].click());
 await sleep(600);
@@ -254,8 +241,7 @@ if (all) {
 			)
 			.join(' | '),
 	);
-	// The dragged half maps to the same box size on every page; on the
-	// 270°-rotated pages it sits in a different corner of the user space.
+	// rotation shifts box corner
 	check(
 		'the crop keeps the dragged half everywhere',
 		boxes.every(
@@ -271,8 +257,6 @@ if (all) {
 		`p1 ${boxes[0].x.toFixed(1)},${boxes[0].y.toFixed(1)} vs p2 ${boxes[1].x.toFixed(1)},${boxes[1].y.toFixed(1)}`,
 	);
 }
-
-// ── clear ────────────────────────────────────────────────────────────────
 await page.$$eval('.dt-prc-cell', (els) => els[0].click());
 await sleep(300);
 await clickOpt('Clear');

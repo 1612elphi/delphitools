@@ -1,7 +1,4 @@
-// MediaInfo (mediainfo.js, MediaInfoLib under BSD-2) for the Video Atlas. The
-// emscripten bundle is self-hosted under /public/mediainfo (ESM glue + 2.5 MB
-// wasm, copied by scripts/copy-mediainfo.mjs) and imported at runtime through
-// the jxl/mupdf `new Function` idiom, so neither enters the Vite graph.
+// keep mediainfo outside vite
 import { formatBytes } from 'delphitools-v2/lib/image-compress';
 import { formatFps } from 'delphitools-v2/lib/media-probe';
 import { rawImport } from 'delphitools-v2/lib/raw-import';
@@ -12,7 +9,6 @@ const MODULE_URL = '/mediainfo/mediainfo.min.js';
 export type TrackType =
 	'General' | 'Video' | 'Audio' | 'Text' | 'Image' | 'Menu' | 'Other';
 
-/** one MediaInfo stream; every field is optional and MediaInfo names them */
 export type Track = { '@type': TrackType } & Record<
 	string,
 	string | number | undefined
@@ -45,11 +41,9 @@ function getMediaInfo(): Promise<MediaInfoLike> {
 	return instance;
 }
 
-// One MediaInfo instance, and it refuses a second analyzeData while one
-// runs, so calls queue behind each other.
+// mediainfo serializes analysis
 let queue: Promise<unknown> = Promise.resolve();
 
-/** MediaInfo reads the file in chunks through slice(), never whole. */
 export function analyzeMedia(file: File): Promise<Track[]> {
 	const run = queue.then(() => analyze(file));
 	queue = run.catch(() => {});
@@ -114,7 +108,6 @@ const RATIOS: [number, string][] = [
 	[5 / 4, '5:4'],
 ];
 
-/** a display aspect ratio as a familiar name, else `N.NN:1` */
 export function formatRatio(ratio: number): string {
 	const hit = RATIOS.find(([value]) => Math.abs(value - ratio) < 0.01);
 	return hit ? hit[1] : `${ratio.toFixed(2)}:1`;
@@ -295,7 +288,6 @@ const SPECS: Partial<Record<TrackType, Spec[]>> = {
 	Text: TEXT,
 };
 
-/** the fields MediaInfo filled for this track, as label/value rows */
 export function trackRows(track: Track): Row[] {
 	const specs = SPECS[track['@type']] ?? [];
 	const rows: Row[] = [];
@@ -312,7 +304,6 @@ export interface Section {
 	rows: Row[];
 }
 
-/** General first, then Video/Audio/Text streams numbered per kind */
 export function sections(tracks: Track[]): Section[] {
 	const counts: Partial<Record<TrackType, number>> = {};
 	const out: Section[] = [];
@@ -330,7 +321,6 @@ export function sections(tracks: Track[]): Section[] {
 	return out;
 }
 
-/** plain-text report for the clipboard */
 export function reportText(tracks: Track[]): string {
 	return sections(tracks)
 		.map(

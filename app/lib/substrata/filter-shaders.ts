@@ -1,21 +1,6 @@
-/**
- * Custom filters (M3 Tier-1 + ratified Threshold/Posterise): the Fabric
- * BaseFilter subclasses behind every registry type that isn't a Fabric
- * built-in. Each carries a GLSL fragment shader AND an applyTo2d fallback
- * (SPEC §9 — the chain must survive the Canvas2D backend after context loss).
- *
- * Contract notes (verified vs installed fabric 7.4.0 source):
- *   - static `type` MUST be unique per class — the WebGL program cache is
- *     keyed by it; a duplicate silently reuses another class's shader.
- *   - static `uniformLocations` lists custom uniforms; uStepW/uStepH are
- *     resolved + sent by BaseFilter itself (1/width, 1/height).
- *   - constructor Object.assigns static `defaults` then options — instance
- *     fields must be `declare`d (a real class field would clobber them).
- *   - Props arrive PRE-NORMALISED (0–1 ranges, [r,g,b] 0–1 vec3s): all
- *     registry-unit scaling stays centralised in filter-factory.ts.
- *
- * ⚠️ Imports Fabric — client-only, keep behind the ssr:false dynamic boundary.
- */
+// client-only fabric import
+// fabric caches by type
+// declare preserves defaults
 
 import { filters as fabricFilters } from 'fabric';
 import type {
@@ -30,7 +15,6 @@ const { BaseFilter, Noise } = fabricFilters;
 
 export type Vec3 = [number, number, number];
 
-/** Rec. 709 luma, the same weights the built-in Grayscale's luminosity mode uses. */
 const LUMA: Vec3 = [0.2126, 0.7152, 0.0722];
 const lumaOf = (r: number, g: number, b: number): number =>
 	r * LUMA[0] + g * LUMA[1] + b * LUMA[2];
@@ -41,8 +25,6 @@ const smoothstep = (e0: number, e1: number, x: number): number => {
 	const t = clamp01((x - e0) / (e1 - e0));
 	return t * t * (3 - 2 * t);
 };
-
-// ── Colour noise (per-channel grain; the mono built-in shares one rand) ───────
 
 const colourNoiseFragment = `
   precision highp float;
@@ -67,7 +49,6 @@ const colourNoiseFragment = `
 
 export class ColourNoise extends Noise {
 	static type = 'SubstrataColourNoise';
-	// public, matching Noise's own declaration (BaseFilter's is protected)
 	getFragmentSource(): string {
 		return colourNoiseFragment;
 	}
@@ -80,8 +61,6 @@ export class ColourNoise extends Noise {
 		}
 	}
 }
-
-// ── Levels ────────────────────────────────────────────────────────────────────
 
 type LevelsProps = {
 	inBlack: number;
@@ -178,8 +157,6 @@ export class SubstrataLevels extends BaseFilter<
 	}
 }
 
-// ── Threshold ─────────────────────────────────────────────────────────────────
-
 type ThresholdProps = { level: number };
 
 export class SubstrataThreshold extends BaseFilter<
@@ -226,8 +203,6 @@ export class SubstrataThreshold extends BaseFilter<
 	}
 }
 
-// ── Posterise ─────────────────────────────────────────────────────────────────
-
 type PosteriseProps = { levels: number };
 
 export class SubstrataPosterise extends BaseFilter<
@@ -273,8 +248,6 @@ export class SubstrataPosterise extends BaseFilter<
 	}
 }
 
-// ── Vignette ──────────────────────────────────────────────────────────────────
-
 type VignetteProps = {
 	amount: number;
 	midpoint: number;
@@ -309,8 +282,6 @@ export class SubstrataVignette extends BaseFilter<
 	];
 
 	protected getFragmentSource(): string {
-		// roundness 0 = frame-fitting ellipse, 1 = pixel-true circle (aspect via
-		// the auto-sent uStep uniforms: uStepH/uStepW = width/height)
 		return `
       precision highp float;
       uniform sampler2D uTexture;
@@ -380,8 +351,6 @@ export class SubstrataVignette extends BaseFilter<
 	}
 }
 
-// ── Duotone ───────────────────────────────────────────────────────────────────
-
 type DuotoneProps = { shadow: Vec3; highlight: Vec3; midpoint: number };
 
 export class SubstrataDuotone extends BaseFilter<
@@ -399,8 +368,6 @@ export class SubstrataDuotone extends BaseFilter<
 	};
 	static uniformLocations = ['uShadow', 'uHighlight', 'uGammaMap'];
 
-	/** Midpoint as a gamma remap: the luma that lands exactly halfway between
-	 *  the two colours. pow(mid, g) = 0.5 → g = ln 0.5 / ln mid. */
 	private gammaMap(): number {
 		return (
 			Math.log(0.5) /
@@ -451,8 +418,6 @@ export class SubstrataDuotone extends BaseFilter<
 	}
 }
 
-// ── Colour balance (ratified M3-7: three sliders, midtone-weighted) ───────────
-
 type ColourBalanceProps = {
 	cyanRed: number;
 	magentaGreen: number;
@@ -474,12 +439,9 @@ export class SubstrataColourBalance extends BaseFilter<
 	};
 	static uniformLocations = ['uShift'];
 
-	/** Full slider = ±0.3 channel shift at pure midtone — QA-taste knob. */
 	private static readonly STRENGTH = 0.3;
 
 	protected getFragmentSource(): string {
-		// 4·l·(1−l): a parabola peaking at mid-grey, zero at black/white — shifts
-		// fade out of shadows/highlights instead of clipping them.
 		return `
       precision highp float;
       uniform sampler2D uTexture;
@@ -531,8 +493,6 @@ export class SubstrataColourBalance extends BaseFilter<
 		);
 	}
 }
-
-// ── Film sim (the LUT family's engine: a lift/gamma/gain + saturation grade) ──
 
 type FilmSimProps = {
 	lift: Vec3;
@@ -614,17 +574,9 @@ export class SubstrataFilmSim extends BaseFilter<
 	}
 }
 
-// ── 3D LUT (the film-emulation looks: 33³ table packed as a 2D strip) ─────────
-
 type LutProps = { lut: LoadedLut; lutKey: string; intensity: number };
 
-/**
- * Samples a packed-strip LUT (S slices of S×S, blue picks the slice): hardware
- * bilinear inside a slice + a manual mix across the two neighbouring slices =
- * full trilinear. The strip uploads once per LUT via the backend texture cache
- * (keyed by `lutKey`, LINEAR filtering) and binds as TEXTURE1 — the same
- * second-texture pattern Fabric's own BlendImage uses.
- */
+// manual lut slice interpolation
 export class SubstrataLut extends BaseFilter<'SubstrataLut', LutProps> {
 	declare lut: LoadedLut;
 	declare lutKey: string;
@@ -682,7 +634,7 @@ export class SubstrataLut extends BaseFilter<'SubstrataLut', LutProps> {
 		gl: WebGLRenderingContext,
 		u: TWebGLUniformLocationMap,
 	): void {
-		gl.uniform1i(u.uLut!, 1); // TEXTURE1
+		gl.uniform1i(u.uLut!, 1);
 		gl.uniform1f(u.uSize!, this.lut.size);
 		gl.uniform1f(u.uIntensity!, this.intensity);
 	}

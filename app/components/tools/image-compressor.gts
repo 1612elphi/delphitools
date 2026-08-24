@@ -49,7 +49,7 @@ async function decodeToCanvas(
 ): Promise<{ canvas: HTMLCanvasElement; width: number; height: number }> {
 	let bitmap: ImageBitmap;
 	try {
-		// Honours EXIF orientation so a rotated phone photo re-encodes upright.
+		// preserve exif orientation
 		bitmap = await createImageBitmap(file, {
 			imageOrientation: 'from-image',
 		});
@@ -85,7 +85,6 @@ export default class ImageCompressorTool extends Component {
 		return QUALITY_FORMATS.includes(this.format);
 	}
 
-	/** AVIF stays out of the segmented row until explicitly enabled. */
 	get visibleFormats(): CompressOption[] {
 		return FORMATS.filter(
 			(option) => option.id !== 'avif' || this.avifEnabled,
@@ -115,7 +114,6 @@ export default class ImageCompressorTool extends Component {
 		return (this.savings ?? 0) < 0;
 	}
 
-	/** Signed badge: −45% saves, +12% grows, ±0% breaks even. */
 	get savingsLabel(): string {
 		const savings = this.savings;
 		if (savings === null) return '';
@@ -186,7 +184,8 @@ export default class ImageCompressorTool extends Component {
 	};
 
 	clear = () => {
-		this.#encodeSeq++; // in-flight encodes land nowhere
+		// invalidate active encodes
+		this.#encodeSeq++;
 		this.#revokeSource();
 		this.#revokeCompressed();
 		this.source = null;
@@ -207,7 +206,7 @@ export default class ImageCompressorTool extends Component {
 		try {
 			const { canvas, width, height } = await decodeToCanvas(
 				source.file,
-				// MozJPEG drops alpha; flatten onto white rather than black.
+				// mozjpeg drops alpha
 				this.format === 'mozjpeg' ? '#ffffff' : null,
 			);
 			const imageData = canvas
@@ -221,7 +220,8 @@ export default class ImageCompressorTool extends Component {
 					level: this.effort,
 				},
 			);
-			if (seq !== this.#encodeSeq) return; // a newer setting won the race
+			// discard stale encodes
+			if (seq !== this.#encodeSeq) return;
 			source.width = width;
 			source.height = height;
 			this.#revokeCompressed();

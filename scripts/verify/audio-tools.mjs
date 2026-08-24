@@ -1,5 +1,4 @@
-// The wave-2 audio tools against a synthesised clip: a 1.5 s 440 Hz wav is
-// written in-page and dropped into each tool, so the rig needs no fixture.
+// wave-2 audio tools, fixture synthesised in-page
 //
 // Usage: npm start, then node scripts/verify/audio-tools.mjs
 
@@ -7,7 +6,6 @@ import { launch, visit, check, finish, sleep } from './harness.mjs';
 
 const { browser, page } = await launch();
 
-/** Builds the wav File in page context and drops it on `selector`. */
 async function dropWav(selector) {
 	await page.evaluate((sel) => {
 		const sampleRate = 22050;
@@ -53,7 +51,6 @@ async function dropWav(selector) {
 	}, selector);
 }
 
-/** True when the canvas has at least one painted (non-blank) pixel. */
 function painted(selector) {
 	return page.evaluate((sel) => {
 		const canvas = document.querySelector(sel);
@@ -71,14 +68,12 @@ function painted(selector) {
 	}, selector);
 }
 
-// --- audio-trimmer ---------------------------------------------------------
 await visit(page, '/tools/audio-trimmer');
 await dropWav('.dt-at-frame');
 await page.waitForSelector('.dt-at-wave', { timeout: 15000 });
 await sleep(400);
 
-// decodeAudioData resamples to the context rate, so the buffer's rate is
-// machine-dependent — assert shape, not the source file's 22050.
+// decodeAudioData resamples; rate machine-dependent
 const trimMeta = await page.$eval('.dt-at-meta', (el) => el.textContent);
 check(
 	'trimmer: decodes and shows meta',
@@ -97,7 +92,6 @@ check(
 	selection.trim(),
 );
 
-// Transport: play shows the playhead line; the loop button latches.
 const atBtn = async (label) =>
 	(
 		await page.evaluateHandle(
@@ -130,7 +124,6 @@ check(
 	await page.evaluate(() => !document.querySelector('.dt-playhead')),
 );
 
-// --- audio-atlas -----------------------------------------------------------
 await visit(page, '/tools/audio-atlas');
 await dropWav('.dt-aa-frame');
 await page.waitForSelector('.dt-aa-meta', { timeout: 15000 });
@@ -167,7 +160,6 @@ check('atlas: waveform painted', await painted('.dt-aa-wave'));
 await sleep(800);
 check('atlas: spectrogram painted', await painted('.dt-aa-spectro'));
 
-// Transport: play toggles to pause; the loop button latches.
 const playBtn = async (label) =>
 	(
 		await page.evaluateHandle(
@@ -200,8 +192,6 @@ check(
 );
 await (await playBtn('Pause')).click();
 
-// Click-to-seek: a click at three quarters of the waveform moves the
-// playhead line there.
 await page.evaluate(() => {
 	const wave = document.querySelector('.dt-aa-wave');
 	const rect = wave.getBoundingClientRect();
@@ -225,7 +215,6 @@ check(
 	`${playheadLeft}%`,
 );
 
-// --- waveform-genny --------------------------------------------------------
 await visit(page, '/tools/waveform-genny');
 await dropWav('.dt-wg-frame');
 await page.waitForSelector('.dt-wg-preview', { timeout: 15000 });

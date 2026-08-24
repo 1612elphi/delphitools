@@ -4,9 +4,7 @@ import { dbToGain, planGain } from 'delphitools-v2/lib/normalise';
 
 const RATE = 48000;
 
-// BS.1770 sums the channel powers, so a dual-mono 1 kHz sine of amplitude A
-// reads -0.691 + 10·log10(2 · A² / 2) plus the K-weighting's ~+0.7 dB at
-// 1 kHz: about -20.0 LUFS for A = 0.1.
+// BS.1770: dual-mono 1 kHz @ A=0.1 ≈ -20 LUFS
 function sine(amplitude: number, seconds = 3): Float32Array[] {
 	const n = RATE * seconds;
 	const out = new Float32Array(n);

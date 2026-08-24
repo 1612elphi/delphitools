@@ -2,11 +2,7 @@ import Service from '@ember/service';
 import type Owner from '@ember/owner';
 import { tracked } from '@glimmer/tracking';
 
-/**
- * Light/dark toggle. The `.dark` class is already on <html> before this loads —
- * the no-flash script in index.html puts it there — so this reads the existing
- * state rather than deciding it.
- */
+// index.html sets .dark
 export default class ThemeService extends Service {
 	@tracked dark = false;
 

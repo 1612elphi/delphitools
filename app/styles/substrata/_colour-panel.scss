@@ -1,10 +1,5 @@
-// Substrata COLOUR panel — tabbed picker + its seven modes.
-//
-// The Tailwind of components/substrata/modules/colour-panel.tsx, the picker kit
-// and colour-modes/*, one class per element. Sizes are the literal Tailwind
-// values (h-8 = 32px, size-3.5 = 14px, text-[11px] = 11px).
+// tailwind of colour-panel.tsx
 
-// ── shell ──────────────────────────────────────────────────────────────────
 .sub-cp {
 	display: flex;
 	flex-direction: column;
@@ -39,14 +34,12 @@
 	}
 }
 
-// Every mode fills this to the same size, so the module fits the rail's 300px
-// slot without scrolling (header ~30 + tabs 32 + this + footer ~48 ≤ 300).
+// fits 300px rail
 .sub-cp-stage {
 	block-size: 180px;
 	overflow: hidden;
 }
 
-// ── shared knob ────────────────────────────────────────────────────────────
 .sub-cp-knob {
 	position: absolute;
 	inline-size: 13px;
@@ -58,7 +51,6 @@
 	pointer-events: none;
 }
 
-// ── mode 1: hue cube ───────────────────────────────────────────────────────
 .sub-cp-cube {
 	display: flex;
 	flex-direction: column;
@@ -97,7 +89,6 @@
 	touch-action: none;
 }
 
-// ── mode 2: HSV triangle ───────────────────────────────────────────────────
 .sub-cp-wheelpad {
 	display: flex;
 	align-items: center;
@@ -132,7 +123,7 @@
 	pointer-events: none;
 }
 
-// A bare canvas is a replaced element, so inset alone leaves it at buffer size.
+// canvas is replaced element
 .sub-cp-tri {
 	position: absolute;
 	inset: 0;
@@ -141,7 +132,6 @@
 	pointer-events: none;
 }
 
-// ── mode 3: sliders ────────────────────────────────────────────────────────
 .sub-cp-sliders {
 	display: flex;
 	flex-direction: column;
@@ -227,7 +217,6 @@
 	}
 }
 
-// ── mode 4: swatch wall ────────────────────────────────────────────────────
 .sub-cp-wall {
 	block-size: 100%;
 	border-block-end: 1px solid var(--border);
@@ -267,7 +256,6 @@
 	}
 }
 
-// ── mode 5: prism ──────────────────────────────────────────────────────────
 .sub-cp-prism {
 	display: flex;
 	flex-direction: column;
@@ -409,7 +397,6 @@
 	font-variant-numeric: tabular-nums;
 }
 
-// ── mode 6: spectral EQ ────────────────────────────────────────────────────
 .sub-cp-eq {
 	display: flex;
 	flex: 1;
@@ -435,7 +422,6 @@
 	pointer-events: none;
 }
 
-// ── mode 7: shade ──────────────────────────────────────────────────────────
 .sub-cp-shade {
 	display: flex;
 	flex-direction: column;
@@ -556,7 +542,6 @@
 	font-variant-numeric: tabular-nums;
 }
 
-// ── footer: swatch · hex · eyedropper ──────────────────────────────────────
 .sub-cp-footer {
 	display: flex;
 	align-items: stretch;

@@ -1,11 +1,4 @@
-// Styles for the typo-calc tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Typography calculator ───────────────────────────────────────────────── */
 
 .dt-typo {
 	border: 2px solid var(--border);
@@ -189,8 +182,7 @@
 	font-size: crayon.font-size("xs");
 }
 
-/* Hidden until the row is pointed at; the active row shows a dimmed one so the
-   column keeps its width either way. */
+// active row holds column width
 .dt-typo-swap {
 	display: flex;
 	width: crayon.size(12);
@@ -220,8 +212,7 @@
 	padding: crayon.size(4);
 }
 
-/* Bleeds back out to the panel edges, so the cells sit flush with the rows
-   above. `.segmented` draws a 1px frame; only the top rule is wanted. */
+// bleed flush, drop .segmented frame
 .segmented.dt-typo-ref-grid {
 	margin: crayon.size(3) (crayon.size(4) * -1) (crayon.size(4) * -1);
 	grid-template-columns: repeat(2, 1fr);

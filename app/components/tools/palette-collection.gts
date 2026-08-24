@@ -36,8 +36,7 @@ export default class PaletteCollectionTool extends Component {
 		label: meta.label,
 	}));
 
-	// Bucketed once, as the Next app's useMemo(…, []) did; the list is a module
-	// constant and never changes.
+	// constant list, compute once
 	palettesByCategory = getPalettesByCategory();
 
 	get activeCategory() {
@@ -56,8 +55,7 @@ export default class PaletteCollectionTool extends Component {
 		const query = this.searchQuery.trim().toLowerCase();
 		if (!query) return inCategory;
 
-		// The Next app matched the raw hex. The header notation also drives what
-		// the swatch titles read, so a query typed in that notation matches too.
+		// match displayed notation too
 		return inCategory.filter(
 			(p) =>
 				p.name.toLowerCase().includes(query) ||
@@ -74,7 +72,7 @@ export default class PaletteCollectionTool extends Component {
 		);
 	}
 
-	/** Untrimmed, matching the Next app: a whitespace query counts as a search. */
+	// untrimmed: whitespace counts
 	get countLabel() {
 		if (!this.searchQuery) return `${this.total} palettes`;
 		const found = this.filteredPalettes.length;
@@ -86,15 +84,12 @@ export default class PaletteCollectionTool extends Component {
 			id: palette.id,
 			name: palette.name,
 			colourCount: palette.colors.length,
-			// Raw, not encoded: LinkTo escapes the value when it builds the URL,
-			// and palette-genny's coloursFromQuery decodes it back.
+			// LinkTo encodes this
 			coloursParam: palette.colors.join(','),
 			swatches: palette.colors.map((hex, index) => ({
 				key: `${palette.id}-${index}`,
 				value: this.colourNotation.format(hex),
-				// style-concatenation wants one trusted value rather than an
-				// interpolated attribute; every hex here is from the
-				// curated list.
+				// style-concatenation: curated hex trusted
 				fillStyle: htmlSafe(`background-color: ${hex}`),
 			})),
 		}));
@@ -181,7 +176,6 @@ export default class PaletteCollectionTool extends Component {
 				</div>
 			{{/if}}
 
-			{{! one pass over the getter rather than one per block }}
 			<div class="dt-collection-body">
 				{{#let this.cards as |cards|}}
 					{{#if cards}}
@@ -251,7 +245,6 @@ export default class PaletteCollectionTool extends Component {
 								@name="palette"
 								class="dt-collection-empty-icon"
 							/>
-							{{! wording carried over from the Next app }}
 							<p>No palettes found
 								matching your
 								search.</p>
@@ -261,7 +254,6 @@ export default class PaletteCollectionTool extends Component {
 			</div>
 
 			<div class="dt-collection-foot">
-				{{! wording carried over from the Next app }}
 				<div class="dt-collection-foot-text">Want to
 					create your own palette?</div>
 				<LinkTo

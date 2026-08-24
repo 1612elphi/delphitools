@@ -26,8 +26,6 @@ export const ALPHABETS: SpellingAlphabet[] = [
 	{
 		id: 'nato',
 		label: 'NATO',
-		// ponytail: the spelled forms; ICAO's pronunciations Tree, Fife and
-		// Niner for 3, 5 and 9 are not represented.
 		words: {
 			A: 'Alfa',
 			B: 'Bravo',
@@ -70,7 +68,7 @@ export const ALPHABETS: SpellingAlphabet[] = [
 	{
 		id: 'din5009',
 		label: 'DIN 5009',
-		// DIN 5009:2022-06, the city-name table.
+		// din 5009:2022 city names
 		words: {
 			A: 'Aachen',
 			B: 'Berlin',
@@ -108,7 +106,7 @@ export const ALPHABETS: SpellingAlphabet[] = [
 	{
 		id: 'german',
 		label: 'German (1996)',
-		// DIN 5009:1996-12, the table the 2022 edition replaced.
+		// din 5009:1996 words
 		words: {
 			A: 'Anton',
 			B: 'Berta',
@@ -148,7 +146,7 @@ export const ALPHABETS: SpellingAlphabet[] = [
 const isSpace = (char: string) => /\s/.test(char);
 
 export function spell(text: string, alphabet: SpellingAlphabet): SpelledChar[] {
-	// 'ß'.toUpperCase() is 'SS', so the raw character is tried first.
+	// ß uppercases to ss
 	return [...text].map((char) => ({
 		char,
 		word:
@@ -164,7 +162,6 @@ export function spellText(text: string, alphabet: SpellingAlphabet): string {
 		.join(' ');
 }
 
-// Lower-cased and hyphen-free, so X-ray and Xray read the same.
 const key = (word: string) => word.toLowerCase().replace(/-/g, '');
 
 function reverse(alphabet: SpellingAlphabet): Map<string, string> {
@@ -174,7 +171,6 @@ function reverse(alphabet: SpellingAlphabet): Map<string, string> {
 	return map;
 }
 
-/** Each whitespace-separated token as the character it names, or as itself. */
 function read(
 	text: string,
 	alphabet: SpellingAlphabet,

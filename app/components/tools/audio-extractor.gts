@@ -37,7 +37,7 @@ export default class AudioExtractorTool extends Component {
 		canLoad: () => !this.busy,
 	});
 
-	/** undefined until the probe answers, null when the file has no audio */
+	/** undefined pending; null silent. */
 	@tracked probe: AudioProbe | null | undefined = undefined;
 	@tracked support: Record<AudioTarget, boolean> | null = null;
 	@tracked target: AudioTarget = 'wav';
@@ -81,7 +81,7 @@ export default class AudioExtractorTool extends Component {
 		);
 	}
 
-	// PCM needs no encoder, so WAV is on before the support probe answers.
+	// wav needs no encoder.
 	#supports(id: AudioTarget) {
 		return this.support?.[id] ?? id === 'wav';
 	}
@@ -295,7 +295,7 @@ export default class AudioExtractorTool extends Component {
 
 				<div class="dt-ax-stage">
 					{{#if this.hasVideo}}
-						{{! user-supplied video; there is no caption track to offer }}
+						{{! user media lacks captions }}
 						{{! template-lint-disable require-media-caption }}
 						<video
 							src={{this.intake.url}}
@@ -329,7 +329,6 @@ export default class AudioExtractorTool extends Component {
 							<span
 								class="dt-ax-drop-title"
 							>{{DROP_TITLE}}</span>
-							{{! hint reused verbatim from Background Remover }}
 							<span
 								class="dt-ax-drop-hint"
 							>or click to select a
@@ -343,7 +342,7 @@ export default class AudioExtractorTool extends Component {
 						<span
 							class="dt-ax-out-label"
 						>Audio</span>
-						{{! the extracted track, so it can be checked by ear }}
+						{{! user media lacks captions }}
 						{{! template-lint-disable require-media-caption }}
 						<audio
 							class="dt-ax-player"

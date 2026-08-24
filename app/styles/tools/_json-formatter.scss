@@ -1,5 +1,3 @@
-// Styles for the json-formatter tool.
-
 @use "../crayon-config" as crayon;
 
 .dt-jf {
@@ -10,7 +8,6 @@
 	border: 2px solid var(--border);
 }
 
-/* Flush action bar: tool identity left, Open/Clear/Copy/Download right. */
 .dt-jf-bar {
 	display: flex;
 	min-height: crayon.size(10);
@@ -94,7 +91,7 @@
 		pointer-events: none;
 	}
 
-	/* The Open button is a label around a hidden input; show its ring here. */
+	/* label wraps hidden file input */
 	&:focus-within,
 	&:focus-visible {
 		outline: 2px solid var(--primary);
@@ -102,7 +99,6 @@
 	}
 }
 
-/* Settings as a grid of stacked label-over-control cells. */
 .dt-jf-settings {
 	display: grid;
 	border-bottom: 1px solid var(--border);
@@ -165,7 +161,6 @@
 	}
 }
 
-/* Source / result panes. */
 .dt-jf-panes {
 	display: grid;
 	grid-template-columns: 1fr;
@@ -180,7 +175,7 @@
 	min-width: 0;
 	flex-direction: column;
 
-	/* Stacked on a phone, so the divider between panes runs the other way. */
+	/* border swaps top to left at md */
 	&.is-result {
 		border-top: 2px solid var(--border);
 
@@ -215,10 +210,7 @@
 	font-variant-numeric: tabular-nums;
 }
 
-/* The source editor is a transparent-text textarea over a rendered copy of
-   its contents; the copy carries the line numbers and the error highlight.
-   Everything the text flows by — font, sizing, leading, tab stops, padding —
-   is shared between the two layers so the caret tracks what the eye sees. */
+/* transparent textarea over rendered copy, shared metrics for caret alignment */
 .dt-jf-editor {
 	position: relative;
 	display: flex;
@@ -252,9 +244,7 @@
 	line-height: crayon.leading("relaxed");
 }
 
-/* The template's inter-row whitespace renders as text under `pre`; zeroing
-   the container's font and leading keeps those phantom lines zero-height.
-   The rows restore both. */
+/* pre renders inter-row whitespace, zero container to suppress */
 .dt-jf-lines-inner {
 	font-size: 0;
 	line-height: 0;
@@ -275,9 +265,7 @@
 	}
 }
 
-/* The number column measures in ch against the text size: the textarea's
-   left padding (calc in .dt-jf-source) is a multiple of the same ch. The
-   width holds the padding under border-box, so 4ch of digits needs 5.5ch. */
+/* 5.5ch: 4ch digits + 1.5ch padding under border-box */
 .dt-jf-line-no {
 	flex-shrink: 0;
 	width: 5.5ch;
@@ -291,7 +279,7 @@
 	flex: 1;
 }
 
-/* Padding-left bodies the line-number column out from under the text. */
+/* padding clears line-number column */
 .dt-jf-source {
 	position: absolute;
 	inset: 0;
@@ -316,7 +304,6 @@
 	}
 }
 
-/* Parse failure state, filling the result pane. */
 .dt-jf-error {
 	display: flex;
 	flex: 1;
@@ -421,7 +408,7 @@
 	}
 }
 
-/* Primitive rows get no caret; the spacer keeps the keys aligned. */
+/* spacer aligns keys with caret rows */
 .dt-jf-tree-leaf {
 	width: crayon.size(4);
 	height: crayon.size(4);

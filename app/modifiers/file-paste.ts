@@ -1,16 +1,6 @@
 import { modifier } from 'ember-modifier';
 import { deliverPending } from 'delphitools-v2/lib/flow-hooks';
 
-/**
- * Hands the first pasted file matching `accept` to the handler, replacing the
- * Next app's use-file-paste hook — 23 tools there use it.
- *
- * The listener is on the document, because a paste lands on whatever has focus
- * rather than on the tool. The element only bounds the listener's lifetime, so
- * put this on whichever wrapper the tool already has:
- *
- *   <div {{filePaste this.readFile accept="image/*"}}>
- */
 export default modifier(
 	(
 		element: HTMLElement,
@@ -27,10 +17,10 @@ export default modifier(
 			handler(file);
 		};
 
+		// document receives focused pastes
 		doc.addEventListener('paste', onPaste);
 
-		// A workflow step takes the earlier steps' output the way it takes
-		// a paste: through this handler, once the tool is on screen.
+		// deliver pending workflow input
 		const cancel = deliverPending(accept, handler);
 
 		return () => {
@@ -40,7 +30,6 @@ export default modifier(
 	},
 );
 
-/** The three forms an accept attribute takes: `image/*`, `.svg`, `image/png`. */
 export function matchesAccept(file: File, accept: string): boolean {
 	return accept.split(',').some((pattern) => {
 		const p = pattern.trim();

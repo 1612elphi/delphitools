@@ -1,9 +1,7 @@
-// Styles for the ipa-transcriber tool.
-
 @use "../crayon-config" as crayon;
 
 .dt-ipa {
-	// The same green the Shavian tool reports a loaded dictionary with.
+	// matches shavian dict green
 	--dt-ipa-dict: #22c55e;
 
 	@include crayon.vstack(4);

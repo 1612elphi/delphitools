@@ -1,11 +1,3 @@
-// The editor's document schema: prosemirror-markdown's CommonMark schema,
-// extended with GFM constructs. We build a new Schema from its spec so the
-// custom MarkdownParser/serializer (markdown.ts) bind to THIS schema.
-//
-// GFM additions:
-//  - strikethrough mark (~~…~~)
-//  - `checked` attr on list_item (task lists: null = plain, true/false = task)
-//  - footnote node (inline atom; its block content is edited via a NodeView)
 import { schema as cm } from 'prosemirror-markdown';
 import { Schema, type NodeSpec } from 'prosemirror-model';
 import { tableNodes } from 'prosemirror-tables';
@@ -15,14 +7,14 @@ const listItem = cm.spec.nodes.get('list_item') as NodeSpec;
 const footnote: NodeSpec = {
 	group: 'inline',
 	inline: true,
-	atom: true, // treated as a leaf in the main view; body edited in a sub-editor
-	content: 'block+', // markdown-it wraps footnote bodies in a paragraph
+	atom: true,
+	// markdown uses paragraph bodies
+	content: 'block+',
 	toDOM: () => ['footnote', 0],
 	parseDOM: [{ tag: 'footnote' }],
 };
 
-// GFM tables. Cells are single-line inline (GFM can't represent multi-block
-// cells), with a per-cell `align` carried as a text-align style.
+// gfm cells are inline
 const tNodes = tableNodes({
 	tableGroup: 'block',
 	cellContent: 'inline*',
@@ -44,8 +36,7 @@ export const schema = new Schema({
 			...listItem,
 			attrs: { checked: { default: null } },
 			toDOM(node) {
-				// Editor-side rendering uses a NodeView (interactive checkbox); this
-				// toDOM is what DOMSerializer emits on export, so render a static glyph.
+				// exports omit node views
 				if (node.attrs.checked === null)
 					return ['li', 0];
 				return [

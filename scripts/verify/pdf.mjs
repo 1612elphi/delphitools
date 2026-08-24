@@ -1,23 +1,5 @@
-// The two pdf tools open a real PDF and produce one.
-//
-// Both shipped broken once and neither the build nor the five lint gates
-// noticed, because both failures happen only at runtime:
-//
-//   pdf-lib   @pdf-lib/standard-fonts imports pako 1.0.11, which is CommonJS.
-//             pdf-lib is excluded from Vite's dep optimizer (the optimizer
-//             cannot parse standard-fonts' .json font payloads), and excluding
-//             a package leaves its dependencies unconverted, so importing
-//             pdf-lib threw "does not provide an export named 'default'" the
-//             first time any tool reached for it.
-//   pdf.js    the worker was a file copied into public/, pinned to a version
-//             the installed pdfjs-dist moved past. pdf.js then threw "The API
-//             version X does not match the Worker version Y" on the first PDF
-//             opened, and pdf-preflight reported that as a malformed file.
-//
-// The fixture is written by node with the same pdf-lib the app uses, so the
-// rig needs no binary checked in.
-//
-// Usage: npm start, then node scripts/verify/pdf.mjs
+// pako 1.0.11 commonjs breaks vite import
+// pdfjs-dist worker version mismatch
 
 import {
 	mkdtempSync,
@@ -58,7 +40,7 @@ const A4_LONG_PT = 297 * MM_TO_PT;
 const A4_SHORT_PT = 210 * MM_TO_PT;
 const BLEED_PT = 3 * MM_TO_PT;
 
-/** Chrome writes a .crdownload first, so wait for a settled, named file. */
+// chrome .crdownload before named file
 async function waitForDownload(dir, timeout, match = /\.pdf$/) {
 	const until = Date.now() + timeout;
 	while (Date.now() < until) {
@@ -76,12 +58,9 @@ async function waitForDownload(dir, timeout, match = /\.pdf$/) {
 
 const { browser, page } = await launch();
 
-// ── pdf-preflight reads it ──────────────────────────────────────────────
-
 await visit(page, '/tools/pdf-preflight');
 await (await page.$('input[type="file"]')).uploadFile(fixture);
 
-// Analysis is pdf-lib then pdf.js, both dynamically imported on first use.
 const analysed = await page
 	.waitForFunction(
 		() =>
@@ -106,14 +85,12 @@ check(
 	analysed && !preflight.error,
 	preflight.error ?? 'no error shown',
 );
-// Four pages is the fixture; a worker mismatch never gets this far.
+// worker mismatch fails before page count
 check(
 	'and reads the page count out of it',
 	/\b4\b/.test(preflight.body),
 	'4 pages',
 );
-
-// ── imposer parses one and writes one ───────────────────────────────────
 
 const downloads = mkdtempSync(join(tmpdir(), 'dt-imposer-'));
 const client = await page.createCDPSession();
@@ -139,7 +116,6 @@ check(
 );
 
 if (loaded) {
-	// pdf.js renders the page thumbnails; pdf-lib writes the sheet.
 	await sleep(1500);
 	const shape = await page.evaluate(() => ({
 		canvases: document.querySelectorAll('canvas').length,
@@ -154,14 +130,7 @@ if (loaded) {
 	);
 }
 
-// ── zine-imposer writes a PDF ───────────────────────────────────────────
-//
-// This is the path that failed in the wild: pdf-lib imported, images embedded,
-// doc.save() into a Blob and a download. The error surfaced as "zine pdf
-// generation failed" with a pako SyntaxError behind it.
-
-// Every slot of the mini-8 gets an image, so an empty cell cannot be
-// mistaken for a bleed that failed to reach the edge.
+// empty masks missed bleed
 await visit(page, '/tools/zine-imposer');
 await (
 	await page.$('.dt-zine-bulk input[type="file"]')
@@ -195,8 +164,7 @@ if (ready) {
 			'%PDF-',
 		);
 
-		// A4 landscape for the mini-8 fold, and no bleed asked for, so the
-		// page is the sheet and carries no trim box of its own.
+		// no bleed, no trim box
 		const plain = await PDFDocument.load(
 			readFileSync(join(downloads, wrote.name)),
 		);
@@ -208,8 +176,6 @@ if (ready) {
 			`${size.width.toFixed(1)} x ${size.height.toFixed(1)} pt`,
 		);
 	}
-
-	// ── and again with bleed ────────────────────────────────────────
 
 	await page.click('#zine-bleed');
 	await sleep(200);
@@ -228,8 +194,7 @@ if (ready) {
 		const sheet = doc.getPage(0);
 		const size = sheet.getSize();
 		const trim = sheet.getTrimBox();
-		// 3mm on all four sides: the page grows by 6mm each way and the
-		// trim box is the original sheet, inset by the bleed.
+		// page grows 6mm, trim insets
 		check(
 			'whose page grew by 3mm on every side',
 			Math.abs(size.width - (A4_LONG_PT + BLEED_PT * 2)) <
@@ -240,12 +205,8 @@ if (ready) {
 				) < 1,
 			`${size.width.toFixed(1)} x ${size.height.toFixed(1)} pt`,
 		);
-		// The boxes can be perfect while the artwork sits inside them,
-		// which is the failure that leaves a white 3mm frame and makes
-		// the whole switch pointless. Render it and look at a corner.
-		// The module URL is passed in rather than written inline: it is a
-		// dev-server path resolved in the page, and eslint reads an inline
-		// one as a missing import on this filesystem.
+		// artwork may miss bleed
+		// eslint flags inline url
 		const corner = await page.evaluate(
 			async (bytes, loaderUrl) => {
 				const { getPdfJs } = await import(loaderUrl);

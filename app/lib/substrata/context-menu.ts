@@ -1,12 +1,3 @@
-/**
- * Context-menu store (right-click, Ruby 2026-07-03). One menu instance
- * (components/substrata/layer-context-menu.tsx, mounted by the shell) serves
- * every surface. Two menu kinds: "layer" (a hit layer / panel row — acts on
- * the target ids) and "canvas" (blank artboard space — paste/place at the
- * scene point, view + guides + canvas actions). Transient UI state, same
- * store pattern as tool/selection.
- */
-
 export type MenuState =
 	| { kind: 'layer'; x: number; y: number; ids: readonly string[] }
 	| {

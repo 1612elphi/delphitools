@@ -7,7 +7,7 @@ module('Unit | Lib | colour-vision', function () {
 	});
 
 	test('achromatopsia is the BT.601 grey', function (assert) {
-		// 0.299*46 + 0.587*125 + 0.114*50 ≈ 93
+		// bt.601 luma 0.299r+0.587g+0.114b
 		assert.strictEqual(
 			simulateHex('#2e7d32', 'achromatopsia'),
 			'#5d5d5d',

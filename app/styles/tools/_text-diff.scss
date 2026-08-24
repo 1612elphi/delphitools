@@ -1,14 +1,6 @@
-// Styles for the text-diff tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
 
-/* ── Text diff ───────────────────────────────────────────────────────────── */
-
-// Added and removed are green and red the world over; neither is a theme token,
-// so the two Tailwind ramps the Next app used are named here once.
+// not theme tokens
 $add: crayon.color("emerald-500");
 $del: crayon.color("rose-500");
 
@@ -55,8 +47,7 @@ $del: crayon.color("rose-500");
 	}
 }
 
-/* `.segmented` draws its own 1px frame; here it is the whole visible box, so it
-   stays. Only the fixed two-column track is added. */
+/* segmented adds own frame */
 .segmented.dt-td-wrap-toggle {
 	width: 12rem;
 	flex-shrink: 0;
@@ -96,7 +87,6 @@ $del: crayon.color("rose-500");
 	min-width: 0;
 	flex-direction: column;
 
-	/* Stacked on a phone, so the divider between panes runs the other way. */
 	&.is-right {
 		border-top: 2px solid var(--border);
 
@@ -163,8 +153,6 @@ $del: crayon.color("rose-500");
 	}
 }
 
-/* The word is dropped on a phone; the icon carries the meaning and the header
-   has four controls to fit. */
 .dt-td-btn-text {
 	display: none;
 
@@ -180,8 +168,7 @@ $del: crayon.color("rose-500");
 	overflow: hidden;
 }
 
-/* Off-screen copy of the textarea's text at the same content width. Its rows
-   are measured to height the gutter cells in word-wrap mode; see alignGutter. */
+/* mirror for gutter rows; see alignGutter */
 .dt-td-mirror {
 	position: absolute;
 	visibility: hidden;

@@ -20,14 +20,6 @@ import {
 } from 'delphitools-v2/components/substrata/omnibar/modules';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 
-/**
- * Free-floating panels (round 3, Ruby 2026-07-12): an open module dragged out
- * of the rail lands here at an arbitrary canvas point. Idle floats render as
- * MINI cards — just the header row (title + live read-only summary + the
- * controls); hovering or keyboard-focusing one expands it to the full panel
- * in place, and the CLAMP toggle holds it full-size permanently. Positions
- * persist via dock-pref. Sits above the rail, below the omnibar.
- */
 
 interface FloatPanelSignature {
 	Args: {
@@ -54,9 +46,7 @@ class FloatPanel extends Component<FloatPanelSignature> {
 		return MODULES[this.args.id].sub != null;
 	}
 
-	// Deferred: focus/pointer boundary events fire synchronously during DOM
-	// teardown (a focused child removed by the mini↔full swap), which lands
-	// the write inside Glimmer's render and trips the backtracking assertion.
+	// defer glimmer state write
 	#setHot(next: boolean) {
 		queueMicrotask(() => {
 			if (!this.isDestroying) this.hot = next;
@@ -82,7 +72,7 @@ class FloatPanel extends Component<FloatPanelSignature> {
 			{{on "focusin" this.focusIn}}
 			{{on "focusout" this.focusOut}}
 		>
-			{{! `shadow-lg` is a harness hook — the parent repo's rigs select on it }}
+			{{! harness selector }}
 			<div class="sub-float-card shadow-lg">
 				{{#if this.full}}
 					<ModuleBox
@@ -91,9 +81,6 @@ class FloatPanel extends Component<FloatPanelSignature> {
 						@clamped={{@clamped}}
 					/>
 				{{else}}
-					{{! mini: the header row alone — title + live summary,
-						read-only at a glance, tighter than the module's full
-						width }}
 					<div
 						class="sub-float-mini
 							{{if

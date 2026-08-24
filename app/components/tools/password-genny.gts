@@ -23,8 +23,7 @@ import {
 } from 'delphitools-v2/lib/password';
 
 const WORDLIST_URL = '/data/eff-large-wordlist.txt';
-/* EFF large list, fixed at 7,776 entries: the entropy readout is correct
-   before the fetch lands. parseWordlist's result is checked against it. */
+// eff list fixed size, pre-fetch entropy
 const EFF_LIST_SIZE = 7776;
 const COPIED_MS = 2000;
 
@@ -52,16 +51,13 @@ const SEPARATORS: { id: string; value: string; label: string; text: string }[] =
 		},
 	];
 
-// The wordlist is a static asset, fetched once per session and lazy so it
-// stays out of the bundle. A cached rejection would deny every later mount a
-// retry, so the catch resets the slot (the shavian dictionary's pattern).
+// lazy fetch, catch resets for retry
 let wordlistPromise: Promise<string[]> | null = null;
 
 function loadWordlist(): Promise<string[]> {
 	wordlistPromise ??= fetch(WORDLIST_URL)
 		.then((response) => {
-			// fetch resolves on 404; without this the miss reaches text() and a
-			// wordlist of HTML error-page words would pass for real data.
+			// fetch resolves on 404
 			if (!response.ok)
 				throw new Error(`HTTP ${response.status}`);
 			return response.text();
@@ -196,7 +192,7 @@ export default class PasswordGeneratorTool extends Component {
 			digits: this.digits,
 			symbols: this.symbols,
 		};
-		// At least one class always stays on; an empty pool cannot generate.
+		// pool must not be empty
 		if (
 			!on &&
 			!Object.keys(state).some(

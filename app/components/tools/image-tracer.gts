@@ -74,13 +74,9 @@ const ACCEPT = 'image/png,image/jpeg,image/webp,image/gif';
 
 const COPIED_MS = 1500;
 
-/** The svg-optimiser tool reads this key on construction. */
 const HANDOFF_KEY = 'svg-optimiser-input';
 
-// The icons name lucide entries that app/lib/tools.ts already references, so
-// scripts/gen-icons.mjs keeps them whatever this file does — it cannot see a
-// name reached through a binding. That rules out a few of the Next app's
-// choices (Spline, Grid3X3, Shuffle), which are approximated here.
+// icons require registry entries
 const PRESETS: { id: string; label: string; icon: string }[] = [
 	{ id: 'default', label: 'Default', icon: 'scale' },
 	{ id: 'posterized1', label: 'Monoposto', icon: 'layers' },
@@ -130,11 +126,7 @@ export function formatSize(bytes: number): string {
 	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/**
- * imagetracerjs writes fixed width/height and no viewBox, so the preview would
- * overflow at scale > 1. Adds the viewBox those two attributes imply, then
- * relaxes them.
- */
+// add responsive viewbox
 export function makeResponsive(svg: string): string {
 	const width = /<svg[^>]*\swidth="([^"]+)"/.exec(svg)?.[1];
 	const height = /<svg[^>]*\sheight="([^"]+)"/.exec(svg)?.[1];
@@ -189,12 +181,7 @@ function extractImageData(file: File): Promise<ImageData> {
 	});
 }
 
-/**
- * The library is fetched as text and wrapped in a Blob worker rather than
- * imported, because tracing a large image runs for seconds and would otherwise
- * hold the main thread. `public/lib/` carries the same 1.2.6 build as the npm
- * package, which stays for the presets and the no-worker path.
- */
+// trace off main thread
 async function createTracerWorker(): Promise<Worker | null> {
 	try {
 		const response = await fetch('/lib/imagetracer_v1.2.6.js');
@@ -350,7 +337,6 @@ export default class ImageTracerTool extends Component {
 	#worker: Worker | null = null;
 	#workerInit: Promise<Worker | null> | null = null;
 	#copiedTimer?: ReturnType<typeof setTimeout>;
-	/** Preset keys with no control of their own — `pal` on Powders, mainly. */
 	#extras: Record<string, unknown> = {};
 
 	willDestroy() {
@@ -369,7 +355,6 @@ export default class ImageTracerTool extends Component {
 		return !this.hasResult || this.tracing;
 	}
 
-	/** A retrace leaves the previous result in place, so its size is stale. */
 	get showSvgSize() {
 		return this.hasResult && !this.tracing;
 	}
@@ -505,8 +490,7 @@ export default class ImageTracerTool extends Component {
 
 		const worker = await this.#getWorker();
 		if (worker) {
-			// A copy, because the transfer detaches the buffer and a retrace
-			// reuses the same ImageData.
+			// transfer detaches buffer
 			const buffer = new Uint8ClampedArray(imgd.data).buffer;
 			worker.postMessage(
 				{
@@ -558,7 +542,7 @@ export default class ImageTracerTool extends Component {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) this.readFile(file);
-		// Choosing the same file twice must still fire a change event.
+		// reset file input
 		input.value = '';
 	};
 
@@ -568,7 +552,7 @@ export default class ImageTracerTool extends Component {
 		if (file) this.readFile(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// prevent file navigation
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -626,7 +610,7 @@ export default class ImageTracerTool extends Component {
 		}
 		if (!presetOptions) return;
 
-		// Only 'default' carries a scale, so the rest keep whatever is set.
+		// preserve selected scale
 		const next = { ...DEFAULT_OPTIONS, scale: this.options.scale };
 		const extras: Record<string, unknown> = {};
 		for (const [key, value] of Object.entries(presetOptions)) {
@@ -733,7 +717,6 @@ export default class ImageTracerTool extends Component {
 								<NdsLoader
 									class="is-stage"
 								/>
-								{{! wording carried over from the Next app }}
 								<span>Tracing
 									image…</span>
 							</div>
@@ -896,7 +879,6 @@ export default class ImageTracerTool extends Component {
 								<label
 									for="dt-trace-colours"
 								>Colours</label>
-								{{! wording carried over from the Next app }}
 								<InfoTip
 									@text="Number of colours used to quantise the image before tracing. Fewer colours = simpler, bolder result."
 								/>
@@ -956,7 +938,6 @@ export default class ImageTracerTool extends Component {
 							/>
 						</div>
 
-						{{! wording carried over from the Next app }}
 						<Stepper
 							@label="Quantise"
 							@tip="Number of k-means iterations for colour clustering. More cycles = more accurate colours, slower trace."
@@ -974,7 +955,6 @@ export default class ImageTracerTool extends Component {
 						<SectionHeader
 							@label="Smoothing"
 						/>
-						{{! wording carried over from the Next app }}
 						<OptionSlider
 							@id="dt-trace-ltres"
 							@label="Paths"
@@ -989,7 +969,6 @@ export default class ImageTracerTool extends Component {
 								"ltres"
 							}}
 						/>
-						{{! wording carried over from the Next app }}
 						<OptionSlider
 							@id="dt-trace-qtres"
 							@label="Curves"
@@ -1004,7 +983,6 @@ export default class ImageTracerTool extends Component {
 								"qtres"
 							}}
 						/>
-						{{! wording carried over from the Next app }}
 						<OptionSlider
 							@id="dt-trace-pathomit"
 							@label="Threshold"
@@ -1036,7 +1014,6 @@ export default class ImageTracerTool extends Component {
 									<span
 									>Stroke
 										width</span>
-									{{! wording carried over from the Next app }}
 									<InfoTip
 										@text="Width of the outline drawn around each traced shape. 0 means no stroke."
 									/>
@@ -1102,7 +1079,6 @@ export default class ImageTracerTool extends Component {
 								>
 									<span
 									>Scale</span>
-									{{! wording carried over from the Next app }}
 									<InfoTip
 										@text="Multiplier for the output SVG size relative to the source image."
 									/>
@@ -1150,7 +1126,6 @@ export default class ImageTracerTool extends Component {
 					</summary>
 					<div class="segmented dt-trace-grid">
 						<div class="dt-trace-panel">
-							{{! wording carried over from the Next app }}
 							<Stepper
 								@label="Blur radius"
 								@tip="Gaussian blur pre-processing. Smooths the image before tracing to reduce noise."
@@ -1162,7 +1137,6 @@ export default class ImageTracerTool extends Component {
 									"blurradius"
 								}}
 							/>
-							{{! wording carried over from the Next app }}
 							<OptionSlider
 								@id="dt-trace-blurdelta"
 								@label="Blur delta"
@@ -1186,7 +1160,6 @@ export default class ImageTracerTool extends Component {
 									<span
 									>Colour
 										sampling</span>
-									{{! wording carried over from the Next app }}
 									<InfoTip
 										@text="How initial colours are sampled. Generated uses k-means, Random picks randomly, Deterministic uses a fixed grid."
 									/>
@@ -1217,7 +1190,6 @@ export default class ImageTracerTool extends Component {
 						</div>
 
 						<div class="dt-trace-panel">
-							{{! wording carried over from the Next app }}
 							<OptionSlider
 								@id="dt-trace-mincolorratio"
 								@label="Min colour ratio"
@@ -1232,7 +1204,6 @@ export default class ImageTracerTool extends Component {
 									"mincolorratio"
 								}}
 							/>
-							{{! wording carried over from the Next app }}
 							<Stepper
 								@label="Coordinate rounding"
 								@tip="Decimal places for SVG path coordinates. Lower = smaller file, less precise."
@@ -1253,7 +1224,6 @@ export default class ImageTracerTool extends Component {
 									<span
 									>Layering
 										mode</span>
-									{{! wording carried over from the Next app }}
 									<InfoTip
 										@text="Sequential stacks colour layers back-to-front. Parallel creates independent layers per colour."
 									/>
@@ -1284,7 +1254,6 @@ export default class ImageTracerTool extends Component {
 						</div>
 
 						<div class="dt-trace-panel">
-							{{! wording carried over from the Next app }}
 							<OptionSlider
 								@id="dt-trace-lcpr"
 								@label="Line control point ratio"
@@ -1299,7 +1268,6 @@ export default class ImageTracerTool extends Component {
 									"lcpr"
 								}}
 							/>
-							{{! wording carried over from the Next app }}
 							<OptionSlider
 								@id="dt-trace-qcpr"
 								@label="Quad control point ratio"
@@ -1334,11 +1302,9 @@ export default class ImageTracerTool extends Component {
 							}}
 						/>
 						<Icon @name="upload" />
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-trace-drop-title"
 						>Drop an image here</span>
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-trace-drop-hint"
 						>or click to select, or paste —

@@ -8,14 +8,6 @@ import {
 
 const KEY = 'colour-notation';
 
-/**
- * The site-wide colour notation preference, replacing the Next app's
- * ColourNotationContext. Every colour tool reads this so a value copied from one
- * matches the next.
- *
- * The Next version held it in memory only and reset on reload; persisting it is
- * the obvious behaviour for a preference and costs one localStorage read.
- */
 export default class ColourNotationService extends Service {
 	@tracked notation: ColourNotation = 'hex';
 
@@ -33,7 +25,6 @@ export default class ColourNotationService extends Service {
 		localStorage.setItem(KEY, notation);
 	};
 
-	/** Format a hex string in the current notation. */
 	format = (hex: string) => formatColour(hex, this.notation);
 }
 

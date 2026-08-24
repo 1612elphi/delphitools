@@ -14,7 +14,6 @@ export interface SortableSignature {
 			index: number;
 			group?: UniqueIdentifier;
 			data?: Data;
-			/** selector resolved inside the element for the drag handle */
 			handle?: string;
 			disabled?: boolean;
 			manager?: DragDropManager;
@@ -22,16 +21,7 @@ export interface SortableSignature {
 	};
 }
 
-/**
- * `@dnd-kit/dom` Sortable as a modifier — the `useSortable` binding the Next
- * layer rows use. Commit the new order from a `dragend` listener on the
- * owning manager; the sortable's optimistic reorder previews mid-drag.
- *
- * Class-based so an index/disabled change WRITES the live entity: Sortable
- * only animates when `index` moves away from its remembered previous index,
- * so recreating the instance per change (what a function modifier does)
- * kills the reorder transition — and destroys the entity mid-drag.
- */
+// preserve entity for transitions
 export default class SortableModifier extends Modifier<SortableSignature> {
 	#sortable: Sortable | null = null;
 	#element: HTMLElement | null = null;

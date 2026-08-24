@@ -1,11 +1,8 @@
 import type { TOC } from '@ember/component/template-only';
 
 /**
- * The NDS loader from delphicomponents (public domain), verbatim: a 3x3 grid
- * whose perimeter cells light in turn. Styled by app/styles/_nds-loader.scss;
- * A size(4) icon by default; `is-stage` is the
- * original 8px cell for stages and overlays. `@mode` takes the space-separated tokens the original documents:
- * reverse, thinking, comet, dot, twin.
+ * verbatim from delphicomponents (public domain); styled in _nds-loader.scss;
+ * size(4) default, is-stage=8px; @mode tokens: reverse thinking comet dot twin
  */
 const NdsLoader: TOC<{
 	Element: HTMLDivElement;

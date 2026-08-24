@@ -1,8 +1,4 @@
-// Styles for the auto-subtitle tool.
-
 @use "../crayon-config" as crayon;
-
-/* ── Auto subtitle ───────────────────────────────────────────────────────── */
 
 .dt-asub {
 	@include crayon.vstack(6);
@@ -13,7 +9,6 @@
 	background: var(--card);
 }
 
-/* Flush action bar: file picker (grows) · Transcribe · Clear. */
 .dt-asub-bar {
 	display: flex;
 	align-items: stretch;
@@ -119,7 +114,6 @@
 	}
 }
 
-/* Settings as a grid of stacked label-over-control cells, hairline-divided. */
 .dt-asub-settings {
 	display: grid;
 	border-bottom: 2px solid var(--border);
@@ -248,7 +242,6 @@
 	min-width: crayon.size(16);
 }
 
-/* Language combobox: flush cell trigger, Command panel, flag tiles. */
 .dt-lang-combo-trigger {
 	@include crayon.hstack(2);
 
@@ -317,8 +310,7 @@
 	}
 }
 
-/* Compound selector: .dt-command-item in app.scss is emitted after this
-   partial and sets flex-direction: row through hstack. */
+/* app.scss .dt-command-item sets flex-direction row */
 .dt-command-item.dt-lang-combo-tile {
 	flex-direction: column;
 	align-items: center;
@@ -437,7 +429,6 @@
 	}
 }
 
-/* Cue grid: number gutter · start · end · text, hairline rows, sticky head. */
 .dt-asub-grid {
 	min-height: crayon.size(80);
 	max-height: crayon.size(160);
@@ -523,11 +514,7 @@
 	font-variant-numeric: tabular-nums;
 }
 
-/* Experimental confirmation dialog: sticker art, the warning, cancel/confirm.
-   The flex layout is scoped to [open]: a display value on the dialog itself
-   overrides the UA's dialog:not([open]) { display: none }. Open and close
-   zoom+fade through @starting-style and discrete display/overlay
-   transitions, so the close animation needs no JS. */
+/* @starting-style + allow-discrete: close animation without js */
 .dt-asub-warn {
 	width: min(28rem, calc(100vw - #{crayon.size(8)}));
 	max-height: 85dvh;
@@ -578,7 +565,6 @@
 	}
 }
 
-/* Padded body over a flush footer row, the Substrata modal shape. */
 .dt-asub-warn-body {
 	@include crayon.vstack(4);
 
@@ -642,7 +628,6 @@
 	}
 }
 
-/* Empty state, the Background Remover's drop zone shape. */
 .dt-asub-drop {
 	display: flex;
 	min-height: crayon.size(72);
@@ -686,8 +671,7 @@
 	font-size: crayon.font-size("sm");
 }
 
-/* Bottom-edge progress: determinate while weights download, sliding while
-   the model runs (no progress events during inference). */
+/* determinate while weights download; indeterminate during inference */
 .dt-asub-progress {
 	display: block;
 	height: crayon.size(2);

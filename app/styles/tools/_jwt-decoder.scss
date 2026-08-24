@@ -1,5 +1,3 @@
-// Styles for the jwt-decoder tool.
-
 @use "../crayon-config" as crayon;
 
 .dt-jwt {
@@ -10,7 +8,6 @@
 	border: 2px solid var(--border);
 }
 
-/* Flush action bar: tool identity left, Clear right. */
 .dt-jwt-bar {
 	display: flex;
 	min-height: crayon.size(10);
@@ -85,7 +82,6 @@
 	}
 }
 
-/* The token field: a stacked label-over-control cell, always visible. */
 .dt-jwt-field {
 	display: flex;
 	flex-direction: column;
@@ -116,7 +112,6 @@
 	}
 }
 
-/* Whole-token parse failure: the segment count shown as data. */
 .dt-jwt-banner {
 	display: flex;
 	align-items: baseline;
@@ -140,7 +135,6 @@
 	font-variant-numeric: tabular-nums;
 }
 
-/* Decode summary as a grid of stacked label-over-value cells. */
 .dt-jwt-settings {
 	display: grid;
 	border-bottom: 1px solid var(--border);
@@ -226,8 +220,7 @@
 	text-transform: uppercase;
 }
 
-/* Header / payload / signature panes; the signature spans both columns
- * because the segment is shown unbroken. */
+/* signature spans full width, shown unbroken */
 .dt-jwt-panes {
 	display: grid;
 	grid-template-columns: 1fr;

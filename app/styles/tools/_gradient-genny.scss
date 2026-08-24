@@ -1,14 +1,5 @@
-// Styles for the gradient-genny tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
 
-/* ── Gradient generator ──────────────────────────────────────────────────── */
-
-/* The root gap is the mode-bar-to-frame spacing; the export panel below adds
-   the rest of the wider gap that separates it from the frame. */
 .dt-gradient {
 	@include crayon.vstack(3);
 }
@@ -41,8 +32,6 @@
 	border: 2px solid var(--border);
 }
 
-/* ── Preview and its overlay dots ────────────────────────────────────────── */
-
 .dt-gradient-preview {
 	position: relative;
 	overflow: hidden;
@@ -56,7 +45,7 @@
 	object-fit: cover;
 }
 
-/* Inset so a dot's tooltip has room inside the preview. */
+/* inset for dot tooltip */
 .dt-gradient-dots {
 	position: absolute;
 	inset: crayon.size(3);
@@ -184,8 +173,6 @@
 	transform: translateX(-50%);
 }
 
-/* ── Control blocks ──────────────────────────────────────────────────────── */
-
 .dt-gradient-block {
 	@include crayon.vstack(3);
 
@@ -258,8 +245,6 @@
 		}
 	}
 }
-
-/* ── Stop / point rows ───────────────────────────────────────────────────── */
 
 .dt-gradient-rows {
 	margin: 0 crayon.size(-4);
@@ -441,8 +426,6 @@
 	white-space: nowrap;
 }
 
-/* ── Corner grid ─────────────────────────────────────────────────────────── */
-
 .dt-gradient-corners {
 	display: grid;
 	margin: 0 crayon.size(-4);
@@ -495,8 +478,6 @@
 	padding: crayon.size(1) 0;
 	border-left: 0;
 }
-
-/* ── Angle dial, sliders and preset grids ────────────────────────────────── */
 
 .dt-gradient-number {
 	@include crayon.hstack(2);
@@ -608,8 +589,6 @@
 		font-weight: crayon.font-weight("bold");
 	}
 }
-
-/* ── Export panel ────────────────────────────────────────────────────────── */
 
 .dt-gradient-export {
 	display: grid;

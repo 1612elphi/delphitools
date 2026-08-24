@@ -1,15 +1,6 @@
-// Styles for the colorblind-sim tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
 
-/* ── Colourblindness simulator ───────────────────────────────────────────── */
-
-// Green and amber have no theme token, so the tailwind scale stands in, at the
-// steps the Next app used either side of the theme. Red does have one
-// (--destructive), but the three badges have to read as one set.
+// no green/amber theme token
 $none: crayon.color("green-500");
 $partial: crayon.color("amber-500");
 $full: crayon.color("red-500");
@@ -17,8 +8,6 @@ $full: crayon.color("red-500");
 .dt-cbs-frame {
 	border: 2px solid var(--border);
 }
-
-/* Mode toggle */
 
 .segmented.dt-cbs-modes {
 	grid-template-columns: repeat(2, 1fr);
@@ -55,8 +44,6 @@ $full: crayon.color("red-500");
 	}
 }
 
-/* Shared block furniture */
-
 .dt-cbs-label {
 	display: block;
 	font-weight: crayon.font-weight("bold");
@@ -65,8 +52,6 @@ $full: crayon.color("red-500");
 .dt-cbs-head {
 	padding: crayon.size(4) crayon.size(4) crayon.size(3);
 }
-
-/* Colour picker row */
 
 .dt-cbs-pick {
 	padding: crayon.size(4) 0;
@@ -78,14 +63,13 @@ $full: crayon.color("red-500");
 	}
 }
 
-/* Bleeds to the panel edges, as a flush table row. */
 .dt-cbs-field {
 	display: flex;
 	align-items: stretch;
 	border-block: 1px solid var(--border);
 }
 
-/* The picker input covers the whole cell so anywhere in the block opens it. */
+// input covers whole cell
 .dt-cbs-picker {
 	position: relative;
 	display: block;
@@ -125,8 +109,6 @@ $full: crayon.color("red-500");
 		color: var(--muted-foreground);
 	}
 }
-
-/* Vision-type table (colour mode) */
 
 .dt-cbs-types {
 	border-bottom: 2px solid var(--border);
@@ -268,8 +250,6 @@ $full: crayon.color("red-500");
 	}
 }
 
-/* Two-up comparison, shared by both modes */
-
 .dt-cbs-compare {
 	display: grid;
 	border-top: 1px solid var(--border);
@@ -311,14 +291,11 @@ $full: crayon.color("red-500");
 	text-align: center;
 }
 
-/* Description of the selected vision type */
-
 .dt-cbs-desc {
 	padding: crayon.size(4);
 	border-top: 1px solid var(--border);
 
-	/* Image mode: the block above already rules, and the comparison below
-	   draws its own top border. */
+	// neighbours draw own borders
 	&.is-shaded {
 		border-top: 0;
 		background: color-mix(in oklch, var(--muted) 30%, transparent);
@@ -336,8 +313,6 @@ $full: crayon.color("red-500");
 	color: var(--muted-foreground);
 	font-size: crayon.font-size("sm");
 }
-
-/* Image mode */
 
 .dt-cbs-drop {
 	display: block;
@@ -478,8 +453,6 @@ $full: crayon.color("red-500");
 	font-size: crayon.font-size("sm");
 }
 
-/* Lightbox */
-
 .dt-cbs-lightbox {
 	width: fit-content;
 	max-width: 95vw;
@@ -506,8 +479,6 @@ $full: crayon.color("red-500");
 		max-height: 90dvh;
 	}
 }
-
-/* About */
 
 .dt-cbs-about {
 	margin-top: crayon.size(6);

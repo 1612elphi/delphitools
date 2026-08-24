@@ -18,7 +18,6 @@ export function isFontFile(fileName: string): boolean {
 	return FONT_EXTENSION.test(fileName);
 }
 
-/** The file name without its extension, which is all the tool has for a name. */
 export function baseName(fileName: string): string {
 	return fileName.replace(FONT_EXTENSION, '');
 }
@@ -27,7 +26,6 @@ export function postScriptName(fileName: string): string {
 	return baseName(fileName).replace(/\s+/g, '-');
 }
 
-/** The `format()` hint that goes with the file's extension. */
 export function fontFormat(fileName: string): string {
 	const name = fileName.toLowerCase();
 	if (name.endsWith('.woff2')) return 'woff2';
@@ -36,7 +34,6 @@ export function fontFormat(fileName: string): string {
 	return 'truetype';
 }
 
-/** The @font-face block shown under CSS Usage, carried over from the Next app. */
 export function cssUsage(fileName: string): string {
 	const name = baseName(fileName);
 	return `@font-face {
@@ -56,7 +53,6 @@ const ACCEPT = '.ttf,.otf,.woff,.woff2';
 const PREVIEW_SIZES = [12, 14, 16, 18, 24, 32, 48, 64, 72, 96];
 const WATERFALL_SIZES = [12, 14, 16, 18, 24, 32, 48, 64];
 
-// Wording carried over from the Next app, all of it.
 const SAMPLE_TEXTS = [
 	'The quick brown fox jumps over the lazy dog',
 	'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
@@ -76,7 +72,6 @@ const LOAD_FAILED =
 const METADATA_NOTE =
 	'Note: Full font metadata extraction requires specialised font parsing libraries. This tool provides basic font preview functionality.';
 
-/** Distinguishes one loaded font from the next; never user input. */
 let familySeq = 0;
 
 export default class FontExplorerTool extends Component {
@@ -88,7 +83,7 @@ export default class FontExplorerTool extends Component {
 
 	#objectUrl: string | null = null;
 	#fontFace: FontFace | null = null;
-	/** Loads are async, so a stale one must not install over a newer font. */
+	// ignore stale font loads
 	#runId = 0;
 
 	willDestroy() {
@@ -147,7 +142,6 @@ export default class FontExplorerTool extends Component {
 	get sampleRows() {
 		return SAMPLE_TEXTS.map((text, index) => ({
 			text,
-			// The pangram and the uppercase run lead, so they are set larger.
 			style: this.#fontStyle(index < 2 ? 24 : 18),
 		}));
 	}
@@ -172,7 +166,6 @@ export default class FontExplorerTool extends Component {
 		);
 	}
 
-	/** Revokes the object URL and takes the face back out of document.fonts. */
 	#release() {
 		if (this.#objectUrl) URL.revokeObjectURL(this.#objectUrl);
 		this.#objectUrl = null;
@@ -210,8 +203,6 @@ export default class FontExplorerTool extends Component {
 		} catch (loadError) {
 			if (runId !== this.#runId) return;
 			console.error('Font load failed:', loadError);
-			// The Next app left fontUrl set here, which hid the drop zone
-			// behind an error with no way back. Everything is reset instead.
 			this.#release();
 			this.fileName = '';
 			this.error = LOAD_FAILED;
@@ -222,7 +213,7 @@ export default class FontExplorerTool extends Component {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) void this.readFile(file);
-		// Reset, so choosing the same file twice still fires a change event.
+		// allow file reselection
 		input.value = '';
 	};
 
@@ -233,7 +224,7 @@ export default class FontExplorerTool extends Component {
 		else this.error = NOT_A_FONT;
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// prevent dropped-file navigation
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};

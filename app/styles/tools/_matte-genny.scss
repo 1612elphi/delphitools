@@ -1,11 +1,4 @@
-// Styles for the matte-genny tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Matte generator ─────────────────────────────────────────────────────── */
 
 .dt-matte-frame {
 	border: 2px solid var(--border);

@@ -10,7 +10,6 @@ export interface DraggableSignature {
 		Named: {
 			id: string | number;
 			data?: Data;
-			/** selector resolved inside the element for the drag handle */
 			handle?: string;
 			disabled?: boolean;
 			manager?: DragDropManager;
@@ -18,11 +17,6 @@ export interface DraggableSignature {
 	};
 }
 
-/**
- * `@dnd-kit/dom` Draggable as a modifier — the `useDraggable` binding the
- * Next components use, minus React. Recreated whenever a named arg changes;
- * cheap, and the entity re-registers itself with the manager.
- */
 export default modifier<DraggableSignature>((element, _positional, named) => {
 	const handle = named.handle
 		? (element.querySelector(named.handle) ?? undefined)

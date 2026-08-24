@@ -16,12 +16,6 @@ import {
 } from 'delphitools-v2/lib/substrata/toast';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 
-/**
- * Top-bar status slot: shows the undo/redo buttons, but when a toast fires it
- * shows a transient status pill to their left, then hides it again. Reduced
- * motion respected via a scss media guard (no motion/react in this app).
- */
-
 function toastIcon(id: ToastId): string {
 	switch (id) {
 		case 'canvas-fit':
@@ -84,9 +78,7 @@ export default class ToastSlot extends Component {
 		this.redoable.unsubscribe();
 	}
 
-	// A single-item array keyed by `seq`: re-firing the same toast id bumps
-	// `seq`, so `{{#each}}` tears down and recreates the pill (replaying the
-	// scss entrance animation) exactly like the source's `key={toast-${seq}}`.
+	// key replays toast animation
 	get toastList() {
 		const t = this.toastState.current;
 		return t ? [t] : [];

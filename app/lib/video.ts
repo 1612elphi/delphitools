@@ -7,10 +7,8 @@ const DEFAULT_FPS = 30;
 const NOT_A_VIDEO = 'Only video files are supported.';
 const LOAD_FAILED = 'Failed to load video.';
 
-/** Resolves once the frame at `time` is current. */
 export function seekTo(video: HTMLVideoElement, time: number): Promise<void> {
-	// A seek to the current position may not fire seeked (HTML spec allows
-	// skipping it), which would park a seek loop on its first frame.
+	// current seeks skip seeked
 	if (Math.abs(video.currentTime - time) < 0.001 && video.readyState >= 2)
 		return Promise.resolve();
 	return new Promise((resolve) => {
@@ -21,12 +19,7 @@ export function seekTo(video: HTMLVideoElement, time: number): Promise<void> {
 	});
 }
 
-/**
- * MediaRecorder output (screen and voice recordings) reports
- * `duration: Infinity` until the file has been scanned — Chromium bug
- * 642012. Seeking far past the end forces the scan; the real value arrives
- * with durationchange.
- */
+/** chromium 642012 workaround */
 export function resolveDuration(video: HTMLVideoElement): Promise<number> {
 	if (Number.isFinite(video.duration))
 		return Promise.resolve(video.duration);
@@ -44,23 +37,13 @@ export function resolveDuration(video: HTMLVideoElement): Promise<number> {
 }
 
 interface VideoIntakeHooks {
-	/** after a new file passes the type check, before its URL is set */
 	onLoad?: (file: File) => void;
-	/** once the metadata (finite duration, dimensions) is in */
 	onReady?: (video: HTMLVideoElement) => void;
-	/** read the container (mediabunny, lazy) into `probe` and `fps` after each load */
 	probe?: boolean;
-	/** the probe's answer for the current file, null when unreadable */
 	onProbe?: (probe: VideoProbe | null) => void;
-	/** a false answer makes load/drop/paste ignore the file, e.g. mid-job */
 	canLoad?: () => boolean;
 }
 
-/**
- * The file-intake plumbing every video tool repeats: type check, object-URL
- * lifecycle, element registration, metadata resolution, decode errors.
- * Tracked, so tool templates read its fields directly.
- */
 export class VideoIntake {
 	@tracked url: string | null = null;
 	@tracked fileName = '';
@@ -68,11 +51,8 @@ export class VideoIntake {
 	@tracked width = 0;
 	@tracked height = 0;
 	@tracked error = '';
-	/** container frame rate when probed, else an assumed 30 */
 	@tracked fps = DEFAULT_FPS;
-	/** the container probe for the current file; null until it answers or when unreadable */
 	@tracked probe: VideoProbe | null = null;
-	/** mirrors the element's paused state for the transport */
 	@tracked playing = false;
 
 	video: HTMLVideoElement | null = null;
@@ -84,7 +64,6 @@ export class VideoIntake {
 		this.#hooks = hooks;
 	}
 
-	/** stripped of its extension; empty until a file is loaded */
 	get baseName() {
 		return this.fileName.replace(/\.[^.]+$/, '');
 	}
@@ -127,7 +106,7 @@ export class VideoIntake {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) this.load(file);
-		// Choosing the same file twice must still fire a change event.
+		// reset input for reselect
 		input.value = '';
 	};
 
@@ -137,7 +116,7 @@ export class VideoIntake {
 		if (file) this.load(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// prevent dropped-file navigation
 	dragOver = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -156,7 +135,6 @@ export class VideoIntake {
 		this.error = LOAD_FAILED;
 	};
 
-	/** revokes the object URL; the tool's willDestroy and clear both route here */
 	release() {
 		if (this.url) URL.revokeObjectURL(this.url);
 		this.url = null;
@@ -173,7 +151,6 @@ export class VideoIntake {
 		this.error = '';
 	};
 
-	// The laserdisc transport every video tool shows.
 	togglePlayback = () => {
 		const video = this.video;
 		if (!video) return;
@@ -181,7 +158,6 @@ export class VideoIntake {
 		else video.pause();
 	};
 
-	/** bind to the element's play and pause events */
 	syncPlaying = (event: Event) => {
 		this.playing = !(event.target as HTMLVideoElement).paused;
 	};

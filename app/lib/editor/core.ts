@@ -1,5 +1,3 @@
-// Everything the text-editor component needs at runtime, behind one dynamic
-// import so the whole ProseMirror stack stays out of the tool's initial chunk.
 export { EditorState, TextSelection } from 'prosemirror-state';
 export { EditorView } from 'prosemirror-view';
 export { setBlockType, toggleMark } from 'prosemirror-commands';

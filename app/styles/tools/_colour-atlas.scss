@@ -1,8 +1,4 @@
-// Styles for the colour-atlas tool.
-
 @use "../crayon-config" as crayon;
-
-/* ── Colour atlas ────────────────────────────────────────────────────────── */
 
 .dt-atlas {
 	border: 2px solid var(--border);
@@ -14,7 +10,7 @@
 	border-bottom: 2px solid var(--border);
 }
 
-/* The picker input covers the whole cell so anywhere in the block opens it. */
+// input covers whole cell
 .dt-atlas-swatch {
 	position: relative;
 	display: block;
@@ -64,8 +60,6 @@
 	white-space: nowrap;
 }
 
-/* ── Two-column interrogation area ───────────────────────────────────────── */
-
 .dt-atlas-cols {
 	display: grid;
 	gap: 1px;
@@ -89,8 +83,6 @@
 	letter-spacing: crayon.tracking("wide");
 	text-transform: uppercase;
 }
-
-/* ── Notations ───────────────────────────────────────────────────────────── */
 
 .dt-atlas-notation {
 	display: flex;
@@ -144,8 +136,6 @@
 	}
 }
 
-/* ── Gamut ───────────────────────────────────────────────────────────────── */
-
 .dt-atlas-hue {
 	position: relative;
 	height: crayon.size(3);
@@ -193,8 +183,6 @@
 	font-size: crayon.font-size("xs");
 }
 
-/* ── Contrast ────────────────────────────────────────────────────────────── */
-
 .dt-atlas-contrast {
 	display: flex;
 	align-items: center;
@@ -226,8 +214,6 @@
 	font-size: crayon.font-size("xs");
 	white-space: nowrap;
 }
-
-/* ── Harmony and vision rows ─────────────────────────────────────────────── */
 
 .dt-atlas-section {
 	border-top: 2px solid var(--border);
@@ -279,8 +265,6 @@
 	white-space: nowrap;
 }
 
-/* ── Tint and shade strips ───────────────────────────────────────────────── */
-
 .dt-atlas-strip {
 	display: flex;
 	border-top: 1px solid var(--border);
@@ -291,8 +275,6 @@
 		height: crayon.size(8);
 	}
 }
-
-/* ── Open in ─────────────────────────────────────────────────────────────── */
 
 .dt-atlas-open {
 	display: grid;

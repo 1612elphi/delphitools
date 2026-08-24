@@ -14,25 +14,17 @@ import {
 
 const ZTRIG_HINT = '-2π to 2π, -4 to 4';
 
-/** Narrowest and widest window a wheel zoom will settle on, in graph units. */
 const MIN_RANGE = 1;
 const MAX_RANGE = 10000;
 
 const GRAPH_HEIGHT = 400;
 
-/** Used until the ResizeObserver reports the real width. */
 const DEFAULT_WIDTH = 800;
 
 const MIN_PIXELS_PER_LINE = 30;
 
-/** One sample per device pixel column, up to here; a pan redraws every frame. */
 const MAX_SAMPLES = 2000;
 
-/**
- * How far past the viewport a sample may sit before its pixel row is clamped.
- * Samples are one pixel column apart, so a clamped neighbour moves the visible
- * edge crossing by well under a pixel.
- */
 const OVERDRAW = 4;
 
 const MAX_TRACE_ROWS = 10;
@@ -63,8 +55,7 @@ const SYNTAX_EXAMPLES = [
 	'tan(x)',
 ];
 
-// mathjs reads log as the natural log; every calculator and textbook reads it
-// as base 10.
+// use base-10 log
 const MATH_SCOPE = { log: Math.log10, ln: Math.log };
 
 interface FunctionEntry {
@@ -84,8 +75,7 @@ interface Bounds {
 
 type Evaluator = (x: number) => number;
 
-// mathjs is ~700 KB and nothing on first paint needs it, so the plot surface
-// renders empty until the import lands.
+// defer 700kb mathjs
 let compileExpression: typeof import('mathjs').compile | null = null;
 let mathjsLoad: Promise<void> | null = null;
 
@@ -101,8 +91,6 @@ function createEvaluator(expression: string): Evaluator | null {
 
 	try {
 		const compiled = compileExpression(expression);
-		// mathjs also returns complex numbers, units and matrices, none of
-		// which can be plotted.
 		if (
 			typeof compiled.evaluate({ x: 1, ...MATH_SCOPE }) !==
 			'number'
@@ -127,7 +115,6 @@ function createEvaluator(expression: string): Evaluator | null {
 	}
 }
 
-/** Rounds a range down to a tick interval of 1, 2 or 5 times a power of ten. */
 function niceStep(range: number): number {
 	const roughStep = range / 10;
 	const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
@@ -139,10 +126,8 @@ function niceStep(range: number): number {
 	return 10 * magnitude;
 }
 
-/** The tick interval, widened until the lines are at least 30px apart. */
 function adaptiveStep(range: number, pixels: number): number {
-	// A reversed or empty range makes niceStep return 0, and the widening loop
-	// below would then never terminate.
+	// prevent zero-step loop
 	if (!(range > 0) || !(pixels > 0)) return 1;
 	const minStep = (range / pixels) * MIN_PIXELS_PER_LINE;
 	let step = niceStep(range);
@@ -182,12 +167,6 @@ interface CurvePaths {
 	region: string;
 }
 
-/**
- * Samples the function across the visible x range and returns the curve as SVG
- * path data, plus the region between it and `fillEdge` when one is given.
- * A run ends wherever the function is undefined or crosses an asymptote, so
- * neither the curve nor the shading spans the break.
- */
 function plotPaths(
 	evaluate: Evaluator,
 	bounds: Bounds,
@@ -240,8 +219,7 @@ function plotPaths(
 			previous = NaN;
 			continue;
 		}
-		// Opposite signs across one pixel column, several viewport heights
-		// apart: a vertical asymptote rather than a steep slope.
+		// split vertical asymptotes
 		if (previous * y < 0 && Math.abs(y - previous) > spanY) flush();
 
 		const px = fraction * width;
@@ -359,10 +337,6 @@ export default class GraphCalcTool extends Component {
 		return this.functions.length > 1;
 	}
 
-	/**
-	 * Compilation happens here and nowhere else: this reads no bound, so a pan
-	 * or a zoom reuses the evaluators rather than recompiling every expression.
-	 */
 	@cached
 	get rows() {
 		return this.functions.map((entry, index) => {
@@ -422,8 +396,6 @@ export default class GraphCalcTool extends Component {
 	get xTicks() {
 		const step = this.xStep;
 		const labelled = this.showXLabels;
-		// Sits just under the x axis, or against the viewport edge once the
-		// axis has been panned out of sight.
 		const labelY = clamp(this.#toPy(0) + 16, 14, GRAPH_HEIGHT - 4);
 		return ticksIn(this.xMin, this.xMax, step).map((value) => ({
 			key: value,
@@ -452,7 +424,6 @@ export default class GraphCalcTool extends Component {
 		}));
 	}
 
-	/** The grid toggle hides the labels with it, as the Next app's does. */
 	get showTicks() {
 		return this.showGrid && this.showNumbers;
 	}
@@ -476,9 +447,6 @@ export default class GraphCalcTool extends Component {
 
 			const operator = entry.operator;
 			const strict = operator === '<' || operator === '>';
-			// The shaded half-plane closes against the bottom of the
-			// viewport for the two "less than" forms and the top for the
-			// two "greater than" forms.
 			const fillEdge =
 				operator === '='
 					? null
@@ -507,10 +475,7 @@ export default class GraphCalcTool extends Component {
 		});
 	}
 
-	// The ResizeObserver keeps the viewBox at one user unit per CSS pixel, so
-	// stroke widths and labels stay the size the stylesheet asks for. The wheel
-	// listener is native because {{on}} attaches passive listeners, and a
-	// passive listener cannot preventDefault the page scroll.
+	// ember on is passive
 	registerSurface = modifier((element: SVGSVGElement) => {
 		const observer = new ResizeObserver(([entry]) => {
 			const width = entry?.contentRect.width ?? 0;
@@ -693,7 +658,6 @@ export default class GraphCalcTool extends Component {
 	zoomDecimal = () => this.setView(-1, 1, -1, 1);
 	resetView = () => this.setView(-10, 10, -10, 10);
 
-	/** Matches the y range to the x range at the plot's own aspect ratio. */
 	zoomSquare = () => {
 		const yRange =
 			((this.xMax - this.xMin) / this.plotWidth) *

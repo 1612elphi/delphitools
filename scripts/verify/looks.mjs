@@ -1,9 +1,4 @@
-// LOOKS module (substrata): the film-sim / LUT gallery populates with live
-// thumbnails, picking a card writes the one film-sim filter, and the intensity
-// slider follows. Needs `npm start` on :3000.
-//
-// Regression guard: the module was registered with an empty ModuleStub body
-// through the Ember port, so the panel opened blank.
+// needs `npm start` on :3000
 import { BASE, check, finish, launch, openModule, sleep } from './harness.mjs';
 
 const { browser, page } = await launch({ viewport: { width: 1500, height: 950 } });
@@ -11,7 +6,6 @@ await page.goto(`${BASE}/editor`, { waitUntil: 'networkidle2' });
 await page.waitForFunction(() => window.__substrata, { timeout: 25000 });
 await sleep(600);
 
-// a raster layer for the gallery to grade — looks apply to pixels only
 await page.evaluate(() =>
   window.__substrata.addRaster(
     320,
@@ -26,7 +20,6 @@ await page.evaluate(() =>
 await sleep(600);
 
 check("omnibar Looks trigger found", await openModule(page, "Looks"));
-// LUT strips load async; the epoch subscription redraws each thumb as it lands
 await sleep(2000);
 
 const state = await page.evaluate(() => {
@@ -60,7 +53,6 @@ check("the look is the one film-sim filter", JSON.stringify(picked.filters) === 
 check("header sub names the look", !!picked.sub, picked.sub ?? "(empty)");
 check("slider enables once a look is set", picked.disabled === false);
 
-// intensity: input opens the transient, change settles it (one undo step)
 await page.evaluate(() => {
   const s = document.querySelector(".sub-look-intensity .sub-slider");
   s.value = "40";

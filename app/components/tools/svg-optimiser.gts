@@ -8,11 +8,7 @@ import { downloadText } from 'delphitools-v2/lib/download';
 import type Owner from '@ember/owner';
 import type { Config } from 'svgo/browser';
 
-/**
- * svgo is roughly 200 kB of parser and plugins, and this is the only tool that
- * needs it, so it is imported on first use rather than at module scope — the
- * same reason lib/bg-removal.ts defers transformers.js.
- */
+/* ~200 kb deferred; same reason bg-removal defers transformers.js */
 async function loadOptimize() {
 	const { optimize } = await import('svgo/browser');
 	return optimize;
@@ -29,12 +25,7 @@ const SVGO_CONFIG: Config = {
 	],
 };
 
-/**
- * The root's width/height go so the SVG sizes to its container, which is
- * what svgo's removeDimensions did until it started stripping nested
- * <svg> elements too (svgo/svgo#2217, delphitools #46). Root only, and
- * only when a viewBox is there to size it.
- */
+/* root only; svgo/svgo#2217 strips nested too */
 export function stripRootDimensions(svg: string): string {
 	const doc = new DOMParser().parseFromString(svg, 'image/svg+xml');
 	const root = doc.documentElement;
@@ -49,7 +40,7 @@ const stripped = (result: { data: string }) => ({
 	data: stripRootDimensions(result.data),
 });
 
-/** The image tracer hands its result over through this key. */
+/** image tracer writes here before navigate */
 const HANDOFF_KEY = 'svg-optimiser-input';
 const HANDOFF_NAME = 'traced.svg';
 
@@ -69,7 +60,7 @@ export function formatBytes(bytes: number): string {
 	return `${(bytes / 1024).toFixed(1)} KB`;
 }
 
-/** Sizes are UTF-8 byte counts, which is what the file on disk would weigh. */
+/** byte counts, utf-8 */
 export function statsFor(original: string, optimised: string): OptimiseStats {
 	const before = new Blob([original]).size;
 	const after = new Blob([optimised]).size;
@@ -78,19 +69,16 @@ export function statsFor(original: string, optimised: string): OptimiseStats {
 		original: before,
 		optimised: after,
 		saved,
-		// An empty input reaches here through a zero-byte .svg file, and the
-		// Next app reported NaN% for it.
+		// zero-byte input → NaN% guard
 		percent: before ? Math.round((saved / before) * 100) : 0,
 	};
 }
 
-/** Whether textarea contents look enough like SVG to be worth optimising. */
 export function looksLikeSvg(text: string): boolean {
 	const trimmed = text.trim();
 	return trimmed.startsWith('<svg') || trimmed.startsWith('<?xml');
 }
 
-/** Optimise SVG markup and return size stats, or null if it is not SVG. */
 export async function optimiseSvg(
 	original: string,
 ): Promise<OptimiseStats | null> {
@@ -113,7 +101,7 @@ export default class SvgOptimiserTool extends Component {
 	@tracked stats: OptimiseStats | null = null;
 
 	#copiedTimer?: ReturnType<typeof setTimeout>;
-	/** Runs are async, so a stale one must not overwrite a newer result. */
+	/** stale async runs must not clobber newer */
 	#runId = 0;
 
 	constructor(owner: Owner, args: object) {
@@ -150,10 +138,7 @@ export default class SvgOptimiserTool extends Component {
 		return formatBytes(this.stats?.saved ?? 0);
 	}
 
-	/**
-	 * The preview goes through a blob URL and an <img>, so user-supplied SVG
-	 * cannot run scripts or reach cross-origin from the main document.
-	 */
+	/** blob URL + img: no scripts, no cross-origin from main */
 	#setPreview(svg: string) {
 		if (this.previewUrl) URL.revokeObjectURL(this.previewUrl);
 		this.previewUrl = svg
@@ -203,7 +188,7 @@ export default class SvgOptimiserTool extends Component {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) this.readFile(file);
-		// Reset, so choosing the same file twice still fires a change event.
+		// reset; same file re-fires change
 		input.value = '';
 	};
 
@@ -213,7 +198,7 @@ export default class SvgOptimiserTool extends Component {
 		if (file?.type === 'image/svg+xml') this.readFile(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// preventDefault stops navigate-to-file
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -265,7 +250,6 @@ export default class SvgOptimiserTool extends Component {
 					{{on "change" this.handleFileSelect}}
 				/>
 				<Icon @name="upload" />
-				{{! wording carried over from the Next app }}
 				<span class="dt-svgo-drop-title">Drop SVG file
 					here</span>
 				<span class="dt-svgo-drop-hint">or click to
@@ -274,7 +258,6 @@ export default class SvgOptimiserTool extends Component {
 
 			<div class="dt-svgo-section">
 				<div class="dt-svgo-bar">
-					{{! wording carried over from the Next app }}
 					<label for="dt-svgo-input">Input SVG</label>
 					{{#if this.input}}
 						<button
@@ -290,7 +273,6 @@ export default class SvgOptimiserTool extends Component {
 						</button>
 					{{/if}}
 				</div>
-				{{! wording carried over from the Next app }}
 				<textarea
 					id="dt-svgo-input"
 					class="dt-svgo-code"
@@ -303,12 +285,10 @@ export default class SvgOptimiserTool extends Component {
 			{{#if this.stats}}
 				<div class="dt-svgo-section">
 					<div class="dt-svgo-bar">
-						{{! wording carried over from the Next app }}
 						<span>Results</span>
 					</div>
 					<div class="dt-svgo-stats">
 						<div class="dt-svgo-stat">
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-svgo-stat-label"
 							>Original</span>
@@ -317,7 +297,6 @@ export default class SvgOptimiserTool extends Component {
 							>{{this.originalLabel}}</span>
 						</div>
 						<div class="dt-svgo-stat">
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-svgo-stat-label"
 							>Optimised</span>
@@ -326,7 +305,6 @@ export default class SvgOptimiserTool extends Component {
 							>{{this.optimisedLabel}}</span>
 						</div>
 						<div class="dt-svgo-stat">
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-svgo-stat-label"
 							>Saved</span>
@@ -335,7 +313,6 @@ export default class SvgOptimiserTool extends Component {
 							>{{this.savedLabel}}</span>
 						</div>
 						<div class="dt-svgo-stat">
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-svgo-stat-label"
 							>Reduction</span>
@@ -350,7 +327,6 @@ export default class SvgOptimiserTool extends Component {
 			{{#if this.output}}
 				<div class="dt-svgo-section">
 					<div class="dt-svgo-bar">
-						{{! wording carried over from the Next app }}
 						<label
 							for="dt-svgo-output"
 						>Optimised SVG</label>
@@ -365,7 +341,6 @@ export default class SvgOptimiserTool extends Component {
 
 				<div class="dt-svgo-section">
 					<div class="dt-svgo-bar">
-						{{! wording carried over from the Next app }}
 						<span>Preview</span>
 					</div>
 					<div class="dt-svgo-preview">
@@ -400,7 +375,6 @@ export default class SvgOptimiserTool extends Component {
 								"copy"
 							}}
 						/>
-						{{! wording carried over from the Next app }}
 						{{if
 							this.copied
 							"Copied!"

@@ -1,8 +1,5 @@
-// Headless verification — touch-gesture resolution drop (delete after use).
-// Emulates a DPR-2 touch device via CDP, drives a real touch drag, and
-// asserts the fabric backing store drops to 1× mid-gesture, restores to
-// retina after release, and never drops on a plain tap.
-// Needs `npm run dev` on :3000.
+// touch-gesture backing-store drop: dpr-2 drag falls to 1×, restores on release
+// needs npm run dev on :3000
 import puppeteer from "puppeteer-core";
 
 const URL = process.env.EDITOR_URL ?? "http://localhost:3000/editor";
@@ -37,8 +34,7 @@ let s = await state();
 check("setup: touch device emulated", `maxTouchPoints=${s.touchPoints}`, s.touchPoints > 1);
 check("rest: retina backing (css × 2)", `${s.backing} vs ${s.css}×2`, s.backing === s.css * 2);
 
-// touch drag across the canvas: expect 1× mid-gesture
-// (top-left quadrant — the empty-scene starter card owns the viewport centre)
+// touch drag mid-gesture; top-left quadrant (starter card owns the centre)
 const cx = 380;
 const cy = 260;
 const touch = (type, x, y) =>
@@ -58,7 +54,7 @@ await sleep(450); // 180ms grace + render
 s = await state();
 check("after release: retina restored", `${s.backing} vs ${s.css}×2`, s.backing === s.css * 2);
 
-// plain tap: no movement → never drops
+// plain tap: no movement, never drops
 await touch("touchStart", cx, cy);
 await sleep(80);
 await touch("touchEnd", 0, 0);
@@ -66,12 +62,12 @@ await sleep(100);
 s = await state();
 check("tap: backing untouched", `${s.backing} vs ${s.css}×2`, s.backing === s.css * 2);
 
-// consecutive strokes inside the grace window: no thrash (stays 1× between)
+// consecutive strokes inside grace window stay 1×, no thrash
 await touch("touchStart", cx, cy);
 await touch("touchMove", cx + 30, cy + 10);
 await sleep(30);
 await touch("touchEnd", 0, 0);
-await sleep(60); // inside the 180ms grace
+await sleep(60); // inside 180ms grace
 await touch("touchStart", cx, cy + 40);
 await touch("touchMove", cx + 30, cy + 50);
 s = await state();

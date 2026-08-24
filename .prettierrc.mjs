@@ -11,7 +11,7 @@ export default {
 			},
 		},
 		{
-			// YAML 1.2 §6.1 forbids tab characters in indentation.
+			// yaml forbids tabs
 			files: '*.{yml,yaml}',
 			options: {
 				useTabs: false,

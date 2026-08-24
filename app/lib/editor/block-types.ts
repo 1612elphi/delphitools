@@ -1,5 +1,3 @@
-// The block types offered by the gutter's click-to-convert menu, each paired
-// with the ProseMirror command that turns the current block into it.
 import { setBlockType, wrapIn } from 'prosemirror-commands';
 import { wrapInList } from 'prosemirror-schema-list';
 import type { Node as PMNode, NodeType, Schema } from 'prosemirror-model';
@@ -9,9 +7,9 @@ export interface BlockChoice {
 	label: string;
 	command: Command;
 	isActive: (node: PMNode) => boolean;
-	/** wraps the block (list/quote) — normalise a styled block to a paragraph first */
+	/** normalize before wrapping */
 	wrap?: boolean;
-	/** for the list choices — lets us swap an existing list's type in place */
+	/** replace existing list type */
 	listType?: NodeType;
 }
 

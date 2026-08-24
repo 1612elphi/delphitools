@@ -25,19 +25,6 @@ import { getActiveTool } from 'delphitools-v2/lib/substrata/tool';
 import { getToolSettings } from 'delphitools-v2/lib/substrata/tool-settings';
 import { viewport } from 'delphitools-v2/lib/substrata/viewport';
 
-/**
- * Substrata keyboard map. ⌘/Ctrl+Z = undo, ⌘/Ctrl+Shift+Z or Ctrl+Y = redo.
- * Backspace/Delete removes the selected layers (same path as the layers-panel
- * footer; one undo step). Arrow keys nudge the selection while MOVE is the
- * active tool (step = the MOVE settings' nudge value, ⇧ ×10; one undo step per
- * press). ⌘A selects what a marquee could grab (visible + unlocked leaves) —
- * never the page text. ⌘D duplicate · ⌘G/⇧⌘G group/ungroup · ⌘]/⌘[ restack
- * (⇧ to the ends) · ⌘E export · ⌘0 fit / ⌘1 100%. Ignored while typing in a
- * field. Mounted by the editor shell; the menus call the same actions and
- * hint these combos. The layer ops validate internally, so a combo on an
- * ineligible selection is a clean no-op.
- */
-
 const ARROWS: Record<string, readonly [number, number]> = {
 	ArrowLeft: [-1, 0],
 	ArrowRight: [1, 0],
@@ -64,7 +51,7 @@ export default modifier(() => {
 			!e.ctrlKey &&
 			!e.altKey
 		) {
-			// Backspace must never trigger browser back-navigation
+			// prevent browser navigation
 			e.preventDefault();
 			deleteLayers(getSelectedLayerIds());
 			return;
@@ -96,14 +83,12 @@ export default modifier(() => {
 			e.preventDefault();
 			redo();
 		} else if (key === 's') {
-			// ⌘S save · ⇧⌘S save a copy (M5 — matches the Scene menu hints)
 			e.preventDefault();
 			void saveScene(e.shiftKey);
 		} else if (key === 'o') {
 			e.preventDefault();
 			void openScene();
 		} else if (key === 'i') {
-			// ⌘I import — the Scene-menu hint promised this; deliver it
 			e.preventDefault();
 			void (async () => {
 				try {
@@ -116,19 +101,20 @@ export default modifier(() => {
 						: [files])
 						void importImageFile(f);
 				} catch {
-					// picker dismissed
+					// ignore picker cancellation
 				}
 			})();
 		} else if (key === 'e') {
-			// ⌘E export — the Scene-menu hint promised this too
 			e.preventDefault();
 			openModal('export');
 		} else if (key === 'a') {
-			e.preventDefault(); // never the browser's select-all-page-text
+			// prevent page selection
+			e.preventDefault();
 			const doc = getSnapshot();
 			if (doc) setSelection(selectableLeafIds(doc.layers));
 		} else if (key === 'd') {
-			e.preventDefault(); // and never the browser's bookmark dialog
+			// prevent bookmark dialog
+			e.preventDefault();
 			duplicateLayers(getSelectedLayerIds());
 		} else if (key === 'g') {
 			e.preventDefault();
@@ -136,8 +122,7 @@ export default modifier(() => {
 				getSelectedLayerIds().forEach(ungroupLayer);
 			else groupLayers(getSelectedLayerIds());
 		} else if (key === ']' || key === '}') {
-			// ⇧ turns ] into } on most layouts — treat both as the shifted
-			// combo
+			// support shifted brackets
 			e.preventDefault();
 			reorderLayers(
 				getSelectedLayerIds(),

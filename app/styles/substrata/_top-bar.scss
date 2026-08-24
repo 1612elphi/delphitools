@@ -1,8 +1,4 @@
-// Substrata top bar (§7), plus its two satellites: the persistence toggle and
-// the undo/redo + toast slot. Ported from the Tailwind-authored .tsx sources —
-// class names below follow the source's arbitrary-value utilities 1:1.
-
-// ── top-bar shell ────────────────────────────────────────────────────────────
+// tailwind port of §7 topbar
 .sub-topbar {
 	position: relative;
 	z-index: 50;
@@ -20,7 +16,6 @@
 	display: none;
 }
 
-// ── left: home · wordmark ────────────────────────────────────────────────────
 .sub-topbar-home {
 	display: grid;
 	place-items: center;
@@ -47,7 +42,6 @@
 	background-color: var(--border);
 }
 
-// ── menubar ───────────────────────────────────────────────────────────────────
 .sub-topbar-nav {
 	display: flex;
 }
@@ -78,7 +72,6 @@
 	padding-block-start: 1px;
 }
 
-// ── dropdown primitives (Box / Item / Sep) ───────────────────────────────────
 .sub-topbar-box {
 	border: 1px solid var(--border);
 	background-color: var(--background);
@@ -87,8 +80,7 @@
 		0 4px 6px -4px rgb(0 0 0 / 10%);
 }
 
-// Item is a <button> (see the .gts comment on why); also worn directly by the
-// two <a>/<LinkTo> rows that used to wrap it. Resets cover both element kinds.
+// button and anchor kinds
 .sub-topbar-item {
 	display: flex;
 	inline-size: 100%;
@@ -144,7 +136,6 @@
 	background-color: var(--border);
 }
 
-// ── Scene menu ────────────────────────────────────────────────────────────────
 .sub-topbar-scene-menu {
 	display: flex;
 	flex-direction: column;
@@ -184,7 +175,6 @@
 	font-variant-numeric: tabular-nums;
 }
 
-// ── Scene name (click to rename) ─────────────────────────────────────────────
 .sub-topbar-scene-btn {
 	padding-block: 4px;
 	padding-inline: 8px;
@@ -256,7 +246,6 @@
 	}
 }
 
-// ── right cluster ─────────────────────────────────────────────────────────────
 .sub-topbar-right {
 	display: flex;
 	align-items: center;
@@ -297,8 +286,7 @@
 	}
 }
 
-// ghost icon button (was the shadcn `<Button variant="ghost" size="icon">`,
-// which has no Ember equivalent here — plain button, same visual result).
+// replaces shadcn ghost button
 .sub-topbar-fit-btn,
 .sub-toast-btn {
 	display: grid;
@@ -364,7 +352,6 @@
 	}
 }
 
-// ── Edit menu ─────────────────────────────────────────────────────────────────
 .sub-topbar-edit-menu {
 	display: flex;
 	flex-direction: column;
@@ -451,7 +438,6 @@
 	color: var(--muted-foreground);
 }
 
-// ── Workspace menu ────────────────────────────────────────────────────────────
 .sub-topbar-workspace-box {
 	padding-block: 4px;
 	min-inline-size: 254px;
@@ -500,13 +486,11 @@
 	}
 }
 
-// ── Help menu ─────────────────────────────────────────────────────────────────
 .sub-topbar-help-box {
 	padding-block: 4px;
 	min-inline-size: 218px;
 }
 
-// ── persistence toggle ────────────────────────────────────────────────────────
 .sub-persist-row {
 	display: flex;
 	align-items: center;
@@ -532,7 +516,6 @@
 	color: var(--muted-foreground);
 }
 
-// ── toast slot ────────────────────────────────────────────────────────────────
 .sub-toast-slot {
 	position: relative;
 	display: flex;

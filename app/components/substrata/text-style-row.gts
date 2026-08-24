@@ -40,9 +40,6 @@ export interface FontSelectSignature {
 	};
 }
 
-/** Font dropdown (Ruby 2026-07-06: dropdown, not buttons) — the three system
- *  stacks + session uploads, each previewed in its own face. Shared by the
- *  TEXT bloom and the Inspector. */
 export class FontSelect extends Component<FontSelectSignature> {
 	uploaded = new TrackedExternal(subscribeFonts, getUploadedFonts);
 
@@ -51,8 +48,7 @@ export class FontSelect extends Component<FontSelectSignature> {
 		this.uploaded.unsubscribe();
 	}
 
-	// the vendored SelectValue's fallback shows the raw value ("sans") and
-	// goes stale when @value changes externally — supply the label
+	// selectvalue ignores external updates
 	get valueLabel(): string {
 		const choice = FONT_CHOICES.find(
 			(c) => c.id === this.args.value,
@@ -91,12 +87,6 @@ export class FontSelect extends Component<FontSelectSignature> {
 	</template>
 }
 
-/**
- * The four text styles as a flush segmented strip (Ruby 2026-07-06: regular ·
- * outline · on a pill · on a rectangle). Shared by the TEXT bloom (next text)
- * and the Inspector (selected text). Icons are glyph specimens — visual
- * chrome; the aria words are the standard style vocabulary.
- */
 const StyleGlyph: TOC<{ Args: { preset: TextStylePreset } }> = <template>
 	{{#if (eq @preset "regular")}}
 		<svg
@@ -161,9 +151,6 @@ const StyleGlyph: TOC<{ Args: { preset: TextStylePreset } }> = <template>
 	{{/if}}
 </template>;
 
-/** Object-level alignment (ratified M2-1) as a flush segmented strip — the
- *  TextStyleRow language. Shared by the TEXT bloom and the Inspector.
- *  Alignment words are standard type vocabulary (functional chrome). */
 const ALIGN_OPTIONS: Array<{ id: TextAlign; label: string; icon: string }> = [
 	{ id: 'left', label: 'Left', icon: 'align-left' },
 	{ id: 'center', label: 'Centre', icon: 'align-center' },

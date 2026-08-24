@@ -1,11 +1,4 @@
-// Styles for the harmony-genny tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Harmony generator ───────────────────────────────────────────────────── */
 
 .dt-harmony {
 	border: 2px solid var(--border);
@@ -15,8 +8,6 @@
 	display: block;
 	font-weight: crayon.font-weight("bold");
 }
-
-/* Base colour */
 
 .dt-harmony-base {
 	padding: crayon.size(4);
@@ -30,7 +21,7 @@
 	border: 1px solid var(--border);
 }
 
-/* The picker input covers the whole cell so anywhere in the block opens it. */
+/* whole cell opens picker */
 .dt-harmony-picker {
 	position: relative;
 	display: block;
@@ -69,8 +60,6 @@
 	}
 }
 
-/* Harmony type picker */
-
 .dt-harmony-types {
 	padding: crayon.size(4);
 	border-bottom: 2px solid var(--border);
@@ -108,8 +97,6 @@
 	}
 }
 
-/* Description of the selected harmony */
-
 .dt-harmony-desc {
 	@include crayon.hstack(2);
 
@@ -131,8 +118,7 @@
 	white-space: nowrap;
 }
 
-/* Colour wheel. The marker offsets in harmony-genny.gts are pixels against this
-   box, so its size is fixed rather than fluid: 14rem square, centre at 112px. */
+/* harmony-genny.gts markers assume fixed box */
 
 .dt-harmony-wheel-wrap {
 	display: flex;
@@ -191,8 +177,6 @@
 	box-shadow: 0 4px 6px rgb(0 0 0 / 15%);
 }
 
-/* Flush swatch strip */
-
 .dt-harmony-strip {
 	display: flex;
 	height: crayon.size(16);
@@ -209,8 +193,6 @@
 		opacity: 0.8;
 	}
 }
-
-/* Colours table */
 
 .dt-harmony-table {
 	border-bottom: 2px solid var(--border);
@@ -286,8 +268,6 @@
 	}
 }
 
-/* Export actions */
-
 .dt-harmony-export {
 	padding: crayon.size(4);
 	border-bottom: 2px solid var(--border);
@@ -321,8 +301,6 @@
 		}
 	}
 }
-
-/* All-harmonies preview */
 
 .dt-harmony-all {
 	padding: crayon.size(4);

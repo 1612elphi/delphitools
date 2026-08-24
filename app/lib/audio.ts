@@ -1,16 +1,9 @@
-// Shared audio plumbing for the Audio & Video tools: file intake + decode,
-// waveform peaks, a 16-bit PCM wav writer, fades, BS.1770 integrated
-// loudness, and a radix-2 FFT for the spectrogram. Everything below the
-// intake works on plain Float32Arrays, so it all unit-tests without an
-// AudioBuffer.
-
 import { tracked } from '@glimmer/tracking';
 
 const NOT_AUDIO = 'Only audio files are supported';
 const DECODE_FAILED = 'Failed to decode audio.';
 
-// Chrome caps live AudioContexts per page, so every decode (and the
-// trimmer's preview playback) shares one.
+// chrome limits audio contexts
 let sharedContext: AudioContext | null = null;
 
 export function audioContext(): AudioContext {
@@ -18,7 +11,6 @@ export function audioContext(): AudioContext {
 	return sharedContext;
 }
 
-/** The decoded channels as plain arrays — every helper below takes these. */
 export function channelsOf(buffer: AudioBuffer): Float32Array[] {
 	return Array.from({ length: buffer.numberOfChannels }, (_, i) =>
 		buffer.getChannelData(i),
@@ -26,17 +18,10 @@ export function channelsOf(buffer: AudioBuffer): Float32Array[] {
 }
 
 interface AudioIntakeHooks {
-	/** after a new file passes the type check, before decoding starts */
 	onLoad?: (file: File) => void;
-	/** once the file is decoded */
 	onDecoded?: (buffer: AudioBuffer) => void;
 }
 
-/**
- * The file-intake plumbing every audio tool repeats: type check, decode via
- * the shared context, busy/error state. Tracked, so tool templates read its
- * fields directly. The video sibling is lib/video's VideoIntake.
- */
 export class AudioIntake {
 	@tracked fileName = '';
 	@tracked fileBytes = 0;
@@ -53,7 +38,6 @@ export class AudioIntake {
 		this.#hooks = hooks;
 	}
 
-	/** stripped of its extension; empty until a file is loaded */
 	get baseName() {
 		return this.fileName.replace(/\.[^.]+$/, '');
 	}
@@ -100,7 +84,7 @@ export class AudioIntake {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) this.load(file);
-		// Choosing the same file twice must still fire a change event.
+		// permit repeat selection
 		input.value = '';
 	};
 
@@ -110,7 +94,7 @@ export class AudioIntake {
 		if (file) this.load(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// prevent file navigation
 	dragOver = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -127,12 +111,7 @@ export class AudioIntake {
 	};
 }
 
-/**
- * A zoomable time window over a clip, shared by the tools that pair a
- * WaveMinimap with a detail canvas.
- */
 export class ViewWindow {
-	// Zooming past this span would render single samples as full columns.
 	static MIN_SPAN_S = 0.05;
 
 	@tracked duration = 0;
@@ -189,7 +168,6 @@ export interface WaveformPeaks {
 	max: Float32Array;
 }
 
-/** Min/max per bucket across all channels, for waveform rendering. */
 export function extractPeaks(
 	channels: Float32Array[],
 	buckets: number,
@@ -220,7 +198,6 @@ export function extractPeaks(
 	return { min, max };
 }
 
-/** The peaks as filled columns; the callers own scale, colour and overlays. */
 export function drawWaveform(
 	ctx: CanvasRenderingContext2D,
 	peaks: WaveformPeaks,
@@ -238,8 +215,6 @@ export function drawWaveform(
 	}
 }
 
-/** 16-bit PCM RIFF/WAVE, interleaved. */
-/** `gain` is linear, applied before the clamp, so a render needs no copy */
 export function encodeWav(
 	channels: Float32Array[],
 	sampleRate: number,
@@ -260,13 +235,13 @@ export function encodeWav(
 	view.setUint32(4, 36 + dataBytes, true);
 	ascii(8, 'WAVE');
 	ascii(12, 'fmt ');
-	view.setUint32(16, 16, true); // PCM fmt chunk size
-	view.setUint16(20, 1, true); // PCM
+	view.setUint32(16, 16, true);
+	view.setUint16(20, 1, true);
 	view.setUint16(22, channelCount, true);
 	view.setUint32(24, sampleRate, true);
 	view.setUint32(28, sampleRate * channelCount * 2, true);
-	view.setUint16(32, channelCount * 2, true); // block align
-	view.setUint16(34, 16, true); // bits per sample
+	view.setUint16(32, channelCount * 2, true);
+	view.setUint16(34, 16, true);
 	ascii(36, 'data');
 	view.setUint32(40, dataBytes, true);
 
@@ -285,7 +260,6 @@ export function encodeWav(
 	return new Uint8Array(out);
 }
 
-/** Linear fade-in/out applied in place, lengths in seconds. */
 export function applyFades(
 	channels: Float32Array[],
 	sampleRate: number,
@@ -303,10 +277,6 @@ export function applyFades(
 	}
 }
 
-/**
- * Normalised peak level from an AnalyserNode's byte time-domain data (128 is
- * the zero crossing). Returns 0..1, suitable for driving a live input meter.
- */
 export function meterLevel(data: Uint8Array<ArrayBufferLike>): number {
 	let peak = 0;
 	for (const v of data) {
@@ -316,7 +286,6 @@ export function meterLevel(data: Uint8Array<ArrayBufferLike>): number {
 	return peak;
 }
 
-/** Peak level in dBFS; -Infinity for silence. */
 export function peakDb(channels: Float32Array[]): number {
 	let peak = 0;
 	for (const channel of channels)
@@ -335,8 +304,7 @@ interface Biquad {
 	a2: number;
 }
 
-// K-weighting per ITU-R BS.1770-4, coefficients recomputed for the actual
-// sample rate the way libebur128 does (the spec tabulates 48 kHz only).
+// bs.1770-4 k-weighting coefficients
 function kWeighting(sampleRate: number): [Biquad, Biquad] {
 	let f0 = 1681.974450955533;
 	let Q = 0.7071752369554196;
@@ -394,14 +362,6 @@ function filtered(
 	return current;
 }
 
-/**
- * Integrated loudness (LUFS) per BS.1770-4: K-weighting, 400 ms blocks with
- * 75% overlap, absolute gate at -70 then relative gate 10 LU under the
- * gated mean. NaN when the input is shorter than one block or fully gated.
- *
- * ponytail: every channel weighs 1.0 — the 1.41 surround weight starts to
- * matter only for >2-channel files, rare on the web.
- */
 export function integratedLufs(
 	channels: Float32Array[],
 	sampleRate: number,
@@ -414,7 +374,6 @@ export function integratedLufs(
 	const biquads = kWeighting(sampleRate);
 	const weighted = channels.map((channel) => filtered(channel, biquads));
 
-	// Mean square per block, summed across channels.
 	const energies: number[] = [];
 	for (let start = 0; start + blockFrames <= frames; start += hopFrames) {
 		let sum = 0;
@@ -438,20 +397,14 @@ export function integratedLufs(
 	return loudness(mean(gated));
 }
 
-/**
- * In-place iterative radix-2 FFT; returns the N/2 magnitude bins for a
- * power-of-two block of samples.
- */
 export function fftMagnitudes(samples: Float32Array): Float32Array {
 	const n = samples.length;
-	// ponytail: power-of-two only; callers pick the window size.
 	if (n === 0 || (n & (n - 1)) !== 0)
 		throw new Error('fft length must be a power of two');
 
 	const re = Float64Array.from(samples);
 	const im = new Float64Array(n);
 
-	// Bit-reversal permutation.
 	for (let i = 1, j = 0; i < n; i++) {
 		let bit = n >> 1;
 		for (; j & bit; bit >>= 1) j ^= bit;

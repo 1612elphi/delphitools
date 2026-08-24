@@ -1,11 +1,7 @@
-// The front-page omnibox: field, legend, file bar, answer rows, carry chips.
-// Reference: docs/frontpage/02-omnibox.html.
+// reference docs/frontpage/02-omnibox.html
 
 @use "crayon-config" as crayon;
 
-/* ── omnibox ─────────────────────────────────────────────────────────────── */
-
-/* box under hero art */
 .dt-omni-zone {
 	max-width: crayon.size(168);
 	margin-inline: auto;
@@ -45,7 +41,7 @@
 	}
 }
 
-/* the input has no outline of its own, so focus lands on the frame */
+/* input has no outline */
 .dt-omni:focus-within {
 	border-color: var(--primary);
 }
@@ -72,8 +68,7 @@
 	}
 }
 
-/* three flush cells, each an action: pick a file, read the clipboard, a
-   random tool; the picker input stays out of sight and out of the tab order */
+/* picker input off tab order */
 .dt-omni-legend-btn {
 	display: flex;
 	align-items: center;
@@ -155,8 +150,6 @@
 	}
 }
 
-/* ── Answer rows, fused under the box ────────────────────────────────────── */
-
 .dt-omni-answers {
 	border: 2px solid var(--border);
 	border-top: 0;
@@ -233,8 +226,6 @@
 	}
 }
 
-/* ── Art credit + shuffle, under the box ─────────────────────────────────── */
-
 .dt-omni-artbar {
 	display: flex;
 	align-items: center;
@@ -274,8 +265,6 @@
 		color: var(--foreground);
 	}
 }
-
-/* ── Carry chip + filtered catalogue ─────────────────────────────────────── */
 
 .dt-cell-carry {
 	display: block;

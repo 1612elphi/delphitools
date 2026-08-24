@@ -1,15 +1,7 @@
-// Styles for the paper-sizes tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
 
 @use "../crayon-config" as crayon;
 
-/* ── Paper sizes ─────────────────────────────────────────────────────────── */
-
-/* The second slot's colour is Tailwind rose-900, carried over from the Next
-   app; it is a fixed accent rather than a theme token, so both themes get the
-   same pair. */
+// tailwind rose-900, not a theme token
 .dt-paper {
 	--dt-paper-first: var(--primary);
 	--dt-paper-second: #881337;
@@ -37,8 +29,7 @@
 	font-weight: crayon.font-weight("bold");
 }
 
-/* `.segmented` draws a 1px frame on all four edges; the bar's own rules already
-   cover the outer edges. Both classes are needed to outrank `.segmented`. */
+// both classes outrank .segmented
 .segmented.dt-paper-units,
 .segmented.dt-paper-views {
 	flex-shrink: 0;
@@ -362,8 +353,7 @@
 	}
 }
 
-/* The file input is inside the label, so clicking anywhere on it opens the
-   picker without a element reference. */
+// input inside label, no element ref
 .dt-paper-upload {
 	@include crayon.hstack(2);
 

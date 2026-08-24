@@ -1,17 +1,7 @@
-// Image De-skewer: drop a synthetic image, drag a corner, nudge one with the
-// keyboard, switch the aspect, and decode the downloaded PNG.
-//
-// The fixture is 200×120 with a white "page" drawn as a tilted quad on a dark
-// ground; the rig drags the corners roughly onto it and checks the output is
-// mostly white. Download goes through URL.createObjectURL, captured.
-
-// Usage: npm start, then node scripts/verify/image-deskewer.mjs
-
 import { launch, visit, check, finish, sleep, captureObjectUrl } from './harness.mjs';
 
 const { browser, page } = await launch();
 
-// Page corners in the fixture, clockwise from top-left.
 const PAGE = [
 	[40, 20],
 	[170, 30],
@@ -66,6 +56,36 @@ const cdp = await page.createCDPSession();
 await cdp.send('Browser.setDownloadBehavior', { behavior: 'deny' });
 
 check('drop zone renders', await page.$('.dt-dsk-drop'));
+
+const dragEvent = (kind, files) =>
+	page.evaluate(
+		({ kind, files }) => {
+			const transfer = new DataTransfer();
+			const send = () =>
+				document
+					.querySelector('.dt-dsk-frame')
+					.dispatchEvent(new DragEvent(kind, { dataTransfer: transfer, bubbles: true }));
+			if (!files) return void send();
+			const canvas = document.createElement('canvas');
+			canvas.toBlob((blob) => {
+				transfer.items.add(new File([blob], 'x.png', { type: 'image/png' }));
+				send();
+			}, 'image/png');
+		},
+		{ kind, files },
+	);
+const frameOver = () =>
+	page.$eval('.dt-dsk-frame', (el) => el.classList.contains('is-dragging'));
+await dragEvent('dragover', true);
+await sleep(120);
+check('a file drag highlights the frame', await frameOver());
+await dragEvent('dragleave', true);
+await sleep(120);
+check('dragleave clears the highlight', !(await frameOver()));
+await dragEvent('dragover', false);
+await sleep(120);
+check('a text drag does not highlight the frame', !(await frameOver()));
+
 await dropFixture('.dt-dsk-frame');
 await page.waitForSelector('.dt-dsk-handle', { timeout: 10000 });
 await sleep(200);
@@ -76,6 +96,12 @@ check(
 	(await page.$eval('.dt-dsk-size', (el) => el.textContent.replace(/\s+/g, ' ').trim())) ===
 		'200 × 120',
 );
+check(
+	'aspect control is labelled output aspect ratio',
+	(await page.$eval('.dt-dsk-cell > span:first-child', (el) =>
+		el.textContent.replace(/\s+/g, ' ').trim(),
+	)) === 'Output aspect ratio',
+);
 const initial = await outputText();
 check('output size starts from the inset quad', initial === '152 × 91 px', initial);
 
@@ -84,7 +110,6 @@ const resultDims = () =>
 let dims = await resultDims();
 check('result canvas drawn at the output size', dims.w === 152 && dims.h === 91, JSON.stringify(dims));
 
-// Drag every handle onto its page corner.
 const stage = await stageRect();
 const scale = stage.width / 200;
 for (let i = 0; i < 4; i++) {
@@ -119,7 +144,6 @@ const white = await page.$eval('.dt-dsk-result', (el) => {
 });
 check('corrected image is mostly the white page', white > 0.9, white.toFixed(3));
 
-// Keyboard: arrow keys move the focused handle; shift is ten pixels.
 await page.focus('.dt-dsk-handle:nth-of-type(1)');
 const before = await page.$eval('.dt-dsk-quad', (el) => el.getAttribute('points'));
 await page.keyboard.down('Shift');
@@ -130,7 +154,50 @@ const after = await page.$eval('.dt-dsk-quad', (el) => el.getAttribute('points')
 const dx = Number(after.split(' ')[0].split(',')[0]) - Number(before.split(' ')[0].split(',')[0]);
 check('shift+arrow nudges the corner by ten pixels', dx === 10, String(dx));
 
-// Aspect preset forces the ratio, keeping the long edge.
+const first = (await handleRects())[0];
+await page.mouse.move(first.x, first.y);
+await page.mouse.down();
+await page.mouse.up();
+await sleep(80);
+const xOf = (s) => Number(s.split(' ')[0].split(',')[0]);
+const beforeLeft = await page.$eval('.dt-dsk-quad', (el) => el.getAttribute('points'));
+await page.keyboard.press('ArrowLeft');
+await sleep(80);
+const afterLeft = await page.$eval('.dt-dsk-quad', (el) => el.getAttribute('points'));
+check('click-then-arrow nudges, no Tab focus needed', xOf(afterLeft) === xOf(beforeLeft) - 1, `${xOf(beforeLeft)} -> ${xOf(afterLeft)}`);
+
+const beforeRight = await page.$eval('.dt-dsk-quad', (el) => el.getAttribute('points'));
+await page.mouse.move(first.x, first.y);
+await page.mouse.down({ button: 'right' });
+await page.mouse.move(first.x + 40, first.y + 40, { steps: 3 });
+await page.mouse.up({ button: 'right' });
+await sleep(100);
+check('right-button drag moves nothing',
+	(await page.$eval('.dt-dsk-quad', (el) => el.getAttribute('points'))) === beforeRight);
+
+const again = (await handleRects())[0];
+await page.mouse.move(again.x, again.y);
+await page.mouse.down();
+await page.mouse.move(again.x + 40, again.y + 25);
+await sleep(80);
+const jumped = await page.$eval('.dt-dsk-quad', (el) => el.getAttribute('points'));
+await page.mouse.move(again.x + 52, again.y + 20);
+await sleep(80);
+const followed = await page.$eval('.dt-dsk-quad', (el) => el.getAttribute('points'));
+check('fast drag keeps tracking', followed !== jumped, `${jumped} -> ${followed}`);
+await page.mouse.up();
+await sleep(80);
+await page.mouse.move(again.x - 100, again.y - 50);
+await sleep(80);
+check('release ends the drag wherever it lands',
+	(await page.$eval('.dt-dsk-quad', (el) => el.getAttribute('points'))) === followed);
+check('no handle stays active', !(await page.$('.dt-dsk-handle.is-active')));
+
+await page.evaluate(() =>
+	[...document.querySelectorAll('.dt-dsk-btn')].find((b) => b.textContent.trim() === 'Reset').click(),
+);
+await sleep(100);
+
 await page.evaluate(() =>
 	[...document.querySelectorAll('.dt-dsk-aspect')].find((b) => b.textContent.trim() === '1:1').click(),
 );
@@ -147,7 +214,6 @@ const a4 = await outputText();
 const [aw, ah] = a4.match(/\d+/g).map(Number);
 check('A4 preset keeps landscape at √2', Math.abs(aw / ah - Math.SQRT2) < 0.02, a4);
 
-// Download: a PNG at the output size.
 await captureObjectUrl(page);
 await page.click('.dt-dsk-btn.is-primary');
 await page.waitForFunction(() => window.__result, { timeout: 5000 });
@@ -158,7 +224,6 @@ const decoded = await page.evaluate(async () => {
 check('download is a PNG', decoded.type === 'image/png', decoded.type);
 check('download decodes at the output size', decoded.w === aw && decoded.h === ah, JSON.stringify(decoded));
 
-// Reset puts the corners back; Clear returns to the drop zone.
 await page.evaluate(() =>
 	[...document.querySelectorAll('.dt-dsk-btn')].find((b) => b.textContent.trim() === 'Reset').click(),
 );
@@ -168,5 +233,18 @@ check('reset restores the inset quad', reset === '152 × 107 px', reset);
 await page.click('.dt-dsk-btn[aria-label="Clear"]');
 await sleep(100);
 check('clear returns to the drop zone', await page.$('.dt-dsk-drop'));
+
+await page.evaluate(() => {
+	const transfer = new DataTransfer();
+	transfer.items.add(new File(['nope'], 'notes.txt', { type: 'text/plain' }));
+	document
+		.querySelector('.dt-dsk-frame')
+		.dispatchEvent(new DragEvent('drop', { dataTransfer: transfer, bubbles: true }));
+});
+await sleep(200);
+check(
+	'the error row renders inside the drop frame',
+	await page.$eval('.dt-dsk-error', (el) => !!el.closest('.dt-dsk-frame')),
+);
 
 await finish(browser);

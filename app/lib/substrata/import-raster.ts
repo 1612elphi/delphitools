@@ -1,10 +1,4 @@
-/**
- * Raster import (M1-5). Decode an image file, clamp the working raster to the GPU
- * texture cap on the way in (the #1 §5 guard — Fabric #6805: oversize sources
- * silently render ~30% of pixels), cache it content-addressed, and append a
- * RasterLayer to the document (object-making = layer-making, §6). One-way: this
- * only mutates the doc model; the reconciler renders the result.
- */
+/* fabric raster size cap */
 
 import { clampToCap } from './webgl-limits';
 import { createRasterLayer } from './doc-model';
@@ -15,7 +9,6 @@ import { getRaster, putRaster, sha256Hex } from './raster-cache';
 import { persistRaster } from './blobs';
 import { toast } from './toast';
 
-/** Centre the layer on the artboard, scaled down to fit if it's larger. */
 function placeOnArtboard(artboard: Artboard, w: number, h: number): Transform {
 	const fit = Math.min(1, artboard.width / w, artboard.height / h);
 	return {
@@ -30,8 +23,6 @@ function placeOnArtboard(artboard: Artboard, w: number, h: number): Transform {
 }
 
 export interface ImportOptions {
-	/** centre the new layer on this scene point instead of the artboard centre
-	 *  (the context menu's paste/place-at-pointer) */
 	at?: { x: number; y: number };
 }
 
@@ -74,7 +65,7 @@ export async function importImageFile(
 		ctx.drawImage(bitmap, 0, 0);
 		bitmap.close();
 		putRaster(hash, raster);
-		void persistRaster(hash); // persist to IndexedDB for reload (best-effort)
+		void persistRaster(hash); // reload persistence
 	}
 
 	const w = raster.width;
@@ -94,8 +85,7 @@ export async function importImageFile(
 		naturalHeight: h,
 		transform,
 	});
-	// Select first so the reconcile triggered by `update` applies it the moment the
-	// layer's Fabric object is created (avoids the post-update selection race).
+	// select before update
 	setActiveLayer(layer.id);
 	update((doc) => ({
 		...doc,
@@ -105,11 +95,7 @@ export async function importImageFile(
 	toast('image-added');
 }
 
-/**
- * Import the first image on the async clipboard (the context menu's Paste —
- * unlike the ⌘V event path, a menu click has no ClipboardEvent to read from).
- * No image / permission denied → a status toast, never a throw.
- */
+/* menu paste: async clipboard */
 export async function importClipboardImage(
 	opts?: ImportOptions,
 ): Promise<void> {
@@ -129,7 +115,7 @@ export async function importClipboardImage(
 			}
 		}
 	} catch {
-		// fall through to the empty-clipboard toast
+		/* ignore clipboard errors */
 	}
 	toast('paste-empty');
 }

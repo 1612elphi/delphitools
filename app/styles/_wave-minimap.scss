@@ -1,4 +1,4 @@
-// The overview strip above zoomable waveforms (components/wave-minimap.gts).
+// wave-minimap.gts overview strip
 
 @use "crayon-config" as crayon;
 
@@ -11,7 +11,6 @@
 	touch-action: none;
 }
 
-/* Overlay plumbing for playhead lines over any strip. */
 .dt-wavewrap {
 	position: relative;
 }

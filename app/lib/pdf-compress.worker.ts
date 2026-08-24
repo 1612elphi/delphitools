@@ -1,14 +1,4 @@
-/* Web Worker that hosts MuPDF off the main thread.
- *
- * Opening a PDF, walking its images, re-encoding them and saving are all
- * synchronous wasm calls; running them here keeps the tab responsive instead of
- * freezing it for the length of a compress. The main-thread client
- * (pdf-compress.ts) talks to this worker over the message protocol below.
- *
- * The ~10 MB mupdf runtime is loaded at RUNTIME through a bundler-ignored dynamic
- * import (the lib/jxl.ts idiom): mupdf.js is served from /public/mupdf/ and pulls
- * its sibling wasm relative to its own URL, so it never enters the module graph.
- */
+// runs mupdf off-thread
 
 import {
 	resizeTo,
@@ -16,8 +6,6 @@ import {
 	type CompressOptions,
 } from './pdf-compress-core';
 import { rawImport } from 'delphitools-v2/lib/raw-import';
-
-// ── minimal typings for the mupdf objects this worker touches ────────────────
 
 interface MupdfBuffer {
 	asUint8Array(): Uint8Array;
@@ -72,17 +60,12 @@ const MODULE_URL = '/mupdf/mupdf.js';
 
 let modulePromise: Promise<MupdfModule> | null = null;
 
+// loads mupdf outside bundling
 function getMupdf(): Promise<MupdfModule> {
 	modulePromise ??= rawImport<MupdfModule>(MODULE_URL);
 	return modulePromise;
 }
 
-/**
- * Re-encode every eligible image XObject as JPEG in place, returning how many
- * were replaced. Left untouched: 1-bit stencil masks, images that carry their
- * own soft mask (JPEG cannot hold alpha), anything MuPDF cannot decode, and any
- * image whose JPEG would not be smaller than the stream it already has.
- */
 function recompressImages(
 	doc: MupdfPdfDocument,
 	quality: number,
@@ -152,7 +135,7 @@ function recompressImages(
 			ref.delete('DecodeParms');
 			touched++;
 		} catch {
-			// Unsupported codec (JPEG2000/JBIG2) or odd colour space: skip it.
+			// skips image decode failures
 		} finally {
 			scaled?.destroy();
 			pix?.destroy();
@@ -161,8 +144,6 @@ function recompressImages(
 	}
 	return touched;
 }
-
-// ── message protocol ─────────────────────────────────────────────────────────
 
 interface InMessage {
 	id: number;
@@ -180,8 +161,7 @@ type OutMessage =
 	  }
 	| { id: number; ok: false; error: string };
 
-// A `/// <reference lib="webworker" />` would leak into the whole program and
-// clash with lib.dom, so the worker global is typed locally instead.
+// avoids lib.dom conflict
 declare const self: {
 	onmessage: ((event: MessageEvent<InMessage>) => void) | null;
 	postMessage(message: OutMessage, transfer?: Transferable[]): void;
@@ -222,8 +202,7 @@ async function handleMessage(msg: InMessage): Promise<void> {
 				: 0;
 			doc.subsetFonts();
 			buffer = doc.saveToBuffer(STRUCTURAL_OPTIONS);
-			// asUint8Array is a view into the wasm heap; copy into a fresh,
-			// transferable buffer before anything frees or grows the heap.
+			// copies wasm heap view
 			const bytes = new Uint8Array(buffer.asUint8Array());
 			self.postMessage(
 				{

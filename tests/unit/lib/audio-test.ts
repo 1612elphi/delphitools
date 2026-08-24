@@ -50,9 +50,9 @@ module('Unit | Lib | audio', function () {
 		assert.strictEqual(view.getUint16(34, true), 16, 'bit depth');
 		assert.strictEqual(view.getUint32(40, true), 20, 'data bytes');
 
-		// Interleaved: frame 1 left = 0.5 → 0.5 * 0x7fff.
+		// interleave frame1 0.5→16383
 		assert.strictEqual(view.getInt16(44 + 4, true), 16383);
-		// Frame 4 left = -1 → clamped to -0x8000.
+		// frame4 clamp -1→-32768
 		assert.strictEqual(view.getInt16(44 + 16, true), -32768);
 	});
 
@@ -102,8 +102,7 @@ module('Unit | Lib | audio', function () {
 	});
 
 	test('integrated loudness of the BS.1770 reference tone', function (assert) {
-		// 997 Hz, 0 dBFS, left channel only of a stereo pair: the spec's
-		// stated result is -3.01 LUFS.
+		// bs.1770 ref tone -3.01 lufs
 		const left = sine(997, 48000, 2);
 		const right = new Float32Array(left.length);
 		const lufs = integratedLufs([left, right], 48000);
@@ -128,7 +127,7 @@ module('Unit | Lib | audio', function () {
 	test('fft finds the tone bin', function (assert) {
 		const n = 1024;
 		const sampleRate = 8192;
-		const bin = 64; // 512 Hz at 8192 Hz over 1024 samples
+		const bin = 64; // 512 Hz = 64*8192/1024
 		const tone = sine(
 			(bin * sampleRate) / n,
 			sampleRate,

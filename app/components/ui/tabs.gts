@@ -2,14 +2,9 @@
 // restyled onto Crayon. The context plumbing is kept; Tailwind class strings
 // become .dt-tabs* hooks.
 //
-// Two divergences from upstream, the same shape as the ones in select.gts:
-//
-// 1. Upstream's tablist has no keyboard handling. role="tablist" promises
-//    arrow-key movement between tabs and one tab stop for the whole set; this
-//    adds the roving tabindex that delivers it, plus Home and End.
-// 2. Triggers and panels are linked by id, so a screen reader can move from a
-//    tab to the panel it controls. Upstream renders neither aria-controls nor
-//    aria-labelledby.
+// divergences from upstream:
+// - upstream has no key handling
+// - upstream has no aria linking
 
 import { on } from '@ember/modifier';
 import Component from '@glimmer/component';
@@ -74,7 +69,7 @@ class Tabs extends Component<TabsSignature> {
 		this.args.onValueChange?.(value);
 	};
 
-	/** Selection follows focus, which is the expected behaviour for tabs. */
+	// selection follows focus
 	move = (to: number | 'first' | 'last') => {
 		const list = this.tabs.filter((tab) => !tab.disabled);
 		if (list.length === 0) return;
@@ -86,8 +81,7 @@ class Tabs extends Component<TabsSignature> {
 			const at = list.findIndex(
 				(tab) => tab.value === this.value,
 			);
-			// Wraps, unlike the listbox in select.gts: a tablist is a
-			// ring and ArrowRight past the end returns to the start.
+			// ring, unlike select
 			next =
 				list[
 					(((at === -1 ? 0 : at + to) %
@@ -153,10 +147,7 @@ class TabsTrigger extends Component<TabsTriggerSignature> {
 
 	element: HTMLElement | null = null;
 
-	// Captured at construction, not read inside the modifier: `context` changes
-	// whenever the selection does, and a modifier that reads it would tear this
-	// tab out of the list and put it back on every click, writing to `tabs`
-	// after the list had been read. Glimmer rejects that.
+	// glimmer backtracking write risk
 	#register = this.context.register;
 	#unregister = this.context.unregister;
 
@@ -217,7 +208,7 @@ class TabsTrigger extends Component<TabsTriggerSignature> {
 			id={{this.id}}
 			aria-selected={{if this.isActive "true" "false"}}
 			aria-controls={{this.panelId}}
-			{{! one tab stop for the whole set; the arrows move within it }}
+			{{! one tab stop }}
 			tabindex={{if this.isActive "0" "-1"}}
 			data-state={{if this.isActive "active" "inactive"}}
 			disabled={{@disabled}}

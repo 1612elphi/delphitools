@@ -6,7 +6,6 @@ export interface Alternative {
 	ipa: string;
 }
 
-// Build a lookup: consonant char → its group (excluding itself)
 const consonantGroupMap = new Map<string, string[]>();
 for (const group of CONSONANT_GROUPS) {
 	for (const char of group) {
@@ -17,11 +16,6 @@ for (const group of CONSONANT_GROUPS) {
 	}
 }
 
-/**
- * Get alternative Shavian letters for a given character.
- * - Vowels: all other vowel characters
- * - Consonants: voicing pair / articulation group members
- */
 export function getAlternatives(shavianChar: string): Alternative[] {
 	const letter = getShavianLetter(shavianChar);
 	if (!letter) return [];

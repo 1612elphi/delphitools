@@ -19,9 +19,6 @@ import {
 	SelectItem,
 } from 'delphitools-v2/components/ui/select';
 
-/* ── Sample ciphertexts shown when input is empty ─────────────────────────── */
-
-/** Labels and sample texts carried over from the Next app, verbatim. */
 export const SAMPLES: { label: string; text: string }[] = [
 	{
 		label: 'Caesar',
@@ -42,8 +39,6 @@ export const SAMPLES: { label: string; text: string }[] = [
 	},
 	{ label: 'Base64', text: 'VGhlIGNyb3cgZmxpZXMgYXQgbWlkbmlnaHQu' },
 ];
-
-/* ── English-likeness scoring ─────────────────────────────────────────────── */
 
 const ENGLISH_FREQ: Record<string, number> = {
 	A: 8.167,
@@ -214,18 +209,15 @@ export function commonWordRatio(text: string): number {
 	return hits / words.length;
 }
 
-/** Higher is more English-like. Ranges roughly 0..1. */
 export function englishLikeness(text: string): number {
 	const letters = text.replace(/[^A-Za-z]/g, '');
 	if (letters.length < 3) return 0;
 	const chi = chiSquaredScore(text);
-	// Map chi to (0..1] — typical English ~10-30, random ~80-200.
+	// normalize chi score
 	const chiScore = Math.max(0, 1 - chi / 100);
 	const wordScore = Math.min(1, commonWordRatio(text) * 3);
 	return chiScore * 0.6 + wordScore * 0.4;
 }
-
-/* ── Cipher implementations ───────────────────────────────────────────────── */
 
 export function caesarShift(text: string, shift: number): string {
 	const s = ((shift % 26) + 26) % 26;
@@ -306,7 +298,6 @@ export function modInverse(a: number, m: number): number | null {
 	return null;
 }
 
-// wording carried over from the Next app
 const AFFINE_COPRIME_ERROR =
 	"'a' must be coprime with 26 (try 1,3,5,7,9,11,15,17,19,21,23,25).";
 
@@ -337,9 +328,6 @@ export function affine(
 	return out;
 }
 
-/* ── Morse ────────────────────────────────────────────────────────────────── */
-
-/** Table carried over from the Next app, verbatim. */
 export const MORSE: Record<string, string> = {
 	A: '.-',
 	B: '-...',
@@ -430,8 +418,6 @@ export function morseDecode(text: string): string {
 		.join(' ');
 }
 
-/* ── A1Z26 ────────────────────────────────────────────────────────────────── */
-
 export function a1z26Encode(text: string): string {
 	return text
 		.toUpperCase()
@@ -470,9 +456,6 @@ export function a1z26Decode(text: string): string {
 		.join(' ');
 }
 
-/* ── Bacon's cipher ───────────────────────────────────────────────────────── */
-
-/** Table carried over from the Next app, verbatim. */
 export const BACON: Record<string, string> = {
 	A: 'AAAAA',
 	B: 'AAAAB',
@@ -530,8 +513,6 @@ export function baconDecode(text: string): string {
 	return out;
 }
 
-/* ── Rail fence ───────────────────────────────────────────────────────────── */
-
 export function railFenceEncode(text: string, rails: number): string {
 	if (rails < 2) return text;
 	const fence: string[][] = Array.from({ length: rails }, () => []);
@@ -549,7 +530,7 @@ export function railFenceEncode(text: string, rails: number): string {
 export function railFenceDecode(text: string, rails: number): string {
 	if (rails < 2) return text;
 	const len = text.length;
-	// The zig-zag row index for each position, then characters dealt out by row.
+	// rebuild rail pattern
 	const pattern: number[] = [];
 	let r = 0;
 	let dir = 1;
@@ -579,8 +560,6 @@ export function railFenceDecode(text: string, rails: number): string {
 	return out;
 }
 
-/* ── Encodings ────────────────────────────────────────────────────────────── */
-
 function utf8ToBytes(s: string): Uint8Array {
 	return new TextEncoder().encode(s);
 }
@@ -605,7 +584,6 @@ export function base64Encode(s: string): string {
 
 const B32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
-// wording carried over from the Next app
 const BASE32_ERROR = 'Invalid Base32 character.';
 const HEX_LENGTH_ERROR = 'Hex must have even length.';
 const HEX_CHARACTER_ERROR = 'Invalid hex character.';
@@ -675,8 +653,6 @@ export function binaryEncode(s: string): string {
 		.join(' ');
 }
 
-/* ── Vigenère cryptanalysis (Index of Coincidence) ────────────────────────── */
-
 export function indexOfCoincidence(text: string): number {
 	const counts: number[] = new Array<number>(26).fill(0);
 	let n = 0;
@@ -713,7 +689,6 @@ export function guessVigenereKey(
 	const letters = text.toUpperCase().replace(/[^A-Z]/g, '');
 	if (letters.length < 20) return null;
 
-	// Average IoC for each candidate key length.
 	const iocs: number[] = [0, 0];
 	const upper = Math.min(maxLen, Math.floor(letters.length / 4));
 	for (let len = 2; len <= upper; len++) {
@@ -728,10 +703,7 @@ export function guessVigenereKey(
 		iocs.push(avg / len);
 	}
 
-	// Multiples of the true key length also have high IoC (a length of 10 looks
-	// identical to length 5 when the key is LEMON). Prefer the shortest length
-	// whose IoC is within tolerance of the best — otherwise we silently pick a
-	// multiple and produce a key like "LEMONLEMON".
+	// prefer shortest key
 	const maxIoC = Math.max(...iocs);
 	if (maxIoC < 0.055) return null;
 	let bestLen = 0;
@@ -753,8 +725,6 @@ export function guessVigenereKey(
 	}
 	return { key, ioc: iocs[bestLen] ?? 0 };
 }
-
-/* ── Auto-detection pipeline ──────────────────────────────────────────────── */
 
 export type CipherId =
 	| 'caesar'
@@ -799,14 +769,12 @@ function safeTry<T>(fn: () => T): T | null {
 
 export const AFFINE_COPRIMES = [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25];
 
-/** Every decoding worth showing, best first, at most eight. */
 export function classifyAndDecode(input: string): Candidate[] {
 	const trimmed = input.trim();
 	if (!trimmed) return [];
 
 	const candidates: Candidate[] = [];
 
-	// Character-set classifiers, often unambiguous.
 	if (/^[.\-\s/|]+$/.test(trimmed)) {
 		const out = safeTry(() => morseDecode(trimmed));
 		if (out) {
@@ -916,7 +884,6 @@ export function classifyAndDecode(input: string): Candidate[] {
 		}
 	}
 
-	// Alphabet ciphers, only where the input contains letters.
 	if (/[A-Za-z]/.test(trimmed)) {
 		const caesarTries: {
 			shift: number;
@@ -1000,7 +967,7 @@ export function classifyAndDecode(input: string): Candidate[] {
 			score: number;
 		} | null = null;
 		for (const a of AFFINE_COPRIMES) {
-			// a = 1 reduces to Caesar, already covered
+			// caesar duplicate
 			if (a === 1) continue;
 			for (let b = 0; b < 26; b++) {
 				const out = safeTry(() =>
@@ -1056,7 +1023,6 @@ export function classifyAndDecode(input: string): Candidate[] {
 		}
 	}
 
-	// Identical outputs collapse to their best-scoring reading.
 	const seen = new Map<string, Candidate>();
 	for (const candidate of candidates) {
 		const previous = seen.get(candidate.output);
@@ -1070,11 +1036,8 @@ export function classifyAndDecode(input: string): Candidate[] {
 		.slice(0, 8);
 }
 
-/* ── Manual cipher dispatch ───────────────────────────────────────────────── */
-
 export const CIPHER_GROUPS = ['Classical', 'Codes', 'Encodings'];
 
-/** Labels carried over from the Next app, verbatim. */
 export const CIPHER_OPTIONS: {
 	value: CipherId;
 	label: string;
@@ -1220,8 +1183,7 @@ export default class DecoderTool extends Component {
 		return this.input.trim().length > 0;
 	}
 
-	// The affine sweep alone runs 312 decodes; the template reads this more than
-	// once per render.
+	// cache affine sweep
 	@cached
 	get candidates() {
 		return classifyAndDecode(this.input);
@@ -1257,7 +1219,6 @@ export default class DecoderTool extends Component {
 				this.params,
 			);
 		} catch (error) {
-			// wording carried over from the Next app
 			return error instanceof Error
 				? `Error: ${error.message}`
 				: 'Error';
@@ -1331,9 +1292,7 @@ export default class DecoderTool extends Component {
 		try {
 			const text = await navigator.clipboard.readText();
 			if (text) this.input = text;
-		} catch {
-			// Permission denied or no clipboard support — nothing to do.
-		}
+		} catch {}
 	};
 
 	pasteFromClipboard = () => void this.paste();
@@ -1350,8 +1309,6 @@ export default class DecoderTool extends Component {
 
 	copyManual = () => this.copy(this.manualOutput, 'manual');
 
-	// The candidate's own parameters land in the manual controls, so the reading
-	// can be adjusted from where the detector left off.
 	openInManual = (candidate: Candidate) => {
 		this.cipher = candidate.cipherId;
 		this.mode = 'decode';
@@ -1377,7 +1334,6 @@ export default class DecoderTool extends Component {
 		<div class="dt-dec">
 			<div class="dt-dec-panel">
 				<div class="dt-dec-input-bar">
-					{{! wording carried over from the Next app }}
 					<span
 						class="dt-dec-input-label"
 					>Input</span>
@@ -1390,7 +1346,6 @@ export default class DecoderTool extends Component {
 						}}
 					>
 						<Icon @name="clipboard-paste" />
-						{{! wording carried over from the Next app }}
 						Paste
 					</button>
 					<button
@@ -1400,11 +1355,9 @@ export default class DecoderTool extends Component {
 						{{on "click" this.clearInput}}
 					>
 						<Icon @name="x" />
-						{{! wording carried over from the Next app }}
 						Clear
 					</button>
 				</div>
-				{{! wording carried over from the Next app }}
 				<textarea
 					class="dt-dec-input"
 					aria-label="Input"
@@ -1421,12 +1374,10 @@ export default class DecoderTool extends Component {
 				<TabsList class="dt-dec-tabs">
 					<TabsTrigger @value="auto">
 						<Icon @name="wand-2" />
-						{{! wording carried over from the Next app }}
 						Auto-decode
 					</TabsTrigger>
 					<TabsTrigger @value="manual">
 						<Icon @name="key-round" />
-						{{! wording carried over from the Next app }}
 						Manual
 					</TabsTrigger>
 				</TabsList>
@@ -1524,7 +1475,6 @@ export default class DecoderTool extends Component {
 														)
 													}}
 												>
-													{{! wording carried over from the Next app }}
 													Tweak
 													in
 													Manual
@@ -1537,7 +1487,6 @@ export default class DecoderTool extends Component {
 									{{/each}}
 								</div>
 							{{else}}
-								{{! wording carried over from the Next app }}
 								<div
 									class="dt-dec-empty"
 								>No confident
@@ -1554,7 +1503,6 @@ export default class DecoderTool extends Component {
 							<div
 								class="dt-dec-blank"
 							>
-								{{! wording carried over from the Next app }}
 								<p
 									class="dt-dec-blank-note"
 								>Enter
@@ -1567,7 +1515,6 @@ export default class DecoderTool extends Component {
 								<div
 									class="dt-dec-samples"
 								>
-									{{! wording carried over from the Next app }}
 									<div
 										class="dt-dec-samples-head"
 									>Try a
@@ -1597,7 +1544,6 @@ export default class DecoderTool extends Component {
 							</div>
 						{{/if}}
 
-						{{! wording carried over from the Next app }}
 						<p
 							class="dt-dec-note"
 						>Candidates are ranked by
@@ -1612,7 +1558,6 @@ export default class DecoderTool extends Component {
 
 					<TabsContent @value="manual">
 						<div class="dt-dec-field">
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-dec-field-label"
 							>Cipher</span>
@@ -1649,7 +1594,6 @@ export default class DecoderTool extends Component {
 						</div>
 
 						<div class="dt-dec-field">
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-dec-field-label"
 							>Direction</span>
@@ -1692,7 +1636,6 @@ export default class DecoderTool extends Component {
 							<div
 								class="dt-dec-field"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-dec-field-label"
 								>Shift (1–25)</span>
@@ -1720,11 +1663,9 @@ export default class DecoderTool extends Component {
 							<div
 								class="dt-dec-field"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-dec-field-label"
 								>Key</span>
-								{{! wording carried over from the Next app }}
 								<input
 									type="text"
 									class="dt-dec-key"
@@ -1748,7 +1689,6 @@ export default class DecoderTool extends Component {
 							<div
 								class="dt-dec-field"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-dec-field-label"
 								>Parameters</span>
@@ -1761,7 +1701,6 @@ export default class DecoderTool extends Component {
 										<span
 											class="dt-dec-affine-label"
 										>a
-											{{! wording carried over from the Next app }}
 											<span
 												class="dt-dec-affine-hint"
 											>(coprime
@@ -1795,7 +1734,6 @@ export default class DecoderTool extends Component {
 										<span
 											class="dt-dec-affine-label"
 										>b
-											{{! wording carried over from the Next app }}
 											<span
 												class="dt-dec-affine-hint"
 											>(0–25)</span></span>
@@ -1825,7 +1763,6 @@ export default class DecoderTool extends Component {
 							<div
 								class="dt-dec-field"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-dec-field-label"
 								>Rails (2–10)</span>
@@ -1850,7 +1787,6 @@ export default class DecoderTool extends Component {
 							<div
 								class="dt-dec-output-head"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-dec-field-label"
 								>Output</span>
@@ -1872,7 +1808,6 @@ export default class DecoderTool extends Component {
 												"copy"
 											}}
 										/>
-										{{! wording carried over from the Next app }}
 										Copy
 									</button>
 								{{/if}}
@@ -1891,7 +1826,6 @@ export default class DecoderTool extends Component {
 										class="dt-dec-output"
 									>{{this.manualOutput}}</pre>
 								{{else}}
-									{{! wording carried over from the Next app }}
 									<p
 										class="dt-dec-placeholder"
 									>Enter
@@ -1918,7 +1852,6 @@ export default class DecoderTool extends Component {
 						}}"
 					{{on "click" this.toggleReference}}
 				>
-					{{! wording carried over from the Next app }}
 					<span>Cipher reference</span>
 					<Icon
 						class="dt-dec-reference-chevron"
@@ -1926,7 +1859,6 @@ export default class DecoderTool extends Component {
 					/>
 				</button>
 				{{#if this.referenceOpen}}
-					{{! wording carried over from the Next app }}
 					<div class="dt-dec-reference">
 						<div>
 							<p

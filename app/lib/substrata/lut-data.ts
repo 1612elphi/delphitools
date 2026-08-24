@@ -1,33 +1,13 @@
-/**
- * Film-emulation LUT looks (Ruby, 2026-07-03: "pull in some open source LUT
- * presets" + "let's try that generator"). Two provenances, one strip format
- * (33 slices of 33×33 → 1089×33 PNG, blue selects the slice) in
- * public/substrata/luts/:
- *   1. RawTherapee Film Simulation Collection (CC BY-SA 4.0, Pat David,
- *      Pavlov Dmitry & Michael Ezra — ACKNOWLEDGEMENTS.md), downsampled from
- *      HaldCLUT.
- *   2. Generated with spectral_film_lut (MIT, Jan Lohse) from published film
- *      datasheets — authentic negative→print chains (e.g. Vision3 5207
- *      through the 2383 print stock), sRGB in → Rec.709 gamut + sRGB gamma
- *      out; generation script noted in STATE.md.
- * Stock names are informational identifiers (trademark fair use per the
- * collection's own disclaimer), not authored copy.
- *
- * Fabric-free on purpose: the looks panel (thumbnails) and filter-sync read
- * this outside the canvas boundary; only filter-shaders touches the GPU.
- */
+/** source licences: acknowledgements.md, state.md */
 
 export interface LutLook {
 	id: string;
 	label: string;
-	/** under /substrata/luts/ */
 	file: string;
-	/** placeholder shelf gradient while the strip loads (same shape as sims') */
 	swatch: [string, string, string];
 }
 
 export const LUT_LOOKS: LutLook[] = [
-	// — RawTherapee collection (CC BY-SA) —
 	{
 		id: 'lut-portra400',
 		label: 'Portra 400',
@@ -76,7 +56,6 @@ export const LUT_LOOKS: LutLook[] = [
 		file: 'lut-trix400.png',
 		swatch: ['#e8e8e8', '#7a7a7a', '#141414'],
 	},
-	// — spectral_film_lut generated (MIT tool; our artefacts) —
 	{
 		id: 'lut-vision3-2383',
 		label: 'Vision3 2383',
@@ -131,11 +110,9 @@ export const isLutLook = (presetId: string): boolean =>
 	LUT_LOOKS.some((l) => l.id === presetId);
 
 export interface LoadedLut {
-	/** entries per axis (33) */
 	size: number;
-	/** RGBA table, index (r + g·S + b·S²)·4 */
 	table: Uint8ClampedArray;
-	/** the packed strip, ready to upload as a GPU texture */
+	/** gpu texture source */
 	strip: HTMLCanvasElement;
 }
 
@@ -144,8 +121,7 @@ const inFlight = new Set<string>();
 let epoch = 0;
 const listeners = new Set<() => void>();
 
-/** Bumped whenever a LUT finishes loading — filter-sync mixes it into its
- *  signature and the canvas re-renders, so looks pop in as they arrive. */
+/** cache invalidation counter */
 export function lutEpoch(): number {
 	return epoch;
 }
@@ -161,7 +137,6 @@ export function getLoadedLut(id: string): LoadedLut | undefined {
 	return loaded.get(id);
 }
 
-/** Kick off (idempotent) an async load of one LUT strip. */
 export function ensureLut(id: string): void {
 	if (
 		loaded.has(id) ||
@@ -174,8 +149,8 @@ export function ensureLut(id: string): void {
 	inFlight.add(id);
 	const img = new Image();
 	img.onload = () => {
-		const height = img.naturalHeight; // = size
-		const width = img.naturalWidth; // = size²
+		const height = img.naturalHeight;
+		const width = img.naturalWidth;
 		const strip = document.createElement('canvas');
 		strip.width = width;
 		strip.height = height;
@@ -184,7 +159,7 @@ export function ensureLut(id: string): void {
 		})!;
 		ctx.drawImage(img, 0, 0);
 		const pix = ctx.getImageData(0, 0, width, height).data;
-		// strip → table: pixel (x = b·S + r, y = g) → (r + g·S + b·S²)
+		// packed lut voxel order
 		const S = height;
 		const table = new Uint8ClampedArray(S * S * S * 4);
 		for (let y = 0; y < S; y++) {
@@ -214,10 +189,6 @@ export function ensureAllLuts(): void {
 	for (const l of LUT_LOOKS) ensureLut(l.id);
 }
 
-/**
- * CPU trilinear application (the Canvas2D fallback + thumbnail path) — the
- * exact maths of the GLSL sampler, on raw RGBA pixels in place.
- */
 export function applyLutToImageData(
 	data: Uint8ClampedArray,
 	lut: LoadedLut,

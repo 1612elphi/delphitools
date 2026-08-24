@@ -1,8 +1,3 @@
-// The header's colour-notation selector, and the service behind it.
-//
-// The point of the service is that the preference is site-wide: a value copied
-// out of one Colour tool has to match the next one, and survive a reload.
-
 import { launch, visit, check, sleep, finish } from './harness.mjs';
 
 const { browser, page } = await launch();
@@ -58,7 +53,6 @@ check(
 	await swatchValue(),
 );
 
-// Same service, second tool.
 await page.evaluate(() => {
 	document.querySelector(
 		'.dt-nav-link[href="/tools/colour-converter"]',
@@ -83,9 +77,7 @@ check(
 	'favicon-genny is Images & Assets',
 );
 
-// Below sm the label drops and the pipette carries the control on its own. The
-// rule has to be scoped to the label, because Icon renders a <span> too and a
-// bare `span` selector leaves a clickable box with nothing drawn in it.
+// bare span matches icon
 await visit(page, '/tools/palette-genny');
 for (const [width, label] of [
 	[420, 'none'],
@@ -119,7 +111,6 @@ for (const [width, label] of [
 }
 await page.setViewport({ width: 1400, height: 1000 });
 
-// The Next version held this in memory and lost it on reload.
 await visit(page, '/tools/palette-genny');
 check(
 	'the choice survives a reload',

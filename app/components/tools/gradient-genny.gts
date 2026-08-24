@@ -42,15 +42,11 @@ const COPIED_MS = 1500;
 const MIN_EXPORT = 100;
 const MAX_EXPORT = 8192;
 
-// Dots are inset from the canvas edge so a corner tooltip stays on screen. The
-// mesh mapping is the same inset run backwards, so a dot dragged to the far
-// left still means x = 0.
 const MESH_INSET_X = 12;
 const MESH_SPAN_X = 76;
 const MESH_INSET_Y = 15;
 const MESH_SPAN_Y = 70;
 
-/** Pixels of movement before a press counts as a drag rather than a click. */
 const DRAG_SLOP = 4;
 
 const MODES: { key: GradientMode; label: string }[] = [
@@ -100,8 +96,6 @@ export default class GradientGennyTool extends Component {
 	@tracked draggingPoint: string | null = null;
 	@tracked gridSize: GridSize = 2;
 
-	// The carried colour (omnibox, a workflow) leads every mode: first stop,
-	// top-left corner, first mesh point.
 	readonly #carried = colourFromUrl() ?? undefined;
 
 	@tracked corners: CornerColours = {
@@ -132,8 +126,6 @@ export default class GradientGennyTool extends Component {
 
 	#copiedTimer?: ReturnType<typeof setTimeout>;
 
-	// Pointer-drag bookkeeping for the mesh dots. None of it is rendered, so
-	// none of it is tracked; `draggingPoint` above carries the visible part.
 	#dragId: string | null = null;
 	#dragField: DOMRect | null = null;
 	#dragOrigin = { px: 0, py: 0, x: 0, y: 0 };
@@ -212,7 +204,6 @@ export default class GradientGennyTool extends Component {
 		}));
 	}
 
-	/** The four dots drawn over the preview in corners mode. */
 	get cornerDots() {
 		return CORNER_POSITIONS.map((position) => {
 			const colour = this.corners[position.key];
@@ -231,7 +222,6 @@ export default class GradientGennyTool extends Component {
 		});
 	}
 
-	/** The same four colours as an editable list under the preview. */
 	get cornerRows() {
 		return CORNER_KEYS.map((key, index) => {
 			const colour = this.corners[key];
@@ -284,9 +274,6 @@ export default class GradientGennyTool extends Component {
 		}));
 	}
 
-	// Every hex reaching a style attribute has been through normaliseHex, so the
-	// `40` suffix below is always a valid 8-digit colour rather than a splice
-	// into whatever the user typed.
 	#dotStyle(colour: string) {
 		return htmlSafe(
 			`background-color: ${colour}; --dt-gradient-ring: ${colour}40`,
@@ -299,10 +286,6 @@ export default class GradientGennyTool extends Component {
 		);
 	}
 
-	/**
-	 * Repaints whenever anything the renderer reads changes — the modifier body
-	 * consumes the same tracked state, so no dependency list is needed.
-	 */
 	paint = modifier((element: HTMLCanvasElement) => {
 		renderGradient(
 			element,
@@ -328,7 +311,6 @@ export default class GradientGennyTool extends Component {
 		this.angle = angle;
 	};
 
-	/** Clicking the dial points the gradient at the click, 0° being up. */
 	setAngleFromDial = (event: MouseEvent) => {
 		const rect = (
 			event.currentTarget as HTMLElement
@@ -390,8 +372,6 @@ export default class GradientGennyTool extends Component {
 		if (!current) return;
 
 		const hex = normaliseHex(input.value);
-		// A rejected entry puts the stored value back rather than leaving the
-		// field showing something the gradient does not use.
 		if (!hex) {
 			input.value = current.colour;
 			return;
@@ -471,8 +451,6 @@ export default class GradientGennyTool extends Component {
 		this.hoveredPoint = null;
 	};
 
-	// Free positional dragging, on pointer events rather than a drag library:
-	// capture keeps the moves coming to the dot even when the pointer outruns it.
 	startDrag = (id: string, event: PointerEvent) => {
 		const dot = event.currentTarget as HTMLElement;
 		const field = dot.closest('.dt-gradient-dots');
@@ -535,15 +513,13 @@ export default class GradientGennyTool extends Component {
 		this.draggingPoint = null;
 	};
 
-	/** Without this, letting go after a drag also opens the colour picker. */
+	// suppress drag click
 	blockDragClick = (event: Event) => {
 		if (this.#dragMoved) event.preventDefault();
 	};
 
 	downloadImage = () => {
 		const canvas = document.createElement('canvas');
-		// The size fields take free-form numbers; an empty one reads as 0, and
-		// createImageData(0, 0) throws.
 		renderGradient(
 			canvas,
 			Math.round(

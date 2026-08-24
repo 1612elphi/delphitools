@@ -1,15 +1,3 @@
-// Writes a per-route index.html into the build output, each with its own head
-// tags, and renders the share cards beside them.
-//
-// An Ember SPA ships one index.html, so every route would otherwise share the
-// root's <title> and og:image and scrapers would see the same card everywhere.
-// prember is the traditional answer, but it is built on the classic broccoli
-// pipeline that Ember 7 no longer defaults to. This drives the built app in
-// headless Chrome instead, which is framework-independent and reuses the
-// puppeteer-core already present for the verification harnesses.
-//
-// Usage: node scripts/prerender.mjs [distDir]
-
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,13 +12,9 @@ const ORIGIN = 'https://delphi.tools';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = process.argv[2] ?? join(root, 'dist');
 
-// Node 26 strips TypeScript natively, so the registry is imported rather than
-// parsed — it stays the single source of truth, as PARITY.md requires.
+// node strips typescript
 const { allTools } = await import('../app/lib/tools.ts');
 
-/** `external: true` entries have no /tools/:id page in the Next app either;
- *  entries whose href is not under /tools/ (substrata → /editor) live at
- *  their own route instead. */
 const toolRoutes = allTools.filter(
 	(t) => !t.external && t.href.startsWith('/tools/'),
 );
@@ -55,7 +39,6 @@ function headFor({ title, description, url, image, imageAlt }) {
 	].join('\n    ');
 }
 
-/** Swap the shell's <title> and description for this route's head block. */
 function withHead(shell, head) {
 	return shell
 		.replace(/<title>[\s\S]*?<\/title>/, '@@HEAD@@')
@@ -92,8 +75,6 @@ const routes = [
 		card: toolCard(t.name),
 	})),
 	{
-		// the editor route; title matches the Next layout's metadata, the
-		// description is the registry entry's shipped wording
 		url: '/editor',
 		title: 'Substrata',
 		description:
@@ -110,19 +91,16 @@ for (const route of routes) {
 	const dir = route.url === '/' ? dist : join(dist, route.url);
 	mkdirSync(dir, { recursive: true });
 
-	// The card is deterministic, so it does not need the browser.
 	writeFileSync(join(dir, 'og.png'), await renderPng(route.card));
 
-	// Boot the route so a failure to render surfaces here rather than in
-	// production. The body is left as the shell: Ember owns it at runtime, and a
-	// snapshot would be replaced on boot anyway.
+	// boot routes before writing
 	const page = await browser.newPage();
 	const errors = [];
 	page.on('pageerror', (e) => errors.push(e.message));
 	await page.goto(`http://localhost:${port}${route.url}`, {
 		waitUntil: 'networkidle2',
 	});
-	// serialised and evaluated in the page, not in node
+	// runs in browser context
 	const rendered = await page.evaluate(
 		() =>
 			document
@@ -143,10 +121,7 @@ for (const route of routes) {
 		);
 	}
 
-	/* Cloudflare Pages serves the root 404.html (status 404) for unmatched
-	 * paths. It is the SPA shell with a 404 head: Ember boots at the unknown
-	 * URL and the catch-all route renders the tiled scene. Boot something bogus
-	 * first so a broken scene fails here, not on the edge. */
+	// cloudflare serves root 404
 	{
 		const page = await browser.newPage();
 		const errors = [];

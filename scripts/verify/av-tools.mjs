@@ -1,10 +1,5 @@
-// The wave-1 audio/video tools against a synthesised clip.
-//
-// The clip is recorded in-page (canvas.captureStream + MediaRecorder), so the
-// rig needs no fixture file. MediaRecorder webm reports duration Infinity
-// until scanned (Chromium bug 642012), so this doubles as coverage for
-// lib/video's resolveDuration path — the same path a dropped screen
-// recording takes.
+// wave-1 audio/video tools, fixture recorded in-page
+// chromium #642012 webm duration infinity; covers resolveDuration
 //
 // Usage: npm start, then node scripts/verify/av-tools.mjs
 
@@ -12,7 +7,6 @@ import { launch, visit, check, finish, sleep } from './harness.mjs';
 
 const { browser, page } = await launch();
 
-/** Records ~1.2 s of colour-cycling 64×64 webm and drops it on `selector`. */
 async function dropClip(selector) {
 	await page.evaluate(async (sel) => {
 		const canvas = document.createElement('canvas');
@@ -48,7 +42,6 @@ async function dropClip(selector) {
 	}, selector);
 }
 
-// --- subtitle-converter: srt in, vtt out -----------------------------------
 await visit(page, '/tools/subtitle-converter');
 await page.evaluate(() => {
 	const area = document.querySelector('.dt-sub-pane textarea');
@@ -73,7 +66,6 @@ check(
 const stats = await page.$eval('.dt-sub-stats', (el) => el.textContent);
 check('cue stats render', /1 cues/.test(stats), stats.trim());
 
-// --- video-to-gif: drop, encode, result ------------------------------------
 await visit(page, '/tools/video-to-gif');
 await dropClip('.dt-vg-frame');
 await page.waitForFunction(
@@ -107,7 +99,6 @@ check(
 	gifMeta.trim(),
 );
 
-// --- frame-extractor: drop, grab a still -----------------------------------
 await visit(page, '/tools/frame-extractor');
 await dropClip('.dt-fx-frame');
 await page.waitForFunction(

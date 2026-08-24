@@ -56,37 +56,26 @@ import {
 } from 'delphitools-v2/lib/substrata/tool-settings';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 
-/**
- * Omnibar (§8) — floating tool + panel cockpit, dockable to any edge (drag the
- * grip). UX pass (Ruby, 2026-07-08): FOUR separated units with space between —
- * [tools] [tool settings, inline + always visible] [panels/more] [colour].
- * Every subtool is a flat, FLUSH full-height button (a selected tool's
- * highlight touches the bar edges — no padding halo); no hover fans. Panel
- * triggers TOGGLE their module on click (round 3 — hover-peek is gone; a
- * module opens in the rail, or floats where it was last dragged); the
- * colour unit is one big full-height swatch.
- */
+// §8. four units: tools · tool settings (inline) · panels · colour. flush
+// full-height buttons, highlight touches bar edges (no padding halo). panel
+// triggers toggle on click — no hover-peek; module opens in rail or floats
+// where last dragged. dockable by dragging the grip.
 
 interface SubDef {
 	id: string;
 	label: string;
 	key: string;
-	/** kebab-case lucide name */
+	/** lucide name */
 	icon: string;
 }
 
 interface ToolDef {
 	id: ToolId;
-	/** the tool's subtools, all rendered flat, each with its OWN shortcut key
-	 *  (badged on the button). Ids are internal (tool.ts activeSubs
-	 *  vocabulary); labels are Ruby's canonical subtool names (authored
-	 *  chrome, not a copy gap). */
+	// ids = tool.ts activeSubs vocabulary; labels = canonical subtool names
 	subs: SubDef[];
 }
 
-// Every subtool has a direct key (Ruby, 2026-07-08) — Photoshop-adjacent
-// letters where they exist (V move · C crop · M marquee · L lasso · W wand ·
-// U shapes · B brush). Plain keypresses, ignored while typing.
+// photoshop-adjacent keys (V C M L W U B); plain keypress, ignored in inputs
 const TOOLS: ToolDef[] = [
 	{
 		id: 'move',
@@ -115,9 +104,8 @@ const TOOLS: ToolDef[] = [
 	},
 	{
 		id: 'adjust',
-		// No subtools (Ruby, 2026-07-03): the planned FILTERS/COLOUR split
-		// collapsed once both families landed in the ONE filters[] pipeline —
-		// a single ADJUST button fronts the whole FX mode.
+		// no subtools: planned filters/colour split collapsed once both
+		// landed in the one filters[] pipeline
 		subs: [
 			{
 				id: 'adjust',
@@ -131,9 +119,8 @@ const TOOLS: ToolDef[] = [
 		id: 'text',
 		subs: [
 			{ id: 'text', label: 'Text', key: 'T', icon: 'type' },
-			// Bezier/pen CUT from v1 (Ruby 2026-07-07) — PathLayer stays
-			// ratified schema for later; text-on-path (its main consumer)
-			// was already cut.
+			// bezier/pen cut from v1; PathLayer stays ratified schema
+			// (text-on-path, its main consumer, already cut)
 		],
 	},
 	{
@@ -167,8 +154,6 @@ const TOOLS: ToolDef[] = [
 	},
 ];
 
-// Trigger order; each button's glyph comes from MODULES[id].icon. `arrange`
-// was the overflow bar's only occupant — pulled in (Ruby).
 const PANELS: ModuleId[] = [
 	'effects',
 	'layers',
@@ -179,8 +164,6 @@ const PANELS: ModuleId[] = [
 
 const OMNIBAR_DRAG: DockDrag = { kind: 'omnibar' };
 
-/* ── template helpers ────────────────────────────────────────────────────── */
-
 function isSubActive(
 	activeTool: ToolId,
 	activeSubs: Readonly<Record<ToolId, string>>,
@@ -190,8 +173,7 @@ function isSubActive(
 	return activeTool === tool && activeSubs[tool] === sub;
 }
 
-// pieces/primitives carry a floating shape menu — the shape choice IS subtool
-// selection (Ruby)
+// shape choice IS subtool selection for these two
 function hasFlyout(sub: string): boolean {
 	return sub === 'primitives' || sub === 'pieces';
 }
@@ -208,8 +190,6 @@ function moduleIcon(id: ModuleId): string {
 	return MODULES[id].icon ?? '';
 }
 
-/* ── building blocks ─────────────────────────────────────────────────────── */
-
 const Tag: TOC<{ Args: { value: string } }> = <template>
 	<span class="sub-omni-tag">{{@value}}</span>
 </template>;
@@ -220,17 +200,10 @@ const PIECE_LABEL: Record<PieceShape, string> = {
 	line: 'Line',
 	polygon: 'Polygon',
 	star: 'Star',
-	symbol: 'Symbol', // chip shows the generic kind; the layer names the preset
+	symbol: 'Symbol', // chip = generic kind; layer names preset
 };
 
-/**
- * Live read-out chips per tool (Ruby's spec): MOVE = the selection's X/Y ·
- * SELECT = the active subtool's mode settings (marquee touch/cover +
- * group/separate, lasso sensitivity, wand tolerance) · ADJUST = the layer's
- * stack labels · TEXT = font + size · PIECES = the chosen shape. All live —
- * doc/selection chips track the stores; the rest read tool-settings, so they
- * update the moment the M2 tools start writing it.
- */
+// live chips: doc/selection chips track stores, rest read tool-settings
 function readoutChips(
 	tool: ToolId,
 	sub: string,
@@ -297,10 +270,8 @@ function readoutChips(
 	}
 }
 
-/** Hover-peek bloom that rises toward the canvas from the docked edge. The
- *  wrapper's padding spans the trigger→bloom gap and becomes a hover bridge
- *  while the trigger group is hovered (the classic hover-gap problem); idle,
- *  it stays click-transparent. */
+// wrapper padding spans trigger→bloom gap as hover bridge; idle stays
+// click-transparent
 const Bloom: TOC<{
 	Args: { edge: Edge; cross: 'center' | 'end' };
 	Blocks: { default: [] };
@@ -333,7 +304,6 @@ const SubButton: TOC<{
 	</button>
 </template>;
 
-/** Omnibar drag grip (dnd-kit) — drag the whole bar onto an edge drop zone. */
 const OmnibarGrip: TOC<{ Args: { vertical: boolean } }> = <template>
 	<span
 		class="sub-omni-grip sub-grip cursor-grab
@@ -358,8 +328,7 @@ const PanelButton: TOC<{
 			class="sub-omni-panel-btn
 				{{if @vertical 'is-vertical'}}
 				{{if @pinned 'is-pinned'}}"
-			{{! module title doubles as the hover tooltip (raw ids told a
-				mouse user nothing — clarity review #6) }}
+			{{! module title = tooltip; raw ids meant nothing (review #6) }}
 			aria-label={{moduleTitle @id}}
 			title={{moduleTitle @id}}
 			{{on "click" (fn togglePin @id)}}
@@ -372,8 +341,7 @@ const PanelButton: TOC<{
 	</div>
 </template>;
 
-/** The colour trigger — its own UNIT: one big full-height live swatch.
- *  Same peek/pin semantics as every PanelButton, just louder. */
+// own unit; same peek/pin semantics as every panelbutton
 class ColourButton extends Component<{ Args: { pinned: boolean } }> {
 	colour = new TrackedExternal(subscribeColour, getColour);
 
@@ -409,12 +377,7 @@ class ColourButton extends Component<{ Args: { pinned: boolean } }> {
 	</template>
 }
 
-/**
- * The tool-settings UNIT — the contextual trigger: the active subtool's icon,
- * name, and up to two live chips summarising its settings at a glance. Click
- * pins the TOOL module (the full settings body). Uniform bar height; vertical
- * docks show the icon only.
- */
+// live chips capped at two; click pins the tool module; vertical docks icon-only
 class ToolSettingsUnit extends Component<{
 	Args: { vertical: boolean; pinned: boolean };
 }> {
@@ -509,7 +472,6 @@ class ToolSettingsUnit extends Component<{
 	</template>
 }
 
-/** The four omnibar units: tools · tool settings · panels · colour. */
 const Barrow: TOC<{
 	Args: {
 		edge: Edge;
@@ -525,8 +487,6 @@ const Barrow: TOC<{
 			{{if @vertical 'is-vertical'}}
 			{{if @alignEnd 'is-align-end' 'is-align-start'}}"
 	>
-		{{! 1 · tools — flat, flush: a selected tool fills the bar's full
-			cross section (no padding halo) }}
 		<div
 			class="sub-omni-box pointer-events-auto border shadow-lg
 				{{if @vertical 'is-vertical flex-col'}}"
@@ -597,15 +557,11 @@ const Barrow: TOC<{
 			{{/each}}
 		</div>
 
-		{{! 2 · tool settings — the contextual trigger (Ruby's keeper shape):
-			active subtool's icon + name + a couple of live setting chips at a
-			glance; pins the TOOL module like every panel trigger }}
 		<ToolSettingsUnit
 			@vertical={{@vertical}}
 			@pinned={{isPinned @pinned "tool"}}
 		/>
 
-		{{! 3 · panels ("more") — flush triggers }}
 		<div
 			class="sub-omni-box pointer-events-auto border shadow-lg
 				{{if @vertical 'is-vertical flex-col'}}"
@@ -619,12 +575,9 @@ const Barrow: TOC<{
 			{{/each}}
 		</div>
 
-		{{! 4 · colour — one big full-height swatch, its own unit }}
 		<ColourButton @pinned={{isPinned @pinned "colour"}} />
 	</div>
 </template>;
-
-/* ── the omnibar ─────────────────────────────────────────────────────────── */
 
 export default class Omnibar extends Component {
 	activeTool = new TrackedExternal(subscribeTool, getActiveTool);
@@ -658,10 +611,8 @@ export default class Omnibar extends Component {
 		return this.edge === 'bottom' || this.edge === 'right';
 	}
 
-	// Rail position: "follow" → adjacent to the omnibar (in the dock); otherwise
-	// its own edge, independent. If that edge IS the omnibar's edge, dock it
-	// adjacent too (stacked) rather than as a separate container that would
-	// overlap.
+	// "follow" → adjacent in dock; own edge otherwise. if that edge IS the
+	// omnibar's, dock adjacent (stacked) not overlapping
 	get effRailEdge(): Edge {
 		return this.railEdge === 'follow' ? this.edge : this.railEdge;
 	}
@@ -677,8 +628,8 @@ export default class Omnibar extends Component {
 		return this.effRailEdge === this.edge;
 	}
 
-	// units of different sizes align to the DOCKED edge (settings grows away
-	// from it) — bottom/right docks align end, top/left align start
+	// different-sized units align to the docked edge (bottom/right end,
+	// top/left start)
 	get alignEnd() {
 		return this.vertical
 			? this.edge === 'right'
@@ -734,7 +685,7 @@ export default class Omnibar extends Component {
 				<Rail @vertical={{this.railVertical}} />
 			{{/if}}
 		</div>
-		{{! rail decoupled from the omnibar — its own edge }}
+		{{! rail decoupled — own edge }}
 		{{#unless this.inDock}}
 			<div
 				class="sub-omni-rail-dock pointer-events-none absolute z-30 is-{{this.effRailEdge}}"

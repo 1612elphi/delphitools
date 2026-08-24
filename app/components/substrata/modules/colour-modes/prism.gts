@@ -17,19 +17,6 @@ import {
 	type SpectralBand,
 } from 'delphitools-v2/lib/substrata/colour-prism';
 
-/**
- * Prism mode (spectroscope) — a draggable spectrum bar tunes a wavelength in
- * [PRISM_LO, PRISM_HI]; a needle marks it. Two knobs (WATTS light intensity,
- * NTU haze) shape the result. All wavelength→sRGB maths lives in
- * lib/substrata/colour-prism; this file is pure UI + pointer handling.
- *
- * Local state (wavelength / watts / ntu) is the source of truth here and is
- * pushed into the shared colour-store on every change via setRgb(prismColour…).
- * Ported from sketches/pickers-fun.html (the PRISM IIFE).
- */
-
-// band() returns a semantic key; these are the family words shown in the
-// readout — one word each, standard colour-family names.
 const BAND_LABELS: Record<SpectralBand, string> = {
 	violet: 'Violet',
 	blue: 'Blue',
@@ -50,7 +37,6 @@ function fillStyle(pct: number) {
 
 interface ParamRowSignature {
 	Args: {
-		/** Instrument-panel glyph (WATTS / NTU), not copy. */
 		label: string;
 		ariaLabel: string;
 		value: number;
@@ -86,14 +72,10 @@ export interface PrismModeSignature {
 }
 
 export default class PrismMode extends Component<PrismModeSignature> {
-	// Spectroscope params — local UI state, not shared document truth.
-	@tracked wl = 532; // wavelength, nm (sketch default)
-	@tracked watts = 100; // light intensity, 0–100 (sketch default)
-	@tracked ntu = 6; // haze / turbidity, 0–100 (sketch default)
+	@tracked wl = 532;
+	@tracked watts = 100;
+	@tracked ntu = 6;
 
-	// Push the shaped wavelength colour into the shared store — ONLY on user
-	// interaction, never on mount (opening the Prism tab must not overwrite the
-	// current colour). Prism is a generator: it writes, it does not read.
 	#push() {
 		setRgb(
 			prismColour(this.wl, {
@@ -136,7 +118,6 @@ export default class PrismMode extends Component<PrismModeSignature> {
 
 	<template>
 		<div class="sub-cp-prism">
-			{{! spectrum bar — drag to tune the wavelength }}
 			<div
 				class="sub-cp-spectrum"
 				aria-label="Wavelength"
@@ -153,10 +134,8 @@ export default class PrismMode extends Component<PrismModeSignature> {
 				><span class="sub-cp-needle-tip"></span></span>
 			</div>
 
-			{{! readout — wavelength (data) + nearest colour name (data) + band }}
 			<div class="sub-cp-readout">
 				<span class="sub-cp-nm">{{this.nm}}</span>
-				{{! "nm" is the SI unit symbol of the value above (data, not copy) }}
 				<span class="sub-cp-unit">nm</span>
 				<span
 					class="sub-cp-name"

@@ -1,9 +1,4 @@
-// Footnote NodeView — an inline atom whose block body is edited in a nested
-// ProseMirror sub-editor that opens as a tooltip when the footnote is selected.
-// Adapted from the canonical example at prosemirror.net/examples/footnote:
-//  - the inner view shares the OUTER history (no inner history plugin), so undo
-//    is one timeline; adds baseKeymap so Enter/Backspace work in the body, and
-//    Escape returns focus to the main editor.
+// outer history only
 import { baseKeymap } from 'prosemirror-commands';
 import { redo, undo } from 'prosemirror-history';
 import { keymap } from 'prosemirror-keymap';
@@ -82,8 +77,7 @@ export class FootnoteView implements NodeView {
 			dispatchTransaction: this.dispatchInner.bind(this),
 			handleDOMEvents: {
 				mousedown: () => {
-					// The whole footnote is node-selected when the outer editor is
-					// focused; re-focus the inner view so typing lands inside it.
+					// outer selection retains focus
 					if (this.outerView.hasFocus())
 						this.innerView?.focus();
 					return false;

@@ -1,11 +1,4 @@
-// Styles for the social-cropper tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Social cropper ──────────────────────────────────────────────────────── */
 
 .dt-cropper-frame {
 	border: 2px solid var(--border);
@@ -35,7 +28,7 @@
 		);
 	}
 
-	/* the file input is visually hidden, so its focus ring has to land here */
+	/* hidden input focus lands here */
 	&:focus-within {
 		border-color: var(--primary);
 		outline: 2px solid var(--primary);
@@ -190,8 +183,7 @@
 	opacity: 0.7;
 }
 
-/* The stage hugs the drawn image, so the frame's percentage box and the
-   image-pixels-per-CSS-pixel scale the drag reads both stay exact. */
+/* stage hugs image for exact scale */
 .dt-cropper-stage {
 	position: relative;
 	display: inline-block;
@@ -218,7 +210,7 @@
 	box-shadow: 0 0 0 9999px rgb(0 0 0 / 50%);
 	pointer-events: none;
 
-	/* Rule of thirds, as two gradients rather than nine elements. */
+	/* thirds via gradients not elements */
 	background-image:
 		repeating-linear-gradient(
 			to right,

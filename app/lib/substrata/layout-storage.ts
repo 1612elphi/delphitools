@@ -1,13 +1,4 @@
-/**
- * localStorage persistence for the editor's UI LAYOUT preferences — which edge
- * the omnibar/rail dock to and which modules are pinned / where they dock.
- *
- * This is chrome ergonomics, NOT document content, so it is deliberately NOT
- * gated behind the opt-in project-persistence flag: that hangup is about the
- * user's *work* (pixels, scenes) never touching the browser uninvited; this is
- * only "where did I leave my panels", which carries no user content. SSR-safe —
- * every access guards on `window` and swallows quota/disabled-storage errors.
- */
+/* layout persists independently */
 
 const PREFIX = 'substrata:layout:';
 
@@ -30,6 +21,6 @@ export function saveLayout(key: string, value: unknown): void {
 			JSON.stringify(value),
 		);
 	} catch {
-		/* quota exceeded or storage disabled — layout memory is best-effort */
+		/* ignore storage failures */
 	}
 }

@@ -35,7 +35,7 @@ import type ColourNotationService from 'delphitools-v2/services/colour-notation'
 const DEFAULT_COLOUR = '#3b82f6';
 const COPIED_MS = 1500;
 
-/** Chroma at the plane's right edge. sRGB peaks at 0.313 (pure blue). */
+// plane chroma range
 const CHROMA_RANGE = 0.35;
 
 const HARMONIES: [label: string, offsets: number[]][] = [
@@ -104,7 +104,6 @@ export default class ColourAtlasTool extends Component {
 		return rgb ? rgbToHex(...rgb) : null;
 	}
 
-	/** White while the input is unparseable, matching colour-converter. */
 	get swatchHex() {
 		return this.hex ?? '#ffffff';
 	}
@@ -139,8 +138,6 @@ export default class ColourAtlasTool extends Component {
 		}));
 	}
 
-	// ── Gamut ───────────────────────────────────────────────────────────
-
 	get oklch(): Triple | null {
 		const rgb = this.rgb;
 		return rgb ? rgbToOklch(...rgb) : null;
@@ -173,10 +170,6 @@ export default class ColourAtlasTool extends Component {
 		);
 	}
 
-	/**
-	 * The OKLCH lightness–chroma slice at this colour's hue, transparent
-	 * outside the sRGB gamut. One bisection per row keeps the repaint cheap.
-	 */
 	drawPlane = modifier(
 		(canvas: HTMLCanvasElement, [hex]: [string | null]) => {
 			const rgb = hex ? hexToRgb(hex) : null;
@@ -208,8 +201,6 @@ export default class ColourAtlasTool extends Component {
 		},
 	);
 
-	// ── Contrast ────────────────────────────────────────────────────────
-
 	get contrastRows() {
 		const rgb = this.rgb;
 		if (!rgb) return [];
@@ -236,8 +227,6 @@ export default class ColourAtlasTool extends Component {
 			large: ratio >= 3,
 		}));
 	}
-
-	// ── Derived swatch rows ─────────────────────────────────────────────
 
 	get harmonyRows() {
 		const rgb = this.rgb;
@@ -298,8 +287,6 @@ export default class ColourAtlasTool extends Component {
 		});
 	}
 
-	// ── Open in ─────────────────────────────────────────────────────────
-
 	get openIn() {
 		return OPEN_IN;
 	}
@@ -308,8 +295,6 @@ export default class ColourAtlasTool extends Component {
 		const hex = this.hex;
 		return hex ? colourToQuery(hex) : '';
 	}
-
-	// ── Actions ─────────────────────────────────────────────────────────
 
 	#syncUrl() {
 		const hex = this.hex;
@@ -590,7 +575,6 @@ export default class ColourAtlasTool extends Component {
 					{{/each}}
 				</div>
 			{{else}}
-				{{! wording carried over from colour-converter }}
 				<p class="dt-atlas-empty">Enter a valid colour
 					value to see conversions</p>
 			{{/if}}

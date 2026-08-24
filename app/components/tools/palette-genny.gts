@@ -62,13 +62,7 @@ const swatch = (hex: string): PaletteColour => ({
 	locked: false,
 });
 
-/**
- * `?colors=aabbcc,ddeeff` — the share link the Next app accepts, with or
- * without the leading #. Returns null unless at least MIN_COLOURS parse, so a
- * truncated or junk link falls back to a fresh palette rather than a stub.
- *
- * Takes the query string rather than reading location, so it is testable.
- */
+// share-link format
 export function coloursFromQuery(search: string): string[] | null {
 	const param = new URLSearchParams(search).get('colors');
 	if (!param) return null;
@@ -99,8 +93,7 @@ export default class PaletteGennyTool extends Component {
 	@tracked strategyOpen = false;
 	@tracked copied: string | null = null;
 
-	// Hidden panel for adding the current palette to lib/palette-collection.ts.
-	// Press P, as in the Next app; not linked from anywhere.
+	// hidden collection-export panel (p)
 	@tracked exportMode = false;
 	@tracked exportName = '';
 	@tracked exportCategory: PaletteCollectionCategory = 'classic';
@@ -134,7 +127,6 @@ export default class PaletteGennyTool extends Component {
 		);
 	}
 
-	/** Below the wide layout's minimum, columns stop fitting and it becomes a grid. */
 	get isGrid() {
 		const b = this.breakpoint.current;
 		return (
@@ -164,8 +156,7 @@ export default class PaletteGennyTool extends Component {
 			number: String(index + 1).padStart(2, '0'),
 			value: this.colourNotation.format(colour.hex),
 			name: getColourName(colour.hex),
-			// style-concatenation wants one trusted value rather than an
-			// interpolated attribute; both inputs are hex from the colour picker.
+			// style-concatenation: picker hex trusted
 			fillStyle: htmlSafe(`background-color: ${colour.hex}`),
 			contrastStyle: htmlSafe(
 				`color: ${contrastText(colour.hex)}`,
@@ -184,8 +175,7 @@ export default class PaletteGennyTool extends Component {
 		}));
 	}
 
-	// Space regenerates, matching the Next app. Bound on the wrapper element
-	// rather than window so it only fires while the tool is on screen.
+	// listener dies with tool
 	shortcuts = modifier((element: HTMLElement) => {
 		const onKeyDown = (e: KeyboardEvent) => {
 			const tag = (e.target as HTMLElement)?.tagName;
@@ -254,9 +244,7 @@ export default class PaletteGennyTool extends Component {
 		};
 	};
 
-	// Every other path that sets a hex validates it, and these values reach an
-	// inline style attribute, so this one validates too rather than trusting
-	// that <input type="color"> can only ever yield #rrggbb.
+	// hex reaches inline style
 	updateColour = (id: string, event: Event) => {
 		const hex = (event.target as HTMLInputElement).value;
 		if (!hexToRgb(hex)) return;
@@ -273,7 +261,7 @@ export default class PaletteGennyTool extends Component {
 		);
 	}
 
-	/** Slug the name the same way the collection file does. */
+	// slug mirrors collection file
 	get exportId() {
 		return this.exportName
 			.toLowerCase()
@@ -283,7 +271,7 @@ export default class PaletteGennyTool extends Component {
 			.trim();
 	}
 
-	/** Trailing comma so it pastes straight into the collection array. */
+	// trailing comma for paste
 	get exportJson() {
 		if (!this.exportName.trim()) return '';
 		return (
@@ -322,7 +310,7 @@ export default class PaletteGennyTool extends Component {
 			void this.copy(this.exportJson, 'export-json');
 	};
 
-	/** One hex per line, with or without the leading #. */
+	// one hex per line
 	loadFromText = () => {
 		const parsed = this.importText
 			.trim()
@@ -383,7 +371,6 @@ export default class PaletteGennyTool extends Component {
 			'json',
 		);
 
-	/** 1200x630 sheet of swatches, drawn fresh each time rather than kept around. */
 	downloadImage = () => {
 		const width = 1200,
 			height = 630,
@@ -615,7 +602,7 @@ export default class PaletteGennyTool extends Component {
 								<label
 									for="dt-export-cat"
 								>Category</label>
-								{{! native select: a dev-only panel does not warrant a primitive }}
+								{{! dev-only: native select }}
 								<select
 									id="dt-export-cat"
 									{{on

@@ -2,14 +2,6 @@ import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 
-/**
- * Small-screen notice (Ruby 2026-07-12): a dismissible banner on sub-768px
- * viewports — the editor works there but isn't designed for it yet. Wording
- * is Ruby's dictation, shipped verbatim. Dismissal sticks via localStorage
- * (the layout-pref precedent: UI ergonomics, not document content).
- * Non-blocking: fixed above the canvas chrome, the editor stays usable.
- */
-
 const SEEN_KEY = 'substrata:small-screen-notice-seen';
 
 function isSeen(): boolean {
@@ -48,7 +40,7 @@ export default class SmallScreenNotice extends Component {
 		try {
 			localStorage.setItem(SEEN_KEY, '1');
 		} catch {
-			// storage blocked — the notice returns next visit, acceptable
+			// preserve current dismissal
 		}
 		this.seen = true;
 	};

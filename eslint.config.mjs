@@ -1,17 +1,3 @@
-/**
- * Debugging:
- *   https://eslint.org/docs/latest/use/configure/debug
- *  ----------------------------------------------------
- *
- *   Print a file's calculated configuration
- *
- *     npx eslint --print-config path/to/file.js
- *
- *   Inspecting the config
- *
- *     npx eslint --inspect-config
- *
- */
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -45,12 +31,7 @@ const parserOptions = {
 };
 
 export default defineConfig([
-	// Everything here is vendored verbatim and served as-is: public/jxl is the
-	// libjxl emscripten build from @jsquash/jxl, public/compress the @jsquash
-	// mozjpeg/webp/oxipng/avif codec builds and their hand-written dispatcher,
-	// pandoc-core.js is the MIT
-	// pandoc-wasm wrapper, and imagetracer is the standalone build
-	// image-tracer builds its worker from.
+	// vendored assets
 	globalIgnores([
 		'dist/',
 		'coverage/',
@@ -60,9 +41,7 @@ export default defineConfig([
 		'public/mediainfo/',
 		'public/lib/imagetracer_v1.2.6.js',
 		'app/lib/pandoc/pandoc-core.js',
-		// Substrata harnesses and the dictionary builder predate this repo's
-		// lint setup (they moved in with the Next-era root) and keep their
-		// own idiom, process.exit included.
+		// legacy scripts allow process.exit
 		'scripts/verify/',
 		'scripts/build-shavian-dict.ts',
 		'!**/.*',
@@ -72,9 +51,6 @@ export default defineConfig([
 	ember.configs.gjs,
 	ember.configs.gts,
 	eslintConfigPrettier,
-	/**
-	 * https://eslint.org/docs/latest/use/configure/configuration-files#configuring-linter-options
-	 */
 	{
 		linterOptions: {
 			reportUnusedDisableDirectives: 'error',
@@ -116,9 +92,6 @@ export default defineConfig([
 			qunit,
 		},
 	},
-	/**
-	 * CJS node files
-	 */
 	{
 		...n.configs['flat/recommended-script'],
 		files: ['**/*.cjs', 'config/**/*.js'],
@@ -134,9 +107,6 @@ export default defineConfig([
 			},
 		},
 	},
-	/**
-	 * ESM node files
-	 */
 	{
 		...n.configs['flat/recommended-module'],
 		files: ['**/*.mjs'],
@@ -154,8 +124,7 @@ export default defineConfig([
 		},
 	},
 	{
-		// scripts/ runs in node but embeds callbacks that puppeteer serialises and
-		// evaluates in the page, so both global sets are legitimately in scope.
+		// page callbacks use browser globals
 		files: ['scripts/**/*.mjs'],
 		languageOptions: {
 			globals: {

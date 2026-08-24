@@ -6,7 +6,7 @@ import { LinkTo } from '@ember/routing';
 import Dialog from 'delphitools-v2/components/ui/dialog';
 import Icon from 'delphitools-v2/components/icon';
 
-// wording dictated by Ruby verbatim
+// verbatim approved copy
 const PILL_TEXT = 'welcome to delphitools 2.0!';
 
 const EMBER_URL = 'https://emberjs.com';
@@ -14,12 +14,6 @@ const CRAYON_URL = 'https://github.com/TeriyakiBomb/crayon';
 
 const SLIDES = [0, 1, 2, 3];
 
-/**
- * The 2.0 announcement: a rounded pill above the hero art (the one rounded
- * shape in the square system, Ruby 2026-08-23) opening a slide popup in the
- * shape of the Substrata onboarding. All slide copy is Ruby's wording,
- * verbatim; the links stand where their (link) markers were.
- */
 export default class WhatsNew extends Component {
 	@tracked slide = 0;
 
@@ -39,7 +33,6 @@ export default class WhatsNew extends Component {
 		this.slide = Math.min(SLIDES.length - 1, this.slide + 1);
 	};
 
-	// Reopening starts over rather than on the slide it was closed on.
 	reset = () => {
 		this.slide = 0;
 	};
@@ -213,7 +206,6 @@ export default class WhatsNew extends Component {
 							class="dt-wn-btn is-primary"
 							{{on "click" d.close}}
 						>
-							{{! the substrata onboarding's shipped label, reused }}
 							let’s go
 						</button>
 					{{else}}

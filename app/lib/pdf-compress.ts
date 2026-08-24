@@ -1,12 +1,3 @@
-/**
- * Main-thread client for the pdf-compressor Web Worker.
- *
- * All MuPDF work runs in pdf-compress.worker.ts so a compress never blocks the
- * UI. The worker is spawned on the first compress and kept alive for the rest of
- * the session, so the ~10 MB wasm instantiates at most once. See
- * pdf-compress-core.ts for the pure helpers this re-exports.
- */
-
 export {
 	formatBytes,
 	savingsPercent,
@@ -63,7 +54,7 @@ function ensureWorker(): Worker {
 		}
 	});
 	w.addEventListener('error', (event) => {
-		// A dead worker fails everything in flight; the next compress respawns it.
+		// respawn after worker errors
 		for (const entry of pending.values())
 			entry.reject(
 				new Error(
@@ -79,11 +70,7 @@ function ensureWorker(): Worker {
 	return w;
 }
 
-/**
- * Compress `input` in the worker. `input` is transferred (the caller must pass a
- * throwaway copy). Resolves with a fresh JS-owned buffer; rejects if MuPDF
- * cannot open the bytes as a PDF.
- */
+// transfers input ownership
 export function compressPdf(
 	input: ArrayBuffer,
 	options: CompressOptions,

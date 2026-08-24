@@ -1,9 +1,5 @@
 import type { BlendMode } from 'delphitools-v2/lib/substrata/doc-model';
 
-// Standard canvas compositing modes → their conventional names (British
-// spelling). Treated as functional chrome labels, not authored copy. In the
-// Next app this lives in inspector-panel.tsx; extracted here so the Layers
-// footer can import it without importing the Inspector.
 export const BLEND_OPTIONS: { value: BlendMode; label: string }[] = [
 	{ value: 'source-over', label: 'Normal' },
 	{ value: 'multiply', label: 'Multiply' },

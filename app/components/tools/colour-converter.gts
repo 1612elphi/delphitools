@@ -58,7 +58,6 @@ export const FORMATS: {
 	{ id: 'oklch', name: 'OKLCH', placeholder: '0.64, 0.15, 264' },
 ];
 
-/** Parse once, then express the result in every format the tool knows. */
 export function convert(
 	format: ColourFormat,
 	value: string,
@@ -156,7 +155,6 @@ export default class ColourConverterTool extends Component {
 		);
 	}
 
-	/** White while the input is unparseable, matching the Next app. */
 	get swatchHex() {
 		return this.values?.hex ?? '#ffffff';
 	}
@@ -183,8 +181,6 @@ export default class ColourConverterTool extends Component {
 		this.inputValue = (event.target as HTMLInputElement).value;
 	};
 
-	// Switching format rewrites the input to the same colour in the new
-	// notation, so the field never reads as the wrong format's numbers.
 	chooseFormat = (id: string) => {
 		const next = id as ColourFormat;
 		const values = this.values;
@@ -265,7 +261,6 @@ export default class ColourConverterTool extends Component {
 			</div>
 
 			<div class="dt-cc-section">
-				{{! wording carried over from the Next app }}
 				<span class="dt-cc-heading">All Formats</span>
 			</div>
 
@@ -304,13 +299,11 @@ export default class ColourConverterTool extends Component {
 					{{/each}}
 				</div>
 			{{else}}
-				{{! wording carried over from the Next app }}
 				<p class="dt-cc-empty">Enter a valid colour
 					value to see conversions</p>
 			{{/if}}
 
 			<div class="dt-cc-section is-top">
-				{{! wording carried over from the Next app }}
 				<span class="dt-cc-heading">Format Examples</span>
 			</div>
 			<div class="dt-cc-examples">

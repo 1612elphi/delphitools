@@ -1,19 +1,10 @@
-// Styles for the algebra-calc tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Algebra calculator ──────────────────────────────────────────────────── */
 
 .dt-alg {
 	border: 2px solid var(--border);
 }
 
-/* `.segmented` draws a 1px frame on all four edges; the panel border already
-   covers the outer edges, so only the bottom rule is wanted. Both classes are
-   needed on the selector to outrank `.segmented` itself. */
+/* two classes outrank segmented */
 .segmented.dt-alg-ops {
 	grid-template-columns: repeat(3, 1fr);
 	border-inline: 0;
@@ -169,8 +160,7 @@
 	border-bottom: 1px solid var(--border);
 }
 
-/* KaTeX is not bundled here, so the result reads as plain monospace maths at
-   the size the rendered formula had. */
+/* katex not bundled */
 .dt-alg-output {
 	min-width: 0;
 	flex: 1;

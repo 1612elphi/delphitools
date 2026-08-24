@@ -1,4 +1,3 @@
-// Styles for the request-builder tool.
 
 @use "../crayon-config" as crayon;
 
@@ -52,7 +51,6 @@
 	}
 }
 
-/* Query | headers, side by side over the hairline background. */
 .dt-req-sections {
 	display: grid;
 	border-bottom: 2px solid var(--border);
@@ -183,7 +181,6 @@
 	}
 }
 
-/* The two hand-over formats. */
 .dt-req-outs {
 	display: grid;
 	background: var(--border);

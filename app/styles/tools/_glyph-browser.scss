@@ -1,11 +1,4 @@
-// Styles for the glyph-browser tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Glyph browser ───────────────────────────────────────────────────────── */
 
 .dt-glyph {
 	border: 2px solid var(--border);
@@ -78,7 +71,7 @@
 	font-size: crayon.font-size("sm");
 }
 
-/* Hairline dividers via a 1px gap over the border colour, as .segmented. */
+/* 1px gap hairline dividers */
 .dt-glyph-grid {
 	display: grid;
 	grid-template-columns: repeat(8, 1fr);
@@ -165,9 +158,7 @@
 	font-size: crayon.font-size("xs");
 }
 
-/* The popover already draws its own frame, so only the internal hairlines are
-   wanted. app.scss is @use'd after every tool partial, so dropping the frame
-   needs both classes to outrank `.segmented` itself. */
+/* both classes outrank .segmented */
 .segmented.dt-glyph-formats {
 	grid-template-columns: 1fr 1fr;
 	border: 0;

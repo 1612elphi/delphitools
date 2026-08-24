@@ -1,7 +1,4 @@
-// favicon-genny: upload, canvas resize, the .ico container, and clear.
-//
-// The ICO bytes are the reason this rig exists — buildIco writes a binary
-// format no unit test can prove the browser will actually download.
+// buildIco writes binary format; browser download unprovable by unit test
 
 import { mkdtempSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -52,7 +49,7 @@ check(
 	[rows[5]?.role, rows[6]?.role, rows[7]?.role].join(' / '),
 );
 
-// Decode each generated PNG rather than trusting the label next to it.
+// decode PNGs, don't trust labels
 const decoded = await page.evaluate(() =>
 	Promise.all(
 		[...document.querySelectorAll('.dt-favicon-chip img')].map(
@@ -88,7 +85,6 @@ check(
 	)) === 'delphi',
 );
 
-// .ico download
 const ico = join(downloads, 'favicon.ico');
 await page.evaluate(() => {
 	[...document.querySelectorAll('.dt-favicon-bar-btn')]
@@ -141,7 +137,6 @@ if (!existsSync(ico)) {
 	);
 }
 
-// clear returns to the drop zone
 await page.evaluate(() => {
 	[...document.querySelectorAll('.dt-favicon-bar-btn')]
 		.find((b) => b.textContent.includes('Clear'))
@@ -151,8 +146,7 @@ await sleep(300);
 check('clear restores the drop zone', await page.$('.dt-favicon-drop'));
 check('clear drops the list', !(await page.$('.dt-favicon-list')));
 
-// A file the browser will accept by extension but cannot decode. The Next
-// version hung on "Generating favicons…" forever here.
+// undecodable-but-accepted file hung on "generating" in the next app
 const broken = join(downloads, 'broken.png');
 writeFileSync(broken, Buffer.from('not a png at all'));
 await (await page.$('.dt-favicon-drop input[type="file"]')).uploadFile(broken);

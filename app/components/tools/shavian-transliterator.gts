@@ -29,7 +29,7 @@ import {
 } from 'delphitools-v2/lib/shavian/alternatives';
 import { getShavianLetter } from 'delphitools-v2/lib/shavian/phoneme-map';
 
-// wording carried over from the Next app
+// wording from next app
 const DEFAULT_TEXT = 'Mankind, be vigilant; we loved you.';
 
 const COPIED_MS = 2000;
@@ -39,12 +39,11 @@ export type DictStatus =
 
 const CORE_ONLY_STATUS = 'Core dictionary only, uncommon words are guessed';
 
-// lib/omni.ts imports parseDictJson from here.
+// re-exported for lib/omni.ts
 export { parseDictJson } from 'delphitools-v2/lib/shavian/dictionary';
 
-/** Tooltip on the Latin row, naming the marker the next click applies. */
 export function markerTitle(marker: GlossWord['marker']): string {
-	// wording carried over from the Next app
+	// wording from next app
 	switch (marker) {
 		case 'none':
 			return 'Add namer dot · (proper noun)';
@@ -57,7 +56,7 @@ export function markerTitle(marker: GlossWord['marker']): string {
 	}
 }
 
-/** The Shavian text alone, punctuation and spacing included. */
+// punctuation and spacing included
 export function glossToText(tokens: GlossToken[]): string {
 	return tokens
 		.map((token) =>
@@ -68,7 +67,6 @@ export function glossToText(tokens: GlossToken[]): string {
 		.join('');
 }
 
-/** The gloss with `marker` applied and the Shavian line rebuilt around it. */
 export function withMarker(
 	token: GlossToken,
 	marker: GlossWord['marker'],
@@ -88,7 +86,7 @@ export function withMarker(
 	};
 }
 
-/** The gloss with one phoneme replaced, marked as hand-edited. */
+// marks gloss user-edited
 export function withPhoneme(
 	token: GlossToken,
 	phonemeIndex: number,
@@ -129,13 +127,12 @@ const PUNCTUATION_FONT = '18px system-ui';
 const BRAND_FONT = '12px system-ui';
 const MARKED_COLOUR = '#ff9f43';
 
-/** The three-row gloss drawn to a PNG and downloaded. */
 export async function exportGloss(tokens: GlossToken[]) {
 	const canvas = document.createElement('canvas');
 	const ctx = canvas.getContext('2d');
 	if (!ctx) return;
 
-	// Measuring in the Shavian face before it loads gives fallback widths.
+	// fonts.ready before measuring widths
 	await document.fonts.ready;
 
 	const isDark =
@@ -284,10 +281,7 @@ export default class ShavianTransliteratorTool extends Component {
 		clearTimeout(this.#copiedTimer);
 	}
 
-	/**
-	 * Core first so the gloss appears at once, then the full dictionary in the
-	 * background; words the heuristic guessed are re-resolved when it lands.
-	 */
+	// core first, full dictionary re-resolves heuristic guesses
 	async #loadDictionaries() {
 		const core = await loadCoreDictionary();
 		if (this.isDestroyed) return;
@@ -301,9 +295,7 @@ export default class ShavianTransliteratorTool extends Component {
 			setFullDictionary(full);
 			this.tokens = reResolveTokens(this.tokens);
 		} catch (error) {
-			// The heuristic stands and the tool still works, but its output is
-			// a guess for every word outside the core, which reads as a
-			// working tool with wrong pronunciations unless it says so.
+			// surface core-only degradation
 			console.error(
 				'shavian full dictionary failed to load:',
 				error,
@@ -433,7 +425,7 @@ export default class ShavianTransliteratorTool extends Component {
 
 	<template>
 		<div class="dt-shav">
-			{{! wording carried over from the Next app }}
+			{{! wording from next app }}
 			<div class="dt-shav-intro">
 				<p>The
 					<strong>Shavian alphabet</strong>
@@ -454,12 +446,12 @@ export default class ShavianTransliteratorTool extends Component {
 			<div class="dt-shav-frame">
 				<div class="dt-shav-input-pane">
 					<div class="dt-shav-pane-head">
-						{{! wording carried over from the Next app }}
+						{{! wording from next app }}
 						<span
 							class="dt-shav-label"
 						>English input</span>
 					</div>
-					{{! wording carried over from the Next app }}
+					{{! wording from next app }}
 					<textarea
 						class="dt-shav-input"
 						aria-label="English input"
@@ -471,7 +463,7 @@ export default class ShavianTransliteratorTool extends Component {
 
 				<div>
 					<div class="dt-shav-pane-head is-split">
-						{{! wording carried over from the Next app }}
+						{{! wording from next app }}
 						<span
 							class="dt-shav-label"
 						>Shavian gloss</span>
@@ -485,7 +477,7 @@ export default class ShavianTransliteratorTool extends Component {
 								class="dt-shav-status"
 							>
 								<NdsLoader />
-								{{! wording carried over from the Next app }}
+								{{! wording from next app }}
 								Loading
 								dictionary…
 							</span>
@@ -499,7 +491,7 @@ export default class ShavianTransliteratorTool extends Component {
 								class="dt-shav-status"
 							>
 								<NdsLoader />
-								{{! wording carried over from the Next app }}
+								{{! wording from next app }}
 								Loading full
 								dictionary…
 							</span>
@@ -518,7 +510,7 @@ export default class ShavianTransliteratorTool extends Component {
 								{{this.coreOnlyStatus}}
 							</span>
 						{{else}}
-							{{! wording carried over from the Next app }}
+							{{! wording from next app }}
 							<span
 								class="dt-shav-status is-ready"
 							>Dictionary ready</span>
@@ -695,7 +687,7 @@ export default class ShavianTransliteratorTool extends Component {
 								{{/each}}
 							</div>
 						{{else}}
-							{{! wording carried over from the Next app }}
+							{{! wording from next app }}
 							<p
 								class="dt-shav-empty"
 							>Start typing above to
@@ -711,7 +703,7 @@ export default class ShavianTransliteratorTool extends Component {
 							<span
 								class="dt-shav-dot is-dict"
 							></span>
-							{{! wording carried over from the Next app }}
+							{{! wording from next app }}
 							Dictionary match
 						</span>
 						<span
@@ -720,7 +712,7 @@ export default class ShavianTransliteratorTool extends Component {
 							<span
 								class="dt-shav-dot is-heuristic"
 							></span>
-							{{! wording carried over from the Next app }}
+							{{! wording from next app }}
 							Heuristic guess
 						</span>
 						<span
@@ -729,7 +721,7 @@ export default class ShavianTransliteratorTool extends Component {
 							<span
 								class="dt-shav-dot is-marked"
 							></span>
-							{{! wording carried over from the Next app }}
+							{{! wording from next app }}
 							Marked (· namer, ⸰
 							initialism, ꤮ acronym)
 						</span>
@@ -754,10 +746,10 @@ export default class ShavianTransliteratorTool extends Component {
 								}}
 							/>
 							{{#if this.copied}}
-								{{! wording carried over from the Next app }}
+								{{! wording from next app }}
 								Copied!
 							{{else}}
-								{{! wording carried over from the Next app }}
+								{{! wording from next app }}
 								Copy Shavian
 							{{/if}}
 						</button>

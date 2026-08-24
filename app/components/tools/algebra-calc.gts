@@ -16,7 +16,6 @@ const ROOT_PRECISION = 10;
 
 const UNSUPPORTED_OP = 'This operation is not supported at this time';
 
-/** Labels carried over from the Next app, verbatim. */
 export const OPERATIONS: { id: Operation; label: string }[] = [
 	{ id: 'simplify', label: 'Simplify' },
 	{ id: 'expand', label: 'Expand' },
@@ -26,7 +25,6 @@ export const OPERATIONS: { id: Operation; label: string }[] = [
 	{ id: 'integral', label: '∫' },
 ];
 
-/** Example expressions carried over from the Next app, verbatim. */
 export const EXAMPLES: Record<Operation, string[]> = {
 	simplify: ['(x+1)^2 - x^2', 'sin(x)^2 + cos(x)^2', '(a*b)/(a*c)'],
 	expand: ['(x+1)^3', '(a+b)*(a-b)', '(x+y+z)^2'],
@@ -36,7 +34,6 @@ export const EXAMPLES: Record<Operation, string[]> = {
 	integral: ['x^2', 'sin(x)', '1/x'],
 };
 
-/** Syntax table carried over from the Next app, verbatim. */
 export const SYNTAX: [label: string, syntax: string][] = [
 	['Power', 'x^2'],
 	['Multiply', 'a*b'],
@@ -55,23 +52,12 @@ const OPERATIONS_WITH_VARIABLE: Operation[] = [
 	'integral',
 ];
 
-/**
- * `lhs = rhs` as a single expression whose roots are the equation's solutions.
- * Anything without an `=` is already in that form.
- */
 export function equationToPolynomial(expression: string): string {
 	const split = expression.indexOf('=');
 	if (split === -1) return expression;
 	return `(${expression.slice(0, split)}) - (${expression.slice(split + 1)})`;
 }
 
-/**
- * Roots of the polynomial the equation reduces to, in nerdamer's bracket form
- * so the copied text matches what the Next app produced.
- *
- * mathjs solves by coefficients, so this covers cubics and below in one
- * variable; anything else throws mathjs's own message.
- */
 function solveEquation(math: MathModule, expression: string): string {
 	const { coefficients } = math.rationalize(
 		equationToPolynomial(expression),
@@ -86,13 +72,6 @@ function solveEquation(math: MathModule, expression: string): string {
 		.join(',')}]`;
 }
 
-/**
- * The operation applied, as plain text. Throws on bad input; the message shown
- * is mathjs's own wherever mathjs raised it.
- *
- * Takes the module rather than importing it, so the algebra is testable without
- * a dynamic import.
- */
 export function compute(
 	math: MathModule,
 	operation: Operation,
@@ -101,9 +80,7 @@ export function compute(
 ): string {
 	switch (operation) {
 		case 'simplify':
-			// mathjs's simplify does not multiply brackets out, so `(x+1)^2 - x^2`
-			// would come back unchanged. rationalize expands first; it rejects
-			// non-polynomials such as sin(x)^2, which then take the plain path.
+			// rationalize expands polynomials.
 			try {
 				return math
 					.simplify(math.rationalize(expression))
@@ -113,8 +90,6 @@ export function compute(
 			}
 
 		case 'expand':
-			// The expanded polynomial with its terms left as they fall; simplify
-			// is the operation that collects them.
 			return math.rationalize(expression).toString();
 
 		case 'solve':
@@ -136,7 +111,6 @@ interface Result {
 
 let mathModule: Promise<MathModule> | null = null;
 
-/** One import for the lifetime of the page; mathjs is large. */
 function loadMath(): Promise<MathModule> {
 	mathModule ??= import('mathjs');
 	return mathModule;
@@ -175,7 +149,6 @@ export default class AlgebraCalcTool extends Component {
 	}
 
 	get placeholder() {
-		// wording carried over from the Next app
 		return this.operation === 'solve'
 			? 'e.g., x^2 - 4 = 0'
 			: 'e.g., (x+1)^2 - x^2';
@@ -226,7 +199,6 @@ export default class AlgebraCalcTool extends Component {
 			);
 			this.result = { input: this.expression, output };
 		} catch (error) {
-			// wording carried over from the Next app
 			this.error =
 				error instanceof Error
 					? error.message
@@ -276,7 +248,6 @@ export default class AlgebraCalcTool extends Component {
 			</div>
 
 			<div class="dt-alg-section">
-				{{! wording carried over from the Next app }}
 				<span class="dt-alg-label">Expression</span>
 				<div class="dt-alg-field">
 					<input
@@ -293,7 +264,6 @@ export default class AlgebraCalcTool extends Component {
 					/>
 					{{#if this.showVariable}}
 						<div class="dt-alg-var">
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-alg-var-label"
 							>var</span>
@@ -321,10 +291,8 @@ export default class AlgebraCalcTool extends Component {
 			>
 				{{#if this.loading}}
 					<NdsLoader />
-					{{! wording carried over from the Next app }}
 					Calculating…
 				{{else}}
-					{{! wording carried over from the Next app }}
 					Calculate
 				{{/if}}
 			</button>
@@ -338,7 +306,6 @@ export default class AlgebraCalcTool extends Component {
 			{{else if this.result}}
 				<div class="dt-alg-result">
 					<div class="dt-alg-echo">
-						{{! wording carried over from the Next app }}
 						<span>Input:</span>
 						<span
 							class="dt-alg-echo-value"
@@ -371,7 +338,6 @@ export default class AlgebraCalcTool extends Component {
 
 			<div class="dt-alg-block">
 				<div class="dt-alg-block-head">
-					{{! wording carried over from the Next app }}
 					<span
 						class="dt-alg-label"
 					>Examples</span>
@@ -398,7 +364,6 @@ export default class AlgebraCalcTool extends Component {
 
 			<div class="dt-alg-block is-last">
 				<div class="dt-alg-block-head">
-					{{! wording carried over from the Next app }}
 					<span class="dt-alg-label">Syntax
 						Reference</span>
 				</div>

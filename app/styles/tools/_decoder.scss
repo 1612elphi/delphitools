@@ -1,11 +1,4 @@
-// Styles for the decoder tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Decoder ─────────────────────────────────────────────────────────────── */
 
 .dt-dec {
 	@include crayon.vstack(6);
@@ -127,9 +120,7 @@
 	font-weight: crayon.font-weight("bold");
 }
 
-/* `.segmented` draws a 1px frame on all four edges; the row bleeds to the panel
-   edges, so the side and bottom rules would double the panel's own. Both
-   classes are needed on the selector to outrank `.segmented` itself. */
+// dual class beats .segmented specificity
 .segmented.dt-dec-sample-grid {
 	grid-template-columns: repeat(3, 1fr);
 	border-inline: 0;
@@ -326,8 +317,7 @@
 	width: 100%;
 }
 
-/* A heading between option groups; the listbox skips it when the arrows move
-   because only SelectItem registers itself. */
+// selectitem omits headings
 .dt-dec-select-group {
 	display: block;
 	padding: crayon.size(1.5) crayon.size(2);

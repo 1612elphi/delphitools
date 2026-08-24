@@ -1,17 +1,4 @@
-// libjxl (the emscripten build from @jsquash/jxl) copied verbatim into
-// /public/jxl/ — jxl_enc.js + jxl_enc.wasm, re-copy from
-// node_modules/@jsquash/jxl/codec/enc/ on a version bump.
-//
-// Loaded at RUNTIME through a bundler-ignored dynamic import so the emscripten
-// glue never enters the module graph. The Next app needs this because Turbopack
-// deadlocks trying to trace it; Vite would merely fail to resolve the absolute
-// path at build time, but the outcome is the same and the codec is served
-// as-is either way. `/* @vite-ignore */` is Vite's spelling of the magic
-// comment that `webpackIgnore`/`turbopackIgnore` provide elsewhere.
-//
-// locateFile points the codec at the self-hosted wasm. This single-threaded
-// build needs no SharedArrayBuffer, so the static export needs no COOP/COEP
-// headers.
+// bypass bundler tracing
 
 import { JXL_ENCODE_DEFAULTS } from './jxl-defaults';
 import { rawImport } from 'delphitools-v2/lib/raw-import';
@@ -60,6 +47,6 @@ export async function encodeJxl(
 		},
 	);
 	if (!result) throw new Error('JXL encoding failed');
-	// Copy out of the WASM heap into a standalone buffer.
+	// detach wasm memory
 	return new Blob([new Uint8Array(result)], { type: 'image/jxl' });
 }

@@ -10,22 +10,19 @@ import { downloadIcon } from 'delphitools-v2/lib/flow-hooks';
 import { downloadUrl } from 'delphitools-v2/lib/download';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 
-/** Six digits behind a #, the only form `<input type="color">` accepts. */
+// color input form: #rrggbb
 const HEX = /^#[0-9a-f]{6}$/i;
 
-/** The Next app downloads the strip one file at a time, 300 ms apart. */
+// stagger multiple file downloads
 const DOWNLOAD_GAP_MS = 300;
 
-/** Radius of the edge-fill blur, in canvas pixels. */
+// blur radius, canvas px
 const FILL_BLUR_PX = 30;
 
-/** Oversampling of the blurred edge fill, so its own edges stay off-tile. */
+// keeps blurred edges off-tile
 const FILL_OVERSCAN = 1.2;
 
-/**
- * Slack around an integer tile count. Below this the strip is treated as an
- * exact fit and no edge fill is drawn.
- */
+// exact-fit tolerance
 const FIT_TOLERANCE = 0.01;
 
 const LOAD_FAILED = 'Image could not be read. Try another file?';
@@ -53,10 +50,7 @@ export interface ScrollGeometry {
 	exactFit: number;
 }
 
-/**
- * Tile size and count for one source image at one aspect ratio. Tiles are full
- * source height, so the count is how many of them the width divides into.
- */
+// tiles span full source height
 export function tileGeometry(
 	imageWidth: number,
 	imageHeight: number,
@@ -88,22 +82,17 @@ export function tileGeometry(
 
 export interface SliceRect {
 	index: number;
-	/** x in the source image where this tile's content starts. */
+	// source x, native px
 	sourceX: number;
-	/** Width of source taken, 0 when the tile is entirely fill. */
+	// native px, 0 when all-fill
 	sourceWidth: number;
-	/** x within the tile where that content lands. */
+	// tile x
 	drawX: number;
-	/** First or last tile while the strip does not divide evenly. */
+	// outer tiles when strip uneven
 	isFillEdge: boolean;
 }
 
-/**
- * Source and destination rectangles for every tile. The strip is laid out in a
- * virtual space `tileWidth * slideCount` wide with the image centred in it, so
- * a rounding-up count leaves a gap on each end and a rounding-down count crops
- * an equal amount off each end.
- */
+// layout: image centred in tile strip
 export function sliceRects(
 	geometry: ScrollGeometry,
 	imageWidth: number,
@@ -190,7 +179,7 @@ export default class ScrollGeneratorTool extends Component {
 		}));
 	}
 
-	/** One entry per slide, for the dashed overlay on the source preview. */
+	// dashed-preview slide markers
 	get slideMarkers() {
 		return Array.from(
 			{ length: this.geometry.slideCount },
@@ -199,8 +188,7 @@ export default class ScrollGeneratorTool extends Component {
 	}
 
 	get overlayStyle() {
-		// The count comes from arithmetic on image dimensions, so nothing a
-		// caller supplied reaches the style string.
+		// count is user-input free
 		return htmlSafe(
 			`grid-template-columns: repeat(${this.geometry.slideCount}, 1fr)`,
 		);
@@ -222,7 +210,7 @@ export default class ScrollGeneratorTool extends Component {
 		return swatchStyle(this.isCustomColour ? this.fillColour : '');
 	}
 
-	/** `<input type="color">` resets itself on a value it cannot parse. */
+	// picker resets on invalid hex
 	get pickerValue() {
 		return HEX.test(this.fillColour) ? this.fillColour : '#000000';
 	}
@@ -241,8 +229,7 @@ export default class ScrollGeneratorTool extends Component {
 				this.sourceImage = dataUrl;
 				this.tiles = [];
 			};
-			// The Next version dropped a failed decode on the floor: the drop
-			// zone stayed up with no file name and no reason given.
+			// decode errors must surface
 			image.onerror = this.fail;
 			image.src = dataUrl;
 		};
@@ -254,7 +241,7 @@ export default class ScrollGeneratorTool extends Component {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) this.readFile(file);
-		// Choosing the same file twice must still fire a change event.
+		// rearm for same-file change
 		input.value = '';
 	};
 
@@ -264,7 +251,7 @@ export default class ScrollGeneratorTool extends Component {
 		if (file?.type.startsWith('image/')) this.readFile(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// else browser navigates to file
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -361,7 +348,6 @@ export default class ScrollGeneratorTool extends Component {
 		image.src = source;
 	};
 
-	/** Backdrop behind the first and last tile when the strip does not divide evenly. */
 	#drawFill(
 		ctx: CanvasRenderingContext2D,
 		image: HTMLImageElement,
@@ -451,7 +437,7 @@ export default class ScrollGeneratorTool extends Component {
 					</div>
 
 					<div class="dt-scroll-section">
-						{{! wording carried over from the Next app }}
+						{{! wording from next app }}
 						<span
 							class="dt-scroll-label"
 						>Slice Preview</span>
@@ -485,7 +471,7 @@ export default class ScrollGeneratorTool extends Component {
 					<div
 						class="dt-scroll-section is-padded"
 					>
-						{{! wording carried over from the Next app }}
+						{{! wording from next app }}
 						<span
 							class="dt-scroll-label"
 						>Tile Shape</span>
@@ -524,12 +510,12 @@ export default class ScrollGeneratorTool extends Component {
 							}}"
 					>
 						<span class="dt-scroll-label">
-							{{! wording carried over from the Next app }}
+							{{! wording from next app }}
 							Edge Fill
 							{{#unless
 								this.geometry.needsFill
 							}}
-								{{! wording carried over from the Next app }}
+								{{! wording from next app }}
 								<span
 									class="dt-scroll-note"
 								>(not needed)</span>
@@ -573,7 +559,7 @@ export default class ScrollGeneratorTool extends Component {
 										"colour"
 									)
 								}}
-							>{{! wording carried over from the Next app }}Solid
+							>{{! wording from next app }}Solid
 								Colour</button>
 						</div>
 
@@ -637,7 +623,7 @@ export default class ScrollGeneratorTool extends Component {
 						<span
 							class="dt-scroll-count"
 						>{{this.geometry.slideCount}}</span>
-						{{! wording carried over from the Next app }}
+						{{! wording from next app }}
 						<span
 							class="dt-scroll-stat"
 						>slides at
@@ -645,12 +631,12 @@ export default class ScrollGeneratorTool extends Component {
 							×
 							{{this.geometry.tileHeight}}</span>
 						{{#if this.geometry.needsFill}}
-							{{! wording carried over from the Next app }}
+							{{! wording from next app }}
 							<span
 								class="dt-scroll-flag is-fill"
 							>+ edge fill</span>
 						{{else}}
-							{{! wording carried over from the Next app }}
+							{{! wording from next app }}
 							<span
 								class="dt-scroll-flag is-fit"
 							>perfect fit</span>
@@ -663,7 +649,7 @@ export default class ScrollGeneratorTool extends Component {
 						{{on "click" this.generate}}
 					>
 						<Icon @name="layout-grid" />
-						{{! wording carried over from the Next app }}
+						{{! wording from next app }}
 						Generate Slides
 					</button>
 				{{else}}
@@ -682,11 +668,11 @@ export default class ScrollGeneratorTool extends Component {
 							}}
 						/>
 						<Icon @name="upload" />
-						{{! wording carried over from the Next app }}
+						{{! wording from next app }}
 						<span
 							class="dt-scroll-drop-title"
 						>Drop panoramic image here</span>
-						{{! wording carried over from the Next app }}
+						{{! wording from next app }}
 						<span
 							class="dt-scroll-drop-hint"
 						>or click to select, or paste</span>
@@ -704,7 +690,7 @@ export default class ScrollGeneratorTool extends Component {
 			{{#if this.tiles.length}}
 				<div class="dt-scroll-frame is-results">
 					<div class="dt-scroll-bar">
-						{{! wording carried over from the Next app }}
+						{{! wording from next app }}
 						<span
 							class="dt-scroll-ready"
 						>{{this.tiles.length}}
@@ -747,7 +733,7 @@ export default class ScrollGeneratorTool extends Component {
 								<span
 									class="dt-scroll-tile-hint"
 								>
-									{{! wording carried over from the Next app }}
+									{{! wording from next app }}
 									<span
 									>Slide
 										{{tile.number}}</span>
@@ -761,7 +747,7 @@ export default class ScrollGeneratorTool extends Component {
 					</div>
 
 					<div class="dt-scroll-footer">
-						{{! wording carried over from the Next app }}
+						{{! wording from next app }}
 						<p>Post these slides in order to
 							create a seamless
 							scrolling carousel</p>

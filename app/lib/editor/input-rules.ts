@@ -1,6 +1,3 @@
-// Live-preview input rules: typing Markdown shorthand transforms the block/inline
-// in place (the markers are consumed, never stored), so "# " becomes a heading,
-// "**x**" becomes bold, etc. — the iA-Writer / Typora feel.
 import {
 	InputRule,
 	inputRules,
@@ -29,7 +26,6 @@ function createTable(schema: Schema, rows = 3, cols = 3): PMNode | null {
 	return table.create(null, [headerRow, ...bodyRows]);
 }
 
-/** Wrap the captured inner text (match[1]) in a mark, removing the delimiters. */
 function markInputRule(regexp: RegExp, markType: MarkType): InputRule {
 	return new InputRule(regexp, (state, match, start, end) => {
 		const inner = match[1];
@@ -60,7 +56,6 @@ export function buildInputRules(schema: Schema): ReturnType<typeof inputRules> {
 	} = schema.nodes;
 	const { strong, em, code, strikethrough } = schema.marks;
 
-	// Block rules (fire on the trailing space / closing fence).
 	if (blockquote) rules.push(wrappingInputRule(/^\s*>\s$/, blockquote));
 	if (ordered_list)
 		rules.push(
@@ -88,10 +83,9 @@ export function buildInputRules(schema: Schema): ReturnType<typeof inputRules> {
 			),
 		);
 
-	// Inline mark rules (fire on the closing delimiter).
 	if (strong) rules.push(markInputRule(/\*\*([^*]+)\*\*$/, strong));
 	if (em) {
-		// Single * not adjacent to another * (so it doesn't fight **bold**), or _italic_.
+		// prevent bold match
 		rules.push(markInputRule(/(?<![*\w])\*([^*\s][^*]*)\*$/, em));
 		rules.push(markInputRule(/(?<![_\w])_([^_\s][^_]*)_$/, em));
 	}
@@ -99,7 +93,7 @@ export function buildInputRules(schema: Schema): ReturnType<typeof inputRules> {
 	if (strikethrough)
 		rules.push(markInputRule(/~~([^~]+)~~$/, strikethrough));
 
-	// Task list: typing "[ ] " / "[x] " at the start of a list item toggles it.
+	// toggle list item state
 	if (list_item)
 		rules.push(
 			new InputRule(
@@ -125,7 +119,6 @@ export function buildInputRules(schema: Schema): ReturnType<typeof inputRules> {
 			),
 		);
 
-	// Footnote: typing "[^]" drops an empty footnote and selects it (opens the editor).
 	if (footnote)
 		rules.push(
 			new InputRule(/\[\^\]$/, (state, match, start, end) => {
@@ -142,7 +135,6 @@ export function buildInputRules(schema: Schema): ReturnType<typeof inputRules> {
 			}),
 		);
 
-	// Table: typing "||| " at the start of a block drops a 3×3 table.
 	if (table)
 		rules.push(
 			new InputRule(

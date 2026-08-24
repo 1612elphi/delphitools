@@ -1,10 +1,5 @@
-// Substrata inspector panel + its rows; filled by its port.
-//
-// The Tailwind of components/substrata/modules/inspector-panel.tsx,
-// gradient-row.tsx and transient-colour.tsx, one class per element. Sizes are
-// the literal Tailwind values (h-7 = 28px, text-[11px] = 11px, size-3.5 = 14px).
+// tailwind of inspector-panel.tsx, gradient-row.tsx, transient-colour.tsx
 
-// ── transient-colour ───────────────────────────────────────────────────────
 .sub-tc {
 	display: flex;
 	align-items: center;
@@ -26,7 +21,6 @@
 	box-shadow: none;
 }
 
-// ── inspector shell ────────────────────────────────────────────────────────
 .sub-insp {
 	display: flex;
 	flex-direction: column;
@@ -118,7 +112,6 @@
 	border-block-start: 1px solid var(--border);
 }
 
-// ── transform grid ─────────────────────────────────────────────────────────
 .sub-insp-grid {
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 	border-inline: 0;
@@ -165,7 +158,6 @@
 	color: var(--muted-foreground);
 }
 
-// ── shape / text rows (and gradient-row's local mirror of them) ────────────
 .sub-insp-row,
 .sub-grad-row {
 	display: flex;
@@ -204,7 +196,6 @@
 	block-size: 24px;
 }
 
-// ── appearance bar ─────────────────────────────────────────────────────────
 .sub-insp-appearance {
 	display: flex;
 	align-items: stretch;
@@ -267,7 +258,6 @@
 	color: var(--muted-foreground);
 }
 
-// ── group / canvas readouts ────────────────────────────────────────────────
 .sub-insp-info {
 	border-block-end: 1px solid var(--border);
 }
@@ -311,7 +301,6 @@
 	}
 }
 
-// ── gradient-row ───────────────────────────────────────────────────────────
 .sub-grad-fill {
 	display: flex;
 	flex-direction: column;

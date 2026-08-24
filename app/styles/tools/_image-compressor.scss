@@ -1,8 +1,4 @@
-// Styles for the image-compressor tool.
-
 @use "../crayon-config" as crayon;
-
-/* ── Image compressor ────────────────────────────────────────────────────── */
 
 .dt-ic-frame {
 	border: 2px solid var(--border);
@@ -33,7 +29,7 @@
 		);
 	}
 
-	/* the file input is visually hidden, so its focus ring has to land here */
+	/* hidden input's focus ring */
 	&:focus-within {
 		border-color: var(--primary);
 		outline: 2px solid var(--primary);
@@ -53,7 +49,6 @@
 	font-size: crayon.font-size("sm");
 }
 
-/* Flush action bar: file identity left, actions right. */
 .dt-ic-bar {
 	display: flex;
 	min-height: crayon.size(12);
@@ -129,7 +124,6 @@
 	}
 }
 
-/* Settings as a grid of stacked label-over-input cells. */
 .dt-ic-fields {
 	display: grid;
 	border-bottom: 1px solid var(--border);
@@ -154,8 +148,7 @@
 	}
 }
 
-/* `.segmented` draws a 1px frame on all four edges; the cell borders already
-   cover them. Both classes are needed to outrank `.segmented` itself. */
+/* both classes outrank .segmented frame */
 .segmented.dt-ic-formats {
 	grid-template-columns: repeat(3, minmax(0, 1fr));
 	border: 0;
@@ -220,7 +213,6 @@
 	font-size: crayon.font-size("xs");
 }
 
-/* Before/after work surface: two panes split by a 1px rule. */
 .dt-ic-compare {
 	display: grid;
 	background: var(--border);
@@ -243,7 +235,7 @@
 		object-fit: contain;
 		padding: crayon.size(3);
 
-		/* transparent inputs stay readable on either theme */
+		/* readable on either theme */
 		background: var(--background);
 	}
 }

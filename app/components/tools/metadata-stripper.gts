@@ -23,7 +23,7 @@ const MIME: Record<ImageContainer, string> = {
 	gif: 'image/gif',
 };
 
-/** Mimes canvas can re-encode without a format change. */
+// canvas round-trips these
 const REENCODABLE = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
 interface StripState {
@@ -68,7 +68,6 @@ export default class MetadataStripperTool extends Component {
 		return this.report?.c2pa ?? false;
 	}
 
-	/** The container is outside the four the parser reads. */
 	get unreadable() {
 		return this.report !== null && this.report.format === null;
 	}
@@ -126,8 +125,7 @@ export default class MetadataStripperTool extends Component {
 		}
 	}
 
-	/** Fallback for containers the parser cannot edit: a canvas re-encode
-	 *  drops every metadata block, at the cost of recompressing the pixels. */
+	// lossy canvas fallback
 	async #canvasStrip() {
 		if (!this.#bytes) return;
 		const type = REENCODABLE.has(this.report?.format ?? '')
@@ -164,7 +162,7 @@ export default class MetadataStripperTool extends Component {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) this.readFile(file);
-		// Choosing the same file twice must still fire a change event.
+		// lets same file re-fire
 		input.value = '';
 	};
 
@@ -174,7 +172,7 @@ export default class MetadataStripperTool extends Component {
 		if (file) this.readFile(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// prevents browser file navigation
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -438,7 +436,6 @@ export default class MetadataStripperTool extends Component {
 							}}
 						/>
 						<Icon @name="upload" />
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-strip-drop-title"
 						>Drop an image here</span>

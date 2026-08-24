@@ -95,7 +95,6 @@ interface FormatComboboxSignature {
 	};
 }
 
-/** Searchable format picker (Popover + Command) with a subtitle per format. */
 class FormatCombobox extends Component<FormatComboboxSignature> {
 	@tracked open = false;
 
@@ -131,7 +130,6 @@ class FormatCombobox extends Component<FormatComboboxSignature> {
 	}
 
 	get autoSubtitle() {
-		// wording carried over from the Next app
 		return this.args.autoDetectedLabel
 			? `Looks like ${this.args.autoDetectedLabel}`
 			: 'Guess from the input';
@@ -301,8 +299,7 @@ export default class DocConverterTool extends Component {
 	@tracked numberSections = false;
 	@tracked optionsOpen = false;
 
-	// The engine is a module-level singleton, so a revisit within the session
-	// starts from "ready" rather than "idle".
+	// reuse engine state
 	@tracked engineState: EngineState = getEngineState();
 	@tracked progress: LoadProgress | null = null;
 	@tracked converting = false;
@@ -341,7 +338,6 @@ export default class DocConverterTool extends Component {
 	}
 
 	get swapTitle() {
-		// wording carried over from the Next app
 		return this.canSwap
 			? 'Swap formats'
 			: 'Swap unavailable for this pair';
@@ -351,7 +347,6 @@ export default class DocConverterTool extends Component {
 		return !this.canSwap;
 	}
 
-	/** What "Auto-detect" currently resolves to, for the From picker's hint. */
 	get autoDetectedLabel(): string | null {
 		const id =
 			this.inputMode === 'upload' && this.file
@@ -388,12 +383,10 @@ export default class DocConverterTool extends Component {
 			(this.progress?.receivedBytes ?? 0) /
 			(1024 * 1024)
 		).toFixed(1);
-		// wording carried over from the Next app
 		return `Fetching Pandoc engine — ${mb} MB${this.pct != null ? ` (${this.pct}%)` : ''}…`;
 	}
 
 	get convertLabel() {
-		// wording carried over from the Next app
 		if (this.busy)
 			return this.loading
 				? 'Downloading engine…'
@@ -492,15 +485,12 @@ export default class DocConverterTool extends Component {
 		this.result = null;
 		this.error = null;
 
-		// Reject files pandoc can't read (PDF, images, …) with a clear message.
 		const unreadable = unreadableInputLabel(file.name);
 		if (unreadable) {
-			// wording carried over from the Next app
 			this.fileError = `Pandoc can't read ${unreadable}s. It converts text and word-processor documents (Word, ODT, EPUB, Markdown, HTML…). Paste the text instead, or pick a different file.`;
 			return;
 		}
 		this.fileError = null;
-		// Auto-set the source format from the filename when we recognise it.
 		const guessed = guessFormatFromFilename(file.name);
 		if (guessed) this.from = guessed;
 	};
@@ -541,7 +531,6 @@ export default class DocConverterTool extends Component {
 			this.result = null;
 			this.error = null;
 		} else {
-			// wording carried over from the Next app
 			this.error =
 				'Your Text Scratchpad is empty — nothing to load.';
 		}
@@ -567,7 +556,6 @@ export default class DocConverterTool extends Component {
 			this.text.trim().length > 0;
 		const toFormat = this.toFormat;
 
-		// wording carried over from the Next app, this method throughout
 		if (!hasFile && !hasText) {
 			this.error =
 				'Add some text or upload a file to convert.';
@@ -582,7 +570,6 @@ export default class DocConverterTool extends Component {
 			return;
 		}
 
-		// Resolve the source format.
 		let fromId = this.from;
 		if (fromId === AUTO_DETECT) {
 			fromId =
@@ -596,7 +583,6 @@ export default class DocConverterTool extends Component {
 			return;
 		}
 
-		// Assemble the input + the options shared across output kinds.
 		let stdin: string | null = null;
 		const files: Record<string, Blob | string> = {};
 		if (hasFile && file) files[file.name] = file;
@@ -607,7 +593,6 @@ export default class DocConverterTool extends Component {
 		if (this.toc) base['table-of-contents'] = true;
 		if (this.numberSections) base['number-sections'] = true;
 
-		// Make sure the engine is loaded (fetches ~16 MB from a CDN on first use).
 		if (getEngineState() !== 'ready') {
 			this.engineState = 'loading';
 			try {
@@ -630,9 +615,6 @@ export default class DocConverterTool extends Component {
 		this.converting = true;
 		try {
 			if (toFormat.id === 'pdf') {
-				// Render a standalone, self-contained HTML document, then hand it to
-				// the browser's own print engine — a real vector PDF with no extra
-				// library.
 				const res = await convert(
 					{
 						...base,
@@ -763,7 +745,6 @@ export default class DocConverterTool extends Component {
 						<span
 							class="dt-docconv-label"
 						>Input</span>
-						{{! wording carried over from the Next app }}
 						<button
 							type="button"
 							class="dt-docconv-ghost"
@@ -839,7 +820,6 @@ export default class DocConverterTool extends Component {
 									@name="upload"
 									class="dt-docconv-drop-icon"
 								/>
-								{{! wording carried over from the Next app }}
 								<p
 									class="dt-docconv-drop-text"
 								>Drag &amp; drop
@@ -871,7 +851,6 @@ export default class DocConverterTool extends Component {
 								{{this.fileError}}
 							</p>
 						{{/if}}
-						{{! wording carried over from the Next app }}
 						<button
 							type="button"
 							class="dt-docconv-mode-link"
@@ -881,7 +860,6 @@ export default class DocConverterTool extends Component {
 							}}
 						>No file? Paste text instead</button>
 					{{else}}
-						{{! wording carried over from the Next app }}
 						<textarea
 							class="dt-docconv-textarea"
 							aria-label="Document text"
@@ -892,7 +870,6 @@ export default class DocConverterTool extends Component {
 								this.setText
 							}}
 						></textarea>
-						{{! wording carried over from the Next app }}
 						<button
 							type="button"
 							class="dt-docconv-mode-link"
@@ -958,7 +935,6 @@ export default class DocConverterTool extends Component {
 					</div>
 
 					{{#if this.showBinaryPasteWarning}}
-						{{! wording carried over from the Next app }}
 						<p
 							class="dt-docconv-binary-warn"
 						>{{this.sourceLabel}}
@@ -996,7 +972,6 @@ export default class DocConverterTool extends Component {
 						<div
 							class="dt-docconv-option-list"
 						>
-							{{! wording carried over from the Next app }}
 							<label
 								class="dt-docconv-option"
 							>
@@ -1028,7 +1003,6 @@ export default class DocConverterTool extends Component {
 									}}
 								/>
 							</label>
-							{{! wording carried over from the Next app }}
 							<label
 								class="dt-docconv-option"
 							>
@@ -1059,7 +1033,6 @@ export default class DocConverterTool extends Component {
 									}}
 								/>
 							</label>
-							{{! wording carried over from the Next app }}
 							<label
 								class="dt-docconv-option"
 							>
@@ -1206,7 +1179,6 @@ export default class DocConverterTool extends Component {
 								@name="printer"
 								class="dt-docconv-output-icon"
 							/>
-							{{! wording carried over from the Next app }}
 							<div
 								class="dt-docconv-output-meta"
 							>
@@ -1275,7 +1247,6 @@ export default class DocConverterTool extends Component {
 
 			<div class="dt-docconv-notice">
 				<Icon @name="info" />
-				{{! wording carried over from the Next app }}
 				<p>
 					Conversion runs entirely in your browser
 					— your documents are never uploaded. On

@@ -12,17 +12,13 @@ export interface MetaFields {
 	twitterHandle: string;
 }
 
-/** Google truncates around here; over it the counter turns red. */
+// google truncates near 60
 const TITLE_LIMIT = 60;
 const DESCRIPTION_LIMIT = 160;
 
 const COPIED_MS = 1500;
 
-/**
- * The Next app interpolated the field values straight into the attributes, so a
- * title containing a double quote produced a broken tag. Ordinary input is
- * unaffected by escaping, so the generated text is otherwise identical.
- */
+// unescaped quotes broke tags
 function escapeAttribute(value: string): string {
 	return value
 		.replaceAll('&', '&amp;')
@@ -90,18 +86,15 @@ export function generateMetaTags(fields: MetaFields): string {
 	return tags.join('\n');
 }
 
-// wording carried over from the Next app: the placeholder values the previews
-// fall back to while the corresponding field is empty.
 const SAMPLE_TITLE = 'Page Title';
 const SAMPLE_URL = 'https://example.com';
 const SAMPLE_DESCRIPTION = 'Page description will appear here...';
 const SAMPLE_CARD_DESCRIPTION = 'Description';
 const SAMPLE_HOST = 'example.com';
 
-/** A literal `@username` in the template reads as a path to the template lint. */
+// template lint reads @ as path
 const TWITTER_PLACEHOLDER = '@username';
 
-/** The host shown on the social card, or the sample host if the URL is junk. */
 export function previewHost(url: string): string {
 	try {
 		return new URL(url || SAMPLE_URL).hostname;
@@ -170,7 +163,6 @@ export default class MetaTagGennyTool extends Component {
 		return this.description || SAMPLE_DESCRIPTION;
 	}
 
-	/** The card falls back to a shorter placeholder than the Google preview. */
 	get cardDescription() {
 		return this.description || SAMPLE_CARD_DESCRIPTION;
 	}
@@ -224,7 +216,6 @@ export default class MetaTagGennyTool extends Component {
 			<div class="dt-meta-form">
 				<div class="dt-meta-field">
 					<div class="dt-meta-head">
-						{{! wording carried over from the Next app }}
 						<label for="dt-meta-title">Page
 							Title</label>
 						<span
@@ -247,7 +238,6 @@ export default class MetaTagGennyTool extends Component {
 
 				<div class="dt-meta-field">
 					<div class="dt-meta-head">
-						{{! wording carried over from the Next app }}
 						<label
 							for="dt-meta-description"
 						>Description</label>
@@ -259,7 +249,6 @@ export default class MetaTagGennyTool extends Component {
 								}}"
 						>{{this.descriptionCount}}</span>
 					</div>
-					{{! wording carried over from the Next app }}
 					<textarea
 						id="dt-meta-description"
 						class="dt-meta-textarea"
@@ -290,7 +279,6 @@ export default class MetaTagGennyTool extends Component {
 
 				<div class="dt-meta-field">
 					<div class="dt-meta-head">
-						{{! wording carried over from the Next app }}
 						<label for="dt-meta-image">Image
 							URL</label>
 					</div>
@@ -302,7 +290,6 @@ export default class MetaTagGennyTool extends Component {
 						placeholder="https://example.com/og-image.jpg"
 						{{on "input" this.setImage}}
 					/>
-					{{! wording carried over from the Next app }}
 					<p class="dt-meta-note">Recommended
 						size: 1200×630px</p>
 				</div>
@@ -310,7 +297,6 @@ export default class MetaTagGennyTool extends Component {
 				<div class="dt-meta-row">
 					<div class="dt-meta-field">
 						<div class="dt-meta-head">
-							{{! wording carried over from the Next app }}
 							<label
 								for="dt-meta-site"
 							>Site Name</label>
@@ -329,7 +315,6 @@ export default class MetaTagGennyTool extends Component {
 					</div>
 					<div class="dt-meta-field">
 						<div class="dt-meta-head">
-							{{! wording carried over from the Next app }}
 							<label
 								for="dt-meta-twitter"
 							>Twitter Handle</label>
@@ -351,8 +336,7 @@ export default class MetaTagGennyTool extends Component {
 
 			<div class="dt-meta-output">
 				<div class="dt-meta-output-head">
-					{{! wording carried over from the Next app }}
-					<span>Generated Meta Tags</span>
+									<span>Generated Meta Tags</span>
 				</div>
 				<pre class="dt-meta-code">{{this.tags}}</pre>
 			</div>
@@ -370,7 +354,6 @@ export default class MetaTagGennyTool extends Component {
 							"copy"
 						}}
 					/>
-					{{! wording carried over from the Next app }}
 					{{if
 						this.copied
 						"Copied to clipboard!"
@@ -389,7 +372,6 @@ export default class MetaTagGennyTool extends Component {
 							"eye"
 						}}
 					/>
-					{{! wording carried over from the Next app }}
 					{{if
 						this.showPreview
 						"Hide Preview"
@@ -418,7 +400,6 @@ export default class MetaTagGennyTool extends Component {
 					</div>
 
 					<div class="dt-meta-preview is-card">
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-meta-preview-label"
 						>Social Card</span>
@@ -434,7 +415,6 @@ export default class MetaTagGennyTool extends Component {
 										alt="Preview"
 									/>
 								{{else}}
-									{{! wording carried over from the Next app }}
 									<span>No
 										image</span>
 								{{/if}}

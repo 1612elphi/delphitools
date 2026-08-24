@@ -21,14 +21,11 @@ import {
 import { AUDIO_ACCEPT, acceptAttr } from 'delphitools-v2/lib/tools';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 
-/** Kept in step with the registry entry, which routes dropped files. */
 const ACCEPT = acceptAttr(AUDIO_ACCEPT);
 
 const DROP_TITLE = 'Drop an audio file here or click to upload';
 
 const PEAK_BUCKETS = 800;
-// A click without a drag collapses the selection; anything shorter reads as
-// a slip, not a cut.
 const MIN_SELECTION_S = 0.01;
 
 export default class AudioTrimmerTool extends Component {
@@ -52,8 +49,6 @@ export default class AudioTrimmerTool extends Component {
 	intake = new AudioIntake({
 		onDecoded: (buffer) => {
 			this.startS = 0;
-			// Rounded down, so the seeded value never reads as a
-			// ten-digit float and never exceeds the clamp.
 			this.endS = Math.floor(buffer.duration * 100) / 100;
 			this.fadeInS = 0;
 			this.fadeOutS = 0;
@@ -89,7 +84,7 @@ export default class AudioTrimmerTool extends Component {
 		return extractPeaks(channelsOf(buffer), PEAK_BUCKETS);
 	}
 
-	/** Peaks over the visible window; subarrays, so zooming copies nothing. */
+	// subarrays avoid copies
 	@cached
 	get viewPeaks() {
 		const buffer = this.intake.buffer;
@@ -129,7 +124,6 @@ export default class AudioTrimmerTool extends Component {
 					styles.getPropertyValue('--primary');
 				drawWaveform(ctx, peaks, width, height);
 
-				// Selection bounds mapped into the view window.
 				const toX = (time: number) =>
 					Math.min(
 						width,
@@ -174,7 +168,6 @@ export default class AudioTrimmerTool extends Component {
 		);
 		const time =
 			this.view.start + (x / rect.width) * this.view.span;
-		// Millisecond precision: the fields mirror every drag.
 		return Math.round(time * 1000) / 1000;
 	}
 
@@ -230,7 +223,6 @@ export default class AudioTrimmerTool extends Component {
 		if (Number.isFinite(value)) this.fadeOutS = Math.max(0, value);
 	};
 
-	/** The selection sliced out, fades applied. */
 	#selectionChannels(): {
 		channels: Float32Array<ArrayBuffer>[];
 		sampleRate: number;
@@ -249,8 +241,7 @@ export default class AudioTrimmerTool extends Component {
 		);
 		if (to - from < 1) return null;
 
-		// new Float32Array rather than .slice: TS types the slice's
-		// backing store as ArrayBufferLike, which copyToChannel rejects.
+		// copytochannel requires arraybuffer
 		const channels = channelsOf(buffer).map(
 			(channel) =>
 				new Float32Array(channel.subarray(from, to)),
@@ -267,8 +258,6 @@ export default class AudioTrimmerTool extends Component {
 		this.playheadS = null;
 	}
 
-	// The played buffer is the selection slice, so the playhead maps its
-	// progress back onto the clip's timeline.
 	#tick = () => {
 		if (!this.playing || this.#playedSpanS <= 0) return;
 		const elapsed =
@@ -280,19 +269,16 @@ export default class AudioTrimmerTool extends Component {
 
 	toggleLoop = () => {
 		this.looping = !this.looping;
-		// BufferSource.loop is live; a playing selection keeps or drops
-		// its cycle without restarting.
+		// loop changes avoid restart
 		if (this.#source) this.#source.loop = this.looping;
 	};
 
-	/** Playhead over the minimap: position within the whole clip. */
 	get playheadMiniStyle() {
 		if (this.playheadS === null || !this.duration) return null;
 		const pct = (this.playheadS / this.duration) * 100;
 		return htmlSafe(`left: ${pct.toFixed(3)}%`);
 	}
 
-	/** Playhead over the zoomed waveform; null while out of the window. */
 	get playheadViewStyle() {
 		if (this.playheadS === null || !this.duration) return null;
 		if (

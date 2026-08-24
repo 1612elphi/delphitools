@@ -25,7 +25,6 @@ const ALL_ON = {
 	excludeAmbiguous: false,
 };
 
-/** A source yielding the given values in order, cycling when exhausted. */
 function scripted(values: number[]): { next: IntSource; draws: () => number } {
 	let i = 0;
 	return {
@@ -155,7 +154,7 @@ module('Unit | Lib | password', function () {
 	});
 
 	test('randomIndex rejects draws past the largest multiple', function (assert) {
-		// n=100 over a byte source: limit is 200, so 255 and 200 must be refused.
+		// limit 200: 255 and 200 refused
 		const source = scripted([255, 200, 7]);
 		assert.strictEqual(randomIndex(100, 256, source.next), 7);
 		assert.strictEqual(
@@ -166,9 +165,7 @@ module('Unit | Lib | password', function () {
 	});
 
 	test('randomIndex shows no modulo skew over a large draw', function (assert) {
-		// A cycling byte source with n=100 biases a naive modulo sampler 2:1
-		// toward indexes 0–55 (256 mod 100 = 56). With rejection the accepted
-		// stream is 0..199 repeating, so 100,000 samples split exactly evenly.
+		// 256 mod 100 = 56: naive modulo biases 0..55
 		const source = scripted(
 			Array.from({ length: 256 }, (_, i) => i),
 		);
@@ -230,8 +227,7 @@ module('Unit | Lib | password', function () {
 
 	test('buildPassphrase picks, separates and decorates deterministically', function (assert) {
 		const words = ['apple', 'banana', 'cherry', 'durian'];
-		// 2^32 % 4 = 0, so these values map straight through: banana cherry
-		// apple, then 3 for the trailing digit.
+		// 2^32 % 4 = 0: values map straight through
 		const source = scripted([1, 2, 0, 3]);
 		assert.strictEqual(
 			buildPassphrase(
@@ -307,7 +303,7 @@ module('Unit | Lib | password', function () {
 	});
 
 	test('buildPassphrase words all come from the injected list', function (assert) {
-		// Three base-26 letters: unique across the 500 fixtures, all [a-z].
+		// 3 base-26 letters, unique over 500
 		const letters = (n: number) =>
 			String.fromCharCode(97 + (n % 26)) +
 			String.fromCharCode(97 + (Math.floor(n / 26) % 26)) +
@@ -367,7 +363,7 @@ module('Unit | Lib | password > charKind', function () {
 		for (const ch of CHARSET_LOWERCASE + CHARSET_UPPERCASE) {
 			assert.strictEqual(charKind(ch), 'letter', ch);
 		}
-		// a space separator is not part of either lookup
+		// space separator is neither lookup
 		assert.strictEqual(charKind(' '), 'letter');
 	});
 });

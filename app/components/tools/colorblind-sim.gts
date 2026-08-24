@@ -27,7 +27,6 @@ interface SimulationInfo {
 	prevalence: string;
 }
 
-// Names, descriptions and prevalences carried over verbatim from the Next app.
 const SIMULATIONS: Record<SimulationType, SimulationInfo> = {
 	normal: {
 		name: 'Normal Vision',
@@ -94,7 +93,6 @@ const SEVERITY_LABEL: Record<Severity, string> = {
 	full: 'Full',
 };
 
-/** Six digits behind a #, the only form `<input type="color">` accepts. */
 const HEX = /^#[0-9a-f]{6}$/i;
 
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -121,7 +119,7 @@ export default class ColorblindSimTool extends Component {
 	@tracked zoomed: { src: string; label: string } | null = null;
 
 	#destroyed = false;
-	/** Bumped per run, so a slow decode cannot overwrite a newer result. */
+	// prevent stale image results
 	#run = 0;
 
 	willDestroy() {
@@ -133,12 +131,10 @@ export default class ColorblindSimTool extends Component {
 		return this.mode === 'colour';
 	}
 
-	/** Null while the typed hex is half-finished, matching the Next app. */
 	get validColour(): string | null {
 		return HEX.test(this.colour) ? this.colour : null;
 	}
 
-	/** `<input type="color">` resets itself on a value it cannot parse. */
 	get pickerValue() {
 		return this.validColour ?? '#000000';
 	}
@@ -165,14 +161,12 @@ export default class ColorblindSimTool extends Component {
 		return fill(this.selectedHex);
 	}
 
-	/** Both halves are the Next app's wording; only the join is local. */
 	get selectedDetail() {
 		const info = this.selectedInfo;
 		return `${info.description} — ${info.prevalence}`;
 	}
 
-	// Built here rather than in the template: prettier wraps a long attribute
-	// value across lines, and hbs keeps that newline inside the alt text.
+	// hbs preserves attribute newlines
 	get simulatedAlt() {
 		return `Simulated ${this.selectedInfo.name}`;
 	}
@@ -226,7 +220,7 @@ export default class ColorblindSimTool extends Component {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) this.readFile(file);
-		// Choosing the same file twice must still fire a change event.
+		// allow file reselection
 		input.value = '';
 	};
 
@@ -245,14 +239,7 @@ export default class ColorblindSimTool extends Component {
 		this.simulatedImage = null;
 	};
 
-	/**
-	 * Redraws the simulated image. This replaces the Next app's effect on
-	 * [sourceImage, selectedSim, mode]: each of those changes through an action
-	 * here, so the redraw starts from the action instead.
-	 *
-	 * The previous result stays on screen until the new one is ready, as in the
-	 * Next app — blanking it first flashes the placeholder on every type change.
-	 */
+	// retain image during processing
 	process = async () => {
 		const source = this.sourceImage;
 		const type = this.selectedSim;
@@ -348,7 +335,6 @@ export default class ColorblindSimTool extends Component {
 							}}
 						>
 							<Icon @name="palette" />
-							{{! wording carried over from the Next app }}
 							Colour Mode
 						</button>
 						<button
@@ -367,14 +353,12 @@ export default class ColorblindSimTool extends Component {
 							}}
 						>
 							<Icon @name="image" />
-							{{! wording carried over from the Next app }}
 							Image Mode
 						</button>
 					</div>
 
 					{{#if this.isColourMode}}
 						<div class="dt-cbs-pick">
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-cbs-label"
 							>Select Colour</span>
@@ -416,7 +400,6 @@ export default class ColorblindSimTool extends Component {
 							<div
 								class="dt-cbs-types-head"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-cbs-label"
 								>Vision Types</span>
@@ -471,7 +454,6 @@ export default class ColorblindSimTool extends Component {
 						</div>
 
 						<div class="dt-cbs-head">
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-cbs-label"
 							>Comparison</span>
@@ -480,7 +462,6 @@ export default class ColorblindSimTool extends Component {
 							<div
 								class="dt-cbs-pane"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-cbs-pane-title"
 								>Original</span>
@@ -512,14 +493,12 @@ export default class ColorblindSimTool extends Component {
 							<span
 								class="dt-cbs-desc-name"
 							>{{this.selectedInfo.name}}</span>
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-cbs-desc-text"
 							>{{this.selectedDetail}}</span>
 						</div>
 					{{else if this.sourceImage}}
 						<div class="dt-cbs-bar">
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-cbs-bar-title"
 							>Simulation Preview</span>
@@ -542,7 +521,6 @@ export default class ColorblindSimTool extends Component {
 							<div
 								class="dt-cbs-types-head"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-cbs-label"
 								>Vision Type</span>
@@ -580,7 +558,6 @@ export default class ColorblindSimTool extends Component {
 							<span
 								class="dt-cbs-desc-name"
 							>{{this.selectedInfo.name}}</span>
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-cbs-desc-text"
 							>{{this.selectedDetail}}</span>
@@ -590,7 +567,6 @@ export default class ColorblindSimTool extends Component {
 							<div
 								class="dt-cbs-pane"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-cbs-pane-title"
 								>Original</span>
@@ -637,7 +613,6 @@ export default class ColorblindSimTool extends Component {
 										/>
 									</button>
 								{{else}}
-									{{! wording carried over from the Next app }}
 									<span
 										class="dt-cbs-pending"
 									>Processing...</span>
@@ -666,11 +641,9 @@ export default class ColorblindSimTool extends Component {
 								}}
 							/>
 							<Icon @name="upload" />
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-cbs-drop-title"
 							>Drop image here</span>
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-cbs-drop-hint"
 							>or click to select, or
@@ -680,17 +653,14 @@ export default class ColorblindSimTool extends Component {
 				</div>
 
 				<div class="dt-cbs-about">
-					{{! wording carried over from the Next app }}
 					<span class="dt-cbs-about-title">About
 						Colour Blindness</span>
-					{{! wording carried over from the Next app }}
 					<p>Colour blindness affects
 						approximately 8% of AMAB and
 						0.5% of AFAB people worldwide.
 						The most common types are
 						red-green deficiencies
 						(protanopia/deuteranopia).</p>
-					{{! wording carried over from the Next app }}
 					<p>When designing, ensure sufficient
 						contrast and don't rely solely
 						on colour to convey information.

@@ -36,18 +36,12 @@ import { getRaster } from 'delphitools-v2/lib/substrata/raster-cache';
 import { ActiveLayer } from 'delphitools-v2/lib/substrata/active-layer';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 
-/**
- * LOOKS module — the bespoke home of the film-sim/LUT family (Ruby,
- * 2026-07-03: pulled OUT of the FX pipeline; a look is browsed with the eyes,
- * not tuned with sliders). Gallery of the preset shelf rendered as LIVE
- * thumbnails — the selected layer's own pixels through each grade (the same
- * pure maths the engine's Canvas2D fallback uses) — plus a None card and one
- * intensity slider. A look is still the one film-sim entry in `layer.filters[]`,
- * pinned to the stack's END (grades after adjustments); look-ops is the only
- * writer.
- */
+// film-sim/lut home, outside the fx pipeline; browsed with the eyes, no sliders.
+// thumbs = selected layer's own pixels through each grade (engine's canvas2d
+// maths). a look is one film-sim entry in layer.filters[], pinned to end
+// (grades after adjustments); look-ops is the only writer.
 
-/** Thumbnail geometry: 3:2 cover-crop, 2-up in the module. */
+// 3:2 cover-crop, 2-up
 const THUMB_W = 148;
 const THUMB_H = 99;
 
@@ -59,7 +53,7 @@ interface Shelf {
 
 const SHELF: Shelf[] = [...FILM_SIM_PRESETS, ...LUT_LOOKS];
 
-/** id → label across both shelves (authored grades + film LUTs). */
+// id→label across both shelves
 function lookLabel(presetId: string): string | null {
 	return SHELF.find((p) => p.id === presetId)?.label ?? null;
 }
@@ -70,11 +64,7 @@ function swatchStyle(swatch: [string, string, string]) {
 	);
 }
 
-/**
- * Build the base thumbnail (cover-cropped) once per layer, then run each grade
- * over its pixels. Pure canvas work on ~15k pixels × N looks — cheap enough to
- * do synchronously.
- */
+// ~15k px × N looks, cheap enough to do synchronously
 function buildThumbs(blobHash: string): Record<string, string> | null {
 	const src = getRaster(blobHash);
 	if (!src) return null;
@@ -84,7 +74,7 @@ function buildThumbs(blobHash: string): Record<string, string> | null {
 	base.height = THUMB_H;
 	const ctx = base.getContext('2d');
 	if (!ctx) return null;
-	// cover-crop: fill the 3:2 card from the source's centre
+	// fill 3:2 from source centre
 	const scale = Math.max(THUMB_W / src.width, THUMB_H / src.height);
 	const w = src.width * scale;
 	const h = src.height * scale;
@@ -128,14 +118,9 @@ function buildThumbs(blobHash: string): Record<string, string> | null {
 	return byPreset;
 }
 
-/**
- * One-entry memo over buildThumbs. Sixteen PNG encodes is far too much to
- * repeat per render, and the result depends on nothing but the (immutable,
- * content-addressed) raster and which LUT strips have loaded. Single-entry
- * rather than a Map: each set holds ~16 data URLs, so keeping every layer's
- * would grow without bound for a case — flipping between layers mid-browse —
- * that is not worth the memory.
- */
+// one-entry memo over buildThumbs: 16 png encodes per render too costly.
+// single-entry not map — each set ~16 data urls would grow unbound
+// (flipping layers mid-browse not worth it). key = raster + lut-epoch only.
 let thumbMemo: { key: string; value: Record<string, string> | null } | null =
 	null;
 
@@ -143,9 +128,8 @@ function cachedThumbs(
 	blobHash: string,
 	lutEpochValue: number,
 ): Record<string, string> | null {
-	// Never memoise a miss: raster-cache has no subscription and the LUT epoch
-	// stops moving once all strips load, so caching null for a still-hydrating
-	// raster would leave that layer on swatch placeholders permanently.
+	// never memoise a miss: raster-cache has no subscription and lut epoch
+	// stops once strips load → cached null would stick on placeholders
 	if (!getRaster(blobHash)) return null;
 	const key = `${blobHash}:${lutEpochValue}`;
 	if (thumbMemo?.key !== key)
@@ -153,7 +137,7 @@ function cachedThumbs(
 	return thumbMemo.value;
 }
 
-/** Active look's name for the module box header (sub slot). */
+// active look's name → module box sub slot
 export class LooksSub extends Component {
 	#active = new ActiveLayer();
 
@@ -194,7 +178,7 @@ const LookCard: TOC<LookCardSignature> = <template>
 			{{#if @image}}
 				<img src={{@image}} alt="" />
 			{{else}}
-				{{! shelf-swatch stand-in until the raster/LUT is ready }}
+				{{! shelf swatch until raster/lut is ready }}
 				<span
 					aria-hidden="true"
 					class="sub-look-swatch"
@@ -211,9 +195,7 @@ interface GallerySignature {
 }
 
 class LooksGallery extends Component<GallerySignature> {
-	// The gallery is the natural preload point for the LUT strips (~50 KB
-	// each); the epoch subscription re-renders as each arrives so its thumb
-	// fades in.
+	// lut strips (~50 KB each) preload here; epoch re-renders as each arrives
 	#luts = new TrackedExternal(subscribeLuts, lutEpoch);
 
 	constructor(
@@ -230,9 +212,8 @@ class LooksGallery extends Component<GallerySignature> {
 	}
 
 	get look() {
-		// No doc subscription here: every look write goes through fx-ops, which
-		// rebuilds the layer, so LooksBody hands down a new `@layer` and this
-		// getter invalidates on the arg alone.
+		// no doc subscription: look writes rebuild the layer → new @layer
+		// arg, so the arg alone invalidates this getter
 		return getLook(this.args.layer);
 	}
 
@@ -250,12 +231,9 @@ class LooksGallery extends Component<GallerySignature> {
 		return typeof value === 'number' ? value : 100;
 	}
 
-	/**
-	 * Memoised on the blobHash and the LUT epoch, which are the only two
-	 * things the thumbnails depend on — NOT `@cached`, which entangles every
-	 * tracked read the getter makes and so would re-encode all sixteen PNGs on
-	 * every doc emit, including each frame of an intensity drag.
-	 */
+	// memoised on blobhash + lut epoch, NOT @cached, which entangles every
+	// tracked read and would re-encode 16 PNGs per doc emit (each frame of
+	// an intensity drag)
 	get thumbs(): Record<string, string> | null {
 		return cachedThumbs(
 			this.args.layer.blobHash,
@@ -279,9 +257,8 @@ class LooksGallery extends Component<GallerySignature> {
 
 	#dragging = false;
 
-	// One undo step per gesture (transient-colour's pattern): the first `input`
-	// opens the transient, `change` settles it. A range input fires `change` at
-	// drag end and once per keypress, so keyboard steps commit singly.
+	// one undo step per gesture: first `input` opens transient, `change`
+	// settles (range input fires change at drag end + once per keypress)
 	setIntensity = (event: Event) => {
 		if (!this.#dragging) {
 			this.#dragging = true;
@@ -301,22 +278,18 @@ class LooksGallery extends Component<GallerySignature> {
 
 	willDestroy() {
 		super.willDestroy();
-		// A still-open gesture must not outlive the gallery (transient-colour's
-		// rule): destroyed mid-drag, `change` never fires, the transient never
-		// commits, and doc-store's undo/redo early-return on isGestureActive()
-		// for the rest of the session.
+		// settle before destroy: mid-drag destroy means `change` never fires,
+		// transient never commits, undo/redo early-return on isGestureActive
+		// persists
 		this.settle();
 		this.#luts.unsubscribe();
 	}
 
 	<template>
-		{{! The 16-card gallery outgrows a hover-bloom (natural height) — cap it
-			to the viewport and scroll the grid inside; None + Intensity stay
-			pinned. In the rail the 300px box wins, so the cap is inert there. }}
+		{{! cap to viewport, scroll grid inside; none+intensity pinned. in the
+			rail the 300px box wins → cap inert there }}
 		<div class="sub-looks">
-			{{! "None" is conventional chrome (the no-selection cell every
-				picker has); a slim full-width row — it is the absence of a
-				look, not a look — which leaves the grades in a clean 2-up. }}
+			{{! slim full row — absence of a look, keeps grades 2-up }}
 			<button
 				type="button"
 				class="sub-look-none
@@ -375,8 +348,7 @@ export class LooksBody extends Component {
 	#active = new ActiveLayer();
 
 	get raster(): RasterLayer | null {
-		// Looks grade PIXELS — raster layers only (a shape gets a look after
-		// rasterize, M3-15).
+		// raster only; shapes get a look after rasterize (M3-15)
 		const layer = this.#active.layer;
 		return isRaster(layer) ? layer : null;
 	}
@@ -390,7 +362,7 @@ export class LooksBody extends Component {
 		{{#if this.raster}}
 			<LooksGallery @layer={{this.raster}} />
 		{{else}}
-			{{! wording carried over from the Next app }}
+			{{! wording carried from the next app }}
 			<div class="sub-look-empty">To pick a look, first pick
 				an image layer</div>
 		{{/if}}

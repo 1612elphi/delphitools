@@ -1,10 +1,3 @@
-/**
- * Blocking-modal store (§7) — which full-screen dialog is currently open. Unlike
- * the dock/rail modules (pinnable panels), these are transient blocking popups:
- * Export and Canvas size. One at a time; transient UI state (never document
- * truth), bound to React via useSyncExternalStore.
- */
-
 type Listener = () => void;
 
 export type ModalId =

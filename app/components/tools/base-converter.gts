@@ -51,7 +51,6 @@ export const BITWISE_OPS: BitwiseOp[] = [
 	'RSH',
 ];
 
-/** The shift operators read as symbols on their buttons, the rest as names. */
 const OP_BUTTON: Record<BitwiseOp, string> = {
 	AND: 'AND',
 	OR: 'OR',
@@ -61,7 +60,6 @@ const OP_BUTTON: Record<BitwiseOp, string> = {
 	RSH: '>>',
 };
 
-/** The same set as an infix sign, for the result heading. */
 const OP_SIGN: Record<BitwiseOp, string> = {
 	AND: 'AND',
 	OR: 'OR',
@@ -71,7 +69,6 @@ const OP_SIGN: Record<BitwiseOp, string> = {
 	RSH: '>>',
 };
 
-// Descriptions carried over from the Next app, verbatim.
 export const BITWISE_REF: { op: string; desc: string }[] = [
 	{ op: 'AND (&)', desc: '1 if both bits are 1' },
 	{ op: 'OR (|)', desc: '1 if either bit is 1' },
@@ -86,7 +83,6 @@ const EMPTY: BaseValues = { dec: '', hex: '', bin: '', oct: '' };
 const BIT_COUNT = 16;
 const COPIED_MS = 1500;
 
-/** The value read in the named base, ignoring its conventional prefix. */
 export function parseValue(value: string, base: Base): number | null {
 	const cleaned = value.trim().toLowerCase();
 	if (!cleaned) return null;
@@ -101,7 +97,6 @@ export function parseValue(value: string, base: Base): number | null {
 	return Number.isNaN(result) ? null : result;
 }
 
-/** One number written out in all four bases. */
 export function convertAll(num: number): BaseValues {
 	return {
 		dec: num.toString(10),
@@ -111,11 +106,6 @@ export function convertAll(num: number): BaseValues {
 	};
 }
 
-/**
- * The operation applied, as an unsigned 32-bit result. Null when an operand the
- * operation needs is missing — the Next app returned early there instead, which
- * left the previous result on screen next to the new operands.
- */
 export function applyBitwise(
 	op: BitwiseOp,
 	a: number | null,
@@ -140,7 +130,6 @@ export function applyBitwise(
 	}
 }
 
-/** The low 16 bits of a decimal string, most significant first. */
 export function getBits(value: string): boolean[] {
 	const num = Number.parseInt(value, 10);
 	if (Number.isNaN(num) || num < 0)
@@ -194,7 +183,6 @@ export default class BaseConverterTool extends Component {
 		});
 	}
 
-	/** Hidden above 16 bits, where the row would no longer show the whole number. */
 	get showBits() {
 		return (
 			!this.hasValue ||
@@ -249,7 +237,6 @@ export default class BaseConverterTool extends Component {
 		}));
 	}
 
-	/** `12 AND 10`, `~12`, `12 << 3` — the operands the result came from. */
 	get resultSummary() {
 		const sign = OP_SIGN[this.bitwiseOp];
 		const operand = this.showShift
@@ -286,7 +273,6 @@ export default class BaseConverterTool extends Component {
 
 		const num = parseValue(value, base);
 		if (num === null || num < 0) {
-			// wording carried over from the Next app
 			this.error = `Invalid ${BASE_INFO[base].name.toLowerCase()} number`;
 			this.values = { ...this.values, [base]: value };
 			return;
@@ -331,8 +317,6 @@ export default class BaseConverterTool extends Component {
 	};
 
 	calculate = () => {
-		// A shift of zero is a shift the user asked for; the Next app's
-		// `parseInt(...) || 1` turned it into one.
 		const parsedShift = Number.parseInt(this.shiftAmount, 10);
 		const shift = Number.isNaN(parsedShift) ? 1 : parsedShift;
 

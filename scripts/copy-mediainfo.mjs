@@ -1,6 +1,4 @@
-// Copies the mediainfo.js emscripten bundle (ESM glue + 2.5 MB wasm) into
-// public/mediainfo, where lib/mediainfo.ts imports it at runtime outside the
-// Vite graph (the jxl/mupdf idiom). Re-run after a mediainfo.js version bump.
+// vite-external; re-run on bumps
 import { copyFileSync, mkdirSync } from 'node:fs';
 
 const src = new URL('../node_modules/mediainfo.js/', import.meta.url);

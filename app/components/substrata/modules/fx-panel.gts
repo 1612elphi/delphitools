@@ -64,35 +64,15 @@ import {
 import { ActiveLayer } from 'delphitools-v2/lib/substrata/active-layer';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 
-/**
- * FX module — the BODY only; the module box supplies the "FX" header. One
- * pipeline over BOTH of the selected layer's stacks (Ruby's call): the
- * filters[] chain (colour changes + spatial filters) as the top zone, the
- * effects[] stack as the bottom zone, split by a heavy divider — matching the
- * real composite order (outer fx → content + filters → inner fx) as closely as
- * one list can. Drag-reorder is constrained to each zone (the two doc arrays
- * cannot interleave); a single Add picker groups both categories and greys out
- * types already on the layer (one-per-type).
- *
- * Sketch fidelity (modals.html Effects card): flush blocks with a muted title
- * bar, 2px dividers between blocks / 1px inside, single-open accordion with the
- * grid-rows collapse animation, grip · chevron · name · reset · toss · switch.
- * Params render generically from the registries' ParamSpecs; continuous
- * gestures (slider / swatch drag) coalesce into ONE undo step via the transient
- * path. Both stacks render live — raster layers only, hence the gates below.
- */
-
 interface PickerCard {
 	type: string;
 	label: string;
 	icon: string;
-	/** last cell spans the row remainder — no empty grid cells */
 	span: number;
 }
 
 interface PickerGroup {
 	key: string;
-	/** section word, functional chrome */
 	heading: string;
 	stack: FxStack;
 	cards: PickerCard[];
@@ -118,8 +98,6 @@ function buildGroup(
 	};
 }
 
-/** Typed-card picker groups: filters (zone 1) · effects (zone 2). The
- *  colour/film-sim family is NOT here — looks are picked in the LOOKS module. */
 const PICKER_GROUPS: PickerGroup[] = [
 	buildGroup(
 		'filter',
@@ -147,7 +125,6 @@ function presetGradient(swatch: string[]) {
 	);
 }
 
-/** Pair chips read light→dark like the sim swatches: highlight leads. */
 function pairGradient(colours: [string, string]) {
 	return htmlSafe(
 		`background: linear-gradient(135deg, ${colours[1]}, ${colours[0]})`,
@@ -162,8 +139,6 @@ function columnsStyle(n: number) {
 	return htmlSafe(`grid-template-columns: repeat(${n}, 1fr)`);
 }
 
-// ── param value readers ─────────────────────────────────────────────────────
-
 function numValue(fx: FxItem, spec: SliderParam | StepperParam): number {
 	const v = fx.params[spec.key];
 	return typeof v === 'number' ? v : spec.default;
@@ -177,15 +152,12 @@ function strValue(
 	return typeof v === 'string' ? v : spec.default;
 }
 
-/** "100%" · "10.0 px" · "0°" — decimals follow the step; px gets a space. */
 function fmtValue(v: number, spec: SliderParam | StepperParam): string {
 	const decimals = spec.step < 0.1 ? 2 : spec.step < 1 ? 1 : 0;
 	const s = v.toFixed(decimals);
 	if (!spec.unit) return s;
 	return spec.unit === 'px' ? `${s} px` : `${s}${spec.unit}`;
 }
-
-// ── param rows ──────────────────────────────────────────────────────────────
 
 interface RowArgs {
 	fx: FxItem;
@@ -197,12 +169,6 @@ interface SliderRowSignature {
 	Args: RowArgs & { spec: SliderParam };
 }
 
-/**
- * Slider drags coalesce into ONE undo step. A native range input fires `input`
- * per move and `change` at the gesture boundary — the first `input` opens the
- * transient, `change` settles it. A keyboard step fires both in turn, so it
- * commits as one plain undo step per press (stepper-like).
- */
 class SliderRow extends Component<SliderRowSignature> {
 	#dragging = false;
 
@@ -236,9 +202,7 @@ class SliderRow extends Component<SliderRowSignature> {
 		this.#dragging = false;
 	};
 
-	// A row destroyed mid-drag (block removed, panel closed) never sees
-	// `change`, so the transient would stay open and doc-store's undo/redo
-	// would early-return on isGestureActive() for the rest of the session.
+	// close active gesture
 	willDestroy() {
 		super.willDestroy();
 		this.settle();
@@ -265,7 +229,6 @@ interface StepperRowSignature {
 	Args: RowArgs & { spec: StepperParam };
 }
 
-/** ±step clicks; each click is one undo step (matches the sketch's stepper). */
 class StepperRow extends Component<StepperRowSignature> {
 	get value() {
 		return numValue(this.args.fx, this.args.spec);
@@ -322,8 +285,6 @@ interface ColourRowSignature {
 	Args: RowArgs & { spec: ColourParam };
 }
 
-/** Colour param — the shared transient swatch+hex cell (transient-colour owns
- *  the OS-picker gesture-settling mechanism). */
 class ColourRow extends Component<ColourRowSignature> {
 	get value() {
 		return strValue(this.args.fx, this.args.spec);
@@ -357,7 +318,6 @@ interface SelectRowSignature {
 	Args: RowArgs & { spec: SelectParam };
 }
 
-/** One-of-N as a flush segmented group (e.g. stroke position). */
 class SelectRow extends Component<SelectRowSignature> {
 	get value() {
 		return strValue(this.args.fx, this.args.spec);
@@ -369,7 +329,6 @@ class SelectRow extends Component<SelectRowSignature> {
 
 	isActive = (value: string) => value === this.value;
 
-	// guard: re-clicking the active segment must not burn a history step
 	pick = (value: string) => {
 		if (value === this.value) return;
 		const { layerId, stack, fx, spec } = this.args;
@@ -398,8 +357,6 @@ interface PresetsGridSignature {
 	Args: RowArgs & { spec: PresetsParam; bordered: boolean };
 }
 
-/** The sketch's flush preset-swatch grid: 4-up, hairline-gapped, edge-to-edge;
- *  the chosen look wears an inset primary ring. */
 class PresetsGrid extends Component<PresetsGridSignature> {
 	get value() {
 		return strValue(this.args.fx, this.args.spec);
@@ -437,12 +394,6 @@ interface PairsGridSignature {
 	Args: RowArgs & { spec: PairsParam; bordered: boolean };
 }
 
-/**
- * Duotone's preset pairs: same flush grid as PresetsGrid, but a pair is a
- * QUICK-SET — clicking writes its `writes` patch (both colours, one undo step
- * via setFxParams) instead of storing a preset id. Active = the pair whose
- * writes all match the current params, so hand-picked colours light no pair up.
- */
 class PairsGrid extends Component<PairsGridSignature> {
 	isActive = (option: PairsParam['options'][number]) =>
 		Object.entries(option.writes).every(
@@ -478,22 +429,12 @@ class PairsGrid extends Component<PairsGridSignature> {
 	</template>
 }
 
-// ── Remove Background status body ───────────────────────────────────────────
-
 interface MatteBodySignature {
 	Args: { layerId: string };
 }
 
-/** The async-bake body: kicks the bake (idempotent — the canvas composite kicks
- *  too) and surfaces the model lifecycle: download %, inference, device (with a
- *  slower-notice when the WASM fallback ran), sticky errors with retry. The
- *  block-header switch owns on/off; a finished matte is cached, so toggling is
- *  instant. */
 class MatteBody extends Component<MatteBodySignature> {
 	#doc = new TrackedExternal(subscribe, getSnapshot);
-	// The epoch IS the "something moved" signal for this store; reading the
-	// status here instead would go stale whenever the hash changes without a
-	// matte notification.
 	#mattes = new TrackedExternal(subscribeMattes, matteEpoch);
 
 	@cached
@@ -507,16 +448,12 @@ class MatteBody extends Component<MatteBodySignature> {
 
 	@cached
 	get status(): MatteStatus | null {
-		// read through the matte store so each lifecycle tick re-renders
 		void this.#mattes.current;
 		const hash = this.hash;
 		return hash ? (getMatteStatus(hash) ?? null) : null;
 	}
 
-	/** Kick the bake from a modifier, never from `status`: ensureMatte notifies
-	 *  the matte store synchronously for an unbaked hash, and doing that inside
-	 *  a getter dirties a tag already consumed in the same render — which Ember
-	 *  asserts on in development. React ran the same kick in an effect. */
+	// avoid render-time writes
 	kick = modifier((_element: HTMLElement, [hash]: [string | null]) => {
 		if (hash) ensureMatte(hash);
 	});
@@ -552,7 +489,6 @@ class MatteBody extends Component<MatteBodySignature> {
 		this.#mattes.unsubscribe();
 	}
 
-	// Wording carried over from the Next app.
 	<template>
 		{{#if this.hash}}
 			<div class="sub-fx-matte" {{this.kick this.hash}}>
@@ -581,8 +517,6 @@ class MatteBody extends Component<MatteBodySignature> {
 							bear with me</div>
 					{{/if}}
 				{{else if (eq this.state "error")}}
-					{{! the raw Error.message stays off-screen — hover the label
-						to see it }}
 					<div
 						class="sub-fx-matte-error"
 						title={{this.detail}}
@@ -597,8 +531,6 @@ class MatteBody extends Component<MatteBodySignature> {
 		{{/if}}
 	</template>
 }
-
-// ── one effect/filter block ─────────────────────────────────────────────────
 
 interface FxBlockSignature {
 	Args: {
@@ -622,8 +554,6 @@ class FxBlock extends Component<FxBlockSignature> {
 		return getFxDef(this.args.stack, this.args.fx.type);
 	}
 
-	/** Remove Background is paramless but NOT bodiless — its body is the async
-	 *  bake status (download %, device, error/retry), not registry params. */
 	get matteBlock() {
 		return (
 			this.args.stack === 'effects' &&
@@ -631,8 +561,6 @@ class FxBlock extends Component<FxBlockSignature> {
 		);
 	}
 
-	/** Paramless blocks (invert, greyscale, sepia, edge-detect…) have nothing to
-	 *  open: no chevron, no toggle, no body, no reset. */
 	get expandable() {
 		return this.matteBlock || (this.def?.params.length ?? 0) > 0;
 	}
@@ -680,10 +608,6 @@ class FxBlock extends Component<FxBlockSignature> {
 				manager=@manager
 			}}
 		>
-			{{! title bar — grip · toggle button (chevron + name) · controls.
-				The toggle is a real button (keyboard path + aria-expanded); the
-				controls and switch sit OUTSIDE it, so they can never toggle the
-				accordion. }}
 			<div class="sub-fx-bar {{if this.isOpen 'is-open'}}">
 				<span
 					class="sub-fx-grip"
@@ -714,8 +638,6 @@ class FxBlock extends Component<FxBlockSignature> {
 						>{{this.label}}</span>
 					</button>
 				{{else}}
-					{{! the indent matches chevron + gap, so titles align down
-						the stack }}
 					<span class="sub-fx-title is-static">
 						<span
 							class="sub-fx-name"
@@ -747,10 +669,6 @@ class FxBlock extends Component<FxBlockSignature> {
 				</div>
 			</div>
 
-			{{! collapsible body — grid-rows 1fr↔0fr (the sketch's animation).
-				`inert` when collapsed: the clip is visual-only, so without it
-				the hidden sliders/fields would stay in the tab order and take
-				invisible edits. }}
 			{{#if this.expandable}}
 				<div
 					class="sub-fx-body
@@ -774,7 +692,6 @@ class FxBlock extends Component<FxBlockSignature> {
 										"presets"
 									)
 								}}
-									{{! presets bleed edge-to-edge }}
 									<PresetsGrid
 										@spec={{p.spec}}
 										@fx={{@fx}}
@@ -858,8 +775,6 @@ class FxBlock extends Component<FxBlockSignature> {
 	</template>
 }
 
-// ── pipeline zones ──────────────────────────────────────────────────────────
-
 interface FxZoneSignature {
 	Args: {
 		layer: RasterLayer;
@@ -870,8 +785,6 @@ interface FxZoneSignature {
 }
 
 class FxZone extends Component<FxZoneSignature> {
-	// Isolated manager per zone: the two doc arrays cannot interleave, so a
-	// drag never crosses the divider.
 	manager = createDndManager();
 
 	constructor(
@@ -888,15 +801,10 @@ class FxZone extends Component<FxZoneSignature> {
 
 	willDestroy() {
 		super.willDestroy();
-		// Each manager installs document-level pointer listeners; the panel
-		// opens and closes freely, so an undestroyed one keeps handling every
-		// pointerdown for the rest of the session (layers-panel precedent).
+		// remove document listeners
 		this.manager.destroy();
 	}
 
-	/** The filters zone hides the looks-module-owned film-sim; setFxOrder
-	 *  handles the subset (unlisted entries sink to the end — where the sim is
-	 *  pinned anyway). */
 	get list(): FxItem[] {
 		const stack =
 			this.args.stack === 'effects'
@@ -912,9 +820,7 @@ class FxZone extends Component<FxZoneSignature> {
 	isOpen = (id: string) => id === this.args.openId;
 
 	onDragEnd = (event: DragEndEvent) => {
-		// Escape mid-drag, and manager.destroy() during one, both dispatch
-		// dragend with canceled set — neither should write the order
-		// (substrata-shell applies the same guard to its dock drops).
+		// skip canceled drops
 		if (event.canceled) return;
 		const { source, target } = event.operation;
 		if (!source || !target || source.id === target.id) return;
@@ -931,8 +837,6 @@ class FxZone extends Component<FxZoneSignature> {
 
 	<template>
 		{{#if this.rows}}
-			{{! groups one stack's blocks — the last-child divider rule
-				and the per-zone sortable both need the wrapper }}
 			<div>
 				{{#each this.rows key="fx.id" as |row|}}
 					<FxBlock
@@ -952,8 +856,6 @@ class FxZone extends Component<FxZoneSignature> {
 		{{/if}}
 	</template>
 }
-
-// ── Add picker ──────────────────────────────────────────────────────────────
 
 interface AddFxSignature {
 	Args: {
@@ -992,7 +894,6 @@ class AddFxButton extends Component<AddFxSignature> {
 					{{trigger.modifiers}}
 				>
 					<Icon @name="plus" />
-					{{! the mockup's word (functional chrome) }}
 					Add Effect
 				</button>
 			</PopoverTrigger>
@@ -1001,8 +902,6 @@ class AddFxButton extends Component<AddFxSignature> {
 				@sideOffset={{0}}
 				class="sub-fx-picker"
 			>
-				{{! film sims / LUTs live in the LOOKS module now — the picker
-					holds only the two type groups }}
 				{{#each this.groups key="key" as |group|}}
 					<div>
 						<div class="sub-fx-pickhead">
@@ -1062,9 +961,6 @@ class AddFxButton extends Component<AddFxSignature> {
 	</template>
 }
 
-// ── the module body ─────────────────────────────────────────────────────────
-
-/** Active layer's name for the module box header (sub slot, per the sketch). */
 export class FxSub extends Component {
 	#active = new ActiveLayer();
 
@@ -1089,25 +985,16 @@ export class FxBody extends Component {
 		return this.#active.layer;
 	}
 
-	/** Group fx are v1-deferred (no group render target); offering the stacks
-	 *  here would write dead data a future group renderer would suddenly start
-	 *  reading (the Inspector gates the same way). */
 	get isGroupLayer() {
 		const layer = this.layer;
 		return layer !== null && isGroup(layer);
 	}
 
-	/** Filters + effects move pixels through the raster pipeline only — on a
-	 *  shape/text layer they would be dead data rendering nothing. The
-	 *  rasterize-for-effects affordance replaces this hint once non-raster
-	 *  kinds can bake. */
 	get raster(): RasterLayer | null {
 		const layer = this.layer;
 		return layer !== null && layer.kind === 'raster' ? layer : null;
 	}
 
-	/** The film-sim look lives in the LOOKS module — the FX pipeline never
-	 *  shows it (it stays pinned at the stack's end regardless). */
 	get showDivider() {
 		const layer = this.raster;
 		if (!layer) return false;
@@ -1121,7 +1008,6 @@ export class FxBody extends Component {
 		this.openId = this.openId === id ? null : id;
 	};
 
-	// Single-open accordion across BOTH zones (ids are unique across stacks).
 	setOpen = (id: string) => {
 		this.openId = id;
 	};
@@ -1131,7 +1017,6 @@ export class FxBody extends Component {
 		this.#active.teardown();
 	}
 
-	// Wording carried over from the Next app.
 	<template>
 		{{#if this.raster}}
 			<div class="sub-fx">
@@ -1147,8 +1032,6 @@ export class FxBody extends Component {
 						@onToggleOpen={{this.toggleOpen}}
 					/>
 					{{#if this.showDivider}}
-						{{! the heavy pipeline divider between the filter chain
-							and the effects }}
 						<div
 							aria-hidden="true"
 							class="sub-fx-divider"

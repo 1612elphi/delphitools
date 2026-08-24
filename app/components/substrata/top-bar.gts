@@ -61,17 +61,7 @@ import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 import type { SubstrataDoc } from 'delphitools-v2/lib/substrata/doc-model';
 import type ThemeService from 'delphitools-v2/services/theme';
 
-/**
- * Top bar (§7) — parity with sketches/mockup.html. Wired: undo/redo, theme,
- * import, the Scene-info inspector, and the persistence-aware status dot.
- * Stubbed (visual only, no-op): zoom, export, file ops (New/Open/Save/…), the
- * Edit history list, the ACXV keypad, and the Workspace docking toggles —
- * those land with M5/M6 and the docking system.
- */
-
 type MenuId = 'scene' | 'edit' | 'workspace' | 'help';
-
-/* ── menu shell ────────────────────────────────────────────────────────────── */
 
 interface MenuSignature {
 	Element: HTMLDivElement;
@@ -102,27 +92,16 @@ const Menu: TOC<MenuSignature> = <template>
 	</div>
 </template>;
 
-/** A box in a dropdown (the .ebox: bg + hairline + shadow). */
 interface BoxSignature {
 	Element: HTMLDivElement;
 	Blocks: { default: [] };
 }
 
-// `shadow-lg` is a harness hook — the parent repo's rigs find the open menu
-// via `[data-menu-root] .shadow-lg`; styled in _top-bar.scss
+// shadow-lg test hook
 const Box: TOC<BoxSignature> = <template>
 	<div class="sub-topbar-box shadow-lg" ...attributes>{{yield}}</div>
 </template>;
 
-/** A plain menu item row with optional shortcut hint. `disabled` greys the row
- *  and drops the handler — a visibly-dead item never reads as a broken one
- *  (the clarity review's "menus that lie" finding).
- *
- *  Ported as a `<button>`, not the source's `<div onClick>`: this app's
- *  ember-template-lint config runs `no-invalid-interactive`, which rejects a
- *  click modifier on a non-interactive element. The rest of this codebase
- *  already makes the same call for equivalent clickable rows (the segmented
- *  cells in preset-row.gts / text-style-row.gts are real buttons too). */
 interface ItemSignature {
 	Element: HTMLButtonElement;
 	Args: {
@@ -155,8 +134,6 @@ const Item: TOC<ItemSignature> = <template>
 const Sep: TOC<{ Element: HTMLDivElement }> = <template>
 	<div class="sub-topbar-sep"></div>
 </template>;
-
-/* ── Scene: file menu + document inspector ───────────────────────────────────── */
 
 interface DiRowSignature {
 	Element: HTMLDivElement;
@@ -199,9 +176,7 @@ class SceneMenu extends Component<SceneMenuSignature> {
 		this.#destroyed = true;
 	}
 
-	// Recents load once per menu open (SceneMenu remounts with the dropdown) and
-	// again whenever persistOn flips (the persistence switch lives inside this
-	// same menu) — gated on the opt-in like every other IndexedDB read.
+	// gate indexeddb reads
 	loadRecents = modifier(() => {
 		if (this.args.persistOn) {
 			void listRecentProjects().then((recents) => {
@@ -279,7 +254,6 @@ class SceneMenu extends Component<SceneMenuSignature> {
 		<div class="sub-topbar-scene-menu" {{this.loadRecents}}>
 			<Box>
 				<div class="sub-topbar-scene-items">
-					{{! no ⌘N hint — browsers reserve it; a shortcut we can't deliver is a lie }}
 					<Item
 						@label="New scene"
 						@onClick={{this.doNewScene}}
@@ -339,8 +313,6 @@ class SceneMenu extends Component<SceneMenuSignature> {
 						@onClick={{this.doExport}}
 					/>
 					<Sep />
-					{{! project-manager actions — disabled until it lands (post-v1) so a
-						dead click never reads as breakage }}
 					<Item
 						@label="Rename"
 						@disabled={{true}}
@@ -354,9 +326,7 @@ class SceneMenu extends Component<SceneMenuSignature> {
 						@disabled={{true}}
 					/>
 					<Sep />
-					{{! Item is a <button> (see its comment); nesting one inside this
-						link would be a nested-interactive violation, so the link
-						wears the item-row look directly instead of wrapping <Item>. }}
+					{{! avoid nested buttons }}
 					<LinkTo
 						@route="index"
 						class="sub-topbar-item"
@@ -395,8 +365,6 @@ class SceneMenu extends Component<SceneMenuSignature> {
 		</div>
 	</template>
 }
-
-/* ── Edit: undo/redo + ACXV keypad ───────────────────────────────────────────── */
 
 interface UrButtonSignature {
 	Element: HTMLButtonElement;
@@ -478,7 +446,7 @@ class EditMenu extends Component<EditMenuSignature> {
 		return this.selection.current.length > 0;
 	}
 
-	// Same set ⌘A grabs — visible + unlocked leaves, not locked/hidden strays.
+	// skip hidden locked layers
 	get selectable() {
 		const doc = this.doc.current;
 		return doc ? selectableLeafIds(doc.layers) : [];
@@ -524,8 +492,6 @@ class EditMenu extends Component<EditMenuSignature> {
 				</div>
 			</Box>
 			<Box>
-				{{! Cut/Copy/Paste need a layer clipboard that doesn't exist yet —
-					disabled, not silently inert }}
 				<div class="segmented sub-topbar-ab-grid">
 					<Ab
 						@icon="scissors"
@@ -576,11 +542,6 @@ class EditMenu extends Component<EditMenuSignature> {
 	</template>
 }
 
-/* ── Workspace: docking + guides (visual stubs) ──────────────────────────────── */
-
-/** Shared seg-key → icon map. Keys are consistent across rows (Fit = the fit
- *  action everywhere, etc.); a key with no icon (e.g. "67%") falls back to
- *  its text. */
 function segIconName(s: string): string | null {
 	switch (s) {
 		case '−':
@@ -616,9 +577,6 @@ interface WRowSignature {
 	};
 }
 
-// The segmented cell is a <button>, not the source's <span onClick> — same
-// no-invalid-interactive constraint as Item, and the same fix the codebase
-// already uses for this exact "segmented cell" shape elsewhere.
 const WRow: TOC<WRowSignature> = <template>
 	<div class="sub-topbar-wrow">
 		<span>{{@label}}</span>
@@ -634,8 +592,7 @@ const WRow: TOC<WRowSignature> = <template>
 						}}"
 					{{on "click" (fn @onSelect s)}}
 				>
-					{{! the inner span carries the title too — the parent
-						repo's rigs read the cell as span[title] }}
+					{{! span title test hook }}
 					<span
 						title={{s}}
 						class="sub-topbar-seg-hook"
@@ -683,8 +640,6 @@ class WorkspaceMenu extends Component {
 		return ['Rulers', 'Guides', 'Grid', 'Snap'];
 	}
 
-	// All four are live: Rulers draw + drag out Guides; Grid + Snap since M2-12.
-	// "Guides" = visibility of dragged-out guidelines.
 	get guidesOn() {
 		const g = this.guides.current;
 		const flags: Array<string | false> = [
@@ -731,8 +686,6 @@ class WorkspaceMenu extends Component {
 	</template>
 }
 
-/* ── Help ────────────────────────────────────────────────────────────────────── */
-
 function showHelpModal(
 	onClose: () => void,
 	id: 'shortcuts' | 'about-substrata' | 'about-delphitools',
@@ -763,8 +716,7 @@ const HelpMenu: TOC<HelpMenuSignature> = <template>
 				"about-delphitools"
 			}}
 		/>
-		{{! Item is a <button>; see its comment on why this link wears the
-			item-row look directly instead of wrapping <Item>. }}
+		{{! avoid nested buttons }}
 		<a
 			href="https://github.com/1612elphi/delphitools"
 			target="_blank"
@@ -776,12 +728,6 @@ const HelpMenu: TOC<HelpMenuSignature> = <template>
 	</Box>
 </template>;
 
-/* ── Scene name, click-to-rename ──────────────────────────────────────────────── */
-
-/** Scene name, click-to-rename: the centre slot swaps to an inline input;
- *  Enter/blur commit the new name as ONE undoable doc edit, Escape cancels.
- *  The name is doc content — it persists, saves into the .substrata file, and
- *  drives the export/save filenames. */
 interface SceneNameSignature {
 	Args: {
 		name: string;
@@ -839,9 +785,7 @@ class SceneName extends Component<SceneNameSignature> {
 				{{on "focus" this.selectOnFocus}}
 				{{on "blur" this.commit}}
 				{{on "keydown" this.onKeydown}}
-				{{! focusInput LAST: element.focus() dispatches focus
-					synchronously, so the select-on-focus listener above must
-					already be attached when it runs }}
+				{{! attach focus handler first }}
 				{{this.focusInput}}
 			/>
 		{{else}}
@@ -859,8 +803,6 @@ class SceneName extends Component<SceneNameSignature> {
 		{{/if}}
 	</template>
 }
-
-/* ── TopBar ────────────────────────────────────────────────────────────────────── */
 
 export default class TopBar extends Component {
 	@tracked open: MenuId | null = null;
@@ -892,7 +834,6 @@ export default class TopBar extends Component {
 		};
 	});
 
-	// Click outside any menu root closes the open menu.
 	watchOutsideClick = modifier(() => {
 		if (!this.open) return;
 		const onDown = (event: MouseEvent) => {
@@ -955,8 +896,6 @@ export default class TopBar extends Component {
 		return Math.round(this.zoom.current * 100);
 	}
 
-	// Three-state dot: stored locally (primary) · edits at risk — storage off
-	// with undoable work (amber) · idle with storage off (muted).
 	get statusDotClass() {
 		if (this.persistOn.current) return 'is-saved';
 		if (this.undoable.current) return 'is-unsaved';
@@ -981,7 +920,6 @@ export default class TopBar extends Component {
 				{{on "change" this.onPickFiles}}
 			/>
 
-			{{! Left: home · wordmark · menubar }}
 			<LinkTo
 				@route="index"
 				aria-label="back to delphitools"
@@ -1040,7 +978,6 @@ export default class TopBar extends Component {
 				</Menu>
 			</nav>
 
-			{{! Centre: scene name (click to rename) + save status }}
 			<div class="sub-topbar-centre">
 				<SceneName
 					@name={{this.docName}}
@@ -1055,7 +992,6 @@ export default class TopBar extends Component {
 				</span>
 			</div>
 
-			{{! Right: undo/redo (swaps to a status toast) · zoom · fit · export · theme }}
 			<div class="sub-topbar-right">
 				<ToastSlot />
 				<span class="sub-topbar-divider"></span>
@@ -1092,7 +1028,6 @@ export default class TopBar extends Component {
 					<Icon @name="maximize-2" />
 				</button>
 				<span class="sub-topbar-divider"></span>
-				{{! beta feedback — the bug-report mailto Ruby specced (subject prefilled) }}
 				<a
 					href="mailto:tools@rmv.fyi?subject=substrata%20bug%20report"
 					class="sub-topbar-feedback"

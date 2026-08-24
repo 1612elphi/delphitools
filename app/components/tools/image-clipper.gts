@@ -6,7 +6,6 @@ import Icon from 'delphitools-v2/components/icon';
 import { downloadUrl } from 'delphitools-v2/lib/download';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 
-// Error wording carried over from the Next app.
 const LOAD_FAILED = 'Failed to load image.';
 const FULLY_TRANSPARENT = 'Image is fully transparent — nothing to clip.';
 const ENCODE_FAILED = 'Failed to encode clipped image.';
@@ -28,10 +27,6 @@ interface ClipResult extends TrimBounds {
 	fileName: string;
 }
 
-/**
- * Width of the fully transparent margin on each edge of an RGBA buffer, in
- * pixels. Null when no pixel has any alpha at all, so there is nothing to keep.
- */
 export function findTrimBounds(
 	data: Uint8ClampedArray,
 	width: number,
@@ -44,7 +39,6 @@ export function findTrimBounds(
 
 	for (let y = 0; y < height; y++) {
 		for (let x = 0; x < width; x++) {
-			// The x/y bounds prove the index, so the alpha byte is present.
 			if (data[(y * width + x) * 4 + 3]! === 0) continue;
 			if (y < top) top = y;
 			if (y > bottom) bottom = y;
@@ -97,8 +91,6 @@ export default class ImageClipperTool extends Component {
 	};
 
 	processImage = (file: File) => {
-		// A second file can arrive by paste while a result is on screen, so the
-		// previous object URL is released here rather than only in `reset`.
 		this.releasePreview();
 		this.result = null;
 		this.error = '';
@@ -120,8 +112,6 @@ export default class ImageClipperTool extends Component {
 			canvas.width = width;
 			canvas.height = height;
 			const ctx = canvas.getContext('2d');
-			// The Next version asserted the context non-null, so a browser that
-			// refused the canvas threw inside onload and left the spinner up.
 			if (!ctx) {
 				URL.revokeObjectURL(fileUrl);
 				this.fail(LOAD_FAILED);
@@ -221,7 +211,7 @@ export default class ImageClipperTool extends Component {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) this.processImage(file);
-		// Choosing the same file twice must still fire a change event.
+		// allows same file selection
 		input.value = '';
 	};
 
@@ -232,7 +222,7 @@ export default class ImageClipperTool extends Component {
 		else this.error = PNG_ONLY;
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// prevent dropped-file navigation
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -271,7 +261,6 @@ export default class ImageClipperTool extends Component {
 							}}
 						/>
 						<Icon @name="upload" />
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-clip-drop-title"
 						>Drop a PNG here or click to
@@ -288,7 +277,6 @@ export default class ImageClipperTool extends Component {
 							@name="scissors"
 							class="dt-clip-pulse"
 						/>
-						{{! wording carried over from the Next app }}
 						<span>Clipping…</span>
 					</p>
 				{{/if}}
@@ -306,7 +294,6 @@ export default class ImageClipperTool extends Component {
 								×
 								{{this.result.clippedHeight}}</p>
 							{{#if this.noChange}}
-								{{! wording carried over from the Next app }}
 								<p
 									class="dt-clip-note"
 								>No transparent
@@ -316,7 +303,6 @@ export default class ImageClipperTool extends Component {
 									already
 									minimal</p>
 							{{else}}
-								{{! wording carried over from the Next app }}
 								<p
 									class="dt-clip-note"
 								>Trimmed

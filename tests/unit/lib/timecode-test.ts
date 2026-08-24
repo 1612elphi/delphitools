@@ -61,8 +61,7 @@ module('Unit | Lib | timecode', function () {
 
 	test('framesToTc and tcToFrames round-trip on every frame for hours', function (assert) {
 		for (const rate of [df, ndf, df60, r24]) {
-			// ~2h of frames — enough to cross many drop boundaries and the
-			// 10-minute reset several times.
+			// ~2h of frames, crosses drop + 10-min resets
 			const limit = Math.round(rate.exact * 3600 * 2);
 			let broke = -1;
 			for (let fn = 0; fn <= limit; fn++) {
@@ -95,10 +94,7 @@ module('Unit | Lib | timecode', function () {
 		);
 	});
 
-	// ── parsing / misinput robustness ──────────────────────────────────────
-
-	// The parse asserts read the discriminated union through a ternary, not an
-	// `if`/`&&` guard — QUnit's lint forbids both around assertions.
+	// ternary not if/&&: qunit lint forbids both here
 	test('parseTc reads full and right-aligned forms', function (assert) {
 		const full = parseTc('01:00:30:12', ndf);
 		assert.deepEqual(
@@ -144,7 +140,7 @@ module('Unit | Lib | timecode', function () {
 	});
 
 	test('parseTc flags a frame out of range with the limit as data', function (assert) {
-		const r = parseTc('00:00:00:30', ndf); // 30 fps → 00–29
+		const r = parseTc('00:00:00:30', ndf);
 		assert.strictEqual(
 			r.ok ? '(parsed)' : r.error,
 			'frame-range',
@@ -158,14 +154,14 @@ module('Unit | Lib | timecode', function () {
 	});
 
 	test('parseTc snaps a dropped drop-frame value up to the first legal frame', function (assert) {
-		const r = parseTc('00:01:00;00', df); // ;00 and ;01 are skipped at minute 1
+		const r = parseTc('00:01:00;00', df); // minute 1 skips ;00 and ;01
 		assert.strictEqual(r.ok ? r.parts.f : -1, 2, 'snapped to ;02');
 		assert.strictEqual(
 			r.ok ? r.snappedFrom : null,
 			'00:01:00;00',
 			'keeps the original for the note',
 		);
-		const ok = parseTc('00:10:00;00', df); // minute 10 is not dropped
+		const ok = parseTc('00:10:00;00', df); // minute 10 not dropped (df rule)
 		assert.strictEqual(
 			ok.ok ? (ok.snappedFrom ?? 'none') : 'fail',
 			'none',
@@ -174,8 +170,7 @@ module('Unit | Lib | timecode', function () {
 	});
 
 	test('arithmetic through frames crosses drop boundaries correctly', function (assert) {
-		// 00:00:59;29 + 1 frame at 29.97 DF steps into minute 1, which renumbers
-		// to ;02 (frames ;00 ;01 skipped).
+		// +1 frame into minute 1, renumbers to ;02
 		const a = parseTc('00:00:59;29', df);
 		assert.strictEqual(
 			a.ok

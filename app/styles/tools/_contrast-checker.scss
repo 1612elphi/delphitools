@@ -1,14 +1,6 @@
-// Styles for the contrast-checker tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
 
-/* ── Contrast checker ────────────────────────────────────────────────────── */
-
-// Green is the one hue with no theme token, so the tailwind scale stands in, at
-// the two steps the Next app used either side of the theme.
+// no green theme token
 $pass: crayon.color("green-500");
 
 .dt-contrast {
@@ -28,7 +20,7 @@ $pass: crayon.color("green-500");
 	}
 }
 
-/* The picker input covers the whole cell so anywhere in the block opens it. */
+// input covers whole cell
 .dt-contrast-swatch {
 	position: relative;
 	display: block;
@@ -91,10 +83,7 @@ $pass: crayon.color("green-500");
 	font-size: crayon.font-size("xs");
 }
 
-/* `.segmented` draws its own 1px frame, but the panel rules already sit on all
-   four edges, so only the internal hairlines are wanted. app.scss is @use'd
-   after every tool partial, so dropping the frame needs both classes to outrank
-   `.segmented` itself. */
+// both classes outrank .segmented
 .segmented.dt-contrast-actions {
 	grid-template-columns: repeat(3, 1fr);
 	border-block: 0;
@@ -168,7 +157,6 @@ $pass: crayon.color("green-500");
 	font-weight: crayon.font-weight("bold");
 }
 
-/* Bleeds to the panel edges: the sample is the swatch. */
 .dt-contrast-preview {
 	padding: crayon.size(8) crayon.size(6);
 }
@@ -264,7 +252,7 @@ $pass: crayon.color("green-500");
 	font-weight: crayon.font-weight("bold");
 }
 
-/* Crayon's reset drops list styling only for `ul[role="list"]`. */
+// crayon reset needs role="list"
 .dt-contrast-about ul {
 	padding-left: 0;
 	color: var(--muted-foreground);

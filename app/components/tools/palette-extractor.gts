@@ -40,10 +40,9 @@ export type ExtractionStrategy =
 	| 'accent';
 
 export interface Cluster {
-	/** OKLAB centroid, as [L, a, b]. */
+	// oklab [l, a, b]
 	centroid: Triple;
 	hex: string;
-	/** Pixels assigned to this cluster in the sampled copy. */
 	count: number;
 }
 
@@ -52,7 +51,6 @@ interface StrategyInfo {
 	description: string;
 }
 
-// Names and descriptions carried over verbatim from the Next app.
 const STRATEGIES: Record<ExtractionStrategy, StrategyInfo> = {
 	dominant: {
 		name: 'Dominant',
@@ -105,7 +103,7 @@ const STRATEGY_ORDER: ExtractionStrategy[] = [
 	'accent',
 ];
 
-/** Long edge of the sampled copy: 150px is at most 22 500 pixels to cluster. */
+// ≤22,500 pixels clustered
 const SAMPLE_EDGE = 150;
 const MAX_CLUSTERS = 32;
 const KMEANS_ITERATIONS = 20;
@@ -115,7 +113,7 @@ const COPIED_MS = 1500;
 const GRID_THRESHOLD_MOBILE = 4;
 const GRID_THRESHOLD_TABLET = 5;
 
-/** Squared OKLAB distance. The square root would not change any ordering. */
+// squared omits sqrt
 export function oklabDistance(a: Triple, b: Triple): number {
 	const dL = a[0] - b[0];
 	const da = a[1] - b[1];
@@ -123,13 +121,7 @@ export function oklabDistance(a: Triple, b: Triple): number {
 	return dL * dL + da * da + db * db;
 }
 
-/**
- * The sampled copy the clusterer reads, at most `edge` on its long side.
- *
- * Both dimensions floor at 1: a 4000x1 image rounds its short side to 0, and a
- * zero-height canvas makes getImageData throw IndexSizeError. The Next app has
- * no such floor.
- */
+// zero-dim canvas throws
 export function downsample(
 	image: HTMLImageElement,
 	edge = SAMPLE_EDGE,
@@ -149,7 +141,6 @@ export function downsample(
 	return canvas;
 }
 
-/** Every pixel at least half opaque, converted to OKLAB. */
 export function pixelsFromCanvas(canvas: HTMLCanvasElement): Triple[] {
 	const ctx = canvas.getContext('2d');
 	if (!ctx || canvas.width === 0 || canvas.height === 0) return [];
@@ -163,13 +154,7 @@ export function pixelsFromCanvas(canvas: HTMLCanvasElement): Triple[] {
 	return pixels;
 }
 
-/**
- * k-means++ seeding: each further centroid is drawn with probability
- * proportional to its squared distance from the nearest centroid already
- * chosen, which spreads the seeds instead of clumping them.
- *
- * `random` is a parameter so a test can pin the seeding.
- */
+// k-means++ seeding; random injectable
 export function seedCentroids(
 	pixels: Triple[],
 	k: number,
@@ -207,10 +192,7 @@ export function seedCentroids(
 	return centroids;
 }
 
-/**
- * Lloyd's algorithm over the seeded centroids, for a fixed iteration count
- * rather than to convergence. Empty clusters are dropped.
- */
+// lloyd's k-means, fixed iterations
 export function clusterPixels(
 	pixels: Triple[],
 	k: number,
@@ -277,7 +259,6 @@ export function clusterPixels(
 		.filter((cluster) => cluster.count > 0);
 }
 
-/** The larger third of the clusters by area, which "accent" scores against. */
 function dominantCentroids(clusters: Cluster[]): Triple[] {
 	const sorted = [...clusters].sort((a, b) => b.count - a.count);
 	const threshold = sorted[Math.floor(sorted.length / 3)]?.count ?? 0;
@@ -322,14 +303,12 @@ function score(
 				);
 				if (d < nearest) nearest = d;
 			}
-			// Divided by area, so a rare colour outranks a common one that is
-			// equally far from the dominant palette.
+			// rare colours outrank common
 			return nearest / Math.log(cluster.count + 2);
 		}
 	}
 }
 
-/** The `count` best-scoring clusters for the strategy, best first. */
 export function rankClusters(
 	clusters: Cluster[],
 	strategy: ExtractionStrategy,
@@ -404,7 +383,6 @@ export default class PaletteExtractorTool extends Component {
 		return this.count >= MAX_COLOURS;
 	}
 
-	/** Below the wide layout's minimum, columns stop fitting and it becomes a grid. */
 	get isGrid() {
 		const b = this.breakpoint.current;
 		return (
@@ -424,8 +402,7 @@ export default class PaletteExtractorTool extends Component {
 			hex: cluster.hex,
 			value: this.colourNotation.format(cluster.hex),
 			fillStyle: htmlSafe(`background-color: ${cluster.hex}`),
-			// Both fills come from rgbToHex, so the style value is a literal
-			// six-digit hex rather than anything the user typed.
+			// style-concatenation: rgbToHex literal
 			textStyle: htmlSafe(
 				`color: ${contrastText(cluster.hex)}`,
 			),
@@ -454,18 +431,16 @@ export default class PaletteExtractorTool extends Component {
 		}));
 	}
 
-	/** palette-genny reads `?colors=`, with or without the leading #. */
+	// palette-genny decodes this
 	get gennyColours() {
 		return this.palette.map((c) => c.hex.slice(1)).join(',');
 	}
 
-	// wording carried over from the Next app
 	get sourceTitle() {
 		return `Source: ${this.imageName} — click to change`;
 	}
 
-	// Space re-extracts, matching the Next app. Bound through the wrapper's
-	// document so it stops when the tool leaves the screen.
+	// listener dies with tool
 	shortcuts = modifier((element: HTMLElement) => {
 		const onKeyDown = (event: KeyboardEvent) => {
 			const target = event.target as HTMLElement | null;
@@ -497,12 +472,9 @@ export default class PaletteExtractorTool extends Component {
 	extract = () => {
 		const canvas = this.#sampleCanvas;
 		if (!canvas) return;
-		// A pending pass is one for the previous canvas or the previous seeds;
-		// either way its result is about to be discarded.
 		this.#cancelFrame();
 		this.extracting = true;
-		// One frame so the dimmed state paints: the clustering below is tens of
-		// milliseconds of synchronous work on the main thread.
+		// lets dim state paint
 		this.#frame = requestAnimationFrame(() => {
 			this.#frame = undefined;
 			if (this.isDestroying || this.isDestroyed) return;
@@ -541,7 +513,7 @@ export default class PaletteExtractorTool extends Component {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) this.readFile(file);
-		// Choosing the same file twice must still fire a change event.
+		// lets same file re-fire
 		input.value = '';
 	};
 
@@ -557,8 +529,7 @@ export default class PaletteExtractorTool extends Component {
 		event.preventDefault();
 	};
 
-	// The selection is an index into the ranked palette, so anything that
-	// re-ranks it has to clear it or the highlight lands on another colour.
+	// re-rank invalidates selection index
 	chooseStrategy = (value: string) => {
 		this.strategy = value as ExtractionStrategy;
 		this.selectedIndex = null;
@@ -576,8 +547,7 @@ export default class PaletteExtractorTool extends Component {
 		this.selectedIndex = null;
 	};
 
-	// Hover expands a swatch on a pointer; a touch has no hover, so there it
-	// takes a tap to open one and a tap outside to close it.
+	// touch has no hover
 	selectSwatch = (index: number) => {
 		if (!this.breakpoint.isTouch) return;
 		this.selectedIndex =
@@ -600,8 +570,7 @@ export default class PaletteExtractorTool extends Component {
 
 	copyValue = (value: string, key: string) => void this.copy(value, key);
 
-	// The pill sits inside the swatch, whose own click toggles the selection;
-	// without this a tap that copies also closes what it copied from.
+	// copy without toggling swatch
 	copySwatch = (value: string, key: string, event: MouseEvent) => {
 		event.stopPropagation();
 		this.copyValue(value, key);
@@ -660,7 +629,6 @@ export default class PaletteExtractorTool extends Component {
 								key="index"
 								as |swatch|
 							}}
-								{{! the whole swatch is the tap target on touch, and it holds a real button for every action it offers }}
 								{{! template-lint-disable no-invalid-interactive }}
 								<div
 									class="dt-extract-swatch
@@ -701,7 +669,6 @@ export default class PaletteExtractorTool extends Component {
 											<Icon
 												@name="check"
 											/>
-											{{! wording carried over from the Next app }}
 											Copied!
 										{{else}}
 											<Icon
@@ -773,7 +740,6 @@ export default class PaletteExtractorTool extends Component {
 							}}
 						>
 							<Icon @name="shuffle" />
-							{{! wording carried over from the Next app }}
 							Re-extract
 						</button>
 
@@ -821,7 +787,6 @@ export default class PaletteExtractorTool extends Component {
 
 					{{#if this.rows}}
 						<div class="dt-extract-export">
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-extract-label"
 							>Export</span>
@@ -845,7 +810,6 @@ export default class PaletteExtractorTool extends Component {
 											"copy"
 										}}
 									/>
-									{{! wording carried over from the Next app }}
 									Copy All
 								</button>
 								<button
@@ -865,7 +829,6 @@ export default class PaletteExtractorTool extends Component {
 											"copy"
 										}}
 									/>
-									{{! wording carried over from the Next app }}
 									CSS
 									Variables
 								</button>
@@ -879,7 +842,6 @@ export default class PaletteExtractorTool extends Component {
 									<Icon
 										@name="palette"
 									/>
-									{{! wording carried over from the Next app }}
 									Open in
 									Palette
 									Generator
@@ -892,7 +854,6 @@ export default class PaletteExtractorTool extends Component {
 						</div>
 
 						<div class="dt-extract-list">
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-extract-label"
 							>Colours</span>
@@ -925,7 +886,6 @@ export default class PaletteExtractorTool extends Component {
 													class="dt-extract-row-name"
 												>{{row.name}}</span>
 											</div>
-											{{! wording carried over from the Next app }}
 											<div
 												class="dt-extract-row-share"
 											>{{row.share}}%
@@ -977,7 +937,6 @@ export default class PaletteExtractorTool extends Component {
 						</div>
 
 						<p class="dt-extract-hint">
-							{{! wording carried over from the Next app }}
 							Press
 							<kbd>Space</kbd>
 							to re-extract with new
@@ -1002,11 +961,9 @@ export default class PaletteExtractorTool extends Component {
 							}}
 						/>
 						<Icon @name="upload" />
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-extract-drop-title"
 						>Drop an image here</span>
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-extract-drop-hint"
 						>or click to select a file, or

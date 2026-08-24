@@ -111,7 +111,7 @@ module('Unit | Lib | transcribe', function () {
 		const cues = wordsToCues([
 			w('one', 0, 0.3),
 			w('two', 0.4, 0.7),
-			// 1.5 s gap > GAP_BREAK
+			// gap > GAP_BREAK
 			w('three', 2.2, 2.5),
 		]);
 		assert.deepEqual(
@@ -121,7 +121,6 @@ module('Unit | Lib | transcribe', function () {
 	});
 
 	test('a line over the char cap splits without punctuation', function (assert) {
-		// eight 8-char words, no punctuation: exceeds the 42-char line.
 		const words = Array.from({ length: 8 }, (_, i) =>
 			w('abcdefgh', i * 0.3, i * 0.3 + 0.25),
 		);
@@ -134,8 +133,7 @@ module('Unit | Lib | transcribe', function () {
 	});
 
 	test('null-timestamp words carry the cursor forward', function (assert) {
-		// readWords is internal; wordsToCues assumes resolved numbers, but a
-		// zero-length word (start === end) must not crash or reorder.
+		// readWords is internal; zero-length words must not crash
 		const cues = wordsToCues([w('a', 1, 1), w('b.', 1, 1.2)]);
 		assert.strictEqual(cues.length, 1);
 		assert.strictEqual(cues[0]!.start, 1000);

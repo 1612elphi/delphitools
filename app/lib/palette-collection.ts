@@ -1,9 +1,4 @@
-// The curated palette collection, lifted from the Next app's
-// lib/palette-collection.ts.
-//
-// The data lives here rather than in the tool that renders it because
-// palette-genny's export panel emits entries to be pasted into this array, and
-// because two tools read the categories.
+// shared palette-genny export data
 
 export interface CuratedPalette {
 	id: string;
@@ -59,9 +54,6 @@ export const COLLECTION_CATEGORIES: Record<
 };
 
 export const CURATED_PALETTES: CuratedPalette[] = [
-	// ============================================================================
-	// CLASSIC (London Underground stations)
-	// ============================================================================
 	{
 		id: 'mayfair',
 		name: 'Mayfair',
@@ -196,10 +188,6 @@ export const CURATED_PALETTES: CuratedPalette[] = [
 		category: 'classic',
 	},
 
-	// ============================================================================
-	// NATURE
-	// ============================================================================
-	// North America
 	{
 		id: 'ellesmere',
 		name: 'Ellesmere',
@@ -254,7 +242,6 @@ export const CURATED_PALETTES: CuratedPalette[] = [
 		colors: ['#1a1a1a', '#3d3d3d', '#ff4500', '#ff6347', '#ffa07a'],
 		category: 'nature',
 	},
-	// South America
 	{
 		id: 'perito-moreno',
 		name: 'Perito Moreno',
@@ -279,7 +266,6 @@ export const CURATED_PALETTES: CuratedPalette[] = [
 		colors: ['#0a1a1a', '#1a3d3d', '#2e5c5c', '#4a8b7a', '#6bb89b'],
 		category: 'nature',
 	},
-	// Europe
 	{
 		id: 'svalbard',
 		name: 'Svalbard',
@@ -328,7 +314,6 @@ export const CURATED_PALETTES: CuratedPalette[] = [
 		colors: ['#0d1a26', '#1a3a5c', '#3d6b8a', '#8ab4c4', '#e8f0f5'],
 		category: 'nature',
 	},
-	// Asia
 	{
 		id: 'cherrapunji',
 		name: 'Cherrapunji',
@@ -359,7 +344,6 @@ export const CURATED_PALETTES: CuratedPalette[] = [
 		colors: ['#9b59b6', '#e74c8b', '#f39c12', '#27ae60', '#3498db'],
 		category: 'nature',
 	},
-	// Africa
 	{
 		id: 'serengeti',
 		name: 'Serengeti',
@@ -384,7 +368,6 @@ export const CURATED_PALETTES: CuratedPalette[] = [
 		colors: ['#f5deb3', '#d4a574', '#c77b4a', '#8b4513', '#1a1a2e'],
 		category: 'nature',
 	},
-	// Oceania
 	{
 		id: 'blue-mountains',
 		name: 'Blue Mountains',
@@ -415,21 +398,18 @@ export const CURATED_PALETTES: CuratedPalette[] = [
 		colors: ['#5c5c52', '#8b8b7a', '#a8a898', '#c4c4b8', '#e0e0d4'],
 		category: 'nature',
 	},
-	// Caribbean / Atlantic
 	{
 		id: 'vieques',
 		name: 'Vieques',
 		colors: ['#0a0a1a', '#1a1a3d', '#00ffff', '#00ff7f', '#7fffd4'],
 		category: 'nature',
 	},
-	// Arctic / Antarctic
 	{
 		id: 'mcmurdo',
 		name: 'McMurdo',
 		colors: ['#f0f8ff', '#e0f0f8', '#b0d8e8', '#80c0d8', '#50a8c8'],
 		category: 'nature',
 	},
-	// More unique locations
 	{
 		id: 'karelia',
 		name: 'Karelia',
@@ -443,9 +423,6 @@ export const CURATED_PALETTES: CuratedPalette[] = [
 		category: 'nature',
 	},
 
-	// ============================================================================
-	// KEYCAPS
-	// ============================================================================
 	{
 		id: '2600',
 		name: '2600',
@@ -674,9 +651,6 @@ export const CURATED_PALETTES: CuratedPalette[] = [
 		category: 'keycaps',
 	},
 
-	// ============================================================================
-	// VINTAGE (Movie references)
-	// ============================================================================
 	{
 		id: 'belafonte',
 		name: 'Belafonte',
@@ -841,9 +815,6 @@ export const CURATED_PALETTES: CuratedPalette[] = [
 		category: 'vintage',
 	},
 
-	// ============================================================================
-	// MODERN
-	// ============================================================================
 	{
 		id: 'tech-startup',
 		name: 'Tech Startup',
@@ -1001,9 +972,6 @@ export const CURATED_PALETTES: CuratedPalette[] = [
 		category: 'modern',
 	},
 
-	// ============================================================================
-	// BOLD
-	// ============================================================================
 	{
 		id: 'tropical-punch',
 		name: 'Tropical Punch',
@@ -1138,9 +1106,6 @@ export const CURATED_PALETTES: CuratedPalette[] = [
 		category: 'bold',
 	},
 
-	// ============================================================================
-	// SOFT
-	// ============================================================================
 	{
 		id: 'cashmere',
 		name: 'Cashmere',
@@ -1292,9 +1257,6 @@ export const CURATED_PALETTES: CuratedPalette[] = [
 		category: 'soft',
 	},
 
-	// ============================================================================
-	// MONOCHROME
-	// ============================================================================
 	{
 		id: 'blue-mono',
 		name: 'Blue Mono',
@@ -1440,9 +1402,6 @@ export const CURATED_PALETTES: CuratedPalette[] = [
 		category: 'monochrome',
 	},
 
-	// ============================================================================
-	// SEASONAL
-	// ============================================================================
 	{
 		id: 'january',
 		name: 'January',
@@ -1588,9 +1547,6 @@ export const CURATED_PALETTES: CuratedPalette[] = [
 		category: 'seasonal',
 	},
 
-	// ============================================================================
-	// ARTISTIC
-	// ============================================================================
 	{
 		id: 'monet',
 		name: 'Monet',
@@ -1863,7 +1819,6 @@ export const CURATED_PALETTES: CuratedPalette[] = [
 	},
 ];
 
-// Helper to get palettes by category
 export function getPalettesByCategory(): Record<
 	PaletteCollectionCategory,
 	CuratedPalette[]

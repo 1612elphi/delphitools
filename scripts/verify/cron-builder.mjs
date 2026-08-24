@@ -1,10 +1,3 @@
-// Behavioural coverage the unit tests can't reach: the booted page, the
-// builder → expression direction (mode buttons rewrite the box), the reader
-// direction (pasting an expression repopulates the per-field cells), the
-// live description and next-runs rendering, and the per-field error strip.
-//
-// Usage: npm start, then node scripts/verify/cron-builder.mjs
-
 import { launch, visit, check, finish, sleep } from './harness.mjs';
 
 const { browser, page } = await launch();
@@ -22,7 +15,6 @@ const boxValue = () => page.$eval('.dt-cb-expr', (el) => el.value);
 const canon = () => page.$eval('.dt-cb-canon', (el) => el.textContent.trim());
 const desc = () => page.$eval('.dt-cb-desc', (el) => el.textContent.trim());
 
-// Chip text: "Mon, Aug 17, 2026, 9:30 AM" (Intl short weekday + time).
 const runs = () =>
 	page.$$eval('.dt-cb-run', (els) =>
 		els.map((el) => {
@@ -37,8 +29,6 @@ const runs = () =>
 			return { day, hour, minute };
 		}),
 	);
-
-// ── defaults ────────────────────────────────────────────────────────────────
 check(
 	'the box starts at the default expression',
 	(await boxValue()) === '30 9 * * MON-FRI',
@@ -60,8 +50,6 @@ check(
 		/\(.+\)/.test(labelText),
 	labelText,
 );
-
-// ── builder → expression ────────────────────────────────────────────────────
 await page.click('[aria-label="Step (Minute)"]');
 await settle();
 check(
@@ -79,8 +67,6 @@ check(
 		(el) => el.getAttribute('aria-pressed'),
 	).then((v) => v === 'true'),
 );
-
-// ── reader: expression → fields ─────────────────────────────────────────────
 await setBox('*/15 9-17 * * 1-5');
 await settle();
 check(
@@ -112,8 +98,6 @@ check(
 		),
 	JSON.stringify(nextFive),
 );
-
-// ── invalid input ───────────────────────────────────────────────────────────
 await setBox('0 9 * MON 1');
 await settle();
 check(
@@ -144,8 +128,6 @@ check(
 	'copy refuses an invalid expression',
 	await page.$eval('.dt-cb-btn', (el) => el.disabled),
 );
-
-// ── copy feedback ───────────────────────────────────────────────────────────
 await setBox('*/15 9-17 * * 1-5');
 await settle();
 await page.click('.dt-cb-btn');

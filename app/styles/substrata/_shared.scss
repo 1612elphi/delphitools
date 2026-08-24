@@ -1,10 +1,4 @@
-// Substrata shared primitives: the switch, the colour-field pair and the
-// preset/text rows both panel surfaces reuse. Component partials build on top.
-
-// The Tailwind-preflight baseline the ported markup assumes: an unstyled
-// <button> renders bare, not with the UA's bevelled grey face. :where() keeps
-// the selector at zero specificity, so every component class still wins
-// regardless of partial order.
+// zero-specificity button reset
 :where(.sub-editor-viewport) :where(button) {
 	appearance: none;
 	margin: 0;
@@ -16,7 +10,6 @@
 	text-align: inherit;
 }
 
-// ── ui/switch — the shadcn track + thumb on a native checkbox ──────────────
 .dt-switch {
 	appearance: none;
 	position: relative;
@@ -62,7 +55,6 @@
 	}
 }
 
-// ── colour-field ───────────────────────────────────────────────────────────
 .dt-cf-hex {
 	min-inline-size: 0;
 	border: 1px solid var(--border);
@@ -96,7 +88,6 @@
 	opacity: 0;
 }
 
-// ── preset-row / text-style-row segments ───────────────────────────────────
 .sub-seg-cell {
 	display: grid;
 	place-items: center;
@@ -125,7 +116,7 @@
 	}
 }
 
-// the text align/style strips run taller cells than the preset strip
+// taller than preset cells
 .sub-seg-4 {
 	grid-template-columns: repeat(4, minmax(0, 1fr));
 
@@ -184,7 +175,6 @@
 	}
 }
 
-// ── font select trigger (text-style-row) ───────────────────────────────────
 .sub-font-trigger {
 	gap: 4px;
 	border-radius: 0;
@@ -200,9 +190,7 @@
 	}
 }
 
-// ── slider (LOOKS intensity, FX params) ────────────────────────────────────
-// The Next app's shadcn Slider was a Radix span stack; a native range input
-// carries the same behaviour (keyboard steps, drag) with no dependency.
+// native range replaces radix slider
 .sub-slider {
 	appearance: none;
 	flex: 1;

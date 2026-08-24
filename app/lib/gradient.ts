@@ -1,11 +1,3 @@
-/**
- * Gradient maths for the gradient-genny tool: the three canvas renderers, the
- * OKLAB blend behind Pigment Blend, and the CSS the tool prints.
- *
- * No Ember imports — the component owns the state and calls in here. Every
- * colour is `#rrggbb`; the component validates before it stores one.
- */
-
 import {
 	hexToRgb,
 	rgbToHex,
@@ -20,7 +12,7 @@ export type GridSize = 2 | 3;
 export interface ColourStop {
 	id: string;
 	colour: string;
-	/** Percent along the gradient, 0–100. */
+	/** percent: 0 to 100 */
 	position: number;
 }
 
@@ -35,7 +27,7 @@ export type CornerKey = keyof CornerColours;
 
 export interface MeshPoint {
 	id: string;
-	/** Normalised 0–1 across the canvas. */
+	/** normalized: 0 to 1 */
 	x: number;
 	y: number;
 	colour: string;
@@ -44,7 +36,7 @@ export interface MeshPoint {
 export interface GradientState {
 	mode: GradientMode;
 	angle: number;
-	/** 0–100; grain applied after the gradient, on the canvas only. */
+	/** percent canvas noise */
 	noise: number;
 	stops: readonly ColourStop[];
 	corners: CornerColours;
@@ -74,11 +66,6 @@ export function clamp(n: number, min: number, max: number): number {
 	return Math.max(min, Math.min(max, n));
 }
 
-/**
- * Typed hex to the `#rrggbb` the renderers and the style attributes expect,
- * with or without the leading #. Null for anything else, including the 3- and
- * 8-digit forms hexToRgb rejects.
- */
 export function normaliseHex(value: string): string | null {
 	const rgb = hexToRgb(value.trim());
 	return rgb ? rgbToHex(...rgb) : null;
@@ -88,7 +75,6 @@ export function sortStops(stops: readonly ColourStop[]): ColourStop[] {
 	return [...stops].sort((a, b) => a.position - b.position);
 }
 
-/** Component-wise interpolation; the caller decides which space the triple is in. */
 function lerpTriple(a: Triple, b: Triple, t: number): Triple {
 	return [
 		a[0] + (b[0] - a[0]) * t,
@@ -97,11 +83,7 @@ function lerpTriple(a: Triple, b: Triple, t: number): Triple {
 	];
 }
 
-/**
- * Interpolate in OKLAB rather than sRGB. Midpoints stay saturated instead of
- * passing through the grey the sRGB midpoint gives for complementary pairs.
- * Returns `hex1` unchanged if either end does not parse.
- */
+/** avoids grey midpoints */
 export function lerpOklab(hex1: string, hex2: string, t: number): string {
 	const rgb1 = hexToRgb(hex1);
 	const rgb2 = hexToRgb(hex2);
@@ -112,7 +94,6 @@ export function lerpOklab(hex1: string, hex2: string, t: number): string {
 	return rgbToHex(...oklabToRgb(...lerpTriple(lab1, lab2, t)));
 }
 
-// Starting colours for each grid size, carried over from the Next app.
 const MESH_COLOURS_2 = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b'];
 const MESH_COLOURS_3 = [
 	'#3b82f6',
@@ -145,7 +126,6 @@ export function initialMeshPoints(gridSize: GridSize): MeshPoint[] {
 	return points;
 }
 
-/** A random-coloured stop dropped into the widest gap between existing stops. */
 export function stopForWidestGap(stops: readonly ColourStop[]): ColourStop {
 	const sorted = sortStops(stops);
 	let maxGap = 0;
@@ -166,7 +146,6 @@ export function stopForWidestGap(stops: readonly ColourStop[]): ColourStop {
 	};
 }
 
-/** Every gap filled with `stepsPerGap` OKLAB-blended stops. */
 export function pigmentBlend(
 	stops: readonly ColourStop[],
 	stepsPerGap = 3,
@@ -245,7 +224,7 @@ function renderLinear(
 	angle: number,
 	stops: readonly ColourStop[],
 ): void {
-	// 0deg points up in CSS and right on the canvas, hence the -90.
+	// css zero points up
 	const angleRad = ((angle - 90) * Math.PI) / 180;
 	const diagonal = Math.hypot(width, height);
 
@@ -255,8 +234,7 @@ function renderLinear(
 		width / 2 + (Math.cos(angleRad) * diagonal) / 2,
 		height / 2 + (Math.sin(angleRad) * diagonal) / 2,
 	);
-	// addColorStop throws IndexSizeError outside 0–1, so clamp rather than
-	// trust that every entry point has already bounded the position.
+	// clamp canvas stop positions
 	for (const stop of sortStops(stops)) {
 		gradient.addColorStop(
 			clamp(stop.position / 100, 0, 1),
@@ -268,7 +246,6 @@ function renderLinear(
 	ctx.fillRect(0, 0, width, height);
 }
 
-/** Bilinear blend of the four corners, per pixel. */
 function renderCorners(
 	ctx: CanvasRenderingContext2D,
 	width: number,
@@ -302,11 +279,7 @@ function renderCorners(
 	ctx.putImageData(imageData, 0, 0);
 }
 
-/**
- * Inverse-distance weighting over the control points: weight 1/(d² + 0.01), so
- * each point dominates its own neighbourhood and the 0.01 keeps a point sitting
- * exactly on a pixel finite.
- */
+// prevent zero-distance division
 function renderMesh(
 	ctx: CanvasRenderingContext2D,
 	width: number,
@@ -354,7 +327,6 @@ function renderMesh(
 	ctx.putImageData(imageData, 0, 0);
 }
 
-/** Monochrome grain, ±50 levels at full strength, added to all three channels. */
 function applyNoise(
 	ctx: CanvasRenderingContext2D,
 	width: number,
@@ -377,7 +349,6 @@ function applyNoise(
 	ctx.putImageData(imageData, 0, 0);
 }
 
-/** Sizes the canvas and paints the current mode into it, noise last. */
 export function renderGradient(
 	canvas: HTMLCanvasElement,
 	width: number,

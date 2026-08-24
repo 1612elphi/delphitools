@@ -1,14 +1,10 @@
-// image-stitcher composes several images into one sheet and encodes it. The
-// preview is laid out with img elements, so nothing about the export path runs
-// until the download button is pressed: the canvas composition, the format
-// table and the JXL encoder are all invisible to a render check.
+// preview: img, not canvas
+// export path only runs on download
 //
-// JXL goes through the same libjxl build image-converter uses (app/lib/jxl.ts)
-// rather than the Substrata export worker, which is not in this app. Checking
-// the magic bytes is what proves the file is a real codestream and not a PNG
-// with the wrong extension.
+// libjxl, not substrata worker
+// magic bytes prove jxl format
 //
-// Usage: npm start, then node scripts/verify/stitch.mjs
+// usage: npm start, then node scripts/verify/stitch.mjs
 
 import { mkdtempSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -30,7 +26,7 @@ await client.send('Browser.setDownloadBehavior', {
 	downloadPath: downloads,
 });
 
-/** Chrome writes a .crdownload first, so wait for a settled, named file. */
+// .crdownload first; await named file
 async function waitForDownload(match, timeout = 30000) {
 	const until = Date.now() + timeout;
 	while (Date.now() < until) {
@@ -47,11 +43,7 @@ async function waitForDownload(match, timeout = 30000) {
 	return null;
 }
 
-/**
- * Several buttons share one hidden file input, each setting which target the
- * files belong to before opening it. Uploading straight to the input skips
- * that, so files have to arrive through the chooser the button opens.
- */
+// shared input: files via chooser
 async function pickVia(selector, ...files) {
 	const [chooser] = await Promise.all([
 		page.waitForFileChooser(),
@@ -60,8 +52,6 @@ async function pickVia(selector, ...files) {
 	await chooser.accept(files);
 	await sleep(1500);
 }
-
-// ── the individual mosaic ───────────────────────────────────────────────
 
 await visit(page, '/tools/image-stitcher');
 await pickVia('.dt-stitch-drop', IMAGE, IMAGE, IMAGE);
@@ -103,7 +93,7 @@ await page.evaluate(() =>
 await sleep(400);
 await page.click('.dt-stitch-download');
 const jxl = await waitForDownload(/\.jxl$/);
-// ff 0a is the raw codestream signature; libjxl also emits an ISOBMFF wrapper.
+// ff 0a or ISOBMFF
 const signature = jxl
 	? [...jxl.bytes.subarray(0, 4)]
 			.map((b) => b.toString(16).padStart(2, '0'))
@@ -119,7 +109,6 @@ check(
 		: 'no file appeared',
 );
 
-// A side button attaches to the existing mosaic rather than replacing it.
 await visit(page, '/tools/image-stitcher');
 await pickVia('.dt-stitch-drop', IMAGE);
 await pickVia('.dt-stitch-side.is-right', IMAGE);
@@ -132,11 +121,6 @@ check(
 	grown.tiles === 2 && grown.seams === 1,
 	`${grown.tiles} tiles, ${grown.seams} seams`,
 );
-
-// ── batch mode ──────────────────────────────────────────────────────────
-//
-// Its pool is separate state from the mosaic and starts empty, as in the Next
-// app. Batch is match-only: every cell is one image in a plain grid.
 
 await visit(page, '/tools/image-stitcher');
 await page.evaluate(() =>

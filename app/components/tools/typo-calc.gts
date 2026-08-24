@@ -21,8 +21,7 @@ export interface UnitInfo {
 	fromPx: (px: number, basePx: number) => number;
 }
 
-// CSS pins the reference pixel at 96 per inch, which fixes every physical unit
-// here against the typographic ones.
+// css 96px per inch
 const PX_PER_INCH = 96;
 const PT_PER_INCH = 72;
 const PT_PER_PICA = 12;
@@ -30,7 +29,6 @@ const AGATES_PER_INCH = 14;
 const MM_PER_INCH = 25.4;
 const MM_PER_CICERO = 4.512;
 
-// Names and descriptions carried over from the Next app.
 export const UNITS: Record<Unit, UnitInfo> = {
 	px: {
 		name: 'Pixels',
@@ -109,7 +107,6 @@ export const UNIT_ORDER: Unit[] = [
 	'rem',
 ];
 
-// Wording carried over from the Next app.
 const QUICK_REF: { label: string; value: string }[] = [
 	{ label: '1 inch =', value: '96px / 72pt / 25.4mm' },
 	{ label: '1 pica =', value: '12 points' },
@@ -120,7 +117,7 @@ const QUICK_REF: { label: string; value: string }[] = [
 
 const DEFAULT_BASE_PX = 16;
 
-/** Decimals enough to round-trip the small units, without a wall of zeros. */
+// round-trips small units
 export function formatValue(value: number): string {
 	const magnitude = Math.abs(value);
 	if (magnitude < 0.001) return '0';
@@ -186,8 +183,7 @@ export default class TypoCalcTool extends Component {
 		this.baseFontSize = (event.target as HTMLInputElement).value;
 	};
 
-	// The dropdown re-reads the same number in the chosen unit; the table below
-	// converts instead. Both behaviours are carried over from the Next app.
+	// dropdown re-reads, table converts
 	chooseUnit = (id: string) => {
 		this.inputUnit = id as Unit;
 	};
@@ -204,7 +200,6 @@ export default class TypoCalcTool extends Component {
 			<div class="dt-typo-base">
 				<div class="dt-typo-base-text">
 					<label for="dt-typo-base">Base Font Size</label>
-					{{! wording carried over from the Next app }}
 					<p>Used for em and rem calculations</p>
 				</div>
 				<div class="dt-typo-base-field">
@@ -263,7 +258,6 @@ export default class TypoCalcTool extends Component {
 
 			<div class="dt-typo-table">
 				<div class="dt-typo-head">
-					{{! wording carried over from the Next app }}
 					<span class="dt-typo-heading">Converted
 						Values</span>
 				</div>
@@ -310,7 +304,6 @@ export default class TypoCalcTool extends Component {
 			</div>
 
 			<div class="dt-typo-ref">
-				{{! wording carried over from the Next app }}
 				<span class="dt-typo-heading">Quick Reference</span>
 				<div class="segmented dt-typo-ref-grid">
 					{{#each

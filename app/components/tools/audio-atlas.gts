@@ -21,7 +21,6 @@ import { probeAudio, type AudioProbe } from 'delphitools-v2/lib/media-probe';
 import { AUDIO_ACCEPT, acceptAttr } from 'delphitools-v2/lib/tools';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 
-/** Kept in step with the registry entry, which routes dropped files. */
 const ACCEPT = acceptAttr(AUDIO_ACCEPT);
 
 const DROP_TITLE = 'Drop an audio file here or click to upload';
@@ -31,8 +30,6 @@ const FFT_SIZE = 1024;
 const SPECTRO_MAX_COLUMNS = 800;
 const SPECTRO_ROWS = 256;
 const SPECTRO_FLOOR_DB = -90;
-// Spectrogram columns rendered per animation frame, so a long file cannot
-// freeze the page while it paints.
 const COLUMNS_PER_FRAME = 24;
 
 interface MetaRow {
@@ -46,7 +43,6 @@ function formatBytes(bytes: number): string {
 	return `${bytes} B`;
 }
 
-/** Dark → green → white, indexed 0..255, matching the site's primary. */
 function spectroPalette(): Uint8ClampedArray {
 	const lut = new Uint8ClampedArray(256 * 3);
 	const stops: [number, number, number][] = [
@@ -112,7 +108,6 @@ export default class AudioAtlasTool extends Component {
 		this.looping = false;
 	}
 
-	/** Where playback currently sits in the buffer, loop cycles unwound. */
 	#position(): number {
 		const source = this.#source;
 		if (!source) return this.#pausedAt;
@@ -134,7 +129,6 @@ export default class AudioAtlasTool extends Component {
 		this.#rafId = requestAnimationFrame(this.#tick);
 	};
 
-	/** Stops the source without clearing the paused position. */
 	#pause() {
 		cancelAnimationFrame(this.#rafId);
 		const source = this.#source;
@@ -145,7 +139,6 @@ export default class AudioAtlasTool extends Component {
 		this.#pausedAt = this.#position();
 		this.playheadS = this.#pausedAt;
 
-		// Null first: onended must not treat this stop as a natural end.
 		this.#source = null;
 		source.onended = null;
 		source.stop();
@@ -164,9 +157,6 @@ export default class AudioAtlasTool extends Component {
 
 		let offset = Math.min(this.#pausedAt, buffer.duration);
 		if (this.looping) {
-			// The A–B window is the minimap's view selection. Bounds are
-			// captured here; changing the view mid-loop applies on the
-			// next play.
 			source.loop = true;
 			source.loopStart = this.view.start;
 			source.loopEnd = this.view.end;
@@ -197,14 +187,12 @@ export default class AudioAtlasTool extends Component {
 
 	toggleLoop = () => {
 		this.looping = !this.looping;
-		// A running source keeps or drops its loop by restarting.
 		if (this.playing) {
 			this.#pause();
 			this.#play();
 		}
 	};
 
-	/** Click on a view-mapped strip: move the playhead there. */
 	seek = (event: MouseEvent) => {
 		if (!this.duration) return;
 		const element = event.currentTarget as HTMLElement;
@@ -220,7 +208,6 @@ export default class AudioAtlasTool extends Component {
 		if (wasPlaying) this.#pause();
 		this.#pausedAt = time;
 		this.playheadS = time;
-		// While looping, a seek outside the window snaps to A in #play.
 		if (wasPlaying) this.#play();
 	};
 
@@ -229,14 +216,12 @@ export default class AudioAtlasTool extends Component {
 		this.intake.clear();
 	};
 
-	/** Playhead over the minimap: position within the whole clip. */
 	get playheadMiniStyle() {
 		if (!this.duration) return null;
 		const pct = (this.playheadS / this.duration) * 100;
 		return htmlSafe(`left: ${pct.toFixed(3)}%`);
 	}
 
-	/** Playhead over the view-mapped strips; null while out of the window. */
 	get playheadViewStyle() {
 		if (!this.duration) return null;
 		if (
@@ -250,8 +235,6 @@ export default class AudioAtlasTool extends Component {
 		return htmlSafe(`left: ${pct.toFixed(3)}%`);
 	}
 
-	// The decoded buffer runs at the AudioContext's rate; the container says
-	// what the file itself was recorded at.
 	async #probeSource(file: File) {
 		const probe = await probeAudio(file);
 		if (this.isDestroyed || this.intake.file !== file) return;
@@ -260,7 +243,7 @@ export default class AudioAtlasTool extends Component {
 
 	async #measureLoudness(buffer: AudioBuffer) {
 		this.lufs = null;
-		// One macrotask, so the waveform paints before the O(n) filter run.
+		// defer loudness scan.
 		await new Promise((resolve) => setTimeout(resolve, 0));
 		if (this.isDestroyed || this.intake.buffer !== buffer) return;
 		this.lufs = integratedLufs(
@@ -269,8 +252,7 @@ export default class AudioAtlasTool extends Component {
 		);
 	}
 
-	// peakDb is a full-buffer scan; keyed on the buffer alone so the lufs and
-	// source-probe arrivals do not rerun it.
+	// cache full-buffer peak.
 	@cached
 	get peak(): number {
 		const buffer = this.intake.buffer;
@@ -340,7 +322,6 @@ export default class AudioAtlasTool extends Component {
 		return extractPeaks(channelsOf(buffer), PEAK_BUCKETS);
 	}
 
-	/** The view's frame range; subarrays, so zooming copies nothing. */
 	#viewChannels(): Float32Array[] | null {
 		const buffer = this.intake.buffer;
 		if (!buffer) return null;
@@ -386,8 +367,6 @@ export default class AudioAtlasTool extends Component {
 		if (!buffer) return;
 		const token = ++this.#spectroToken;
 
-		// The view's mono mix; zooming in recomputes at a finer hop, so
-		// the spectrogram genuinely gains detail.
 		const sampleRate = buffer.sampleRate;
 		const from = Math.floor(this.view.start * sampleRate);
 		const to = Math.min(
@@ -454,7 +433,6 @@ export default class AudioAtlasTool extends Component {
 				const magnitudes = fftMagnitudes(block);
 
 				for (let row = 0; row < SPECTRO_ROWS; row++) {
-					// Low frequencies at the bottom.
 					const bin = Math.floor(
 						(SPECTRO_ROWS - 1 - row) *
 							binsPerRow,
@@ -675,7 +653,7 @@ export default class AudioAtlasTool extends Component {
 							</div>
 						{{/if}}
 						<div class="dt-wavewrap">
-							{{! seek-on-click; the transport and zoom buttons are the keyboard path }}
+							{{! keyboard controls available }}
 							{{! template-lint-disable no-invalid-interactive }}
 							<canvas
 								class="dt-aa-wave"
@@ -701,7 +679,7 @@ export default class AudioAtlasTool extends Component {
 							class="dt-aa-panel-title"
 						>Spectrogram</h3>
 						<div class="dt-wavewrap">
-							{{! seek-on-click; the transport and zoom buttons are the keyboard path }}
+							{{! keyboard controls available }}
 							{{! template-lint-disable no-invalid-interactive }}
 							<canvas
 								class="dt-aa-spectro"

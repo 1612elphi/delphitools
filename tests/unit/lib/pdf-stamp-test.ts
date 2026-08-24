@@ -80,7 +80,6 @@ module('Unit | Lib | pdf-stamp', function () {
 	});
 
 	test('resolvePageNumbers applies sections in fromPage order', function (assert) {
-		// The headline case: front matter in roman, body in arabic from 1.
 		const labels = resolvePageNumbers(
 			[
 				{ fromPage: 4, style: 'arabic', startAt: 1 },

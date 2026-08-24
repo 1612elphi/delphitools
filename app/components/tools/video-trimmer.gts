@@ -166,8 +166,6 @@ export default class VideoTrimmerTool extends Component {
 		this.#releaseResult();
 	};
 
-	// Unparseable input snaps back to the current value on commit, so the
-	// field never shows a time the cut would not use.
 	#setPoint(key: 'inMs' | 'outMs', event: Event) {
 		const input = event.target as HTMLInputElement;
 		const ms = parseTimestamp(input.value);
@@ -179,8 +177,7 @@ export default class VideoTrimmerTool extends Component {
 			0,
 			Math.min(this.intake.duration * 1000, ms),
 		);
-		// An unchanged value leaves the tracked field alone, so the field is
-		// normalised by hand too.
+		// no rerender if unchanged
 		input.value = tc(this[key]);
 		this.#releaseResult();
 	}
@@ -488,7 +485,6 @@ export default class VideoTrimmerTool extends Component {
 				<div class="dt-vt-stage">
 					{{#if this.hasVideo}}
 						{{#if this.resultUrl}}
-							{{! the cut output, so the result can be checked before download }}
 							{{! template-lint-disable require-media-caption }}
 							<video
 								class="dt-vt-result"
@@ -498,7 +494,7 @@ export default class VideoTrimmerTool extends Component {
 								preload="metadata"
 							></video>
 						{{/if}}
-						{{! the source stays mounted (hidden behind a result) so readiness fires once per file }}
+						{{! remount refires readiness }}
 						{{! template-lint-disable require-media-caption }}
 						<video
 							src={{this.intake.url}}
@@ -548,7 +544,7 @@ export default class VideoTrimmerTool extends Component {
 							<span
 								class="dt-vt-drop-title"
 							>{{DROP_TITLE}}</span>
-							{{! hint reused verbatim from Background Remover }}
+							{{! wording duplicated in background-remover }}
 							<span
 								class="dt-vt-drop-hint"
 							>or click to select a
@@ -558,7 +554,6 @@ export default class VideoTrimmerTool extends Component {
 				</div>
 
 				{{#if this.hasVideo}}
-					{{! the transport drives the source, which is hidden while a result shows }}
 					{{#unless this.resultUrl}}
 						<div
 							class="dt-vt-range"

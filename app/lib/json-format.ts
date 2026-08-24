@@ -1,10 +1,3 @@
-/**
- * JSON formatting core: a parse wrapper that recovers the error location from
- * the engine's message, indentation presets, and a tree model for the
- * collapsible viewer. No DOM, no Ember — the component in
- * app/components/tools/json-formatter.gts and the unit tests both drive these.
- */
-
 export const INDENT_OPTIONS = [
 	{ id: '2', label: '2 spaces' },
 	{ id: '4', label: '4 spaces' },
@@ -15,20 +8,18 @@ export const INDENT_OPTIONS = [
 export type IndentId = (typeof INDENT_OPTIONS)[number]['id'];
 
 export interface JsonErrorInfo {
-	/** The engine's message, verbatim. */
 	message: string;
-	/** 1-based. */
+	/** 1-based index. */
 	line: number;
-	/** 1-based. */
+	/** 1-based index. */
 	column: number;
-	/** 0-based character offset. */
+	/** 0-based offset. */
 	position: number;
 }
 
 export type JsonParseResult =
 	{ ok: true; value: unknown } | { ok: false; error: JsonErrorInfo };
 
-/** Where a 0-based offset sits, in 1-based line/column terms. */
 export function positionInfo(
 	source: string,
 	position: number,
@@ -40,7 +31,6 @@ export function positionInfo(
 	return { line, column };
 }
 
-/** Where a 1-based line/column sits, as a 0-based offset. */
 export function positionFromLineColumn(
 	source: string,
 	line: number,
@@ -55,13 +45,7 @@ export function positionFromLineColumn(
 	return Math.min(offset + column - 1, source.length);
 }
 
-/**
- * The window V8 echoes in "Unexpected token 'x', ...\"ctx\"... is not valid
- * JSON" is up to ten characters either side of the offending token, string-
- * escaped, with ellipses when clipped. Undo the escapes so the window can be
- * matched back into the source. (Observed on V8 14 / Chrome 151; the grammar
- * changed in V8 10.x when error messages started quoting the input.)
- */
+// v8 escapes token windows
 function unescapeSnippets(escaped: string): string {
 	return escaped
 		.replace(/\\u([0-9a-fA-F]{4})/g, (_w, hex: string) =>
@@ -85,14 +69,7 @@ function unescapeSnippets(escaped: string): string {
 		});
 }
 
-/**
- * The token-echo grammar carries no position: recover it by matching the
- * echoed window back onto the source. Because the token's index inside the
- * window is unknown (the left context is "up to ten" characters), every
- * occurrence of the token inside the window is a candidate; the full window
- * must then coincide at the candidate site, and the longest prefix wins — a
- * one-character prefix like `" ` recurs all over any real document.
- */
+// v8 omits token positions
 function recoverUnexpectedToken(
 	source: string,
 	token: string,
@@ -110,7 +87,6 @@ function recoverUnexpectedToken(
 	return null;
 }
 
-/** Dequote `'}'` / `'\n'` as V8 quotes its token, then unescape. */
 function decodeToken(quoted: string): string {
 	const inner =
 		quoted.length >= 2 &&
@@ -124,33 +100,16 @@ function decodeToken(quoted: string): string {
 const UNEXPECTED_TOKEN =
 	/^Unexpected token (.+?), (?:\.\.\.)?"([\s\S]*?)"(?:\.\.\.)? is not valid JSON$/s;
 
-// JavaScriptCore: `JSON Parse error: Unexpected identifier "tru"`, no
-// location. The identifier is the offending token, so search for it.
+// javascriptcore omits locations
 const JSC_IDENTIFIER = /Unexpected identifier "([^"]+)"/;
 
-/**
- * Error location extraction, per engine message grammar:
- *   V8          "Expected … / Unterminated … / Unexpected non-whitespace …
- *                in JSON at position 12 (line 2 column 4)"
- *   V8 (echo)   "Unexpected token 'x', \"ctx\" is not valid JSON" — no
- *               position at all; recovered from the echoed window
- *   SpiderMonkey "JSON.parse: … at line 2 column 4 of the JSON data"
- *   JavaScriptCore "JSON Parse error: Unexpected identifier \"x\""
- * Anything unrecognised falls back to the first byte. Line/column derivation
- * always comes from the source itself, so the message grammar never reaches
- * the component. All three fields always agree with each other: grammars that
- * carry only a position get line/column derived, and a grammar carrying both
- * gets the offset derived back from its line/column.
- */
 export function errorInfo(source: string, message: string): JsonErrorInfo {
 	const positionMatch = /position (\d+)/.exec(message);
 	const lineColumnMatch = /\(line (\d+) column (\d+)\)/.exec(message);
 	if (lineColumnMatch) {
 		const line = Number(lineColumnMatch[1]);
 		const column = Number(lineColumnMatch[2]);
-		// The offset is derived from line/column even when the same sentence
-		// carries "position N": line/column is what the UI reports, and the
-		// position must agree with it.
+		// preserve ui coordinates
 		const position = positionFromLineColumn(source, line, column);
 		return { message, line, column, position };
 	}
@@ -198,8 +157,7 @@ export function errorInfo(source: string, message: string): JsonErrorInfo {
 			};
 	}
 
-	// "Unexpected end of JSON input" carries no location, but the site is the
-	// end of the input by definition.
+	// eof has no location
 	if (/end of JSON input|unexpected end of data/.test(message)) {
 		const position = source.length;
 		return { message, ...positionInfo(source, position), position };
@@ -220,11 +178,6 @@ export function parseJson(source: string): JsonParseResult {
 	}
 }
 
-/**
- * Indentation presets — 2/4 → spaces, tab → "\t", minify → no whitespace.
- * JSON.stringify's gap argument takes either width or string, so the mapping
- * is one ternary.
- */
 export function formatJson(value: unknown, indent: IndentId): string {
 	if (indent === 'minify') return JSON.stringify(value);
 	return JSON.stringify(
@@ -239,20 +192,11 @@ export type TreeNodeKind =
 
 export interface TreeNode {
 	kind: TreeNodeKind;
-	/** Key in the parent: object key verbatim, array index as a string, null at the root. */
 	key: string | null;
-	/**
-	 * NUL-joined key path from the root, used as the `{{#each}}` key so a
-	 * node's collapse state survives a source edit. NUL cannot appear in a
-	 * key from JSON.parse more than zero times unless the author writes \0,
-	 * which would still only collide with its own twin.
-	 */
+	/** stable collapse-state key. */
 	path: string;
-	/** Direct children of a container; 0 for primitives. */
 	entryCount: number;
-	/** Non-null for object/array nodes only. */
 	children: TreeNode[] | null;
-	/** The primitive payload; null for containers and, naturally, null. */
 	value: string | number | boolean | null;
 }
 
@@ -312,25 +256,13 @@ export function buildTree(
 	};
 }
 
-/** One row of the unfolded tree the viewer renders. */
 export interface FlatTreeRow {
 	node: TreeNode;
-	/** Nesting depth; the root sits at 0. */
 	depth: number;
-	/** True when this row is a container the viewer shows collapsed. */
 	collapsed: boolean;
-	/**
-	 * Rendered payload for primitives (strings quoted); null for containers,
-	 * which render their entry count instead.
-	 */
 	display: string | null;
 }
 
-/**
- * The tree as the viewer shows it: a depth-first walk of the visible rows.
- * Everything below a collapsed container is withheld, so the template stays a
- * single flat `{{#each}}` instead of a recursive component.
- */
 export function flattenTree(
 	root: TreeNode,
 	collapsed: ReadonlySet<string>,

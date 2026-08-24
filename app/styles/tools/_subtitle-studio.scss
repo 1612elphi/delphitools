@@ -1,7 +1,3 @@
-// Styles for the subtitle-studio tool: the Auto Subtitle frame (flush bar,
-// stacked settings cells, cue grid) around the Frame Extractor's stage and
-// laserdisc transport.
-
 @use "../crayon-config" as crayon;
 
 .dt-ss {
@@ -13,7 +9,6 @@
 	background: var(--card);
 }
 
-/* Flush action bar: video picker (grows) · subtitle picker · Burn · Clear. */
 .dt-ss-bar {
 	display: flex;
 	min-height: crayon.size(12);
@@ -109,7 +104,6 @@
 	}
 }
 
-/* Export format, a flush bar cell before Burn. */
 .dt-ss-format {
 	min-width: crayon.size(32);
 	padding-inline: crayon.size(3);
@@ -156,7 +150,6 @@
 	}
 }
 
-/* Settings: stacked label-over-control cells, hairline-divided. */
 .dt-ss-settings {
 	display: grid;
 	border-bottom: 2px solid var(--border);
@@ -267,12 +260,10 @@
 	}
 }
 
-/* Stage: the preview canvas on black; the subtitle is dragged on it. */
 .dt-ss-stage {
 	position: relative;
 }
 
-/* Position pill over the stage's top-right corner, next to what it controls. */
 .dt-ss-pos {
 	@include crayon.hstack(2);
 
@@ -306,7 +297,7 @@
 	}
 }
 
-/* Empty states, the Background Remover's drop-zone shape. */
+/* drop-zone shape from background-remover */
 .dt-ss-drop {
 	display: flex;
 	min-height: crayon.size(56);
@@ -355,7 +346,7 @@
 	font-size: crayon.font-size("sm");
 }
 
-/* Laserdisc transport, as in Frame Extractor. */
+/* transport shape from frame-extractor */
 .dt-ss-transport {
 	display: grid;
 	border-top: 2px solid var(--border);
@@ -400,7 +391,6 @@
 	}
 }
 
-/* Output: head row, then the cue grid. */
 .dt-ss-out {
 	display: flex;
 	min-width: 0;
@@ -485,7 +475,7 @@
 	}
 }
 
-/* Cue grid: seek button gutter · start · end · editable text. */
+/* seek gutter · start · end · text */
 .dt-ss-grid {
 	max-height: crayon.size(120);
 	overflow-y: auto;
@@ -597,7 +587,6 @@ button.dt-ss-n {
 	font-size: crayon.font-size("sm");
 }
 
-/* Bottom-edge burn progress, the Auto Subtitle bar. */
 .dt-ss-progress {
 	display: block;
 	height: crayon.size(2);

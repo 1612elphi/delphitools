@@ -1,11 +1,4 @@
-// Styles for the encoder tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Encoder ─────────────────────────────────────────────────────────────── */
 
 .dt-enc-tabs {
 	display: grid;
@@ -44,8 +37,7 @@
 }
 
 .dt-enc-panel {
-	/* The panel is a focus target, and its own ring would double the section
-	   borders it sits inside. */
+	// ring would double section borders
 	outline-offset: -2px;
 }
 

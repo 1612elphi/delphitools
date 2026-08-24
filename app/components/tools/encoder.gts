@@ -22,10 +22,7 @@ export interface HashRow {
 const COPIED_MS = 1500;
 const HASH_DEBOUNCE_MS = 300;
 
-/**
- * crypto-js gave the Next app MD5 as well. Web Crypto implements no MD5 at any
- * digest name, so the row is gone rather than faked.
- */
+// web crypto lacks md5
 export const HASH_ALGORITHMS: { key: string; name: string; digest: string }[] =
 	[
 		{ key: 'sha1', name: 'SHA-1', digest: 'SHA-1' },
@@ -33,9 +30,6 @@ export const HASH_ALGORITHMS: { key: string; name: string; digest: string }[] =
 		{ key: 'sha512', name: 'SHA-512', digest: 'SHA-512' },
 	];
 
-// Wording carried over from the Next app. Held here rather than inline in the
-// template because the formatter wraps long attribute values, and a placeholder
-// keeps the line break it is given.
 const PLACEHOLDERS = {
 	base64Encode: 'Enter text to encode...',
 	base64Decode: 'Enter Base64 to decode...',
@@ -44,15 +38,11 @@ const PLACEHOLDERS = {
 	hash: 'Enter text to generate hashes...',
 };
 
-/** Wording carried over from the Next app. */
 const BASE64_DECODE_ERROR = 'Invalid Base64 string';
 const BASE64_ENCODE_ERROR = 'Encoding error';
 const URL_ERROR = 'Invalid input';
 
-/**
- * The Next app spread the byte array into String.fromCharCode, which overflows
- * the argument limit and throws on roughly 100 kB of input.
- */
+// avoid spread argument limits
 function binaryString(bytes: Uint8Array): string {
 	let out = '';
 	for (const byte of bytes) out += String.fromCharCode(byte);
@@ -63,7 +53,6 @@ export function encodeBase64(text: string): string {
 	return btoa(binaryString(new TextEncoder().encode(text)));
 }
 
-/** Throws when the input is not Base64; the caller reports that as an error. */
 export function decodeBase64(text: string): string {
 	const binary = atob(text.trim());
 	const bytes = new Uint8Array(binary.length);
@@ -97,7 +86,6 @@ export function convertBase64(
 	}
 }
 
-/** decodeURIComponent throws on a stray `%`, which the Next app reported inline. */
 export function convertUrl(mode: EncodingMode, text: string): string {
 	if (!text) return '';
 	try {
@@ -109,7 +97,6 @@ export function convertUrl(mode: EncodingMode, text: string): string {
 	}
 }
 
-/** Returns null instead of the error string so callers can distinguish failure. */
 export function tryDecodeUrl(text: string): string | null {
 	if (!text) return null;
 	try {
@@ -125,10 +112,7 @@ export function toHex(buffer: ArrayBuffer): string {
 		.join('');
 }
 
-/**
- * crypto.subtle is only defined in a secure context, so an http origin other
- * than localhost gets no hashes at all.
- */
+// requires secure context
 export async function hashAll(text: string): Promise<HashRow[]> {
 	if (!globalThis.crypto?.subtle) return [];
 	const bytes = new TextEncoder().encode(text);
@@ -161,7 +145,7 @@ export default class EncoderTool extends Component {
 
 	#copiedTimer?: ReturnType<typeof setTimeout>;
 	#hashTimer?: ReturnType<typeof setTimeout>;
-	/** Guards against an earlier digest resolving after a later one. */
+	// ignore stale digests
 	#hashRun = 0;
 
 	willDestroy() {
@@ -254,7 +238,6 @@ export default class EncoderTool extends Component {
 		this.base64Mode = mode;
 	};
 
-	// Swaps input and output, so the round trip continues from where it stopped.
 	toggleBase64Mode = () => {
 		this.base64Input = this.base64Result.output;
 		this.base64Mode = this.base64IsEncoding ? 'decode' : 'encode';
@@ -323,7 +306,6 @@ export default class EncoderTool extends Component {
 						class="dt-enc-tab"
 						@value="base64"
 					>Base64</TabsTrigger>
-					{{! wording carried over from the Next app }}
 					<TabsTrigger
 						class="dt-enc-tab"
 						@value="url"
@@ -380,7 +362,6 @@ export default class EncoderTool extends Component {
 						</div>
 
 						<div class="dt-enc-section">
-							{{! wording carried over from the Next app }}
 							<label
 								class="dt-enc-label"
 								for="dt-enc-base64-in"
@@ -397,7 +378,6 @@ export default class EncoderTool extends Component {
 							></textarea>
 						</div>
 
-						{{! wording carried over from the Next app }}
 						<button
 							type="button"
 							class="dt-enc-switch"
@@ -418,7 +398,6 @@ export default class EncoderTool extends Component {
 							<div
 								class="dt-enc-head"
 							>
-								{{! wording carried over from the Next app }}
 								<label
 									class="dt-enc-label"
 									for="dt-enc-base64-out"
@@ -487,7 +466,6 @@ export default class EncoderTool extends Component {
 										"copy"
 									}}
 								/>
-								{{! wording carried over from the Next app }}
 								{{if
 									(eq
 										this.copied
@@ -545,7 +523,6 @@ export default class EncoderTool extends Component {
 						</div>
 
 						<div class="dt-enc-section">
-							{{! wording carried over from the Next app }}
 							<label
 								class="dt-enc-label"
 								for="dt-enc-url-in"
@@ -562,7 +539,6 @@ export default class EncoderTool extends Component {
 							></textarea>
 						</div>
 
-						{{! wording carried over from the Next app }}
 						<button
 							type="button"
 							class="dt-enc-switch"
@@ -583,7 +559,6 @@ export default class EncoderTool extends Component {
 							<div
 								class="dt-enc-head"
 							>
-								{{! wording carried over from the Next app }}
 								<label
 									class="dt-enc-label"
 									for="dt-enc-url-out"
@@ -648,7 +623,6 @@ export default class EncoderTool extends Component {
 										"copy"
 									}}
 								/>
-								{{! wording carried over from the Next app }}
 								{{if
 									(eq
 										this.copied
@@ -660,7 +634,6 @@ export default class EncoderTool extends Component {
 							</button>
 						{{/if}}
 
-						{{! wording carried over from the Next app }}
 						<p class="dt-enc-note">Uses
 							JavaScript's
 							encodeURIComponent/decodeURIComponent</p>
@@ -671,7 +644,6 @@ export default class EncoderTool extends Component {
 						@value="hash"
 					>
 						<div class="dt-enc-section">
-							{{! wording carried over from the Next app }}
 							<label
 								class="dt-enc-label"
 								for="dt-enc-hash-in"
@@ -689,7 +661,6 @@ export default class EncoderTool extends Component {
 						</div>
 
 						{{#if this.hashLoading}}
-							{{! wording carried over from the Next app }}
 							<p
 								class="dt-enc-status"
 							>Generating hashes...</p>
@@ -702,7 +673,6 @@ export default class EncoderTool extends Component {
 								<div
 									class="dt-enc-head"
 								>
-									{{! wording carried over from the Next app }}
 									<span
 										class="dt-enc-label"
 									>Hash
@@ -753,23 +723,19 @@ export default class EncoderTool extends Component {
 						{{/if}}
 
 						<div class="dt-enc-about">
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-enc-label"
 							>About Hash Functions</span>
-							{{! wording carried over from the Next app }}
 							<p><strong
 								>SHA-1:</strong>
 								160-bit,
 								deprecated for
 								security use.</p>
-							{{! wording carried over from the Next app }}
 							<p><strong
 								>SHA-256:</strong>
 								256-bit, secure
 								for most
 								applications.</p>
-							{{! wording carried over from the Next app }}
 							<p><strong
 								>SHA-512:</strong>
 								512-bit,

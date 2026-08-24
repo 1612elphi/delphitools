@@ -1,14 +1,9 @@
-// Exports derived from the live editor doc. Markdown is canonical; HTML is
-// rendered via DOMSerializer so it matches the on-screen rendering exactly.
-// The print-to-PDF helper is inlined from the Next app's lib/print-pdf.ts;
-// the editor is its only v2 user so far.
 import { DOMSerializer } from 'prosemirror-model';
 import type { Node as PMNode } from 'prosemirror-model';
 import { downloadText } from 'delphitools-v2/lib/download';
 import { schema } from './schema';
 import { serializeDoc } from './markdown';
 
-// A clean print stylesheet injected into the document we hand to the print engine.
 const PRINT_CSS = `
 @page { margin: 2cm; }
 * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -35,14 +30,10 @@ function injectPrintStyles(html: string): string {
 		: `${style}${html}`;
 }
 
-/** Render HTML in an offscreen iframe and invoke the browser's print-to-PDF. */
 function printHtmlInIframe(html: string): void {
 	const iframe = document.createElement('iframe');
 	iframe.setAttribute('aria-hidden', 'true');
-	// Sandbox the print frame: allow-same-origin lets us drive win.print() and
-	// allow-modals permits the print dialog, but the absence of allow-scripts
-	// means any <script>/onerror/onload smuggled in via converted documents
-	// cannot execute in our origin. Carried from the Next app's security audit.
+	// sandbox disables document scripts
 	iframe.setAttribute('sandbox', 'allow-same-origin allow-modals');
 	iframe.style.cssText =
 		'position:fixed; left:-9999px; top:0; width:794px; height:0; border:0;';

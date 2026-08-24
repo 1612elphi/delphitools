@@ -11,7 +11,6 @@ import filePaste from 'delphitools-v2/modifiers/file-paste';
 const MIN_TILES = 1;
 const MAX_TILES = 20;
 
-/** Staggered so the browser does not drop all but the first download. */
 const DOWNLOAD_GAP_MS = 100;
 
 export interface TileRect {
@@ -29,10 +28,6 @@ interface Tile extends TileRect {
 	dataUrl: string;
 }
 
-/**
- * Size of one tile. Floored, so a source that does not divide evenly loses up
- * to `cols - 1` columns and `rows - 1` rows off the right and bottom edges.
- */
 export function tileSize(
 	imageWidth: number,
 	imageHeight: number,
@@ -45,7 +40,6 @@ export function tileSize(
 	};
 }
 
-/** Source rectangles for every tile, in row-major order. */
 export function splitGeometry(
 	imageWidth: number,
 	imageHeight: number,
@@ -108,14 +102,11 @@ export default class ImageSplitterTool extends Component {
 		);
 	}
 
-	/** One cell per tile, drawn over the preview as a dashed grid. */
 	get overlayCells() {
 		return Array.from({ length: this.total }, (_, i) => i);
 	}
 
 	get overlayStyle() {
-		// Both counts are clamped integers, so nothing user-supplied reaches
-		// the style string.
 		return htmlSafe(
 			`grid-template-columns: repeat(${this.cols}, 1fr); grid-template-rows: repeat(${this.rows}, 1fr)`,
 		);
@@ -149,7 +140,7 @@ export default class ImageSplitterTool extends Component {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) this.readFile(file);
-		// Choosing the same file twice must still fire a change event.
+		// reset file input
 		input.value = '';
 	};
 
@@ -159,7 +150,7 @@ export default class ImageSplitterTool extends Component {
 		if (file?.type.startsWith('image/')) this.readFile(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// prevent file navigation
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -247,7 +238,6 @@ export default class ImageSplitterTool extends Component {
 			<div class="dt-split-frame">
 				{{#if this.sourceImage}}
 					<div class="dt-split-bar">
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-split-bar-title"
 						>Source Image</span>
@@ -321,7 +311,6 @@ export default class ImageSplitterTool extends Component {
 							/>
 						</div>
 						<div class="dt-split-field">
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-split-field-label"
 							>Tile Size</span>
@@ -349,7 +338,6 @@ export default class ImageSplitterTool extends Component {
 						{{on "click" this.splitImage}}
 					>
 						<Icon @name="layout-grid" />
-						{{! wording carried over from the Next app }}
 						Split Image into
 						{{this.total}}
 						Tiles
@@ -370,7 +358,6 @@ export default class ImageSplitterTool extends Component {
 							}}
 						/>
 						<Icon @name="upload" />
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-split-drop-title"
 						>Drop image here</span>
@@ -385,7 +372,6 @@ export default class ImageSplitterTool extends Component {
 			{{#if this.tiles.length}}
 				<div class="dt-split-frame">
 					<div class="dt-split-bar">
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-split-bar-title"
 						>Generated Tiles</span>

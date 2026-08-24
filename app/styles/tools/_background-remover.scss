@@ -1,11 +1,4 @@
-// Styles for the background-remover tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Background remover ──────────────────────────────────────────────────── */
 
 .dt-bg-frame {
 	border: 2px solid var(--border);
@@ -220,8 +213,6 @@
 		object-fit: contain;
 	}
 
-	/* Transparency needs a ground of its own; the theme surface would read as
-	   a solid background in the cut-out areas. */
 	&.is-checkered {
 		background-color: #fff;
 		background-image:

@@ -7,14 +7,6 @@ export type Breakpoint = 'mobile' | 'tablet' | 'desktop';
 const MOBILE = 640;
 const TABLET = 1024;
 
-/**
- * Viewport size band, replacing the Next app's useBreakpoint hook.
- *
- * Separate from the `sidebar` service's own media query: that one tracks a
- * single 768px boundary for the drawer, this reports three bands that tools use
- * to change layout. matchMedia rather than a resize listener, so the callback
- * fires on band changes instead of every resize frame.
- */
 export default class BreakpointService extends Service {
 	@tracked current: Breakpoint = 'desktop';
 	@tracked isTouch = false;

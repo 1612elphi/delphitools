@@ -1,8 +1,3 @@
-// Drives the Morse Code tool: encode, auto-detect decode, the direction
-// override, WebAudio playback ending by itself, and the copy button.
-//
-// Usage: npm start, then node scripts/verify/morse-code.mjs
-
 import {
 	launch,
 	visit,

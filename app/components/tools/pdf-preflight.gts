@@ -22,18 +22,13 @@ type PdfLib = typeof import('pdf-lib');
 
 const ACCEPT = '.pdf,application/pdf';
 
-/** Width the preview canvas is scaled to, in CSS pixels. */
+/** in css px */
 const PREVIEW_WIDTH = 600;
 
-/** How long to wait for pdf.js to resolve one image object before giving up. */
 const IMAGE_OBJECT_TIMEOUT_MS = 500;
 
-/** 3mm, the bleed most printers ask for, in points. */
+/** 3mm bleed, in points */
 const MIN_BLEED_PT = 8.5;
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
 
 type Severity = 'error' | 'warning' | 'info';
 
@@ -74,9 +69,9 @@ interface FontInfo {
 	name: string;
 	embedded: boolean;
 	type?: string;
-	/** Raw font file bytes, only for embedded fonts. */
+	/** font bytes; embedded only */
 	data?: Uint8Array;
-	/** File extension for download (.ttf, .otf, .pfb). */
+	/** download extension: .ttf/.otf/.pfb */
 	extension?: string;
 }
 
@@ -97,15 +92,10 @@ interface PdfFile {
 	buffer: ArrayBuffer;
 }
 
-/** One issue plus what the template needs to draw it. */
 interface DisplayIssue extends PreflightIssue {
 	key: string;
 	icon: string;
 }
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 const SEVERITY_ICON: Record<Severity, string> = {
 	error: 'circle-x',
@@ -153,16 +143,11 @@ function plural(count: number): string {
 	return count === 1 ? '' : 's';
 }
 
-/**
- * pdf.js gives setFillColorSpace either a name ("DeviceRGB") or a serialised
- * array (["ICCBased", …]); the checks downstream only look for substrings, so
- * JSON is a faithful enough flattening of both.
- */
+// pdf.js: name or array
 function colourSpaceName(value: unknown): string {
 	return typeof value === 'string' ? value : JSON.stringify(value);
 }
 
-/** Resolve a value that may be an indirect reference to a dictionary. */
 function asDict(
 	lib: PdfLib,
 	value: PDFObject | undefined,
@@ -182,7 +167,7 @@ function dictAt(
 	return asDict(lib, dict.get(lib.PDFName.of(key)), context);
 }
 
-/** Convert a 4-element PDF array [llx, lly, urx, ury] to a PageBox. */
+// pdf box: [llx lly urx ury]
 function arrayToBox(lib: PdfLib, arr: PDFArray): PageBox {
 	const nums: number[] = [];
 	for (let i = 0; i < arr.size(); i++) {
@@ -212,16 +197,15 @@ function boxAt(lib: PdfLib, dict: PDFDict, key: string): PageBox | undefined {
 	return raw instanceof lib.PDFArray ? arrayToBox(lib, raw) : undefined;
 }
 
-/** Font file bytes from a FontDescriptor, or null when nothing is embedded. */
 function extractFontData(
 	lib: PdfLib,
 	descriptor: PDFDict,
 	context: PDFContext,
 ): { data: Uint8Array; extension: string } | null {
 	const entries: [string, string][] = [
-		['FontFile', '.pfb'], // Type 1
-		['FontFile2', '.ttf'], // TrueType
-		['FontFile3', '.otf'], // CFF / OpenType
+		['FontFile', '.pfb'], // type 1
+		['FontFile2', '.ttf'], // truetype
+		['FontFile3', '.otf'], // cff / opentype
 	];
 
 	for (const [key, ext] of entries) {
@@ -262,16 +246,11 @@ function extractFontData(
 	return null;
 }
 
-/** True when any of the three FontFile keys is present. */
 function hasFontFile(lib: PdfLib, descriptor: PDFDict): boolean {
 	return ['FontFile', 'FontFile2', 'FontFile3'].some(
 		(key) => descriptor.get(lib.PDFName.of(key)) !== undefined,
 	);
 }
-
-// ---------------------------------------------------------------------------
-// Structural analysis with pdf-lib
-// ---------------------------------------------------------------------------
 
 async function analyseWithPdfLib(
 	buffer: ArrayBuffer,
@@ -405,7 +384,6 @@ async function analyseWithPdfLib(
 		const resources = dictAt(lib, node, 'Resources', context);
 		if (!resources) continue;
 
-		// ----- Fonts -----
 		const fontsDict = dictAt(lib, resources, 'Font', context);
 		for (const [, fontValue] of fontsDict?.entries() ?? []) {
 			const fontDict = asDict(lib, fontValue, context);
@@ -420,7 +398,7 @@ async function analyseWithPdfLib(
 				baseFont instanceof lib.PDFString
 					? baseFont.decodeText()
 					: 'Unknown';
-			// Subset prefixes look like "ABCDEF+Inter"; the name is the useful half.
+			// strip 6-letter subset prefix (ABCDEF+…)
 			fontName = fontName.replace(/^[A-Z]{6}\+/, '');
 
 			const subtype = fontDict.get(lib.PDFName.of('Subtype'));
@@ -450,11 +428,11 @@ async function analyseWithPdfLib(
 				);
 			}
 
-			// The standard 14 are supplied by the viewer, so absence is not a fault.
+			// base-14 ship with viewers
 			if (!embedded && STANDARD_14_FONTS.has(fontName))
 				embedded = true;
 
-			// A Type0 font carries its font file on the descendant CIDFont.
+			// type0 embeds at descendant cidfont
 			if (!embedded && fontType === 'Type0') {
 				const descendants = fontDict.get(
 					lib.PDFName.of('DescendantFonts'),
@@ -509,7 +487,6 @@ async function analyseWithPdfLib(
 			}
 		}
 
-		// ----- Transparency -----
 		const group = dictAt(lib, node, 'Group', context);
 		const groupType = group?.get(lib.PDFName.of('S'));
 		if (
@@ -650,15 +627,7 @@ async function analyseWithPdfLib(
 	};
 }
 
-// ---------------------------------------------------------------------------
-// Image and colour-space analysis with pdf.js
-// ---------------------------------------------------------------------------
-
-/**
- * pdf.js only resolves an image object once the worker has decoded it, and a
- * getOperatorList pass does not always get that far, so an unresolved object
- * gives up rather than blocking the run.
- */
+// pdf.js image may never resolve
 function imageSize(
 	objs: {
 		get(objId: string, callback?: (obj: unknown) => void): unknown;
@@ -818,10 +787,7 @@ async function analyseWithPdfJs(
 			});
 		}
 
-		// Without the content stream's transformation matrix there is no placed
-		// size, so the estimate assumes each image fills the page. That is the
-		// worst case: anything flagged here is genuinely low-resolution, and an
-		// image placed smaller has a higher effective DPI than reported.
+		// no ctm; assume full-page
 		const viewport = page.getViewport({ scale: 1 });
 		const pageWidthInches = viewport.width / 72;
 		const pageHeightInches = viewport.height / 72;
@@ -861,10 +827,6 @@ async function analyseWithPdfJs(
 	return { pdfDoc, issues };
 }
 
-// ---------------------------------------------------------------------------
-// Page preview
-// ---------------------------------------------------------------------------
-
 const BOX_COLOURS = {
 	trim: '#3b82f6',
 	bleed: '#ef4444',
@@ -903,7 +865,7 @@ async function drawPage(
 		] as const) {
 			if (!box) continue;
 			ctx.strokeStyle = colour;
-			// PDF space has its origin bottom-left, the canvas top-left.
+			// pdf y-up, canvas y-down
 			ctx.strokeRect(
 				(box.x - info.mediaBox.x) * scale,
 				canvas.height -
@@ -919,10 +881,6 @@ async function drawPage(
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
-
 export default class PdfPreflightTool extends Component {
 	@tracked file: PdfFile | null = null;
 	@tracked error: string | null = null;
@@ -932,7 +890,7 @@ export default class PdfPreflightTool extends Component {
 	@tracked pdfDoc: PDFDocumentProxy | null = null;
 	@tracked currentPage = 1;
 
-	/** Analysis is async, so a stale run must not overwrite a newer one. */
+	/** latest-wins analysis runs */
 	#runId = 0;
 
 	willDestroy() {
@@ -945,8 +903,6 @@ export default class PdfPreflightTool extends Component {
 		void this.pdfDoc.destroy();
 		this.pdfDoc = null;
 	}
-
-	// ---- Derived ----
 
 	get fileSizeLabel() {
 		return formatSize(this.file?.size ?? 0);
@@ -1100,8 +1056,6 @@ export default class PdfPreflightTool extends Component {
 		return this.currentPage >= this.pageCount;
 	}
 
-	// ---- File handling ----
-
 	readFile = (candidate: File) => {
 		this.error = null;
 
@@ -1147,7 +1101,7 @@ export default class PdfPreflightTool extends Component {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) this.readFile(file);
-		// Choosing the same file twice must still fire a change event.
+		// allow re-picking same file
 		input.value = '';
 	};
 
@@ -1158,8 +1112,7 @@ export default class PdfPreflightTool extends Component {
 		if (file) this.readFile(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead. dragover
-	// fires continuously, so the guard keeps it from invalidating every frame.
+	// default navigates; dragover refires
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 		if (!this.dragActive) this.dragActive = true;
@@ -1179,8 +1132,6 @@ export default class PdfPreflightTool extends Component {
 		this.analysing = false;
 		this.currentPage = 1;
 	};
-
-	// ---- Analysis ----
 
 	analyse = async (file: PdfFile) => {
 		const runId = ++this.#runId;
@@ -1224,9 +1175,7 @@ export default class PdfPreflightTool extends Component {
 			this.report = report;
 		} catch (e) {
 			if (runId !== this.#runId) return;
-			// Everything that goes wrong here reads as "could not parse
-			// this PDF", including a pdf-lib that failed to load at all.
-			// That cost an afternoon once.
+			// import failure = parse error
 			console.error('pdf-preflight analysis failed:', e);
 			const message = e instanceof Error ? e.message : '';
 			this.error =
@@ -1239,8 +1188,6 @@ export default class PdfPreflightTool extends Component {
 		}
 	};
 
-	// ---- Navigation ----
-
 	goToPage = (page: number) => {
 		this.currentPage = Math.max(
 			1,
@@ -1251,15 +1198,12 @@ export default class PdfPreflightTool extends Component {
 	previousPage = () => this.goToPage(this.currentPage - 1);
 	nextPage = () => this.goToPage(this.currentPage + 1);
 
-	/** An issue with no page is not a link; the Next app left it inert too. */
+	/** page-less issues inert */
 	goToIssuePage = (issue: PreflightIssue) => {
 		if (issue.page) this.goToPage(issue.page);
 	};
 
-	/**
-	 * Repaints whenever the document, the report or the page changes — the body
-	 * consumes the same tracked state, so no dependency list is needed.
-	 */
+	// autotracked: no dependency list
 	renderPreview = modifier((canvas: HTMLCanvasElement) => {
 		const doc = this.pdfDoc;
 		const info = this.currentPageInfo;
@@ -1276,8 +1220,7 @@ export default class PdfPreflightTool extends Component {
 	downloadFont = (font: FontInfo) => {
 		const bytes = font.data;
 		if (!bytes) return;
-		// BlobPart rejects a view over an ArrayBufferLike, so copy out the
-		// view's own range rather than widening the declared type.
+		// BlobPart rejects ArrayBufferLike view
 		const buffer = bytes.buffer.slice(
 			bytes.byteOffset,
 			bytes.byteOffset + bytes.byteLength,
@@ -1321,7 +1264,6 @@ export default class PdfPreflightTool extends Component {
 							}}
 						>
 							<Icon @name="x" />
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-sr-only"
 							>Remove file</span>
@@ -1348,7 +1290,6 @@ export default class PdfPreflightTool extends Component {
 							}}
 						/>
 						<Icon @name="upload" />
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-preflight-drop-title"
 						>Drop a PDF here</span>
@@ -1362,7 +1303,6 @@ export default class PdfPreflightTool extends Component {
 				{{#if this.analysing}}
 					<div class="dt-preflight-busy">
 						<NdsLoader class="is-stage" />
-						{{! wording carried over from the Next app }}
 						<span>Analysing PDF...</span>
 					</div>
 				{{/if}}
@@ -1375,7 +1315,6 @@ export default class PdfPreflightTool extends Component {
 			{{#if this.showReport}}
 				<div class="dt-preflight-report">
 					<div class="dt-preflight-panel">
-						{{! wording carried over from the Next app }}
 						<h3
 							class="dt-preflight-panel-title"
 						>Page Preview</h3>
@@ -1404,13 +1343,11 @@ export default class PdfPreflightTool extends Component {
 									<Icon
 										@name="chevron-left"
 									/>
-									{{! wording carried over from the Next app }}
 									<span
 										class="dt-sr-only"
 									>Previous
 										page</span>
 								</button>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-preflight-nav-label"
 								>Page
@@ -1429,7 +1366,6 @@ export default class PdfPreflightTool extends Component {
 									<Icon
 										@name="chevron-right"
 									/>
-									{{! wording carried over from the Next app }}
 									<span
 										class="dt-sr-only"
 									>Next
@@ -1466,7 +1402,6 @@ export default class PdfPreflightTool extends Component {
 								</span>
 							</div>
 						{{else}}
-							{{! wording carried over from the Next app }}
 							<p
 								class="dt-preflight-empty"
 							>Page preview
@@ -1477,7 +1412,6 @@ export default class PdfPreflightTool extends Component {
 							<div
 								class="dt-preflight-dims"
 							>
-								{{! wording carried over from the Next app }}
 								<p><span>Page
 										size:</span>
 									{{this.pageDimensions.size}}</p>
@@ -1504,7 +1438,6 @@ export default class PdfPreflightTool extends Component {
 							<div
 								class="dt-preflight-section"
 							>
-								{{! wording carried over from the Next app }}
 								<h4
 									class="dt-preflight-subhead"
 								>Page
@@ -1565,7 +1498,6 @@ export default class PdfPreflightTool extends Component {
 							<span
 								class="dt-preflight-verdict-body"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-preflight-verdict-title"
 								>{{if
@@ -1618,7 +1550,6 @@ export default class PdfPreflightTool extends Component {
 							<div
 								class="dt-preflight-section"
 							>
-								{{! wording carried over from the Next app }}
 								<h4
 									class="dt-preflight-head"
 								>Fonts</h4>
@@ -1689,7 +1620,6 @@ export default class PdfPreflightTool extends Component {
 							<div
 								class="dt-preflight-section"
 							>
-								{{! wording carried over from the Next app }}
 								<h4
 									class="dt-preflight-head"
 								>Issues by
@@ -1766,7 +1696,6 @@ export default class PdfPreflightTool extends Component {
 							<div
 								class="dt-preflight-section"
 							>
-								{{! wording carried over from the Next app }}
 								<h4
 									class="dt-preflight-head"
 								>Issues by Page</h4>
@@ -1831,7 +1760,6 @@ export default class PdfPreflightTool extends Component {
 						target="_blank"
 						rel="noopener noreferrer"
 					>
-						{{! wording carried over from the Next app }}
 						<span>Need more?
 							<strong>Taxiway</strong>
 							is a free native macOS

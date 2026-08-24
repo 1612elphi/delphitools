@@ -4,11 +4,6 @@ import Icon from 'delphitools-v2/components/icon';
 import { PeelSticker } from 'delphitools-v2/components/sticker-wall';
 import type { ToolModel } from 'delphitools-v2/routes/tools/tool';
 
-// The shape every tool page inherits: capped header block, then the tool's own
-// component at whatever width it asked for, then the per-tool lousy sticker
-// (renders nothing for tools with no art). Mirrors the Next app's
-// tools/[toolId]/page.tsx.
-
 export default RouteTemplate<{ Args: { model: ToolModel } }>(
 	<template>
 		{{pageTitle @model.tool.name}}
@@ -59,7 +54,6 @@ export default RouteTemplate<{ Args: { model: ToolModel } }>(
 				{{#if @model.component}}
 					<@model.component />
 				{{else}}
-					{{! wording carried over from the Next app's placeholder card }}
 					<div class="dt-tool-soon">
 						<span
 							class="dt-tool-soon-mark"

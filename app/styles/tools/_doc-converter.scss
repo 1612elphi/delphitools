@@ -1,11 +1,6 @@
-// Styles for the doc-converter tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
 
-// Amber has no theme token, so the tailwind scale stands in.
+// no theme token; tailwind scale stands in
 $amber: crayon.color("amber-500");
 
 .dt-docconv {
@@ -60,8 +55,6 @@ $amber: crayon.color("amber-500");
 	}
 }
 
-/* ── Input ──────────────────────────────────────────────────────────────── */
-
 .dt-docconv-drop {
 	display: flex;
 	flex-direction: column;
@@ -104,7 +97,7 @@ $amber: crayon.color("amber-500");
 		background: color-mix(in oklch, var(--muted) 60%, transparent);
 	}
 
-	/* the file input is visually hidden, so its focus ring has to land here */
+	// hidden file input; ring lands here
 	&:focus-within {
 		outline: 2px solid var(--primary);
 		outline-offset: 2px;
@@ -211,8 +204,6 @@ $amber: crayon.color("amber-500");
 	resize: vertical;
 }
 
-/* ── Format ─────────────────────────────────────────────────────────────── */
-
 .dt-docconv-formats {
 	display: grid;
 	margin: crayon.size(3) crayon.size(-4) 0;
@@ -308,8 +299,6 @@ $amber: crayon.color("amber-500");
 	}
 }
 
-/* ── Format picker (combobox) ───────────────────────────────────────────── */
-
 .dt-docconv-picker {
 	@include crayon.hstack(2);
 
@@ -384,8 +373,6 @@ $amber: crayon.color("amber-500");
 	white-space: nowrap;
 }
 
-/* ── Options ────────────────────────────────────────────────────────────── */
-
 .dt-docconv-options {
 	border-bottom: 2px solid var(--border);
 }
@@ -447,8 +434,6 @@ $amber: crayon.color("amber-500");
 	flex-shrink: 0;
 	accent-color: var(--primary);
 }
-
-/* ── Convert ────────────────────────────────────────────────────────────── */
 
 .dt-docconv-convert {
 	@include crayon.hstack(2);
@@ -513,8 +498,6 @@ $amber: crayon.color("amber-500");
 	color: var(--muted-foreground);
 	font-size: crayon.font-size("xs");
 }
-
-/* ── Error, output, warnings, notice ────────────────────────────────────── */
 
 .dt-docconv-error {
 	@include crayon.hstack(2);

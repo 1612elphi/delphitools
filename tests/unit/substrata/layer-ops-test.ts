@@ -1,12 +1,6 @@
-/**
- * layer-ops is the edit surface over the doc store. Two properties matter more
- * than any single result: every op returns a NEW doc, and the branches it did
- * not touch come back by REFERENCE (history snapshots are only cheap because of
- * that). So most tests here check the resulting doc order AND that the layers
- * the op had no business rebuilding are still the same objects.
- *
- * Doc order is bottom -> top throughout, which is why "front"/"forward" move
- * ids toward the END of a list.
+/*
+ * every op returns NEW doc; untouched branches shared by REFERENCE.
+ * doc order bottom→top; "front"/"forward" move ids toward END.
  */
 
 import { module, test } from 'qunit';
@@ -130,8 +124,7 @@ const GRADIENT: Gradient = {
 	coords: { x1: 0, y1: 0, x2: 1, y2: 0 },
 };
 
-/** Install a doc and hand the exact object back, so a test can assert the op
- *  never touched it. */
+/** installs doc and returns it so tests can assert ops never touched it */
 function load(layers: Layer[]): SubstrataDoc {
 	const doc: SubstrataDoc = {
 		id: 'doc-1',
@@ -153,7 +146,7 @@ function live(): SubstrataDoc {
 	return doc;
 }
 
-/** Doc order as a string — 'a,g(b,c),d'. Structural, and hand-readable. */
+/** doc order as string, e.g. 'a,g(b,c),d' */
 function tree(layers: readonly Layer[] = live().layers): string {
 	return layers
 		.map((l) =>
@@ -214,8 +207,7 @@ module('Unit | Substrata | layer-ops', function (hooks) {
 			assert.strictEqual(tree(out), 'a,b,n');
 		});
 
-		// The panel drags copies into groups; only the group on the path may be
-		// rebuilt, or every sibling re-renders and history stops sharing.
+		// only group on path may rebuild; else siblings re-render, history stops sharing
 		test('descends into a group and rebuilds only that path', function (assert) {
 			const outside = leaf('z');
 			const g = group('g', [leaf('x'), leaf('y')]);
@@ -287,8 +279,7 @@ module('Unit | Substrata | layer-ops', function (hooks) {
 			);
 		});
 
-		// A group's own transform is identity by contract (folder semantics), so
-		// the offset has to land on the leaves instead.
+		// group transform identity by contract (folder semantics); offset lands on leaves
 		test('keeps a group copy at identity and nudges its leaves', function (assert) {
 			load([
 				group('g', [
@@ -351,8 +342,7 @@ module('Unit | Substrata | layer-ops', function (hooks) {
 			);
 		});
 
-		// A child riding along inside its group's copy must not also clone on its
-		// own, or the duplicate contains the child twice.
+		// child cloned via its group must not also clone standalone
 		test('clones only the topmost selected node', function (assert) {
 			load([group('g', [leaf('x')])]);
 			duplicateLayers(['g', 'x']);
@@ -491,7 +481,7 @@ module('Unit | Substrata | layer-ops', function (hooks) {
 	module('groupLayers', function () {
 		test('takes the topmost member slot, children in doc order', function (assert) {
 			load([leaf('a'), leaf('b'), leaf('c'), leaf('d')]);
-			// ids arrive in click order; the children must still be doc order
+			// ids arrive click order; children must stay doc order
 			const gid = groupLayers(['c', 'b']);
 			assert.strictEqual(
 				tree().replace(gid!, 'G'),
@@ -524,8 +514,7 @@ module('Unit | Substrata | layer-ops', function (hooks) {
 			);
 		});
 
-		// Grouping is defined as "collect into one slot", so non-adjacent members
-		// come out adjacent — the layers between them stay put below.
+		// grouping is collect-into-one-slot; intervening layers stay put
 		test('pulls non-adjacent members together', function (assert) {
 			load([leaf('a'), leaf('b'), leaf('c'), leaf('d')]);
 			const gid = groupLayers(['a', 'c'])!;
@@ -629,8 +618,7 @@ module('Unit | Substrata | layer-ops', function (hooks) {
 			);
 		});
 
-		// group -> ungroup on an adjacent run is the round trip a user does by
-		// reflex; it must land back on the exact same objects in the same order.
+		// group→ungroup reflex must restore exact same objects in same order
 		test('round-trips an adjacent selection back to the original layers', function (assert) {
 			const doc = load([
 				leaf('a'),
@@ -722,8 +710,7 @@ module('Unit | Substrata | layer-ops', function (hooks) {
 			assert.false(canUndo());
 		});
 
-		// The top item dropped "above the top" resolves to the slot it is in, so
-		// the clamp has to happen before the same-slot comparison.
+		// clamp must run before same-slot comparison
 		test('an over-range index onto the top item is still a same-slot drop', function (assert) {
 			const doc = load([leaf('a'), leaf('b'), leaf('c')]);
 			moveLayer('c', null, 7);
@@ -799,8 +786,7 @@ module('Unit | Substrata | layer-ops', function (hooks) {
 			assert.strictEqual(tree(), 'a,c,b');
 		});
 
-		// The end-of-list cases are where an indexed swap loop goes wrong: it
-		// either reads past the array or silently rotates the list.
+		// end-of-list is where indexed swap loops overread or rotate silently
 		test('forward on the topmost layer changes nothing', function (assert) {
 			const doc = load([leaf('a'), leaf('b'), leaf('c')]);
 			reorderLayers(['c'], 'forward');
@@ -836,8 +822,7 @@ module('Unit | Substrata | layer-ops', function (hooks) {
 			assert.strictEqual(tree(), 'b,c,a,d');
 		});
 
-		// If the loop did not skip over other selected items, the top member
-		// would swap with the one below it and the block would shear apart.
+		// loop must skip other selected items or block shears apart
 		test('a block already at the top does not shear', function (assert) {
 			const doc = load([leaf('a'), leaf('b'), leaf('c')]);
 			reorderLayers(['b', 'c'], 'forward');
@@ -968,10 +953,7 @@ module('Unit | Substrata | layer-ops', function (hooks) {
 			assert.strictEqual(tree(), 'a,b');
 		});
 
-		// A declined op returns the doc it was handed, and update() used to
-		// push history before running the mutator, so undo consumed a step
-		// that restored an identical document. colour-sink.mjs in the parent
-		// repo already asserts the same property for a settings-only pick.
+		// update() must not push history for a declined op
 		test('a declined sibling order records no history step', function (assert) {
 			load([leaf('a'), leaf('b'), leaf('c')]);
 			setSiblingOrder(null, ['b', 'a']);
@@ -1030,8 +1012,7 @@ module('Unit | Substrata | layer-ops', function (hooks) {
 			);
 		});
 
-		// Lock and visibility are EFFECTIVE — inherited from the group — so a
-		// locked folder has to protect children that are not themselves locked.
+		// lock/visibility are effective (inherited from group); locked folder protects unlocked children
 		test('skips leaves locked or hidden by an ancestor', function (assert) {
 			const locked = group('g', [leaf('x')]);
 			locked.locked = true;
@@ -1059,8 +1040,7 @@ module('Unit | Substrata | layer-ops', function (hooks) {
 			);
 		});
 
-		// A freehand fill is string-typed, so a gradient must fall through rather
-		// than write an object into a string field.
+		// freehand fill is string-typed; gradient must fall through
 		test('a gradient on a freehand layer leaves the layer alone', function (assert) {
 			const doc = load([freehand('f', '#000000')]);
 			setFill('f', GRADIENT);

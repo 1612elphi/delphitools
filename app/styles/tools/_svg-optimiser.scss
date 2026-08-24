@@ -1,11 +1,4 @@
-// Styles for the svg-optimiser tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── SVG optimiser ───────────────────────────────────────────────────────── */
 
 .dt-svgo {
 	border: 2px solid var(--border);
@@ -30,7 +23,7 @@
 		background: color-mix(in oklch, var(--muted) 30%, transparent);
 	}
 
-	/* the file input is visually hidden, so its focus ring has to land here */
+	/* hidden input focus lands here */
 	&:focus-within {
 		outline: 2px solid var(--primary);
 		outline-offset: -4px;
@@ -148,8 +141,7 @@
 	}
 }
 
-/* White, not var(--background): an SVG drawn in black is invisible on the dark
-   theme, and the file itself carries no background. */
+/* white, not var(--background): black SVG invisible on dark theme */
 .dt-svgo-preview {
 	display: flex;
 	align-items: center;

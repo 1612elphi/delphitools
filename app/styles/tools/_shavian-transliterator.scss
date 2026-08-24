@@ -1,14 +1,5 @@
-// Styles for the shavian-transliterator tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
 
-/* ── Shavian transliterator ──────────────────────────────────────────────── */
-
-/* The Next app injected this face from the component at runtime; here it is
-   part of the sheet, so no <style> element is created or removed. */
 @font-face {
 	font-family: "Noto Sans Shavian";
 	src: url("/fonts/NotoSansShavian-Regular.woff2") format("woff2");
@@ -76,8 +67,7 @@
 		color: var(--dt-shav-dict);
 	}
 
-	// The same colour the gloss marks a heuristic guess with, which is what
-	// every uncommon word falls back to in this state.
+	// marks heuristic fallback like gloss
 	&.is-degraded {
 		color: var(--destructive);
 	}

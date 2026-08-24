@@ -1,9 +1,3 @@
-// Exercises Video Muter with a webm generated in the page that carries an
-// audio track (canvas captureStream + an oscillator through MediaRecorder),
-// then a real mediabunny remux.
-//
-// Usage: npm start, then node scripts/verify/video-muter.mjs
-
 import {
 	launch,
 	visit,

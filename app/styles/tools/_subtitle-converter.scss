@@ -1,14 +1,9 @@
-// Styles for the subtitle-converter tool.
-
 @use "../crayon-config" as crayon;
-
-/* ── Subtitle converter ──────────────────────────────────────────────────── */
 
 .dt-sub {
 	@include crayon.vstack(4);
 }
 
-/* Settings as a grid of stacked label-over-control cells. */
 .dt-sub-settings {
 	display: grid;
 	border-bottom: 1px solid var(--border);
@@ -25,7 +20,6 @@
 	border: 2px solid var(--border);
 }
 
-/* Sits in the output pane head, between the label and the tools. */
 .dt-sub-stats {
 	margin-left: auto;
 	align-self: center;
@@ -99,7 +93,7 @@
 	min-width: 0;
 	flex-direction: column;
 
-	/* Stacked on a phone, so the divider between panes runs the other way. */
+	/* divider flips on phone */
 	&.is-right {
 		border-top: 2px solid var(--border);
 
@@ -161,7 +155,7 @@
 		pointer-events: none;
 	}
 
-	/* the file input is visually hidden, so its focus ring has to land here */
+	/* hidden input focus lands here */
 	&:focus-within,
 	&:focus-visible {
 		outline: 2px solid var(--primary);
@@ -169,7 +163,7 @@
 	}
 }
 
-/* The Download label drops to icon-only below the sm breakpoint. */
+/* icon-only below sm */
 .dt-sub-btn-text {
 	display: none;
 

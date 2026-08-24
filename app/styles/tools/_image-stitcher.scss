@@ -1,11 +1,4 @@
-// Styles for the image-stitcher tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Image stitcher ──────────────────────────────────────────────────────── */
 
 .dt-stitch {
 	@include crayon.vstack(6);
@@ -14,8 +7,6 @@
 .dt-stitch-frame {
 	border: 2px solid var(--border);
 }
-
-/* ── Mode switch ─────────────────────────────────────────────────────────── */
 
 .dt-stitch-modes {
 	display: flex;
@@ -44,8 +35,6 @@
 		color: var(--primary-foreground);
 	}
 }
-
-/* ── Drop zone ───────────────────────────────────────────────────────────── */
 
 .dt-stitch-drop {
 	display: block;
@@ -89,8 +78,6 @@
 	font-size: crayon.font-size("sm");
 }
 
-/* ── Trail chrome ────────────────────────────────────────────────────────── */
-
 .dt-stitch-bar {
 	display: flex;
 	justify-content: flex-end;
@@ -122,8 +109,7 @@
 	}
 }
 
-/* The four global add buttons ring the composite. Named areas rather than
-   filler cells, so the template holds nothing that renders as nothing. */
+/* named areas; no fillers */
 .dt-stitch-stage {
 	display: grid;
 	grid-template:
@@ -180,7 +166,7 @@
 		grid-area: bottom;
 	}
 
-	/* an image is selected: the add buttons scope to it instead */
+	/* hidden when image selected */
 	&.is-hidden {
 		opacity: 0;
 		pointer-events: none;
@@ -200,12 +186,9 @@
 	box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
 }
 
-/* ── Tiles ───────────────────────────────────────────────────────────────── */
-
 .dt-stitch-tile {
 	position: absolute;
 
-	/* swap target tint while another tile is dragged over this one */
 	&.is-over::after {
 		position: absolute;
 		z-index: 10;
@@ -245,7 +228,6 @@
 	}
 }
 
-/* Selection ring: a double keyline, previewed at half strength on hover. */
 .dt-stitch-ring {
 	position: absolute;
 	z-index: 10;
@@ -267,8 +249,6 @@
 	.dt-stitch-ring:not(.is-selected) {
 	opacity: 0.5;
 }
-
-/* ── Fit pill ────────────────────────────────────────────────────────────── */
 
 .dt-stitch-pill {
 	position: absolute;
@@ -330,8 +310,6 @@
 		color: var(--foreground);
 	}
 }
-
-/* ── Drop-to-place edge zones ────────────────────────────────────────────── */
 
 .dt-stitch-place {
 	position: absolute;
@@ -397,9 +375,7 @@
 	}
 }
 
-/* ── Seam inserts ────────────────────────────────────────────────────────── */
-
-/* The seam itself has no width, so the invisible strip is what catches hover. */
+/* zero-width seam hover strip */
 .dt-stitch-seam {
 	position: absolute;
 	z-index: 20;
@@ -456,8 +432,6 @@
 	}
 }
 
-/* ── Selection-scoped add buttons ────────────────────────────────────────── */
-
 .dt-stitch-adder {
 	position: absolute;
 	z-index: 30;
@@ -482,8 +456,6 @@
 		color: var(--primary-foreground);
 	}
 }
-
-/* ── Batch pool ──────────────────────────────────────────────────────────── */
 
 .dt-stitch-pool {
 	display: flex;
@@ -588,8 +560,6 @@
 	}
 }
 
-/* ── Batch preview ───────────────────────────────────────────────────────── */
-
 .dt-stitch-preview {
 	display: flex;
 	justify-content: center;
@@ -613,8 +583,6 @@
 		object-fit: cover;
 	}
 }
-
-/* ── Export row ──────────────────────────────────────────────────────────── */
 
 .dt-stitch-export {
 	display: flex;

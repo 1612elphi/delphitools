@@ -28,11 +28,7 @@ import type ColourNotationService from 'delphitools-v2/services/colour-notation'
 const DEFAULT_COLOUR = '#3b82f6';
 const COPIED_MS = 1500;
 
-/**
- * Each Tailwind level with the OKLCH lightness it aims for. The Next app held
- * the levels and the lightnesses in two structures keyed by level; one list of
- * pairs cannot fall out of step with itself.
- */
+/** built from a bundled lookup → list of level/lightness pairs */
 const SHADE_TARGETS: [level: number, lightness: number][] = [
 	[50, 0.97],
 	[100, 0.93],
@@ -50,7 +46,6 @@ const SHADE_TARGETS: [level: number, lightness: number][] = [
 export type GenerationMode =
 	'classic' | 'hue-shift' | 'luminance-anchored' | 'vivid' | 'muted';
 
-// Labels and descriptions carried over from the Next app, verbatim.
 export const GENERATION_MODES: {
 	value: GenerationMode;
 	label: string;
@@ -90,11 +85,7 @@ export interface Shade {
 	oklch: Triple;
 }
 
-/**
- * How much of the base colour's saturation a mode keeps: at the light end of
- * the ramp, across the middle, and at the dark end. Above 1 pushes toward the
- * edge of sRGB, and saturation is capped there.
- */
+/** [light, mid, dark] sat fraction; >1 clamped to sRGB edge */
 const MODE_RAMPS: Record<
 	GenerationMode,
 	[light: number, mid: number, dark: number]
@@ -106,12 +97,7 @@ const MODE_RAMPS: Record<
 	muted: [0.3, 0.5, 0.4],
 };
 
-/**
- * The saturation multiplier at `index`, easing into the middle over two levels
- * at each end. Stepping instead — one flat bucket over 50 and 100, the middle
- * value from 200 on — put a near-doubling of chroma between 100 and 200, and
- * 100 came out visibly grey beside both its neighbours.
- */
+/** ease over two levels each end; steps doubled chroma 100→200 */
 function rampScale(index: number, mode: GenerationMode): number {
 	const [light, mid, dark] = MODE_RAMPS[mode];
 	const fromEnd = SHADE_TARGETS.length - 1 - index;
@@ -120,7 +106,6 @@ function rampScale(index: number, mode: GenerationMode): number {
 	return mid;
 }
 
-/** The OKLCH the level at `index` lands on, as [L, chroma, hue]. */
 function shadeParams(
 	index: number,
 	targetL: number,
@@ -137,7 +122,6 @@ function shadeParams(
 				: fromEnd < 2
 					? targetL * 0.8
 					: targetL;
-	// ±15 degrees, warm at the light end and cool at the dark end
 	const h =
 		mode === 'hue-shift'
 			? (baseH + (targetL - 0.5) * 2 * 15 + 360) % 360
@@ -146,7 +130,6 @@ function shadeParams(
 	return [l, sat * maxOklchChroma(l, h), h];
 }
 
-/** Null when the base colour does not parse, which blanks the whole output. */
 export function generateShades(
 	baseHex: string,
 	mode: GenerationMode,
@@ -154,12 +137,8 @@ export function generateShades(
 	const rgb = hexToRgb(baseHex);
 	if (!rgb) return null;
 
-	// Only saturation and hue come from the base colour: lightness is the
-	// ramp's. Saturation is chroma as a fraction of the most this hue can hold
-	// at that lightness, not chroma itself — sRGB holds two to three times as
-	// much chroma at L 0.7 as it does at L 0.95, so a ramp built on a fixed
-	// chroma reads as vivid at one end and grey at the other. Tailwind's own
-	// palettes sit within a tenth of the sRGB edge at every level.
+	// saturation = chroma / max at that lightness; fixed chroma reads grey at L~0.95
+	// tailwind sits within 0.1 of sRGB edge across levels
 	const [baseL, baseC, baseH] = rgbToOklch(...rgb);
 	const baseMax = maxOklchChroma(baseL, baseH);
 	const baseSat = baseMax > 0 ? Math.min(1, baseC / baseMax) : 0;
@@ -211,7 +190,7 @@ export default class TailwindShadesTool extends Component {
 		return generateShades(this.baseColour, this.mode);
 	}
 
-	/** Half-typed hex paints nothing rather than reaching a style attribute. */
+	/** half-typed hex → no fill style */
 	get baseFillStyle() {
 		return htmlSafe(
 			hexToRgb(this.baseColour)
@@ -237,7 +216,6 @@ export default class TailwindShadesTool extends Component {
 				fillStyle: htmlSafe(
 					`background-color: ${shade.hex}`,
 				),
-				// The light half of the ramp needs dark text on it, and back.
 				lightText: shade.level >= 500,
 			};
 		});
@@ -267,7 +245,7 @@ export default class TailwindShadesTool extends Component {
 		return `:root {\n${lines}\n}`;
 	}
 
-	/** Trailing comma so it pastes straight into a theme's colour map. */
+	/** trailing comma so it pastes into a map */
 	get tailwindBlock() {
 		const shades = this.shades;
 		if (!shades) return '';
@@ -282,7 +260,6 @@ export default class TailwindShadesTool extends Component {
 
 	get codeBlocks() {
 		return [
-			// wording carried over from the Next app
 			{
 				key: 'css',
 				label: 'CSS Variables',
@@ -290,13 +267,11 @@ export default class TailwindShadesTool extends Component {
 			},
 			{
 				key: 'oklch',
-				// wording carried over from the Next app
 				label: 'CSS Variables (OKLCH)',
 				code: this.oklchBlock,
 			},
 			{
 				key: 'tailwind',
-				// wording carried over from the Next app
 				label: 'Tailwind Config',
 				code: this.tailwindBlock,
 			},
@@ -333,7 +308,6 @@ export default class TailwindShadesTool extends Component {
 		<div class="dt-shades">
 			<div class="dt-shades-inputs">
 				<div class="dt-shades-field">
-					{{! wording carried over from the Next app }}
 					<span class="dt-shades-label">Base
 						Colour</span>
 					<div class="dt-shades-combo">
@@ -367,7 +341,6 @@ export default class TailwindShadesTool extends Component {
 				</div>
 
 				<div class="dt-shades-field">
-					{{! wording carried over from the Next app }}
 					<span class="dt-shades-label">Colour
 						Name</span>
 					<input
@@ -384,7 +357,6 @@ export default class TailwindShadesTool extends Component {
 				</div>
 
 				<div class="dt-shades-field">
-					{{! wording carried over from the Next app }}
 					<span class="dt-shades-label">Generation
 						Mode</span>
 					<Select
@@ -418,7 +390,6 @@ export default class TailwindShadesTool extends Component {
 			{{#if this.rows}}
 				<div class="dt-shades-section">
 					<div class="dt-shades-section-head">
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-shades-label"
 						>Generated Shades</span>

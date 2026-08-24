@@ -7,9 +7,7 @@ export interface ToolGridSignature {
 	Element: HTMLDivElement;
 	Args: {
 		tools: Tool[];
-		/** query params every cell's link carries (the omnibox colour carry) */
 		query?: Record<string, string>;
-		/** chip under the description naming the carried value, `→ #2e7d32` */
 		carryLabel?: string;
 	};
 }
@@ -20,8 +18,6 @@ function queryOrEmpty(query?: Record<string, string>) {
 	return query ?? EMPTY_QUERY;
 }
 
-// `external` entries (App Store, GitHub) have no /tools/:id route, so they
-// render as plain anchors. See the field's note in app/lib/tools.ts.
 const ToolGrid: TOC<ToolGridSignature> = <template>
 	<div class="dt-grid" ...attributes>
 		{{#each @tools as |tool|}}

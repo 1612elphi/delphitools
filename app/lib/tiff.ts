@@ -1,13 +1,3 @@
-// Baseline uncompressed RGBA TIFF, little-endian. The Next app gets this from
-// `utif`, which is not installed here; the encoder half of that package is one
-// IFD and a pixel blit, so it is written out rather than depended on.
-//
-// TIFF 6.0 §2 "Baseline Field Reference Guide" for the tag set, and §3
-// "Associated Alpha" for ExtraSamples = 2 (unassociated alpha).
-//
-// ponytail: one strip, no compression, no tiling. Output is 4 bytes per pixel
-// plus 154. Deflate or LZW would need a compressor and nothing asks for one.
-
 const SHORT = 3;
 const LONG = 4;
 
@@ -34,7 +24,7 @@ export function encodeTiff(
 	view.setUint16(IFD_OFFSET, ENTRY_COUNT, true);
 	let entry = IFD_OFFSET + 2;
 
-	// Tags must be written in ascending order.
+	// tiff requires sorted tags
 	const tag = (
 		id: number,
 		type: number,
@@ -54,18 +44,27 @@ export function encodeTiff(
 
 	tag(256, LONG, 1, width);
 	tag(257, LONG, 1, height);
-	// Four SHORTs do not fit the 4-byte value field, so this one is a pointer.
+	// bits use an offset
 	tag(258, SHORT, 4, BITS_OFFSET);
-	tag(259, SHORT, 1, 1); // no compression
-	tag(262, SHORT, 1, 2); // photometric: RGB
-	tag(273, LONG, 1, PIXEL_OFFSET); // StripOffsets
-	tag(277, SHORT, 1, 4); // SamplesPerPixel
-	tag(278, LONG, 1, height); // RowsPerStrip
-	tag(279, LONG, 1, pixelBytes); // StripByteCounts
-	tag(284, SHORT, 1, 1); // PlanarConfiguration: chunky
-	tag(338, SHORT, 1, 2); // ExtraSamples: unassociated alpha
+	// no compression
+	tag(259, SHORT, 1, 1);
+	// photometric rgb
+	tag(262, SHORT, 1, 2);
+	// strip offsets
+	tag(273, LONG, 1, PIXEL_OFFSET);
+	// samples per pixel
+	tag(277, SHORT, 1, 4);
+	// rows per strip
+	tag(278, LONG, 1, height);
+	// strip byte counts
+	tag(279, LONG, 1, pixelBytes);
+	// chunky planar layout
+	tag(284, SHORT, 1, 1);
+	// unassociated alpha
+	tag(338, SHORT, 1, 2);
 
-	view.setUint32(entry, 0, true); // no further IFD
+	// no more ifds
+	view.setUint32(entry, 0, true);
 
 	for (let i = 0; i < 4; i++) {
 		view.setUint16(BITS_OFFSET + i * 2, 8, true);

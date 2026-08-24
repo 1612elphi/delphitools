@@ -1,8 +1,4 @@
-// colour-converter, and with it the vendored select.
-//
-// The select is the point: upstream shipped it with no keyboard handling at
-// all, so the arrows, Enter, Escape and the focus return are local additions
-// and nothing but a real browser proves they work.
+// vendored select, local keyboard
 
 import { launch, visit, check, sleep, finish } from './harness.mjs';
 
@@ -22,8 +18,6 @@ const rows = () =>
 const trigger = '.dt-cc-field .dt-select-trigger';
 const value = () => page.$eval('.dt-cc-value', (el) => el.value);
 const openContent = () => page.$('.dt-select-content');
-
-// ── the conversion table ────────────────────────────────────────────────────
 
 const initial = await rows();
 check('eight formats listed', initial.length === 8, `${initial.length}`);
@@ -56,8 +50,6 @@ check(
 	(await rows())[1]?.out === 'rgb(255, 0, 0)',
 	(await rows())[1]?.out,
 );
-
-// ── the select, by pointer ──────────────────────────────────────────────────
 
 check('closed to begin with', !(await openContent()));
 await page.click(trigger);
@@ -115,8 +107,6 @@ check(
 	(await rows())[0]?.out === '#ff0000',
 	(await rows())[0]?.out,
 );
-
-// ── the select, by keyboard ─────────────────────────────────────────────────
 
 await page.focus(trigger);
 await page.keyboard.press('ArrowDown');
@@ -187,16 +177,13 @@ check(
 	),
 );
 
-// The listbox unmounts on animationend. Without the keyframes in app.scss it
-// would stay in the DOM forever, which is how the tooltip and popover broke.
+// stays without app.scss keyframes
 check(
 	'the closed listbox is gone from the DOM, not just hidden',
 	await page.evaluate(
 		() => !document.querySelector('.dt-select-content'),
 	),
 );
-
-// ── navigating away must not throw from a teardown ──────────────────────────
 
 await page.click(trigger);
 await sleep(150);

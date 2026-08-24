@@ -1,11 +1,4 @@
-// Styles for the line-height-calc tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Line height calculator ──────────────────────────────────────────────── */
 
 .dt-lh {
 	border: 2px solid var(--border);
@@ -87,7 +80,7 @@
 	font-size: crayon.font-size("sm");
 }
 
-/* The Next app's small outline button. */
+/* matches next app outline button */
 .dt-lh-btn {
 	@include crayon.hstack(2);
 
@@ -196,8 +189,7 @@
 	}
 }
 
-/* Three abreast is unreadable on a phone; the Next app's fixed grid-cols-3 is
-   traded for a stack below the sm breakpoint. */
+/* stack below sm, fixed grid-cols-3 unreadable on phones */
 .dt-lh-previews {
 	display: grid;
 

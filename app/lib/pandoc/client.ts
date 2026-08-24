@@ -1,20 +1,6 @@
-/* Main-thread client for the pandoc Web Worker.
- *
- * This is our own (MIT) code — it never touches pandoc symbols directly, it only
- * fetches the GPL `pandoc.wasm` asset and exchanges messages with the worker.
- *
- * The engine is loaded lazily (only on the first conversion, never on page load)
- * and then kept alive for the rest of the session, so visitors who never use the
- * converter download nothing, and those who do fetch it at most once.
- */
 import type { PandocConvertResult, PandocQueryOptions } from './pandoc-core';
 
-// The 58 MB pandoc.wasm is fetched from a public CDN (unpkg) rather than bundled
-// into our own deploy. Why: it's far too big to self-host on Cloudflare Pages
-// (hard 25 MiB per-file limit) and jsDelivr refuses it too (file-size limit) —
-// unpkg serves it gzip-compressed (~16 MB over the wire) with permissive CORS.
-// This mirrors how the Background Remover streams its ML model from the HF CDN.
-// Version is pinned to keep it in lockstep with the vendored wrapper (pandoc-core.js).
+// wasm exceeds deployment file limit
 const WASM_URL = 'https://unpkg.com/pandoc-wasm@1.0.1/src/pandoc.wasm';
 
 export type EngineState = 'idle' | 'loading' | 'ready' | 'error';
@@ -22,7 +8,6 @@ export type EngineState = 'idle' | 'loading' | 'ready' | 'error';
 export interface LoadProgress {
 	receivedBytes: number;
 	totalBytes: number;
-	/** received / total, clamped to [0,1]; null when total is unknown. */
 	ratio: number | null;
 }
 
@@ -54,7 +39,7 @@ function ensureWorker(): Worker {
 			data: unknown;
 			error: string;
 		};
-		if (msg?.type !== 'result') return; // "ready"/"init-error" handled in loadEngine
+		if (msg?.type !== 'result') return;
 		const entry = pending.get(msg.id);
 		if (!entry) return;
 		pending.delete(msg.id);
@@ -89,9 +74,7 @@ async function fetchWasm(
 			onProgress?.({
 				receivedBytes: received,
 				totalBytes,
-				// The CDN gzips the asset; the browser decodes it transparently, so the
-				// bytes we count (decompressed) can exceed the declared (compressed)
-				// content-length. When that happens, fall back to an indeterminate bar.
+				// decoded bytes exceed header
 				ratio:
 					totalBytes > 0 && received <= totalBytes
 						? received / totalBytes
@@ -109,12 +92,7 @@ async function fetchWasm(
 	return decompressIfNeeded(out);
 }
 
-/**
- * The asset ships gzipped. Most hosts serve it verbatim (so we gunzip here);
- * if a host transparently decoded it (fetch strips Content-Encoding), the bytes
- * are already raw wasm. We branch on the magic number so either case works.
- *   gzip:  1f 8b …        wasm:  00 61 73 6d ("\0asm")
- */
+// supports compressed wasm responses
 async function decompressIfNeeded(
 	bytes: Uint8Array<ArrayBuffer>,
 ): Promise<ArrayBuffer> {
@@ -132,7 +110,6 @@ async function decompressIfNeeded(
 	return new Response(stream).arrayBuffer();
 }
 
-/** Download + instantiate the engine. Idempotent; safe to call repeatedly. */
 export function loadEngine(
 	onProgress?: (p: LoadProgress) => void,
 ): Promise<void> {
@@ -164,7 +141,6 @@ export function loadEngine(
 					}
 				};
 				w.addEventListener('message', onMessage);
-				// Transfer the buffer (zero-copy); the main thread no longer needs it.
 				w.postMessage({ type: 'init', wasm: buffer }, [
 					buffer,
 				]);
@@ -172,7 +148,7 @@ export function loadEngine(
 			engineState = 'ready';
 		} catch (err) {
 			engineState = 'error';
-			readyPromise = null; // allow a retry
+			readyPromise = null;
 			throw err;
 		}
 	})();
@@ -209,7 +185,6 @@ export function query<T = unknown>(options: PandocQueryOptions): Promise<T> {
 	return call<T>({ type: 'query', options });
 }
 
-/** Tear the worker down and free the module (e.g. on unmount). */
 export function disposeEngine(): void {
 	if (worker) {
 		worker.terminate();

@@ -1,11 +1,4 @@
-// Styles for the meta-tag-genny tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Meta tag generator ──────────────────────────────────────────────────── */
 
 .dt-meta {
 	border: 2px solid var(--border);
@@ -90,8 +83,7 @@
 	font-size: crayon.font-size("sm");
 }
 
-/* Site name and Twitter handle share a row, divided by one hairline. */
-.dt-meta-row {
+ .dt-meta-row {
 	display: flex;
 
 	.dt-meta-field {
@@ -209,8 +201,7 @@
 	}
 }
 
-/* Google's own result colours, so the preview reads as a search result rather
-   than as part of the theme. They are the same in both themes. */
+/* google serp colours, same in both themes */
 .dt-meta-serp-title {
 	color: #2563eb;
 	font-size: crayon.font-size("lg");

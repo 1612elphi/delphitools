@@ -33,11 +33,9 @@ type HarmonyType =
 interface HarmonyInfo {
 	name: string;
 	description: string;
-	/** Hue offsets from the base, in degrees; unused by monochromatic. */
 	angles: number[];
 }
 
-// Names and descriptions carried over verbatim from the Next app.
 const HARMONIES: Record<HarmonyType, HarmonyInfo> = {
 	complementary: {
 		name: 'Complementary',
@@ -103,11 +101,9 @@ const HARMONIES: Record<HarmonyType, HarmonyInfo> = {
 
 const HARMONY_KEYS = Object.keys(HARMONIES) as HarmonyType[];
 
-/** OKLCH lightnesses for the monochromatic ramp; the middle step takes the base's. */
 const MONO_LIGHTNESS = [0.85, 0.7, null, 0.4, 0.25];
 
-// Both are pixel values against `.dt-harmony-wheel`, which the partial fixes at
-// 14rem square: 112 is its centre, 88 puts the markers just outside the hole.
+// matches .dt-harmony-wheel
 const WHEEL_CENTRE = 112;
 const WHEEL_RADIUS = 88;
 
@@ -115,7 +111,6 @@ const COPIED_MS = 1500;
 
 interface HarmonySwatch {
 	hex: string;
-	/** OKLCH hue of this swatch, which is where its wheel marker sits. */
 	hue: number;
 	angle: number;
 }
@@ -124,7 +119,6 @@ function oklchToHex(l: number, c: number, h: number): string {
 	return rgbToHex(...oklabToRgb(...lchToLab(l, c, h)));
 }
 
-/** Null when the base does not parse, which blanks every dependent block. */
 function generateHarmony(
 	baseHex: string,
 	type: HarmonyType,
@@ -137,8 +131,7 @@ function generateHarmony(
 	if (type === 'monochromatic') {
 		return MONO_LIGHTNESS.map((step) => {
 			const l = step ?? L;
-			// The two lightest steps halve their chroma: a near-white
-			// tint at full chroma reads as a different colour.
+			// light tints halve chroma
 			return {
 				hex: oklchToHex(l, c * (l > 0.7 ? 0.5 : 1), h),
 				hue: h,
@@ -179,13 +172,11 @@ export default class HarmonyGennyTool extends Component {
 		}));
 	}
 
-	/** Null while the base hex is unparseable, matching the Next app. */
 	get validBase(): string | null {
 		return hexToRgb(this.baseColour) ? this.baseColour : null;
 	}
 
-	// The text field takes free-form input and this value reaches a style
-	// attribute, so an unparseable entry paints nothing rather than being trusted.
+	// rejects invalid style values
 	get baseFillStyle() {
 		return htmlSafe(
 			this.validBase
@@ -194,7 +185,7 @@ export default class HarmonyGennyTool extends Component {
 		);
 	}
 
-	/** `<input type="color">` resets itself on a value it cannot parse. */
+	// color input requires hex
 	get pickerValue() {
 		return this.validBase ?? '#000000';
 	}
@@ -232,7 +223,6 @@ export default class HarmonyGennyTool extends Component {
 		});
 	}
 
-	/** Every harmony previewed against the current base, for the bottom table. */
 	get allHarmonies() {
 		return HARMONY_KEYS.map((key) => ({
 			key,
@@ -347,7 +337,6 @@ export default class HarmonyGennyTool extends Component {
 				</div>
 			</div>
 
-			{{! wording carried over from the Next app }}
 			<div class="dt-harmony-desc">
 				<span
 					class="dt-harmony-desc-name"
@@ -543,7 +532,6 @@ export default class HarmonyGennyTool extends Component {
 									></span>
 								{{/each}}
 							</span>
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-harmony-all-info"
 							>

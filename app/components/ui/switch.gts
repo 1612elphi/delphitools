@@ -7,7 +7,7 @@ export interface SwitchSignature {
 	Args: {
 		checked: boolean;
 		onChange: (checked: boolean) => void;
-		/** functional chrome — the control's accessible name */
+		// accessible name
 		label?: string;
 	};
 }
@@ -16,9 +16,7 @@ function toggle(onChange: (checked: boolean) => void, event: Event) {
 	onChange((event.target as HTMLInputElement).checked);
 }
 
-// Native checkbox with switch semantics, styled as the shadcn track + thumb
-// in app.scss (.dt-switch). Not vendored: shadcn-ember's Switch is a Radix
-// port this one native element replaces.
+// native checkbox, styled in app.scss
 const Switch: TOC<SwitchSignature> = <template>
 	<input
 		type="checkbox"

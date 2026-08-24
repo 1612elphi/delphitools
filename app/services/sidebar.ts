@@ -7,13 +7,6 @@ const COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const MOBILE_BREAKPOINT = 768;
 const SHORTCUT = 'b';
 
-/**
- * Sidebar open/collapsed state, replacing shadcn's SidebarProvider context.
- *
- * Two independent states, as in the Next app: on desktop the rail collapses to
- * icons and the choice persists in a cookie; on mobile it is an off-canvas
- * drawer that always starts closed.
- */
 export default class SidebarService extends Service {
 	@tracked open = true;
 	@tracked openMobile = false;
@@ -25,8 +18,7 @@ export default class SidebarService extends Service {
 		super(owner);
 		if (typeof window === 'undefined') return;
 
-		// Anchored to a cookie boundary so a different cookie ending in
-		// "…sidebar_state" cannot satisfy the match. Absent cookie means expanded.
+		// match cookie boundary
 		const stored = new RegExp(
 			`(?:^|;\\s*)${COOKIE}=(true|false)`,
 		).exec(document.cookie);
@@ -64,14 +56,8 @@ export default class SidebarService extends Service {
 		this.openMobile = false;
 	};
 
-	/**
-	 * Crossing the mobile breakpoint. Separate from the listener so the policy is
-	 * reachable without dispatching a MediaQueryList event.
-	 */
 	setMobile = (isMobile: boolean) => {
 		this.isMobile = isMobile;
-		// Growing past the breakpoint with the drawer open would otherwise leave
-		// its full-screen scrim covering the desktop layout.
 		if (!isMobile) this.openMobile = false;
 	};
 

@@ -1,23 +1,12 @@
-// GIF89a: median-cut palette, then LZW as specified in the GIF89a spec,
-// section 22 (Table Based Image Data) and appendix F. The Next app gets both
-// halves from `gifenc`, which is not installed here. encodeGif writes a
-// single frame; AnimatedGifEncoder writes a looping multi-frame stream.
-//
-// ponytail: one frame, no dithering, no interlacing, and the palette is a plain
-// median cut rather than gifenc's. A photo at 256 colours looks like a photo at
-// 256 colours; banding on a smooth gradient is the visible ceiling, and
-// Floyd-Steinberg over `indices` is where that would be fixed.
-
 export type GifQuantisation = 'rgb565' | 'rgb444' | 'rgba4444';
 
-/** Channel masks per mode, matching the precision each name claims. */
 const MASKS: Record<GifQuantisation, [number, number, number]> = {
 	rgb565: [0xf8, 0xfc, 0xf8],
 	rgb444: [0xf0, 0xf0, 0xf0],
 	rgba4444: [0xf0, 0xf0, 0xf0],
 };
 
-/** GIF alpha is one bit. Anything below this becomes the transparent index. */
+/** gif alpha is binary */
 const ALPHA_CUTOFF = 128;
 
 const MAX_CODE = 4096;
@@ -29,7 +18,6 @@ interface Bucket {
 	count: number;
 }
 
-/** A growable byte sink; the LZW stream is not sized until it is written. */
 class Bytes {
 	#buf = new Uint8Array(4096);
 	#len = 0;
@@ -63,7 +51,6 @@ function channel(bucket: Bucket, axis: number): number {
 	return axis === 0 ? bucket.r : axis === 1 ? bucket.g : bucket.b;
 }
 
-/** The axis with the widest spread, and that spread. */
 function widestAxis(box: Bucket[]): [number, number] {
 	let axis = 0;
 	let widest = 0;
@@ -83,10 +70,6 @@ function widestAxis(box: Bucket[]): [number, number] {
 	return [axis, widest];
 }
 
-/**
- * Repeatedly split the box with the widest colour spread at its pixel-count
- * median, until there are `target` boxes or nothing left worth splitting.
- */
 function medianCut(buckets: Bucket[], target: number): Bucket[][] {
 	const boxes: Bucket[][] = [buckets];
 
@@ -201,8 +184,7 @@ function quantise(
 	const transparentIndex = anyTransparent ? boxes.length : null;
 	const needed = boxes.length + (anyTransparent ? 1 : 0);
 
-	// The colour table field encodes 2^(N+1) entries, and the LZW minimum code
-	// size must be at least 2, so the smallest usable table is four.
+	// lzw needs four entries
 	let tableSize = 4;
 	while (tableSize < needed) tableSize *= 2;
 
@@ -223,7 +205,6 @@ function quantise(
 	return { palette, indices, transparentIndex, tableSize };
 }
 
-/** Variable-width LZW, codes packed least-significant bit first. */
 function lzw(
 	indices: Uint8Array,
 	minCodeSize: number,
@@ -285,7 +266,7 @@ function writePalette(out: Bytes, palette: number[], tableSize: number) {
 	for (let i = palette.length; i < tableSize * 3; i++) out.push(0);
 }
 
-/** LZW minimum code size, then the compressed stream in ≤255-byte sub-blocks. */
+// gif data sub-blocks
 function writePixelData(out: Bytes, indices: Uint8Array, tableSize: number) {
 	const minCodeSize = Math.log2(tableSize);
 	out.push(minCodeSize);
@@ -313,7 +294,7 @@ export function encodeGif(
 	);
 
 	const out = new Bytes();
-	out.pushAll([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]); // "GIF89a"
+	out.pushAll([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]); // gif89a header
 
 	const sizeField = Math.log2(tableSize) - 1;
 	out.pushAll([
@@ -321,9 +302,9 @@ export function encodeGif(
 		width >> 8,
 		height & 0xff,
 		height >> 8,
-		0x80 | (7 << 4) | sizeField, // global colour table, 8-bit source
+		0x80 | (7 << 4) | sizeField, // global colour table
 		0, // background index
-		0, // no pixel aspect ratio
+		0, // default aspect ratio
 	]);
 
 	writePalette(out, palette, tableSize);
@@ -346,25 +327,20 @@ export function encodeGif(
 		0,
 		0,
 		0,
-		0, // image position
+		0, // image origin
 		width & 0xff,
 		width >> 8,
 		height & 0xff,
 		height >> 8,
-		0, // no local colour table, not interlaced
+		0, // no local table
 	]);
 
 	writePixelData(out, indices, tableSize);
-	out.push(0x3b); // trailer
+	out.push(0x3b); // gif trailer
 
 	return out.bytes;
 }
 
-/**
- * Multi-frame GIF89a: no global colour table, one median-cut local table per
- * frame, NETSCAPE2.0 infinite loop. Frames are quantised and written as they
- * arrive, so the caller never holds more than one frame of RGBA.
- */
 export class AnimatedGifEncoder {
 	#out = new Bytes();
 	#width: number;
@@ -386,18 +362,18 @@ export class AnimatedGifEncoder {
 		);
 		this.#mode = mode;
 
-		this.#out.pushAll([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]); // "GIF89a"
+		this.#out.pushAll([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]); // gif89a header
 		this.#out.pushAll([
 			width & 0xff,
 			width >> 8,
 			height & 0xff,
 			height >> 8,
-			7 << 4, // no global colour table, 8-bit source
+			7 << 4, // no global table
 			0, // background index
-			0, // no pixel aspect ratio
+			0, // default aspect ratio
 		]);
 
-		// NETSCAPE2.0 application extension: loop count 0 = forever.
+		// infinite loop extension
 		this.#out.pushAll([0x21, 0xff, 0x0b]);
 		this.#out.pushAll(
 			[...'NETSCAPE2.0'].map((c) => c.charCodeAt(0)),
@@ -414,8 +390,7 @@ export class AnimatedGifEncoder {
 				this.#mode,
 			);
 
-		// Browsers snap a 0–1cs delay up to 10cs, so 2cs (50 fps) is the
-		// fastest delay that plays as written.
+		// browsers clamp sub-20ms delays
 		const delay = Math.max(2, Math.round(delayMs / 10));
 		const disposal = transparentIndex === null ? 1 : 2;
 		this.#out.pushAll([
@@ -434,19 +409,19 @@ export class AnimatedGifEncoder {
 			0,
 			0,
 			0,
-			0, // image position
+			0, // image origin
 			this.#width & 0xff,
 			this.#width >> 8,
 			this.#height & 0xff,
 			this.#height >> 8,
-			0x80 | (Math.log2(tableSize) - 1), // local table, not interlaced
+			0x80 | (Math.log2(tableSize) - 1), // local table, no interlace
 		]);
 		writePalette(this.#out, palette, tableSize);
 		writePixelData(this.#out, indices, tableSize);
 	}
 
 	finish(): Uint8Array<ArrayBuffer> {
-		this.#out.push(0x3b); // trailer
+		this.#out.push(0x3b); // gif trailer
 		return this.#out.bytes;
 	}
 }

@@ -51,7 +51,6 @@ export default class HttpStatusTool extends Component {
 		}));
 	}
 
-	// Static data — computed once, not per render.
 	classCounts = STATUS_CLASSES.map((info: StatusClassInfo) => ({
 		info,
 		count: HTTP_STATUSES.filter(

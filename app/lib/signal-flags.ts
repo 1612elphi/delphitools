@@ -1,11 +1,3 @@
-/**
- * Per-letter chart data for the NATO Phonetic tool: the ICS maritime signal
- * flag as inline SVG and the flag-semaphore arm positions. Flag geometry
- * follows the blazons in Wikipedia, "International maritime signal flags"
- * (e.g. M "azure, a saltire argent"); semaphore angles are the standard
- * chart as the receiver sees it, in 45° steps clockwise from straight down.
- */
-
 const COLOURS = {
 	r: '#cc2b37',
 	b: '#1f3a93',
@@ -35,7 +27,6 @@ const stroke = (
 ): string =>
 	`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${COLOURS[f]}" stroke-width="${width}"/>`;
 
-/** An upright cross (R, X) or a saltire (M, V) through the whole flag. */
 const cross = (f: Fill, width: number): string =>
 	stroke(f, width, W / 2, 0, W / 2, H) +
 	stroke(f, width, 0, H / 2, W, H / 2);
@@ -61,7 +52,6 @@ function checker(cols: number, rows: number, a: Fill, b: Fill): string {
 	return out;
 }
 
-/** Bendy sinister of ten (Y): stripes rotated to the fly-up diagonal, clipped. */
 function bendySinister(a: Fill, b: Fill): string {
 	const angle = (-Math.atan2(H, W) * 180) / Math.PI;
 	let stripes = '';
@@ -83,7 +73,6 @@ function flag(shapes: string, outline = RECTANGLE): Flag {
 }
 
 const FLAGS: Record<string, Flag> = {
-	// Alfa: swallowtailed, per pale argent and azure
 	A: flag(
 		rect(0, 0, W / 2, H, 'w') +
 			poly(
@@ -101,24 +90,18 @@ const FLAGS: Record<string, Flag> = {
 			),
 		SWALLOWTAIL,
 	),
-	// Bravo: swallowtailed, gules
 	B: flag(poly('r', 0, 0, W, 0, W - 25, H / 2, W, H, 0, H), SWALLOWTAIL),
-	// Charlie: azure, a fess gules fimbriated argent
 	C: flag(
 		rect(0, 0, W, H, 'b') +
 			rect(0, H * 0.2, W, H * 0.6, 'w') +
 			rect(0, H * 0.4, W, H * 0.2, 'r'),
 	),
-	// Delta: or, a Spanish fess azure
 	D: flag(rect(0, 0, W, H, 'y') + rect(0, H / 4, W, H / 2, 'b')),
-	// Echo: per fess azure and gules
 	E: flag(rect(0, 0, W, H / 2, 'b') + rect(0, H / 2, W, H / 2, 'r')),
-	// Foxtrot: argent, a lozenge throughout gules
 	F: flag(
 		rect(0, 0, W, H, 'w') +
 			poly('r', W / 2, 0, W, H / 2, W / 2, H, 0, H / 2),
 	),
-	// Golf: paly of six or and azure
 	G: flag(
 		[0, 1, 2, 3, 4, 5]
 			.map((i) =>
@@ -132,58 +115,39 @@ const FLAGS: Record<string, Flag> = {
 			)
 			.join(''),
 	),
-	// Hotel: per pale argent and gules
 	H: flag(rect(0, 0, W / 2, H, 'w') + rect(W / 2, 0, W / 2, H, 'r')),
-	// India: or, a pellet
 	I: flag(
 		rect(0, 0, W, H, 'y') +
 			`<circle cx="${W / 2}" cy="${H / 2}" r="21" fill="${COLOURS.k}"/>`,
 	),
-	// Juliett: azure, a fess argent
 	J: flag(
 		rect(0, 0, W, H / 3, 'b') +
 			rect(0, H / 3, W, H / 3, 'w') +
 			rect(0, (2 * H) / 3, W, H / 3, 'b'),
 	),
-	// Kilo: per pale or and azure
 	K: flag(rect(0, 0, W / 2, H, 'y') + rect(W / 2, 0, W / 2, H, 'b')),
-	// Lima: quarterly or and sable
 	L: flag(checker(2, 2, 'y', 'k')),
-	// Mike: azure, a saltire argent
 	M: flag(rect(0, 0, W, H, 'b') + saltire('w', 18)),
-	// November: chequy of sixteen azure and argent
 	N: flag(checker(4, 4, 'b', 'w')),
-	// Oscar: per bend gules and or
 	O: flag(poly('y', 0, 0, W, H, 0, H) + poly('r', 0, 0, W, 0, W, H)),
-	// Papa: azure, an inescutcheon argent
 	P: flag(rect(0, 0, W, H, 'b') + rect(W / 4, H / 4, W / 2, H / 2, 'w')),
-	// Quebec: or
 	Q: flag(rect(0, 0, W, H, 'y')),
-	// Romeo: gules, a cross or
 	R: flag(rect(0, 0, W, H, 'r') + cross('y', 18)),
-	// Sierra: argent, an inescutcheon azure
 	S: flag(rect(0, 0, W, H, 'w') + rect(W / 4, H / 4, W / 2, H / 2, 'b')),
-	// Tango: tierced in pale gules, argent and azure
 	T: flag(
 		rect(0, 0, W / 3, H, 'r') +
 			rect(W / 3, 0, W / 3, H, 'w') +
 			rect((2 * W) / 3, 0, W / 3, H, 'b'),
 	),
-	// Uniform: quarterly gules and argent
 	U: flag(checker(2, 2, 'r', 'w')),
-	// Victor: argent, a saltire gules
 	V: flag(rect(0, 0, W, H, 'w') + saltire('r', 18)),
-	// Whiskey: azure, an inescutcheon gules fimbriated argent
 	W: flag(
 		rect(0, 0, W, H, 'b') +
 			rect(W / 6, H / 6, (2 * W) / 3, (2 * H) / 3, 'w') +
 			rect(W / 3, H / 3, W / 3, H / 3, 'r'),
 	),
-	// Xray: argent, a cross azure
 	X: flag(rect(0, 0, W, H, 'w') + cross('b', 18)),
-	// Yankee: bendy sinister of ten or and gules
 	Y: flag(bendySinister('y', 'r')),
-	// Zulu: per saltire or, sable, gules and azure
 	Z: flag(
 		poly('y', 0, 0, W, 0, W / 2, H / 2) +
 			poly('k', 0, 0, W / 2, H / 2, 0, H) +
@@ -192,7 +156,6 @@ const FLAGS: Record<string, Flag> = {
 	),
 };
 
-/** The whole flag as an inline SVG string, hairlined by its own outline. */
 export function flagSvg(letter: string): string {
 	const spec = FLAGS[letter.toUpperCase()];
 	if (!spec) return '';
@@ -204,12 +167,7 @@ export function flagSvg(letter: string): string {
 	);
 }
 
-/**
- * Both arm directions per letter, degrees clockwise from straight down as
- * the receiver sees them. A–G raise one arm through the seven positions;
- * the rest pair two positions (J and V swap places in the pairing so that
- * H–Z stay alphabetical on the chart).
- */
+/** angles face receiver */
 export const SEMAPHORE: Record<string, [number, number]> = {
 	A: [45, 0],
 	B: [90, 0],
@@ -239,7 +197,6 @@ export const SEMAPHORE: Record<string, [number, number]> = {
 	Z: [270, 315],
 };
 
-/** The semaphore signal as a circle with two arms, like the wall charts. */
 export function semaphoreSvg(letter: string): string {
 	const angles = SEMAPHORE[letter.toUpperCase()];
 	if (!angles) return '';

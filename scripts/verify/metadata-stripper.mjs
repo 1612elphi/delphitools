@@ -1,19 +1,8 @@
-// Metadata Stripper against a real JPEG with synthetic EXIF.
-//
-// The fixture is encoded in-page (canvas → JPEG, so it genuinely decodes),
-// then has an APP1 EXIF segment with known fields spliced in after the SOI —
-// same TIFF layout as tests/unit/lib/metadata-test.ts (TestCam / Model X,
-// 51.5° N 0.126667° E at 100 m), plus an ICC APP2 for the keep/drop toggle.
-// The download is captured by patching URL.createObjectURL, and the cleaned
-// bytes are decoded again to prove the pixels survived.
-
-// Usage: npm start, then node scripts/verify/metadata-stripper.mjs
 
 import { launch, visit, check, finish } from './harness.mjs';
 
 const { browser, page } = await launch();
 
-/** Encodes a 64×64 JPEG in-page, splices EXIF + ICC in, drops the File. */
 async function dropTaggedJpeg(selector) {
 	await page.evaluate(async (sel) => {
 		const u16 = (n) => [n & 0xff, n >> 8];
@@ -107,7 +96,6 @@ async function dropTaggedJpeg(selector) {
 	}, selector);
 }
 
-/** Captures the next blob passed to URL.createObjectURL. */
 async function armDownloadCapture() {
 	await page.evaluate(() => {
 		const original = URL.createObjectURL.bind(URL);
@@ -120,8 +108,7 @@ async function armDownloadCapture() {
 }
 
 await visit(page, '/tools/metadata-stripper');
-// The download click would otherwise start a real download that hangs
-// browser.close(); the blob is captured via createObjectURL instead.
+// real download hangs browser.close()
 const cdp = await page.createCDPSession();
 await cdp.send('Browser.setDownloadBehavior', { behavior: 'deny' });
 await dropTaggedJpeg('.dt-strip-frame');
@@ -208,7 +195,6 @@ check(
 check('camera string is gone from the output', !cleaned.hasCam);
 check('ICC kept by default', cleaned.hasIcc);
 
-// Toggle "Keep ICC" off: the profile is dropped too.
 await page.click('.dt-strip-switch');
 await page.waitForFunction(
 	() =>

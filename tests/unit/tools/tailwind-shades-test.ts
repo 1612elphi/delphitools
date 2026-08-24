@@ -30,8 +30,7 @@ module('Unit | Tool | tailwind-shades', function () {
 		}
 	});
 
-	// The ramp's lightness is the scale's, not the base colour's, so 50 is
-	// always the lightest end and 950 the darkest whatever goes in.
+	// lightness comes from scale
 	test('lightness falls monotonically from 50 to 950', function (assert) {
 		for (const mode of GENERATION_MODES) {
 			const shades = generateShades(BASE, mode.value)!;
@@ -70,11 +69,7 @@ module('Unit | Tool | tailwind-shades', function () {
 		);
 	});
 
-	// The bug this replaced: 50 and 100 shared one chroma multiplier and 200
-	// took the next one up, so 100 held a third of its neighbour's chroma and
-	// came out grey between two tinted swatches. Saturation is the fraction of
-	// the chroma sRGB can hold at that lightness, which is what the eye reads;
-	// a fixed chroma across the ramp is not flat in these terms.
+	// chroma not perceptually flat
 	test('saturation rises to the middle of the ramp and falls away again', function (assert) {
 		for (const mode of GENERATION_MODES) {
 			for (const base of [
@@ -107,7 +102,7 @@ module('Unit | Tool | tailwind-shades', function () {
 					),
 					where,
 				);
-				// The old ramp's worst step was 0.53, between 50 and 100.
+				// old ramp worst step 0.53
 				assert.true(
 					Math.max(...steps.map(Math.abs)) < 0.25,
 					where,
@@ -129,8 +124,7 @@ module('Unit | Tool | tailwind-shades', function () {
 						) +
 							1e-6,
 				),
-				// The oklch() CSS block is written from these numbers, so an
-				// out-of-gamut one renders a different colour than the hex block.
+				// feeds oklch css block
 				`${mode.value}: ${shades.map((s) => s.oklch[1].toFixed(3)).join(' ')}`,
 			);
 		}

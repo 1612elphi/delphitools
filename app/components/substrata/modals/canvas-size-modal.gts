@@ -22,20 +22,6 @@ import { closeModal } from 'delphitools-v2/lib/substrata/modal';
 import { DEFAULT_ARTBOARD } from 'delphitools-v2/lib/substrata/doc-model';
 import { viewport } from 'delphitools-v2/lib/substrata/viewport';
 
-/**
- * Canvas size modal (blocking, §7) — edits the document artboard. Reads the
- * current artboard once to seed a LOCAL DRAFT; editing only touches the draft.
- * Apply commits the draft through `setArtboard` (a single undoable step) then
- * closes; Cancel discards it. The modal is remounted per open (ModalHost
- * renders it conditionally), so a constructor seed is the right shape — no
- * need to resync on later doc changes.
- *
- * Field labels + preset dimensions are functional chrome / data, not authored
- * copy. British spelling in our own identifiers ("colour").
- */
-
-/** Common canvas sizes, shown as DIMENSION labels (data). First is the
- *  default. */
 const PRESETS: { w: number; h: number }[] = [
 	{ w: 2000, h: 1500 },
 	{ w: 1080, h: 1080 },
@@ -45,7 +31,6 @@ const PRESETS: { w: number; h: number }[] = [
 	{ w: 1600, h: 900 },
 ];
 
-/** Greatest common divisor for the aspect-ratio readout. */
 function gcd(a: number, b: number): number {
 	return b === 0 ? a : gcd(b, a % b);
 }
@@ -60,8 +45,7 @@ interface NumberFieldSignature {
 	};
 }
 
-/** A flush, labelled numeric cell (draft-as-string; parsed/clamped on Apply).
- *  Wrapped in <label> so the visible label is the accessible name. */
+/** label provides accessible name */
 class NumberField extends Component<NumberFieldSignature> {
 	onInput = (event: Event) => {
 		this.args.onChange(
@@ -112,11 +96,7 @@ export default class CanvasSizeModal extends Component<CanvasSizeModalSignature>
 	@tracked colour =
 		normalizeHex(this.seedArtboard.background ?? '') ?? '#ffffff';
 	@tracked transparent = this.seedArtboard.background === null;
-	// Magic resize (M7-8/9): reflow layers with the artboard. Off by default —
-	// a plain canvas-size edit stays a plain canvas-size edit.
 	@tracked reflow = false;
-	// "new" mode is TWO steps (Ruby 2026-07-12): a chooser — upload an image
-	// or create an empty scene — then the size form for the blank path only.
 	@tracked step: 'choose' | 'size' =
 		this.mode === 'new' ? 'choose' : 'size';
 
@@ -129,9 +109,6 @@ export default class CanvasSizeModal extends Component<CanvasSizeModalSignature>
 		};
 	});
 
-	// "new" mode's second door: a scene built FROM an image — artboard sized
-	// to the picture, the file imported as its first layer (placeOnArtboard
-	// lands it full-bleed; a GPU-clamped decode scales to fit the same frame).
 	fromImage = async (file: File) => {
 		let w = DEFAULT_ARTBOARD.width;
 		let h = DEFAULT_ARTBOARD.height;
@@ -141,7 +118,7 @@ export default class CanvasSizeModal extends Component<CanvasSizeModalSignature>
 			h = bmp.height;
 			bmp.close();
 		} catch {
-			return; // undecodable file — leave the dialog open
+			return;
 		}
 		createScene({ ...DEFAULT_ARTBOARD, width: w, height: h });
 		await importImageFile(file);
@@ -172,7 +149,6 @@ export default class CanvasSizeModal extends Component<CanvasSizeModalSignature>
 		this.resolution = next;
 	};
 
-	// Picking any colour implies an opaque background.
 	pickColour = (hex: string) => {
 		this.colour = hex;
 		this.transparent = false;
@@ -208,8 +184,6 @@ export default class CanvasSizeModal extends Component<CanvasSizeModalSignature>
 			this.hNum >= 1
 		);
 	}
-	// Live readout (data): parse the draft; only valid, ≥1 integers get an
-	// aspect.
 	get readout() {
 		if (!this.dimsValid) return '—';
 		const g = gcd(this.wNum, this.hNum);
@@ -221,8 +195,7 @@ export default class CanvasSizeModal extends Component<CanvasSizeModalSignature>
 	}
 
 	cancel = () => {
-		// new mode: Cancel steps back to the two-door chooser; only
-		// dialog-level dismissal (Esc/X) falls back via ensureScene
+		// cancel returns to chooser
 		if (this.mode === 'new') this.step = 'choose';
 		else closeModal();
 	};
@@ -255,14 +228,11 @@ export default class CanvasSizeModal extends Component<CanvasSizeModalSignature>
 		};
 		const ab = getSnapshot()?.artboard ?? DEFAULT_ARTBOARD;
 		if (this.mode === 'new') {
-			// bitDepth/colourMode ride the defaults — the dialog only drafts
-			// dims + background
-			createScene({ ...DEFAULT_ARTBOARD, ...artboard }); // fresh doc, history reset
+			createScene({ ...DEFAULT_ARTBOARD, ...artboard });
 			viewport.fit();
 		} else if (this.reflow && (w !== ab.width || h !== ab.height)) {
-			// one undoable step: artboard + layer reflow
 			resizeArtboardReflow(artboard);
-			// aspect jumps reframe — the reconciler never refits itself
+			// reframe after aspect change
 			viewport.fit();
 		} else {
 			setArtboard(artboard);
@@ -274,7 +244,6 @@ export default class CanvasSizeModal extends Component<CanvasSizeModalSignature>
 		<div class="sub-modal-frame sub-csm">
 			<div class="sub-modal-header">
 				<h2 class="sub-modal-title">
-					{{! "New scene" reuses the Scene-menu item's shipped label }}
 					{{if
 						(eq this.mode "new")
 						"New scene"
@@ -284,8 +253,6 @@ export default class CanvasSizeModal extends Component<CanvasSizeModalSignature>
 			</div>
 
 			{{#if (eq this.step "choose")}}
-				{{! Step 1 (new mode only): the two-door chooser — labels +
-					"or" are Ruby's wording verbatim. }}
 				<div class="sub-csm-choose">
 					<input
 						type="file"
@@ -328,7 +295,6 @@ export default class CanvasSizeModal extends Component<CanvasSizeModalSignature>
 				</div>
 			{{else}}
 				<div class="sub-csm-body">
-					{{! Presets — dimension labels are data, not copy. }}
 					<section class="sub-csm-section">
 						<div
 							class="sub-csm-heading"
@@ -365,8 +331,6 @@ export default class CanvasSizeModal extends Component<CanvasSizeModalSignature>
 						</div>
 					</section>
 
-					{{! Dimensions — Width | Height, then Resolution across
-						both cells. }}
 					<section class="sub-csm-section">
 						<div
 							class="segmented sub-csm-dims"
@@ -396,10 +360,6 @@ export default class CanvasSizeModal extends Component<CanvasSizeModalSignature>
 						>{{this.readout}}</div>
 					</section>
 
-					{{! Magic resize (M7): when on, Apply re-anchors +
-						proportionally scales every layer with the artboard
-						(anchor+proportional, ratified). Hidden in "new" mode —
-						a fresh scene has no layers to reflow. }}
 					{{#unless (eq this.mode "new")}}
 						<section class="sub-csm-reflow">
 							<span
@@ -413,8 +373,6 @@ export default class CanvasSizeModal extends Component<CanvasSizeModalSignature>
 						</section>
 					{{/unless}}
 
-					{{! Background — swatch + hex, plus a Transparent toggle
-						(→ background null). }}
 					<section class="sub-csm-section">
 						<div
 							class="sub-csm-heading"
@@ -464,9 +422,6 @@ export default class CanvasSizeModal extends Component<CanvasSizeModalSignature>
 					</section>
 				</div>
 
-				{{! Footer — flush bar closed off by a 2px major divider
-					(§5/§9). The primary Apply dominates the width; Cancel
-					discards and closes. }}
 				<div class="sub-modal-footer">
 					<button
 						type="button"

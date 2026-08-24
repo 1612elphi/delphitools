@@ -23,19 +23,10 @@ interface Step {
 
 const FLIGHT_MS = 520;
 const LANDING_MS = 160;
-/** how far above the slot the arc's control point sits, px */
 const ARC_RISE = 72;
 const ARC_SAMPLES = 24;
-/** fraction of the flight after which the page starts to move */
 const LIFT_OFF = 0.25;
 
-/**
- * A disc lifts off the clicked control and flies a quadratic arc into the
- * Next slot (the arc sampled into translate keyframes; the animation's
- * easing shapes the speed), which pulses when it lands. Resolves when the
- * landing is done; nothing happens without an origin or under reduced
- * motion.
- */
 async function flyTo(
 	origin: DOMRect | null,
 	target: HTMLElement,
@@ -84,11 +75,6 @@ async function flyTo(
 		.finished.catch(() => undefined);
 }
 
-/**
- * The Flow State bar under the header: one tile per step, the current step's
- * captures (each a save button), Next or the finale's save button, and exit.
- * Renders nothing outside a workflow.
- */
 export default class FlowState extends Component {
 	@service declare flow: FlowService;
 
@@ -108,19 +94,17 @@ export default class FlowState extends Component {
 		}));
 	}
 
-	/** Next stays muted until the disc lands on it */
 	get nextEnabled() {
 		return this.flow.canAdvance && !this.flow.landing;
 	}
 
-	/** the Next/Done slot is where captures land */
 	slot = modifier((element: HTMLElement) => {
 		this.flow.captureListener = (origin) => {
 			this.flow.landing = true;
 			const flight = flyTo(origin, element).finally(() => {
 				this.flow.landing = false;
 			});
-			// the page moves on once the disc has clearly left
+			// advance after lift-off
 			const committed = new Promise<void>((resolve) =>
 				setTimeout(resolve, FLIGHT_MS * LIFT_OFF),
 			);
@@ -135,7 +119,6 @@ export default class FlowState extends Component {
 
 	next = () => void this.flow.advance();
 
-	/** captures are gone with the flow; a stray click must not take them */
 	exit = () => {
 		if (
 			this.flow.files.length === 0 ||
@@ -144,7 +127,7 @@ export default class FlowState extends Component {
 			void this.flow.exit();
 	};
 
-	/** the finale's one button takes focus from the tool it covers */
+	// final button overlaps tool
 	focus = modifier((element: HTMLElement) => {
 		element.focus();
 	});

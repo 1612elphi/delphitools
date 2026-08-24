@@ -10,15 +10,14 @@ import { seekTo, VideoIntake } from 'delphitools-v2/lib/video';
 import { VIDEO_ACCEPT, acceptAttr } from 'delphitools-v2/lib/tools';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 
-/** Kept in step with the registry entry, which routes dropped files. */
+// mirrors registry drop routing
 const ACCEPT = acceptAttr(VIDEO_ACCEPT);
 
 const TOO_MANY_FRAMES =
 	'Over 300 frames. Please lower the fps or shorten the range';
 const DROP_TITLE = 'Drop a video here or click to upload';
 
-// Frame cap: 300 frames at 480 px is already a ~150 MB decode pass and a
-// GIF nobody should ship.
+// ~150 MB decode at cap
 const MAX_FRAMES = 300;
 const DEFAULT_RANGE_S = 5;
 
@@ -120,8 +119,7 @@ export default class VideoToGifTool extends Component {
 			);
 	};
 
-	// intake.drop cannot see busy, and a drop mid-encode would tear the
-	// video out from under the seek loop.
+	// mid-encode drop breaks seek loop
 	handleDrop = (event: DragEvent) => {
 		event.preventDefault();
 		if (!this.busy) this.intake.drop(event);
@@ -334,7 +332,6 @@ export default class VideoToGifTool extends Component {
 					</div>
 
 					<div class="dt-vg-stage">
-						{{! user-supplied video; there is no caption track to offer }}
 						{{! template-lint-disable require-media-caption }}
 						<video
 							src={{this.intake.url}}

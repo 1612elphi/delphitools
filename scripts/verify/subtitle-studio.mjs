@@ -1,8 +1,4 @@
-// Exercises Subtitle Studio end to end with a video generated in the page
-// (canvas.captureStream + MediaRecorder, two seconds), an SRT dropped on the
-// frame, and a real burn through MediaRecorder.
-//
-// Usage: npm start, then node scripts/verify/subtitle-studio.mjs
+// usage: npm start, then node scripts/verify/subtitle-studio.mjs
 
 import {
 	launch,
@@ -109,7 +105,6 @@ check(
 	formats.join(' '),
 );
 await page.select('.dt-ss-format', 'h264');
-// Capture the result blob as it is handed to createObjectURL.
 await captureObjectUrl(page);
 
 await page.click('.dt-ss-go');
@@ -149,7 +144,7 @@ const burned = await page.evaluate(async () => {
 	canvas.height = video.videoHeight;
 	const ctx = canvas.getContext('2d');
 	ctx.drawImage(video, 0, 0);
-	// The sweep is saturated colour; white text pixels sit in the bottom band.
+	// saturated sweep; white subtitle band
 	const band = ctx.getImageData(0, Math.round(canvas.height * 0.8), canvas.width, Math.round(canvas.height * 0.2)).data;
 	let white = 0;
 	for (let i = 0; i < band.length; i += 4)

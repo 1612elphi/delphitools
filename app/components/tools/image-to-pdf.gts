@@ -38,7 +38,6 @@ const FIT_MODES: { value: FitMode; label: string }[] = [
 ];
 const MARGINS_MM = [0, 5, 10, 20];
 
-/** Render scales for PDF → PNG, labelled by their effective resolution. */
 const SCALES: { value: number; label: string }[] = [
 	{ value: 1, label: '72 DPI' },
 	{ value: 2, label: '144 DPI' },
@@ -82,7 +81,6 @@ function loadImageSize(
 	});
 }
 
-/** Non-png/jpeg formats are rasterised once so pdf-lib can embed them. */
 async function pngBytes(file: File): Promise<ArrayBuffer> {
 	const bitmap = await createImageBitmap(file);
 	const canvas = document.createElement('canvas');
@@ -105,7 +103,6 @@ async function pngBytes(file: File): Promise<ArrayBuffer> {
 export default class ImageToPdfTool extends Component {
 	@tracked direction: Direction = 'to-pdf';
 
-	// Images → PDF
 	@tracked images: QueuedImage[] = [];
 	@tracked pageSizeId = 'a4';
 	@tracked orientation: PageOrientation = 'auto';
@@ -113,7 +110,6 @@ export default class ImageToPdfTool extends Component {
 	@tracked marginMm = 0;
 	@tracked building = false;
 
-	// PDF → PNG
 	@tracked pdfName: string | null = null;
 	@tracked pdfBytes: ArrayBuffer | null = null;
 	@tracked renders: RenderedPage[] = [];
@@ -124,7 +120,7 @@ export default class ImageToPdfTool extends Component {
 	@tracked draggedId: number | null = null;
 	@tracked dragOverId: number | null = null;
 
-	// Bumped per render run, so a stale loop from a replaced PDF stops early.
+	// cancel stale renders
 	#renderRun = 0;
 
 	willDestroy() {
@@ -169,8 +165,6 @@ export default class ImageToPdfTool extends Component {
 		this.error = null;
 	};
 
-	// ------------------------------------------------------ images → pdf
-
 	readImage = (file: File) => this.#addImages([file]);
 
 	chooseImages = (event: Event) => {
@@ -184,7 +178,7 @@ export default class ImageToPdfTool extends Component {
 		this.#addImages([...(event.dataTransfer?.files ?? [])]);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// prevent file navigation
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -233,8 +227,6 @@ export default class ImageToPdfTool extends Component {
 		this.error = null;
 	};
 
-	// ------------------------------------------------------ drag reorder
-
 	dragStart = (id: number, event: DragEvent) => {
 		this.draggedId = id;
 		if (event.dataTransfer) {
@@ -261,7 +253,6 @@ export default class ImageToPdfTool extends Component {
 		event.preventDefault();
 		this.dragOverId = null;
 
-		// A file dropped on the grid is intake, not a reorder.
 		if (event.dataTransfer?.files.length) {
 			this.draggedId = null;
 			this.#addImages([...event.dataTransfer.files]);
@@ -280,8 +271,6 @@ export default class ImageToPdfTool extends Component {
 		next.splice(to, 0, moved!);
 		this.images = next;
 	};
-
-	// ------------------------------------------------------------ build
 
 	setPageSize = (event: Event) =>
 		(this.pageSizeId = (event.target as HTMLSelectElement).value);
@@ -331,8 +320,6 @@ export default class ImageToPdfTool extends Component {
 
 				const areaW = setup.width - marginPt * 2;
 				const areaH = setup.height - marginPt * 2;
-				// Match-image pages are the image's own size, so contain
-				// lands it back at natural size inside the margin.
 				const mode = this.matchSize
 					? 'contain'
 					: this.fitMode;
@@ -352,8 +339,7 @@ export default class ImageToPdfTool extends Component {
 			}
 
 			if (this.isDestroyed) return;
-			// Copied into a fresh buffer: pdf-lib types its output over
-			// ArrayBufferLike, which BlobPart does not accept.
+			// blobpart requires arraybuffer
 			const bytes = await doc.save();
 			downloadBlob(
 				new Blob([new Uint8Array(bytes)], {
@@ -367,8 +353,6 @@ export default class ImageToPdfTool extends Component {
 			this.building = false;
 		}
 	};
-
-	// ------------------------------------------------------ pdf → png
 
 	choosePdf = (event: Event) => {
 		const input = event.target as HTMLInputElement;
@@ -423,7 +407,7 @@ export default class ImageToPdfTool extends Component {
 		this.#releaseRenders();
 		this.renders = [];
 		try {
-			// A copy: pdf.js detaches the buffer it is handed.
+			// pdf.js detaches buffers
 			const doc = await loadPdfDocument(bytes.slice(0));
 			const base = this.pdfName ?? 'pages';
 			const renders: RenderedPage[] = [];

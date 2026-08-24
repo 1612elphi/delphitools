@@ -24,7 +24,6 @@ interface Size {
 	height: number;
 }
 
-/** Largest box of `aspect` that fits inside the image, in image pixels. */
 export function cropSize(
 	imageWidth: number,
 	imageHeight: number,
@@ -86,7 +85,6 @@ export default class SocialCropperTool extends Component {
 		return `${Math.round(this.cropX)}, ${Math.round(this.cropY)}`;
 	}
 
-	/** The crop frame over the preview, as percentages of the source image. */
 	get frameStyle() {
 		if (!this.imageWidth || !this.imageHeight) return htmlSafe('');
 		const { width, height } = this.crop;
@@ -117,8 +115,7 @@ export default class SocialCropperTool extends Component {
 				this.cropY = 0;
 				this.render();
 			};
-			// The Next version dropped a failed decode on the floor: the drop
-			// zone stayed up with no file name and no reason given.
+			// decode errors must surface
 			image.onerror = this.fail;
 			image.src = dataUrl;
 		};
@@ -130,7 +127,7 @@ export default class SocialCropperTool extends Component {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) this.readFile(file);
-		// Choosing the same file twice must still fire a change event.
+		// rearm for same-file change
 		input.value = '';
 	};
 
@@ -140,7 +137,7 @@ export default class SocialCropperTool extends Component {
 		if (file?.type.startsWith('image/')) this.readFile(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// else browser navigates to file
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -186,8 +183,7 @@ export default class SocialCropperTool extends Component {
 		this.cropY = clamp(y, this.imageHeight - height);
 	}
 
-	// One pointer path instead of the Next app's parallel mouse and touch pairs:
-	// capture keeps the moves coming when the pointer leaves the preview.
+	// pointer path; capture keeps moves outside preview
 	startDrag = (event: PointerEvent) => {
 		const stage = event.currentTarget as HTMLElement;
 		const rect = stage.getBoundingClientRect();
@@ -374,10 +370,10 @@ export default class SocialCropperTool extends Component {
 					>
 						<span class="dt-cropper-label">
 							<Icon @name="move" />
-							{{! wording carried over from the Next app }}
+							{{! wording from next app }}
 							Drag to reposition
 						</span>
-						{{! pointerdown starts a drag here rather than standing in for a click, which is what the rule guards against }}
+						{{! drag, not click }}
 						{{! template-lint-disable no-pointer-down-event-binding }}
 						<div
 							class="dt-cropper-stage
@@ -469,11 +465,11 @@ export default class SocialCropperTool extends Component {
 							}}
 						/>
 						<Icon @name="upload" />
-						{{! wording carried over from the Next app }}
+						{{! wording from next app }}
 						<span
 							class="dt-cropper-drop-title"
 						>Drop image here</span>
-						{{! wording carried over from the Next app }}
+						{{! wording from next app }}
 						<span
 							class="dt-cropper-drop-hint"
 						>PNG, JPG, or any image format,

@@ -321,10 +321,7 @@ class CommandGroup extends Component<CommandGroupSignature> {
 	registerWithCommand = modifier(() => {
 		if (!this.commandContext) return;
 
-		// Captured here rather than re-read in the destructor. Upstream used
-		// `this.commandContext!`, which throws when the whole subtree unmounts
-		// at once — a Command inside a Popover — because the parent Command is
-		// torn down first and the consumed context is already gone.
+		// popover unmount: parent context gone
 		const command = this.commandContext;
 		command.allGroups.push(this.groupContext);
 
@@ -435,9 +432,7 @@ class CommandItem extends Component<CommandItemComponentSignature> {
 			isDisabled: () => this.args.disabled ?? false,
 		};
 
-		// Captured, not re-read in the destructor — same reason as
-		// CommandGroup above: on a whole-subtree unmount the consumed context
-		// is gone by the time this runs.
+		// whole-subtree unmount drops context
 		const group = this.groupContext;
 		group.items.push(item);
 

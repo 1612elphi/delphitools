@@ -18,9 +18,6 @@ import {
 
 type Op = '+' | '-';
 
-// Feedback is microcopy kept to <= 3 words so it is not gap-worthy; the
-// specifics (the legal frame range, the snapped value) render beside it as
-// data, not prose.
 const MESSAGE: Record<ParseError, string | null> = {
 	empty: null,
 	'not-numeric': 'Numbers only',
@@ -67,7 +64,7 @@ export default class TimecodeCalcTool extends Component {
 		if (!a.ok) return null;
 		if (this.bInput.trim() === '') return a.frames;
 		const b = this.#b;
-		if (!b.ok) return a.frames; // a second, invalid operand does not poison A
+		if (!b.ok) return a.frames;
 		return this.op === '+'
 			? a.frames + b.frames
 			: a.frames - b.frames;
@@ -128,8 +125,8 @@ export default class TimecodeCalcTool extends Component {
 		return this.#feedback(this.bInput, this.#b);
 	}
 
-	setRate = (event: Event) => {
-		this.rateId = (event.target as HTMLSelectElement).value;
+	pickRate = (id: string) => {
+		this.rateId = id;
 	};
 
 	setA = (event: Event) => {
@@ -151,32 +148,40 @@ export default class TimecodeCalcTool extends Component {
 	};
 
 	<template>
-		<div class="dt-tc">
-			<div class="dt-tc-rate">
-				<label for="dt-tc-rate">Frame rate</label>
-				<select
-					id="dt-tc-rate"
-					class="dt-tc-select"
-					{{on "change" this.setRate}}
-				>
-					{{#each this.rates key="id" as |r|}}
-						<option
-							value={{r.id}}
-							selected={{eq
-								r.id
-								this.rateId
-							}}
-						>{{r.label}}</option>
-					{{/each}}
-				</select>
+		<div class="dt-tcc">
+			<div
+				class="segmented dt-tcc-rates"
+				role="group"
+				aria-label="Frame rate"
+			>
+				{{#each this.rates key="id" as |r|}}
+					<button
+						type="button"
+						class="dt-tcc-rate
+							{{if
+								(eq
+									r.id
+									this.rateId
+								)
+								'is-active'
+							}}"
+						{{on
+							"click"
+							(fn this.pickRate r.id)
+						}}
+					>{{r.label}}</button>
+				{{/each}}
 			</div>
 
-			<div class="dt-tc-grid">
-				<div class="dt-tc-cell">
-					<label for="dt-tc-a">Timecode A</label>
+			<div class="dt-tcc-strip">
+				<div class="dt-tcc-cell">
+					<label
+						class="dt-tcc-label"
+						for="dt-tcc-a"
+					>Timecode A</label>
 					<input
-						id="dt-tc-a"
-						class="dt-tc-input"
+						id="dt-tcc-a"
+						class="dt-tcc-input"
 						inputmode="numeric"
 						autocomplete="off"
 						spellcheck="false"
@@ -186,7 +191,7 @@ export default class TimecodeCalcTool extends Component {
 					/>
 					{{#if this.aFeedback}}
 						<p
-							class="dt-tc-msg
+							class="dt-tcc-msg
 								{{this.aFeedback.tone}}"
 						>
 							<span
@@ -201,10 +206,10 @@ export default class TimecodeCalcTool extends Component {
 					{{/if}}
 				</div>
 
-				<div class="segmented dt-tc-op">
+				<div class="segmented dt-tcc-op">
 					<button
 						type="button"
-						class="dt-tc-op-cell
+						class="dt-tcc-op-cell
 							{{if
 								(eq this.op '+')
 								'is-active'
@@ -217,7 +222,7 @@ export default class TimecodeCalcTool extends Component {
 					>+</button>
 					<button
 						type="button"
-						class="dt-tc-op-cell
+						class="dt-tcc-op-cell
 							{{if
 								(eq this.op '-')
 								'is-active'
@@ -230,11 +235,14 @@ export default class TimecodeCalcTool extends Component {
 					>−</button>
 				</div>
 
-				<div class="dt-tc-cell">
-					<label for="dt-tc-b">Timecode B</label>
+				<div class="dt-tcc-cell">
+					<label
+						class="dt-tcc-label"
+						for="dt-tcc-b"
+					>Timecode B</label>
 					<input
-						id="dt-tc-b"
-						class="dt-tc-input"
+						id="dt-tcc-b"
+						class="dt-tcc-input"
 						inputmode="numeric"
 						autocomplete="off"
 						spellcheck="false"
@@ -244,7 +252,7 @@ export default class TimecodeCalcTool extends Component {
 					/>
 					{{#if this.bFeedback}}
 						<p
-							class="dt-tc-msg
+							class="dt-tcc-msg
 								{{this.bFeedback.tone}}"
 						>
 							<span
@@ -260,28 +268,28 @@ export default class TimecodeCalcTool extends Component {
 				</div>
 			</div>
 
-			<div class="dt-tc-result">
-				<button
-					type="button"
-					class="dt-tc-tc"
-					aria-label="Copy result"
-					{{on "click" this.copyResult}}
-				>
-					<span>{{this.resultTc}}</span>
-					<Icon @name="copy" />
-				</button>
-				<dl class="dt-tc-readout">
-					<div>
-						<dt>Frames</dt>
-						<dd
-						>{{this.resultFrameLabel}}</dd>
-					</div>
-					<div>
-						<dt>Real time</dt>
-						<dd>{{this.resultClock}}</dd>
-					</div>
-				</dl>
-			</div>
+			<button
+				type="button"
+				class="dt-tcc-result"
+				aria-label="Copy result"
+				{{on "click" this.copyResult}}
+			>
+				<span
+					class="dt-tcc-result-tc"
+				>{{this.resultTc}}</span>
+				<Icon @name="copy" />
+			</button>
+
+			<dl class="dt-tcc-readout">
+				<div class="dt-tcc-readout-cell">
+					<dt>Frames</dt>
+					<dd>{{this.resultFrameLabel}}</dd>
+				</div>
+				<div class="dt-tcc-readout-cell">
+					<dt>Real time</dt>
+					<dd>{{this.resultClock}}</dd>
+				</div>
+			</dl>
 		</div>
 	</template>
 }

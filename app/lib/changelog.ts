@@ -1,16 +1,5 @@
-/**
- * The changelog the "what's new?" popup renders. One entry per release,
- * newest first; the version picker in the popup's title lists them. An
- * entry written as "Name: text" whose Name is a catalogue tool renders
- * with a badge and a link to that tool (the match is on the exact tool
- * name, case-insensitive). Every string in here is user-facing copy: Ruby
- * writes all of it. An empty array renders an empty tab.
- */
-
 export interface Release {
-	/** the version the entry describes */
 	version: string;
-	/** the baseline the changes are counted from ("changes since ...") */
 	since: string;
 	features: string[];
 	fixes: string[];
@@ -21,20 +10,6 @@ export const RELEASES: Release[] = [
 	{
 		version: '2.0.0',
 		since: '1.0',
-		// One plain string per bullet, one bullet per line of the popup;
-		// no markdown, no trailing period convention enforced. Sample
-		// shape only (non-final wording, keep this block commented):
-		//
-		//   features: [
-		//   	'Workflows: chain tools into a sequence and carry your file between steps.',
-		//   	'Auto Subtitle: speech-to-text subtitles generated entirely in your browser.',
-		//   ],
-		//   fixes: [
-		//   	'QR Generator: exported SVGs no longer show hairline seams between modules.',
-		//   ],
-		//   technical: [
-		//   	'The stack moved from Next.js to Ember 7 with Crayon CSS, built by Vite.',
-		//   ],
 		features: [
 			'Rebuilt from the ground up: delphitools is now rebuilt from scratch with Ember 7 and Crayon CSS as the new foundation. Every tool was rebuilt for the new stack!',
 			'The Omnibox: The front page now has one box that answers your queries as you type! Drop a file on it to see what tools accept it, paste a colour code and it gives you conversions right there, decipher text, try conversions and more!',
@@ -44,7 +19,7 @@ export const RELEASES: Release[] = [
 			'Audio Extractor: Drop a video file and get a clean audio track from it, every time!',
 			'Audio Normaliser: Pretend you know what LUFS means when you upload to social media!',
 			'Audio Trimmer: Trim down any audio file In/Out style without getting out the editing workstation!',
-			"Auto Subtitler: Speech to text, in the browser! Uses open-source transcription technologies and your computer's GPU to process on-device using Whisper.",
+			"Auto Subtitle: Speech to text, in the browser! Uses open-source transcription technologies and your computer's GPU to process on-device using Whisper.",
 			'Braille Converter: Convert latin text to Braille clusters and back again!',
 			'Colour Atlas: Learn everything about a colour, its tints, shades, harmonies and so on! Goes great with our other colour tools!',
 			'Cron Builder: Stop memorising arcane incantations and start setting up your Cronjobs with a simple to use interface!',
@@ -73,6 +48,7 @@ export const RELEASES: Release[] = [
 			'Video Altas: Learn everything there is to know about a video file you have! Frame rate, resolution, codec, is Jamie Lee Curtis in it? Spoiler, probably not!',
 			'Video Muter: Mmmmph, mmmm, mmmmph!',
 			'Video to GIF: This one is self explanatory!',
+			'Video Trimmer: Cut your video files, In/Out style!',
 			'Voice Recorder: Record your voice, in the browser and in style!',
 			'Waveform Generator: Make your audio files into visual representations!',
 		],

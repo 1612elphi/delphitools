@@ -18,7 +18,6 @@ import {
 
 type Mode = 'every' | 'value' | 'range' | 'step';
 
-/** The last picks per mode, so toggling Every → Value → Every keeps choices. */
 interface Subs {
 	value: number;
 	lo: number;
@@ -30,9 +29,7 @@ interface FieldRow {
 	kind: FieldKind;
 	rule: FieldRule;
 	label: string;
-	/** raw field text as the user typed it (names kept) */
 	source: string;
-	/** which preset shape the source parses as; null = custom source */
 	mode: Mode | null;
 	parse: FieldParse;
 	error: { text: string; data?: string } | null;
@@ -57,10 +54,6 @@ const DEFAULT_FIELD_TEXTS = ['30', '9', '*', '*', 'MON-FRI'];
 const ARITY_WARNING =
 	'A cron expression has five fields: minute, hour, day, month, weekday';
 
-/**
- * Which preset shape a parse corresponds to. Steps on ranges (`9-17/2`) and
- * lists have no preset buttons; their field stays on the free input.
- */
 function modeOf(parse: FieldParse): Mode | null {
 	if (!parse.ok) return null;
 	switch (parse.shape.kind) {
@@ -78,7 +71,6 @@ function modeOf(parse: FieldParse): Mode | null {
 }
 
 export default class CronBuilderTool extends Component {
-	/** One string per field — the single source of truth. */
 	@tracked fields: Record<FieldKind, string> = {
 		minute: DEFAULT_FIELD_TEXTS[0]!,
 		hour: DEFAULT_FIELD_TEXTS[1]!,
@@ -87,7 +79,6 @@ export default class CronBuilderTool extends Component {
 		dow: DEFAULT_FIELD_TEXTS[4]!,
 	};
 
-	/** Mirrors the field join, except mid-edit in the expression box. */
 	@tracked boxText = DEFAULT_FIELD_TEXTS.join(' ');
 
 	@tracked subs: Record<FieldKind, Subs> = {
@@ -107,8 +98,7 @@ export default class CronBuilderTool extends Component {
 		clearTimeout(this.#copiedTimer);
 	}
 
-	/** Downstream state reads the box so a mid-paste arity error shows
-	 *  instead of last-good rows (cells read fields — see fieldRows). */
+	// preserve invalid input
 	get parsed(): CronParse {
 		return parseCron(this.boxText);
 	}
@@ -117,7 +107,6 @@ export default class CronBuilderTool extends Component {
 		return MODES;
 	}
 
-	/** The expression box diverged from five tokens while typing. */
 	get arityError(): boolean {
 		return (
 			this.boxText.trim().split(/\s+/).filter(Boolean)
@@ -170,7 +159,6 @@ export default class CronBuilderTool extends Component {
 		});
 	}
 
-	/** Broken fields for the error strip, in field order. */
 	get errors(): { label: string; text: string; data?: string }[] {
 		if (this.parsed.ok || this.parsed.fieldCount !== 5) return [];
 		return this.parsed.fields.flatMap((f, i) =>
@@ -192,7 +180,6 @@ export default class CronBuilderTool extends Component {
 		this.boxText = FIELD_RULES.map((rule) => next[rule.kind]).join(
 			' ',
 		);
-		// Pull parsed picks into the mode inputs so box edits reflect there.
 		const subs = { ...this.subs };
 		for (const rule of FIELD_RULES) {
 			const p = parseField(next[rule.kind], rule);
@@ -252,8 +239,7 @@ export default class CronBuilderTool extends Component {
 			10,
 		);
 		if (Number.isNaN(raw)) return;
-		// Steps can never divide by zero; every other pick starts at the field's
-		// own minimum (1 for the month and day-of-month fields).
+		// steps start at one
 		const min = key === 'step' ? 1 : rule.min;
 		const max =
 			key === 'step'
@@ -261,7 +247,6 @@ export default class CronBuilderTool extends Component {
 				: rule.max;
 		const n = Math.min(Math.max(raw, min), max);
 		const s = { ...this.subs[kind], [key]: n };
-		// A range reads lo..hi; crossing silently reverses, so clamp instead.
 		if (key === 'lo' && s.lo > s.hi) s.hi = s.lo;
 		if (key === 'hi' && s.hi < s.lo) s.lo = s.hi;
 		this.subs = { ...this.subs, [kind]: s };

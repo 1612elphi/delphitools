@@ -1,24 +1,13 @@
-// SubRip (.srt) and WebVTT (.vtt) cues, one model for both. WebVTT is
-// W3C "WebVTT: The Web Video Text Tracks Format"; SubRip has no spec, the
-// de-facto shape is index / timing / text blocks separated by blank lines.
-//
-// ponytail: cue text passes through verbatim — no translation between VTT
-// voice/class tags and SRT font tags, no STYLE/REGION support. A tag-mapping
-// table in writeSrt/writeVtt is where that would go.
-
 export interface Cue {
 	/** milliseconds */
 	start: number;
 	/** milliseconds */
 	end: number;
-	/** payload lines joined with \n */
 	text: string;
 }
 
 export type SubtitleFormat = 'srt' | 'vtt';
 
-// Lenient superset of both formats: hours optional (VTT), comma or dot
-// before the milliseconds (SRT uses the comma).
 const TIMESTAMP = /^(?:(\d+):)?(\d{1,2}):(\d{1,2})[.,](\d{1,3})$/;
 
 export function parseTimestamp(value: string): number | null {
@@ -45,22 +34,13 @@ export function formatTimestamp(ms: number, separator: ',' | '.'): string {
 	return `${pad(h, 2)}:${pad(min, 2)}:${pad(s, 2)}${separator}${pad(t % 1000, 3)}`;
 }
 
-/**
- * Labels the input so the converter can pick a default target; parseSubtitles
- * itself reads both formats without being told which one it has.
- */
 export function detectFormat(text: string): SubtitleFormat | null {
 	const t = text.trimStart();
 	if (t.startsWith('WEBVTT')) return 'vtt';
 	return t.includes('-->') ? 'srt' : null;
 }
 
-/**
- * Cues from either format, in file order. Blocks with no timing line (the
- * WEBVTT header, NOTE and STYLE blocks) are skipped; lines before the timing
- * line (SRT index, VTT cue identifier) are dropped; VTT cue settings after
- * the end timestamp are dropped.
- */
+/** skip non-cue blocks */
 export function parseSubtitles(text: string): Cue[] {
 	const blocks = text.replace(/\r\n?/g, '\n').split(/\n{2,}/);
 	const cues: Cue[] = [];
@@ -100,15 +80,14 @@ export function writeSrt(cues: Cue[]): string {
 }
 
 export interface VttOptions {
-	/** `Kind:` header line — captions, subtitles, descriptions, ... */
+	/** vtt kind header */
 	kind?: string;
-	/** `Language:` header line — a BCP 47 tag */
+	/** bcp 47 language */
 	language?: string;
 }
 
 export function writeVtt(cues: Cue[], options: VttOptions = {}): string {
-	// Header metadata sits directly under the signature line, before the
-	// first blank line (WebVTT spec §4.1, "WebVTT file body").
+	// metadata precedes cue blocks
 	let header = 'WEBVTT';
 	if (options.kind?.trim()) header += `\nKind: ${options.kind.trim()}`;
 	if (options.language?.trim())
@@ -127,7 +106,6 @@ export function writeVtt(cues: Cue[], options: VttOptions = {}): string {
 	);
 }
 
-/** Shifted by `deltaMs`, clamped so no cue starts before zero or ends before it starts. */
 export function shiftCues(cues: Cue[], deltaMs: number): Cue[] {
 	return cues.map((cue) => {
 		const start = Math.max(0, cue.start + deltaMs);
@@ -139,7 +117,6 @@ export function shiftCues(cues: Cue[], deltaMs: number): Cue[] {
 	});
 }
 
-/** Timestamps multiplied by `factor` — 25/23.976 stretches film-rate subs to PAL. */
 export function scaleCues(cues: Cue[], factor: number): Cue[] {
 	return cues.map((cue) => ({
 		...cue,

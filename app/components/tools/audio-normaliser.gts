@@ -107,7 +107,7 @@ export default class AudioNormaliserTool extends Component {
 		return `wav · ${formatBytes(this.result.size)} · ${db(this.resultLufs, 'LUFS')}`;
 	}
 
-	// One macrotask, so the bar and rows paint before the O(n) LUFS pass.
+	// defer loudness scan.
 	async #measure(buffer: AudioBuffer) {
 		const token = ++this.#token;
 		await new Promise((resolve) => setTimeout(resolve, 0));
@@ -135,9 +135,7 @@ export default class AudioNormaliserTool extends Component {
 		this.#releaseResult();
 		await new Promise((resolve) => setTimeout(resolve, 0));
 		if (this.isDestroyed || token !== this.#token) return;
-		// One pass: the gain rides inside the WAV writer. The reported loudness
-		// is measured + gain; only the -70 LUFS absolute gate could move it, on
-		// near-silent programme.
+		// skip output lufs scan.
 		const wav = encodeWav(
 			channelsOf(buffer),
 			buffer.sampleRate,
@@ -321,7 +319,6 @@ export default class AudioNormaliserTool extends Component {
 							<span
 								class="dt-an-drop-title"
 							>{{DROP_TITLE}}</span>
-							{{! hint reused verbatim from Background Remover }}
 							<span
 								class="dt-an-drop-hint"
 							>or click to select a
@@ -334,7 +331,7 @@ export default class AudioNormaliserTool extends Component {
 						<span
 							class="dt-an-out-label"
 						>Result</span>
-						{{! the normalised render, so it can be checked by ear }}
+						{{! user media lacks captions }}
 						{{! template-lint-disable require-media-caption }}
 						<audio
 							class="dt-an-player"

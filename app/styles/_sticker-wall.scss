@@ -1,5 +1,3 @@
-/* ── Sticker wall + per-tool sticker ─────────────────────────────────────── */
-
 @use "crayon-config" as crayon;
 
 .dt-sticker-wall {
@@ -117,8 +115,7 @@
 		margin-top: crayon.size(32);
 	}
 
-	/* A tool with no lousy art 404s its image and StickerButton removes
-	   itself; collapse the block too, so no empty margin is left behind. */
+	// collapse when sticker 404s
 	&:not(:has(.dt-sticker-btn)) {
 		display: none;
 	}

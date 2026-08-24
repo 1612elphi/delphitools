@@ -1,11 +1,4 @@
-// Styles for the colour-converter tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Colour converter ────────────────────────────────────────────────────── */
 
 .dt-cc {
 	border: 2px solid var(--border);
@@ -17,7 +10,7 @@
 	border-bottom: 2px solid var(--border);
 }
 
-/* The picker input covers the whole cell so anywhere in the block opens it. */
+// input covers whole cell
 .dt-cc-swatch {
 	position: relative;
 	display: block;
@@ -65,7 +58,7 @@
 	font-weight: crayon.font-weight("bold");
 }
 
-/* The select inside the field is chromeless: the cell is the visible box. */
+// chromeless select, cell is box
 .dt-cc-field .dt-select-trigger {
 	height: crayon.size(7);
 	padding: 0;
@@ -188,7 +181,7 @@
 		font-family: crayon.font-family("mono");
 	}
 
-	/* one column: only the last row loses its rule; two: the last pair does */
+	// last row(s) lose bottom rule
 	&:last-child {
 		border-bottom: 0;
 	}

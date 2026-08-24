@@ -1,9 +1,4 @@
-// COLOUR module (substrata): the tabbed picker renders, each of the seven modes
-// mounts, and the interactive ones write through the shared colour store.
-// Needs `npm start` on :3000.
-//
-// Regression guard: the module was registered with an empty ModuleStub body
-// through the Ember port, so the panel opened blank.
+// blank-panel regression guard
 import { BASE, check, finish, launch, openModule, sleep } from './harness.mjs';
 
 const { browser, page } = await launch({ viewport: { width: 1500, height: 950 } });
@@ -27,7 +22,7 @@ check("cube is the default mode", shell.cube);
 check("footer shows the current hex", /^#[0-9a-f]{6}$/i.test(shell.footerHex ?? ""), shell.footerHex ?? "(none)");
 check("header sub names the colour", !!shell.sub, shell.sub ?? "(empty)");
 
-// Each tab mounts its mode. Root class per mode, in tab order.
+// order matches tabs
 const MODE_ROOTS = [
   [".sub-cp-cube", "cube"],
   [".sub-cp-wheelwrap", "triangle"],
@@ -44,7 +39,7 @@ for (const [sel, name] of MODE_ROOTS) {
   check(`mode ${name} mounts`, ok, sel);
 }
 
-// triangle paints its SV fill to a canvas (the hue ring is CSS)
+// sv canvas; hue css
 await page.evaluate(() => document.querySelectorAll(".sub-cp-tab")[1].click());
 await sleep(300);
 const triPainted = await page.evaluate(() => {
@@ -53,7 +48,6 @@ const triPainted = await page.evaluate(() => {
 });
 check("triangle canvas is painted at 2x", triPainted?.w === 336 && triPainted?.h === 336, JSON.stringify(triPainted));
 
-// sliders: the RGB set shows three channels, and HSL swaps them
 await page.evaluate(() => document.querySelectorAll(".sub-cp-tab")[2].click());
 await sleep(300);
 const rgbLabels = await page.evaluate(() =>
@@ -67,7 +61,6 @@ const hslLabels = await page.evaluate(() =>
 );
 check("HSL toggle swaps the channel set", JSON.stringify(hslLabels) === '["H","S","L"]', JSON.stringify(hslLabels));
 
-// a channel field commits to the store (and the footer hex follows)
 await page.evaluate(() => [...document.querySelectorAll(".sub-cp-setbtn")].find((b) => b.textContent.trim() === "RGB").click());
 await sleep(250);
 await page.evaluate(() => {
@@ -85,7 +78,6 @@ const afterRed = await page.evaluate(() => ({
 }));
 check("channel field writes through the store", afterRed.r === "255" && /^#ff/i.test(afterRed.hex ?? ""), JSON.stringify(afterRed));
 
-// hue-cube drag: a pointer stroke on the hue strip moves the stored hue
 await page.evaluate(() => document.querySelectorAll(".sub-cp-tab")[0].click());
 await sleep(300);
 const before = await page.evaluate(() => document.querySelector(".sub-cp-footer-hex")?.value);
@@ -101,7 +93,6 @@ await sleep(400);
 const after = await page.evaluate(() => document.querySelector(".sub-cp-footer-hex")?.value);
 check("hue strip drag rewrites the colour", !!after && after !== before, `${before} → ${after}`);
 
-// swatch wall: every cell is a real hex, and clicking one picks it
 await page.evaluate(() => document.querySelectorAll(".sub-cp-tab")[3].click());
 await sleep(300);
 const wall = await page.evaluate(() => document.querySelectorAll(".sub-cp-swcell").length);

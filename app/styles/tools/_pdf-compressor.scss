@@ -1,8 +1,4 @@
-// Styles for the pdf-compressor tool.
-
 @use "../crayon-config" as crayon;
-
-/* ── PDF compressor ──────────────────────────────────────────────────────── */
 
 .dt-pcmp-frame {
 	border: 2px solid var(--border);
@@ -52,7 +48,6 @@
 	font-size: crayon.font-size("sm");
 }
 
-/* Flush action bar: file identity left, actions right. */
 .dt-pcmp-bar {
 	display: flex;
 	min-height: crayon.size(12);
@@ -128,7 +123,6 @@
 	}
 }
 
-/* Settings as a grid of stacked label-over-input cells. */
 .dt-pcmp-fields {
 	display: grid;
 	border-bottom: 1px solid var(--border);
@@ -153,8 +147,7 @@
 	}
 }
 
-/* `.segmented` draws its own frame; the cell backgrounds cover it. Both classes
-   are needed to outrank `.segmented` itself. */
+/* outrank .segmented frame */
 .segmented.dt-pcmp-images {
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 	border: 0;
@@ -204,7 +197,6 @@
 	text-align: right;
 }
 
-/* Before → after work surface. */
 .dt-pcmp-result {
 	display: flex;
 	align-items: center;

@@ -1,7 +1,7 @@
 import { arpabetToIpa } from './shavian/phoneme-map';
 import { heuristicTransliterate } from './shavian/heuristic';
 
-/** Lower-cased word to its ARPABET phones, e.g. ["HH", "AH0", "L", "OW1"]. */
+/** lowercase word → arpabet phones */
 export type Lookup = (word: string) => string[] | undefined;
 
 export type IpaToken =
@@ -18,8 +18,7 @@ const isVowel = (phone: string) => /\d$/.test(phone);
 // syllabification (sonority sequencing) is the upgrade.
 function wordToIpa(phones: string[]): string {
 	const polysyllabic = phones.filter(isVowel).length > 1;
-	// CMU gives both halves of a compound a 1 (mankind: M AE1 N K AY1 N D);
-	// the last keeps the primary mark and the earlier ones drop to secondary.
+	// cmu compound stress quirk
 	const lastPrimary = phones.findLastIndex((p) => p.endsWith('1'));
 	let out = '';
 	let onset = '';

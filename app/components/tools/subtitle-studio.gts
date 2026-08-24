@@ -62,7 +62,7 @@ const TEXT_STYLES: { id: TextStyle; label: string }[] = [
 	{ id: 'plain', label: 'Plain' },
 ];
 
-// Static per browser, so probed once.
+// probed once; static per browser
 const FORMATS = supportedFormats();
 
 const VIDEO_DROP_TITLE = 'Drop a video file';
@@ -109,7 +109,7 @@ export default class SubtitleStudioTool extends Component {
 	@tracked resultUrl = '';
 	@tracked resultSize = 0;
 	@tracked resultExt = 'webm';
-	/** output seconds per wall-clock second on the fast path, 0 when unknown */
+	/** sec of video / wall clock sec; 0 unknown */
 	@tracked resultSpeed = 0;
 	@tracked encoders: Set<BurnCodec> | null = null;
 	@tracked errorCode = '';
@@ -145,8 +145,8 @@ export default class SubtitleStudioTool extends Component {
 		void this.#audio?.ctx.close();
 	}
 
-	// With WebCodecs the fast path decides support per encoder; without it
-	// MediaRecorder's answers stand.
+	// per-encoder support with webcodecs;
+	// else mediarecorder answers stand.
 	get formats() {
 		return this.encoders
 			? supportedFormats(this.encoders)
@@ -251,8 +251,7 @@ export default class SubtitleStudioTool extends Component {
 		this.draw();
 	};
 
-	// Video and subtitles share the drop target and the paste handler; each
-	// file is routed by type, so both can arrive in one drop.
+	// routed by extension: srt/vtt → subs, else video
 	readAny = (file: File) => {
 		if (SUBS_RE.test(file.name)) void this.readSubs(file);
 		else this.intake.load(file);
@@ -291,13 +290,11 @@ export default class SubtitleStudioTool extends Component {
 	resetPosition = () =>
 		this.#patch({ x: DEFAULT_STYLE.x, y: DEFAULT_STYLE.y });
 
-	// Pointer deltas scale from the canvas's CSS box to frame fractions, so
-	// the drag feels 1:1 at any display size.
+	// css-box scale → frame fractions; 1:1 at any size
 	pointerDown = (event: PointerEvent) => {
 		const canvas = this.canvas;
 		if (!canvas || this.burning || !this.cues.length) return;
-		// object-fit: contain letterboxes the canvas inside its CSS box; deltas
-		// scale against the drawn frame, not the box.
+		// object-fit: contain letterboxes; deltas scale against frame
 		const rect = canvas.getBoundingClientRect();
 		const scale = Math.min(
 			rect.width / canvas.width,
@@ -381,8 +378,7 @@ export default class SubtitleStudioTool extends Component {
 		}
 	};
 
-	// One draw per decoded frame where the browser offers it (Chrome 83+,
-	// Safari 15.4+, Firefox 132+); the rAF fallback overdraws at display rate.
+	// rVFC one draw/frame (chrome 83+, safari 15.4+, firefox 132+); rAF fallback
 	#loop = () => {
 		this.#cancelFrame();
 		if (!this.intake.playing && !this.burning) return;
@@ -413,7 +409,7 @@ export default class SubtitleStudioTool extends Component {
 			video.videoWidth,
 			video.videoHeight,
 		);
-		// WebCodecs present but no encoder is the MediaRecorder case too.
+		// webcodecs present; no encoder valid → mediarecorder
 		if (!this.isDestroyed && this.intake.file === file)
 			this.encoders = encoders?.size ? encoders : null;
 	}
@@ -426,8 +422,7 @@ export default class SubtitleStudioTool extends Component {
 		this.draw();
 	}
 
-	// createMediaElementSource binds the element for good, so the graph is
-	// built once and also carries normal playback (gain 1) afterwards.
+	// createMediaElementSource binds permanently; build once, gain 1 = playback
 	#audioGraph(video: HTMLVideoElement) {
 		if (this.#audio) return this.#audio;
 		const ctx = new AudioContext();
@@ -446,8 +441,6 @@ export default class SubtitleStudioTool extends Component {
 		else void this.#burnLive();
 	};
 
-	// WebCodecs path: decode → draw → encode through mediabunny, as fast as
-	// the codecs allow, independent of the tab being visible.
 	async #burnFast() {
 		const file = this.intake.file;
 		const canvas = this.canvas;
@@ -518,8 +511,6 @@ export default class SubtitleStudioTool extends Component {
 		}
 	}
 
-	// MediaRecorder path for browsers without WebCodecs: plays the video
-	// through once at 1× and records the canvas.
 	async #burnLive() {
 		const video = this.intake.video;
 		const canvas = this.canvas;
@@ -573,15 +564,13 @@ export default class SubtitleStudioTool extends Component {
 					},
 				),
 			);
-			// #stopBurn (new file, Clear, teardown) aborts the watcher, which also
-			// drops both listeners; without this the burn stayed suspended here.
+			// stop must abort or burn suspends; watcher drops listeners too
 			const aborted = new Promise<never>((_, reject) =>
 				watcher.signal.addEventListener('abort', () =>
 					reject(new Error('stopped')),
 				),
 			);
-			// A background tab throttles rAF and the canvas capture, so the
-			// file would stutter or freeze for that stretch; abort instead.
+			// backgrounded tab throttles capture; abort rather than stutter
 			const hidden = new Promise<never>((_, reject) =>
 				document.addEventListener(
 					'visibilitychange',
@@ -918,7 +907,7 @@ export default class SubtitleStudioTool extends Component {
 				</div>
 
 				<div class="dt-ss-stage">
-					{{! user-supplied video; there is no caption track to offer }}
+					{{! no caption track in uploaded file }}
 					{{! template-lint-disable require-media-caption }}
 					<video
 						src={{this.intake.url}}
@@ -938,7 +927,7 @@ export default class SubtitleStudioTool extends Component {
 						{{on "pause" this.syncPlaying}}
 						{{on "seeked" this.draw}}
 					></video>
-					{{! the subtitle is dragged on the preview; the canvas is the drag surface }}
+					{{! canvas = subtitle drag surface }}
 					{{! template-lint-disable no-invalid-interactive no-pointer-down-event-binding }}
 					<canvas
 						class="dt-ss-canvas
@@ -1000,7 +989,7 @@ export default class SubtitleStudioTool extends Component {
 							<span
 								class="dt-ss-drop-title"
 							>{{VIDEO_DROP_TITLE}}</span>
-							{{! hint reused verbatim from Background Remover }}
+							{{! hint shared with background remover }}
 							<span
 								class="dt-ss-drop-hint"
 							>or click to select a
@@ -1269,7 +1258,7 @@ export default class SubtitleStudioTool extends Component {
 							<span
 								class="dt-ss-drop-title"
 							>{{SUBS_DROP_TITLE}}</span>
-							{{! hint reused verbatim from Background Remover }}
+							{{! hint shared with background remover }}
 							<span
 								class="dt-ss-drop-hint"
 							>or click to select a

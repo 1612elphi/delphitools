@@ -45,20 +45,13 @@ export interface BarcodeInfo {
 const GENERATE_DEBOUNCE_MS = 300;
 const COPIED_MS = 1500;
 
-/** Six digits behind a #, the only form `<input type="color">` accepts. */
 const HEX = /^#[0-9a-f]{6}$/i;
 
-// The Next app spelled this \x00-\x7F, which eslint rejects as a control-
-// character range. \p{ASCII} is the same set, U+0000 to U+007F.
+// eslint rejects ascii range
 const ASCII = /^\p{ASCII}*$/u;
 const CODE39 = /^[A-Z0-9\-. $/+%]*$/;
 const DIGITS = /^\d*$/;
 
-/**
- * Mod-10 check digit for the EAN/UPC family. `digits` is the data portion
- * without the trailing check digit (12 for EAN-13, 11 for UPC-A). The weight
- * pair differs per symbology: EAN-13 weights even/odd indices 1/3, UPC-A 3/1.
- */
 export function mod10CheckDigit(
 	digits: string,
 	evenWeight: number,
@@ -73,7 +66,6 @@ export function mod10CheckDigit(
 	return (10 - (sum % 10)) % 10;
 }
 
-// Every string in this table is carried over from the Next app unchanged.
 export const BARCODE_TYPES: Record<BarcodeType, BarcodeInfo> = {
 	microqr: {
 		name: 'Micro QR',
@@ -203,10 +195,8 @@ export const BARCODE_TYPES: Record<BarcodeType, BarcodeInfo> = {
 	},
 };
 
-/** Insertion order is the order the buttons appear in. */
 const TYPE_LIST = Object.entries(BARCODE_TYPES) as [BarcodeType, BarcodeInfo][];
 
-/** bwip-js bcid per type; the only one that differs from our own id. */
 const BWIP_BCID: Record<BarcodeType, string> = {
 	microqr: 'microqrcode',
 	datamatrix: 'datamatrix',
@@ -226,7 +216,6 @@ export function isContentCompatible(
 	return BARCODE_TYPES[type].allowedPattern.test(content);
 }
 
-/** Drops every character the symbology cannot carry. Code 39 also uppercases. */
 export function filterContent(content: string, type: BarcodeType): string {
 	const text = type === 'code39' ? content.toUpperCase() : content;
 	const pattern = BARCODE_TYPES[type].allowedPattern;
@@ -244,11 +233,7 @@ export interface CodeOptions {
 	showText: boolean;
 }
 
-/**
- * Transparency relies on OMITTING backgroundcolor: bwip-js only paints a
- * background when the value is a valid 6-hex string, otherwise it clears the
- * canvas to alpha-0 (bwip-js 4.11.2, src/drawing-canvas.js).
- */
+// omit backgroundcolor for transparency
 export function buildBwipOptions(
 	type: BarcodeType,
 	text: string,
@@ -282,10 +267,6 @@ export function buildBwipOptions(
 	};
 }
 
-/**
- * bwip-js raises errors as "bwipp.someCode#1234: message" or "bwip-js: message".
- * Strip the namespace so users see the human-readable part only.
- */
 export function friendlyBwipError(err: unknown): string {
 	const raw =
 		err instanceof Error
@@ -328,9 +309,7 @@ export default class CodeGennyTool extends Component {
 	@tracked batchItems: BatchItem[] = [];
 	@tracked batchGenerating = false;
 
-	// Both option groups start open, as the Next app's accordion did.
-	// <details> would carry this for free, but ember-template-lint's
-	// no-nested-interactive forbids a form control inside one.
+	// details disallows nested controls
 	@tracked basicOpen = true;
 	@tracked coloursOpen = true;
 
@@ -395,7 +374,6 @@ export default class CodeGennyTool extends Component {
 		return `Enter content to generate ${this.currentType.name}`;
 	}
 
-	/** `<input type="color">` resets itself on a value it cannot parse. */
 	get foregroundSwatch() {
 		return HEX.test(this.foregroundColour)
 			? this.foregroundColour
@@ -440,11 +418,6 @@ export default class CodeGennyTool extends Component {
 		this.queueGenerate();
 	};
 
-	/**
-	 * The filtered value is written back to the element: when every typed
-	 * character is rejected the tracked value does not change, so nothing
-	 * re-renders and the rejected character would otherwise stay on screen.
-	 */
 	setContent = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		input.value = filterContent(input.value, this.codeType);
@@ -512,9 +485,8 @@ export default class CodeGennyTool extends Component {
 		this.generating = true;
 		this.error = null;
 
-		// Only the first call actually waits on the module, but a render that
-		// resolved after a newer one started would otherwise overwrite it.
-		const run = ++this.#run;
+		// prevent stale generation results
+			const run = ++this.#run;
 
 		try {
 			const bwipjs = await import('bwip-js/browser');
@@ -561,10 +533,8 @@ export default class CodeGennyTool extends Component {
 				new ClipboardItem({ 'image/png': blob }),
 			]);
 		} catch {
-			// Firefox has no image support in clipboard.write, and every
-			// browser denies it outside a permitted gesture. The button not
-			// flipping to Copied! is the whole report, as in the Next app.
-			return;
+			// clipboard image writes can fail
+				return;
 		}
 		if (this.#destroyed) return;
 
@@ -595,7 +565,7 @@ export default class CodeGennyTool extends Component {
 	uploadList = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
-		// Choosing the same file twice must still fire a change event.
+		// allow file reselection
 		input.value = '';
 		if (!file) return;
 
@@ -687,7 +657,6 @@ export default class CodeGennyTool extends Component {
 	<template>
 		<div class="dt-code">
 			<div class="dt-code-section">
-				{{! wording carried over from the Next app }}
 				<span class="dt-code-heading">Code Type</span>
 				<div class="dt-code-types">
 					{{#each this.types key="id" as |entry|}}
@@ -731,7 +700,6 @@ export default class CodeGennyTool extends Component {
 						class="dt-code-tab"
 						@value="single"
 					>Single</TabsTrigger>
-					{{! wording carried over from the Next app }}
 					<TabsTrigger
 						class="dt-code-tab"
 						@value="batch"
@@ -744,7 +712,6 @@ export default class CodeGennyTool extends Component {
 						@value="single"
 					>
 						<div class="dt-code-content">
-							{{! wording carried over from the Next app }}
 							<label
 								class="dt-code-label"
 								for="dt-code-text"
@@ -778,7 +745,6 @@ export default class CodeGennyTool extends Component {
 								<div
 									class="dt-code-preview-head"
 								>
-									{{! wording carried over from the Next app }}
 									<span
 										class="dt-code-heading"
 									>Preview</span>
@@ -797,7 +763,6 @@ export default class CodeGennyTool extends Component {
 													this.setShowText
 												}}
 											/>
-											{{! wording carried over from the Next app }}
 											Show
 											numbers
 										</label>
@@ -878,7 +843,6 @@ export default class CodeGennyTool extends Component {
 							<div
 								class="dt-code-options"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-code-heading"
 								>Options</span>
@@ -911,7 +875,6 @@ export default class CodeGennyTool extends Component {
 											<div
 												class="dt-code-slider"
 											>
-												{{! wording carried over from the Next app }}
 												<label
 													for="dt-code-size"
 												>Size</label>
@@ -934,7 +897,6 @@ export default class CodeGennyTool extends Component {
 											<div
 												class="dt-code-slider"
 											>
-												{{! wording carried over from the Next app }}
 												<label
 													for="dt-code-padding"
 												>Padding</label>
@@ -985,7 +947,6 @@ export default class CodeGennyTool extends Component {
 											<div
 												class="dt-code-colour"
 											>
-												{{! wording carried over from the Next app }}
 												<span
 													class="dt-code-colour-name"
 												>Foreground</span>
@@ -1021,7 +982,6 @@ export default class CodeGennyTool extends Component {
 											<div
 												class="dt-code-colour"
 											>
-												{{! wording carried over from the Next app }}
 												<span
 													class="dt-code-colour-name"
 												>Background</span>
@@ -1070,7 +1030,6 @@ export default class CodeGennyTool extends Component {
 															this.setTransparent
 														}}
 													/>
-													{{! wording carried over from the Next app }}
 													Transparent
 												</label>
 											</div>
@@ -1169,7 +1128,6 @@ export default class CodeGennyTool extends Component {
 								<Icon
 									@name="plus"
 								/>
-								{{! wording carried over from the Next app }}
 								Add Item
 							</button>
 							<label
@@ -1187,7 +1145,6 @@ export default class CodeGennyTool extends Component {
 								<Icon
 									@name="upload"
 								/>
-								{{! wording carried over from the Next app }}
 								Upload List
 							</label>
 						</div>
@@ -1217,18 +1174,15 @@ export default class CodeGennyTool extends Component {
 			<div class="dt-code-about">
 				<h3 class="dt-code-about-head">
 					<Icon @name="info" />
-					{{! wording carried over from the Next app }}
 					About
 					{{this.currentType.name}}
 				</h3>
 				<p>
-					{{! wording carried over from the Next app }}
 					<span class="dt-code-about-key">Invented
 						by:</span>
 					{{this.currentType.inventor}}
 				</p>
 				<p>
-					{{! wording carried over from the Next app }}
 					<span
 						class="dt-code-about-key"
 					>Year:</span>

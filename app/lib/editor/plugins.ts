@@ -1,4 +1,3 @@
-// Assembles the ProseMirror plugin stack for the editor.
 import { baseKeymap, chainCommands, toggleMark } from 'prosemirror-commands';
 import { dropCursor } from 'prosemirror-dropcursor';
 import { gapCursor } from 'prosemirror-gapcursor';
@@ -23,8 +22,6 @@ export function buildPlugins(
 	settings: EditorSettings,
 	placeholder = '',
 ): Plugin[] {
-	// History, undo-the-autoformat, and toggle marks on the selection (so you can
-	// format existing/selected text — input rules only fire as you type forward).
 	const keys: Record<string, Command> = {
 		'Mod-z': undo,
 		'Mod-y': redo,
@@ -43,7 +40,6 @@ export function buildPlugins(
 	const listKeys: Record<string, Command> = {};
 	if (listItem) listKeys['Enter'] = splitListItem(listItem);
 
-	// Tab / Shift-Tab: indent/outdent in a list, otherwise move between table cells.
 	const tabChain: Command[] = [];
 	const shiftTabChain: Command[] = [];
 	if (listItem) {
@@ -71,7 +67,7 @@ export function buildPlugins(
 		focusPlugin(settings),
 	];
 	if (placeholder) plugins.push(placeholderPlugin(placeholder));
-	// tableEditing must come last — it broadly captures mouse/arrow/copy events.
+	// table editing captures events
 	if (hasTable) plugins.push(columnResizing(), tableEditing());
 	return plugins;
 }

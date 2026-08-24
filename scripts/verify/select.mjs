@@ -1,6 +1,3 @@
-// Headless verification for M2-10 SELECT (delete after use).
-// Pattern from .verify-guides.mjs: real mouse drags + window.__substrata rig.
-// Needs `npm run dev` on :3000.
 import puppeteer from "puppeteer-core";
 
 const URL = process.env.EDITOR_URL ?? "http://localhost:3000/editor";
@@ -56,9 +53,7 @@ const clickScene = async (sx, sy) => {
   await page.mouse.click(p.x, p.y);
   await sleep(250);
 };
-// The popup renders only once the canvas has reported an anchor for THIS
-// selection (selection-popup keys the anchor by epoch), so wait for it rather
-// than assuming the frame already landed.
+// popup keys anchor by epoch, wait for it
 const popupReady = (action = "extract") =>
   page.waitForSelector(`[data-select-action="${action}"]`, { visible: true, timeout: 5000 });
 const popupClick = async (action) => {
@@ -67,7 +62,6 @@ const popupClick = async (action) => {
   await sleep(350);
 };
 
-// ── 1) marquee: select / clear / escape ──────────────────────────────────────
 await page.evaluate(() => window.__substrata.setTool("select", "select"));
 await drag(200, 200, 700, 600);
 let s = await sel();
@@ -82,14 +76,11 @@ await sleep(200);
 s = await sel();
 check("marquee: Escape clears", String(s), s === null);
 
-// ── 1b) gutter marquee: a drag entirely OUTSIDE the artboard selects nothing ─
-// (regression: TypedArray.fill's negative end is length-relative — this used
-// to select nearly the whole artboard)
+// typedarray.fill negative end is length-relative
 await drag(-30, -5, -4, 12);
 s = await sel();
 check("marquee: gutter drag selects nothing", String(s), s === null);
 
-// ── 2) invert / grow / shrink (store ops over the artboard domain) ──────────
 await drag(200, 200, 700, 600);
 const base = (await sel()).area;
 await page.evaluate(() => window.__substrata.selectOps.invert());
@@ -104,11 +95,9 @@ s = await sel();
 check("grow→shrink: returns ≈ original", s?.area, s && Math.abs(s.area - base) <= base * 0.02);
 await page.evaluate(() => window.__substrata.selectOps.deselect());
 
-// ── 3) lasso: triangle ≈ half its bbox ───────────────────────────────────────
 await page.evaluate(() => window.__substrata.setTool("select", "lasso"));
 {
-  // top-left quadrant — the empty-scene starter card (2026-07-08) floats over
-  // the artboard centre and rightly catches pointerdowns aimed at its buttons
+  // starter card floats over artboard centre, catches pointerdowns
   const a = toPage(300, 300);
   const b = toPage(700, 300);
   const c = toPage(300, 700);
@@ -124,8 +113,6 @@ check("lasso: triangle area ≈ ½ bbox", s?.area, s && Math.abs(s.area - (400 *
 await page.keyboard.press("Escape");
 await sleep(150);
 
-// ── 4) wand: flood vs global on a two-square raster ──────────────────────────
-// one raster layer, two disjoint 300×200 green squares (canvas 1000×800)
 await page.evaluate(() =>
   window.__substrata.addRaster(
     1000,
@@ -143,7 +130,7 @@ check("wand setup: raster imported", ls.length, ls.length === 1);
 await page.evaluate((id) => window.__substrata.select([id]), ls[0].id);
 await page.evaluate(() => window.__substrata.setTool("select", "wand"));
 await sleep(150);
-// raster is centred at (1000,750): its top-left square spans scene (500,350)+(300×200)
+// raster at (1000,750), top-left square at (500,350)
 await clickScene(600, 400);
 s = await sel();
 check("wand flood: one square selected", s?.area, s && Math.abs(s.area - 300 * 200) <= 1500);
@@ -153,14 +140,12 @@ s = await sel();
 check("wand global: both squares selected", s?.area, s && Math.abs(s.area - 2 * 300 * 200) <= 3000);
 await page.evaluate(() => window.__substrata.toolSettings("select", { wandMode: "flood" }));
 
-// ── 4b) magnetic lasso: points snap onto the square's hard edge ──────────────
 await page.evaluate(() => {
   window.__substrata.setTool("select", "lasso");
   window.__substrata.toolSettings("select", { magnetic: true, sensitivity: 100 });
 });
 {
-  // trace a sloppy box ~10px OUTSIDE the top-left square (scene 500,350 → 800,550);
-  // with a 20px snap radius the points should pull onto the edge
+  // 10px outside square; 20px snap radius pulls points onto edge
   const pts = [
     [490, 340],
     [810, 340],
@@ -187,9 +172,8 @@ await page.evaluate(() => window.__substrata.toolSettings("select", { magnetic: 
 await page.keyboard.press("Escape");
 await sleep(150);
 
-// ── 5) extract via the popup (default action) ─────────────────────────────────
 await page.evaluate(() => window.__substrata.setTool("select", "select"));
-await drag(550, 380, 750, 500); // inside the top-left green square
+await drag(550, 380, 750, 500);
 const popupVisible = await popupReady().then(
   (h) => !!h,
   () => false,
@@ -204,7 +188,6 @@ await undo();
 ls = await layers();
 check("extract: ONE undo removes it", ls.length, ls.length === 1);
 
-// ── 6) cut: hole + new layer, ONE undo restores both ─────────────────────────
 await page.evaluate((id) => window.__substrata.select([id]), ls[0].id);
 await drag(550, 380, 750, 500);
 let before = await sample(650, 440);
@@ -212,26 +195,25 @@ check("cut setup: pixels are green", before?.join(","), near(before, [62, 107, 5
 await popupClick("cut");
 ls = await layers();
 check("cut: extracted layer added", ls.length, ls.length === 2);
-// delete the extracted copy — the source's HOLE must show through (artboard white)
+// artboard bg is white
 await page.evaluate((id) => window.__substrata.select([id]), ls[1].id);
 await page.keyboard.press("Backspace");
 await sleep(350);
 let px = await sample(650, 440);
 check("cut: hole punched in the source", px?.join(","), near(px, [255, 255, 255, 255]));
-await undo(); // restore the deleted copy
-await undo(); // revert the cut itself
+await undo();
+await undo();
 ls = await layers();
 px = await sample(650, 440);
 check("cut: undo×2 restores source pixels", `${ls.length} ${px?.join(",")}`, ls.length === 1 && near(px, [62, 107, 51, 255]));
 
-// ── 7) popup gates on raster; tool switch clears ─────────────────────────────
 await page.evaluate(() => {
   window.__substrata.setTool("pieces", "primitives");
   window.__substrata.toolSettings("pieces", { shape: "rectangle", fill: "#cc2222" });
 });
 await drag(1300, 200, 1600, 400);
 await page.evaluate(() => window.__substrata.setTool("select", "select"));
-await drag(1350, 250, 1500, 350); // over the shape layer (it's now active)
+await drag(1350, 250, 1500, 350);
 await popupReady();
 const disabled = await page.$eval('[data-select-action="extract"]', (el) => el.disabled);
 check("gate: extract disabled on a shape layer", String(disabled), disabled === true);

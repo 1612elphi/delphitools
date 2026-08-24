@@ -1,9 +1,5 @@
-// FX module (substrata): the add picker, both pipeline zones, the accordion,
-// and the generic param rows built from the registry ParamSpecs.
-// Needs `npm start` on :3000.
-//
-// Regression guard: the module was registered with an empty ModuleStub body
-// through the Ember port, so the panel opened blank.
+// needs `npm start` on :3000
+// regression: empty ModuleStub body made panel open blank
 import { BASE, check, finish, launch, openModule, sleep } from './harness.mjs';
 
 const { browser, page } = await launch({ viewport: { width: 1500, height: 950 } });
@@ -11,7 +7,6 @@ await page.goto(`${BASE}/editor`, { waitUntil: 'networkidle2' });
 await page.waitForFunction(() => window.__substrata, { timeout: 25000 });
 await sleep(600);
 
-// no selection → the gate hint, not the pipeline
 check("omnibar FX trigger found", await openModule(page, "FX"));
 const gated = await page.evaluate(() => ({
   empty: !!document.querySelector(".sub-fx-empty"),
@@ -32,7 +27,6 @@ const armed = await page.evaluate(() => ({
 check("a raster selection arms the pipeline", armed.add === "Add Effect", JSON.stringify(armed));
 check("header sub names the layer", !!armed.sub, armed.sub ?? "(empty)");
 
-// the picker groups both registries and gives every card a glyph
 await page.evaluate(() => document.querySelector(".sub-fx-add").click());
 await sleep(600);
 const picker = await page.evaluate(() => {
@@ -49,7 +43,6 @@ check("picker lists every registry type", picker.cards >= 29, `${picker.cards} c
 check("every card has a glyph", picker.withIcon === picker.cards, `${picker.withIcon}/${picker.cards}`);
 check("every card has a label", picker.labelled === picker.cards, `${picker.labelled}/${picker.cards}`);
 
-// add a slider filter — it lands in filters[] and opens
 await page.evaluate(() => [...document.querySelectorAll(".sub-fx-pickcard")].find((b) => /bright/i.test(b.textContent)).click());
 await sleep(700);
 const added = await page.evaluate(() => ({
@@ -62,7 +55,6 @@ check("adding writes the filters stack", JSON.stringify(added.filters) === '[["b
 check("the new block opens itself", added.blocks === 1 && added.open === 1, JSON.stringify(added));
 check("its slider param renders", added.sliders === 1);
 
-// slider writes through fx-ops
 await page.evaluate(() => {
   const s = document.querySelector(".sub-fx-prow .sub-slider");
   s.value = String(Number(s.max) * 0.75);
@@ -73,7 +65,6 @@ await sleep(400);
 const slid = await page.evaluate(() => document.querySelector(".sub-fx-pvalue")?.textContent?.trim());
 check("slider write round-trips through the doc", !!slid && slid !== "0", slid ?? "(none)");
 
-// add an effect with colour + stepper + slider params → the second zone appears
 await page.evaluate(() => document.querySelector(".sub-fx-add").click());
 await sleep(500);
 await page.evaluate(() => [...document.querySelectorAll(".sub-fx-pickcard")].find((b) => /drop shadow/i.test(b.textContent)).click());
@@ -91,7 +82,6 @@ check("the two zones are split by the divider", both.blocks === 2 && both.divide
 check("colour + stepper params render", both.colours === 1 && both.steppers >= 1, JSON.stringify(both));
 check("the accordion stays single-open", both.open === 1, `${both.open} open`);
 
-// enable switch and remove
 await page.evaluate(() => document.querySelector(".sub-fx-switch input").click());
 await sleep(400);
 const toggled = await page.evaluate(() => ({

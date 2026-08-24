@@ -15,16 +15,6 @@ import { ensureScene } from 'delphitools-v2/lib/substrata/file-ops';
 import { finishOnboarding } from 'delphitools-v2/lib/substrata/onboarding-pref';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 
-/**
- * Host for the editor's blocking modals, on the native `<dialog>` element —
- * showModal() supplies the top layer, focus trap and Esc-to-close (the same
- * trade the local ui/dialog primitive makes). Reads the modal store and shows
- * the active dialog; each modal body owns its width and layout.
- *
- * Pass-1 boundary: only Canvas size · New scene · Onboarding are ported.
- * Export, Shortcuts and the two About panes are pass 2 — their ids stay
- * closed here, so ⌘E currently does nothing visible.
- */
 const PASS1_MODALS: ReadonlySet<ModalId> = new Set<ModalId>([
 	'canvas-size',
 	'new-scene',
@@ -34,8 +24,7 @@ const PASS1_MODALS: ReadonlySet<ModalId> = new Set<ModalId>([
 export default class ModalHost extends Component {
 	open = new TrackedExternal(subscribeModal, getOpenModal);
 
-	// distinguishes store-driven close() from user dismissal (Esc): only the
-	// latter runs the fallback paths in onClose
+	// track dialog close source
 	#closingProgrammatically = false;
 
 	willDestroy() {
@@ -63,20 +52,16 @@ export default class ModalHost extends Component {
 	onClose = () => {
 		if (this.#closingProgrammatically) return;
 		const open = this.open.current;
-		// Esc-close of the onboarding still counts as "seen" and hands over
-		// to the New-scene dialog — same path as its final button
+		// esc completes onboarding
 		if (open === 'onboarding') {
 			finishOnboarding();
 			return;
 		}
 		closeModal();
-		// fresh boots are doc-less until the New-scene dialog lands one —
-		// Esc-dismiss falls back to a default blank scene
+		// esc creates default scene
 		if (open === 'new-scene') ensureScene();
 	};
 
-	// the X on Canvas size / New scene (Radix's default showCloseButton; the
-	// onboarding opts out, as the source does)
 	get showClose() {
 		return (
 			this.openId === 'canvas-size' ||
@@ -84,15 +69,11 @@ export default class ModalHost extends Component {
 		);
 	}
 
-	// both routes go through dialog.close() so the `close` handler above runs
-	// the same seen-marking / ensureScene fallbacks as Esc
 	dismiss = (event: Event) => {
 		(event.currentTarget as HTMLElement).closest('dialog')?.close();
 	};
 
-	// a click on ::backdrop targets the dialog element itself; clicks in the
-	// content target its children. A custom modifier because template-lint's
-	// no-invalid-interactive rejects {{on "click"}} on <dialog>.
+	// dialog click requires modifier
 	backdropDismiss = modifier((dialog: HTMLDialogElement) => {
 		const onClick = (event: MouseEvent) => {
 			if (event.target === dialog) dialog.close();

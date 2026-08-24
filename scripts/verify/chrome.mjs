@@ -1,6 +1,3 @@
-// The site shell: sidebar, search, header, routing, 404, and the handful of
-// styling rules that only a real layout can prove.
-
 import { launch, visit, check, sleep, finish } from './harness.mjs';
 
 const TOGGLE = ".dt-icon-btn[aria-label='Toggle sidebar']";
@@ -9,8 +6,6 @@ const { browser, page } = await launch({
 	viewport: { width: 1400, height: 1000 },
 });
 await visit(page, '/');
-
-// ── the shell renders ───────────────────────────────────────────────────────
 
 const shell = await page.evaluate(() => ({
 	sidebar: !!document.querySelector('.dt-sidebar'),
@@ -29,8 +24,6 @@ check('every tool has a nav link', shell.navLinks >= 55, `${shell.navLinks}`);
 check('links are grouped by category', shell.groups >= 5, `${shell.groups}`);
 check('the home route names itself', shell.title === 'Home', shell.title);
 check('the theme toggle is present', shell.theme);
-
-// ── search ──────────────────────────────────────────────────────────────────
 
 await page.type('.dt-search-input', 'palette');
 await sleep(400);
@@ -65,8 +58,6 @@ check(
 	(await page.$$eval('.dt-nav-link', (els) => els.length)) ===
 		shell.navLinks,
 );
-
-// ── collapse ────────────────────────────────────────────────────────────────
 
 const rail = () =>
 	page.evaluate(() => {
@@ -104,8 +95,6 @@ await page.click(TOGGLE);
 await sleep(400);
 check('and expands again', (await rail()).state === 'expanded');
 
-// ── routing ─────────────────────────────────────────────────────────────────
-
 await visit(page, '/tools/px-to-rem');
 const tool = await page.evaluate(() => ({
 	title: document
@@ -134,12 +123,9 @@ check(
 	await page.$eval('.dt-404 h1', (el) => el.textContent.trim()),
 );
 
-// ── styling that only a laid-out page can prove ─────────────────────────────
-
 await visit(page, '/tools/px-to-rem');
 
-// lucide-static bakes width/height presentation attributes into the SVG; the
-// .dt-icon wrapper has to beat them or every icon renders at 24px.
+// lucide-static bakes 24px attrs
 const icons = await page.$$eval(
 	'.dt-nav-link .dt-icon svg, .dt-header-icon svg',
 	(els) =>
@@ -167,7 +153,7 @@ check(
 	),
 );
 
-// Not crayon.sr-only: that mixin uses the deprecated `clip` property.
+// crayon.sr-only uses deprecated clip
 const srOnly = await page.evaluate(() => {
 	const el = document.querySelector('.dt-sr-only');
 	if (!el) return null;

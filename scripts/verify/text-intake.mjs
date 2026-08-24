@@ -1,9 +1,4 @@
-// The two text tools take a dropped Markdown file: the scratchpad replaces
-// its draft (after a confirm when one exists), the editor replaces its
-// document. Both declare `.md`/`.txt` in the registry, so the omnibox routes
-// dropped files to them; this is the landing side of that promise.
-//
-// Usage: npm start, then node scripts/verify/text-intake.mjs
+// usage: npm start, then node scripts/verify/text-intake.mjs
 
 import { launch, visit, check, finish, sleep } from './harness.mjs';
 

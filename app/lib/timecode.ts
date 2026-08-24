@@ -1,39 +1,19 @@
-/**
- * SMPTE timecode maths, drop-frame included.
- *
- * The drop-frame rule is what every broken online calculator gets wrong:
- * drop-frame does NOT remove frames, it RENUMBERS them so 29.97/59.94 timecode
- * stays aligned with wall-clock time. It skips the first two (at 30) or four
- * (at 60) frame NUMBERS of every minute except every tenth minute. Reference:
- * SMPTE ST 12-1; the standard derivation is David Heidelberger's article.
- *
- * Everything routes through an integer frame number, so arithmetic is exact and
- * the two directions round-trip (see tests/unit/lib/timecode-test.ts, which
- * checks every frame across several hours).
- */
-
 export interface Parts {
 	h: number;
 	m: number;
 	s: number;
 	f: number;
-	/** true when the whole value is negative (result of a subtraction) */
 	negative?: boolean;
 }
 
 export interface Rate {
 	id: string;
 	label: string;
-	/** integer frames counted per second (24, 25, 30, 50, 60) */
 	nominal: number;
-	/** real playback rate, for wall-clock time (24000/1001, 30000/1001, ...) */
 	exact: number;
-	/** drop-frame counting — only ever true for 29.97 and 59.94 */
 	drop: boolean;
 }
 
-// The picker's presets. 29.97 and 59.94 appear twice (NDF and DF); the rest
-// cannot be drop-frame, so they do not.
 export const RATES: Rate[] = [
 	{
 		id: '23.976',
@@ -78,15 +58,14 @@ export const RATES: Rate[] = [
 ];
 
 export function rateById(id: string): Rate {
-	return RATES.find((r) => r.id === id) ?? RATES[5]!; // default 30
+	return RATES.find((r) => r.id === id) ?? RATES[5]!;
 }
 
-/** Frame NUMBERS dropped per drop-minute: 2 at 30 fps, 4 at 60 fps. */
+// drop-frame skip count
 function dropPerMinute(nominal: number): number {
 	return nominal >= 60 ? 4 : 2;
 }
 
-/** Timecode -> absolute frame number. Assumes `parts` is already in range. */
 export function tcToFrames(parts: Parts, rate: Rate): number {
 	const base = rate.nominal;
 	let frames = ((parts.h * 60 + parts.m) * 60 + parts.s) * base + parts.f;
@@ -98,7 +77,6 @@ export function tcToFrames(parts: Parts, rate: Rate): number {
 	return parts.negative ? -frames : frames;
 }
 
-/** Absolute frame number -> timecode. Negative counts come back with the flag. */
 export function framesToTc(frameNumber: number, rate: Rate): Parts {
 	const negative = frameNumber < 0;
 	let fn = Math.abs(frameNumber);
@@ -128,12 +106,10 @@ export function framesToTc(frameNumber: number, rate: Rate): Parts {
 	return { h, m, s, f, negative: negative && frameNumber !== 0 };
 }
 
-/** Real elapsed seconds a frame count represents at this rate's true speed. */
 export function framesToSeconds(frameNumber: number, rate: Rate): number {
 	return frameNumber / rate.exact;
 }
 
-/** "HH:MM:SS:FF" (":" separator) or "HH:MM:SS;FF" (";" = drop-frame). */
 export function formatTc(parts: Parts, rate: Rate): string {
 	const sep = rate.drop ? ';' : ':';
 	const p2 = (n: number) => String(n).padStart(2, '0');
@@ -141,7 +117,6 @@ export function formatTc(parts: Parts, rate: Rate): string {
 	return `${sign}${p2(parts.h)}:${p2(parts.m)}:${p2(parts.s)}${sep}${p2(parts.f)}`;
 }
 
-/** Wall-clock elapsed time as "HH:MM:SS.mmm". */
 export function formatClock(seconds: number): string {
 	const sign = seconds < 0 ? '-' : '';
 	const abs = Math.abs(seconds);
@@ -154,9 +129,7 @@ export function formatClock(seconds: number): string {
 	return `${sign}${p2(h)}:${p2(m)}:${p2(s)}.${String(ms).padStart(3, '0')}`;
 }
 
-// Error codes, not prose — the UI owns the user-facing wording (copy). `detail`
-// carries the offending value + the rate's frame ceiling so the UI can show the
-// specifics as data.
+// ui owns error text
 export type ParseError =
 	| 'empty'
 	| 'too-many'
@@ -170,7 +143,6 @@ export type ParseResult =
 			ok: true;
 			parts: Parts;
 			frames: number;
-			/** original value when a drop-frame skip was snapped up to a legal frame */
 			snappedFrom?: string;
 	  }
 	| {
@@ -179,16 +151,8 @@ export type ParseResult =
 			detail?: { value: number; max: number };
 	  };
 
-// Accept ":", ";", "." or "," between fields; a bare number is frames.
 const FIELD_SPLIT = /[:;.,]/;
 
-/**
- * Parse a timecode string against a rate WITHOUT ever throwing or returning
- * NaN. Fewer than four fields are read right-aligned (a lone number is frames,
- * two fields are SS:FF, and so on). Out-of-range fields and drop-frame values
- * that name a skipped frame are reported by code, not silently mangled; a
- * skipped drop-frame value snaps up to the first legal frame and flags it.
- */
 export function parseTc(input: string, rate: Rate): ParseResult {
 	const raw = input.trim();
 	if (raw === '') return { ok: false, error: 'empty' };
@@ -202,7 +166,7 @@ export function parseTc(input: string, rate: Rate): ParseResult {
 		return { ok: false, error: 'not-numeric' };
 	}
 
-	// Right-align: [f] | [s,f] | [m,s,f] | [h,m,s,f].
+	// right-align parsed fields
 	const nums = tokens.map((t) => Number.parseInt(t, 10));
 	const padded = [0, 0, 0, 0];
 	nums.forEach((n, i) => {
@@ -236,8 +200,7 @@ export function parseTc(input: string, rate: Rate): ParseResult {
 	const parts: Parts = { h, m, s, f, negative };
 	let snappedFrom: string | undefined;
 
-	// A drop-frame timecode at :00 seconds of a non-tenth minute cannot name the
-	// first dpm frames — they were skipped. Snap up rather than reject.
+	// skip invalid drop-frame numbers
 	if (rate.drop) {
 		const dpm = dropPerMinute(rate.nominal);
 		if (m % 10 !== 0 && s === 0 && f < dpm) {

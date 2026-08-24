@@ -1,11 +1,5 @@
 import { hexToRgb, rgbToHex, type Triple } from './colour-maths';
 
-/**
- * Colour-vision-deficiency simulation, shared by colorblind-sim and
- * colour-atlas. Moved out of colorblind-sim.gts so the atlas does not import a
- * tool component's chunk.
- */
-
 export type SimulationType =
 	| 'normal'
 	| 'protanopia'
@@ -17,14 +11,9 @@ export type SimulationType =
 	| 'achromatopsia'
 	| 'achromatomaly';
 
-/** Rows of an sRGB-to-sRGB mixing matrix, each row summing to 1. */
 export type Matrix = readonly [Triple, Triple, Triple];
 
-// Carried over byte-for-byte from the Next app so both render the same colours.
-// Its comment credits Machado, Oliveira and Fernandes (2009), but the values are
-// not that paper's: they are the older HCIRN/"Color Blindness Simulation" set,
-// which also mixes gamma-encoded sRGB rather than linear light. Correcting
-// either would break parity with the CLI and iOS repos.
+// preserve cli parity
 export const MATRICES: Record<SimulationType, Matrix> = {
 	normal: [
 		[1, 0, 0],
@@ -73,8 +62,6 @@ export const MATRICES: Record<SimulationType, Matrix> = {
 	],
 };
 
-// Every row is non-negative and sums to 1, so the result is already within
-// 0-255 and needs no clamp.
 export function applyMatrix(
 	matrix: Matrix,
 	r: number,
@@ -94,7 +81,6 @@ export function applyMatrix(
 	];
 }
 
-/** Null when the hex does not parse, which blanks the dependent swatch. */
 export function simulateHex(hex: string, type: SimulationType): string | null {
 	const rgb = hexToRgb(hex);
 	if (!rgb) return null;

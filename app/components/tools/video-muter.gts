@@ -199,7 +199,7 @@ export default class VideoMuterTool extends Component {
 		this.result = null;
 	}
 
-	// A new file or Clear cancels a running remux; mediabunny stops decoding.
+	// abort stops mediabunny decoding
 	#reset() {
 		this.#token++;
 		this.#muteAbort?.abort();
@@ -334,7 +334,6 @@ export default class VideoMuterTool extends Component {
 								preload="metadata"
 							></video>
 						{{/if}}
-						{{! user-supplied video; there is no caption track to offer }}
 						{{! template-lint-disable require-media-caption }}
 						<video
 							src={{this.intake.url}}
@@ -372,7 +371,7 @@ export default class VideoMuterTool extends Component {
 							<span
 								class="dt-vm-drop-title"
 							>{{DROP_TITLE}}</span>
-							{{! hint reused verbatim from Background Remover }}
+							{{! wording duplicated in background-remover }}
 							<span
 								class="dt-vm-drop-hint"
 							>or click to select a

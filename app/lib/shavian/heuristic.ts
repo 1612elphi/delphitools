@@ -1,14 +1,12 @@
-// The `!` below is guarded by the length check in the same condition.
+// ! guarded by length check in condition
 import { getShavianLetter } from './phoneme-map';
 
-// Grapheme patterns sorted longest-first for greedy matching.
-// Each maps an English spelling pattern to a Shavian character string.
+// sorted longest-first for greedy matching
 const GRAPHEME_RULES: [string, string][] = [
-	// Multi-character patterns (longest first)
 	['tion', '𐑖𐑩𐑯'],
 	['sion', '𐑠𐑩𐑯'],
 	['ture', '𐑗𐑼'],
-	['ough', '𐑴'], // most common: "though" — user can fix others
+	['ough', '𐑴'], // though most common
 	['ight', '𐑲𐑑'],
 	['ould', '𐑫𐑛'],
 	['ious', '𐑾𐑕'],
@@ -28,7 +26,7 @@ const GRAPHEME_RULES: [string, string][] = [
 	['ph', '𐑓'],
 	['wh', '𐑢'],
 	['gh', ''], // silent in most positions
-	['th', '𐑔'], // default to unvoiced; user can swap
+	['th', '𐑔'], // unvoiced default
 	['sh', '𐑖'],
 	['ch', '𐑗'],
 	['ng', '𐑙'],
@@ -55,12 +53,11 @@ const GRAPHEME_RULES: [string, string][] = [
 	['or', '𐑹'],
 	['ar', '𐑸'],
 	['ew', '𐑿'],
-	// Single-letter fallbacks
 	['a', '𐑨'],
 	['b', '𐑚'],
 	['c', '𐑒'],
 	['d', '𐑛'],
-	['e', '𐑧'], // short e default; often silent at word end (handled separately)
+	['e', '𐑧'], // short e default
 	['f', '𐑓'],
 	['g', '𐑜'],
 	['h', '𐑣'],
@@ -88,17 +85,11 @@ interface HeuristicPhoneme {
 	ipa: string;
 }
 
-/**
- * Convert an English word to Shavian using grapheme rules.
- * Returns an array of phonemes (one per matched pattern).
- * This is a rough heuristic — results should be flagged for user review.
- */
 export function heuristicTransliterate(word: string): HeuristicPhoneme[] {
 	const lower = word.toLowerCase();
 	const result: HeuristicPhoneme[] = [];
 	let i = 0;
 
-	// Strip silent trailing 'e' (very rough heuristic)
 	const effective =
 		lower.length > 2 &&
 		lower.endsWith('e') &&
@@ -112,8 +103,7 @@ export function heuristicTransliterate(word: string): HeuristicPhoneme[] {
 		for (const [grapheme, shavianStr] of GRAPHEME_RULES) {
 			if (effective.startsWith(grapheme, i)) {
 				if (shavianStr.length > 0) {
-					// Each Shavian character in the output is a separate phoneme
-					// Shavian chars are in the supplementary plane, so use spread for surrogate pairs
+									// astral plane, use spread
 					for (const char of [...shavianStr]) {
 						const letter =
 							getShavianLetter(char);
@@ -132,7 +122,6 @@ export function heuristicTransliterate(word: string): HeuristicPhoneme[] {
 		}
 
 		if (!matched) {
-			// Skip unknown characters (numbers, hyphens, etc.)
 			i++;
 		}
 	}

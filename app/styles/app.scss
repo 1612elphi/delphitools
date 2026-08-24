@@ -1,21 +1,13 @@
-// delphitools stylesheet, on Crayon.
-//
-// Two layers, deliberately kept apart:
-//   Crayon owns the compile-time scales — spacing, type, radius, breakpoints,
-//   the colour palette and every utility class and mixin.
-//   The :root/.dark block below owns the semantic theme tokens. Those switch at
-//   runtime when the no-flash script toggles `.dark`, which a Sass map cannot
-//   do, so they stay as CSS custom properties.
+// crayon scales + runtime theme tokens
 
 @use "crayon-config" as crayon;
 
-// Front-page omnibox (docs/frontpage mock 02 is the reference).
+// docs/frontpage mock 02
 @use "omnibox";
 @use "wave-minimap";
 @use "sticker-wall";
 @use "nds-loader";
 
-// One partial per tool; see app/styles/tools/.
 @use "tools/algebra-calc";
 @use "tools/artwork-enhancer";
 @use "tools/audio-atlas";
@@ -108,7 +100,6 @@
 @use "tools/word-counter";
 @use "tools/zine-imposer";
 
-// One partial per Substrata surface; see app/styles/substrata/.
 @use "substrata/arrange-panel";
 @use "substrata/canvas";
 @use "substrata/colour-panel";
@@ -121,9 +112,7 @@
 @use "substrata/shell";
 @use "substrata/top-bar";
 
-/* iA Writer Quattro — self-hosted variable font (weight axis 400–700, upright +
-   italic). The single typeface for the whole UI; replaces IBM Plex Mono and
-   Instrument Serif. Served locally so no third party sees visitors. */
+// weight axis 400–700, self-hosted
 @font-face {
 	font-family: "iA Writer Quattro";
 	src: url("/fonts/iAWriterQuattroV.woff2") format("woff2");
@@ -217,8 +206,7 @@ html.dark {
 	color-scheme: dark;
 }
 
-/* Crayon's `.border` sets width only, so the token default has to live here for
-   bare `border` classes to draw in the theme colour, as Tailwind's did. */
+// crayon .border sets width only
 *,
 *::before,
 *::after {
@@ -235,9 +223,7 @@ body {
 	-webkit-font-smoothing: antialiased;
 }
 
-/* Flush segmented option groups — children sit edge-to-edge, divided by single
-   hairlines. Put `.segmented` + a `grid-cols-*` on any button/option group;
-   child borders/radii are neutralised so only the 1px grid lines show. */
+// flush segmented groups
 .segmented {
 	display: grid;
 	gap: 1px;
@@ -250,8 +236,6 @@ body {
 	border-radius: 0 !important;
 }
 
-/* Glyph styling for the decorative TAXIWAY split-flap wordmark on the home page.
-   Shared across the top/bottom flap halves; only `top` varies inline. */
 .taxiway-glyph {
 	position: absolute;
 	left: 50%;
@@ -264,7 +248,6 @@ body {
 	text-shadow: 0 0 10px rgb(212 149 42 / 15%);
 }
 
-/* ── Text Editor (ProseMirror surface) — v1 ─────────────────────────── */
 .dt-editor {
 	outline: none;
 	min-height: 60vh;
@@ -432,8 +415,7 @@ body {
 	margin-top: 0.5em;
 }
 
-/* GFM tables (overrides prosemirror-tables' light defaults; no margin on
-   `table` so the block-gap rule still spaces it) */
+// no table margin; block-gap spaces
 .dt-editor table {
 	border-collapse: collapse;
 	table-layout: fixed;
@@ -467,7 +449,6 @@ body {
 	background: var(--primary);
 }
 
-/* Empty-document ghost placeholder (may wrap to several lines) */
 .dt-editor .dt-empty {
 	position: relative;
 }
@@ -482,7 +463,6 @@ body {
 	pointer-events: none;
 }
 
-/* Typography refinements */
 .dt-editor a:hover {
 	text-decoration-thickness: 2px;
 }
@@ -500,14 +480,9 @@ body {
 	color: var(--muted-foreground);
 }
 
-/* ── Pride Month styling (sidebar brand mark) ───────────────────────────
-   Enabled at build time via NEXT_PUBLIC_PRIDE (auto-on during June). */
+// NEXT_PUBLIC_PRIDE, auto-on june
 
-/* "delphitools" wordmark → flowing rainbow gradient text. Solid colour by
-   default; the gradient + text-clip only apply where background-clip:text is
-   supported, so the brand never vanishes if clipping fails. A theme-coloured
-   stroke keeps the letters legible across the low-contrast bands (yellow on the
-   cream theme, blue/purple on dark). */
+// @supports guard, stroke for legibility
 .pride-wordmark {
 	color: var(--foreground);
 }
@@ -536,9 +511,7 @@ body {
 	}
 }
 
-/* "trans rights" tagline → trans-flag blue/pink. The light-theme stops are
-   deepened so the small text clears WCAG AA on the cream background; the bright
-   flag colours are kept for dark mode (where they already exceed it). */
+// deepened for wcag aa
 .pride-tagline {
 	font-weight: 600;
 	color: var(--foreground);
@@ -555,8 +528,7 @@ body {
 		animation: pride-flow 6s linear infinite;
 	}
 
-	/* background-image (not the `background` shorthand) so it doesn't reset
-     background-clip back to border-box and paint a solid bar. */
+	// shorthand resets background-clip
 	.dark .pride-tagline {
 		background-image: linear-gradient(
 			90deg,
@@ -567,7 +539,6 @@ body {
 	}
 }
 
-/* Logo ring cycles through the flag colours. */
 .pride-ring {
 	border-color: #e40303;
 	animation: pride-ring-cycle 6s linear infinite;
@@ -624,12 +595,7 @@ body {
 	}
 }
 
-/* ── "Delphi needs a favour" ticker ─────────────────────────────────────
-   Slim bottom banner that rises ~2s after load; the body text scrolls
-   right-to-left on a loop.
-   ponytail: single-span marquee — reliable while the text is wider than the
-   bar (lorem is). If the ask ever gets short, duplicate the span for a
-   seamless loop. */
+// ponytail: single-span marquee; needs wide text
 .favour-banner {
 	animation: favour-rise 0.4s ease-out;
 }
@@ -670,8 +636,7 @@ body {
 	}
 }
 
-/* Forced-colors / high-contrast: drop the gradient-text trick so the brand
-   stays visible in the system palette. */
+// keep brand visible in hc
 @media (forced-colors: active) {
 	.pride-wordmark,
 	.pride-tagline {
@@ -683,15 +648,9 @@ body {
 	}
 }
 
-/* ── Sticker wall (home page + QR tool) ──────────────────────────────────
-   A single die-cut PNG, rendered twice: the stuck "face" (clipped from the
-   fold line down) and a vertically-mirrored "flap" whose grey underside is
-   synthesised from the PNG's own alpha (#sticker-back). One --peel variable,
-   animated by GSAP, drives the face clip, the flap clip and the welded flap
-   offset together so it folds back on itself like a real sticker.
-   Technique adapted from React Bits "Sticker Peel". */
+// react bits sticker peel
 .sticker-btn {
-	/* clip padding so the die-cut edges aren't shaved; --peel = fold position */
+	// --peel = fold position
 	--p: 10px;
 	--peel-start: calc(-1 * var(--p));
 	--peel-end: calc(100% + var(--p));
@@ -707,7 +666,6 @@ body {
 	-webkit-tap-highlight-color: transparent;
 }
 
-/* the actively touched sticker rises above its neighbours */
 .sticker-btn:hover,
 .sticker-btn:focus-visible {
 	z-index: 5;
@@ -728,8 +686,7 @@ body {
 	border-radius: 6px;
 }
 
-/* GSAP animates this layer's transform (lift toward viewer); the drop-shadow
-   follows the die-cut alpha and grows with the lift's scale. */
+// gsap lift, alpha shadow
 .peel-lift {
 	display: block;
 	transition: transform 0.25s ease;
@@ -749,7 +706,6 @@ body {
 	transition: none;
 }
 
-/* The resting tilt also sets the axis the sticker peels along. */
 .sticker-fold {
 	position: relative;
 	display: block;
@@ -757,7 +713,6 @@ body {
 	transform-origin: center;
 }
 
-/* Face: the part still stuck down — visible from the fold line to the bottom. */
 .sticker-face {
 	display: block;
 	clip-path: polygon(
@@ -768,7 +723,6 @@ body {
 	);
 }
 
-/* Flap: the mirrored grey underside that curls back, welded to the fold line. */
 .sticker-flap {
 	position: absolute;
 	left: 0;
@@ -812,12 +766,7 @@ body {
 	}
 }
 
-/* ── Home tool grid — icon hover animation ──────────────────────────────
-   Static lucide icons (those without a bespoke animated counterpart in
-   components/animated-icons) get a CSS "draw-in" on cell hover/focus. The 12
-   icons that DO have a motion version animate themselves and are not matched
-   here. pathLength is normalised to 1 in tool-grid.tsx so dasharray:1 == full
-   stroke. */
+// static icons only; pathlength=1 set in tsx
 @media (prefers-reduced-motion: no-preference) {
 	.tool-ic-draw svg > * {
 		stroke-dasharray: 1;
@@ -840,7 +789,6 @@ body {
 	}
 }
 
-/* Focus-mode decorations */
 .pm-para-active {
 	background: color-mix(in oklch, var(--primary) 8%, transparent);
 	border-radius: 4px;
@@ -858,20 +806,14 @@ body {
 	transition: opacity 0.2s ease;
 }
 
-/* ── Chrome — v2 ───────────────────────────────────────────────────────────
-   Crayon owns the scale (crayon.size, crayon.font-size, crayon.screen); the
-   theme tokens stay CSS custom properties so the .dark toggle keeps working.
-   Themed surfaces use component CSS rather than utility classes for that
-   reason: there is no `bg-background` class, because the value is not a
-   compile-time constant. */
+// sass can't toggle .dark; keep css props
 
 $sidebar-width: 16rem;
 $sidebar-width-icon: 3rem;
 $sidebar-width-mobile: 18rem;
 $header-height: crayon.size(14);
 
-/* Not crayon.sr-only: that mixin clips with the deprecated `clip` property.
-   Same behaviour, current syntax. */
+// crayon.sr-only uses deprecated clip
 .dt-sr-only {
 	position: absolute;
 	width: 1px;
@@ -906,7 +848,6 @@ $header-height: crayon.size(14);
 	}
 }
 
-/* The icon component wraps raw lucide SVG; make it size to its box. */
 .dt-icon {
 	display: inline-flex;
 
@@ -915,8 +856,6 @@ $header-height: crayon.size(14);
 		height: 100%;
 	}
 }
-
-/* ── Layout ─────────────────────────────────────────────────────────────── */
 
 .dt-shell {
 	display: flex;
@@ -935,8 +874,6 @@ $header-height: crayon.size(14);
 	overflow: auto;
 }
 
-/* ── Sidebar ────────────────────────────────────────────────────────────── */
-
 .dt-sidebar {
 	display: flex;
 	flex-direction: column;
@@ -944,7 +881,7 @@ $header-height: crayon.size(14);
 	width: $sidebar-width;
 	height: 100dvh;
 
-	/* sticky, not relative: it also positions .dt-sidebar-rail on the outer edge */
+	// also anchors .dt-sidebar-rail
 	position: sticky;
 	top: 0;
 	background: var(--sidebar);
@@ -956,7 +893,7 @@ $header-height: crayon.size(14);
 		width: $sidebar-width-icon;
 	}
 
-	/* Off-canvas below md. The rail collapse is a desktop affordance only. */
+	// rail collapse desktop only
 	&[data-mobile="true"] {
 		position: fixed;
 		z-index: 60;
@@ -1021,7 +958,6 @@ $header-height: crayon.size(14);
 	color: var(--muted-foreground);
 }
 
-/* the tagline swaps to the build commit on hover */
 .dt-brand-sha {
 	display: none;
 }
@@ -1100,9 +1036,7 @@ $header-height: crayon.size(14);
 	@include crayon.vstack(0.5);
 }
 
-/* NavTip wraps each link in a TooltipTrigger, which is inline-block so it can
-   sit beside inline content elsewhere. Here it has to fill the group, or the
-   hover and active backgrounds stop at the text instead of spanning the row. */
+// navtip is inline-block; must fill row
 .dt-nav-group .dt-tooltip-trigger {
 	display: block;
 }
@@ -1153,7 +1087,6 @@ $header-height: crayon.size(14);
 		outline-offset: -2px;
 	}
 
-	/* LinkTo sets `active` on the matching route */
 	&.active {
 		background: var(--sidebar-accent);
 		color: var(--sidebar-accent-foreground);
@@ -1215,7 +1148,6 @@ $header-height: crayon.size(14);
 	margin-inline: auto;
 }
 
-/* Collapsed rail: icons only. */
 .dt-sidebar[data-state="collapsed"][data-mobile="false"] {
 	.dt-sidebar-search,
 	.dt-nav-group-label,
@@ -1244,7 +1176,7 @@ $header-height: crayon.size(14);
 	}
 }
 
-/* The outer edge doubles as a toggle, as shadcn's SidebarRail does. */
+// as shadcn SidebarRail
 .dt-sidebar-rail {
 	position: absolute;
 	inset-block: 0;
@@ -1267,8 +1199,6 @@ $header-height: crayon.size(14);
 .dt-sidebar[data-mobile="true"] .dt-sidebar-rail {
 	display: none;
 }
-
-/* ── Header ─────────────────────────────────────────────────────────────── */
 
 .dt-header {
 	@include crayon.hstack(2);
@@ -1321,10 +1251,7 @@ $header-height: crayon.size(14);
 	align-items: center;
 }
 
-/* ── Flow State: the workflow bar under the header ─────────────────────── */
-
-/* An action bar (DESIGN.md §10): flush cells divided by 1px, a 2px rule
-   below, the primary action a filled cell at the right edge. */
+// design.md §10 action bar
 .dt-flow {
 	position: sticky;
 	z-index: 49;
@@ -1337,14 +1264,11 @@ $header-height: crayon.size(14);
 	overflow-x: auto;
 	transition: min-height 240ms ease-out;
 
-	/* the finale: the last step has passed its output along, the panel
-	   grows and Done is the one thing left to press */
 	&.is-finished {
 		min-height: crayon.size(20);
 	}
 }
 
-/* the tool behind a finished flow steps back; the save or exit brings it back */
 .dt-main.is-behind {
 	opacity: 0.5;
 	filter: blur(4px);
@@ -1587,7 +1511,7 @@ $header-height: crayon.size(14);
 		height: crayon.size(6);
 	}
 
-	/* the beacon fades a static ring in and out: opacity only, no repaint */
+	// opacity only, no repaint
 	&::after {
 		content: "";
 		position: absolute;
@@ -1624,8 +1548,7 @@ $header-height: crayon.size(14);
 	}
 }
 
-/* the capture in flight from the clicked control to the Next slot; left/top
-   are the launch point, the arc is translate keyframes */
+// launch point; translate arc keyframes
 .dt-flow-ghost {
 	position: fixed;
 	z-index: 60;
@@ -1640,8 +1563,7 @@ $header-height: crayon.size(14);
 	will-change: translate, scale, opacity;
 }
 
-/* the workflow catalogue as a table (DESIGN.md §12): one column per step
-   slot, so tools line up by position; rows and cells hairline-divided */
+// design.md §12 table
 .dt-wf-scroll {
 	overflow-x: auto;
 }
@@ -1816,10 +1738,7 @@ $header-height: crayon.size(14);
 	}
 }
 
-/* ── Dialog (ember-primitives wraps the native <dialog>) ─────────────────── */
-
-/* Tabs (ui/tabs.gts): a flush hairline-divided trigger strip. The active
-   state rides the component's data-state attribute. */
+// ui/tabs.gts
 .dt-tabs-list {
 	display: flex;
 	border: 1px solid var(--border);
@@ -1897,8 +1816,6 @@ $header-height: crayon.size(14);
 	@extend .dt-icon-btn;
 }
 
-/* ── About body ─────────────────────────────────────────────────────────── */
-
 .dt-about-body {
 	@include crayon.vstack(4);
 
@@ -1947,7 +1864,6 @@ $header-height: crayon.size(14);
 	font-size: crayon.font-size("xs");
 }
 
-/* ── Colour palette dialog ──────────────────────────────────────────── */
 .dt-palette-trigger {
 	display: inline-flex;
 	align-items: center;
@@ -1970,7 +1886,7 @@ $header-height: crayon.size(14);
 }
 
 .dt-palette-dialog {
-	// wider than the 32rem base so a full row of cards fits
+	// wider than 32rem base
 	inline-size: min(1440px, 96vw);
 	max-inline-size: none;
 	max-block-size: 92dvh;
@@ -2110,17 +2026,9 @@ $header-height: crayon.size(14);
 	}
 }
 
-/* ── 404 ────────────────────────────────────────────────────────────────── */
-
-/* ── 404 ──────────────────────────────────────────────────────────────────
-   Full-viewport scene that escapes the app chrome (see application.gts):
-   regular-tile repeats as a grid whose ORIGIN tile sits bottom-middle
-   (background-position 50%/100% anchors exactly one tile there), and
-   bottom-tile overlays that cell — both read the same --tile size so the
-   overlay can never drift off the grid. Card floats exact-centre above it. */
+// 50%/100% anchors origin tile
 .dt-404-page {
-	/* Origin tile centred bottom-mid, 1.5 regular tiles to each side: at most
-	   four full tiles fit the width, so the cell is a quarter viewport. */
+	// at most 4 tiles wide
 	--tile: 25vw;
 
 	position: fixed;
@@ -2140,8 +2048,7 @@ $header-height: crayon.size(14);
 	width: var(--tile);
 	height: var(--tile);
 
-	/* Opaque backdrop: the art's transparent pixels show the page ground,
-	   never the regular grid through it — the two tiles never overlap. */
+	// opaque; hides grid behind art
 	background: var(--background);
 	translate: -50% 0;
 	pointer-events: none;
@@ -2171,7 +2078,6 @@ $header-height: crayon.size(14);
 }
 
 .dt-404-home {
-	// sits under the card stack; margin-top gives the button air
 	margin-top: crayon.size(4);
 }
 
@@ -2196,8 +2102,6 @@ $header-height: crayon.size(14);
 	}
 }
 
-/* ── Home page ──────────────────────────────────────────────────────────── */
-
 .dt-page {
 	padding: crayon.size(6);
 
@@ -2214,7 +2118,6 @@ $header-height: crayon.size(14);
 	margin-bottom: crayon.size(12);
 }
 
-/* Doodle layout: the version pill, then the art, centred above the omnibox. */
 .dt-hero.is-doodle {
 	display: flex;
 	flex-direction: column;
@@ -2222,7 +2125,7 @@ $header-height: crayon.size(14);
 	margin-bottom: crayon.size(6);
 }
 
-/* Rounded on purpose (Ruby): the one pill shape in the square system. */
+// the one pill shape
 .dt-hero-pills {
 	display: flex;
 	flex-wrap: wrap;
@@ -2262,7 +2165,6 @@ $header-height: crayon.size(14);
 	}
 }
 
-/* The what's-new popup, in the shape of the Substrata onboarding. */
 .dt-wn {
 	width: min(28rem, calc(100vw - #{crayon.size(8)}));
 	padding: 0;
@@ -2323,10 +2225,7 @@ $header-height: crayon.size(14);
 	border-top: 2px solid var(--border);
 }
 
-/* The changelog popup: a since-picker over the three category tabs. */
-
-/* The changelog popup reads as a document: a centred title with the
-   version picker inline, tabs, a bulleted list. Not the flush chrome. */
+// document, not flush chrome
 .dt-cl {
 	width: min(36rem, calc(100vw - #{crayon.size(8)}));
 	padding: crayon.size(6) crayon.size(7) crayon.size(5);
@@ -2480,8 +2379,7 @@ $header-height: crayon.size(14);
 .dt-hero-art {
 	width: 100%;
 	max-width: 42rem;
-	// Hero art is authored at 2.8:1 (width:height); pin the box to that and
-	// stretch, so a slightly-off source (delphi.png is 2.84:1) still fits.
+	// source art 2.8:1; delphi.png 2.84:1
 	aspect-ratio: 2.8 / 1;
 	object-fit: fill;
 }
@@ -2504,8 +2402,7 @@ $header-height: crayon.size(14);
 	transform: rotateY(180deg);
 }
 
-/* Both faces stack in the same grid cell; backface-visibility hides
-	whichever one is rotated away, sizing the box to the taller face. */
+// sized by taller face
 .dt-hero-flip-face {
 	position: relative;
 	grid-area: 1 / 1;
@@ -2516,9 +2413,7 @@ $header-height: crayon.size(14);
 	transform: rotateY(180deg);
 }
 
-/* Fills the face; catches clicks that miss the real links inside. Plain
-	cursor-only affordance — a hover fill here would cover the whole face,
-	well past the tiles/text it sits behind. */
+// click catch-all, no hover fill
 .dt-hero-flip-cover {
 	position: absolute;
 	inset: 0;
@@ -2528,8 +2423,7 @@ $header-height: crayon.size(14);
 	cursor: pointer;
 }
 
-/* Sits over the cover button visually; only its real links take clicks, so
-	the cover still catches everything else (paragraph text, tile gaps). */
+// links-only clicks
 .dt-hero-flip-content {
 	@include crayon.vstack(3);
 
@@ -2560,7 +2454,7 @@ $header-height: crayon.size(14);
 	font-size: crayon.font-size("xs");
 }
 
-/* Loose, not gridded: alternating tilt per tile for a doodled, scattered feel. */
+// loose, doodled tilt
 .dt-hero-tiles {
 	display: flex;
 	flex-wrap: wrap;
@@ -2585,8 +2479,7 @@ $header-height: crayon.size(14);
 		height: crayon.size(4);
 	}
 
-	/* The crayon glyph is drawn wide (455x190), not square like the others;
-		a square box would letterbox it down to a sliver. */
+	// glyph is 455x190 wide
 	.dt-icon.is-wide {
 		width: crayon.size(7);
 		height: crayon.size(3);
@@ -2632,7 +2525,7 @@ $header-height: crayon.size(14);
 	color: var(--muted-foreground);
 }
 
-/* Hairline dividers via a 1px gap over the border colour, as .segmented. */
+// as .segmented
 .dt-grid {
 	display: grid;
 	gap: 1px;
@@ -2659,8 +2552,6 @@ $header-height: crayon.size(14);
 	}
 }
 
-/* the flagship treatment (Substrata, Workflows): an accent wash, icon and
-   name in the accent, a shine that sweeps across on hover */
 .dt-cell.is-highlight {
 	position: relative;
 	overflow: hidden;
@@ -2710,8 +2601,7 @@ $header-height: crayon.size(14);
 	}
 }
 
-/* Greatest Hits: six tracks, the two flagships span three, the three hits
-   span two, so both rows fill (an auto-fit grid left a dark track) */
+// flagships span 3, hits 2
 @include crayon.screen("md") {
 	.dt-grid.is-featured {
 		grid-template-columns: repeat(6, 1fr);
@@ -2748,10 +2638,7 @@ $header-height: crayon.size(14);
 	color: var(--muted-foreground);
 }
 
-/* ── Tooltip (vendored from shadcn-ember, restyled) ──────────────────────────
-   The component unmounts on `animationend`, so the open/closed animations are
-   required for it to close at all, not decoration. Upstream got them from
-   tw-animate-css, which Crayon replaces. */
+// vendored shadcn; animationend unmounts tooltip
 
 .dt-tooltip-trigger {
 	display: inline-block;
@@ -2803,15 +2690,12 @@ $header-height: crayon.size(14);
 }
 
 @media (prefers-reduced-motion: reduce) {
-	/* still animated, but fast enough to be imperceptible: animationend has to
-     fire or the tooltip never unmounts */
+	// animationend must fire
 	.dt-tooltip,
 	.dt-tooltip[data-state="closed"] {
 		animation-duration: 0.01s;
 	}
 }
-
-/* ── Tool page shell ─────────────────────────────────────────────────────── */
 
 .dt-tool-page {
 	padding: crayon.size(6);
@@ -2923,8 +2807,6 @@ $header-height: crayon.size(14);
 	}
 }
 
-/* ── Popover + Command (vendored from shadcn-ember, restyled) ─────────────── */
-
 .dt-popover {
 	z-index: 50;
 	background: var(--popover);
@@ -2933,8 +2815,7 @@ $header-height: crayon.size(14);
 	box-shadow: 0 8px 28px rgb(0 0 0 / 25%);
 }
 
-/* Not `display: contents`: the trigger is what floating-ui measures, and an
-   element with no box reports a zero rect, which pins the popover to 0,0. */
+// no box = zero rect
 .dt-popover-trigger,
 .dt-popover-anchor {
 	display: flex;
@@ -3049,10 +2930,7 @@ $header-height: crayon.size(14);
 	color: var(--muted-foreground);
 }
 
-/* The popover unmounts on `animationend` (isOpenOrClosing clears in
-   finishClose), so these are required for it to close at all — the same
-   load-bearing animation the tooltip needs. Upstream got them from
-   tw-animate-css, which Crayon replaces. */
+// animationend unmounts popover
 .dt-popover {
 	animation: dt-pop-in 0.12s ease-out;
 
@@ -3086,14 +2964,12 @@ $header-height: crayon.size(14);
 }
 
 @media (prefers-reduced-motion: reduce) {
-	/* still animated, just imperceptibly: animationend has to fire */
+	// animationend must fire
 	.dt-popover,
 	.dt-popover[data-state="closed"] {
 		animation-duration: 0.01s;
 	}
 }
-
-/* ── Select (vendored from shadcn-ember, restyled) ────────────────────────── */
 
 .dt-select-trigger {
 	@include crayon.hstack(2);
@@ -3134,8 +3010,7 @@ $header-height: crayon.size(14);
 	opacity: 0.5;
 }
 
-/* Portalled to <body>, so the trigger width comes across as a custom property
-   rather than from the cascade. */
+// portalled; width via custom property
 .dt-select-content {
 	position: fixed;
 	z-index: 50;
@@ -3159,7 +3034,7 @@ $header-height: crayon.size(14);
 }
 
 @media (prefers-reduced-motion: reduce) {
-	/* still animated, just imperceptibly: animationend has to fire */
+	// animationend must fire
 	.dt-select-content,
 	.dt-select-content[data-state="closed"] {
 		animation-duration: 0.01s;
@@ -3177,8 +3052,7 @@ $header-height: crayon.size(14);
 	cursor: default;
 	user-select: none;
 
-	/* The arrows and the pointer set the same attribute, so hover and keyboard
-	   focus cannot highlight two different rows. */
+	// one active row for hover+keyboard
 	&[data-active="true"] {
 		background: var(--accent);
 		color: var(--accent-foreground);
@@ -3204,8 +3078,6 @@ $header-height: crayon.size(14);
 	}
 }
 
-/* ── Colour notation selector (header) ───────────────────────────────────── */
-
 .dt-notation-trigger {
 	@include crayon.hstack(1.5);
 
@@ -3225,8 +3097,7 @@ $header-height: crayon.size(14);
 		height: crayon.size(3.5);
 	}
 
-	/* Scoped to the label, not to `span`: Icon renders a <span class="dt-icon">
-	   too, so a bare selector collapsed the whole control to an invisible box. */
+	// bare span hits .dt-icon
 	.dt-notation-current {
 		display: none;
 

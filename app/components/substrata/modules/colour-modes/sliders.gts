@@ -14,19 +14,6 @@ import {
 	type ColourSnapshot,
 } from 'delphitools-v2/lib/substrata/colour-store';
 
-/**
- * Colour mode 3 — SLIDERS with manual input. Per-channel gradient track + a
- * numeric field, switchable between an RGB set (R/G/B 0–255) and an HSL set
- * (H 0–360, S/L 0–100) via the segmented toggle. Ported from
- * sketches/pickers.html §"3 · RGB SLIDERS".
- *
- * All maths lives in colour-convert / colour-hsv; this file is pure UI + pointer
- * handling. Reads come from the `colour` arg; writes go through setRgb — RGB
- * channels write directly, HSL channels read via rgbToHsl(colour.rgb) and write
- * via setRgb(hslToRgb(...)). Channel letters (R/G/B, H/S/L) and the RGB/HSL
- * segment labels are functional glyphs, not copy.
- */
-
 type SetId = 'rgb' | 'hsl';
 
 const SETS: SetId[] = ['rgb', 'hsl'];
@@ -35,17 +22,12 @@ const HUE_SPECTRUM =
 	'linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)';
 
 interface Row {
-	/** Channel glyph — standard letter, not copy. */
 	label: string;
-	/** Committed display value (integer, in display units). */
 	value: number;
 	min: number;
 	max: number;
-	/** Handle position, 0–1. */
 	pos: number;
-	/** CSS background reflecting the channel. */
 	track: string;
-	/** Commit a typed display-unit value to the store. */
 	onCommit: (n: number) => void;
 }
 
@@ -142,8 +124,6 @@ interface ChannelInputSignature {
 	};
 }
 
-/** Editable numeric field: commits on blur/Enter (clamped + rounded to range),
- *  reverts on invalid input or Escape. */
 class ChannelInput extends Component<ChannelInputSignature> {
 	@tracked draft: string | null = null;
 
@@ -169,7 +149,7 @@ class ChannelInput extends Component<ChannelInputSignature> {
 					Math.min(this.args.max, Math.round(n)),
 				),
 			);
-		this.draft = null; // invalid → snap back to the live value
+		this.draft = null;
 	};
 
 	onKeydown = (event: KeyboardEvent) => {
@@ -244,8 +224,6 @@ export default class SlidersMode extends Component<SlidersModeSignature> {
 			: hslRows(this.args.colour);
 	}
 
-	// A track drag emits a normalised x (0–1); write it to channel `row` of the
-	// active set.
 	#writeTrack(row: number, x: number) {
 		const n = clamp01(x);
 		const colour = this.args.colour;
@@ -278,7 +256,6 @@ export default class SlidersMode extends Component<SlidersModeSignature> {
 
 	<template>
 		<div class="sub-cp-sliders">
-			{{! RGB | HSL set toggle }}
 			<div class="sub-cp-settop">
 				<div class="segmented sub-cp-setseg">
 					{{#each this.sets key="." as |s|}}
@@ -304,8 +281,6 @@ export default class SlidersMode extends Component<SlidersModeSignature> {
 				</div>
 			</div>
 
-			{{! channel rows — fill the panel evenly (the footer swatch shows
-				the preview) }}
 			{{#each this.rowBindings key="row.label" as |binding|}}
 				<ChannelRow
 					@row={{binding.row}}

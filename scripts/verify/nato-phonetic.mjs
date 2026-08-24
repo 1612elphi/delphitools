@@ -1,8 +1,4 @@
-// Spells "Hi 5" in two tables, reads "tango echo" back through Auto, and
-// copies the result. Clipboard reads need the permission override below.
-//
-// Usage: npm start, then node scripts/verify/nato-phonetic.mjs
-
+// clipboard reads need permission override
 import {
 	launch,
 	visit,
@@ -104,7 +100,6 @@ await sleep(150);
 const saved = await page.evaluate(() => window.__result?.text());
 check('Download saves the read text', saved === 'TE', String(saved));
 
-// The chart: 26 tiles that type on click; the word row follows the alphabet.
 check('chart has 26 tiles', (await page.$$('.dt-nato-tile')).length === 26);
 await setInput('');
 await page.$$eval('.dt-nato-tile', (els) => {

@@ -1,10 +1,4 @@
-// Every dt- (app) and sub- (Substrata) class a component uses must be defined
-// somewhere in the stylesheets. Guards against the failure mode where a bulk
-// stylesheet edit swallows an unrelated rule block and the element silently
-// falls back to UA default styling (the trimmer's transport buttons,
-// 2026-08-11).
-//
-// Static check — needs no dev server. Usage: node scripts/verify/classes.mjs
+// missing css fails silently
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -12,8 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
 
-// Wrapper names with deliberately no rules of their own; their children
-// carry the styling. Additions here need a reason.
+// children carry the styling
 const UNSTYLED_CONTAINERS = new Set([
 	'dt-bc-rows',
 	'dt-atlas-table',
@@ -22,15 +15,12 @@ const UNSTYLED_CONTAINERS = new Set([
 	'dt-shades-rows',
 	'dt-tc-table',
 	'dt-tabs',
-	// Substrata: behaviour hooks and layout-neutral wrappers.
-	'sub-csm-section', // grouping only; the heading + grid inside are styled
-	'sub-grip', // the draggable modifier's handle selector
-	'sub-preset-strip', // .segmented carries the strip's own styling
-	'sub-topbar-seg-hook', // span[title] the parent repo's rigs read
-	// image-compressor: selectors image-compressor.mjs drives; .dt-ic-btn and
-	// .dt-ic-pane img carry the styling.
-	'dt-ic-after-img', // rigs fetch the encoded bytes off its blob src
-	'dt-ic-download', // rigs read its disabled state
+	'sub-csm-section',
+	'sub-grip', // draggable modifier handle
+	'sub-preset-strip', // .segmented carries styling
+	'sub-topbar-seg-hook', // span[title] rigs read
+	'dt-ic-after-img', // bytes fetched off blob src
+	'dt-ic-download', // disabled state read
 ]);
 
 function* walk(dir) {
@@ -52,7 +42,7 @@ for (const path of walk(join(root, 'app/components'))) {
 	if (!path.endsWith('.gts')) continue;
 	const source = readFileSync(path, 'utf8');
 	const used = new Set();
-	// The lookbehind keeps `dt-sub-frame` from also reading as a `sub-` class.
+	// else dt-sub-frame reads sub-
 	for (const attr of source.matchAll(/class="([^"]*)"/g))
 		for (const cls of attr[1].matchAll(
 			/(?<![\w-])(?:dt|sub)-[a-z0-9-]+\b/g,

@@ -15,30 +15,19 @@ import {
 } from 'delphitools-v2/lib/colour-maths';
 import type ColourNotationService from 'delphitools-v2/services/colour-notation';
 
-// WCAG 2.1 SC 1.4.3 (AA) and 1.4.6 (AAA).
+// wcag 2.1 thresholds
 const AA_NORMAL = 4.5;
 const AA_LARGE = 3;
 const AAA_NORMAL = 7;
 const AAA_LARGE = 4.5;
 
-/** Six digits behind a #, the only form `<input type="color">` accepts. */
 const HEX = /^#[0-9a-f]{6}$/i;
 
 function isHex(value: string): boolean {
 	return HEX.test(value);
 }
 
-/**
- * The colour's hue and saturation at the lightness closest to the original that
- * clears `target` against `reference`. Returns the original when no lightness
- * does.
- *
- * Contrast is monotone in lightness on each side of the reference, so the
- * lightnesses that pass form one interval reaching 0 or 100. The sweep starts
- * at whichever end sits on the reference's side of the scale: every failing
- * lightness, including the original, lies between that end and the boundary, so
- * the first pass encountered is the boundary and therefore the smallest change.
- */
+// searches nearest passing lightness
 function fixContrast(
 	colourToFix: string,
 	reference: string,
@@ -88,7 +77,6 @@ export default class ContrastCheckerTool extends Component {
 	get verdict() {
 		const ratio = this.ratio;
 		if (ratio === null) return null;
-		// Wording carried over from the Next app.
 		if (ratio >= AAA_NORMAL) return 'Excellent';
 		if (ratio >= AA_NORMAL) return 'Good';
 		if (ratio >= AA_LARGE) return 'Acceptable for large text';
@@ -141,9 +129,6 @@ export default class ContrastCheckerTool extends Component {
 		}));
 	}
 
-	// Half-typed input would otherwise reset the picker to black; the Next app
-	// falls back the same way, black behind the background and white behind the
-	// foreground.
 	get backgroundSwatch() {
 		return isHex(this.background) ? this.background : '#000000';
 	}
@@ -152,8 +137,6 @@ export default class ContrastCheckerTool extends Component {
 		return isHex(this.foreground) ? this.foreground : '#ffffff';
 	}
 
-	// Both swatch getters return a matched hex or a literal, so nothing a typist
-	// enters reaches the style string intact.
 	get backgroundStyle() {
 		return htmlSafe(`background-color: ${this.backgroundSwatch}`);
 	}
@@ -178,7 +161,6 @@ export default class ContrastCheckerTool extends Component {
 		return this.inNotation(this.foreground);
 	}
 
-	/** The same colour in the header's notation, or null when that is hex. */
 	inNotation(hex: string) {
 		if (this.colourNotation.notation === 'hex') return null;
 		if (!isHex(hex)) return null;
@@ -342,18 +324,15 @@ export default class ContrastCheckerTool extends Component {
 					class="dt-contrast-preview"
 					style={{this.previewStyle}}
 				>
-					{{! wording carried over from the Next app }}
 					<p
 						class="dt-contrast-large"
 						style={{this.inkStyle}}
 					>Large Text (24px+)</p>
-					{{! wording carried over from the Next app }}
 					<p
 						class="dt-contrast-normal"
 						style={{this.inkStyle}}
 					>Normal text at 16px. The quick brown
 						fox jumps over the lazy dog.</p>
-					{{! wording carried over from the Next app }}
 					<p
 						class="dt-contrast-small"
 						style={{this.inkStyle}}
@@ -400,23 +379,18 @@ export default class ContrastCheckerTool extends Component {
 			{{/if}}
 
 			<div class="dt-contrast-about">
-				{{! wording carried over from the Next app }}
 				<span class="dt-contrast-about-title">About WCAG
 					Contrast Requirements</span>
 				<ul>
-					{{! wording carried over from the Next app }}
 					<li><strong>AA Normal:</strong>
 						4.5:1 minimum for text smaller
 						than 18pt (or 14pt bold)</li>
-					{{! wording carried over from the Next app }}
 					<li><strong>AA Large:</strong>
 						3:1 minimum for text 18pt+ (or
 						14pt+ bold)</li>
-					{{! wording carried over from the Next app }}
 					<li><strong>AAA Normal:</strong>
 						7:1 minimum for enhanced
 						accessibility</li>
-					{{! wording carried over from the Next app }}
 					<li><strong>AAA Large:</strong>
 						4.5:1 minimum for large text
 						enhanced accessibility</li>

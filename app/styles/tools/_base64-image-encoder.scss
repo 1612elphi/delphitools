@@ -1,11 +1,4 @@
-// Styles for the base64-image-encoder tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Base64 image encoder ────────────────────────────────────────────────── */
 
 .dt-b64 {
 	display: flex;
@@ -54,7 +47,7 @@
 		background: color-mix(in oklch, var(--primary) 5%, transparent);
 	}
 
-	/* the file input is visually hidden, so its focus ring has to land here */
+	/* hidden file input; focus ring on container */
 	&:focus-within {
 		border-color: var(--primary);
 		outline: 2px solid var(--primary);
@@ -204,9 +197,7 @@
 	}
 }
 
-/* The panel already draws the outer frame, so only the middle hairline is
-   wanted. app.scss is @use'd after every tool partial, so dropping the frame
-   needs both classes to outrank `.segmented` itself. */
+/* outrank .segmented: app.scss loads after partials */
 .segmented.dt-b64-actions {
 	grid-template-columns: 1fr 1fr;
 	margin: crayon.size(4) crayon.size(-4) crayon.size(-4);

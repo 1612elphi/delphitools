@@ -1,9 +1,4 @@
-// pdf-page-numberer: load a PDF, stamp page numbers + optional text, download,
-// and check the result is a valid PDF with its pages intact and grown by the
-// added text. The placement/format maths is covered by the unit tests
-// (lib/pdf-stamp); this proves the end-to-end wiring.
-//
-// Usage: npm start, then node scripts/verify/pdf-page-numberer.mjs
+// npm start, node scripts/verify/pdf-page-numberer.mjs
 
 import {
 	mkdtempSync,

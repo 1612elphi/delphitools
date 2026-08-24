@@ -54,8 +54,7 @@ export default class UuidGeneratorTool extends Component {
 		);
 	}
 
-	// Uppercase and hyphen-stripping reformat the batch in place; the ids
-	// themselves never regenerate under an option toggle.
+	// toggles never regenerate ids
 	get rows(): IdRow[] {
 		const options = {
 			uppercase: this.uppercase,
@@ -83,8 +82,7 @@ export default class UuidGeneratorTool extends Component {
 		this.#resize();
 	};
 
-	// Grow by appending and shrink by truncating, so ids the user already
-	// copied from the top of the list survive a count change.
+	// resize keeps copied ids
 	#resize() {
 		if (this.ids.length >= this.count) {
 			this.ids = this.ids.slice(0, this.count);

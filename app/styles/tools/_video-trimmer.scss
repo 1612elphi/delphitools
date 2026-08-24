@@ -1,7 +1,3 @@
-// Styles for the video-trimmer tool: the Muter's bar and result row, the
-// Auto Subtitle settings cells, the Frame Extractor stage and transport, and
-// a selection strip between them.
-
 @use "../crayon-config" as crayon;
 
 .dt-vt {
@@ -13,7 +9,6 @@
 	background: var(--card);
 }
 
-/* Flush action bar: file picker (grows) · container · Trim · Clear. */
 .dt-vt-bar {
 	display: flex;
 	min-height: crayon.size(12);
@@ -138,7 +133,6 @@
 	}
 }
 
-/* Settings: In · Out · Cut mode · Length, stacked label-over-control cells. */
 .dt-vt-settings {
 	display: grid;
 	border-bottom: 2px solid var(--border);
@@ -259,8 +253,7 @@
 	}
 }
 
-/* The block rule above would beat the UA's [hidden]; the source stays
-   mounted but unseen while a result shows. */
+/* beat ua [hidden] via higher specificity */
 .dt-vt-stage video[hidden] {
 	display: none;
 }
@@ -278,7 +271,6 @@
 	white-space: nowrap;
 }
 
-/* Empty state, the Background Remover's drop-zone shape. */
 .dt-vt-drop {
 	display: flex;
 	min-height: crayon.size(56);
@@ -324,7 +316,6 @@
 	font-size: crayon.font-size("sm");
 }
 
-/* Selection strip: the kept span over the whole duration. */
 .dt-vt-range {
 	position: relative;
 	height: crayon.size(2);
@@ -339,7 +330,6 @@
 	background: var(--primary);
 }
 
-/* Laserdisc transport, as in Frame Extractor. */
 .dt-vt-transport {
 	display: grid;
 	border-top: 1px solid var(--border);
@@ -384,7 +374,6 @@
 	}
 }
 
-/* Result row: label · cut · Download. */
 .dt-vt-out {
 	display: flex;
 	min-height: crayon.size(12);

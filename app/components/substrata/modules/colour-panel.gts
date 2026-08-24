@@ -29,17 +29,6 @@ import {
 } from 'delphitools-v2/lib/substrata/colour-store';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 
-/**
- * Colour module — the BODY only; the module box supplies the "COLOUR" header +
- * the nearest-name sub. A tabbed picker over one shared current colour
- * (colour-store): basic modes (hue cube · HSV triangle · sliders) and fun modes
- * (swatches · prism · shade · spectrum). The hue cube lives here; the other six
- * modes are self-contained files in ./colour-modes.
- *
- * All maths lives in colour-convert / colour-hsv / colour-prism / colour-spectrum;
- * this file is pure UI + pointer handling. Mode tabs are icons, not copy.
- */
-
 type ModeId =
 	| 'cube'
 	| 'triangle'
@@ -51,9 +40,7 @@ type ModeId =
 
 interface ModeDef {
 	id: ModeId;
-	/** kebab-case lucide name */
 	icon: string;
-	/** icon-only control, so the tab needs a label for both surfaces */
 	label: string;
 }
 
@@ -66,8 +53,6 @@ const MODES: ModeDef[] = [
 	{ id: 'spectrum', icon: 'audio-lines', label: 'Spectrum' },
 	{ id: 'shade', icon: 'palette', label: 'Shade' },
 ];
-
-// ── mode 1: hue cube (SV square + hue + alpha) ──────────────────────────────
 
 function svStyle(hue: number) {
 	return htmlSafe(
@@ -122,8 +107,6 @@ const HueCube: TOC<CubeSignature> = <template>
 	</div>
 </template>;
 
-// ── shared footer: swatch · hex · eyedropper ────────────────────────────────
-
 interface EyeDropperCtor {
 	new (): { open: () => Promise<{ sRGBHex: string }> };
 }
@@ -135,12 +118,7 @@ interface FooterSignature {
 	Args: { hex: string; alpha: number };
 }
 
-/** Flush colour line-item, reusing the shared gradient-generator components:
- *  native swatch cell (click → OS picker) · deferred hex field · the
- *  eyedropper. The swatch sits over a checkerboard so alpha reads through. */
 class Footer extends Component<FooterSignature> {
-	// Capability read (secure-context, and not in every browser); it never
-	// changes after load.
 	hasEyeDropper = hasEyeDropper();
 
 	apply = (hex: string) => {
@@ -189,9 +167,6 @@ class Footer extends Component<FooterSignature> {
 	</template>
 }
 
-// ── the module body ─────────────────────────────────────────────────────────
-
-/** Box-header sub: nearest colour name for the current colour. */
 export class ColourName extends Component {
 	#colour = new TrackedExternal(subscribeColour, getColour);
 
@@ -229,7 +204,6 @@ export class ColourBody extends Component {
 
 	<template>
 		<div class="sub-cp">
-			{{! mode tabs }}
 			<div class="segmented sub-cp-tabs">
 				{{#each this.modes key="id" as |m|}}
 					<button
@@ -254,9 +228,6 @@ export class ColourBody extends Component {
 				{{/each}}
 			</div>
 
-			{{! Fixed content height so every mode fills the panel to the same
-				size and the module sits inside the rail's 300px slot without
-				scrolling. Taller modes (swatches) scroll within. }}
 			<div class="sub-cp-stage">
 				{{#if (eq this.mode "cube")}}
 					<HueCube @colour={{this.colour}} />

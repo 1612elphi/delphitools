@@ -1,7 +1,4 @@
-// Exercises Video Atlas with a webm generated in the page (canvas
-// captureStream + MediaRecorder), which loads the self-hosted MediaInfo wasm.
-//
-// Usage: npm start, then node scripts/verify/video-atlas.mjs
+// in-page webm → mediainfo wasm
 
 import {
 	launch,

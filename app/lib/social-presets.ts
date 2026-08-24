@@ -1,11 +1,3 @@
-/**
- * Social-media aspect-ratio presets, carried over from the Next app's
- * `lib/social-presets.ts` unchanged. It lives outside the tool because
- * Substrata's batch social-size export reuses the same table.
- *
- * `width`/`height` are aspect-ratio components, not pixel dimensions.
- */
-
 export interface SocialRatio {
 	name: string;
 	label: string;

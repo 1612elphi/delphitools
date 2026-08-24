@@ -1,11 +1,4 @@
-// Styles for the font-explorer tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Font explorer ───────────────────────────────────────────────────────── */
 
 .dt-fx-panel {
 	border: 2px solid var(--border);
@@ -137,7 +130,7 @@
 	}
 }
 
-/* The trigger is chromeless: the bar's own rule is the visible box. */
+/* bar rule is the visible box */
 .dt-fx-size {
 	display: flex;
 	flex-shrink: 0;

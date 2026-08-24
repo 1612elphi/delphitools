@@ -37,8 +37,6 @@ export default class AppHeader extends Component {
 		return this.router.currentRouteName === 'workflows';
 	}
 
-	// colour-converter is excluded because its own format picker already sets
-	// the notation for everything it shows. Same condition as the Next header.
 	get showsNotation() {
 		return (
 			this.category?.name === 'Colour' &&

@@ -1,8 +1,5 @@
-// Styles for the audio-atlas tool.
 
 @use "../crayon-config" as crayon;
-
-/* ── Audio atlas ─────────────────────────────────────────────────────────── */
 
 .dt-aa {
 	@include crayon.vstack(4);
@@ -37,7 +34,7 @@
 		);
 	}
 
-	/* the file input is visually hidden, so its focus ring has to land here */
+	/* hidden input focus lands here */
 	&:focus-within {
 		border-color: var(--primary);
 		outline: 2px solid var(--primary);

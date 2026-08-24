@@ -1,10 +1,3 @@
-/**
- * Export orchestrator (M6) — the one entry the UI calls:
- * resolve dims (area clamp) → render (via the export-source bridge) → encode →
- * verify (SPEC §5 silent-failure guard) → bounded shrink-retry → download.
- * Fabric-free; the fabric side lives behind renderForExport.
- */
-
 import {
 	estimateBytes,
 	exportFilename,
@@ -20,9 +13,7 @@ import { getActiveLayerId } from './selection';
 import { leafRenderList } from './layer-tree';
 import { downloadBlob } from 'delphitools-v2/lib/download';
 
-/** Alpha-less formats (JPEG) flatten a null artboard background to white. */
 const NO_ALPHA_FLATTEN = '#ffffff';
-/** Verify failed → re-render this much smaller, at most twice (SPEC §5). */
 const SHRINK_FACTOR = 0.7;
 const MAX_ATTEMPTS = 3;
 
@@ -69,8 +60,7 @@ export async function runExport(
 		doc.artboard.height,
 		options.scale,
 	);
-	// An artboard with no visible content AND no background legitimately exports
-	// all-transparent — don't let verify call that a Safari failure.
+	// transparent exports may pass
 	const expectContent =
 		plan.soloLayerId !== null ||
 		doc.artboard.background !== null ||
@@ -119,15 +109,9 @@ export async function runExport(
 	return { ok: false, reason: 'verify-failed' };
 }
 
-// ── live size estimate ───────────────────────────────────────────────────────
-
-/** Proxy renders aim for ~0.26 MP (512²) — cheap to render + encode, big
- *  enough that byte-per-pixel extrapolation is in the right ballpark. */
 const PROXY_AREA = 262_144;
 
-/** One-entry proxy-render cache: the quality slider is the most-dragged
- *  control and quality doesn't touch pixels — only re-render when something
- *  that does (doc identity, scale, solo target, flatten) changes. */
+// quality reuses proxy render
 let proxyCache: {
 	doc: object;
 	scale: number;
@@ -136,8 +120,6 @@ let proxyCache: {
 	canvas: HTMLCanvasElement;
 } | null = null;
 
-/** Approximate the output byte size by encoding a small proxy render with the
- *  live options and scaling by area. Null when the canvas isn't ready. */
 export async function estimateExportBytes(
 	options: ExportOptions,
 ): Promise<number | null> {

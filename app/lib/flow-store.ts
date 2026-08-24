@@ -1,16 +1,7 @@
 import type Dexie from 'dexie';
 import type { Table } from 'dexie';
 
-/**
- * The bag of files a workflow carries between steps. IndexedDB because
- * sessionStorage holds strings under a 5 MB quota; a trimmed video does not
- * fit. The database is per origin, not per tab, so every row carries the run
- * id of the flow that wrote it: a tab reads and clears its own run, and a
- * boot-time sweep (flow service) deletes the runs no live tab answers for.
- * A localStorage flag says whether any rows exist, so a visitor who never
- * used a flow never opens the database, and Dexie (32 kB gzipped) loads on
- * the first write, not at boot.
- */
+// flow files use indexeddb
 
 const BAG_FLAG = 'flow-bag';
 
@@ -25,7 +16,6 @@ interface FlowRow {
 
 export interface FlowFile {
 	id: number;
-	/** the step that produced it */
 	step: number;
 	file: File;
 }
@@ -46,7 +36,6 @@ function getDB(): Promise<FlowDB> {
 
 export const hasFlowStore = () => typeof indexedDB !== 'undefined';
 
-/** rows may exist (set after a write, cleared when the last row goes) */
 export function hasBag(): boolean {
 	try {
 		return localStorage.getItem(BAG_FLAG) !== null;
@@ -61,7 +50,7 @@ async function syncFlag(database: FlowDB): Promise<void> {
 		if (rows > 0) localStorage.setItem(BAG_FLAG, '1');
 		else localStorage.removeItem(BAG_FLAG);
 	} catch {
-		// storage blocked: the next boot opens the database regardless
+		// missing flag opens database
 	}
 }
 
@@ -82,8 +71,7 @@ export async function addFlowFile(
 	return { id, step, file };
 }
 
-// WebKit handed File values back as Blob (bug 208351), so name and type are
-// their own columns and the File is rebuilt on read.
+// webkit blob file workaround
 export async function allFlowFiles(run: string): Promise<FlowFile[]> {
 	if (!hasBag()) return [];
 	const rows = await (
@@ -99,7 +87,6 @@ export async function allFlowFiles(run: string): Promise<FlowFile[]> {
 	}));
 }
 
-/** one run's rows, or every row when no run is given */
 export async function clearFlowFiles(run?: string): Promise<void> {
 	if (!hasBag()) return;
 	const database = await getDB();
@@ -108,7 +95,6 @@ export async function clearFlowFiles(run?: string): Promise<void> {
 	await syncFlag(database);
 }
 
-/** rows of runs no live tab claims (rows from the v1 schema have no run and go too) */
 export async function sweepFlowFiles(alive: Set<string>): Promise<void> {
 	if (!hasBag()) return;
 	const database = await getDB();

@@ -21,7 +21,6 @@ type Fit = 'match' | 'cheese' | 'matte';
 type Mode = 'individual' | 'batch';
 type Dir = 'row' | 'col';
 
-/** matte-mode surround — white, the same default as the matte generator */
 const MATTE_COLOUR = '#ffffff';
 
 const MODES: Mode[] = ['individual', 'batch'];
@@ -33,9 +32,7 @@ interface SideMeta {
 	place: string;
 }
 
-// The edge arrow icon is chosen in the template rather than stored here:
-// scripts/gen-icons.mjs only sees icon names written as literals inside an
-// `<Icon @name=…>`, so a name read from this table never reaches icons.ts.
+// generator needs literal icons
 const SIDE_META: SideMeta[] = [
 	{ side: 'top', add: 'Add top', place: 'Place top' },
 	{ side: 'left', add: 'Add left', place: 'Place left' },
@@ -47,31 +44,19 @@ interface Src {
 	id: string;
 	name: string;
 	el: HTMLImageElement;
-	/** object URL — backs both the <img> element and the thumbnails */
 	url: string;
 	w: number;
 	h: number;
 }
 
-/* ── export surface ────────────────────────────────────────────────────────────
- * The Next app takes this from lib/substrata/export-core and export-encode.
- * Substrata itself is not in this app, and those two modules reach a raster
- * cache, Dexie and a worker bridge none of which the stitcher uses, so the five
- * pieces it does use are rebuilt here: the format table, formatMeta,
- * ExportFormat, encodeCanvas and jxlAvailable. The canvas area budget stays
- * behind — this tool caps the longest side itself, in drawLayout.
- */
-
 type ExportFormat = 'png' | 'jpeg' | 'webp' | 'jxl';
 
 interface FormatMeta {
 	id: ExportFormat;
-	/** format acronym — factual data, not copy */
 	label: string;
 	mime: string;
 	ext: string;
 	lossy: boolean;
-	/** carries an alpha channel; without one, transparency needs flattening */
 	alpha: boolean;
 }
 
@@ -114,7 +99,7 @@ function formatMeta(id: ExportFormat): FormatMeta {
 	return EXPORT_FORMATS.find((f) => f.id === id)!;
 }
 
-/** libjxl is fetched from an absolute path, which needs a real origin. */
+// libjxl needs origin
 function jxlAvailable(): boolean {
 	return typeof window !== 'undefined' && window.isSecureContext;
 }
@@ -140,8 +125,6 @@ function canvasToBlob(
 	});
 }
 
-/** Quality is 1–100 and only reaches the lossy encoders. Throws when the
- *  browser silently substitutes a different format. */
 async function encodeCanvas(
 	canvas: HTMLCanvasElement,
 	format: ExportFormat,
@@ -163,15 +146,6 @@ async function encodeCanvas(
 	}
 	return blob;
 }
-
-/* ── the mosaic tree ───────────────────────────────────────────────────────────
- * The composite is a tree: leaves are images, splits are rows (side by side)
- * or columns (stacked). A scoped add wraps one node in a new split, a global
- * add wraps the root — geometry-wise wrapping flattens (a row inside a row
- * lays out identically to one long row), so the tree can stay naive.
- * Fits per leaf: match = centre-cropped to the base image's aspect ratio;
- * cheese = the image's own aspect; matte = match's cell, letterboxed — no crop.
- */
 
 interface LeafNode {
 	kind: 'img';
@@ -210,8 +184,6 @@ function mapLeaves(node: TreeNode, fn: (l: LeafNode) => LeafNode): TreeNode {
 	};
 }
 
-/** Wrap the node with `key` (null = the root) in a new split holding the
- *  added leaves on the given side. */
 function wrapNode(
 	root: TreeNode,
 	key: string | null,
@@ -237,7 +209,6 @@ function wrapNode(
 	return walk(root);
 }
 
-/** Splice leaves into a split's child list (seam insert). */
 function insertIntoSplit(
 	root: TreeNode,
 	splitKey: string,
@@ -261,8 +232,6 @@ function insertIntoSplit(
 	return walk(root);
 }
 
-/** Drag-move: two leaves trade contents (image + fit); the mosaic structure
- *  itself never changes — slots stay, pictures move. */
 function swapLeafContent(root: TreeNode, aKey: string, bKey: string): TreeNode {
 	let a: LeafNode | undefined;
 	let b: LeafNode | undefined;
@@ -272,8 +241,7 @@ function swapLeafContent(root: TreeNode, aKey: string, bKey: string): TreeNode {
 		return l;
 	});
 	if (!a || !b) return root;
-	// Captured out of the `let`s: TypeScript drops the narrowing inside the
-	// callback below, because both could be reassigned before it runs.
+	// preserve type narrowing
 	const from = a;
 	const to = b;
 	return mapLeaves(root, (l) => {
@@ -285,7 +253,6 @@ function swapLeafContent(root: TreeNode, aKey: string, bKey: string): TreeNode {
 	});
 }
 
-/** Remove a leaf; single-child splits collapse away. Returns null when empty. */
 function removeLeafNode(root: TreeNode, key: string): TreeNode | null {
 	const walk = (node: TreeNode): TreeNode | null => {
 		if (node.kind === 'img') return node.key === key ? null : node;
@@ -299,8 +266,6 @@ function removeLeafNode(root: TreeNode, key: string): TreeNode | null {
 	return walk(root);
 }
 
-/** Drag-move onto an edge arrow: detach the leaf from its slot (collapsing as
- *  needed) and re-wrap the target so it lands on that side. */
 function moveLeafNode(
 	root: TreeNode,
 	movedKey: string,
@@ -318,8 +283,6 @@ function moveLeafNode(
 	return wrapNode(without, targetKey, side, [moved]);
 }
 
-/* ── layout: aspect algebra shared by the DOM trail and the exported canvas ─── */
-
 interface Op {
 	src: Src;
 	leafKey: string;
@@ -335,7 +298,6 @@ interface Op {
 	dh: number;
 }
 
-/** A boundary between two siblings of a split — the "insert here" hover strip. */
 interface Seam {
 	x: number;
 	y: number;
@@ -352,7 +314,6 @@ interface Layout {
 	seams: Seam[];
 }
 
-/** centre-crop source rect covering a target aspect (w/h) */
 function coverCrop(src: Src, aspect: number) {
 	if (src.w / src.h > aspect) {
 		const sw = src.h * aspect;
@@ -362,8 +323,6 @@ function coverCrop(src: Src, aspect: number) {
 	return { sx: 0, sy: (src.h - sh) / 2, sw: src.w, sh };
 }
 
-/** Every node reduces to an aspect ratio: leaves contribute their own (cheese)
- *  or the base's (match/matte); a row sums them, a column sums the inverses. */
 function nodeAspect(
 	node: TreeNode,
 	byId: Map<string, Src>,
@@ -466,7 +425,6 @@ function layoutTree(
 	};
 	const rootAspect = nodeAspect(root, byId, baseAspect);
 	walk(root, 0, 0, rootAspect * 1000, 1000);
-	// normalise so the base image sits at its native pixel size
 	const baseOp = ops.find((o) => o.isBase);
 	const k = baseOp ? base.w / baseOp.dw : 1;
 	for (const op of ops) {
@@ -483,10 +441,6 @@ function layoutTree(
 	return { w: rootAspect * 1000 * k, h: 1000 * k, ops, seams };
 }
 
-/** Near-square grid, every cell centre-cropped to the first image's aspect
- *  (batch is match-only — cheese cells would break the grid).
- *  ponytail: cell size = the first image's pixel size; a giant first image
- *  makes a giant grid — add a cell-size control if anyone hits it. */
 function layoutBatch(srcs: Src[]): Layout | null {
 	const first = srcs[0];
 	if (!first) return null;
@@ -526,7 +480,6 @@ function drawLayout(
 	if (!ctx) return;
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	if (bg) {
-		// alpha-less formats (JPEG) flatten transparency to black — matte it
 		ctx.fillStyle = bg;
 		ctx.fillRect(0, 0, canvas.width, canvas.height);
 	}
@@ -565,10 +518,9 @@ function drawLayout(
 	}
 }
 
-/** Where the next picked/dropped files should land. */
 type Target =
-	| { kind: 'first' } // seed the trail: first file = base, rest join a row
-	| { kind: 'add'; nodeKey: string | null; side: Side } // null scopes to the whole composite
+	| { kind: 'first' }
+	| { kind: 'add'; nodeKey: string | null; side: Side }
 	| { kind: 'insert'; splitKey: string; at: number }
 	| { kind: 'batch' };
 
@@ -595,7 +547,7 @@ function loadImageFile(file: File): Promise<Src> {
 
 const pct = (n: number, of: number) => `${(n / of) * 100}%`;
 
-// Without this the browser navigates to the dropped file instead.
+// prevent file navigation
 function allowDrop(event: DragEvent) {
 	event.preventDefault();
 }
@@ -616,13 +568,10 @@ const Uploader: TOC<UploaderSignature> = <template>
 		{{on "dragover" allowDrop}}
 	>
 		<Icon @name="upload" />
-		{{! wording carried over from the Next app }}
 		<span class="dt-stitch-drop-title">Drop images here</span>
 		<span class="dt-stitch-drop-hint">{{DROP_HINT}}</span>
 	</button>
 </template>;
-
-/* ── the tool ──────────────────────────────────────────────────────────────── */
 
 export default class ImageStitcherTool extends Component {
 	@tracked mode: Mode = 'individual';
@@ -635,12 +584,10 @@ export default class ImageStitcherTool extends Component {
 
 	@tracked draggedLeafKey: string | null = null;
 	@tracked dragOverLeafKey: string | null = null;
-	/** `${leafKey}:${side}` of the edge arrow currently under the pointer */
 	@tracked dragOverPlace: string | null = null;
 	@tracked draggedBatchId: string | null = null;
 	@tracked dragOverBatchId: string | null = null;
 
-	// One hidden input serves every "+"; the aimed target rides along beside it.
 	#fileInput: HTMLInputElement | null = null;
 	#pendingTarget: Target = { kind: 'first' };
 
@@ -728,7 +675,6 @@ export default class ImageStitcherTool extends Component {
 		}));
 	}
 
-	/** The four add buttons that hug the selected image, in its own scope. */
 	get selectionAdders() {
 		const layout = this.trailLayout;
 		if (!layout || !this.selectedKey) return [];
@@ -801,12 +747,8 @@ export default class ImageStitcherTool extends Component {
 		return formatMeta(this.format).label;
 	}
 
-	/* ── loading and routing files ─────────────────────────────────────────── */
-
 	async #addFiles(files: Iterable<File>): Promise<Src[]> {
-		// Snapshot synchronously — a live FileList empties out when the input
-		// resets, and a DataTransfer dies with its event, before the first
-		// await returns.
+		// snapshot transient file lists
 		const list = Array.from(files);
 		const added: Src[] = [];
 		for (const file of list) {
@@ -814,14 +756,12 @@ export default class ImageStitcherTool extends Component {
 			try {
 				added.push(await loadImageFile(file));
 			} catch {
-				// undecodable file — skip it
 			}
 		}
 		if (added.length) this.srcs = [...this.srcs, ...added];
 		return added;
 	}
 
-	/** Route freshly loaded images to wherever the picker or drop was aimed. */
 	#place(added: Src[], target: Target) {
 		const firstAdded = added[0];
 		if (!firstAdded) return;
@@ -882,7 +822,7 @@ export default class ImageStitcherTool extends Component {
 		if (input.files) {
 			void this.#dropFiles(input.files, this.#pendingTarget);
 		}
-		// Cleared so the same file can be picked again.
+		// reset file input
 		input.value = '';
 	};
 
@@ -954,8 +894,6 @@ export default class ImageStitcherTool extends Component {
 		});
 	};
 
-	/* ── editing ───────────────────────────────────────────────────────────── */
-
 	#revoke(ids: Set<string>) {
 		for (const id of ids) {
 			const s = this.byId.get(id);
@@ -1004,8 +942,6 @@ export default class ImageStitcherTool extends Component {
 		this.selectedKey = null;
 	};
 
-	// Esc drops the selection. Bound on the wrapper's document rather than
-	// window so it only fires while the tool is on screen.
 	escapeKey = modifier((element: HTMLElement) => {
 		const onKeyDown = (event: KeyboardEvent) => {
 			if (event.key === 'Escape') this.selectedKey = null;
@@ -1017,8 +953,6 @@ export default class ImageStitcherTool extends Component {
 				onKeyDown,
 			);
 	});
-
-	/* ── dragging: the trail ───────────────────────────────────────────────── */
 
 	#endTrailDrag() {
 		this.draggedLeafKey = null;
@@ -1036,10 +970,7 @@ export default class ImageStitcherTool extends Component {
 
 	dragEndTile = () => this.#endTrailDrag();
 
-	// dragover repeats for as long as the pointer is held over the element, so
-	// every hover setter here writes only on a change — a tracked property is
-	// dirtied by the assignment, not by the value, and re-laying the whole
-	// mosaic out several times a second is visible.
+	// avoid redundant tracked writes
 	dragOverTile = (key: string, event: DragEvent) => {
 		event.preventDefault();
 		if (this.dragOverPlace !== null) this.dragOverPlace = null;
@@ -1050,8 +981,7 @@ export default class ImageStitcherTool extends Component {
 		if (this.dragOverLeafKey !== next) this.dragOverLeafKey = next;
 	};
 
-	// dragleave from an edge zone bubbles to the tile, so both hover marks clear
-	// here — otherwise the last arrow stays lit until the drag ends.
+	// clear bubbled dragleave state
 	dragLeaveTile = () => {
 		if (this.dragOverLeafKey !== null) this.dragOverLeafKey = null;
 		if (this.dragOverPlace !== null) this.dragOverPlace = null;
@@ -1065,9 +995,7 @@ export default class ImageStitcherTool extends Component {
 		this.root = swapLeafContent(this.root, from, key);
 	};
 
-	// The edge arrows sit inside the tiles, so an arrow under the pointer has to
-	// beat the tile centre: stopping propagation here is what the Next app gets
-	// from a custom dnd-kit collision detector.
+	// prioritize edge drops
 	dragOverPlaceZone = (key: string, side: Side, event: DragEvent) => {
 		event.preventDefault();
 		event.stopPropagation();
@@ -1085,8 +1013,6 @@ export default class ImageStitcherTool extends Component {
 		if (!from || !this.root) return;
 		this.root = moveLeafNode(this.root, from, key, side);
 	};
-
-	/* ── dragging: the batch pool ──────────────────────────────────────────── */
 
 	dragStartThumb = (id: string, event: DragEvent) => {
 		this.draggedBatchId = id;
@@ -1134,8 +1060,6 @@ export default class ImageStitcherTool extends Component {
 		this.batchIds = next;
 	};
 
-	/* ── export ────────────────────────────────────────────────────────────── */
-
 	download = async () => {
 		const layout = this.isIndividual
 			? this.trailLayout
@@ -1143,8 +1067,7 @@ export default class ImageStitcherTool extends Component {
 		if (!layout) return;
 		const meta = formatMeta(this.format);
 		const canvas = document.createElement('canvas');
-		// ponytail: 16384 = safe canvas side cap; larger stitches downscale to
-		// fit — tile and stitch if a full-resolution oversize export is asked for
+		// canvas side cap
 		drawLayout(
 			canvas,
 			layout,
@@ -1175,7 +1098,6 @@ export default class ImageStitcherTool extends Component {
 			{{filePaste this.pasteFile accept="image/*"}}
 			{{this.escapeKey}}
 		>
-			{{! every "+" opens this one input; hidden rather than sr-only, so it stays out of the tab order the way its buttons already are in it }}
 			<input
 				type="file"
 				accept="image/*"
@@ -1228,7 +1150,6 @@ export default class ImageStitcherTool extends Component {
 							</button>
 						</div>
 
-						{{! clicking the padding around the composite drops the selection; every control inside it is a real button }}
 						{{! template-lint-disable no-invalid-interactive }}
 						<div
 							class="dt-stitch-stage"
@@ -1291,7 +1212,6 @@ export default class ImageStitcherTool extends Component {
 										key="key"
 										as |tile|
 									}}
-										{{! the tile is the selection target, and holds real buttons for every action it offers }}
 										{{! template-lint-disable no-invalid-interactive }}
 										<div
 											class="dt-stitch-tile
@@ -1329,7 +1249,6 @@ export default class ImageStitcherTool extends Component {
 												)
 											}}
 										>
-											{{! the drag source is this inner box, not the tile, so a press on the fit pill never starts a drag }}
 											<div
 												class="dt-stitch-grab
 													{{if
@@ -1592,8 +1511,7 @@ export default class ImageStitcherTool extends Component {
 						/>
 					{{/if}}
 				{{else if this.batchThumbs.length}}
-					{{! the pool takes OS file drops as well as thumbnail reorders }}
-					{{! template-lint-disable no-invalid-interactive }}
+						{{! template-lint-disable no-invalid-interactive }}
 					<div
 						class="dt-stitch-pool"
 						{{on "drop" this.dropBatch}}

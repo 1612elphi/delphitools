@@ -12,20 +12,8 @@ import {
 	rgbToHsl,
 } from 'delphitools-v2/lib/colour-maths';
 
-/**
- * The theme palette as a card wall — swatch, nearest name, and the value in
- * every notation the colour tools speak.
- *
- * Tokens are read from the live document rather than copied out of app.scss, so
- * the wall cannot drift from the stylesheet and shows whichever theme is
- * active. Each authored value is `oklch(...)`; resolving it to sRGB by hand
- * would mean re-implementing the browser's own conversion, so instead each one
- * is painted to a 1×1 canvas and read back — that resolves ANY colour syntax
- * the browser accepts, exactly as the browser would paint it.
- */
+// canvas resolves theme tokens
 
-/** Semantic tokens worth showing, in app.scss's declaration order. The
- *  `-foreground` pairs are folded into their base card as the text colour. */
 const TOKENS = [
 	'background',
 	'foreground',
@@ -52,15 +40,12 @@ const TOKENS = [
 const CMYK_NOTE = 'CMYK is natively converted and uses no ICC profile';
 
 interface Entry {
-	/** every token that resolves to this colour, in declaration order */
 	tokens: string[];
-	/** nearest name from the colour-names DB (data, not copy) */
 	name: string;
 	hex: string;
 	rgb: string;
 	hsl: string;
 	cmyk: string;
-	/** the value as authored in app.scss */
 	oklch: string;
 	swatch: ReturnType<typeof htmlSafe>;
 }
@@ -73,9 +58,7 @@ function readPalette(nameOf: (hex: string) => string): Entry[] {
 	const ctx = canvas.getContext('2d', { willReadFrequently: true });
 	if (!ctx) return [];
 
-	// Several tokens deliberately share a value — card and popover, border and
-	// input, primary and ring — so key by the resolved colour and let one card
-	// carry every token that lands on it.
+	// deduplicate resolved colours
 	const byHex = new Map<string, Entry>();
 	for (const token of TOKENS) {
 		const authored = styles.getPropertyValue(`--${token}`).trim();
@@ -111,12 +94,7 @@ function readPalette(nameOf: (hex: string) => string): Entry[] {
 export default class ColourPaletteDialog extends Component {
 	@tracked entries: Entry[] = [];
 
-	/** Read on open, not at construction: the values follow the active theme,
-	 *  and the dialog is modal so the theme cannot change while it is up. The
-	 *  colour-names DB (color-name-list, ~176 kB) is dynamic-imported here so it
-	 *  stays out of the eager front-page bundle — the About dialog is reachable
-	 *  from the index route, and a static import would ship the dictionary to
-	 *  every visitor. */
+	// defer colour-name database
 	load = async () => {
 		const { getColourName } =
 			await import('delphitools-v2/lib/colour-names');

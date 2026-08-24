@@ -31,8 +31,7 @@ interface ScalePreset {
 	factor: number;
 }
 
-// factor = from/to: subtitles timed for `from` fps content that now plays
-// at `to` fps. PAL speedup shrinks every timestamp, hence 23.976/25.
+// factor = from/to fps (pal speedup shrinks timestamps)
 const SCALE_PRESETS: ScalePreset[] = [
 	{ id: 'custom', label: 'Custom', factor: 1 },
 	{ id: 'film-pal', label: '23.976 → 25', factor: 23.976 / 25 },
@@ -67,15 +66,13 @@ export default class SubtitleConverterTool extends Component {
 		return detectFormat(this.input);
 	}
 
-	// @cached: the template reads output/stats/noCues several times per
-	// render, and each uncached read would reparse the whole input.
+	// avoids reparse per template read
 	@cached
 	get cues() {
 		return parseSubtitles(this.input);
 	}
 
-	// Scale first: the factor corrects the source timeline (frame-rate
-	// mismatch), the shift is then in output seconds.
+	// scale before shift
 	@cached
 	get adjusted() {
 		let cues = this.cues;
@@ -153,7 +150,7 @@ export default class SubtitleConverterTool extends Component {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) this.readFile(file);
-		// Choosing the same file twice must still fire a change event.
+		// rearm for same-file change
 		input.value = '';
 	};
 
@@ -163,7 +160,7 @@ export default class SubtitleConverterTool extends Component {
 		if (file) this.readFile(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// else browser navigates to file
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -221,7 +218,7 @@ export default class SubtitleConverterTool extends Component {
 			this.input = await navigator.clipboard.readText();
 			this.fileName = '';
 		} catch {
-			// Clipboard read denied or unsupported; nothing to report.
+			// clipboard may be unavailable
 		}
 	}
 

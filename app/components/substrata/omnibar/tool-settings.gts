@@ -59,16 +59,6 @@ import {
 } from 'delphitools-v2/lib/substrata/tool-settings';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 
-/**
- * Per-tool settings blooms for the omnibar's contextual zone (Ruby's rule: a
- * built tool ships its settings). MOVE is real — snap/grid (guides-pref, the
- * same switches as Workspace ▸ Guides) + the arrow-key nudge step
- * (tool-settings). PIECES·Primitives is real — shape / fill / stroke / shape
- * params (M2-7); the Pieces head (preset gallery to come) and Brush/Pencil
- * (freehand, next chunk) keep the copy-gap placeholder, as do the other stub
- * tools. The Bloom supplies the box chrome; bodies render header + rows.
- */
-
 export interface ToolSettingsBodySignature {
 	Args: {
 		tool: ToolId;
@@ -76,13 +66,10 @@ export interface ToolSettingsBodySignature {
 	};
 }
 
-// The dispatch below only reaches these with a concrete subtool id, but Glint
-// cannot narrow `@sub` through the `{{#if}}` guards, so the arg stays optional.
+// glint cannot narrow @sub through #if
 interface SubSignature {
 	Args: { sub?: string };
 }
-
-/* ── shared rows ─────────────────────────────────────────────────────────── */
 
 const Row: TOC<{
 	Element: HTMLDivElement;
@@ -95,7 +82,6 @@ const Row: TOC<{
 	</div>
 </template>;
 
-/** Swatch + hex pair used by the Fill and Stroke rows. */
 const ColourCell: TOC<{
 	Args: {
 		colour: string;
@@ -119,17 +105,9 @@ const ColourCell: TOC<{
 	</span>
 </template>;
 
-/* ── ADJUST ──────────────────────────────────────────────────────────────── */
-
-/** ADJUST quick presets (Ruby 2026-07-12; titles + icons Claude-picked per
- *  her grant): one-tap versions of the FX everybody reaches for. Each adds
- *  its effect/filter to the ACTIVE raster layer (registry defaults, tuned
- *  params where the default is wrong for a scrim) — or retargets the
- *  existing block's params if the type is already on the stack (one undo
- *  step either way; fine-tuning lives in the FX panel). */
 const ADJUST_PRESETS: {
 	title: string;
-	/** kebab-case lucide name */
+	// kebab-case lucide name
 	icon: string;
 	stack: 'effects' | 'filters';
 	type: string;
@@ -180,7 +158,7 @@ class AdjustSettings extends Component {
 		this.layerId.unsubscribe();
 	}
 
-	// findLayer is a tree DFS, re-read per preset cell without the cache
+	// findLayer is a tree DFS
 	@cached
 	get layer() {
 		const doc = this.doc.current;
@@ -223,9 +201,7 @@ class AdjustSettings extends Component {
 
 	<template>
 		<div class="sub-tool-pane is-w224">
-			{{! Ruby's intro line, verbatim — the inline sparkle mirrors the
-				omnibar's FX-panel trigger icon }}
-			<div class="sub-tool-note is-lead">Quickly add an
+					<div class="sub-tool-note is-lead">Quickly add an
 				adjustment. Fine-adjust in the
 				<Icon
 					@name="sparkles"
@@ -233,7 +209,6 @@ class AdjustSettings extends Component {
 				/>
 				FX panel.</div>
 			{{#unless this.ok}}
-				{{! the FX panel's shipped gate line, reused }}
 				<div class="sub-tool-note">Effects apply to
 					image layers for now.</div>
 			{{/unless}}
@@ -260,8 +235,6 @@ class AdjustSettings extends Component {
 		</div>
 	</template>
 }
-
-/* ── MOVE ────────────────────────────────────────────────────────────────── */
 
 class MoveSettings extends Component {
 	guides = new TrackedExternal(subscribeGuides, getGuides);
@@ -303,9 +276,7 @@ class MoveSettings extends Component {
 
 	<template>
 		<div class="sub-tool-pane is-w200">
-			{{! Group/Separate: how a multi-selection rotates/scales — shared
-				with SELECT (one flag, Ruby's words as the cell labels). }}
-			<Row @label="Transform">
+					<Row @label="Transform">
 				<span class="segmented sub-seg-2">
 					<button
 						type="button"
@@ -339,8 +310,7 @@ class MoveSettings extends Component {
 					>Separate</button>
 				</span>
 			</Row>
-			{{! Snap/Grid mirror Workspace ▸ Guides (same store, same words) }}
-			<Row @label="Snap">
+					<Row @label="Snap">
 				<Switch
 					@checked={{this.guides.current.snap}}
 					@onChange={{this.toggleSnap}}
@@ -378,11 +348,6 @@ class MoveSettings extends Component {
 	</template>
 }
 
-/* ── SELECT ──────────────────────────────────────────────────────────────── */
-
-/** SELECT subtool settings (M2-10): lasso = magnetic switch + edge
- *  sensitivity; wand = contiguous/global mode + tolerance. Mode words are
- *  standard graphics vocabulary = functional chrome. */
 class SelectToolSettings extends Component<SubSignature> {
 	ts = new TrackedExternal(subscribeToolSettings, getToolSettings);
 
@@ -531,13 +496,6 @@ class SelectToolSettings extends Component<SubSignature> {
 	</template>
 }
 
-/* ── PIECES ──────────────────────────────────────────────────────────────── */
-
-/** Preset menus (Ruby, 2026-07-06: presets + a custom (…) escape hatch —
- *  "a simple editor for simple people"). Values are data; the corner glyphs
- *  are visual.
- *  Corner-preset arias: one or two words each, name the roundedness level,
- *  sharpest → roundest; British spelling. */
 const CORNER_PX_PRESETS: PresetOption[] = [
 	{ value: 0, cornerR: 0, aria: 'Sharp' },
 	{ value: 16, cornerR: 2, aria: 'Subtle' },
@@ -557,12 +515,10 @@ const INNER_PRESETS: PresetOption[] = [30, 50, 70].map((v) => ({
 	label: `${v}%`,
 }));
 
-/** The five primitives — icon cells; labels are the standard shape vocabulary
- *  (functional chrome, the PIECE_LABEL/SHAPE_NAMES words). */
 const SHAPE_CELLS: Array<{
 	shape: PieceShape;
 	label: string;
-	/** kebab-case lucide name */
+	// kebab-case lucide name
 	icon: string;
 }> = [
 	{ shape: 'rectangle', label: 'Rectangle', icon: 'square' },
@@ -572,10 +528,6 @@ const SHAPE_CELLS: Array<{
 	{ shape: 'star', label: 'Star', icon: 'star' },
 ];
 
-/** The Pieces HEAD sub = the preset-shapes gallery (ratified 2026-07-07):
- *  a grid of vendored Phosphor-fill symbols; picking one arms drag-to-draw
- *  with that symbol. Fill mirrors the primitives bloom's next-shape fill.
- *  Symbol names = standard vocabulary chrome (SHAPE_NAMES precedent). */
 class PiecesGalleryGrid extends Component<{ Args: { bordered?: boolean } }> {
 	ts = new TrackedExternal(subscribeToolSettings, getToolSettings);
 
@@ -590,7 +542,6 @@ class PiecesGalleryGrid extends Component<{ Args: { bordered?: boolean } }> {
 
 	pick = (id: string) => {
 		updateToolSettings('pieces', { shape: 'symbol', symbolId: id });
-		// picking a piece arms the tool
 		setActiveSub('pieces', 'pieces');
 	};
 
@@ -660,16 +611,12 @@ class PiecesGallerySettings extends Component {
 	</template>
 }
 
-/** Floating shape menu on the PIECES tool button — the piece selector IS
- *  subtool selection (Ruby), so it hangs off the tool itself. */
 export const PiecesFlyout: TOC<{ Args: object }> = <template>
 	<div class="sub-tool-pane is-w224">
 		<PiecesGalleryGrid />
 	</div>
 </template>;
 
-/** Floating shape menu on the PRIMITIVES tool button — pick a shape, the
- *  subtool arms itself. Full params stay in the tool-settings module. */
 export class PrimitivesFlyout extends Component {
 	ts = new TrackedExternal(subscribeToolSettings, getToolSettings);
 
@@ -716,8 +663,7 @@ export class PrimitivesFlyout extends Component {
 	</template>
 }
 
-/** PIECES ▸ Primitives (M2-7): what the next drag draws. Writes tool-settings;
- *  the drag-to-draw gesture (fabric-canvas) reads it at draw time. */
+// fabric-canvas reads this at draw time
 class PiecesSettings extends Component {
 	ts = new TrackedExternal(subscribeToolSettings, getToolSettings);
 
@@ -879,7 +825,6 @@ class PiecesSettings extends Component {
 	</template>
 }
 
-/** Brush/Pencil size menus — a fat and a fine register (data, not copy). */
 const BRUSH_SIZES: PresetOption[] = [8, 16, 24, 48].map((v) => ({
 	value: v,
 	label: String(v),
@@ -889,8 +834,7 @@ const PENCIL_SIZES: PresetOption[] = [2, 4, 6, 12].map((v) => ({
 	label: String(v),
 }));
 
-/** PIECES ▸ Brush/Pencil (M2-2): the next stroke's colour + size. The stroke
- *  body is a filled outline, so it shares the pieces `fill` setting. */
+// stroke body is a filled outline
 class FreehandSettings extends Component<SubSignature> {
 	ts = new TrackedExternal(subscribeToolSettings, getToolSettings);
 
@@ -946,18 +890,11 @@ class FreehandSettings extends Component<SubSignature> {
 	</template>
 }
 
-/* ── TEXT ────────────────────────────────────────────────────────────────── */
-
 const TEXT_SIZES: PresetOption[] = [16, 24, 48, 96].map((v) => ({
 	value: v,
 	label: String(v),
 }));
 
-/** TEXT (M2): font choice (system stacks + session uploads — Ruby's call, no
- *  bundled files; dropdown per her 2026-07-06 ask), size presets, style
- *  presets. Colour rides the shared current-colour sink. Settings describe
- *  the NEXT text AND live-apply to the active text layer — a font click must
- *  restyle the text you're editing (Ruby, same day). */
 class TextToolSettings extends Component {
 	ts = new TrackedExternal(subscribeToolSettings, getToolSettings);
 
@@ -981,7 +918,6 @@ class TextToolSettings extends Component {
 
 	openPicker = () => this.#fileInput?.click();
 
-	/** the selected text layer, when the live patch has somewhere to land */
 	#activeText() {
 		const id = getActiveLayerId();
 		const doc = getSnapshot();
@@ -990,7 +926,6 @@ class TextToolSettings extends Component {
 		return { id, layer };
 	}
 
-	/** patch the selected text layer too, so the bloom edits what you see */
 	applyLive = (patch: {
 		fontFamily?: string;
 		fontSize?: number;
@@ -1095,9 +1030,6 @@ class TextToolSettings extends Component {
 	</template>
 }
 
-/* ── dispatch ────────────────────────────────────────────────────────────── */
-
-/** Stub tools until their settings exist (M2 SELECT). */
 const PlaceholderSettings: TOC<{ Args: object }> = <template>
 	<div class="sub-tool-pane is-w200">
 		<div class="sub-tool-placeholder">Settings arrive with this tool</div>
@@ -1130,15 +1062,10 @@ export const ToolSettingsBody: TOC<ToolSettingsBodySignature> = <template>
 	{{else if (eq @tool "adjust")}}
 		<AdjustSettings />
 	{{else}}
-		{{! marquee has no real settings yet (feather/boolean combine are
-			post-v1) — it keeps the placeholder like other settings-less
-			modes }}
 		<PlaceholderSettings />
 	{{/if}}
 </template>;
 
-/** The active subtool's display label (module `sub` slot). Ids are globally
- *  unique across tools; labels are Ruby's canonical subtool names. */
 const SUB_LABELS: Record<string, string> = {
 	move: 'Move',
 	crop: 'Crop',
@@ -1153,8 +1080,6 @@ const SUB_LABELS: Record<string, string> = {
 	pencil: 'Pencil',
 };
 
-/** TOOL module body — the active tool's settings as a regular module (bloom /
- *  pin / rail / dock / drag-to-dock), replacing the omnibar's ContextZone. */
 export class ToolModuleBody extends Component {
 	activeTool = new TrackedExternal(subscribeTool, getActiveTool);
 	activeSubs = new TrackedExternal(subscribeTool, getActiveSubs);
@@ -1177,7 +1102,6 @@ export class ToolModuleBody extends Component {
 	</template>
 }
 
-/** Module-header sub slot: names the subtool the body is configuring. */
 export class ToolModuleSub extends Component {
 	activeTool = new TrackedExternal(subscribeTool, getActiveTool);
 	activeSubs = new TrackedExternal(subscribeTool, getActiveSubs);

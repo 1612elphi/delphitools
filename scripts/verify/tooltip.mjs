@@ -1,8 +1,4 @@
-// Collapsed-rail tooltips, from the vendored ui/tooltip.gts.
-//
-// The unmount check is the important one. The component removes itself on
-// animationend, so if the keyframes in app.scss ever go missing every tooltip
-// opens and then stays on screen forever. Nothing else catches that.
+// unmount rides animationend; app.scss keyframes
 
 import { launch, visit, check, sleep, finish } from './harness.mjs';
 
@@ -74,7 +70,7 @@ await page.evaluate(() => document.activeElement.blur());
 await sleep(900);
 check('and blur closes it', (await count()) === 0);
 
-// Expanding the rail while a tooltip is up destroys the trigger's subtree.
+// tooltip's subtree dies on rail expand
 await page.hover('.dt-nav-link');
 await sleep(500);
 await page.click(TOGGLE);

@@ -48,9 +48,7 @@ const STAMP_MODES: { value: StampMode; label: string }[] = [
 	{ value: 'watermark', label: 'Watermark' },
 ];
 
-// A watermark spans ~80% of the page diagonal. Helvetica caps advance ~0.55em,
-// so sizing from the string length alone (no metrics call) keeps the CSS preview
-// and the drawn PDF identical.
+// 80% diagonal; helvetica caps ~0.55em
 function watermarkSize(pageW: number, pageH: number, textLen: number) {
 	const raw =
 		(0.8 * Math.hypot(pageW, pageH)) /
@@ -58,8 +56,7 @@ function watermarkSize(pageW: number, pageH: number, textLen: number) {
 	return Math.min(raw, Math.min(pageW, pageH) * 0.9);
 }
 
-// The three standard PDF fonts double as the browser's default families, so the
-// preview's CSS and the drawn PDF land on the same shapes.
+// pdf base-14 ≈ css generics
 const FONT_CSS: Record<FontFamily, string> = {
 	sans: 'ui-sans-serif, system-ui, sans-serif',
 	serif: 'ui-serif, Georgia, serif',
@@ -78,9 +75,7 @@ const STYLE_LABEL = Object.fromEntries(
 	NUMERAL_STYLES.map((s) => [s.value, s.label]),
 ) as Record<NumeralStyle, string>;
 
-// The 3x3 position grid draws each cell as the arrow pointing at that corner;
-// the centre is a dot. Referenced through the `get` helper, so gen-icons cannot
-// see these — they are listed in scripts/gen-icons.mjs EXTRA.
+// via get(); see gen-icons.mjs EXTRA
 const ANCHOR_ICON: Record<Anchor, string> = {
 	'top-left': 'arrow-up-left',
 	'top-center': 'arrow-up',
@@ -97,7 +92,7 @@ interface Preview {
 	url: string;
 	width: number;
 	height: number;
-	/** preview px per PDF point, so the overlay tracks the drawn text size */
+	/** px per pdf point */
 	scale: number;
 }
 
@@ -121,8 +116,7 @@ export default class PdfPageNumbererTool extends Component {
 	@tracked stampMode: StampMode = 'label';
 	@tracked watermarkOpacity = 0.15;
 
-	// Debounced mirrors of the slider values; the live overlay reads these so a
-	// drag re-lays the preview on a short timer, not on every input event.
+	// debounced slider mirrors
 	@tracked previewSize = 11;
 	@tracked previewMargin = 24;
 	@tracked previewOpacity = 0.15;
@@ -138,7 +132,7 @@ export default class PdfPageNumbererTool extends Component {
 
 	#bytes: ArrayBuffer | null = null;
 	#js: PDFDocumentProxy | null = null;
-	// Latest-wins guard for overlapping preview renders.
+	// latest-wins preview renders
 	#renderToken = 0;
 
 	get anchors() {
@@ -183,15 +177,12 @@ export default class PdfPageNumbererTool extends Component {
 
 	get previewStyle() {
 		if (!this.preview) return null;
-		// Width plus aspect-ratio, so `max-width: 100%` shrinks the box
-		// proportionally and the page never distorts. Overlays scale with it
-		// through cqw units (the box is a `container-type: inline-size`).
+		// overlays scale via cqw
 		return htmlSafe(
 			`width: ${this.preview.width}px; aspect-ratio: ${this.preview.width} / ${this.preview.height}`,
 		);
 	}
 
-	/** The label this page would carry, run through the template. */
 	get previewNumber(): string | null {
 		if (!this.numbersOn) return null;
 		const label = resolvePageNumbers(this.sections, this.pageCount)[
@@ -211,13 +202,10 @@ export default class PdfPageNumbererTool extends Component {
 			: null;
 	}
 
-	/** CSS placement for an overlay at `anchor`, matched to the drawn text. */
 	#overlayStyle(anchor: Anchor) {
 		const preview = this.preview;
 		if (!preview) return null;
-		// cqw = 1% of the preview's rendered width, so an offset given as
-		// (points / pageWidthPoints * 100)cqw stays correct at any display size.
-		// The display scale is uniform, so the same unit works on both axes.
+		// cqw = 1% container width
 		const pageW = preview.width / preview.scale;
 		const marginCqw = (this.previewMargin / pageW) * 100;
 		const fontCqw = (Math.max(4, this.previewSize) / pageW) * 100;
@@ -260,7 +248,6 @@ export default class PdfPageNumbererTool extends Component {
 		return this.#overlayStyle(this.stampAnchor);
 	}
 
-	/** Full-page diagonal watermark: centred, rotated, translucent. */
 	#watermarkStyle() {
 		const preview = this.preview;
 		if (!preview) return null;
@@ -283,8 +270,6 @@ export default class PdfPageNumbererTool extends Component {
 			].join('; '),
 		);
 	}
-
-	// ------------------------------------------------------------- intake
 
 	readFile = async (file: File) => {
 		this.error = '';
@@ -329,7 +314,7 @@ export default class PdfPageNumbererTool extends Component {
 		if (file) void this.readFile(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// default drop navigates
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -345,8 +330,6 @@ export default class PdfPageNumbererTool extends Component {
 		this.previewIndex = 0;
 		this.sections = [{ fromPage: 1, style: 'arabic', startAt: 1 }];
 	};
-
-	// ------------------------------------------------------------ preview
 
 	async #renderPreview() {
 		const js = this.#js;
@@ -394,8 +377,6 @@ export default class PdfPageNumbererTool extends Component {
 	prevPage = () => this.setPreviewIndex(this.previewIndex - 1);
 	nextPage = () => this.setPreviewIndex(this.previewIndex + 1);
 
-	// ----------------------------------------------------------- settings
-
 	setTemplate = (event: Event) => {
 		this.numberTemplate = (event.target as HTMLInputElement).value;
 	};
@@ -432,8 +413,6 @@ export default class PdfPageNumbererTool extends Component {
 
 	setStampMode = (mode: StampMode) => (this.stampMode = mode);
 
-	// One shared debounce: copy the committed slider values into the mirrors the
-	// overlay reads, a beat after the drag settles.
 	#schedulePreview() {
 		clearTimeout(this.#previewTimer);
 		this.#previewTimer = setTimeout(() => {
@@ -443,8 +422,6 @@ export default class PdfPageNumbererTool extends Component {
 			this.previewOpacity = this.watermarkOpacity;
 		}, 100);
 	}
-
-	// ----------------------------------------------------------- sections
 
 	addSection = () => {
 		const maxFrom = this.sections.reduce(
@@ -493,8 +470,6 @@ export default class PdfPageNumbererTool extends Component {
 				: s,
 		);
 	};
-
-	// ------------------------------------------------------------- output
 
 	apply = async () => {
 		if (!this.#bytes) return;

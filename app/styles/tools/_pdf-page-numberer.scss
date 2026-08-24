@@ -51,8 +51,6 @@
 	font-size: crayon.font-size("sm");
 }
 
-/* ── top bar ─────────────────────────────────────────────────────────────── */
-
 .dt-ppn-bar {
 	display: flex;
 	min-height: crayon.size(12);
@@ -111,8 +109,6 @@
 	}
 }
 
-/* ── body: preview beside controls, one hairline apart ───────────────────── */
-
 .dt-ppn-body {
 	display: grid;
 	gap: 1px;
@@ -150,7 +146,6 @@
 	}
 }
 
-/* the number/stamp as it will land on the page */
 .dt-ppn-overlay {
 	position: absolute;
 	line-height: 1;
@@ -202,8 +197,6 @@
 	font-size: crayon.font-size("xs");
 	font-variant-numeric: tabular-nums;
 }
-
-/* ── controls column ─────────────────────────────────────────────────────── */
 
 .dt-ppn-controls {
 	display: flex;
@@ -265,8 +258,6 @@
 	}
 }
 
-/* Label-beside-control rows: a fixed label column so Format, Font, Size, Margin
-   and Position line up down the panel. */
 .dt-ppn-set {
 	display: grid;
 	align-items: center;
@@ -320,14 +311,11 @@
 	grid-template-columns: repeat(2, 1fr);
 }
 
-/* ── sections editor ─────────────────────────────────────────────────────── */
-
 .dt-ppn-sections {
 	border: 1px solid var(--border);
 }
 
-/* Flush cells divided by hairlines, one column header, rows stacked — the
-   dt-harmony-row pattern. */
+/* dt-harmony-row pattern */
 .dt-ppn-section-head,
 .dt-ppn-section {
 	display: grid;
@@ -412,8 +400,6 @@
 	}
 }
 
-/* ── segmented font picker ───────────────────────────────────────────────── */
-
 .dt-ppn-font {
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);
@@ -446,8 +432,6 @@
 	}
 }
 
-/* 3x3 position picker: each cell is the arrow pointing at that corner, the
-   active one filled; the centre cell is a dot. */
 .dt-ppn-anchors {
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);
@@ -487,8 +471,6 @@
 	color: var(--destructive);
 	font-size: crayon.font-size("sm");
 }
-
-/* ── apply: full-width primary at the foot of the tool ───────────────────── */
 
 .dt-ppn-apply {
 	@include crayon.hstack(2);

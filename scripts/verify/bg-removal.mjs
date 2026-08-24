@@ -1,13 +1,4 @@
-// background-remover, end to end: the real model, the real inference.
-//
-// This downloads roughly 44 MB from the Hugging Face hub the first time and
-// then runs it, so it is slow and it needs network. It is excluded from
-// `npm run verify` for that reason — run it on its own after touching
-// lib/bg-removal.ts, the transformers pin, or anything about bundling.
-//
-// It is worth the wall clock because nothing cheaper proves the interesting
-// part: that the pipeline builds on one of the two devices, that a mask comes
-// back, and that it lands in the alpha channel rather than being dropped.
+// bg-remover end-to-end; ~44 MB model, excluded from npm run verify
 //
 // Usage: npm start, then node scripts/verify/bg-removal.mjs
 
@@ -21,9 +12,7 @@ const MODEL_TIMEOUT_MS = 10 * 60 * 1000;
 
 const { browser, page } = await launch({
 	viewport: { width: 1200, height: 1000 },
-	// Hub traffic is noisy: a 404 on an optional weight file is how
-	// transformers.js probes for quantised variants. The VerifyEachNode lines
-	// are ORT saying it put shape ops on CPU, which it always does.
+	// 404 probes + VerifyEachNode cpu-note are expected noise
 	ignore: [
 		/Failed to load resource/,
 		/huggingface\.co/,
@@ -130,9 +119,7 @@ if (outcome === 'done') {
 						canvas.width,
 						canvas.height,
 					);
-					// Not exactly 0 and 255: RMBG's sigmoid does
-					// not saturate, so a fully kept pixel comes
-					// back at 254 and the edges are a soft ramp.
+					// rmbg sigmoid saturates at 254
 					let clear = 0;
 					let opaque = 0;
 					let min = 255;
@@ -183,7 +170,7 @@ if (outcome === 'done') {
 		alpha && alpha.opaque > 0.5,
 		`${(alpha.opaque * 100).toFixed(1)}% opaque`,
 	);
-	// A result with no mask applied would be flat at 255 everywhere.
+	// unmasked result would read flat 255
 	check(
 		'so the alpha channel actually varies',
 		alpha && alpha.min < 8 && alpha.max > 200,
@@ -191,12 +178,7 @@ if (outcome === 'done') {
 	);
 }
 
-// The dev server and the build disagree about where the ONNX runtime comes
-// from, the same way lib/jxl.ts does: Rolldown emits the binary into dist/ and
-// rewrites the reference, so production self-hosts it, while the dev server
-// serves transformers.js unbundled and its own default sends the runtime to
-// jsdelivr. static.mjs asserts the production half. The weights come from the
-// hub either way.
+// dev uses jsdelivr ort runtime; prod self-hosts (see lib/jxl.ts)
 check(
 	'the weights came from the hub',
 	requests.some((url) => /huggingface\.co.*RMBG-1\.4/.test(url)),

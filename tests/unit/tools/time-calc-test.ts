@@ -5,8 +5,7 @@ import {
 	parseToDate,
 } from 'delphitools-v2/components/tools/time-calc';
 
-// A whole second: unix seconds and RFC 822 both drop milliseconds, so a date
-// carrying them cannot survive its own round trip.
+// unix, rfc 822 drop ms
 const INSTANT = new Date('2024-01-01T00:00:00.000Z');
 
 module('Unit | Tool | time-calc', function () {
@@ -21,8 +20,7 @@ module('Unit | Tool | time-calc', function () {
 		}
 	});
 
-	// RSS 2.0 cites RFC 822 for pubDate, allowing the four-digit year. Feed
-	// validators reject a locale-translated month or a missing zone.
+	// rss 2.0 cites rfc 822
 	test('rfc822 is a day name, a four-digit year and a zone', function (assert) {
 		assert.strictEqual(
 			dateToFormats(INSTANT).rfc822,

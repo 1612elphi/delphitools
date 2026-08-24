@@ -1,11 +1,3 @@
-// Renders the share cards to PNG at build time.
-//
-// Port of the Next app's lib/og-card.tsx. That file is satori-flavoured JSX
-// compiled by Next; there is no JSX here, so the same element tree is written
-// in satori's object form ({ type, props }) — which is what JSX compiled to
-// anyway. Colours are hex because satori has no oklch parser, exactly as in the
-// original.
-
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -44,7 +36,7 @@ export const ogFonts = [
 const MARK = dataUri('mark.jpg', 'image/jpeg');
 const heroFile = read('hero.png');
 const HERO = `data:image/png;base64,${heroFile.toString('base64')}`;
-// IHDR width/height, so re-exporting the art at another size cannot stretch it.
+// png dimensions come from ihdr
 const HERO_ASPECT = heroFile.readUInt32BE(16) / heroFile.readUInt32BE(20);
 
 const h = (type, props = {}, children) => ({
@@ -52,7 +44,6 @@ const h = (type, props = {}, children) => ({
 	props: children === undefined ? props : { ...props, children },
 });
 
-/** Green border, cream field. Children stack from the bottom up. */
 const Frame = (children) =>
 	h(
 		'div',
@@ -86,7 +77,6 @@ const Frame = (children) =>
 		),
 	);
 
-/** Tiled wordmark band, each row offset so the seams do not line up. */
 const TileBand = () =>
 	h(
 		'div',
@@ -127,7 +117,6 @@ const Mark = () =>
 		style: { position: 'absolute', right: 36, bottom: 30 },
 	});
 
-/** The hero art, centred in whatever room is left above the URL line. */
 const Hero = () =>
 	h(
 		'div',
@@ -200,7 +189,6 @@ const SiteUrl = (gap = 96) =>
 		'https://delphi.tools/',
 	);
 
-/** Share card for a tool page. Mirrors app/(site)/tools/[toolId]/og.png. */
 export const toolCard = (name) =>
 	Frame([
 		TileBand(),
@@ -210,7 +198,6 @@ export const toolCard = (name) =>
 		SiteUrl(),
 	]);
 
-/** Share card for the site root. The art carries the wordmark, so no title. */
 export const siteCard = () => Frame([Hero(), SiteUrl(0)]);
 
 export async function renderPng(element) {
@@ -222,7 +209,6 @@ export async function renderPng(element) {
 		.asPng();
 }
 
-// node scripts/og.mjs <outDir> — renders the two cards used for verification
 if (import.meta.url === `file://${process.argv[1]}`) {
 	const outDir = process.argv[2] ?? join(root, 'tmp/og');
 	mkdirSync(outDir, { recursive: true });

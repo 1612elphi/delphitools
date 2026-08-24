@@ -1,18 +1,4 @@
-/**
- * Snap engine (M2-12) — PURE maths, no Fabric/DOM imports. Given the moving
- * object's box (centre + dims, scene coords), a field of candidate lines
- * (artboard edges/centre + sibling bbox edges/centres) and an optional grid
- * pitch, produce the correction that aligns the nearest probe (the box's
- * left/centre/right and top/centre/bottom) with the nearest candidate within
- * the threshold — plus the matched lines for the smart-guide overlay.
- *
- * The threshold is in SCENE px — callers divide their screen-px feel constant
- * by the current zoom. Boxes are unrotated approximations (the same
- * simplification Arrange uses); rotation-aware bounds are a later refinement.
- */
-
 export interface SnapBox {
-	/** centre */
 	x: number;
 	y: number;
 	w: number;
@@ -20,9 +6,9 @@ export interface SnapBox {
 }
 
 export interface SnapField {
-	/** vertical candidate lines (x positions) */
+	/** vertical lines */
 	v: number[];
-	/** horizontal candidate lines (y positions) */
+	/** horizontal lines */
 	h: number[];
 }
 
@@ -70,7 +56,7 @@ function snapAxis(
 export interface SnapResult {
 	dx: number;
 	dy: number;
-	/** matched vertical / horizontal lines to draw as smart guides */
+	/** guide lines */
 	v: number[];
 	h: number[];
 }

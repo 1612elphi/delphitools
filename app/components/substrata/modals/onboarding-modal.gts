@@ -11,13 +11,6 @@ import {
 import { toast } from 'delphitools-v2/lib/substrata/toast';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 
-/**
- * First-visit onboarding (Ruby 2026-07-12) — slides, wording dictated by Ruby
- * verbatim and carried over from the Next app unchanged. The storage slide
- * carries the opt-in as a big friendly button reusing the toggle's shipped
- * label. Closing by ANY means (Done, Esc) marks the flow seen and hands over
- * to the New-scene dialog when the session is still on an empty scene.
- */
 
 const BUG_MAILTO = 'mailto:tools@rmv.fyi?subject=substrata%20bug%20report';
 const REPO_URL = 'https://github.com/1612elphi/delphitools';
@@ -50,25 +43,20 @@ class StorageButton extends Component {
 			{{else}}
 				<Icon @name="hard-drive" />
 			{{/if}}
-			{{! the persistence toggle's shipped label, reused }}
 			Save in this browser
 		</button>
 	</template>
 }
 
-// touch devices only: the two-finger navigation nobody would discover
-// unprompted
 const touch = navigator.maxTouchPoints > 1;
 
-// slide ids in order; "touch" is present only on touch devices
 const SLIDE_IDS = touch
 	? (['hello', 'local', 'private', 'storage', 'touch', 'beta'] as const)
 	: (['hello', 'local', 'private', 'storage', 'beta'] as const);
 
 export default class OnboardingModal extends Component {
 	@tracked slide = 0;
-	// every close path (the final button here; Esc in ModalHost) routes
-	// through finishOnboarding — see onboarding-pref
+	// close completes onboarding
 
 	slideIds = SLIDE_IDS;
 
@@ -98,8 +86,6 @@ export default class OnboardingModal extends Component {
 
 	<template>
 		<div class="sub-modal-frame sub-onb">
-			{{! no visible chrome (Ruby 2026-07-12): one box, content + nav
-				only. All slide copy is Ruby's shipped wording, verbatim. }}
 			<h2 class="dt-sr-only">Substrata</h2>
 
 			<div class="sub-onb-slide">

@@ -1,5 +1,3 @@
-// Styles for the video-muter tool: flush bar, stage, result row, progress.
-
 @use "../crayon-config" as crayon;
 
 .dt-vm {
@@ -11,7 +9,6 @@
 	background: var(--card);
 }
 
-/* Flush action bar: file picker (grows) · status · Mute · Clear. */
 .dt-vm-bar {
 	display: flex;
 	min-height: crayon.size(12);
@@ -99,7 +96,6 @@
 	}
 }
 
-/* Output container, a flush bar cell before Mute. */
 .dt-vm-format {
 	min-width: crayon.size(32);
 	padding-inline: crayon.size(3);
@@ -153,13 +149,11 @@
 	background: #000;
 }
 
-/* The block rule above would beat the UA's [hidden]; the source stays
-   mounted but unseen while a result shows. */
+// beats UA [hidden]; keep source mounted, unseen
 .dt-vm-stage video[hidden] {
 	display: none;
 }
 
-/* Empty state, the Background Remover's drop-zone shape. */
 .dt-vm-drop {
 	display: flex;
 	min-height: crayon.size(56);
@@ -205,7 +199,6 @@
 	font-size: crayon.font-size("sm");
 }
 
-/* Result row: label · size · Download, flush under the stage. */
 .dt-vm-out {
 	display: flex;
 	min-height: crayon.size(12);

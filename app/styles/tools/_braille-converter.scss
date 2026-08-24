@@ -1,5 +1,3 @@
-// Styles for the braille-converter tool.
-
 @use "../crayon-config" as crayon;
 
 .dt-brl-frame {
@@ -49,8 +47,7 @@
 	}
 }
 
-/* The system font carries the braille block on every platform the app
-   targets, so no web font is loaded for the cells. */
+/* system font carries the braille block */
 .dt-brl-output {
 	min-height: 8rem;
 	padding: crayon.size(3) crayon.size(4);

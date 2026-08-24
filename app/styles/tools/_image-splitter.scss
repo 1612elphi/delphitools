@@ -1,11 +1,4 @@
-// Styles for the image-splitter tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Image splitter ──────────────────────────────────────────────────────── */
 
 .dt-split {
 	@include crayon.vstack(6);
@@ -33,7 +26,7 @@
 		background: color-mix(in oklch, var(--muted) 30%, transparent);
 	}
 
-	/* the file input is visually hidden, so its focus ring has to land here */
+	/* ring for visually-hidden input */
 	&:focus-within {
 		outline: 2px solid var(--primary);
 		outline-offset: -2px;
@@ -220,8 +213,7 @@
 	}
 }
 
-/* The 1px gap plus a border-coloured ground is what draws the grid lines
-   between tiles; the tiles themselves carry no border. */
+/* gridlines via gap + background */
 .dt-split-tiles {
 	display: grid;
 	gap: 1px;

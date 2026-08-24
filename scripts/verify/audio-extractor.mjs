@@ -1,9 +1,4 @@
-// Exercises Audio Extractor with a webm generated in the page (canvas +
-// oscillator through MediaRecorder): WAV through mediabunny's PCM path,
-// then Ogg (Opus), which copies the Opus packets straight from the source.
-//
-// Usage: npm start, then node scripts/verify/audio-extractor.mjs
-
+// wav re-encodes, ogg stream-copies
 import {
 	launch,
 	visit,

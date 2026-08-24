@@ -1,5 +1,3 @@
-// NodeViews for the editor: an interactive task-list checkbox on list_item,
-// and the footnote sub-editor.
 import type { Node as PMNode } from 'prosemirror-model';
 import type { EditorView, NodeView } from 'prosemirror-view';
 import { FootnoteView } from './footnote-view';
@@ -21,7 +19,6 @@ class ListItemView implements NodeView {
 		this.dom = document.createElement('li');
 
 		if (this.checked === null) {
-			// Plain list item — content goes straight in the <li>, like the default.
 			this.contentDOM = this.dom;
 			return;
 		}
@@ -32,7 +29,8 @@ class ListItemView implements NodeView {
 		box.contentEditable = 'false';
 		box.textContent = this.checked ? '☑' : '☐';
 		box.addEventListener('mousedown', (e) => {
-			e.preventDefault(); // don't move the selection
+			// preserve selection
+			e.preventDefault();
 			const pos = getPos();
 			if (pos == null) return;
 			view.dispatch(
@@ -53,7 +51,7 @@ class ListItemView implements NodeView {
 
 	update(node: PMNode): boolean {
 		if (node.type !== this.node.type) return false;
-		// Switching plain <-> task changes the DOM structure: recreate.
+		// dom structure changed
 		if ((node.attrs.checked === null) !== (this.checked === null))
 			return false;
 		if (node.attrs.checked !== this.checked) {

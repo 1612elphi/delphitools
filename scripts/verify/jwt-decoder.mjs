@@ -1,10 +1,5 @@
-// Drives /tools/jwt-decoder: paste a token, read the decoded panes, and drive
-// every failure mode the lib promises — wrong segment count, bad base64url or
-// non-JSON per segment, exp past vs future. The suite covers the math in
-// isolation; this is here to prove the wiring: the textarea event path, the
-// claim rows, the badge, and the per-segment error panes.
-//
-// Usage: npm start, then node scripts/verify/jwt-decoder.mjs
+// proves wiring; suite covers math
+// usage: npm start, then node scripts/verify/jwt-decoder.mjs
 
 import { launch, visit, check, finish, sleep } from './harness.mjs';
 
@@ -38,7 +33,7 @@ const setToken = async (value) => {
 	await sleep(350);
 };
 
-// Everything the page shows about the current token, in one serialisable read.
+// one serialisable read
 const snapshot = () =>
 	page.evaluate(() => ({
 		settings: [...document.querySelectorAll('.dt-jwt-cell')].map(
@@ -78,8 +73,7 @@ const snapshot = () =>
 			.trim(),
 	}));
 
-// The catalogue cell must be live — an unregistered id renders the
-// coming-soon placeholder and every check below would be a false signal.
+// unregistered id → placeholder
 await visit(page, '/');
 const cell = await page.evaluate(() => !!document.querySelector('a[href="/tools/jwt-decoder"]'));
 check('the catalogue links the tool', cell);

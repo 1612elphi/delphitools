@@ -81,7 +81,7 @@ export default class ScreenRecorderTool extends Component {
 				});
 		} catch (err) {
 			const name = (err as Error)?.name;
-			// User cancelling the picker is NotAllowedError; do not treat as failure.
+			// cancel throws NotAllowedError
 			if (
 				name !== 'NotAllowedError' &&
 				name !== 'AbortError'
@@ -109,7 +109,6 @@ export default class ScreenRecorderTool extends Component {
 				);
 			} catch {
 				this.error = MIC_DENIED;
-				// Continue without microphone audio.
 			}
 		}
 
@@ -147,7 +146,7 @@ export default class ScreenRecorderTool extends Component {
 		this.#displayStream
 			.getVideoTracks()[0]
 			?.addEventListener('ended', () => {
-				// User stopped sharing from the browser chrome.
+				// chrome stop fires 'ended'
 				this.stop();
 			});
 
@@ -190,8 +189,7 @@ export default class ScreenRecorderTool extends Component {
 	#stopRecording() {
 		const recorder = this.#recorder;
 		if (recorder) {
-			// Detach first: callers (clear, willDestroy) discard the take,
-			// so the async onstop must not finish it after the fact.
+			// prevent resurrecting discarded takes
 			recorder.ondataavailable = null;
 			recorder.onstop = null;
 			recorder.onpause = null;
@@ -199,7 +197,7 @@ export default class ScreenRecorderTool extends Component {
 			try {
 				recorder.stop();
 			} catch {
-				// Already stopped or never started.
+				// stop() throws when idle
 			}
 		}
 		this.#recorder = null;
@@ -234,7 +232,7 @@ export default class ScreenRecorderTool extends Component {
 	};
 
 	togglePause = () => {
-		// State bookkeeping lives in the recorder's onpause/onresume handlers.
+		// bookkeeping in onpause/onresume handlers
 		if (this.status === 'recording') this.#recorder?.pause();
 		else if (this.status === 'paused') this.#recorder?.resume();
 	};

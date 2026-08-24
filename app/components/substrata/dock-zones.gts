@@ -16,21 +16,8 @@ import {
 } from 'delphitools-v2/lib/substrata/dock-pref';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 
-/**
- * Drop targets for drag-to-dock, on dnd-kit (round 3): a MODULE drag shows
- * only the rail strip (drop there to re-dock; drop ANYWHERE ELSE floats the
- * panel at the pointer — the canvas is the target now, so it gets no zone
- * chrome). An omnibar drag keeps its four edges. Zones render only while a
- * drag is live; collision is pointer intersection, so the pointer — not the
- * tiny grip rect — picks the target.
- *
- * Deviation from the Next component: no DragOverlay chip naming what's in
- * hand — @dnd-kit/dom's default feedback moves the grip element itself.
- */
-
 type ZoneSpec = { id: string; icon: string; style: string };
 
-/** Module-drag zone: just the rail strip hugging the omnibar's current edge. */
 function moduleZones(omniEdge: Edge): ZoneSpec[] {
 	const rail: Record<Edge, string> = {
 		bottom: 'left: 128px; right: 128px; bottom: 8px; height: 80px',
@@ -72,7 +59,6 @@ export default class DockZones extends Component {
 	drag = new TrackedExternal(subscribeDockDrag, getDockDrag);
 	omniEdge = new TrackedExternal(subscribeDock, getOmnibarEdge);
 
-	// the useDroppable isOver equivalent, fed by the manager's drag events
 	@tracked overId: string | null = null;
 
 	#offOver = dndManager.monitor.addEventListener('dragover', (event) => {

@@ -18,7 +18,6 @@ export interface DroppableSignature {
 	};
 }
 
-/** `@dnd-kit/dom` Droppable as a modifier — the `useDroppable` binding. */
 export default modifier<DroppableSignature>((element, _positional, named) => {
 	const droppable = new Droppable(
 		{

@@ -32,7 +32,6 @@ type EditorCore = typeof import('delphitools-v2/lib/editor/core');
 const DOC_KEY = 'delphitools-editor';
 const ACCEPT = acceptAttr(TEXT_ACCEPT);
 const SEED = '';
-// Ghost text shown in an empty document; wording carried over from the Next app.
 const PLACEHOLDER =
 	'The Karman Institute for Planetary Observation has confirmed that Earth is no longer able to sustain organic life. After decades of atmospheric collapse, sensor data from the Donna Shirley Space Telescope indicates that oxygen and nitrogen concentrations in the atmosphere have reached irreversible levels of depletion. Carbon dioxide levels, combined with solar radiation and the absence of a protective ozone layer, have rendered the surface barren. The final viable microbial traces recorded last year by automated spectroscopic satellites have now vanished.';
 
@@ -86,11 +85,10 @@ export default class TextEditorTool extends Component {
 
 	ed: EditorCore | null = null;
 	view: EditorView | null = null;
-	/** a file that arrived before the editor core finished loading */
+	// arrived before core load
 	#pendingText: string | null = null;
 	frame = 0;
-	// The document is never persisted (privacy). `dirty` tracks unsaved edits so
-	// we can warn before the page unloads. Cleared when the user exports a copy.
+	// never persisted, privacy
 	dirty = false;
 	menuEl: HTMLElement | null = null;
 	hideTimer: ReturnType<typeof setTimeout> | null = null;
@@ -132,7 +130,7 @@ export default class TextEditorTool extends Component {
 			row,
 			key: row.key,
 			active: row.pos === this.activeBlockPos,
-			// offsets come from ProseMirror's own layout measurements
+			// offsets from prosemirror measurements
 			style: htmlSafe(`top: ${row.top}px`),
 		}));
 	}
@@ -164,7 +162,6 @@ export default class TextEditorTool extends Component {
 		}));
 	}
 
-	// wording carried over from the Next app
 	get wordCountLabel() {
 		const n = this.wordCount;
 		let label = `${n} ${n === 1 ? 'word' : 'words'}`;
@@ -195,12 +192,10 @@ export default class TextEditorTool extends Component {
 			this.ed = ed;
 			this.choices = ed.blockChoices(ed.schema);
 
-			// Nothing is persisted across sessions — clean up anything an older
-			// build left.
+			// older-build leftovers
 			try {
 				localStorage.removeItem(DOC_KEY);
 			} catch {
-				/* ignore */
 			}
 			ed.clearStoredSettings();
 
@@ -222,14 +217,11 @@ export default class TextEditorTool extends Component {
 					spellcheck: 'true',
 				},
 				nodeViews: ed.buildNodeViews(),
-				// Pasting plain text parses it as Markdown (ProseMirror only calls
-				// this when there's no rich HTML on the clipboard, so web copy-paste
-				// still works).
+				// plain-text clipboard only
 				clipboardTextParser: (text) => {
 					const doc = ed.parseMarkdown(text);
 					const first = doc.firstChild;
-					// A single paragraph pastes inline (merges into the current
-					// line); anything richer pastes as blocks.
+					// single paragraph pastes inline
 					if (
 						doc.childCount === 1 &&
 						first &&
@@ -249,7 +241,6 @@ export default class TextEditorTool extends Component {
 					this.scheduleMeasure();
 					if (tr.docChanged) this.dirty = true;
 
-					// Derived UI state: active block, selection bubble, word count.
 					const sel = next.selection;
 					this.activeBlockPos =
 						sel.$from.depth >= 1
@@ -450,7 +441,7 @@ export default class TextEditorTool extends Component {
 		this.dirty = true;
 	};
 
-	/** a dropped, pasted or handed-off Markdown file replaces the document */
+	// replaces the whole document
 	readFile = async (file: File) => {
 		if (!matchesAccept(file, ACCEPT)) return;
 		this.#load(await file.text());
@@ -525,11 +516,9 @@ export default class TextEditorTool extends Component {
 				);
 			})
 			.catch(() => {
-				/* clipboard unavailable */
 			});
 	};
 
-	// Inline formatting (bubble toolbar on selection).
 	applyMark = (markName: string) => {
 		const ed = this.ed;
 		const view = this.view;
@@ -563,7 +552,6 @@ export default class TextEditorTool extends Component {
 		event.preventDefault();
 	};
 
-	// Convert the block at `pos` (the one whose gutter label was clicked).
 	runBlockCommand = (pos: number, choice: BlockChoice) => {
 		const ed = this.ed;
 		const view = this.view;
@@ -572,8 +560,7 @@ export default class TextEditorTool extends Component {
 			view.state.schema.nodes;
 		const block = view.state.doc.nodeAt(pos);
 
-		// Block is already a list and a list type was picked → swap the list's
-		// type in place (bullet ↔ numbered), keeping the items.
+		// in-place list type swap
 		if (
 			choice.listType &&
 			block &&
@@ -604,8 +591,7 @@ export default class TextEditorTool extends Component {
 				),
 			),
 		);
-		// For wrapping choices (list/quote), demote a styled block (heading/code)
-		// to a plain paragraph first, so the result isn't a heading-sized list item.
+		// else heading-sized list items
 		if (choice.wrap && paragraph) {
 			const parent = view.state.selection.$from.parent;
 			if (parent.isTextblock && parent.type !== paragraph) {
@@ -646,8 +632,7 @@ export default class TextEditorTool extends Component {
 		this.blockMenu = menu;
 	}
 
-	// Close the block menu on Escape or an outside click (but not on a gutter
-	// label, whose own click handler toggles the menu).
+	// gutter label toggles it itself
 	menuOutside = (event: MouseEvent) => {
 		const target = event.target as HTMLElement;
 		if (
@@ -668,12 +653,7 @@ export default class TextEditorTool extends Component {
 		else this.enterZen();
 	};
 
-	// In Focus mode, auto-hide the toolbar when idle; reveal on mouse/key
-	// activity. Escape exits — unless a footnote sub-editor or the block menu
-	// should handle it first.
-	// zenKeydown goes on the document so it runs BEFORE the block menu's own
-	// Escape listener (same target, and zen is always entered first): it must
-	// see the menu still open and leave that Escape to the menu.
+	// runs before menu escape listener
 	enterZen() {
 		this.zen = true;
 		window.addEventListener('mousemove', this.zenActivity);
@@ -732,7 +712,6 @@ export default class TextEditorTool extends Component {
 							'is-faded'
 						}}"
 				>
-					{{! wording carried over from the Next app }}
 					<button
 						type="button"
 						class="dt-te-tb-btn is-lead"
@@ -755,7 +734,6 @@ export default class TextEditorTool extends Component {
 							Focus
 						{{/if}}
 					</button>
-					{{! wording carried over from the Next app }}
 					<button
 						type="button"
 						class="dt-te-tb-btn"
@@ -828,7 +806,6 @@ export default class TextEditorTool extends Component {
 									@icon={{false}}
 								/>
 							</button>
-							{{! wording carried over from the Next app }}
 							<button
 								type="button"
 								class="dt-te-menu-item"
@@ -889,7 +866,6 @@ export default class TextEditorTool extends Component {
 							class="dt-te-menu is-settings"
 							@align="end"
 						>
-							{{! wording carried over from the Next app }}
 							<label
 								class="dt-te-setting"
 							>
@@ -1166,7 +1142,7 @@ export default class TextEditorTool extends Component {
 				</div>
 
 				{{#if this.bubble}}
-					{{! mousedown would move the editor selection away, which is what the bubble is anchored to }}
+					{{! mousedown moves selection }}
 					{{! template-lint-disable no-pointer-down-event-binding no-invalid-interactive }}
 					<div
 						class="dt-te-bubble"

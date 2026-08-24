@@ -163,8 +163,7 @@
 	}
 }
 
-/* delphitools: a size(4) icon by default (buttons, status lines); `is-stage`
-   restores the original 8px cell for stages and overlays */
+/* stage uses 8px cells */
 .nds-loader {
 	--nds-cell: 4px;
 	--nds-gap: 2px;

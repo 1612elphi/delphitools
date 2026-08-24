@@ -1,20 +1,11 @@
-// Styles for the word-counter tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
+// one partial per tool; app.scss grew past 3000 lines
 
 @use "../crayon-config" as crayon;
-
-/* ── Word counter ────────────────────────────────────────────────────────── */
-
 .dt-wc {
 	border: 2px solid var(--border);
 }
 
-/* `.segmented` draws a 1px frame on all four edges; the panel border already
-   covers the sides, so only the internal hairlines and the bottom rule are
-   wanted. app.scss is @use'd after every tool partial, so dropping the frame
-   needs both classes to outrank `.segmented` itself. */
+/* app.scss is @use'd after tool partials; both classes needed to outrank .segmented */
 .segmented.dt-wc-primary,
 .segmented.dt-wc-secondary {
 	grid-template-columns: repeat(4, 1fr);

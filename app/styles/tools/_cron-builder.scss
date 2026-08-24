@@ -1,11 +1,3 @@
-// Styles for the cron-builder tool.
-//
-// Anatomy: flush expression bar (label, mono input, copy), five per-field
-// rows (label rail, mode segmented, mode args + free field text, inline
-// error), then the work surface: canonical expression, plain-language
-// reading, next five runs. The field-error strip replaces the work surface
-// when the expression does not parse.
-
 @use "../crayon-config" as crayon;
 
 .dt-cb {
@@ -15,8 +7,6 @@
 .dt-cb-frame {
 	border: 2px solid var(--border);
 }
-
-/* ── Expression bar ──────────────────────────────────────────────────────── */
 
 .dt-cb-bar {
 	display: flex;
@@ -97,7 +87,6 @@
 	}
 }
 
-/* Arity warning under the expression bar. */
 .dt-cb-error {
 	@include crayon.hstack(2);
 
@@ -114,12 +103,6 @@
 	}
 }
 
-/* ── Field cells ─────────────────────────────────────────────────────────── */
-
-/* Fields as full-width rows: micro-label rail left, mode segmented
- * intrinsic, the mode's inputs plus the free field text filling the rest.
- * The 1px gaps/padding mirror the stacked-cell grid from the shared
- * anatomy, just rotated. */
 .dt-cb-grid {
 	display: grid;
 	border-bottom: 1px solid var(--border);
@@ -157,7 +140,7 @@
 	text-transform: uppercase;
 }
 
-/* Intrinsic columns so the four presets hug their labels, not the row. */
+// auto cols keep presets tight to labels
 .segmented.dt-cb-modes {
 	grid-template-columns: repeat(4, auto);
 }
@@ -250,8 +233,6 @@
 		font-family: crayon.font-family("mono");
 	}
 }
-
-/* ── Work surface ────────────────────────────────────────────────────────── */
 
 .dt-cb-out {
 	display: grid;

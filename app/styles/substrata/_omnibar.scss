@@ -1,13 +1,3 @@
-// Substrata omnibar, rail, modules and tool-settings blooms.
-//
-// The Next app styled all of this with Tailwind utilities; the class names here
-// are the translation. A handful of literal utility names survive as HARNESS
-// HOOKS — scripts/verify/workspace.mjs selects on `.pointer-events-none.absolute
-// .z-40`, `.pointer-events-auto.shadow-lg`, `button.size-12` and
-// `span.cursor-grab` — so those keep their Tailwind spelling and are defined at
-// the bottom of this file.
-
-// ── dock containers ────────────────────────────────────────────────────────
 .sub-omni-dock,
 .sub-omni-rail-dock {
 	display: flex;
@@ -50,7 +40,6 @@
 	gap: 14px;
 }
 
-// ── the four units ─────────────────────────────────────────────────────────
 .sub-omni-barrow {
 	display: flex;
 	flex-direction: row;
@@ -104,7 +93,6 @@
 	}
 }
 
-// ── tool + subtool buttons ─────────────────────────────────────────────────
 .sub-omni-tool {
 	position: relative;
 	display: grid;
@@ -152,7 +140,6 @@
 	}
 }
 
-// ── the drag grip ──────────────────────────────────────────────────────────
 .sub-omni-grip {
 	display: grid;
 	flex-shrink: 0;
@@ -181,7 +168,6 @@
 	}
 }
 
-// ── tool-settings unit ─────────────────────────────────────────────────────
 .sub-omni-tool-btn {
 	display: flex;
 	align-items: center;
@@ -258,7 +244,6 @@
 	color: var(--muted-foreground);
 }
 
-// ── panel triggers + the colour unit ───────────────────────────────────────
 .sub-omni-panel-btn {
 	display: grid;
 	place-items: center;
@@ -322,7 +307,6 @@
 	border: 1px solid color-mix(in srgb, var(--foreground) 35%, transparent);
 }
 
-// ── hover bloom (the shape flyouts) ────────────────────────────────────────
 .sub-omni-bloom {
 	position: absolute;
 	z-index: 60;
@@ -420,7 +404,6 @@
 	}
 }
 
-// ── utility rail ───────────────────────────────────────────────────────────
 .sub-rail {
 	display: flex;
 	flex-wrap: wrap;
@@ -458,13 +441,12 @@
 	}
 }
 
-// ── module box ─────────────────────────────────────────────────────────────
 .sub-module {
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
 
-	// the §8 "every pinned module is the same height"
+	// §8 fixed module height
 	&.is-rail {
 		block-size: 300px;
 	}
@@ -571,7 +553,6 @@
 	}
 }
 
-// ── tool-settings panes ────────────────────────────────────────────────────
 .sub-tool-pane {
 	&.is-w200 {
 		inline-size: 200px;
@@ -669,7 +650,6 @@
 	color: var(--muted-foreground);
 }
 
-// ── colour cell (swatch + hex) ─────────────────────────────────────────────
 .sub-tool-colour {
 	display: flex;
 	align-items: stretch;
@@ -690,7 +670,6 @@
 	box-shadow: none;
 }
 
-// ── shape strips + the preset gallery ──────────────────────────────────────
 .sub-tool-shapes {
 	grid-template-columns: repeat(5, minmax(0, 1fr));
 	margin: 11px;
@@ -777,7 +756,6 @@
 	block-size: 24px;
 }
 
-// ── the TEXT font row ──────────────────────────────────────────────────────
 .sub-tool-font {
 	display: flex;
 	align-items: stretch;
@@ -814,7 +792,7 @@
 	display: none;
 }
 
-// ── harness hooks: the literal Tailwind names the parent rigs select on ─────
+// scripts/verify/workspace.mjs selects on these
 .sub-omni-dock,
 .sub-omni-rail-dock,
 .sub-omni-barrow,

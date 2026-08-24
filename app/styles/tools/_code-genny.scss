@@ -1,11 +1,4 @@
-// Styles for the code-genny tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Barcode generator ───────────────────────────────────────────────────── */
 
 .dt-code {
 	@include crayon.vstack(6);
@@ -26,8 +19,7 @@
 	font-weight: crayon.font-weight("bold");
 }
 
-/* Hairlines via a 1px gap over the border colour, as `.segmented`. The tooltip
-   wrapper is the grid cell, so the button has to fill it. */
+// tooltip wrapper is grid cell
 .dt-code-types {
 	display: grid;
 	gap: 1px;
@@ -123,8 +115,7 @@
 }
 
 .dt-code-panel {
-	/* The panel is a focus target, and its own ring would double the section
-	   borders it sits inside. */
+	// avoids doubled section borders
 	outline: none;
 
 	&.is-batch {
@@ -203,8 +194,7 @@
 		max-height: 100%;
 	}
 
-	/* Transparency needs a ground of its own; the theme surface would read as a
-	   solid background behind a cut-out barcode. */
+	// transparency needs white ground
 	&.is-checkered {
 		background-color: #fff;
 		background-image:
@@ -221,8 +211,7 @@
 	}
 }
 
-/* The stage paints a light background of its own, so the empty line cannot
-   inherit the theme's foreground colour. */
+// over fixed light stage
 .dt-code-empty {
 	color: #6b6b6b;
 	text-align: center;
@@ -236,8 +225,7 @@
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-/* The actions row runs to the panel edges; only the batch pair is free-standing
-   and needs a frame of its own. `.dt-code-stage` already draws the line above. */
+// stage draws line above
 .dt-code-batch-adds {
 	border: 1px solid var(--border);
 }
@@ -264,8 +252,7 @@
 		background: var(--muted);
 	}
 
-	/* The Upload List control is a label over a visually hidden file input, so
-	   its focus ring has to land here. */
+	// wraps hidden file input
 	&:focus-within {
 		outline: 2px solid var(--primary);
 		outline-offset: -2px;
@@ -380,7 +367,7 @@
 	font-size: crayon.font-size("sm");
 }
 
-/* The picker input covers the whole cell so anywhere in the block opens it. */
+// input covers whole cell
 .dt-code-swatch {
 	position: relative;
 	display: block;

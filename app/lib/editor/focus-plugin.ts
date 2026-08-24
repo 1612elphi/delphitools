@@ -1,6 +1,3 @@
-// A single plugin that produces the selection-driven focus decorations:
-// current-sentence highlight, current-paragraph highlight, and dim-inactive.
-// Settings live in the plugin state and are updated via setMeta(focusKey, …).
 import { Plugin, PluginKey } from 'prosemirror-state';
 import type { EditorState } from 'prosemirror-state';
 import { Decoration, DecorationSet } from 'prosemirror-view';
@@ -31,7 +28,7 @@ function segmentSentences(text: string): [number, number][] {
 		}
 		return out;
 	}
-	// Fallback: split on sentence-ending punctuation, keeping trailing space.
+	// regex sentence fallback
 	const out: [number, number][] = [];
 	const re = /[^.!?]*[.!?]+[\s]*|[^.!?]+$/g;
 	let m: RegExpExecArray | null;

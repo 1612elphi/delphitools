@@ -1,12 +1,9 @@
-// Styles for the nato-phonetic tool.
-
 @use "../crayon-config" as crayon;
 
 .dt-nato-frame {
 	border: 2px solid var(--border);
 }
 
-/* Alphabet picker | direction picker, one hairline between them. */
 .dt-nato-head {
 	display: grid;
 	border-bottom: 1px solid var(--border);
@@ -156,7 +153,6 @@
 	}
 }
 
-/* The wall chart: one tile per letter with Morse, semaphore and the flag. */
 .dt-nato-chart-head {
 	display: flex;
 	min-height: crayon.size(10);
@@ -169,9 +165,8 @@
 
 .dt-nato-chart-label {
 	color: var(--muted-foreground);
-	font-size: crayon.font-size("xs");
+	font-size: crayon.font-size("sm");
 	font-weight: crayon.font-weight("semibold");
-	letter-spacing: 0.05em;
 	text-transform: uppercase;
 }
 
@@ -196,8 +191,8 @@
 	font: inherit;
 	text-align: left;
 	cursor: pointer;
-	gap: crayon.size(1) crayon.size(3);
-	grid-template: "letter morse" auto "letter sem" auto "letter flag" 1fr "word word" auto / 1fr auto;
+	gap: crayon.size(4) crayon.size(3);
+	grid-template: "letter morse" auto "letter sem" auto "word flag" 1fr / 1fr auto;
 
 	@include crayon.hover {
 		background: var(--muted);
@@ -213,8 +208,8 @@
 }
 
 .dt-nato-tile-letter {
-	align-self: center;
-	font-size: 2.5rem;
+	align-self: start;
+	font-size: 4rem;
 	font-weight: crayon.font-weight("bold");
 	grid-area: letter;
 	line-height: 1;
@@ -258,7 +253,7 @@
 
 	line {
 		stroke: currentcolor;
-		stroke-width: 3.5;
+		stroke-width: 2;
 	}
 }
 
@@ -271,7 +266,7 @@
 
 .dt-nato-tile-word {
 	overflow: hidden;
-	margin-top: crayon.size(1);
+	align-self: end;
 	font-size: crayon.font-size("sm");
 	font-weight: crayon.font-weight("semibold");
 	grid-area: word;

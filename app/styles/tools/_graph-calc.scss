@@ -1,10 +1,4 @@
-// Styles for the graph-calc tool.
-//
-// The plot is inline SVG rather than a chart library: the Next app draws it
-// with mafs, which is React-only. Grid, axes and tick labels are styled here so
-// they follow the theme — the Next app hard-codes black for all three, which
-// only reads on a light background. The curves keep their per-function colour
-// as a presentation attribute on each path.
+// mafs react-only, next hard-codes black
 
 @use "../crayon-config" as crayon;
 
@@ -33,7 +27,7 @@
 	font-size: crayon.font-size("sm");
 }
 
-/* Flush tables: the rows span the section's own padding. */
+/* rows span section padding */
 .dt-graph-rows {
 	margin: crayon.size(4) crayon.size(-4) 0;
 	border-block: 1px solid var(--border);
@@ -49,8 +43,6 @@
 		border-bottom: 0;
 	}
 }
-
-/* ── Function rows ───────────────────────────────────────────────────────── */
 
 .dt-graph-name {
 	display: flex;
@@ -183,8 +175,6 @@
 	}
 }
 
-/* ── Add + display toggles ───────────────────────────────────────────────── */
-
 .dt-graph-toolbar {
 	display: flex;
 	align-items: stretch;
@@ -248,8 +238,6 @@
 	}
 }
 
-/* ── Plot surface ────────────────────────────────────────────────────────── */
-
 .dt-graph-surface {
 	position: relative;
 	overflow: hidden;
@@ -257,7 +245,7 @@
 	background: var(--card);
 	cursor: grab;
 
-	/* The pointer handlers pan the plot; the browser must not also scroll. */
+	/* pan, not scroll */
 	touch-action: none;
 
 	&.is-panning {
@@ -312,8 +300,6 @@
 	pointer-events: none;
 }
 
-/* ── View ────────────────────────────────────────────────────────────────── */
-
 .dt-graph-range-name {
 	display: flex;
 	width: crayon.size(20);
@@ -359,7 +345,7 @@
 	border-inline: 0;
 	border-bottom: 0;
 
-	/* The tooltip wrapper is the grid cell, so the button has to fill it. */
+	/* tooltip wrapper is grid cell */
 	> [data-slot="tooltip"],
 	.dt-tooltip-trigger {
 		display: block;
@@ -390,8 +376,6 @@
 		background: var(--muted);
 	}
 }
-
-/* ── Trace ───────────────────────────────────────────────────────────────── */
 
 .dt-graph-trace {
 	display: flex;
@@ -450,8 +434,6 @@
 		background: color-mix(in oklch, var(--primary) 90%, black);
 	}
 }
-
-/* ── Trace results ───────────────────────────────────────────────────────── */
 
 .dt-graph-results-head {
 	display: flex;
@@ -525,8 +507,6 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
-
-/* ── Syntax examples ─────────────────────────────────────────────────────── */
 
 .dt-graph-syntax {
 	margin: crayon.size(4) crayon.size(-4) crayon.size(-4);

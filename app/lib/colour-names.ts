@@ -1,6 +1,3 @@
-// Colour naming utility using meodai/color-names database
-// Uses RGB Euclidean distance for nearest-color matching
-
 import { colornames } from 'color-name-list/bestof';
 
 interface NamedColour {
@@ -11,7 +8,6 @@ interface NamedColour {
 	b: number;
 }
 
-// Parse the colour data into a more efficient format
 const COLOURS: NamedColour[] = colornames.map((c) => {
 	const hex = c.hex;
 	const r = parseInt(hex.slice(1, 3), 16);
@@ -20,7 +16,6 @@ const COLOURS: NamedColour[] = colornames.map((c) => {
 	return { name: c.name, hex, r, g, b };
 });
 
-// Calculate Euclidean distance between two colours
 function colourDistance(
 	r1: number,
 	g1: number,
@@ -32,16 +27,13 @@ function colourDistance(
 	const dr = r1 - r2;
 	const dg = g1 - g2;
 	const db = b1 - b2;
-	return dr * dr + dg * dg + db * db; // Skip sqrt for performance (comparing relative distances)
+	return dr * dr + dg * dg + db * db;
 }
 
-// Find the closest named colour
 export function getColourName(hex: string): string {
-	// Parse hex
 	const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
 	if (!match) return 'Unknown';
 
-	// the regex above has exactly three groups and matched
 	const r = parseInt(match[1]!, 16);
 	const g = parseInt(match[2]!, 16);
 	const b = parseInt(match[3]!, 16);
@@ -62,7 +54,6 @@ export function getColourName(hex: string): string {
 			minDistance = distance;
 			closestName = colour.name;
 		}
-		// Exact match
 		if (distance === 0) break;
 	}
 

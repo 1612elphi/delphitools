@@ -1,56 +1,17 @@
-/**
- * Remove Background (M7) — an async, non-destructive bake. RMBG-1.4 (the
- * background-remover tool's proven model — see the MODEL_ID note) via
- * @huggingface/transformers v4 produces a grayscale matte per raster SOURCE,
- * keyed by the layer's content blobHash: same pixels ⇒ same matte, a destructive edit repoints the hash
- * and re-bakes automatically, and undo snapshots keep rendering off the old
- * cached matte. The matte lives in a canvas's ALPHA channel so EffectsImage
- * can `destination-in` it onto the layer content at composite time — the
- * original RGBA is never touched and the header switch restores instantly.
- *
- * Hosting is Ruby's ratified call (2026-07-08): reuse the background-remover
- * tool's system — runtime fetch from the HF hub through the browser HTTP
- * cache (no self-hosted weights; Cache API off, it's unreliable on iOS
- * Safari), on the SAME transformers v3 the tool uses (v4 dropped RMBG-1.4's
- * model class from image-segmentation, and v4's only draw — BiRefNet — is
- * unrunnable in-browser; the v4 alias came and went 2026-07-08). WebGPU fp32
- * first; single-thread WASM fp32 fallback, engaged at LOAD time or at RUN
- * time (a pipeline can compile yet fail inside OrtRun).
- *
- * Store shape follows lut-data.ts: matteEpoch() bumps only when a matte
- * ARRIVES (EffectsImage mixes it into its cache-dirty check so cutouts pop
- * in); listeners fire on every status change (the FX panel shows progress).
- * Fabric-free on purpose — the panel imports this outside the canvas
- * boundary.
- *
- * ponytail: inference runs serially on the main thread (the WebGPU path is
- * async anyway; the WASM fallback janks) — a dedicated worker is the upgrade
- * path if fallback jank matters.
- */
-
 import { getDB } from './db';
 import { getRaster } from './raster-cache';
 import { canvasToBlob } from './blobs';
 import { getPersistenceEnabled } from './persistence-pref';
 
-// RMBG-1.4 — the SAME model the standalone background-remover tool ships
-// (proven on webgpu AND wasm in this stack; the browser HTTP cache is shared
-// between tool and editor since both fetch the same hub files). Licence:
-// CC BY-NC-ND, acknowledged in ACKNOWLEDGEMENTS.md — Ruby's 2026-07-08 call.
-// BiRefNet-lite was tried first and is unrunnable in-browser today: WebGPU
-// trips maxStorageBuffersPerShaderStage (11 > 10 on Apple silicon) and its
-// static-1024² graph exhausts the wasm heap (std::bad_alloc, fp32 AND fp16,
-// ORT 1.26-dev and 1.27 alike).
+// birefnet buffer limit
 const MODEL_ID = 'briaai/RMBG-1.4';
 
 export type MatteDevice = 'webgpu' | 'wasm';
 
 export interface MatteStatus {
 	state: 'queued' | 'downloading' | 'processing' | 'done' | 'error';
-	/** model download %, only while downloading */
 	progress?: number;
 	device?: MatteDevice;
-	/** technical error detail (Error.message) — data, not authored copy */
 	detail?: string;
 }
 
@@ -59,7 +20,6 @@ const status = new Map<string, MatteStatus>();
 let epoch = 0;
 const listeners = new Set<() => void>();
 
-/** hashes whose bake is waiting on the shared model download */
 const waitingDownload = new Set<string>();
 let lastProgress = -1;
 
@@ -72,8 +32,7 @@ function setStatus(hash: string, s: MatteStatus): void {
 	notify();
 }
 
-/** Bumped only when a matte finishes — EffectsImage compares it in
- *  isCacheDirty so the cutout recomposites exactly once per arrival. */
+// increments after matte completion
 export function matteEpoch(): number {
 	return epoch;
 }
@@ -93,8 +52,6 @@ export function getMatteStatus(hash: string): MatteStatus | undefined {
 	return status.get(hash);
 }
 
-/** Inject a finished matte directly (the bake path lands here; also the dev
- *  rig's test seam — the verify harness composites without running the model). */
 export function putMatte(
 	hash: string,
 	matte: HTMLCanvasElement,
@@ -106,21 +63,15 @@ export function putMatte(
 	notify();
 }
 
-/**
- * Kick off (idempotent) the async bake of one source's matte. Errors are
- * sticky — a failed hash does NOT auto-retry (drawObject kicks every
- * composite; looping a failed 90 MB model fetch would be hostile). The FX
- * panel's retry goes through retryMatte.
- */
+// failures require manual retry
 export function ensureMatte(hash: string): void {
 	if (!hash || typeof document === 'undefined') return;
 	if (mattes.has(hash) || status.has(hash)) return;
 	setStatus(hash, { state: 'queued' });
-	// serial queue — one inference at a time keeps peak memory sane
+	// limit inference memory
 	chain = chain.then(() => bake(hash)).catch(() => undefined);
 }
 
-/** Clear a sticky error and re-kick. */
 export function retryMatte(hash: string): void {
 	if (status.get(hash)?.state !== 'error') return;
 	status.delete(hash);
@@ -129,11 +80,7 @@ export function retryMatte(hash: string): void {
 
 let chain: Promise<void> = Promise.resolve();
 
-/**
- * What this file uses of a transformers.js segmentation pipeline. The library's
- * own type is a union across every dtype and device and does not narrow
- * usefully; `lib/bg-removal.ts` names the same shape for the same reason.
- */
+// narrow transformers pipeline type
 type SegmentationPipeline = ((image: string) => Promise<unknown>) & {
 	dispose?: () => Promise<void>;
 };
@@ -143,16 +90,12 @@ interface DownloadProgress {
 	progress?: number;
 }
 
-// The pipeline singleton — module-lifetime so re-bakes skip the load.
 let pipePromise: Promise<{
 	pipe: SegmentationPipeline;
 	device: MatteDevice;
 }> | null = null;
 
-/** Set after a WebGPU RUNTIME failure — WebGPU pipelines can compile fine yet
- *  fail inside OrtRun (BiRefNet-lite trips maxStorageBuffersPerShaderStage,
- *  11 > 10, on real adapters). Sticky for the session so every later bake
- *  goes straight to WASM instead of failing the same way. */
+// skip failed webgpu
 let forceWasm = false;
 
 function loadPipeline(): NonNullable<typeof pipePromise> {
@@ -161,8 +104,7 @@ function loadPipeline(): NonNullable<typeof pipePromise> {
 			const { pipeline, env } =
 				await import('@huggingface/transformers');
 			env.allowLocalModels = false;
-			// Browser HTTP cache instead of the Cache API — unreliable on iOS
-			// Safari (the background-remover call, carried over).
+			// ios cache api fails
 			env.useBrowserCache = false;
 			const onProgress = (e: DownloadProgress) => {
 				if (
@@ -171,7 +113,7 @@ function loadPipeline(): NonNullable<typeof pipePromise> {
 				)
 					return;
 				const pct = Math.round(e.progress);
-				if (pct === lastProgress) return; // don't flood renders per byte-tick
+				if (pct === lastProgress) return;
 				lastProgress = pct;
 				for (const h of waitingDownload)
 					setStatus(h, {
@@ -179,10 +121,7 @@ function loadPipeline(): NonNullable<typeof pipePromise> {
 						progress: pct,
 					});
 			};
-			// fp32 on both devices — mirrors the v3 tool's field-proven config.
-			// The localStorage flag is a QA escape hatch to force the CPU path.
-			// logSeverityLevel 3 = errors only: ORT's W-level EP-assignment notes
-			// otherwise land on console.error and trip the Next dev overlay.
+			// suppress ort dev overlay
 			const session_options = {
 				logSeverityLevel: 3,
 			} as const;
@@ -207,7 +146,6 @@ function loadPipeline(): NonNullable<typeof pipePromise> {
 						device: 'webgpu' as const,
 					};
 				} catch {
-					// load-time WebGPU failure — fall through to WASM below
 				}
 			}
 			const pipe = (await pipeline(
@@ -222,14 +160,14 @@ function loadPipeline(): NonNullable<typeof pipePromise> {
 			)) as unknown as SegmentationPipeline;
 			return { pipe, device: 'wasm' as const };
 		})().catch((err) => {
-			pipePromise = null; // a failed load may be transient (offline) — retry can rebuild
+			// allow pipeline retries
+			pipePromise = null;
 			throw err;
 		});
 	}
 	return pipePromise;
 }
 
-/** Tear down the (broken) WebGPU pipeline and rebuild on WASM. */
 async function rebuildPipelineAsWasm(): Promise<{
 	pipe: SegmentationPipeline;
 	device: MatteDevice;
@@ -243,14 +181,13 @@ async function rebuildPipelineAsWasm(): Promise<{
 
 async function bake(hash: string): Promise<void> {
 	try {
-		// persisted matte from an earlier session?
 		if (await hydrateMatte(hash)) {
 			putMatte(hash, mattes.get(hash)!);
 			return;
 		}
 		const src = getRaster(hash);
 		if (!src) {
-			// source not decoded yet — drop the marker so a later kick retries
+			// retry after raster decode
 			status.delete(hash);
 			notify();
 			return;
@@ -267,9 +204,6 @@ async function bake(hash: string): Promise<void> {
 				result = await pipe(url);
 			} catch (runErr) {
 				if (device === 'wasm') throw runErr;
-				// WebGPU ran aground at inference time (shader storage-buffer limits
-				// etc.) — rebuild on WASM (fp32 weights re-fetch shows as download)
-				// and retry this bake once.
 				waitingDownload.add(hash);
 				setStatus(hash, {
 					state: 'downloading',
@@ -305,11 +239,6 @@ async function bake(hash: string): Promise<void> {
 	}
 }
 
-/** Normalise the model's mask output into an ALPHA-channel canvas scaled to
- *  the source's pixel size (mask value → alpha, RGB left black — only alpha
- *  matters to destination-in). Handles the RawImage raw-data shape and the
- *  toCanvas fallback, the two cases this pipeline type actually produces
- *  (background-remover.tsx precedent). */
 function matteFromMask(mask: unknown, w: number, h: number): HTMLCanvasElement {
 	const m = mask as {
 		width: number;
@@ -334,7 +263,7 @@ function matteFromMask(mask: unknown, w: number, h: number): HTMLCanvasElement {
 			.getContext('2d')!
 			.getImageData(0, 0, mw, mh).data;
 		for (let i = 0; i < mw * mh; i++)
-			id.data[i * 4 + 3] = px[i * 4]!; // grayscale rides in red
+			id.data[i * 4 + 3] = px[i * 4]!;
 	} else {
 		throw new Error('unrecognised mask shape');
 	}
@@ -343,13 +272,11 @@ function matteFromMask(mask: unknown, w: number, h: number): HTMLCanvasElement {
 	const scaled = document.createElement('canvas');
 	scaled.width = w;
 	scaled.height = h;
-	scaled.getContext('2d')!.drawImage(alpha, 0, 0, w, h); // bilinear alpha upscale
+	scaled.getContext('2d')!.drawImage(alpha, 0, 0, w, h);
 	return scaled;
 }
 
-// ── IndexedDB matte cache (dexie v3 `mattes`) ────────────────────────────────
-// Writes ride the persistence opt-in like every other IDB write; reads are
-// unconditional (the table is simply empty when persistence was never on).
+// reads ignore persistence
 
 async function persistMatte(
 	hash: string,
@@ -366,7 +293,7 @@ async function persistMatte(
 			createdAt: Date.now(),
 		});
 	} catch {
-		// best-effort cache — quota/private-mode failures are non-fatal
+		// ignore cache failures
 	}
 }
 

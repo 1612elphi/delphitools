@@ -1,16 +1,10 @@
-// image-compressor, end to end: the real codecs from /public/compress, in
-// the real worker.
-//
-// The codec wasm is served by the dev server, so there is no network fetch
-// and the rig stays in all.mjs. AVIF is the exception that earns its keep:
-// the encode is slow even at 192px, but it is the only check that proves the
-// gated fourth format works.
-//
-// The source image is generated in the page (a gradient with solid blocks —
-// compressible, unlike noise), pulled back out as base64 and written to a
-// temp file, because uploadFile needs a path on disk.
-//
-// Usage: npm start, then node scripts/verify/image-compressor.mjs
+// real codecs, real worker
+// no network fetch
+// avif slow even 192px
+// only check proving gated format
+// compressible unlike noise
+// uploadfile needs disk path
+// usage: npm start, then node scripts/verify/image-compressor.mjs
 
 import { writeFileSync, statSync, mkdtempSync } from 'node:fs';
 import { join } from 'node:path';
@@ -52,7 +46,6 @@ await page.waitForSelector('.dt-ic-after-img', { timeout: 30000 });
 check('an upload shows the action bar', await page.$('.dt-ic-bar'));
 check('and the before/after surface', await page.$('.dt-ic-compare'));
 
-/** Bytes + identity of the current after-pane result, read off its blob URL. */
 async function readResult() {
 	return page.evaluate(async () => {
 		const img = document.querySelector('.dt-ic-after-img');
@@ -68,7 +61,6 @@ async function readResult() {
 	});
 }
 
-/** Wait until the after pane shows a blob that is not `previousSrc`. */
 async function waitForNewResult(previousSrc, timeoutMs = 30000) {
 	const deadline = Date.now() + timeoutMs;
 	for (;;) {
@@ -99,7 +91,6 @@ check('the savings badge reads negative', /^−\d+%$/.test(savings), savings);
 
 let lastSrc = webp?.src ?? '';
 
-// MozJPEG at two qualities: the slider has to change the output size.
 await page.$$eval('.dt-ic-format', (buttons) =>
 	buttons.find((b) => b.textContent.trim() === 'JPEG').click(),
 );
@@ -127,7 +118,7 @@ check(
 );
 lastSrc = q15?.src ?? lastSrc;
 
-// OxiPNG: lossless, so the effort slider replaces the quality slider.
+// oxipng lossless: effort replaces quality
 await page.$$eval('.dt-ic-format', (buttons) =>
 	buttons.find((b) => b.textContent.trim() === 'PNG').click(),
 );
@@ -139,7 +130,7 @@ check(
 lastSrc = result?.src ?? lastSrc;
 check('and the quality slider becomes effort', !!(await page.$('.dt-ic-effort')) && !(await page.$('.dt-ic-quality')));
 
-// AVIF stays gated until the switch; then it is slow but real.
+// slow once ungated
 const countSegments = () =>
 	page.$$eval('.dt-ic-format', (buttons) => buttons.length);
 check('AVIF is gated out of the formats', (await countSegments()) === 3);

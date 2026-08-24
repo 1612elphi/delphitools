@@ -1,8 +1,6 @@
-// Copies the circle-flags language flags for Whisper's languages (the
-// LANGUAGES table in app/lib/transcribe.ts) into public/flags, where the
-// language combobox <img>s them. Re-run after a circle-flags version bump or
-// a LANGUAGES change. Whisper's `jw` (Javanese) is `jv` in circle-flags;
-// `sa` (Sanskrit) has no language flag, India's country flag stands in.
+// sync whisper language flags
+// jw maps to jv
+// india flag for sa
 import { copyFileSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 
 const src = new URL('../node_modules/circle-flags/flags/', import.meta.url);

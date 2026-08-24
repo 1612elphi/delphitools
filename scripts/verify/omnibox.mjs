@@ -1,8 +1,3 @@
-// The front-page omnibox: search, microtool answer rows, colour carry,
-// file-drop routing, ⌘K focus.
-//
-// Usage: npm start, then node scripts/verify/omnibox.mjs
-
 import { launch, visit, check, finish, sleep } from './harness.mjs';
 
 const { browser, page } = await launch();
@@ -17,7 +12,7 @@ async function type(value) {
 		).set.call(input, v);
 		input.dispatchEvent(new Event('input', { bubbles: true }));
 	}, value);
-	// debounce (120ms) plus the dynamic import of the answering tool chunk
+	// debounce 120ms, chunk import
 	await sleep(600);
 }
 
@@ -32,9 +27,8 @@ check('idle: legend strip with three entries', idle.legend === 3);
 check('idle: catalogue sections render', idle.sections > 5, `${idle.sections}`);
 check('idle: hero art renders from the manifest', !!idle.art, idle.art ?? '');
 
-// --- search --------------------------------------------------------------
 await type('palette');
-// the answers load their tool chunks on demand; under load a fixed wait is not enough
+// chunks load on demand
 await page.waitForFunction(
 	() => !!document.querySelector('.dt-omni-catalogue.is-dimmed'),
 	{ timeout: 10000 },
@@ -55,7 +49,6 @@ check(
 );
 check('search: catalogue dims while filtering', search.dimmed);
 
-// --- colour --------------------------------------------------------------
 await type('#2E7D32');
 const colour = await page.evaluate(() => {
 	const rows = [...document.querySelectorAll('.dt-omni-row')];
@@ -96,9 +89,7 @@ check(
 );
 check('colour: carry chip names the value', colour.chip === '→ #2e7d32');
 
-// The link's href carrying the value is not the same as the router keeping
-// it: app/controllers/tools/tool.ts declares `color`, without it the
-// transition strips the query and the tool opens on its default.
+// app/controllers/tools/tool.ts declares color param
 await page.evaluate(() =>
 	[...document.querySelectorAll('.dt-omni-open')]
 		.find((a) => a.getAttribute('href')?.includes('colour-converter'))
@@ -116,7 +107,6 @@ check(
 );
 await visit(page, '/');
 
-// --- unit / expression ---------------------------------------------------
 await type('18px');
 const unit = await page.evaluate(() =>
 	[...document.querySelectorAll('.dt-omni-row-val')].map((el) =>
@@ -130,8 +120,7 @@ check(
 );
 
 await type('2*(3+4)^2');
-// mathjs is the heaviest on-demand chunk; its first dev-server fetch can
-// outlast the type() settle sleep.
+// mathjs chunk loads slowly
 const expr = await page
 	.waitForFunction(
 		() =>
@@ -151,7 +140,6 @@ const expr = await page
 	);
 check('expression: evaluates to 98', expr === '98', expr);
 
-// --- remaining microtools ------------------------------------------------
 async function rowFor(name) {
 	return page.evaluate((n) => {
 		const row = [...document.querySelectorAll('.dt-omni-row')].find(
@@ -283,7 +271,6 @@ check(
 	algebra,
 );
 
-// --- file drop -----------------------------------------------------------
 await page.evaluate(() => {
 	const transfer = new DataTransfer();
 	transfer.items.add(
@@ -321,7 +308,6 @@ check(
 	await page.evaluate(() => !!document.querySelector('.dt-omni-input')),
 );
 
-// --- ⌘K ------------------------------------------------------------------
 await page.keyboard.down('Meta');
 await page.keyboard.press('k');
 await page.keyboard.up('Meta');
@@ -330,7 +316,6 @@ const focused = await page.evaluate(() =>
 );
 check('⌘K focuses the field', focused === true);
 
-// --- legend --------------------------------------------------------------
 await visit(page, '/');
 const legend = await page.$$eval('.dt-omni-legend-btn', (buttons) =>
 	buttons.map((b) => b.textContent?.replace(/\s+/g, ' ').trim()),

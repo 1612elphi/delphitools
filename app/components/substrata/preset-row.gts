@@ -6,17 +6,9 @@ import { htmlSafe } from '@ember/template';
 import type { TOC } from '@ember/component/template-only';
 import Icon from 'delphitools-v2/components/icon';
 
-/**
- * Preset-first value controls (Ruby, 2026-07-06: "a simple editor for simple
- * people" — most shape parameters offer a few good presets plus a custom (…)
- * escape hatch). Shared by the PIECES settings bloom and the Inspector's
- * shape section, so both surfaces read identically.
- */
-
 export interface StepBtnSignature {
 	Element: HTMLButtonElement;
 	Args: {
-		/** kebab-case lucide name */
 		icon: string;
 		aria: string;
 		onClick: () => void;
@@ -50,7 +42,6 @@ export interface StepperSignature {
 	};
 }
 
-/** Compact value + up/down stepper (the omnibar Nudge cell's pattern). */
 export class Stepper extends Component<StepperSignature> {
 	get step() {
 		return this.args.step ?? 1;
@@ -94,7 +85,6 @@ export class Stepper extends Component<StepperSignature> {
 	</template>
 }
 
-/** Rounded-square glyph for corner-radius presets — visual, not copy. */
 export const CornerPresetIcon: TOC<{ Args: { r: number } }> = <template>
 	<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
 		<rect
@@ -112,11 +102,8 @@ export const CornerPresetIcon: TOC<{ Args: { r: number } }> = <template>
 
 export interface PresetOption {
 	value: number;
-	/** number-ish text (self-labelling data) — or supply cornerR instead */
 	label?: string;
-	/** renders a CornerPresetIcon with this radius in place of the label */
 	cornerR?: number;
-	/** required with icon-only options */
 	aria?: string;
 }
 
@@ -128,7 +115,7 @@ function hasCorner(option: PresetOption): boolean {
 	return option.cornerR !== undefined;
 }
 
-// Glint cannot narrow `cornerR` through the template's hasCorner guard
+// glint misses template guard
 function cornerOf(option: PresetOption): number {
 	return option.cornerR ?? 0;
 }
@@ -143,7 +130,6 @@ export interface PresetRowSignature {
 		options: PresetOption[];
 		value: number;
 		onChange: (value: number) => void;
-		/** preset-match tolerance (fractional presets round to px) */
 		eps?: number;
 		min: number;
 		max: number;
@@ -152,12 +138,6 @@ export interface PresetRowSignature {
 	};
 }
 
-/**
- * A flush strip of preset buttons + an (…) cell revealing a custom Stepper.
- * The strip highlights the matching preset, or the (…) cell when the live
- * value is off-menu. Every path writes through `onChange` (callers make each
- * commit one undo step / one settings patch).
- */
 export class PresetRow extends Component<PresetRowSignature> {
 	@tracked open = false;
 

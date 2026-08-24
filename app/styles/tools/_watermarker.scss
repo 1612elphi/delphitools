@@ -1,11 +1,4 @@
-// Styles for the watermarker tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Watermarker ─────────────────────────────────────────────────────────── */
 
 .dt-wm {
 	display: flex;
@@ -97,8 +90,7 @@
 		object-fit: contain;
 	}
 
-	/* Transparency needs a ground of its own; the theme surface would read as a
-	   solid background behind a cut-out watermark. */
+	/* transparency needs checker ground else theme shows through */
 	&.is-checkered {
 		background-color: #fff;
 		background-image:

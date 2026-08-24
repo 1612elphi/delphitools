@@ -1,9 +1,3 @@
-/**
- * Identifier generation for the UUID Generator tool: UUID v4 and v7 per
- * RFC 9562 (the bit layout is assembled here; entropy is
- * `crypto.getRandomValues`) and Nano IDs on the url-safe alphabet.
- */
-
 export type IdentifierKind = 'uuid4' | 'uuid7' | 'nanoid';
 
 export const IDENTIFIER_KINDS: { id: IdentifierKind; label: string }[] = [
@@ -26,7 +20,6 @@ function randomBytes(length: number): Uint8Array {
 	return bytes;
 }
 
-/** 16 bytes as the canonical 8-4-4-4-12 hyphenated hex form. */
 function toUuidString(bytes: Uint8Array): string {
 	const hex: string[] = [];
 	for (const b of bytes) hex.push(b.toString(16).padStart(2, '0'));
@@ -43,7 +36,7 @@ function toUuidString(bytes: Uint8Array): string {
 	);
 }
 
-/** UUID v4 (RFC 9562 §5.4): all random, version nibble 4, variant 10. */
+// rfc 9562 v4 bits
 export function uuid4(): string {
 	const bytes = randomBytes(16);
 	bytes[6] = (bytes[6]! & 0x0f) | 0x40;
@@ -51,11 +44,7 @@ export function uuid4(): string {
 	return toUuidString(bytes);
 }
 
-/**
- * UUID v7 (RFC 9562 §5.7): 48-bit unix-epoch milliseconds, then 74 random
- * bits. Ordering holds at millisecond granularity: draws within the same
- * millisecond share the timestamp block and sort randomly after it.
- */
+// millisecond timestamp prefix
 export function uuid7(timestamp: number = Date.now()): string {
 	const bytes = randomBytes(16);
 	const hi = Math.floor(timestamp / 2 ** 32);
@@ -71,12 +60,11 @@ export function uuid7(timestamp: number = Date.now()): string {
 	return toUuidString(bytes);
 }
 
-/** The 48-bit timestamp embedded in a v7 UUID (its first 12 hex digits). */
 export function uuid7Timestamp(uuid: string): number {
 	return parseInt(uuid.replaceAll('-', '').slice(0, 12), 16);
 }
 
-// The alphabet is exactly 64 characters, so byte % 64 has no modulo bias.
+// 64 avoids modulo bias
 export function nanoid(length: number = NANOID_LENGTH): string {
 	const bytes = randomBytes(length);
 	let id = '';
@@ -89,10 +77,6 @@ export interface IdentifierOptions {
 	stripHyphens: boolean;
 }
 
-/**
- * Display/copy transforms. Both are no-ops for Nano IDs: they have no hyphens
- * and case is significant in their alphabet.
- */
 export function formatIdentifier(
 	id: string,
 	kind: IdentifierKind,

@@ -1,17 +1,7 @@
-// Styles for the zine-imposer tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-//
-// The `.dt-paper-combo*` block at the end belongs to
-// app/components/ui/paper-size-combobox.gts, which the print imposer also uses.
-// It lives here because app.scss is off limits to a tool port; move it there
-// when a second tool needs it.
+// one partial per tool; app.scss grew past 3000 lines
+// .dt-paper-combo* lives here pending a second consumer; move when one appears
 
 @use "../crayon-config" as crayon;
-
-/* ── Zine imposer ────────────────────────────────────────────────────────── */
-
 .dt-zine {
 	@include crayon.vstack(8);
 }
@@ -49,9 +39,6 @@
 	font-size: crayon.font-size("sm");
 	font-weight: crayon.font-weight("normal");
 }
-
-/* ── Fold picker ─────────────────────────────────────────────────────────── */
-
 .dt-zine-folds {
 	padding: crayon.size(4);
 	border-bottom: 2px solid var(--border);
@@ -117,9 +104,6 @@
 		opacity: 0.8;
 	}
 }
-
-/* ── Options + sheet setup ───────────────────────────────────────────────── */
-
 .dt-zine-setup {
 	display: grid;
 
@@ -203,7 +187,7 @@
 	font-size: crayon.font-size("xs");
 }
 
-/* A native checkbox drawn as a switch; the v2 app has no Switch primitive. */
+/* no Switch primitive in v2 app */
 .dt-zine-switch {
 	position: relative;
 	width: crayon.size(9);
@@ -263,9 +247,6 @@
 		font-weight: crayon.font-weight("medium");
 	}
 }
-
-/* ── Bulk drop zone ──────────────────────────────────────────────────────── */
-
 .dt-zine-bulk {
 	display: block;
 	padding: crayon.size(6);
@@ -307,9 +288,6 @@
 	color: var(--muted-foreground);
 	font-size: crayon.font-size("sm");
 }
-
-/* ── Page grid ───────────────────────────────────────────────────────────── */
-
 .dt-zine-grid-head {
 	@include crayon.hstack(3);
 
@@ -495,9 +473,6 @@
 	background: var(--destructive);
 	color: #fff;
 }
-
-/* ── Imposition preview ──────────────────────────────────────────────────── */
-
 .dt-zine-preview-head {
 	padding: crayon.size(4);
 	border-bottom: 2px solid var(--border);
@@ -547,9 +522,6 @@
 	letter-spacing: crayon.tracking("wide");
 	text-transform: uppercase;
 }
-
-/* ── Generate + instructions ─────────────────────────────────────────────── */
-
 .dt-zine-generate {
 	@include crayon.hstack(2);
 
@@ -596,9 +568,6 @@
 		margin-top: crayon.size(1);
 	}
 }
-
-/* ── Paper size combobox (shared with the print imposer) ─────────────────── */
-
 .dt-paper-combo-trigger {
 	@include crayon.hstack(2);
 

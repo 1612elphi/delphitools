@@ -22,7 +22,7 @@ const DIRECTIONS: { id: Direction; label: string }[] = [
 ];
 
 const TONE_HZ = 600;
-// ~5 ms to 92% of the target; an instant step clicks.
+// instant gain step clicks
 const RAMP_S = 0.002;
 const COPIED_MS = 2000;
 

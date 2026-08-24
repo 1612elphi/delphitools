@@ -1,6 +1,3 @@
-// Subtitle rendering for the Subtitle Studio burner. The preview and the
-// export draw through the same routine on the same canvas, so the stage shows
-// what the recorder gets.
 import type { BurnCodec } from 'delphitools-v2/lib/media-convert';
 import type { Cue } from 'delphitools-v2/lib/subtitles';
 
@@ -9,12 +6,9 @@ export type TextStyle = 'outline' | 'box' | 'plain';
 
 export interface BurnStyle {
 	font: FontChoice;
-	/** glyph height as a fraction of the frame height */
 	size: number;
-	/** CSS colour of the glyphs */
 	colour: string;
 	text: TextStyle;
-	/** offset from the bottom-centre anchor, as fractions of frame width/height */
 	x: number;
 	y: number;
 }
@@ -28,8 +22,7 @@ export const DEFAULT_STYLE: BurnStyle = {
 	y: 0,
 };
 
-// Burned text must survive outside the app, so the stacks are platform fonts;
-// Quattro is the one face the page itself loads (app.scss @font-face).
+// quattro loads from app.scss
 export const FONT_STACKS: Record<FontChoice, string> = {
 	sans: '"Helvetica Neue", Helvetica, Arial, sans-serif',
 	serif: 'Georgia, "Times New Roman", serif',
@@ -42,12 +35,10 @@ const LINE_HEIGHT = 1.25;
 const BOTTOM_MARGIN = 0.06;
 const BOX_FILL = 'rgb(0 0 0 / 65%)';
 
-/** VTT/SRT inline tags (<i>, <b>, <c.class>, <v Name>) are not rendered */
 export function stripTags(text: string): string {
 	return text.replace(/<[^>]+>/g, '');
 }
 
-/** the cue covering `ms`, first wins on overlap */
 export function activeCue(cues: Cue[], ms: number): Cue | undefined {
 	return cues.find((cue) => ms >= cue.start && ms < cue.end);
 }
@@ -56,7 +47,6 @@ interface Measurer {
 	measureText(text: string): { width: number };
 }
 
-/** explicit newlines stay; each line then greedy-wraps on spaces to maxWidth */
 export function wrapLines(
 	ctx: Measurer,
 	text: string,
@@ -79,7 +69,6 @@ export function wrapLines(
 	return out;
 }
 
-/** draws `text` over whatever the canvas holds; the caller draws the frame */
 export function drawSubtitle(
 	ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
 	text: string,
@@ -124,16 +113,12 @@ export function drawSubtitle(
 export interface ExportFormat {
 	id: string;
 	label: string;
-	/** MediaRecorder type, the real-time path */
 	mime: string;
-	/** WebCodecs codec, the fast path */
 	codec: BurnCodec;
 	ext: 'mp4' | 'webm';
 }
 
-// Preference order doubles as the default: the first one the browser can
-// encode wins. Codec strings are the ones Chrome 151 / Safari answer
-// isTypeSupported for; HEVC needs the full profile string.
+// first supported format wins
 export const EXPORT_FORMATS: ExportFormat[] = [
 	{
 		id: 'h264',
@@ -179,10 +164,6 @@ export const EXPORT_FORMATS: ExportFormat[] = [
 	},
 ];
 
-/**
- * Every format with whether this browser can produce it: by WebCodecs encoder
- * when `encoders` is given (the fast path), else by MediaRecorder type.
- */
 export function supportedFormats(
 	encoders?: Set<BurnCodec> | null,
 ): (ExportFormat & { supported: boolean })[] {
@@ -200,8 +181,7 @@ export function supportedFormats(
 	}));
 }
 
-// MediaRecorder's default is 2.5 Mbps whatever the frame size, which smears
-// 1080p. 0.12 bit per pixel per frame at 30 fps is a broadcast-ish middle.
+// bitrate target: 0.12 bpppf
 const BITS_PER_PIXEL_FRAME = 0.12;
 
 export function bitrateFor(width: number, height: number, fps = 30): number {

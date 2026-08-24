@@ -34,7 +34,6 @@ export interface HistoryItem {
 const HISTORY_LIMIT = 20;
 const COPIED_MS = 1500;
 
-/** Five columns per row, in reading order. */
 const BUTTON_ROWS = [
 	['C', '(', ')', '%', '⌫'],
 	['sin', 'cos', 'tan', 'π', '÷'],
@@ -45,11 +44,7 @@ const BUTTON_ROWS = [
 	['4', '5', '6', 'Const', 'Ans'],
 ];
 
-/**
- * The last two rows, split around the double-height `=`. Grid auto-placement
- * puts `=` in the last column of row eight, and the four keys after it flow
- * onto row nine beside it.
- */
+// split around the double-height = so grid auto-placement places it
 const BOTTOM_LEFT = [
 	['1', '2', '3', '.'],
 	['0', '±', 'EE', 'mod'],
@@ -65,7 +60,6 @@ export const KEYPAD: string[] = [
 const OPERATORS = ['+', '−', '×', '÷', '%'];
 const DIGIT = /^[0-9.]$/;
 
-/** Which of the six keypad looks a key takes. */
 export function keyVariant(btn: string): string {
 	if (btn === '=') return 'is-equals';
 	if (btn === 'C' || btn === '⌫') return 'is-clear';
@@ -75,11 +69,7 @@ export function keyVariant(btn: string): string {
 	return 'is-default';
 }
 
-/**
- * The display expression as mathjs source. Math.PI and Math.E are the same
- * doubles mathjs exports as `pi` and `e`, so this stays free of the import and
- * the whole library loads only when a result is actually asked for.
- */
+// math.PI/E equal mathjs pi/e; avoids loading the library until evaluation
 export function prepareExpression(expr: string, lastAnswer: number): string {
 	return (
 		expr
@@ -87,9 +77,9 @@ export function prepareExpression(expr: string, lastAnswer: number): string {
 			.replace(/÷/g, '/')
 			.replace(/−/g, '-')
 			.replace(/π/g, `(${Math.PI})`)
-			// Protect scientific notation (5e10, 3.14e-5) before the standalone e
+			// protect 5e10 notation before standalone-e rule
 			.replace(/(\d\.?\d*)[eE]([+-]?\d)/g, '$1e$2')
-			// A lone e is Euler's number: not part of `exp`, not an exponent
+			// lone e is Euler's number, not an exponent
 			.replace(/(^|[^0-9])e(?!x|[0-9])/g, `$1(${Math.E})`)
 			.replace(/Ans/g, `(${lastAnswer})`)
 			.replace(/(\d+)!/g, 'factorial($1)')
@@ -97,10 +87,7 @@ export function prepareExpression(expr: string, lastAnswer: number): string {
 	);
 }
 
-/**
- * Degree-mode trig as an evaluation scope rather than a string rewrite, so
- * nested calls compose.
- */
+// scope, not string rewrite, so nested calls compose
 export function angleScope(
 	mode: AngleMode,
 ): Record<string, (x: number) => number> {
@@ -115,15 +102,14 @@ export function angleScope(
 	};
 }
 
-/** mathjs also returns units, complex numbers and matrices, which print themselves. */
+// mathjs units/complex/matrices print via String()
 export function resultText(value: unknown): string {
 	return typeof value === 'number'
 		? formatScientific(value)
 		: String(value);
 }
 
-// mathjs is ~700 KB and only a press of `=` needs it, so it is fetched on the
-// first calculation and held for the rest of the session.
+// ~700 KB; loaded on first = and cached
 let mathjs: typeof import('mathjs') | null = null;
 
 async function loadMathjs() {
@@ -172,7 +158,7 @@ export default class SciCalcTool extends Component {
 	}
 
 	get constantGroups() {
-		// Headings carried over from the Next app, verbatim.
+		// next app verbatim headings
 		return [
 			{ key: 'mathematical', heading: 'Mathematical' },
 			{ key: 'physical', heading: 'Physical' },
@@ -190,8 +176,7 @@ export default class SciCalcTool extends Component {
 		}));
 	}
 
-	// Bound on the wrapper's document rather than window so it only fires while
-	// the tool is on screen.
+	// document, not window, so it only fires while tool is on screen
 	shortcuts = modifier((element: HTMLElement) => {
 		const onKeyDown = (event: KeyboardEvent) => {
 			if (event.target instanceof HTMLInputElement) return;
@@ -255,7 +240,7 @@ export default class SciCalcTool extends Component {
 				...this.history.slice(0, HISTORY_LIMIT - 1),
 			];
 		} catch {
-			// wording carried over from the Next app
+			// next app wording
 			this.error = 'Error';
 			this.result = null;
 		}
@@ -276,8 +261,7 @@ export default class SciCalcTool extends Component {
 				void this.calculate();
 				break;
 			case '±':
-				// Carried over from the Next app, including the strip: an
-				// exponential result loses its × and ^ here and negates wrong.
+				// strip leaves ×/^ so exponential results negate wrong
 				if (this.result !== null) {
 					const num = Number.parseFloat(
 						this.result.replace(
@@ -346,7 +330,7 @@ export default class SciCalcTool extends Component {
 				this.expression += 'Ans';
 				break;
 			default:
-				// A digit typed on top of a result starts a fresh expression.
+				// digit on a result starts a fresh expression
 				if (this.result !== null && DIGIT.test(btn)) {
 					this.expression = btn;
 					this.result = null;
@@ -446,7 +430,7 @@ export default class SciCalcTool extends Component {
 						}}
 					>
 						<Icon @name="clock" />
-						{{! wording carried over from the Next app }}
+						{{! next app wording }}
 						History
 						<Icon
 							@name="chevron-down"
@@ -522,7 +506,7 @@ export default class SciCalcTool extends Component {
 								>{{item.result}}</div>
 							</button>
 						{{else}}
-							{{! wording carried over from the Next app }}
+							{{! next app wording }}
 							<p
 								class="dt-sci-history-empty"
 							>No history yet</p>
@@ -544,7 +528,7 @@ export default class SciCalcTool extends Component {
 									@asChild={{true}}
 									as |trigger|
 								>
-									{{! wording carried over from the Next app }}
+									{{! next app wording }}
 									<button
 										type="button"
 										class="dt-sci-key is-const"
@@ -557,13 +541,13 @@ export default class SciCalcTool extends Component {
 								>
 									<Command
 									>
-										{{! wording carried over from the Next app }}
+										{{! next app wording }}
 										<CommandInput
 											@placeholder="Search constants..."
 										/>
 										<CommandList
 										>
-											{{! wording carried over from the Next app }}
+											{{! next app wording }}
 											<CommandEmpty
 											>No
 												constant
@@ -620,7 +604,7 @@ export default class SciCalcTool extends Component {
 				</div>
 			</div>
 
-			{{! wording carried over from the Next app }}
+			{{! next app wording }}
 			<p class="dt-sci-hint">Keyboard supported: numbers,
 				operators, Enter to calculate, Escape to clear</p>
 		</div>

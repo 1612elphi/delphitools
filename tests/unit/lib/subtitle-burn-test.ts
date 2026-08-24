@@ -8,7 +8,7 @@ import {
 	wrapLines,
 } from 'delphitools-v2/lib/subtitle-burn';
 
-// ten units per character, so a 40-unit maxWidth holds four characters
+// 10 units/char, 40-unit width holds 4 chars
 const measurer = {
 	measureText: (text: string) => ({ width: text.length * 10 }),
 };

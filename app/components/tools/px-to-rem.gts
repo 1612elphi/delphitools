@@ -11,12 +11,7 @@ const REFERENCE_PX = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 40, 48];
 const DEFAULT_BASE = 16;
 const COPIED_MS = 1500;
 
-/**
- * toFixed pads to a fixed number of decimals, so every result carries zeros it
- * does not need. The Next app strips them with this same expression; because
- * toFixed always emits the decimal point, a whole number such as "10.0000"
- * loses only its fraction and never its own trailing zero.
- */
+// strips toFixed padding; "10.0000" keeps its integer zeros
 function trimZeros(value: string): string {
 	return value.replace(/\.?0+$/, '');
 }
@@ -67,12 +62,12 @@ export default class PxToRemTool extends Component {
 		return this.copied === 'rem';
 	}
 
-	// Wording carried over from the Next app.
+	// next app wording
 	get pxHeading() {
 		return this.pxIsSource ? 'Pixels (input)' : 'Pixels (result)';
 	}
 
-	// Wording carried over from the Next app.
+	// next app wording
 	get remHeading() {
 		return this.pxIsSource ? 'REM (result)' : 'REM (input)';
 	}
@@ -122,8 +117,7 @@ export default class PxToRemTool extends Component {
 		this.applyRem((event.target as HTMLInputElement).value);
 	};
 
-	// Only the derived side is recomputed: rewriting the side the user typed in
-	// would fight them mid-keystroke.
+	// never rewrite the field being typed
 	setBase = (event: Event) => {
 		const value = (event.target as HTMLInputElement).value;
 		this.baseSize = value;
@@ -140,8 +134,7 @@ export default class PxToRemTool extends Component {
 		}
 	};
 
-	// The reference row fills both fields whichever way round the tool is
-	// pointing, matching the Next app.
+	// fills px side; rem derives
 	useReference = (px: number) => this.applyPx(String(px));
 
 	toggleMode = () => {
@@ -164,7 +157,7 @@ export default class PxToRemTool extends Component {
 	<template>
 		<div class="dt-ptr">
 			<div class="dt-ptr-base">
-				{{! wording carried over from the Next app }}
+				{{! next app wording }}
 				<label
 					class="dt-ptr-base-label"
 					for="dt-ptr-base"
@@ -290,7 +283,7 @@ export default class PxToRemTool extends Component {
 
 			<div>
 				<div class="dt-ptr-ref-head">
-					{{! wording carried over from the Next app }}
+					{{! next app wording }}
 					<span class="dt-ptr-heading">Quick
 						Reference</span>
 				</div>

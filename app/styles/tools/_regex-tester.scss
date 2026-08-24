@@ -1,11 +1,5 @@
-// Styles for the regex-tester tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
 
 @use "../crayon-config" as crayon;
-
-/* ── Regex tester ────────────────────────────────────────────────────────── */
 
 .dt-rx {
 	border: 2px solid var(--border);
@@ -77,10 +71,7 @@
 	outline: none;
 }
 
-/* `.segmented` draws a 1px frame on all four edges; the row bleeds to the panel
-   edges instead, so the side rules would double the panel's own border and the
-   bottom rule would double the section's. Both classes are needed on the
-   selector to outrank `.segmented` itself. */
+/* segmented frame would double panel border */
 .segmented.dt-rx-options {
 	margin: 0 crayon.size(-4) crayon.size(-4);
 	grid-template-columns: repeat(2, 1fr);

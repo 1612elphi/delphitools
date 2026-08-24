@@ -1,8 +1,4 @@
-// Styles for the pdf-rotate-crop tool.
-
 @use "../crayon-config" as crayon;
-
-/* ── PDF rotate & crop ───────────────────────────────────────────────────── */
 
 .dt-prc {
 	@include crayon.vstack(4);
@@ -37,7 +33,7 @@
 		);
 	}
 
-	/* the file input is visually hidden, so its focus ring has to land here */
+	/* input hidden, ring here */
 	&:focus-within {
 		border-color: var(--primary);
 		outline: 2px solid var(--primary);
@@ -133,7 +129,6 @@
 	}
 }
 
-/* Rotate/crop settings as a grid of stacked label-over-control cells. */
 .dt-prc-settings {
 	display: grid;
 	border-bottom: 1px solid var(--border);
@@ -165,11 +160,10 @@
 	grid-template-columns: repeat(3, 1fr);
 }
 
-/* Second settings row: margins take two tracks, paper size the third. */
 .dt-prc-settings-2 {
 	grid-template-columns: repeat(3, minmax(0, 1fr));
 
-	/* Slack sits above the buttons, so inputs line up and both rows end flush. */
+	/* both rows end flush */
 	.dt-prc-applyscope {
 		margin-top: auto;
 	}
@@ -179,7 +173,6 @@
 	grid-template-columns: repeat(2, 1fr);
 }
 
-/* Give the four margin inputs room; the paper picker keeps a single column. */
 .dt-prc-margins {
 	grid-column: span 2;
 }

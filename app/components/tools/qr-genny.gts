@@ -30,11 +30,7 @@ import {
 import type QRCodeStyling from 'qr-code-styling';
 import type { Options as StylingOptions } from 'qr-code-styling';
 
-/**
- * Same-colour outline on every filled shape: adjacent QR modules then
- * overlap by half the stroke, which closes the antialiasing seams
- * renderers draw between separate paths that only touch (Ruby 2026-08-23).
- */
+// stroke of same fill colour closes antialiasing gaps between modules
 export function sealSvgSeams(svg: string, strokeWidth = 0.5): string {
 	const doc = new DOMParser().parseFromString(svg, 'image/svg+xml');
 	if (doc.querySelector('parsererror')) return svg;
@@ -61,9 +57,7 @@ type CornerDotType = 'square' | 'dot';
 type ErrorLevel = 'L' | 'M' | 'Q' | 'H';
 type SecurityType = 'nopass' | 'WPA' | 'WEP';
 
-// Type aliases rather than interfaces: TrackedObject's parameter is constrained
-// to Record<PropertyKey, unknown>, and only an alias gets an implicit index
-// signature.
+// alias, not interface: TrackedObject needs an implicit index signature
 export type VCardData = {
 	firstName: string;
 	lastName: string;
@@ -82,14 +76,13 @@ export type WifiData = {
 	isHidden: boolean;
 };
 
-/** Regeneration is a full encode plus a PNG round trip, so typing debounces. */
+// full encode is expensive; debounce typing
 const GENERATE_DEBOUNCE_MS = 300;
 const URL_CHECK_MS = 500;
 const COPY_RESET_MS = 1500;
 
 const URL_LIKE = /^https?:\/\/.+/i;
 
-/** Small PNG data URL for the omnibox QR preview. */
 export async function qrDataUrl(
 	text: string,
 	size = 80,
@@ -279,10 +272,7 @@ function escapeXml(value: string): string {
 	return value.replace(/[&<>'"]/g, (c) => XML_ESCAPES[c] ?? c);
 }
 
-/**
- * Word-wrap for the exported info block; hard-breaks words wider than the line
- * (long URLs) so text never overflows the QR width.
- */
+// hard-breaks long words to fit the QR width
 export function wrapText(
 	ctx: CanvasRenderingContext2D,
 	text: string,
@@ -339,18 +329,14 @@ export function vcardString(data: VCardData): string {
 	return lines.join('\n');
 }
 
-// The ZXing WIFI: spec requires escaping \ ; , " : — unescaped quotes make
-// scanners treat the value as hex/quoted rather than literal text.
+// ZXing WIFI: escape \ ; , " :
+// unescaped quotes are parsed as hex/quoted, not literal
 function escapeWifiValue(value: string): string {
 	return value.replace(/[\\;,":]/g, '\\$&');
 }
 
-/**
- * Format: WIFI:T:{security};S:{ssid};P:{password};H:true;;
- *
- * Returns "" while the form is incomplete — a secured network without a
- * password would encode an unjoinable QR.
- */
+// format: WIFI:T:{security};S:{ssid};P:{password};H:true;;
+// secured without password encodes an unjoinable QR
 export function wifiString(data: WifiData): string {
 	if (!data.ssid.trim()) return '';
 	if (data.securityType !== 'nopass' && !data.password) return '';
@@ -449,7 +435,7 @@ export default class QrGennyTool extends Component {
 	#urlTimer: ReturnType<typeof setTimeout> | null = null;
 	#copyTimer: ReturnType<typeof setTimeout> | null = null;
 	#destroyed = false;
-	/** A logo has to load before the encode finishes, so runs can overlap. */
+	// a logo load makes runs overlap
 	#runId = 0;
 
 	willDestroy() {
@@ -459,8 +445,6 @@ export default class QrGennyTool extends Component {
 		if (this.#urlTimer) clearTimeout(this.#urlTimer);
 		if (this.#copyTimer) clearTimeout(this.#copyTimer);
 	}
-
-	/* ── derived state ─────────────────────────────────────────────── */
 
 	get isBatch() {
 		return this.mode === 'batch';
@@ -515,11 +499,7 @@ export default class QrGennyTool extends Component {
 		return EMPTY_SINGLE;
 	}
 
-	/**
-	 * A colour reaches the canvas, an SVG attribute and an inline style, so an
-	 * unparseable value would either paint nothing or break out of the markup.
-	 * The Next app interpolated the raw field.
-	 */
+	// unparseable colour would paint nothing or break out of SVG/style markup
 	get safeForeground() {
 		return CSS.supports('color', this.foreground)
 			? this.foreground
@@ -602,10 +582,7 @@ export default class QrGennyTool extends Component {
 	securityTypes = SECURITY_TYPES;
 	qrInfo = QR_INFO;
 
-	/**
-	 * Plaintext details shown under the QR when "Add information" is on;
-	 * entries without a label render as a bare line.
-	 */
+	// label-less entries render as bare lines
 	get infoTexts(): string[] {
 		const entries: { label?: string; value: string }[] = [];
 
@@ -673,8 +650,6 @@ export default class QrGennyTool extends Component {
 	get batchBusy() {
 		return this.batchGenerating || this.batchItems.length === 0;
 	}
-
-	/* ── generation ────────────────────────────────────────────────── */
 
 	#styleOptions(data: string): StylingOptions {
 		const options: StylingOptions = {
@@ -749,8 +724,7 @@ export default class QrGennyTool extends Component {
 					? await blobToDataUrl(blob)
 					: null;
 		} catch {
-			// An unencodable payload (over capacity for the chosen level)
-			// falls back to the empty state, as it does in the Next app.
+			// over-capacity payload falls back to empty state
 			if (run === this.#runId) this.qrDataUrl = null;
 		} finally {
 			if (run === this.#runId) this.generating = false;
@@ -845,8 +819,6 @@ export default class QrGennyTool extends Component {
 			{ type: 'image/svg+xml' },
 		);
 	}
-
-	/* ── actions ───────────────────────────────────────────────────── */
 
 	setMode = (mode: string) => {
 		this.mode = mode as Mode;
@@ -975,8 +947,6 @@ export default class QrGennyTool extends Component {
 		}, URL_CHECK_MS);
 	}
 
-	/* ── logo ──────────────────────────────────────────────────────── */
-
 	readLogo = (file: File) => {
 		if (!file.type.startsWith('image/')) return;
 		const reader = new FileReader();
@@ -992,7 +962,7 @@ export default class QrGennyTool extends Component {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) this.readLogo(file);
-		// Choosing the same file twice must still fire a change event.
+		// same file twice must still fire change
 		input.value = '';
 	};
 
@@ -1003,9 +973,8 @@ export default class QrGennyTool extends Component {
 		if (file) this.readLogo(file);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
-	// dragover fires continuously, and a tracked write dirties its tag even when
-	// the value is unchanged, so the flag is only set on the first one.
+	// prevent default or the browser navigates away
+	// dragover fires continuously; only set flag once to avoid redundant dirty
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 		if (!this.logoDragging) this.logoDragging = true;
@@ -1031,8 +1000,6 @@ export default class QrGennyTool extends Component {
 		this.queueGenerate();
 	};
 
-	/* ── export ────────────────────────────────────────────────────── */
-
 	download = (format: 'png' | 'svg') => {
 		void this.#download(format);
 	};
@@ -1046,7 +1013,7 @@ export default class QrGennyTool extends Component {
 			const raw = await qr.getRawData(format);
 			if (raw === null) return;
 			if (format === 'svg') {
-				// qr-code-styling resolves a string in some versions
+				// qr-code-styling may resolve a string
 				const svg =
 					raw instanceof Blob
 						? await raw.text()
@@ -1101,11 +1068,9 @@ export default class QrGennyTool extends Component {
 				this.copied = false;
 			}, COPY_RESET_MS);
 		} catch {
-			// A denied clipboard permission leaves the button as it was.
+			// denied clipboard leaves the button unchanged
 		}
 	}
-
-	/* ── batch ─────────────────────────────────────────────────────── */
 
 	addBatchItem = () => {
 		this.batchItems = [...this.batchItems, new BatchItem('')];
@@ -1179,7 +1144,7 @@ export default class QrGennyTool extends Component {
 				item.dataUrl = await blobToDataUrl(blob);
 				item.status = 'done';
 			} catch {
-				// One unencodable payload must not abort the rest.
+				// single failure must not abort the batch
 				item.status = 'error';
 			}
 		}
@@ -1254,7 +1219,7 @@ export default class QrGennyTool extends Component {
 									</span>
 								{{/if}}
 							</div>
-							{{! wording carried over from the Next app }}
+							{{! next app wording }}
 							<textarea
 								class="dt-qr-textarea"
 								placeholder="Enter URL, text, or data..."
@@ -1294,12 +1259,12 @@ export default class QrGennyTool extends Component {
 						@value="wifi"
 					>
 						<div class="dt-qr-field">
-							{{! wording carried over from the Next app }}
+							{{! next app wording }}
 							<label
 								class="dt-qr-label"
 								for="dt-qr-ssid"
 							>Network Name (SSID)</label>
-							{{! wording carried over from the Next app }}
+							{{! next app wording }}
 							<input
 								id="dt-qr-ssid"
 								class="dt-qr-input"
@@ -1358,7 +1323,7 @@ export default class QrGennyTool extends Component {
 								<div
 									class="dt-qr-password"
 								>
-									{{! wording carried over from the Next app }}
+									{{! next app wording }}
 									<input
 										id="dt-qr-password"
 										class="dt-qr-input"
@@ -1412,7 +1377,7 @@ export default class QrGennyTool extends Component {
 								{{#if
 									this.wifiNeedsPassword
 								}}
-									{{! wording carried over from the Next app }}
+									{{! next app wording }}
 									<p
 										class="dt-qr-hint"
 									>Enter
@@ -1432,7 +1397,7 @@ export default class QrGennyTool extends Component {
 								<span
 									class="dt-qr-label"
 								>Hidden network</span>
-								{{! wording carried over from the Next app }}
+								{{! next app wording }}
 								<span
 									class="dt-qr-hint"
 								>For networks
@@ -1532,7 +1497,7 @@ export default class QrGennyTool extends Component {
 									class="dt-qr-label"
 									for="dt-qr-title"
 								>Job Title</label>
-								{{! wording carried over from the Next app }}
+								{{! next app wording }}
 								<input
 									id="dt-qr-title"
 									class="dt-qr-input"
@@ -1621,7 +1586,7 @@ export default class QrGennyTool extends Component {
 									class="dt-qr-label"
 									for="dt-qr-address"
 								>Address</label>
-								{{! wording carried over from the Next app }}
+								{{! next app wording }}
 								<input
 									id="dt-qr-address"
 									class="dt-qr-input"
@@ -1660,7 +1625,7 @@ export default class QrGennyTool extends Component {
 								<span
 									class="dt-qr-batch-index"
 								>{{row.number}}.</span>
-								{{! wording carried over from the Next app }}
+								{{! next app wording }}
 								<input
 									class="dt-qr-input"
 									type="text"
@@ -1750,7 +1715,7 @@ export default class QrGennyTool extends Component {
 							</label>
 						</div>
 
-						{{! wording carried over from the Next app }}
+						{{! next app wording }}
 						<p class="dt-qr-hint">Insert
 							your data manually or
 							upload a text file with
@@ -1943,11 +1908,8 @@ export default class QrGennyTool extends Component {
 							</div>
 
 							<div class="dt-qr-side">
-								{{! no-nested-interactive counts <details> itself as
-										interactive, so every control in the options
-										accordion trips it. Only <summary> is
-										interactive; the rest of the subtree is a plain
-										container. }}
+								{{! only <summary> is interactive;
+										the rest is a plain container }}
 								{{! template-lint-disable no-nested-interactive }}
 								<span
 									class="dt-qr-heading"
@@ -2027,7 +1989,7 @@ export default class QrGennyTool extends Component {
 															@name="info"
 														/>
 													</TooltipTrigger>
-													{{! wording carried over from the Next app }}
+													{{! next app wording }}
 													<TooltipContent
 														@class="dt-qr-tip"
 													>Higher
@@ -2377,7 +2339,7 @@ export default class QrGennyTool extends Component {
 												/>
 											</div>
 
-											{{! wording carried over from the Next app }}
+											{{! next app wording }}
 											<p
 												class="dt-qr-hint"
 											>Tip:
@@ -2429,7 +2391,7 @@ export default class QrGennyTool extends Component {
 												<Icon
 													@name="upload"
 												/>
-												{{! wording carried over from the Next app }}
+												{{! next app wording }}
 												<span
 												>{{if
 														this.logoDragging
@@ -2455,7 +2417,7 @@ export default class QrGennyTool extends Component {
 					{{this.qrInfo.inventor}}</p>
 				<p><span class="dt-qr-about-key">Year:</span>
 					{{this.qrInfo.year}}</p>
-				{{! wording carried over from the Next app }}
+				{{! next app wording }}
 				<p
 					class="dt-qr-about-note"
 				>{{this.qrInfo.description}}</p>

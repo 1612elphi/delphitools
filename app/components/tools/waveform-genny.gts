@@ -17,7 +17,7 @@ import {
 import { AUDIO_ACCEPT, acceptAttr } from 'delphitools-v2/lib/tools';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 
-/** Kept in step with the registry entry, which routes dropped files. */
+// mirrors registry for drop routing
 const ACCEPT = acceptAttr(AUDIO_ACCEPT);
 
 const DROP_TITLE = 'Drop an audio file here or click to upload';
@@ -36,7 +36,7 @@ const PRESETS: SizePreset[] = [
 	{ id: 'square', label: 'Square', width: 1200, height: 1200 },
 ];
 
-// Bar width in output pixels: 1 is per-pixel detail, 8 is chunky bars.
+// 1 = per-px, 8 = chunky
 const DETAIL_STEPS = [1, 2, 4, 8];
 const CUSTOM_MIN = 100;
 const CUSTOM_MAX = 4000;

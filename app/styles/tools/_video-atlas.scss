@@ -1,6 +1,3 @@
-// Styles for the video-atlas tool: Audio Atlas's frame and cell grid around a
-// Frame Extractor stage.
-
 @use "../crayon-config" as crayon;
 
 .dt-va {
@@ -12,7 +9,6 @@
 	background: var(--card);
 }
 
-/* Flush action bar: file picker (grows) · status · Copy report · Clear. */
 .dt-va-bar {
 	display: flex;
 	min-height: crayon.size(12);
@@ -135,7 +131,6 @@
 	}
 }
 
-/* Empty state, the Background Remover's drop-zone shape. */
 .dt-va-drop {
 	display: flex;
 	min-height: crayon.size(56);
@@ -181,7 +176,6 @@
 	font-size: crayon.font-size("sm");
 }
 
-/* One panel per stream: title rail, then a cell grid of label/value pairs. */
 .dt-va-panel {
 	overflow: hidden;
 }
@@ -197,8 +191,7 @@
 	text-transform: uppercase;
 }
 
-/* Cells draw their own hairlines (not the gap trick), so a short last row
-   leaves card-coloured space instead of a border-coloured block. */
+// own hairlines, not gap trick; short last row reads clean
 .dt-va-meta {
 	display: grid;
 	margin: 0;

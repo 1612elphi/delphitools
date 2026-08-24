@@ -1,8 +1,3 @@
-/**
- * Builds a cURL command line and a raw HTTP/1.1 request from one form spec.
- * Building only: nothing here sends anything.
- */
-
 export interface Pair {
 	key: string;
 	value: string;
@@ -11,7 +6,6 @@ export interface Pair {
 export interface RequestSpec {
 	method: string;
 	url: string;
-	/** appended to whatever query the URL already carries */
 	params: Pair[];
 	headers: Pair[];
 	body: string;
@@ -32,7 +26,7 @@ const live = (pairs: Pair[]) => pairs.filter((pair) => pair.key.trim() !== '');
 const findHeader = (headers: Pair[], name: string) =>
 	headers.some((pair) => pair.key.trim().toLowerCase() === name);
 
-/** POSIX single-quoting: a literal ' becomes '\'' . */
+// escape posix quotes
 const quote = (text: string) => `'${text.replaceAll("'", `'\\''`)}'`;
 
 export function fullUrl(spec: RequestSpec): string {
@@ -67,7 +61,6 @@ export function toHttp(spec: RequestSpec): string {
 		host = url.host;
 		target = url.pathname + url.search;
 	} catch {
-		// not an absolute URL: the request line carries it as typed
 	}
 
 	const headers = live(spec.headers);
@@ -81,6 +74,5 @@ export function toHttp(spec: RequestSpec): string {
 		);
 	}
 
-	// LF for reading and the clipboard; the wire wants CRLF.
 	return lines.join('\n') + (spec.body ? `\n\n${spec.body}` : '\n');
 }

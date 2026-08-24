@@ -34,27 +34,19 @@ import {
 	ToolModuleSub,
 } from 'delphitools-v2/components/substrata/omnibar/tool-settings';
 
-/**
- * Module registry + box wrapper (round 3): an open module renders in the
- * RAIL (uniform height, beside the omnibar) or FLOATS at an arbitrary point
- * (natural height, mini-when-idle — see float-layer). The box supplies the
- * header (grip · title · sub · clamp-when-floating · ✕). Titles =
- * mockup/omnibar words.
- */
+// open module renders in rail (uniform height) or floats (natural height,
+// mini-when-idle — float-layer)
 
 type ModulePart = ComponentLike<{ Args: object }>;
 
 export interface ModuleDef {
 	id: ModuleId;
 	title: string;
-	/** kebab-case lucide name for the omnibar trigger. null for the two units
-	 *  the Next app draws differently: `tool` mirrors the active subtool's
-	 *  glyph, `colour` is a live swatch. */
+	// lucide name; null for tool (mirrors subtool glyph) and colour (live swatch)
 	icon: string | null;
-	/** box width, as a CSS length (the Next app carried a Tailwind class) */
+	// css length
 	width: string;
 	body: ModulePart;
-	/** the header's sub slot, or null when the module has none */
 	sub: ModulePart | null;
 }
 
@@ -144,8 +136,7 @@ export interface ModuleHeaderSignature {
 	};
 }
 
-/** The shared header row: grip · title · sub · (clamp) · ✕. Exported so the
- *  float-layer's mini card can render exactly this and nothing else. */
+// exported → float-layer's mini card renders exactly this
 export class ModuleHeader extends Component<ModuleHeaderSignature> {
 	get clamped() {
 		return this.args.clamped ?? false;
@@ -171,8 +162,8 @@ export class ModuleHeader extends Component<ModuleHeaderSignature> {
 		return this.clamped ? 'pin-off' : 'pin';
 	}
 
-	/** `ml-auto` lands on the first header item that can push the rest to the
-	 *  trailing edge: the sub slot, else the clamp button, else the ✕. */
+	// ml-auto goes to first item that pushes the rest trailing: sub, else
+	// clamp, else ✕
 	get clampIsEnd() {
 		return this.isFloat && subOf(this.args.id) === null;
 	}
@@ -185,9 +176,8 @@ export class ModuleHeader extends Component<ModuleHeaderSignature> {
 	close = () => togglePin(this.args.id);
 
 	<template>
-		{{! Drag grip (dnd-kit draggable): drag a module out of the rail to
-			float it anywhere, drag a floating module to move it, drop on the
-			rail zone to re-dock. The shell's manager owns the drop dispatch. }}
+		{{! drag out of rail to float, drop on rail zone to re-dock; shell
+			manager owns drop dispatch }}
 		<div
 			class="sub-module-header
 				{{if (eq @variant 'rail') 'is-rail'}}"
@@ -250,12 +240,7 @@ export interface ModuleBoxSignature {
 	};
 }
 
-/**
- * Render a module. `rail` = docked in the rail (own width, uniform height,
- * sticky header); `float` = free-floating (own width, natural height, clamp
- * toggle in the header). The float-layer owns mini/full switching — this box
- * always renders the FULL panel.
- */
+// float-layer owns mini/full switching; this box always renders FULL panel
 export class ModuleBox extends Component<ModuleBoxSignature> {
 	get variant(): ModuleVariant {
 		return this.args.variant ?? 'rail';

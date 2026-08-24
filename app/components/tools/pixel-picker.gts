@@ -42,7 +42,6 @@ export default class PixelPickerTool extends Component {
 	@tracked hoverPos: { left: number; top: number } | null = null;
 	@tracked copied: string | null = null;
 
-	/** the active swatch, for a workflow that carries a colour on */
 	get carried(): string | undefined {
 		return this.activeSwatch === null
 			? undefined
@@ -63,8 +62,6 @@ export default class PixelPickerTool extends Component {
 		clearTimeout(this.#copiedTimer);
 	}
 
-	// The canvas is drawn on imperatively, so the element itself is the state the
-	// handlers need; a modifier is the only way to reach it from a Glimmer class.
 	registerCanvas = modifier((element: HTMLCanvasElement) => {
 		this.#canvas = element;
 		this.#paint();
@@ -87,8 +84,7 @@ export default class PixelPickerTool extends Component {
 			value: this.colourNotation.format(swatch.hex),
 			hexUpper: swatch.hex.toUpperCase(),
 			name: getColourName(swatch.hex),
-			// Every hex here comes from rgbToHex, which clamps and pads, so
-			// nothing a file could contain reaches the style string intact.
+			// rgbToHex guarantees hex literal
 			fillStyle: htmlSafe(`background-color: ${swatch.hex}`),
 			isActive: this.activeSwatch === index,
 		}));
@@ -156,8 +152,7 @@ export default class PixelPickerTool extends Component {
 		this.#image = null;
 		this.#p3Canvas = null;
 
-		// The Next app held the object URL in state for the component's lifetime;
-		// nothing displays it, so it is revoked as soon as decoding is done.
+		// undisplayed; revoke after decode
 		const url = URL.createObjectURL(file);
 		const image = new Image();
 		image.onload = () => {
@@ -173,7 +168,7 @@ export default class PixelPickerTool extends Component {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (file) this.readFile(file);
-		// Choosing the same file twice must still fire a change event.
+		// allow re-picking same file
 		input.value = '';
 	};
 
@@ -317,8 +312,7 @@ export default class PixelPickerTool extends Component {
 		const rect = canvas.getBoundingClientRect();
 		const cssX = event.clientX - rect.left;
 		const cssY = event.clientY - rect.top;
-		// Past the right edge the loupe would sit off the frame, so it flips to
-		// the other side of the cursor.
+		// right-edge overflow flips loupe
 		const flipX = cssX + 20 + LOUPE_SIZE > rect.width;
 		this.hoverPos = {
 			left: flipX ? cssX - 20 - LOUPE_SIZE : cssX + 20,
@@ -393,7 +387,6 @@ export default class PixelPickerTool extends Component {
 							<label
 								class="dt-pixel-p3"
 							>
-								{{! wording carried over from the Next app }}
 								<span>Display P3</span>
 								<input
 									type="checkbox"
@@ -455,7 +448,6 @@ export default class PixelPickerTool extends Component {
 
 					<div class="dt-pixel-hint">
 						<Icon @name="crosshair" />
-						{{! wording carried over from the Next app }}
 						<span>Click anywhere on the
 							image to sample a colour</span>
 					</div>
@@ -519,7 +511,6 @@ export default class PixelPickerTool extends Component {
 							<div
 								class="dt-pixel-table-head"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-pixel-table-title"
 								>Sampled colours</span>
@@ -622,11 +613,9 @@ export default class PixelPickerTool extends Component {
 					{{/if}}
 
 					<p class="dt-pixel-about">
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-pixel-about-title"
 						>About colour spaces — </span>
-						{{! wording carried over from the Next app }}
 						Colours are sampled in sRGB by
 						default. Images with wide-gamut
 						colour profiles (Display P3,
@@ -634,14 +623,12 @@ export default class PixelPickerTool extends Component {
 						sRGB, which may shift some
 						colours.
 						{{#if this.p3Supported}}
-							{{! wording carried over from the Next app }}
 							Enable the Display P3
 							toggle to sample
 							wide-gamut values and
 							get color(display-p3 …)
 							CSS output.
 						{{else}}
-							{{! wording carried over from the Next app }}
 							Your browser does not
 							support Display P3
 							colour sampling.
@@ -663,11 +650,9 @@ export default class PixelPickerTool extends Component {
 							}}
 						/>
 						<Icon @name="upload" />
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-pixel-drop-title"
 						>Drop an image here</span>
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-pixel-drop-hint"
 						>or click to select a file, or

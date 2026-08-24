@@ -24,10 +24,9 @@ import filePaste from 'delphitools-v2/modifiers/file-paste';
 
 const DPI_OPTIONS = [72, 150, 300, 600];
 
-/** Preview canvas resolution, in pixels per millimetre. */
 const PREVIEW_SCALE = 2;
 
-/** Bleed depth. 3mm is what UK and EU print shops ask for; US shops use 1/8in. */
+// 3mm uk/eu; us 1/8in
 const BLEED_MM = 3;
 
 const FALLBACK_PAPER = PAPER_SIZES[0]!;
@@ -35,7 +34,7 @@ const FALLBACK_PAPER = PAPER_SIZES[0]!;
 interface ZineImage {
 	id: string;
 	dataUrl: string;
-	/** Decoded once at upload, so preview and PDF never wait on a load. */
+	/** decoded once at upload */
 	element: HTMLImageElement;
 	fitMode: 'fit' | 'fill';
 }
@@ -115,7 +114,7 @@ function drawImageInCell(
 	ctx.restore();
 }
 
-/** Fold creases (dashed grey) and, on the front only, cut lines (solid red). */
+// creases; cut lines front only
 function drawGuides(
 	ctx: CanvasRenderingContext2D,
 	layout: ZineFoldLayout,
@@ -192,7 +191,7 @@ function drawPageNumbers(
 	}
 }
 
-/** Centre-crop to the cell's aspect ratio, because pdf-lib cannot clip. */
+// centre-crop; pdf-lib cannot clip
 function cropToAspect(img: HTMLImageElement, targetAspect: number): string {
 	const imgAspect = img.width / img.height;
 	let sourceX = 0;
@@ -226,8 +225,7 @@ function cropToAspect(img: HTMLImageElement, targetAspect: number): string {
 }
 
 function embedImage(pdfDoc: PDFDocument, bytes: ArrayBuffer, isPng: boolean) {
-	// A data URL's mime type is the only hint available, and a mislabelled
-	// upload is common enough that the other decoder is worth a second try.
+	// mime unreliable; retry other decoder
 	return isPng
 		? pdfDoc.embedPng(bytes).catch(() => pdfDoc.embedJpg(bytes))
 		: pdfDoc.embedJpg(bytes).catch(() => pdfDoc.embedPng(bytes));
@@ -293,7 +291,7 @@ export default class ZineImposerTool extends Component {
 		return findPaperSize(this.paperSizeId) ?? FALLBACK_PAPER;
 	}
 
-	// The sheet is always printed landscape, whichever way round the size reads.
+	// print landscape, rotate size
 	get sheetWidthMm() {
 		return Math.max(
 			this.paperSize.widthMm,
@@ -317,7 +315,6 @@ export default class ZineImposerTool extends Component {
 			image,
 			index,
 			number: index + 1,
-			// wording carried over from the Next app
 			alt: `Page ${index + 1}`,
 		}));
 	}
@@ -327,14 +324,12 @@ export default class ZineImposerTool extends Component {
 	}
 
 	get doubleSidedHint() {
-		// wording carried over from the Next app
 		return this.doubleSided
 			? `Front + back · print flip on ${this.duplexLabel}`
 			: 'Single side · fold-out strip';
 	}
 
 	get splitHint() {
-		// wording carried over from the Next app
 		return this.split
 			? 'Two copies stacked · cut in half · shorter panels'
 			: 'One full-height strip';
@@ -366,7 +361,6 @@ export default class ZineImposerTool extends Component {
 	}
 
 	get previewNote() {
-		// wording carried over from the Next app
 		const base = this.isDuplex
 			? `Double-sided print. Print both pages, flip on the ${this.duplexLabel}.`
 			: 'Single-sided print.';
@@ -429,7 +423,6 @@ export default class ZineImposerTool extends Component {
 		});
 	}
 
-	/** Keep the slot array the length the fold asks for, preserving what fits. */
 	#resizeSlots() {
 		const count = this.layout.pageCount;
 		if (this.images.length === count) return;
@@ -501,11 +494,10 @@ export default class ZineImposerTool extends Component {
 		try {
 			this.#setAt(index, await loadImage(file));
 		} catch {
-			// An undecodable file leaves the slot as it was.
+			// undecodable: keep slot
 		}
 	}
 
-	/** Fill the empty slots in order, skipping whatever failed to decode. */
 	async #fill(files: FileList | null) {
 		const imageFiles = Array.from(files ?? []).filter((f) =>
 			f.type.startsWith('image/'),
@@ -542,7 +534,7 @@ export default class ZineImposerTool extends Component {
 	selectForSlot = (index: number, event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
-		// Cleared so the same file can be picked again.
+		// same file re-pick still fires
 		input.value = '';
 		if (file?.type.startsWith('image/'))
 			void this.#place(index, file);
@@ -559,7 +551,7 @@ export default class ZineImposerTool extends Component {
 		void this.#fill(event.dataTransfer?.files ?? null);
 	};
 
-	// Without this the browser navigates to the dropped file instead.
+	// else browser navigates to file
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -629,10 +621,7 @@ export default class ZineImposerTool extends Component {
 			const cellHeightPt = sheetHeightPt / layout.rows;
 			const targetAspect = cellWidthPt / cellHeightPt;
 
-			// With bleed on, the page grows by the bleed on all four sides
-			// and the sheet sits inside it, so artwork on an outer panel can
-			// run past the trim line. The margin is outside every cell, so
-			// nothing a panel draws into it can reach a neighbour.
+			// bleed grows page, isolates cells
 			const bleedPt = this.bleedEnabled
 				? BLEED_MM * MM_TO_POINTS
 				: 0;
@@ -645,8 +634,7 @@ export default class ZineImposerTool extends Component {
 					pageHeightPt,
 				]);
 				if (bleedPt) {
-					// Where the sheet actually gets cut. A print shop reads
-					// this rather than guessing from the page size.
+					// trim box = cut line
 					page.setTrimBox(
 						bleedPt,
 						bleedPt,
@@ -666,10 +654,7 @@ export default class ZineImposerTool extends Component {
 						this.images[placement.page - 1];
 					if (!zineImage) continue;
 
-					// Only the sides of this cell that sit on the sheet's
-					// own edge get bleed. An interior edge is a fold or a
-					// cut between two panels, and both sides of it are
-					// already covered by artwork.
+					// bleed only on sheet edges
 					const out = bleedPt
 						? {
 								left:
@@ -713,10 +698,7 @@ export default class ZineImposerTool extends Component {
 					const boxAspect =
 						boxWidthPt / boxHeightPt;
 
-					// fill crops the source to the box it has to cover, so
-					// growing the box for bleed crops slightly less rather
-					// than stretching. fit letterboxes inside the cell and
-					// never reaches an edge, so bleed cannot apply to it.
+					// fill crops; fit skips bleed
 					const dataUrl =
 						zineImage.fitMode === 'fill'
 							? cropToAspect(
@@ -733,9 +715,7 @@ export default class ZineImposerTool extends Component {
 						dataUrl.includes('image/png'),
 					);
 
-					// The PDF origin is bottom-left; row 0 is the top
-					// row. Everything shifts by the bleed, because the
-					// sheet now sits inside a larger page.
+					// pdf origin bottom-left, +bleed shift
 					const cellX =
 						bleedPt +
 						placement.col * cellWidthPt;
@@ -779,8 +759,7 @@ export default class ZineImposerTool extends Component {
 					}
 
 					if (placement.rotation === 180) {
-						// pdf-lib rotates about the origin it is given,
-						// so a 180 draw starts from the far corner.
+						// 180 starts from far corner
 						page.drawImage(embedded, {
 							x: drawX + drawWidth,
 							y: drawY + drawHeight,
@@ -799,8 +778,7 @@ export default class ZineImposerTool extends Component {
 				}
 			}
 
-			// Copied into a fresh buffer: pdf-lib types its output over
-			// ArrayBufferLike, which BlobPart does not accept.
+			// pdf-lib save: ArrayBufferLike ≠ BlobPart
 			const blob = new Blob(
 				[new Uint8Array(await pdfDoc.save())],
 				{
@@ -830,7 +808,6 @@ export default class ZineImposerTool extends Component {
 		>
 			<div class="dt-zine-panel">
 				<div class="dt-zine-folds">
-					{{! wording carried over from the Next app }}
 					<span class="dt-zine-title">Fold type</span>
 					<div
 						class="segmented dt-zine-fold-tabs"
@@ -925,7 +902,6 @@ export default class ZineImposerTool extends Component {
 
 				<div class="dt-zine-setup">
 					<div class="dt-zine-options">
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-zine-title"
 						>Options</span>
@@ -940,7 +916,6 @@ export default class ZineImposerTool extends Component {
 								<div
 									class="dt-zine-field"
 								>
-									{{! wording carried over from the Next app }}
 									<span
 										class="dt-zine-label"
 									>Panels</span>
@@ -996,7 +971,6 @@ export default class ZineImposerTool extends Component {
 										class="dt-zine-switch-text"
 										for="zine-double-sided"
 									>
-										{{! wording carried over from the Next app }}
 										<span
 											class="dt-zine-switch-label"
 										>Double-sided</span>
@@ -1027,7 +1001,6 @@ export default class ZineImposerTool extends Component {
 										class="dt-zine-switch-text"
 										for="zine-split"
 									>
-										{{! wording carried over from the Next app }}
 										<span
 											class="dt-zine-switch-label"
 										>Split
@@ -1051,7 +1024,6 @@ export default class ZineImposerTool extends Component {
 								</div>
 							{{/if}}
 						{{else}}
-							{{! wording carried over from the Next app }}
 							<p
 								class="dt-zine-hint"
 							>Fixed
@@ -1062,13 +1034,11 @@ export default class ZineImposerTool extends Component {
 					</div>
 
 					<div class="dt-zine-output">
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-zine-title"
 						>Sheet & output</span>
 
 						<div class="dt-zine-field">
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-zine-label"
 							>Paper size</span>
@@ -1080,7 +1050,6 @@ export default class ZineImposerTool extends Component {
 						</div>
 
 						<div class="dt-zine-field">
-							{{! wording carried over from the Next app }}
 							<span
 								class="dt-zine-label"
 							>Reference DPI</span>
@@ -1126,7 +1095,6 @@ export default class ZineImposerTool extends Component {
 						</div>
 
 						<div class="dt-zine-switch-row">
-							{{! wording carried over from the Next app }}
 							<label
 								class="dt-zine-switch-label"
 								for="zine-bleed"
@@ -1146,7 +1114,6 @@ export default class ZineImposerTool extends Component {
 				</div>
 
 				<div class="dt-zine-stats">
-					{{! wording carried over from the Next app }}
 					<span class="dt-zine-label">Each page</span>
 					<span
 						class="dt-zine-stat is-strong"
@@ -1176,28 +1143,23 @@ export default class ZineImposerTool extends Component {
 					{{on "change" this.selectBulk}}
 				/>
 				<Icon @name="upload" />
-				{{! wording carried over from the Next app }}
 				<span class="dt-zine-bulk-title">Drop images
 					here to fill empty slots</span>
-				{{! wording carried over from the Next app }}
 				<span class="dt-zine-bulk-hint">or click to
 					select multiple files, or paste</span>
 			</label>
 
 			<div class="dt-zine-panel">
 				<div class="dt-zine-grid-head">
-					{{! wording carried over from the Next app }}
 					<span class="dt-zine-title">Zine pages
 						<span class="dt-zine-subtle">·
 							drag to reorder</span></span>
 					<div class="dt-zine-grid-actions">
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-zine-subtle"
 						>{{this.imageCount}}/{{this.layout.pageCount}}
 							filled{{this.sideRanges}}</span>
 						{{#if this.imageCount}}
-							{{! wording carried over from the Next app }}
 							<button
 								type="button"
 								class="dt-zine-clear"
@@ -1379,7 +1341,6 @@ export default class ZineImposerTool extends Component {
 								<Icon
 									@name="upload"
 								/>
-								{{! wording carried over from the Next app }}
 								<span
 									class="dt-zine-slot-label"
 								>Page
@@ -1393,7 +1354,6 @@ export default class ZineImposerTool extends Component {
 			{{#if this.previews.length}}
 				<div class="dt-zine-panel">
 					<div class="dt-zine-preview-head">
-						{{! wording carried over from the Next app }}
 						<span
 							class="dt-zine-title"
 						>Imposition Preview</span>
@@ -1439,7 +1399,6 @@ export default class ZineImposerTool extends Component {
 				{{on "click" this.generatePdf}}
 			>
 				{{#if this.isGenerating}}
-					{{! wording carried over from the Next app }}
 					Generating PDF...
 				{{else}}
 					<DownloadLabel
@@ -1449,7 +1408,6 @@ export default class ZineImposerTool extends Component {
 			</button>
 
 			<div class="dt-zine-panel">
-				{{! wording carried over from the Next app }}
 				<p class="dt-zine-steps-title">How to fold your
 					zine:</p>
 				<ol class="dt-zine-steps">

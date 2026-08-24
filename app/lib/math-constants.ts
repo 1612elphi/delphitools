@@ -7,7 +7,6 @@ export interface MathConstant {
 }
 
 export const MATH_CONSTANTS: MathConstant[] = [
-	// Mathematical constants
 	{ name: 'Pi', symbol: 'π', value: Math.PI, category: 'mathematical' },
 	{
 		name: "Euler's number",
@@ -52,7 +51,6 @@ export const MATH_CONSTANTS: MathConstant[] = [
 		category: 'mathematical',
 	},
 
-	// Physical constants
 	{
 		name: 'Speed of light',
 		symbol: 'c',
@@ -110,7 +108,6 @@ export const MATH_CONSTANTS: MathConstant[] = [
 		category: 'physical',
 	},
 
-	// Chemical constants
 	{
 		name: 'Avogadro constant',
 		symbol: 'Nₐ',
@@ -139,11 +136,9 @@ export function formatScientific(value: number): string {
 
 	const absValue = Math.abs(value);
 	if (absValue >= 1e-3 && absValue < 1e6) {
-		// Regular notation for reasonable numbers
 		return value.toPrecision(10).replace(/\.?0+$/, '');
 	}
 
-	// Scientific notation for very large or very small numbers
 	const exp = Math.floor(Math.log10(absValue));
 	const mantissa = value / Math.pow(10, exp);
 	return `${mantissa.toPrecision(6).replace(/\.?0+$/, '')} × 10^${exp}`;

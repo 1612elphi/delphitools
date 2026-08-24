@@ -1,10 +1,3 @@
-// The About dialog, which is the only user of ui/dialog.gts.
-//
-// That component is deliberately thin: focus trapping, Escape, the top layer
-// and ::backdrop all come from <dialog showModal()>, and the wrapper only owns
-// open state and returning focus. These checks are aimed at the parts the
-// browser provides, because they are what the thin wrapper is betting on.
-
 import { launch, visit, check, sleep, finish } from './harness.mjs';
 
 const { browser, page } = await launch();
@@ -42,8 +35,7 @@ check(
 	opened.focused,
 );
 
-// showModal puts the element in the top layer, which is what makes the rest of
-// the page inert without any JS of ours.
+// showModal top layer
 check(
 	'it is in the top layer with a ::backdrop',
 	await page.evaluate(() => {
@@ -94,7 +86,7 @@ check(
 	(await state()).focused,
 );
 
-// Leaving the route with the dialog mounted exercises the modifier teardown.
+// route-leave teardown
 await page.click('.dt-about');
 await sleep(300);
 await page.evaluate(() => {

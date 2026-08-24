@@ -1,11 +1,4 @@
-// Styles for the large-type tool.
-//
-// One partial per tool: app.scss had grown past three thousand lines and every
-// new tool collided in it.
-
 @use "../crayon-config" as crayon;
-
-/* ── Large type ──────────────────────────────────────────────────────────── */
 
 .dt-lt {
 	display: flex;
@@ -13,7 +6,6 @@
 	gap: crayon.size(6);
 }
 
-/* The controls stay column-capped; only the display below runs the full width. */
 .dt-lt-controls {
 	width: 100%;
 	max-width: crayon.size(224);
@@ -134,7 +126,7 @@
 	cursor: pointer;
 }
 
-/* A native checkbox drawn as a switch; the v2 app has no Switch primitive. */
+/* no switch primitive, checkbox styled as switch */
 .dt-lt-switch {
 	position: relative;
 	width: crayon.size(9);
@@ -194,7 +186,7 @@
 	padding: crayon.size(6);
 	background: var(--background);
 
-	/* The fullscreen element gets a black backdrop otherwise. */
+	/* override default black fullscreen backdrop */
 	&:fullscreen {
 		width: 100%;
 		height: 100%;

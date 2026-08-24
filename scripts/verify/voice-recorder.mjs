@@ -1,11 +1,3 @@
-// Voice recorder end-to-end using Chrome's fake audio device.
-//
-// getUserMedia is granted automatically by the fake-device flags, so the
-// MediaRecorder path records real audio frames. The resulting webm is decoded
-// for the waveform and playback surface.
-//
-// Usage: npm start, then node scripts/verify/voice-recorder.mjs
-
 import { launch, visit, check, finish, sleep } from './harness.mjs';
 
 const { browser, page } = await launch({
@@ -17,7 +9,6 @@ const { browser, page } = await launch({
 
 await visit(page, '/tools/voice-recorder');
 
-// Idle state: the primary action is Record.
 check(
 	'idle state shows a Record button',
 	await page.$eval('.dt-vr-btn.is-primary', (btn) =>
@@ -25,7 +16,6 @@ check(
 	),
 );
 
-// Start a recording. With the fake device flags this succeeds without a picker.
 await page.click('.dt-vr-btn.is-primary');
 await page.waitForFunction(
 	() => document.querySelector('.dt-vr-meter') !== null,
@@ -33,10 +23,8 @@ await page.waitForFunction(
 );
 check('recording starts and the input meter appears', true);
 
-// Let a few frames of fake audio accumulate.
 await sleep(800);
 
-// Pause freezes the clock and swaps in the Resume action.
 await page.evaluate(() => {
 	const pause = [...document.querySelectorAll('.dt-vr-btn')].find((b) =>
 		b.textContent.includes('Pause'),
@@ -58,7 +46,6 @@ check(
 	`paused at ${frozenAt}`,
 );
 
-// Resume restarts it.
 await page.evaluate(() => {
 	const resume = [...document.querySelectorAll('.dt-vr-btn')].find((b) =>
 		b.textContent.includes('Resume'),
@@ -75,7 +62,6 @@ await page.waitForFunction(
 );
 check('resume restarts the clock', true);
 
-// Stop the recording.
 await page.evaluate(() => {
 	const stop = [...document.querySelectorAll('.dt-vr-btn')].find((b) =>
 		b.textContent.includes('Stop'),
@@ -88,7 +74,6 @@ await page.waitForFunction(
 );
 check('take finishes and the waveform renders', true);
 
-// Playback from the take.
 await page.click('.dt-vr-btn.is-primary');
 await sleep(300);
 check(
@@ -106,7 +91,6 @@ check(
 	),
 );
 
-// Clear returns to the idle state.
 const cleared = await page.evaluate(() => {
 	const btn = [...document.querySelectorAll('button')].find((b) =>
 		b.textContent.includes('Clear'),

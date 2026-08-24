@@ -13,7 +13,6 @@ export interface ToolModel {
 export default class ToolRoute extends Route<ToolModel> {
 	async model(params: { tool_id: string }): Promise<ToolModel> {
 		const tool = getToolById(params.tool_id);
-		// matches notFound() in the Next app's tools/[toolId]/page.tsx
 		if (!tool) throw new Error(`Unknown tool: ${params.tool_id}`);
 		return {
 			tool,

@@ -1,12 +1,8 @@
-// image-to-pdf: images in, a PDF out; a PDF in, PNGs out.
-//
-// The images are synthesised in-page on a canvas (red 200×100, blue 100×200)
-// and dropped as Files, so the rig needs no checked-in fixture; the PDF side
-// reuses a node-written pdf-lib fixture. Downloads are unpacked in node:
-// page sizes prove orientation and match-image sizing, PNG headers prove the
-// render scale.
-//
-// Usage: npm start, then node scripts/verify/image-to-pdf.mjs
+// usage: npm start, then node scripts/verify/image-to-pdf.mjs
+// no checked-in fixture
+// node pdf-lib writes pdf fixture
+// page sizes prove orientation
+// png headers prove render scale
 
 import {
 	mkdtempSync,
@@ -38,7 +34,7 @@ const fixture = join(mkdtempSync(join(tmpdir(), 'dt-i2p-')), 'three.pdf');
 
 const downloads = mkdtempSync(join(tmpdir(), 'dt-i2p-dl-'));
 
-/** Chrome writes a .crdownload first, so wait for a settled, named file. */
+// .crdownload intermediate
 async function waitForDownload(match, timeout = 30000) {
 	const until = Date.now() + timeout;
 	while (Date.now() < until) {
@@ -55,7 +51,7 @@ async function waitForDownload(match, timeout = 30000) {
 	return null;
 }
 
-/** Empty the dir between steps so a wait cannot match the previous file. */
+// so wait can't rematch
 function clearDownloads() {
 	for (const name of readdirSync(downloads)) {
 		rmSync(join(downloads, name));
@@ -71,7 +67,6 @@ await client.send('Browser.setDownloadBehavior', {
 
 await visit(page, '/tools/image-to-pdf');
 
-// Two canvases → two Files → one drop on the queue wrapper.
 await page.evaluate(async () => {
 	const make = (width, height, colour, name) =>
 		new Promise((resolve) => {
@@ -112,7 +107,6 @@ const queued = await page
 	.catch(() => false);
 check('two dropped images queue up', queued);
 
-// Drag red-wide past blue-tall, so the tall portrait page comes first.
 await page.evaluate(() => {
 	const cells = [...document.querySelectorAll('.dt-i2p-cell')];
 	const dataTransfer = new DataTransfer();
@@ -133,7 +127,6 @@ check(
 	order.join('|'),
 );
 
-// Default settings: A4, auto orientation, fit, no margin.
 await page.click('.dt-i2p-btn.is-primary');
 const built = await waitForDownload(/^images\.pdf$/);
 check('Build PDF downloads', !!built, built?.name ?? 'nothing landed');
@@ -151,7 +144,6 @@ if (built) {
 	);
 }
 
-// Match-image sizing with a 10 mm margin: page = px × 0.75 + margin each side.
 clearDownloads();
 await page.select('.dt-i2p-field select', 'match');
 await page.evaluate(() => {
@@ -183,7 +175,6 @@ if (matchFile) {
 	);
 }
 
-// ── PDF → PNG ────────────────────────────────────────────────────────────
 await page.evaluate(() => {
 	[...document.querySelectorAll('.dt-i2p-tab')]
 		.find((b) => b.textContent.includes('PDF to Image'))
@@ -200,7 +191,6 @@ const rendered = await page
 	.catch(() => false);
 check('the PDF renders one cell per page', rendered);
 
-// Per-page download: PNG signature + IHDR width at the default ×2 scale.
 await page.click('.dt-i2p-cell .dt-i2p-tool[title="Download"]');
 const png = await waitForDownload(/-page-1\.png$/);
 check('a single page downloads as PNG', !!png, png?.name ?? 'nothing');

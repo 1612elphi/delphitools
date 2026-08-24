@@ -5,8 +5,6 @@ import { fn } from '@ember/helper';
 import { eq } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
 
-// The table is carried over from the Next app verbatim: class names and the CSS
-// they stand for are data, not prose.
 export interface CheatSheetItem {
 	class: string;
 	css: string;
@@ -784,7 +782,6 @@ export const TOTAL_CLASSES = CHEATSHEET.reduce(
 
 const COPIED_MS = 1500;
 
-/** The sheet narrowed to one category, then to rows matching `search`. */
 export function filterCheatsheet(
 	search: string,
 	activeCategory: string | null,
@@ -816,7 +813,6 @@ export function filterCheatsheet(
 		.filter((category) => category.items.length > 0);
 }
 
-/** Exact-match lookup for a single Tailwind class used by the omnibox. */
 export function lookupTailwindClass(className: string): CheatSheetItem | null {
 	const q = className.trim().toLowerCase();
 	if (!q) return null;
@@ -832,7 +828,7 @@ export default class TailwindCheatsheetTool extends Component {
 	@tracked search = '';
 	@tracked copied: string | null = null;
 	@tracked activeCategory: string | null = null;
-	/** Inverted from the Next app's expanded set: every category starts open. */
+	/** starts expanded; collapse list not expand set */
 	@tracked collapsed: string[] = [];
 
 	#copiedTimer?: ReturnType<typeof setTimeout>;
@@ -847,7 +843,6 @@ export default class TailwindCheatsheetTool extends Component {
 	}
 
 	get placeholder() {
-		// wording carried over from the Next app
 		return `Search ${TOTAL_CLASSES} classes…`;
 	}
 
@@ -878,7 +873,6 @@ export default class TailwindCheatsheetTool extends Component {
 		this.search = '';
 	};
 
-	// Clicking the active category clears the filter, as in the Next app.
 	setCategory = (name: string | null) => {
 		this.activeCategory =
 			this.activeCategory === name ? null : name;
@@ -985,7 +979,6 @@ export default class TailwindCheatsheetTool extends Component {
 							<span
 								class="dt-twcs-category-meta"
 							>
-								{{! wording carried over from the Next app }}
 								<span
 								>{{category.count}}
 									classes</span>
@@ -1007,11 +1000,9 @@ export default class TailwindCheatsheetTool extends Component {
 								<div
 									class="dt-twcs-thead"
 								>
-									{{! wording carried over from the Next app }}
 									<span
 										class="dt-twcs-th"
 									>Class</span>
-									{{! wording carried over from the Next app }}
 									<span
 										class="dt-twcs-th"
 									>CSS</span>
@@ -1036,7 +1027,6 @@ export default class TailwindCheatsheetTool extends Component {
 											{{#if
 												item.example
 											}}
-												{{! wording carried over from the Next app }}
 												<span
 													class="dt-twcs-example"
 												>e.g.
@@ -1076,13 +1066,11 @@ export default class TailwindCheatsheetTool extends Component {
 					</div>
 				{{/each}}
 			{{else}}
-				{{! wording carried over from the Next app }}
 				<div class="dt-twcs-empty">No classes found
 					matching &ldquo;{{this.search}}&rdquo;</div>
 			{{/if}}
 
 			<div class="dt-twcs-tip">
-				{{! wording carried over from the Next app }}
 				<strong>Tip:</strong>
 				Use arbitrary values with square brackets:
 				<code class="dt-twcs-tip-code">w-[200px]</code>,

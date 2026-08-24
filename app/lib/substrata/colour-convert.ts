@@ -1,16 +1,3 @@
-/**
- * sRGB ↔ OKLab ↔ OKLCH colour conversion (M4-1) for the Substrata colour picker
- * (M4) and Colour Balance (M3). Algorithms re-authored from the delphitools
- * colour tooling (lib/colour-notation.ts rgb→oklab, lib/palette-strategies.ts
- * oklch→rgb) per SPEC §4 — "reuse" means the maths, not the code, so those
- * shared files are left untouched.
- *
- * Pure + framework-free. The same maths is later re-authored in GLSL for the
- * per-pixel effect path (the per-swatch JS here must NOT be used per-pixel).
- *
- * Conventions: RGB channels 0–255; OKLCH L∈[0,1], C∈[0,~0.4], h∈[0,360).
- */
-
 export interface RGB {
 	r: number;
 	g: number;
@@ -55,12 +42,10 @@ export function rgbToHex({ r, g, b }: RGB): string {
 	);
 }
 
-/** sRGB channel (0–1) → linear-light (0–1). */
 export function srgbToLinear(c: number): number {
 	return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
 }
 
-/** linear-light (0–1) → sRGB channel (0–1). */
 export function linearToSrgb(c: number): number {
 	return c <= 0.0031308
 		? 12.92 * c

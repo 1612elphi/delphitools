@@ -71,27 +71,11 @@ import {
 } from 'delphitools-v2/lib/substrata/text-style';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 
-/**
- * Inspector module (modals pass) — the BODY only; the module box supplies the
- * "INSPECTOR" header. Reflects the SELECTED layer and edits its transform,
- * blend mode, and opacity. Reads doc + selection stores; writes go through
- * layer-ops → the doc round-trip (one-way; the reconciler re-renders Fabric and
- * the on-canvas handles). Every field commits on blur/Enter (one undo step each)
- * and supports maths (+100, -50, *1.5, /2, 100+50).
- *
- * Compact by design: it should fit without scrolling. Blend + opacity share one
- * "Blend [Normal] at [NN%]" line (the layers-footer pattern).
- *
- * The layer's transform.x/y is the object CENTRE in scene coordinates (§ sync
- * convention). W/H are the layer's own dimensions (natural × scale); editing one
- * sets that axis's scale. Scale % ties both axes.
- *
- * Section titles + field labels are functional chrome (mockup words, per Ruby's
- * call). Blend-mode names are standard compositing terms (British spelling), same
- * category. Empty-state hint stays the copy gap it was.
- */
+// body-only; module box supplies the header
+// transform.x/y is object centre, scene coords (§ sync convention)
+// w/h are natural dims; scale % ties both axes
+// writes one-way through layer-ops; field commit = one undo step
 
-/** Apply a binary op; divide-by-zero is a no-op (keeps the left operand). */
 function applyOp(a: number, op: string, b: number): number {
 	switch (op) {
 		case '+':
@@ -107,17 +91,12 @@ function applyOp(a: number, op: string, b: number): number {
 	}
 }
 
-/**
- * Evaluate a field entry against the field's current value:
- *   "150" → 150 (absolute) · "+100" → current+100 · "-50" → current-50
- *   "*1.5" → current*1.5 · "/2" → current/2 · "100+50" → 150
- * Returns null on anything unparseable (edit is discarded).
- */
+// field grammar: "+100" "-50" "*1.5" "/2" relative; "100+50" expression
+// null on unparseable → edit discarded
 function evalField(raw: string, current: number): number | null {
 	const s = raw.trim().replace(/\s+/g, '');
 	if (s === '') return null;
 
-	// Leading operator → apply relative to the current value.
 	let m = s.match(/^([+\-*/])(-?\d*\.?\d+)$/);
 	if (m) {
 		const n = parseFloat(m[2] as string);
@@ -126,7 +105,6 @@ function evalField(raw: string, current: number): number | null {
 			: null;
 	}
 
-	// Two-operand expression, e.g. "100+50", "10*3", "300/2".
 	m = s.match(/^(-?\d*\.?\d+)([+\-*/])(-?\d*\.?\d+)$/);
 	if (m) {
 		const a = parseFloat(m[1] as string);
@@ -136,7 +114,6 @@ function evalField(raw: string, current: number): number | null {
 			: null;
 	}
 
-	// Plain number.
 	const n = parseFloat(s);
 	return Number.isFinite(n) ? n : null;
 }
@@ -198,7 +175,6 @@ export interface ShapeRowSignature {
 	Blocks: { default: [] };
 }
 
-/** One shape-param row: bloom-density label + control (hairline separated). */
 const ShapeRow: TOC<ShapeRowSignature> = <template>
 	<div class="sub-insp-row" ...attributes>
 		<span class="sub-insp-row-label">{{@label}}</span>
@@ -222,8 +198,7 @@ export interface FillRowSignature {
 	Args: { layerId: string; fill: string };
 }
 
-/** Solid-only fill row for FREEHAND layers (their fill is string-typed).
- *  Shapes get the fuller ShapeFillRows (gradient-row.gts) instead. */
+// freehand only; string fill. shapes use shapefillrows (gradient-row.gts)
 class FillRow extends Component<FillRowSignature> {
 	apply = (value: string, transient: boolean) => {
 		setFill(
@@ -249,7 +224,6 @@ export interface StrokeRowsSignature {
 	Args: { layer: ShapeLayer };
 }
 
-/** Vector-stroke rows for a shape layer: on/off, colour, width. */
 class StrokeRows extends Component<StrokeRowsSignature> {
 	get stroke() {
 		return this.args.layer.stroke;
@@ -316,20 +290,15 @@ export interface ShapeSectionSignature {
 	Args: { layer: ShapeLayer };
 }
 
-/**
- * After-the-fact shape params (Ruby, 2026-07-06): the selected shape's
- * corner/sides/points/inner surface here as presets + a custom (…) hatch —
- * the same PresetRow language as the PIECES bloom. Corner presets are
- * SIZE-AWARE (fractions of the min side, so "pill" is always a pill); the
- * custom stepper caps at half the min side (beyond it the radius is a lie).
- * Ellipse/line have no extra params — W/H already edit them.
- */
+// corner presets size-aware (fractions of min side → pill always a pill)
+// custom corner caps at half min side (beyond = a lie)
+// same preset-row language as the pieces bloom
 class ShapeSection extends Component<ShapeSectionSignature> {
 	get params(): ShapeParams {
 		return this.args.layer.params;
 	}
 
-	/** a line renders stroke-only — no fill row to offer */
+	// line is stroke-only → no fill row
 	get hasFill(): boolean {
 		return this.params.shape !== 'line';
 	}
@@ -354,8 +323,7 @@ class ShapeSection extends Component<ShapeSectionSignature> {
 		return p ? Math.min(p.width, p.height) : 0;
 	}
 
-	/* corner-preset arias: one or two words each, name the roundedness
-	   level, sharpest → roundest; British spelling */
+	// corner arias: sharpest→roundest, british spelling
 	get cornerPresets(): PresetOption[] {
 		const m = this.minSide;
 		return [
@@ -482,11 +450,7 @@ export interface TextSectionSignature {
 	Args: { layer: TextLayer };
 }
 
-/**
- * After-the-fact text controls (the shape-section pattern): font choice,
- * size presets, style presets (quick-set fill/stroke/plate around the layer's
- * accent, active state DERIVED — text-style.ts), accent colour.
- */
+// shape-section pattern; active style derived (text-style.ts)
 class TextSection extends Component<TextSectionSignature> {
 	get accent(): string {
 		return textAccent(this.args.layer);
@@ -617,8 +581,6 @@ class TextSection extends Component<TextSectionSignature> {
 				/>
 			</ShapeRow>
 			<ShapeRow @label="Direction">
-				{{! LTR/RTL — standard writing-direction vocabulary
-					(functional chrome) }}
 				<span class="segmented sub-insp-seg-2">
 					{{#each DIRECTIONS as |d|}}
 						<button
@@ -672,12 +634,8 @@ export interface NumFieldSignature {
 	};
 }
 
-/**
- * The deferred-commit machinery both numeric cells share — the port of the
- * source's useNumberField hook. Local draft, commit on blur/Enter (with
- * maths), revert on Escape, select-all on focus; reflects the live value when
- * not editing. Subclasses supply `liveValue` and `commitValue`.
- */
+// local draft; commit on blur/enter, revert on escape; subclasses supply
+// liveValue + commitValue
 abstract class DeferredNumberInput<S> extends Component<S> {
 	@tracked draft: string | null = null;
 
@@ -715,10 +673,7 @@ abstract class DeferredNumberInput<S> extends Component<S> {
 	};
 }
 
-/**
- * A flush transform cell: glyph/icon label + number input (+ optional unit).
- * Wrapped in <label> so the visible glyph is the accessible name.
- */
+// wrapped in <label> so the glyph is the accessible name
 class NumField extends DeferredNumberInput<NumFieldSignature> {
 	get liveValue(): number {
 		return this.args.value;
@@ -763,8 +718,6 @@ export interface OpacityFieldSignature {
 	Args: { layerId: string; opacity: number };
 }
 
-/** Opacity field (0–100%) — a flush cell in the appearance bar, same height as
- *  the blend dropdown, divided off by a 1px hairline. */
 class OpacityField extends DeferredNumberInput<OpacityFieldSignature> {
 	get liveValue(): number {
 		return this.args.opacity * 100;
@@ -797,8 +750,6 @@ export interface GroupInfoSignature {
 	Args: { layer: Layer; count: number };
 }
 
-/** Group-primary state: identity strip + member count (no editable fields —
- *  see the isGroup branch above). */
 class GroupInfo extends Component<GroupInfoSignature> {
 	get members(): string {
 		return String(leafLayers(this.args.layer).length);
@@ -841,12 +792,7 @@ export interface CanvasInfoSignature {
 	Args: { doc: SubstrataDoc | null };
 }
 
-/**
- * No-selection state: the canvas / scene readout (dimensions, resolution, bit
- * depth, colour mode, layer count, storage) — the same facts the Scene menu
- * shows, so the Inspector always has something useful. Row labels/values are
- * functional chrome (mockup words), matching the Scene menu.
- */
+// mirrors the scene menu's readout so the inspector always shows something
 class CanvasInfo extends Component<CanvasInfoSignature> {
 	persist = new TrackedExternal(
 		subscribePersistence,
@@ -897,12 +843,12 @@ class CanvasInfo extends Component<CanvasInfoSignature> {
 		return this.persist.current ? 'Local' : 'Off';
 	}
 
-	// opens the same Canvas-size modal as Scene ▸ Canvas size…
+	// same modal as scene ▸ canvas size…
 	openCanvasSize = () => openModal('canvas-size');
 
 	<template>
 		<div class="sub-insp">
-			{{! canvas identity — mirrors the layer seltype header }}
+			{{! mirrors the layer seltype header }}
 			<div class="sub-insp-head">
 				<span class="sub-insp-badge"><Icon
 						@name="frame"
@@ -969,7 +915,7 @@ export class InspectorBody extends Component {
 		this.selectedIds.unsubscribe();
 	}
 
-	// findLayer is a tree DFS and ~14 template read-sites fan out from this
+	// findLayer is a tree dfs; cached against many template fans
 	@cached
 	get layer(): Layer | null {
 		const doc = this.doc.current;
@@ -977,12 +923,8 @@ export class InspectorBody extends Component {
 		return doc && activeId ? findLayer(doc.layers, activeId) : null;
 	}
 
-	/**
-	 * A GROUP primary gets NO transform/blend/opacity fields — a group's own
-	 * transform stays identity and its blend/opacity aren't applied in v1
-	 * (layer-tree.ts semantics); offering the fields would write dead values a
-	 * future group-composition renderer would suddenly start reading.
-	 */
+	// groups: own transform stays identity + blend/opacity not applied in v1
+	// (layer-tree.ts); fields would write dead values a future renderer reads
 	get groupLayer(): Layer | null {
 		const layer = this.layer;
 		return layer && isGroup(layer) ? layer : null;
@@ -1017,7 +959,7 @@ export class InspectorBody extends Component {
 		return this.selectedIds.current.length;
 	}
 
-	/** multi-selection marker — the fields below edit the PRIMARY layer */
+	// fields below edit the primary layer only
 	get multiSelected(): boolean {
 		return this.selectedCount > 1;
 	}
@@ -1029,7 +971,7 @@ export class InspectorBody extends Component {
 		return d ? { w: d.width, h: d.height } : null;
 	}
 
-	// rounded — shape dims are fractional (polygon/star vertex bboxes)
+	// shape dims fractional (polygon/star bboxes) → rounded
 	get dimsLabel(): string {
 		const nat = this.nat;
 		return nat ? `${Math.round(nat.w)}×${Math.round(nat.h)}` : '';
@@ -1072,8 +1014,8 @@ export class InspectorBody extends Component {
 					setTransform(id, { ...t, y: n }),
 			},
 		];
-		// Zero-extent axes (a line's height) get no field — editing it would
-		// divide by zero; the length edits through W like any width.
+		// zero-extent axis (line height) → no field; divide-by-zero. length
+		// edits via w
 		if (nat && nat.w > 0) {
 			cells.push({
 				key: 'w',
@@ -1130,8 +1072,7 @@ export class InspectorBody extends Component {
 	<template>
 		{{#if this.leaf}}
 			<div class="sub-insp">
-				{{! selection identity — header strip; text breathes
-					(DESIGN.md §1) }}
+				{{! text breathes (DESIGN.md §1) }}
 				<div class="sub-insp-head">
 					<span class="sub-insp-badge"><Icon
 							@name={{this.kindIcon}}
@@ -1153,12 +1094,8 @@ export class InspectorBody extends Component {
 					{{/if}}
 				</div>
 
-				{{! Transform — the title breathes (padded); the value grid
-					is a flush container that bleeds edge to edge
-					(DESIGN.md §6/§7). Internal 1px hairlines; a 2px major
-					divider closes the section (§5). The middle scrolls so
-					the Shape section can never push the appearance bar
-					past the rail box's uniform height. }}
+				{{! middle scrolls → shape section never pushes the appearance
+					bar past the rail box's uniform height (DESIGN.md §5/§6/§7) }}
 				<div class="sub-insp-scroll">
 					<SectionTitle @text="Transform" />
 					<div class="segmented sub-insp-grid">
@@ -1198,12 +1135,8 @@ export class InspectorBody extends Component {
 					{{/if}}
 				</div>
 
-				{{! Appearance — a flush action bar pinned to the BOTTOM of
-					the card, split off by the 2px major divider
-					(DESIGN.md §5/§9/§11): the blend mode fills, opacity is
-					an equal-height cell behind a 1px hairline. Labels
-					dropped so long mode names ("Colour Dodge") fit; %
-					self-labels. }}
+				{{! labels dropped so "colour dodge" fits; % self-labels
+					(DESIGN.md §5/§9/§11) }}
 				<div class="sub-insp-appearance">
 					<Select
 						@value={{this.leaf.blendMode}}
@@ -1242,8 +1175,7 @@ export class InspectorBody extends Component {
 				@count={{this.selectedCount}}
 			/>
 		{{else}}
-			{{! No selection → show the canvas/scene info (mirrors the Scene
-				menu's readout). }}
+			{{! no selection → scene readout (mirrors scene menu) }}
 			<CanvasInfo @doc={{this.doc.current}} />
 		{{/if}}
 	</template>

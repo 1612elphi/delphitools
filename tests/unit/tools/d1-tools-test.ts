@@ -1,6 +1,4 @@
-// The pure logic behind the smallest tools. One file rather than eight,
-// because each exports only a function or two and they are all the same shape:
-// a value in, a formatted string or a count out.
+// smallest tools; one file per each would be eight files of one or two fns
 
 import { module, test } from 'qunit';
 import { countText } from 'delphitools-v2/components/tools/word-counter';
@@ -33,7 +31,7 @@ module('Unit | Tools | D1', function () {
 			assert.strictEqual(s.sentences, 0);
 		});
 
-		// Runs of whitespace are one separator, not several empty words.
+		// whitespace runs are one separator, not empty words
 		test('does not count whitespace as words', function (assert) {
 			assert.strictEqual(countText('   \n\t  ').words, 0);
 			assert.strictEqual(countText('one    two').words, 2);
@@ -81,8 +79,7 @@ module('Unit | Tools | D1', function () {
 	});
 
 	module('line-height-calc', function () {
-		// One decimal place, matching the Next app: a ratio rarely lands on a
-		// whole pixel and rounding to one hides that.
+		// one decimal: ratios rarely land on a whole pixel
 		test('multiplies size by ratio, to one decimal place', function (assert) {
 			assert.strictEqual(lineHeightPx(16, 1.5), '24.0');
 			assert.strictEqual(lineHeightPx(20, 1.2), '24.0');
@@ -132,7 +129,7 @@ module('Unit | Tools | D1', function () {
 			);
 		});
 
-		// The preview should never blank out while a url is half-typed.
+		// preview must not blank while a url is half-typed
 		test('falls back rather than throwing on a broken url', function (assert) {
 			assert.true(previewHost('not a url').length > 0);
 			assert.true(previewHost('').length > 0);

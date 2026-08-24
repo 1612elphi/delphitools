@@ -20,14 +20,13 @@ export interface CropArea {
 export type DragMode =
 	'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w' | 'move';
 
-/** Smallest crop side, in displayed pixels. */
 const MIN_CROP = 20;
 
-/** A crop smaller than this has no room for the size badge. */
+// room needed for badge
 const BADGE_MIN_WIDTH = 50;
 const BADGE_MIN_HEIGHT = 30;
 
-/** The crop rectangle is in displayed pixels, so a reflow invalidates it. */
+// crop coords are display px
 const RESIZE_DEBOUNCE_MS = 150;
 
 const RULE_OF_THIRDS = [0, 1, 2, 3, 4, 5, 6, 7, 8];
@@ -49,11 +48,6 @@ interface Shot {
 	type: string;
 }
 
-/**
- * The new crop after dragging `mode` by (dx, dy), clamped to the image. Ported
- * branch for branch from the Next app: an edge that would cross the image runs
- * to the boundary instead, and one that would go under MIN_CROP stops dead.
- */
 export function resizeCrop(
 	mode: DragMode,
 	initial: CropArea,
@@ -120,10 +114,6 @@ export function resizeCrop(
 	return { x, y, width, height };
 }
 
-/**
- * The Next app named every download `.png` whatever was pasted, so a pasted
- * JPEG arrived as a .png file holding JPEG bytes.
- */
 export function extensionFor(type: string): string {
 	const subtype = type.split('/')[1]?.replace(/\+.*$/, '') ?? 'png';
 	return subtype === 'jpeg' ? 'jpg' : subtype;
@@ -139,7 +129,7 @@ export default class PasteImageTool extends Component {
 	@tracked isCropping = false;
 	@tracked crop: CropArea | null = null;
 
-	/** Natural pixels per displayed pixel, captured when cropping starts. */
+	// natural px per display px
 	@tracked scaleX = 1;
 	@tracked scaleY = 1;
 
@@ -203,7 +193,6 @@ export default class PasteImageTool extends Component {
 		return this.isCropping && this.crop != null;
 	}
 
-	/** Geometry the browser measured, so nothing typed reaches the style. */
 	get cropStyle() {
 		const crop = this.crop;
 		if (!crop) return htmlSafe('');
@@ -257,8 +246,6 @@ export default class PasteImageTool extends Component {
 		this.stopCropping();
 	};
 
-	// A reflow moves the image under the crop rectangle, whose coordinates are
-	// in displayed pixels, so the crop is dropped rather than left misaligned.
 	onResize = () => {
 		clearTimeout(this.#resizeTimer);
 		this.#resizeTimer = setTimeout(() => {
@@ -285,8 +272,7 @@ export default class PasteImageTool extends Component {
 		this.crop = null;
 	};
 
-	// Pointer capture keeps the moves coming to the handle even when the pointer
-	// outruns it, which is what the Next app's window-level listeners were for.
+	// capture keeps drag events here
 	startDrag = (mode: DragMode, event: PointerEvent) => {
 		if (!this.crop) return;
 		event.preventDefault();
@@ -418,7 +404,6 @@ export default class PasteImageTool extends Component {
 								<Icon
 									@name="check"
 								/>
-								{{! wording carried over from the Next app }}
 								Apply Crop
 							</button>
 							<button
@@ -519,7 +504,6 @@ export default class PasteImageTool extends Component {
 										{{/each}}
 									</div>
 
-									{{! a pointer press starts a drag here rather than standing in for a click, which is what the rule guards against }}
 									{{! template-lint-disable no-pointer-down-event-binding }}
 									{{#each
 										this.handles
@@ -566,7 +550,6 @@ export default class PasteImageTool extends Component {
 				{{else}}
 					<div class="dt-pi-empty">
 						<Icon @name="clipboard-paste" />
-						{{! wording carried over from the Next app }}
 						<h2 class="dt-pi-empty-title">
 							Press
 							<kbd>Ctrl</kbd>/<kbd
@@ -575,7 +558,6 @@ export default class PasteImageTool extends Component {
 							<kbd>V</kbd>
 							to paste
 						</h2>
-						{{! wording carried over from the Next app }}
 						<p class="dt-pi-empty-hint">Copy
 							any image to your
 							clipboard and paste it
@@ -584,7 +566,6 @@ export default class PasteImageTool extends Component {
 				{{/if}}
 			</div>
 
-			{{! wording carried over from the Next app }}
 			<p class="dt-pi-credit">Contributed by
 				<a
 					href="https://github.com/himanshubalani"

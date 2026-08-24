@@ -1,13 +1,6 @@
-// Screen recorder rig.
-//
-// getDisplayMedia cannot be granted headlessly, so the picker itself is
-// covered by stubbing: the cancel/error checks replace it with rejecting
-// stubs, and the pipeline check replaces it with a canvas.captureStream().
-// Everything downstream of the permission call — MediaRecorder, the take
-// assembly, the playback surface, resolveDuration and the download action —
-// then runs for real.
-//
-// Usage: npm start, then node scripts/verify/screen-recorder.mjs
+// getDisplayMedia cannot be granted headlessly; picker stubbed for cancel/error checks
+// pipeline check uses canvas.captureStream; downstream of permission call runs for real
+// usage: npm start, then node scripts/verify/screen-recorder.mjs
 
 import { launch, visit, check, finish, sleep } from './harness.mjs';
 
@@ -15,7 +8,7 @@ const { browser, page } = await launch();
 
 await visit(page, '/tools/screen-recorder');
 
-// Idle state: the primary action is Share screen.
+// idle state: primary action is "share screen"
 check(
 	'idle state shows a Share screen button',
 	await page.$eval('.dt-sr-btn.is-primary', (btn) =>
@@ -23,14 +16,14 @@ check(
 	),
 );
 
-// Microphone mix-in toggle defaults off and can be switched on.
+// mic mix-in toggle defaults off, can switch on
 const micOff = await page.$eval('.dt-switch', (el) => !el.checked);
 check('mic mix-in defaults off', micOff);
 await page.click('.dt-switch');
 const micOn = await page.$eval('.dt-switch', (el) => el.checked);
 check('mic mix-in toggles on', micOn);
 
-// Cancelling the display picker (NotAllowedError) must not surface an error.
+// cancelling picker (notallowederror) must not surface an error
 await page.evaluate(() => {
 	const original = navigator.mediaDevices.getDisplayMedia;
 	navigator.mediaDevices.getDisplayMedia = function () {
@@ -51,7 +44,7 @@ check(
 	`error text: ${errorAfterCancel}`,
 );
 
-// A genuine unsupported failure surfaces the error message.
+// genuine unsupported failure surfaces the error message
 await page.evaluate(() => {
 	navigator.mediaDevices.getDisplayMedia = function () {
 		return Promise.reject(new TypeError('Unsupported'));
@@ -61,9 +54,8 @@ await page.click('.dt-sr-btn.is-primary');
 await page.waitForSelector('.dt-sr-error', { timeout: 5000 });
 check('unsupported display media surfaces an error', true);
 
-// Full pipeline: getDisplayMedia stubbed to a live canvas stream. The mic
-// mix-in is still on, and headless getUserMedia rejects, which must surface
-// the mic-denied error while the recording proceeds without it.
+// full pipeline: getDisplayMedia stubbed to canvas stream; mic on, getUserMedia rejects
+// surfaces mic-denied error while recording proceeds without it
 await page.evaluate(() => {
 	const canvas = document.createElement('canvas');
 	canvas.width = 320;
@@ -88,7 +80,7 @@ check('recording starts with the stubbed display stream', true);
 await page.waitForSelector('.dt-sr-error', { timeout: 5000 });
 check('mic mix-in denial surfaces while recording continues', true);
 
-// Record a second or so of canvas frames, then stop.
+// record ~1s of canvas frames, then stop
 await sleep(1000);
 await page.evaluate(() => {
 	const stop = [...document.querySelectorAll('.dt-sr-btn')].find((b) =>
@@ -102,7 +94,7 @@ await page.waitForFunction(
 );
 check('take finishes and the playback surface appears', true);
 
-// The meta row only appears once resolveDuration has beaten Infinity.
+// meta row appears once resolveduration beats infinity
 await page.waitForFunction(
 	() => (document.querySelector('.dt-sr-meta')?.textContent ?? '') !== '',
 	{ timeout: 10000 },
@@ -114,7 +106,7 @@ check(
 	meta,
 );
 
-// Playback from the finished take.
+// playback from finished take
 await page.click('.dt-sr-btn.is-primary');
 await page.waitForFunction(
 	() =>
@@ -125,7 +117,7 @@ await page.waitForFunction(
 );
 check('playback starts', true);
 
-// The download action hands a timestamped webm to the anchor.
+// download action hands timestamped webm to anchor
 const filename = await page.evaluate(
 	() =>
 		new Promise((resolve) => {

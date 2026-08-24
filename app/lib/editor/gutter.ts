@@ -1,6 +1,3 @@
-// The modular per-block gutter. Each top-level block gets a row of metadata
-// rendered in an overlay column to the left of the text. Adding a new field is
-// just pushing one GutterField; the editor reads `enabledFields` to pick which.
 import type { Node as PMNode } from 'prosemirror-model';
 import type { EditorView } from 'prosemirror-view';
 
@@ -22,7 +19,6 @@ export const GUTTER_FIELDS: GutterField[] = [
 		label: 'chars',
 		render: (n) => String(n.textContent.length),
 	},
-	// Add more here later — e.g. reading time — and they appear as toggles automatically.
 ];
 
 export function blockType(node: PMNode): string {
@@ -52,14 +48,12 @@ export function blockType(node: PMNode): string {
 
 export interface GutterRow {
 	key: string;
-	/** document position just before this top-level block */
 	pos: number;
 	top: number;
 	type: string;
 	fields: { id: string; label: string; value: string }[];
 }
 
-/** One read pass: measure every top-level block's offset + metadata. */
 export function measureGutter(
 	view: EditorView,
 	enabledFields: string[],

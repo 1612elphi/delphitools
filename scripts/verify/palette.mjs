@@ -1,13 +1,7 @@
-// palette-genny: generate, lock, the count stepper, and the strategy combobox.
-//
-// The combobox is the reason this rig exists. It stacks the vendored popover on
-// the vendored command list, and neither renders at all until a real click has
-// opened a portal, so nothing short of a browser proves the strategy changes.
-
+// combobox needs real click
 import { launch, visit, check, sleep, finish } from './harness.mjs';
 
-// Counted from the registry rather than pinned, so adding a strategy does not
-// fail this rig. Node 26 strips the types, the same trick prerender.mjs uses.
+// node 26 strips types
 const { STRATEGY_CATEGORIES, STRATEGY_INFO } =
 	await import('../../app/lib/palette-strategies.ts');
 const CATEGORY_COUNT = Object.keys(STRATEGY_CATEGORIES).length;
@@ -18,8 +12,7 @@ const { browser, page } = await launch({
 });
 await visit(page, '/tools/palette-genny');
 
-// The inline style, not .dt-swatch-value: the caption is rewritten by whatever
-// notation the header is set to, the fill is always the raw hex.
+// caption follows header notation
 const fills = () =>
 	page.$$eval('.dt-swatch-colour', (els) =>
 		els.map((el) => el.getAttribute('style')),
@@ -27,8 +20,6 @@ const fills = () =>
 const strategyName = () =>
 	page.$eval('.dt-strategy-name', (el) => el.textContent.trim());
 const commandOpen = () => page.$('.dt-command');
-
-// ── what the tool opens with ────────────────────────────────────────────────
 
 check(
 	'the page is the palette tool',
@@ -73,8 +64,6 @@ check(
 	names.slice(0, 3).join(' / '),
 );
 
-// ── generate ────────────────────────────────────────────────────────────────
-
 await page.click('.dt-generate');
 await sleep(400);
 const generated = await fills();
@@ -84,8 +73,6 @@ check(
 	generated.join(' '),
 );
 check('and keeps the count', generated.length === initial.length);
-
-// ── lock ────────────────────────────────────────────────────────────────────
 
 await page.click('.dt-swatch .dt-swatch-btn');
 await sleep(250);
@@ -119,14 +106,12 @@ check(
 	!(await page.$('.dt-swatch .dt-swatch-btn.is-locked')),
 );
 
-// ── the count stepper ───────────────────────────────────────────────────────
-
 const before = (await fills()).length;
 await page.click('.dt-count button:last-child');
 await sleep(300);
 const added = (await fills()).length;
 check('plus adds one swatch', added === before + 1, `${before} -> ${added}`);
-// Direct child: each stepper button holds an icon <span> of its own.
+// buttons contain icon spans
 check(
 	'the stepper reports the new count',
 	(await page.$eval('.dt-count > span', (el) =>
@@ -138,8 +123,6 @@ await page.click('.dt-count button:first-child');
 await sleep(300);
 const removed = (await fills()).length;
 check('minus takes it back', removed === before, `${added} -> ${removed}`);
-
-// ── the strategy combobox ───────────────────────────────────────────────────
 
 check('the command list starts closed', !(await commandOpen()));
 await page.click('.dt-strategy');

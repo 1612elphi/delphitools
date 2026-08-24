@@ -1,10 +1,3 @@
-/**
- * Imposition Layout Engine
- *
- * Pure TypeScript module for computing print imposition layouts.
- * No UI, no PDF dependencies — just geometry and page ordering.
- */
-
 export const MM_TO_POINTS = 72 / 25.4;
 
 export interface PaperSize {
@@ -14,25 +7,22 @@ export interface PaperSize {
 	heightMm: number;
 }
 
-/** A single page placed on one side of a sheet. */
 export interface PagePlacement {
-	/** 1-indexed document page number. 0 means blank. */
+	/** zero is blank. */
 	pageNumber: number;
-	/** X offset from sheet origin (mm), left edge. */
+	/** millimetres. */
 	x: number;
-	/** Y offset from sheet origin (mm), top edge. */
+	/** millimetres. */
 	y: number;
-	/** Width of the placed page area (mm). */
+	/** millimetres. */
 	width: number;
-	/** Height of the placed page area (mm). */
+	/** millimetres. */
 	height: number;
-	/** Rotation in degrees (0, 90, 180, 270). */
+	/** degrees. */
 	rotation: number;
-	/** Which side of the physical sheet this placement belongs to. */
 	side: 'front' | 'back';
 }
 
-/** One physical sheet with placements on front and back. */
 export interface SheetDefinition {
 	sheetNumber: number;
 	front: PagePlacement[];
@@ -40,47 +30,29 @@ export interface SheetDefinition {
 }
 
 export interface ImpositionConfig {
-	/** ID of the layout to use. */
 	layoutId: string;
-	/** Output sheet size. */
 	paperSize: PaperSize;
-	/** Sheet orientation. */
 	orientation: 'portrait' | 'landscape';
-	/** Margin on each sheet edge (mm). */
+	/** millimetres. */
 	marginMm: number;
-	/** Gap between page cells (mm). */
+	/** millimetres. */
 	gutterMm: number;
-	/**
-	 * Creep compensation for saddle stitch (mm).
-	 * Inner pages shift outward by this amount per sheet from the centre.
-	 * Set to 0 to disable.
-	 */
+	/** saddle-stitch compensation. */
 	creepMm: number;
-	/** How content is scaled to fit each cell. */
 	scaling: 'fit' | 'fill' | 'actual';
-	/** How to handle incomplete final signature. */
 	blankHandling: 'auto' | 'leave-empty';
-	/** Whether to include crop marks in the result metadata. */
 	cropMarks: boolean;
-	/**
-	 * For N-up gang run and custom layouts: number of copies per sheet (gang run)
-	 * or [rows, cols] for custom N-up.
-	 */
 	nUp?: number;
-	/** For custom N-up: explicit [rows, cols]. If provided, overrides nUp grid lookup. */
 	customGrid?: [number, number];
-	/** Duplex flip direction. Long-edge is standard; short-edge adds 180° to back-side placements. */
+	/** short-edge adds 180 degrees. */
 	duplexFlip?: 'long-edge' | 'short-edge';
 }
 
 export interface ImpositionResult {
 	sheets: SheetDefinition[];
 	totalSheets: number;
-	/** Total document pages (after padding to signature multiple). */
 	totalPages: number;
-	/** Number of pages from the source document actually placed. */
 	pagesUsed: number;
-	/** Number of blank pages inserted to complete the final signature. */
 	blanksAdded: number;
 }
 
@@ -89,7 +61,7 @@ export interface ImpositionLayout {
 	name: string;
 	description: string;
 	useCase: string;
-	/** Total page slots per physical sheet (front + back). */
+	/** front and back. */
 	pagesPerSheet: number;
 	calculate: (
 		totalSourcePages: number,
@@ -138,7 +110,6 @@ export const PAPER_SIZES: PaperSize[] = [
 	},
 ];
 
-/** Return the effective sheet dimensions after applying orientation. */
 function sheetDimensions(
 	paperSize: PaperSize,
 	orientation: 'portrait' | 'landscape',
@@ -156,16 +127,11 @@ function sheetDimensions(
 	};
 }
 
-/** Pad a page count up to the nearest multiple of `multiple`. */
 function padToMultiple(n: number, multiple: number): number {
 	const rem = n % multiple;
 	return rem === 0 ? n : n + (multiple - rem);
 }
 
-/**
- * Build a grid of PagePlacements for one side of a sheet.
- * Pages are placed left-to-right, top-to-bottom.
- */
 function buildGrid(
 	pageNumbers: number[],
 	rows: number,
@@ -201,7 +167,6 @@ function buildGrid(
 	return placements;
 }
 
-/** Build an ImpositionResult with zero blanks from pre-constructed sheets. */
 function makeResult(
 	sheets: SheetDefinition[],
 	totalSourcePages: number,
@@ -217,23 +182,6 @@ function makeResult(
 	};
 }
 
-/**
- * Classic booklet imposition for saddle-stitched (stapled in the fold) books.
- *
- * For a document with N pages (padded to a multiple of 4):
- *   - Sheet 1 front:  [N, 1]  (outermost pages)
- *   - Sheet 1 back:   [2, N-1]
- *   - Sheet 2 front:  [N-2, 3]
- *   - Sheet 2 back:   [4, N-3]
- *   - …and so on
- *
- * Each sheet is landscape; pages are placed side by side.
- * The right page of the front and the left page of the back form the outer fold.
- *
- * Creep: with physical paper, inner sheets must shift slightly outward to
- * compensate for paper thickness. The creepMm value is applied per-sheet
- * offset from the centre-most sheet.
- */
 function calculateSaddleStitch(
 	totalSourcePages: number,
 	config: ImpositionConfig,
@@ -250,17 +198,11 @@ function calculateSaddleStitch(
 	const sheets: SheetDefinition[] = [];
 
 	for (let s = 0; s < numSheets; s++) {
-		// Creep offset: outermost sheet (s=0) has largest creep, innermost has none.
-		// Clamped to the margin so pages can't be pushed off the sheet edge.
+		// outer sheets creep more
 		const rawCreep = (numSheets - 1 - s) * creepMm;
+		// clamp at margin
 		const creepOffset = Math.min(rawCreep, marginMm);
 
-		// Saddle stitch page assignment:
-		// Sheet index s (0-based, outermost = 0) contains:
-		//   front left:  totalPages - 2*s         (e.g. N, N-4, …)
-		//   front right: 2*s + 1                   (e.g. 1, 5, …)
-		//   back left:   2*s + 2                   (e.g. 2, 6, …)
-		//   back right:  totalPages - 2*s - 1      (e.g. N-1, N-5, …)
 		const frontLeft = totalPages - 2 * s;
 		const frontRight = 2 * s + 1;
 		const backLeft = 2 * s + 2;
@@ -273,7 +215,6 @@ function calculateSaddleStitch(
 		const usableH = sheetH - marginMm * 2;
 		const halfW = (usableW - gutterMm) / 2;
 
-		// No rotation needed — page ordering handles correct reading after fold.
 		const frontPlacements: PagePlacement[] = [
 			{
 				pageNumber: pageOrBlank(frontLeft),
@@ -326,18 +267,6 @@ function calculateSaddleStitch(
 	return makeResult(sheets, totalSourcePages, totalPages);
 }
 
-/**
- * Sequential two-up layout for perfect-bound books (pages cut and glued at spine).
- *
- * Each sheet carries two leaves side by side. After cutting down the centre,
- * each leaf has its front and back page correctly backed up (long-edge flip).
- *
- *   Sheet 1 front: [1, 3]   — page 1 left, page 3 right
- *   Sheet 1 back:  [2, 4]   — page 2 behind page 1, page 4 behind page 3
- *   Sheet 2 front: [5, 7]
- *   Sheet 2 back:  [6, 8]
- *   …
- */
 function calculatePerfectBind(
 	totalSourcePages: number,
 	config: ImpositionConfig,
@@ -355,12 +284,12 @@ function calculatePerfectBind(
 
 	for (let s = 0; s < numSheets; s++) {
 		const base = s * 4;
-		// Front: odd-numbered pages of each leaf side by side
+		// odd front pages
 		const frontPages = [
 			pageOrBlank(base + 1),
 			pageOrBlank(base + 3),
 		];
-		// Back: even-numbered pages behind their fronts (same position after long-edge flip)
+		// even back pages
 		const backPages = [
 			pageOrBlank(base + 2),
 			pageOrBlank(base + 4),
@@ -394,13 +323,6 @@ function calculatePerfectBind(
 	return makeResult(sheets, totalSourcePages, totalPages);
 }
 
-/**
- * The same single page repeated twice on every sheet (both sides if duplex,
- * or front-only for simplex). Typical use: postcards, flyers, business cards.
- *
- * Only page 1 of the source document is used; its number is duplicated into
- * both cell positions.
- */
 function calculateStepAndRepeat(
 	totalSourcePages: number,
 	config: ImpositionConfig,
@@ -410,8 +332,6 @@ function calculateStepAndRepeat(
 		config.orientation,
 	);
 
-	// Step & repeat always produces exactly one sheet (front only, or front + back
-	// if there is a second source page to repeat on the back).
 	const sourcePage = totalSourcePages >= 1 ? 1 : 0;
 	const backPage = totalSourcePages >= 2 ? 2 : sourcePage;
 
@@ -448,17 +368,6 @@ function calculateStepAndRepeat(
 	};
 }
 
-/**
- * Saddle-stitch style but with 4 quarter-size pages per side (2×2 grid).
- * The sheet is folded twice: once long-edge then short-edge (or vice versa).
- *
- * Page assignment per sheet (0-based sheet index s, total padded pages N):
- *   Front:  [N-4s, N-4s-1, 4s+1, 4s+2]   rotations: [180, 180, 0, 0]
- *   Back:   [4s+3, 4s+4, N-4s-2, N-4s-3]  rotations: [0, 0, 180, 180]
- *
- * Grid is 2 columns × 2 rows. Reading order after double-fold:
- * outer-spread top-right = page 1, outer-spread top-left = back cover.
- */
 function calculateFourUpBooklet(
 	totalSourcePages: number,
 	config: ImpositionConfig,
@@ -476,9 +385,8 @@ function calculateFourUpBooklet(
 
 	for (let s = 0; s < numSheets; s++) {
 		const N = totalPages;
-		const base = s * 4; // 0-based offset within this 8-page signature
+		const base = s * 4;
 
-		// Front side: outer two pages (rotated) then inner two pages
 		const frontPages = [
 			pageOrBlank(N - base),
 			pageOrBlank(N - base - 1),
@@ -487,7 +395,6 @@ function calculateFourUpBooklet(
 		];
 		const frontRotations = [180, 180, 0, 0];
 
-		// Back side: inner continuation then outer pages (rotated)
 		const backPages = [
 			pageOrBlank(base + 3),
 			pageOrBlank(base + 4),
@@ -526,7 +433,6 @@ function calculateFourUpBooklet(
 	return makeResult(sheets, totalSourcePages, totalPages);
 }
 
-/** Predefined grid layouts for standard N-up values. */
 const GANG_RUN_GRIDS: Record<number, [number, number]> = {
 	2: [1, 2],
 	4: [2, 2],
@@ -535,14 +441,6 @@ const GANG_RUN_GRIDS: Record<number, [number, number]> = {
 	9: [3, 3],
 };
 
-/**
- * N copies of a single page repeated across the sheet (gang run / nesting).
- * All copies show the same source page. Useful for cutting multiple identical
- * items from one sheet (e.g. business cards, stickers).
- *
- * config.nUp controls how many copies per sheet (2, 4, 6, 8, or 9).
- * Falls back to 2 if the value is not recognised.
- */
 function calculateGangRun(
 	totalSourcePages: number,
 	config: ImpositionConfig,
@@ -555,15 +453,12 @@ function calculateGangRun(
 		config.orientation,
 	);
 
-	// For gang runs we repeat the same page nUp times on every sheet.
-	// One sheet per source page — or just page 1 if source has only one page.
 	const numSourcePages = Math.max(totalSourcePages, 1);
 	const sheets: SheetDefinition[] = [];
 
 	for (let s = 0; s < numSourcePages; s++) {
 		const srcPage = s + 1;
 		const frontPages = Array(nUp).fill(srcPage) as number[];
-		// Back uses the next page if available, otherwise repeats the same.
 		const backSrcPage = s + 1 <= totalSourcePages ? srcPage : 0;
 		const backPages = Array(nUp).fill(backSrcPage) as number[];
 
@@ -601,20 +496,13 @@ function calculateGangRun(
 	};
 }
 
-/**
- * User-specified rows × columns grid. Pages flow sequentially left-to-right,
- * top-to-bottom across all sheet fronts, then all sheet backs.
- *
- * config.customGrid = [rows, cols] — required for this layout.
- * Falls back to [2, 2] if not provided.
- */
 function calculateCustomNUp(
 	totalSourcePages: number,
 	config: ImpositionConfig,
 ): ImpositionResult {
 	const [rows, cols] = config.customGrid ?? [2, 2];
 	const cellsPerSide = rows * cols;
-	const cellsPerSheet = cellsPerSide * 2; // front + back
+	const cellsPerSheet = cellsPerSide * 2;
 
 	const { sheetW, sheetH } = sheetDimensions(
 		config.paperSize,
@@ -672,11 +560,6 @@ function calculateCustomNUp(
 	return makeResult(sheets, totalSourcePages, totalPadded);
 }
 
-/**
- * Apply tumble (short-edge) rotation to all back-side placements.
- * Adds 180° (mod 360) to every back placement's rotation.
- * This compensates for the sheet being flipped upside-down during tumble duplex.
- */
 function applyTumbleRotation(result: ImpositionResult): ImpositionResult {
 	for (const sheet of result.sheets) {
 		for (const p of sheet.back) {
@@ -686,16 +569,12 @@ function applyTumbleRotation(result: ImpositionResult): ImpositionResult {
 	return result;
 }
 
-/** Layouts that support duplex direction (have fold geometry). */
 export const DUPLEX_AWARE_LAYOUTS = new Set([
 	'saddle-stitch',
 	'perfect-bind',
 	'four-up-booklet',
 ]);
 
-/**
- * Wrap a layout calculate function to apply tumble rotation when short-edge duplex is selected.
- */
 function withDuplexPostProcess(
 	calculateFn: (
 		totalSourcePages: number,
@@ -772,7 +651,7 @@ export const IMPOSITION_LAYOUTS: ImpositionLayout[] = [
 			'Multiple identical copies of a single page nested on one sheet. ' +
 			'Supports 2, 4, 6, 8, and 9 copies per sheet. Set config.nUp accordingly.',
 		useCase: 'Stickers, business cards, labels, short-run items',
-		pagesPerSheet: 2, // minimum; actual value depends on nUp setting
+		pagesPerSheet: 2,
 		calculate: calculateGangRun,
 	},
 	{
@@ -782,7 +661,7 @@ export const IMPOSITION_LAYOUTS: ImpositionLayout[] = [
 			'Pages flow sequentially through a user-defined rows × columns grid. ' +
 			'Set config.customGrid = [rows, cols] to control the layout.',
 		useCase: 'Thumbnails, proof sheets, custom print layouts',
-		pagesPerSheet: 4, // default 2×2; actual value depends on customGrid
+		pagesPerSheet: 4,
 		calculate: calculateCustomNUp,
 	},
 ];
@@ -791,11 +670,7 @@ export function getLayoutById(id: string): ImpositionLayout | undefined {
 	return IMPOSITION_LAYOUTS.find((l) => l.id === id);
 }
 
-/**
- * For each placement, determine which edges face the sheet margin (outer)
- * vs an adjacent cell across a gutter (inner). Crop mark arms should only
- * be drawn on outer edges to avoid confusing convergence in gutters.
- */
+/** crop-mark outer edges. */
 export function getOuterEdges(placements: PagePlacement[]): {
 	left: boolean;
 	right: boolean;

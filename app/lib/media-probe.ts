@@ -1,8 +1,3 @@
-// Container-level facts through mediabunny (MPL-2.0, pure JS demuxers and
-// muxers, WebCodecs-aware): the real frame rate, the container family, the
-// source sample rate. Imported on demand so the front page and the tools that
-// never probe stay clear of it. Remux, burn, trim and extract live in
-// lib/media-convert.ts.
 
 export function loadMediabunny() {
 	return import('mediabunny');
@@ -10,7 +5,6 @@ export function loadMediabunny() {
 
 type Mediabunny = Awaited<ReturnType<typeof loadMediabunny>>;
 
-/** a mediabunny Input over the File, every format it knows */
 export function openInput(m: Mediabunny, file: File) {
 	return new m.Input({
 		source: new m.BlobSource(file),
@@ -18,7 +12,6 @@ export function openInput(m: Mediabunny, file: File) {
 	});
 }
 
-/** `29.97 fps`, `25 fps`, `23.976 fps` */
 export function formatFps(fps: number): string {
 	return `${fps.toFixed(3).replace(/\.?0+$/, '')} fps`;
 }
@@ -26,9 +19,8 @@ export function formatFps(fps: number): string {
 export type Container = 'mp4' | 'mov' | 'webm' | 'mkv';
 
 export interface VideoProbe {
-	/** the family the source is in, the remux default */
 	container: Container;
-	/** average packet rate over the first 200 packets; null when unreadable */
+	// packet average over 200
 	fps: number | null;
 	width: number;
 	height: number;

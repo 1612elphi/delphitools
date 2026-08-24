@@ -1,4 +1,4 @@
-// The `!`s below are guarded by the bounds checks in the same conditions.
+// ! guarded by bounds checks
 import {
 	arpabetToShavian,
 	arpabetToIpa,
@@ -15,26 +15,24 @@ export interface Phoneme {
 }
 
 export interface GlossWord {
-	latin: string; // Original English text
-	phonemes: Phoneme[]; // Per-letter breakdown
-	shavian: string; // Full Shavian rendering (concatenated)
-	ipa: string; // Full IPA rendering (concatenated)
+	latin: string;
+	phonemes: Phoneme[];
+	shavian: string;
+	ipa: string;
 	source: 'core' | 'full' | 'heuristic';
-	marker: 'none' | 'namer' | 'acroring' | 'acroarc'; // Word marker prefix
-	userEdited: boolean; // Whether user has manually changed any phoneme
+	marker: 'none' | 'namer' | 'acroring' | 'acroarc';
+	userEdited: boolean;
 }
 
 export interface GlossToken {
 	type: 'word' | 'punctuation' | 'whitespace';
 	value: string;
-	gloss?: GlossWord; // Only present for type "word"
+	gloss?: GlossWord;
 }
 
-// Dictionary type: word → ARPABET phoneme array
-// e.g. "hello" → ["HH", "AH0", "L", "OW1"]
+// "hello" → ["HH","AH0","L","OW1"]
 export type Dictionary = Map<string, string[]>;
 
-/** Map marker type to its prefix character */
 export function markerPrefix(marker: GlossWord['marker']): string {
 	switch (marker) {
 		case 'namer':
@@ -48,7 +46,6 @@ export function markerPrefix(marker: GlossWord['marker']): string {
 	}
 }
 
-/** Cycle to the next marker state */
 export function nextMarker(marker: GlossWord['marker']): GlossWord['marker'] {
 	switch (marker) {
 		case 'none':
@@ -62,7 +59,7 @@ export function nextMarker(marker: GlossWord['marker']): GlossWord['marker'] {
 	}
 }
 
-// Active dictionaries — mutated as tiers load
+// mutated as tiers load
 let coreDictionary: Dictionary = new Map();
 let fullDictionary: Dictionary = new Map();
 
@@ -74,10 +71,7 @@ export function setFullDictionary(dict: Dictionary) {
 	fullDictionary = dict;
 }
 
-/**
- * Shavian shorthands: common words spelt as a single consonant letter.
- * Per shavian.info spelling guide, rule 2.
- */
+// shavian.info rule 2
 const SHORTHANDS: Map<string, { shavian: string; ipa: string }> = new Map([
 	['the', { shavian: '𐑞', ipa: 'ðə' }],
 	['of', { shavian: '𐑝', ipa: 'əv' }],
@@ -86,18 +80,11 @@ const SHORTHANDS: Map<string, { shavian: string; ipa: string }> = new Map([
 	['for', { shavian: '𐑓', ipa: 'fɔːr' }],
 ]);
 
-/**
- * ARPABET overrides for words where CMU doesn't match Shavian spelling conventions.
- *
- * - PALM words: CMU uses AA (LOT vowel 𐑪) but Shavian uses 𐑭 (PALM vowel).
- *   We remap their AA phoneme to synthetic AA_PALM.
- * - THOUGHT bugs: CMU incorrectly uses AA instead of AO for some words.
- *   We remap their AA phoneme to AO.
- */
+// cmu deviates from shavian spelling
 const ARPABET_OVERRIDES: Map<string, { from: string; to: string }[]> =
 	new Map();
 
-// PALM words: AA → AA_PALM (𐑭, IPA ɑː)
+// cmu lot, shavian palm
 for (const w of [
 	'father',
 	'rather',
@@ -135,14 +122,11 @@ for (const w of [
 	ARPABET_OVERRIDES.set(w, [{ from: 'AA', to: 'AA_PALM' }]);
 }
 
-// THOUGHT bugs: AA → AO (𐑷, IPA ɔː) — CMU incorrectly uses AA for these
+// cmu lot for thought
 for (const w of ['caught', 'bought', 'raw', 'spawn', 'cause']) {
 	ARPABET_OVERRIDES.set(w, [{ from: 'AA', to: 'AO' }]);
 }
 
-/**
- * Apply ARPABET overrides for a word, returning corrected phoneme array.
- */
 function applyArpabetOverrides(word: string, arpabets: string[]): string[] {
 	const overrides = ARPABET_OVERRIDES.get(word.toLowerCase());
 	if (!overrides) return arpabets;
@@ -153,10 +137,6 @@ function applyArpabetOverrides(word: string, arpabets: string[]): string[] {
 	});
 }
 
-/**
- * Look up a word in the dictionary tiers.
- * Returns [phonemes, source] or null if not found.
- */
 function dictionaryLookup(
 	word: string,
 ): { arpabets: string[]; source: 'core' | 'full' } | null {
@@ -168,15 +148,11 @@ function dictionaryLookup(
 	return null;
 }
 
-/**
- * Merge ARPABET sequences that map to single Shavian letters.
- * e.g. Y + UW → 𐑿 (yew, /juː/)
- */
 function mergeArpabetSequences(arpabets: string[]): string[] {
 	const result: string[] = [];
 	let i = 0;
 	while (i < arpabets.length) {
-		// Y + UW (any stress) → YUW (yew ligature)
+		// y+uw=yew
 		if (
 			arpabets[i] === 'Y' &&
 			i + 1 < arpabets.length &&
@@ -192,9 +168,6 @@ function mergeArpabetSequences(arpabets: string[]): string[] {
 	return result;
 }
 
-/**
- * Convert ARPABET array to Phoneme array.
- */
 function arpabetToPhonemes(arpabets: string[]): Phoneme[] {
 	const merged = mergeArpabetSequences(arpabets);
 	return merged.map((code) => {
@@ -210,12 +183,8 @@ function arpabetToPhonemes(arpabets: string[]): Phoneme[] {
 	});
 }
 
-/**
- * Transliterate a single word.
- * Namer dots are never auto-detected — they are toggled manually by the user.
- */
+// namer dots manual only
 function transliterateWord(word: string): GlossWord {
-	// Check shorthands first (the, of, and, to, for)
 	const shorthand = SHORTHANDS.get(word.toLowerCase());
 	if (shorthand) {
 		const phoneme: Phoneme = {
@@ -243,7 +212,6 @@ function transliterateWord(word: string): GlossWord {
 		phonemes = arpabetToPhonemes(corrected);
 		source = lookup.source;
 	} else {
-		// Heuristic fallback
 		const heuristic = heuristicTransliterate(word);
 		phonemes = heuristic.map((h) => ({
 			shavian: h.shavian,
@@ -264,12 +232,8 @@ function transliterateWord(word: string): GlossWord {
 	};
 }
 
-/**
- * Tokenise input text into words, punctuation, and whitespace.
- */
 export function tokenise(text: string): GlossToken[] {
 	const tokens: GlossToken[] = [];
-	// Match: words (letters/apostrophes), whitespace runs, or punctuation
 	const regex = /([a-zA-Z']+)|(\s+)|([^\sa-zA-Z']+)/g;
 	let match: RegExpExecArray | null;
 
@@ -287,19 +251,15 @@ export function tokenise(text: string): GlossToken[] {
 	return tokens;
 }
 
-/**
- * Re-resolve heuristic words against the full dictionary.
- * Called after Tier 2 loads. Preserves user-edited words.
- */
+// after tier 2 load
 export function reResolveTokens(tokens: GlossToken[]): GlossToken[] {
 	return tokens.map((token) => {
 		if (token.type !== 'word' || !token.gloss) return token;
-		if (token.gloss.userEdited) return token; // Preserve user edits
+		if (token.gloss.userEdited) return token;
 		if (token.gloss.source !== 'heuristic') return token;
 
-		// Try full dictionary now
 		const lookup = dictionaryLookup(token.gloss.latin);
-		if (!lookup) return token; // Still no match
+		if (!lookup) return token;
 
 		const corrected = applyArpabetOverrides(
 			token.gloss.latin,

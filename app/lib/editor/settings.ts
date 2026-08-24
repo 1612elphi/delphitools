@@ -1,4 +1,4 @@
-// Editor settings — session-only; never persisted to the device.
+// session settings only
 export interface EditorSettings {
 	highlightSentence: boolean;
 	highlightParagraph: boolean;
@@ -7,7 +7,6 @@ export interface EditorSettings {
 	showGutter: boolean;
 	showMarginLine: boolean;
 	codeMode: boolean;
-	/** which GutterField ids are shown (modular) */
 	enabledFields: string[];
 }
 
@@ -22,11 +21,9 @@ export const DEFAULT_SETTINGS: EditorSettings = {
 	enabledFields: ['words'],
 };
 
-// Clean up any settings a previous build persisted (we store nothing now).
+// remove legacy storage
 export function clearStoredSettings(): void {
 	try {
 		localStorage.removeItem('delphitools-editor-settings');
-	} catch {
-		/* ignore */
-	}
+	} catch {}
 }

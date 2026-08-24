@@ -49,8 +49,7 @@ module('Unit | Modifier | file-paste | matchesAccept', function () {
 		);
 	});
 
-	// Dropped files sometimes arrive with an empty type, and a wildcard must
-	// not swallow them on the strength of "".startsWith("image/") being false.
+	// dropped files can have empty type
 	test('rejects a file with no type against a wildcard', function (assert) {
 		assert.false(matchesAccept(file('a.png', ''), 'image/*'));
 	});
