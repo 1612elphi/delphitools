@@ -1514,3 +1514,14 @@ ids (`matte-generator`, `scroll-generator`). Renamed to `matte-genny` and
 `scroll-genny`; 54 tools show their sticker again. The other 38 (every
 tool added since the 1.x port, plus Substrata and Large Type) have no
 lousy art at all and render no sticker; that is drawing work, not code.
+
+## 2026-08-24: lousy stickers for the new tools
+
+Ruby drew 36 stickers on the 2549×697 template (Downloads); each went
+through `delphi clip` (transparent-edge trim), then Lanczos to 2549 wide
+for @2x and 1274 wide for 1x, PNG with alpha. `image-compressor` is the
+joke: its RGB was shrunk 4× (8× for @2x), JPEG-encoded at quality 5 with
+4:2:0 subsampling, blown back up nearest-neighbour and given the original
+alpha back, so the blocks survive the page's downscale and the die-cut
+stays crisp. 90 tools carry a sticker; `substrata` and `video-trimmer`
+still have no art.
