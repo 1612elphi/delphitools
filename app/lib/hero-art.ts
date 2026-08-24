@@ -25,4 +25,9 @@ export const HERO_ART: HeroArt[] = [
 		artist: 'Rowan Oats',
 		url: 'https://rowanoats.com/',
 	},
+	{
+		src: '/heroes/olive.png',
+		artist: 'olive',
+		url: 'https://wikipedia.org/wiki/Olive',
+	},
 ];
