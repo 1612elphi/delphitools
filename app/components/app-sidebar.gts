@@ -64,10 +64,16 @@ export default class AppSidebar extends Component {
 	}
 
 	// Alphabetical within each category, and categories with no match drop out.
+	// Entries with their own route (Substrata) already have an item beside
+	// Home, so the category lists skip them.
 	get categories(): ToolCategory[] {
 		return toolCategories.flatMap((cat) => {
 			const tools = cat.tools
-				.filter((t) => matches(t, this.query))
+				.filter(
+					(t) =>
+						!t.route &&
+						matches(t, this.query),
+				)
 				.sort((a, b) => a.name.localeCompare(b.name));
 			return tools.length > 0 ? [{ ...cat, tools }] : [];
 		});
