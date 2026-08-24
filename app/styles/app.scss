@@ -2193,6 +2193,13 @@ $header-height: crayon.size(14);
 	}
 }
 
+.dt-wn-art {
+	display: block;
+	width: min(60%, 12rem);
+	height: auto;
+	margin: 0 auto crayon.size(3);
+}
+
 .dt-wn-link {
 	text-decoration: underline;
 	text-underline-offset: 2px;
@@ -2379,7 +2386,7 @@ $header-height: crayon.size(14);
 .dt-hero-art {
 	width: 100%;
 	max-width: 42rem;
-	// source art 2.8:1; delphi.png 2.84:1
+	// source art 2.8:1; delphi.webp 2.84:1
 	aspect-ratio: 2.8 / 1;
 	object-fit: fill;
 }

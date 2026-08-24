@@ -52,6 +52,13 @@ export default class WhatsNew extends Component {
 				<h2 class="dt-sr-only">delphitools 2.0</h2>
 				<div class="dt-wn-slide">
 					{{#if (eq this.slide 0)}}
+						<img
+							src="/art/delphi-house.webp"
+							width="640"
+							height="639"
+							alt=""
+							class="dt-wn-art"
+						/>
 						<p>
 							Over half a year since
 							it's initial release,
