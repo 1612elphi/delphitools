@@ -166,7 +166,7 @@ const AboutDelphitoolsBody: TOC<{ Element: HTMLDivElement }> = <template>
 			<p class="dt-about-note">
 				Plus
 				<a
-					href="https://github.com/1612elphi/delphitools/blob/main/ACKNOWLEDGEMENTS.md"
+					href="https://github.com/1612elphi/delphitools"
 					target="_blank"
 					rel="noopener noreferrer"
 				>

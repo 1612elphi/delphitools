@@ -132,7 +132,7 @@ export default class HeroCopy extends Component {
 						<p class="dt-hero-flip-more">
 							Plus
 							<a
-								href="https://github.com/1612elphi/delphitools/blob/main/ACKNOWLEDGEMENTS.md"
+								href="https://github.com/1612elphi/delphitools"
 								target="_blank"
 								rel="noopener noreferrer"
 							>many more open source
