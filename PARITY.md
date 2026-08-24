@@ -23,9 +23,9 @@ applicable on this surface (hardware/native or format constraint).
 
 ## Summary
 
-- **Tools tracked:** 89 (shipped, any surface)
-- **On all three surfaces:** 41
-- **Web:** 85 · **CLI:** 46 · **iOS:** 51
+- **Tools tracked:** 95 (shipped, any surface)
+- **On all three surfaces:** 44
+- **Web:** 91 · **CLI:** 75 · **iOS:** 52
 - **Backlog:** 29 planned tools (web-first) — see the Backlog section at the end.
 - iOS-exclusive (native/hardware): Colour Camera, Document Scanner, Font Installer, NFC Reader/Writer
 - Web-exclusive: Pixel Picker, Text Editor (pandoc.wasm note: GPL — incompatible with the App Store, and won't run on-device on iOS, hence Document Converter I 🚧)
@@ -52,12 +52,12 @@ Picker is similarly web-only.
 | Tool (web ID)                                 |  W  |          C           |  I  | Notes                                                       |
 | --------------------------------------------- | :-: | :------------------: | :-: | ----------------------------------------------------------- |
 | Colour Converter (`colour-converter`)         | ✅  |     ✅ `colour`      | ✅  |                                                             |
-| Colour Atlas (`colour-atlas`)                 | ✅  |          ❌          | ❌  | v2 web only so far; one-colour interrogation page           |
+| Colour Atlas (`colour-atlas`)                 | ✅  |          ➖          | ❌  | covered by the colour family on CLI; no extra command       |
 | Colour Blindness Simulator (`colorblind-sim`) | ✅  |   ✅ `colorblind`    | ✅  |                                                             |
-| Contrast Checker (`contrast-checker`)         | ✅  |    ✅ `contrast`     | ✅  |                                                             |
+| Contrast Checker (`contrast-checker`)         | ✅  |    ✅ `contrast`     | ✅  | notation echo skipped per CHORES b5 (cosmetic)              |
 | Harmony Generator (`harmony-genny`)           | ✅  |     ✅ `harmony`     | ✅  |                                                             |
 | Palette Generator (`palette-genny`)           | ✅  |     ✅ `palette`     | ✅  | CLI: 28 strategies                                          |
-| Palette Collection (`palette-collection`)     | ✅  |          ❌          | ✅  |                                                             |
+| Palette Collection (`palette-collection`)     | ✅  | ✅ `palettes` | ✅  |                                                             |
 | Palette Extractor (`palette-extractor`)       | ✅  | ✅ `palette --from`  | ❌  | iOS analog = Colour Camera. CLI: median-cut, dominant-first |
 | Pixel Picker (`pixel-picker`)                 | ✅  |          ➖          | ❌  | iOS analog = Colour Camera                                  |
 | Colour Camera (`colour-camera`)               | ❌  |          ➖          | ✅  | iOS-only (live camera)                                      |
@@ -72,13 +72,13 @@ Picker is similarly web-only.
 | Background Remover (`background-remover`)     | ✅  |      ✅ `rmbg`      | ✅  | ML model download                                                                                                                                                                                                            |
 | Favicon Generator (`favicon-genny`)           | ✅  |    ✅ `favicon`     | ✅  |                                                                                                                                                                                                                              |
 | Image Clipper (`image-clipper`)               | ✅  |      ✅ `clip`      | ✅  | trim transparent edges                                                                                                                                                                                                       |
-| Image Compressor (`image-compressor`)         | ✅  |         ❌          | ❌  | new 2026-08; MozJPEG/WebP/OxiPNG/AVIF re-encode in a worker on @jsquash wasm, AVIF gated (slow)                                                                                                                              |
+| Image Compressor (`image-compressor`)         | ✅  | ✅ `compress` | ❌  | CLI: `image` crate re-encode (no MozJPEG/OxiPNG/AVIF); WebP lossless-only; alias `cq` |
 | Image Converter (`image-converter`)           | ✅  |    ✅ `convert`     | ✅  | CLI: + jxl (lossless-only) + icns (2026-07)                                                                                                                                                                                  |
-| Image De-skewer (`image-deskewer`)            | ✅  |         ❌          | ❌  | new 2026-08; four draggable corners → planar homography, bilinear resample on the main thread, aspect presets (A4, Letter, …), PNG out                                                                                       |
+| Image De-skewer (`image-deskewer`)            | ✅  | ✅ `deskew` | ❌  | new 2026-08; four draggable corners → planar homography, bilinear resample on the main thread, aspect presets (A4, Letter, …), PNG out                                                                                       |
 | Image Splitter (`image-splitter`)             | ✅  |     ✅ `split`      | ✅  |                                                                                                                                                                                                                              |
 | Image Stitcher (`image-stitcher`)             | ✅  |     ✅ `stitch`     | ✅  | new 2026-07; edge-stitch + batch grid. CLI: flat row/col + grid; nested mosaics editor-only. iOS (2026-07): full mosaic editor + batch grid + Stitch Images intent; PNG/JPEG only — ImageIO has no WebP/JXL encoder (probed) |
 | Image Tracer (`image-tracer`)                 | ✅  |     ✅ `trace`      | ✅  | raster → SVG                                                                                                                                                                                                                 |
-| Metadata Stripper (`metadata-stripper`)       | ✅  |         ❌          | ❌  | new 2026-08; EXIF/GPS/XMP/IPTC strip without re-encoding (JPEG/PNG/WebP/GIF segments), before/after removal list, ICC kept by default                                                                                        |
+| Metadata Stripper (`metadata-stripper`)       | ✅  | ✅ `strip-meta` | ❌  | new 2026-08; EXIF/GPS/XMP/IPTC strip without re-encoding (JPEG/PNG/WebP/GIF segments), before/after removal list, ICC kept by default                                                                                        |
 | SVG Optimiser (`svg-optimiser`)               | ✅  |      ✅ `svgo`      | ✅  |                                                                                                                                                                                                                              |
 | Paste Image (`paste-image`)                   | ✅  |         ➖          | ✅  | clipboard-driven                                                                                                                                                                                                             |
 | Placeholder Generator (`placeholder-genny`)   | ✅  |  ✅ `placeholder`   | ✅  | CLI: png or svg output                                                                                                                                                                                                       |
@@ -89,22 +89,22 @@ Picker is similarly web-only.
 
 | Tool (web ID)                             |  W  |  C  |  I  | Notes                                                                                                                                                                                |
 | ----------------------------------------- | :-: | :-: | :-: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Audio Atlas (`audio-atlas`)               | ✅  | ❌  | ❌  | new 2026-08; one-file interrogation: meta, peak dBFS, BS.1770 LUFS, waveform, spectrogram                                                                                            |
-| Audio Extractor (`audio-extractor`)       | ✅  | ❌  | ❌  | new 2026-08; video → WAV / M4A (AAC) / Ogg (Opus) / FLAC through mediabunny `Conversion` (video discarded, packets copied when the codec matches, else WebCodecs encode)             |
-| Audio Normaliser (`audio-normaliser`)     | ✅  | ❌  | ❌  | new 2026-08; integrated LUFS (BS.1770, `lib/audio.ts`) → gain to -14/-16/-23 with a -1 dBFS sample-peak ceiling (`lib/normalise.ts`), WAV out with the result re-measured            |
-| Audio Trimmer (`audio-trimmer`)           | ✅  | ❌  | ❌  | new 2026-08; drag selection, fades, wav export (`lib/audio.ts`), mp3 deferred                                                                                                        |
-| Auto Subtitle (`auto-subtitle`)           | ✅  | ❌  | ❌  | new 2026-08; local Whisper via transformers.js (`lib/transcribe.ts`), fast/reasonable/accurate modes, word→cue on `lib/subtitles.ts`; Accurate requires WebGPU                       |
-| Frame Extractor (`frame-extractor`)       | ✅  | ❌  | ❌  | new 2026-08; video stills + contact sheet, `<video>` + canvas                                                                                                                        |
-| Screen Recorder (`screen-recorder`)       | ✅  | ❌  | ❌  | new 2026-08; getDisplayMedia + MediaRecorder, optional mic mix-in, webm download                                                                                                     |
-| Subtitle Converter (`subtitle-converter`) | ✅  | ❌  | ❌  | new 2026-08; srt↔vtt + shift/scale on `lib/subtitles.ts`                                                                                                                             |
-| Subtitle Studio (`subtitle-studio`)       | ✅  | ❌  | ❌  | new 2026-08; burns SRT/VTT into video: canvas draw (`lib/subtitle-burn.ts`); WebCodecs via mediabunny (fast) with a MediaRecorder 1× fallback; font/size/colour/style, drag to place |
-| Timecode Calculator (`timecode-calc`)     | ✅  | ❌  | ❌  | new 2026-08; SMPTE add/subtract, drop-frame correct, misinput-proof parser on `lib/timecode.ts` (user request)                                                                       |
-| Voice Recorder (`voice-recorder`)         | ✅  | ❌  | ❌  | new 2026-08; getUserMedia + MediaRecorder, level meter, pause/resume, playback, download                                                                                             |
-| Video Atlas (`video-atlas`)               | ✅  | ❌  | ❌  | new 2026-08; MediaInfo report (mediainfo.js wasm self-hosted in `public/mediainfo`): container, codecs, fps, bitrate, colour, per-stream panels                                      |
-| Video Muter (`video-muter`)               | ✅  | ❌  | ❌  | new 2026-08; drops audio tracks by remux (mediabunny `Conversion`, packets copied, no re-encode), MP4/MOV → MP4, WebM/MKV → WebM                                                     |
-| Video to GIF (`video-to-gif`)             | ✅  | ❌  | ❌  | new 2026-08; canvas frames through `lib/gif.ts` `AnimatedGifEncoder`, no wasm                                                                                                        |
-| Video Trimmer (`video-trimmer`)           | ✅  | ❌  | ❌  | new 2026-08; In/Out + Mark from the playhead; Keyframe cut copies packets (mediabunny sinks/sources, no re-encode), Exact cut re-encodes via `Conversion` trim; container select     |
-| Waveform Generator (`waveform-genny`)     | ✅  | ❌  | ❌  | new 2026-08; waveform → PNG/SVG at social sizes                                                                                                                                      |
+| Audio Atlas (`audio-atlas`)               | ✅  | ✅ `audio-atlas` | ❌  | CLI: native decode (symphonia); BS.1770 LUFS; optional waveform/spectrogram PNGs                                                                                                      |
+| Audio Extractor (`audio-extractor`)       | ✅  | ✅ `audio-extract` | ❌  | CLI: system ffmpeg; `--copy-if-match` stream-copies when codecs match; alias `aex`                                                                                                    |
+| Audio Normaliser (`audio-normaliser`)     | ✅  | ✅ `normalise` | ❌  | CLI: native LUFS/gain, 16-bit WAV; ceiling clamp warns (exit 0, `clamped:true`); alias `norm`                                                                                         |
+| Audio Trimmer (`audio-trimmer`)           | ✅  | ✅ `audio-trim` | ❌  | CLI: `--from`/`--to` + lin/exp/cos fades, WAV out; alias `atrim`                                                                                                                      |
+| Auto Subtitle (`auto-subtitle`)           | ✅  | ✅ `autosub` | ❌  | CLI: whisper.cpp via whisper-rs (CPU); `--model tiny/base/small` (default tiny; web default is small); `--approve` model download like rmbg; video needs ffmpeg; word→cue from `lib/transcribe.ts` |
+| Frame Extractor (`frame-extractor`)       | ✅  | ✅ `frames` | ❌  | CLI: system ffmpeg (`--every`/`--fps`/`--scene`); contact sheet via tile filter, `image` crate fallback                                                                               |
+| Screen Recorder (`screen-recorder`)       | ✅  | ➖  | ❌  | device capture + interactive; SPEC non-goals (no TUI/interactive modes)                                                                                                              |
+| Subtitle Converter (`subtitle-converter`) | ✅  | ✅ `subtitles` | ❌  | new 2026-08; srt↔vtt + shift/scale on `lib/subtitles.ts`                                                                                                                             |
+| Subtitle Studio (`subtitle-studio`)       | ✅  | ✅ `burn-subs` | ❌  | CLI: ffmpeg `subtitles=` (needs libass); always re-encodes video, copies audio; alias `burn`                                                                                          |
+| Timecode Calculator (`timecode-calc`)     | ✅  | ✅ `timecode` | ❌  | new 2026-08; SMPTE add/subtract, drop-frame correct, misinput-proof parser on `lib/timecode.ts` (user request)                                                                       |
+| Voice Recorder (`voice-recorder`)         | ✅  | ➖  | ❌  | device capture + interactive; SPEC non-goals (no TUI/interactive modes)                                                                                                              |
+| Video Atlas (`video-atlas`)               | ✅  | ✅ `video-atlas` | ❌  | CLI: ffprobe JSON reshaped (not raw passthrough); alias `va`                                                                                                                          |
+| Video Muter (`video-muter`)               | ✅  | ✅ `video-mute` | ❌  | CLI: ffmpeg `-an -c:v copy`; MP4/MOV→MP4, WebM/MKV→WebM                                                                                                                               |
+| Video to GIF (`video-to-gif`)             | ✅  | ✅ `video-gif` | ❌  | CLI: ffmpeg two-pass palettegen/paletteuse; alias `vgif`                                                                                                                              |
+| Video Trimmer (`video-trimmer`)           | ✅  | ✅ `video-trim` | ❌  | CLI: default keyframe copy; `--exact` re-encodes libx264/vp9; alias `vtrim`                                                                                                           |
+| Waveform Generator (`waveform-genny`)     | ✅  | ✅ `waveform` | ❌  | CLI: native decode; bars/line; PNG/SVG; presets og/twitter/square/story                                                                                                               |
 
 ## Social Media
 
@@ -122,7 +122,7 @@ Picker is similarly web-only.
 | Document Converter (`doc-converter`)        | ✅  |       ✅ `doc`       | 🚧  | Web: pandoc 3.9 wasm, any-to-any (md/html/docx/odt/epub/latex/rst/org/…). CLI: comrak core (md→html/txt native) + system `pandoc` shell-out for the long tail (stays 0BSD). iOS (planned): native subset only — GPL ✗ App Store (VLC precedent) + no on-device wasm runtime |
 | Font File Explorer (`font-explorer`)        | ✅  |    ✅ `font-info`    | ✅  |                                                                                                                                                                                                                                                                             |
 | Glyph Browser (`glyph-browser`)             | ✅  |      ✅ `glyph`      | ✅  |                                                                                                                                                                                                                                                                             |
-| Large Type (`large-type`)                   | ✅  |          ❌          | ❌  | new 2026-07; huge per-character transcription display                                                                                                                                                                                                                       |
+| Large Type (`large-type`)                   | ✅  | ✅ `large-type` | ❌  | CLI writes a PNG (usvg/resvg), not an on-screen live display |
 | Line Height Calculator (`line-height-calc`) | ✅  |   ✅ `line-height`   | ✅  |                                                                                                                                                                                                                                                                             |
 | PX to REM (`px-to-rem`)                     | ✅  | ✅ `px2rem`/`rem2px` | ✅  |                                                                                                                                                                                                                                                                             |
 | Typography Calculator (`typo-calc`)         | ✅  |      ✅ `typo`       | ✅  |                                                                                                                                                                                                                                                                             |
@@ -136,11 +136,11 @@ Picker is similarly web-only.
 | Tool (web ID)                      |  W  |       C        |  I  | Notes                                                                                                |
 | ---------------------------------- | :-: | :------------: | :-: | ---------------------------------------------------------------------------------------------------- |
 | PDF Preflight (`pdf-preflight`)    | ✅  | ✅ `preflight` | ✅  |                                                                                                      |
-| PDF Organiser (`pdf-organiser`)    | ✅  |       ❌       | ❌  | new 2026-08; merge, split (ranges / one file per page), drag-reorder page grid with rotate + delete  |
-| Images ⇄ PDF (`image-to-pdf`)      | ✅  |       ❌       | ❌  | new 2026-08; one page per image with size/fit/margin; PDF pages out as PNGs                          |
-| Rotate & Crop (`pdf-rotate-crop`)  | ✅  |       ❌       | ❌  | new 2026-08; per-page 90° rotation (+ rotate-all), drag-box crop applied to current or all pages     |
-| Page Numbers (`pdf-page-numberer`) | ✅  |       ❌       | ❌  | new 2026-08; page numbers ({n}/{N}, start-at, skip-first) + optional text stamp, 3×3 anchor, pdf-lib |
-| PDF Compressor (`pdf-compressor`)  | ✅  |       ❌       | ❌  | new 2026-08; MuPDF wasm (self-hosted, lazy); lossless structural squeeze, no image downsampling      |
+| PDF Organiser (`pdf-organiser`)    | ✅  | ✅ `pdf-organise` | ❌  | CLI: merge/split/each/edit (delete then order then rotate); alias `pdforg` |
+| Images ⇄ PDF (`image-to-pdf`)      | ✅  | ✅ `img2pdf`/`pdf2img` | ❌  | pdf2img needs system pdftoppm or mutool |
+| Rotate & Crop (`pdf-rotate-crop`)  | ✅  | ✅ `pdf-rotate` | ❌  | CLI crop is x,y,w,h CropBox; no drag-box |
+| Page Numbers (`pdf-page-numberer`) | ✅  | ✅ `pdf-number` | ❌  | Helvetica overlay; /Rotate ignored for placement |
+| PDF Compressor (`pdf-compressor`)  | ✅  | ✅ `pdf-compress` | ❌  | lopdf structural squeeze; modest ratios vs MuPDF wasm; no image downsample |
 
 ## Print & Production
 
@@ -180,7 +180,7 @@ Picker is similarly web-only.
 | Tool (web ID)                       |  W  |              C              |  I  | Notes                         |
 | ----------------------------------- | :-: | :-------------------------: | :-: | ----------------------------- |
 | Scientific Calculator (`sci-calc`)  | ✅  |          ✅ `calc`          | ✅  |                               |
-| Algebra Calculator (`algebra-calc`) | ✅  |             ❌              | ✅  |                               |
+| Algebra Calculator (`algebra-calc`) | ✅  | ✅ `alg` | ✅  | native engine; integral unsupported (matches web); univariate factor is extra |
 | Graph Calculator (`graph-calc`)     | ✅  |         ✅ `graph`          | ✅  | CLI: png/svg; no inequalities |
 | Base Converter (`base-converter`)   | ✅  |          ✅ `base`          | ✅  |                               |
 | Time Calculator (`time-calc`)       | ✅  |          ✅ `time`          | ✅  |                               |
@@ -192,10 +192,10 @@ Picker is similarly web-only.
 | Tool (web ID)                                     |  W  |      C       |  I  | Notes                                                                                                                      |
 | ------------------------------------------------- | :-: | :----------: | :-: | -------------------------------------------------------------------------------------------------------------------------- |
 | Shavian Transliterator (`shavian-transliterator`) | ✅  | ✅ `shavian` | ✅  |                                                                                                                            |
-| Morse Code (`morse-code`)                         | ✅  |      ❌      | ❌  | new 2026-08; ITU Morse both ways, WebAudio playback                                                                        |
-| Braille Converter (`braille-converter`)           | ✅  |      ❌      | ❌  | new 2026-08; uncontracted (Grade 1) Unicode braille both ways                                                              |
-| IPA Transcription (`ipa-transcriber`)             | ✅  |      ❌      | ❌  | new 2026-08; CMU dictionary (shared with Shavian) → IPA, General American                                                  |
-| NATO Phonetic (`nato-phonetic`)                   | ✅  |      ❌      | ❌  | new 2026-08; NATO/ICAO, DIN 5009:2022 and traditional German tables; interactive letter chart (Morse, semaphore, ICS flag) |
+| Morse Code (`morse-code`)                         | ✅  | ✅ `morse` | ❌  | new 2026-08; ITU Morse both ways, WebAudio playback CLI: no audio.|
+| Braille Converter (`braille-converter`)           | ✅  | ✅ `braille` | ❌  | new 2026-08; uncontracted (Grade 1) Unicode braille both ways                                                              |
+| IPA Transcription (`ipa-transcriber`)             | ✅  | ✅ `ipa` | ❌  | new 2026-08; CMU dictionary (shared with Shavian) → IPA, General American                                                  |
+| NATO Phonetic (`nato-phonetic`)                   | ✅  | ✅ `nato` | ❌  | new 2026-08; NATO/ICAO, DIN 5009:2022 and traditional German tables; interactive letter chart (Morse, semaphore, ICS flag) CLI: no interactive letter chart.|
 
 ---
 
