@@ -23,6 +23,10 @@
 # env: .env.development is tracked; local overrides are not
 .env*.local
 
+# claude / local-only working notes
+CLAUDE.md
+/.claude/
+/.superpowers/
 
 # wheelybin: local-only scratch and agent working files, never committed
 /wheelybin/
