@@ -208,7 +208,6 @@ export const toolCategories: ToolCategory[] = [
 				route: 'editor',
 				accepts: ['image/*'],
 				beta: true,
-				new: true,
 				highlight: true,
 			},
 			{
@@ -291,7 +290,6 @@ export const toolCategories: ToolCategory[] = [
 				icon: 'combine',
 				href: '/tools/image-stitcher',
 				accepts: ['image/*'],
-				new: true,
 			},
 			{
 				id: 'image-tracer',
@@ -344,7 +342,6 @@ export const toolCategories: ToolCategory[] = [
 				icon: 'file-code',
 				href: '/tools/base64-image-encoder',
 				accepts: ['image/*'],
-				new: true,
 			},
 		],
 	},
@@ -524,7 +521,6 @@ export const toolCategories: ToolCategory[] = [
 					'.tex',
 					'.epub',
 				],
-				new: true,
 			},
 			{
 				id: 'text-editor',
@@ -533,7 +529,6 @@ export const toolCategories: ToolCategory[] = [
 				icon: 'pen-line',
 				href: '/tools/text-editor',
 				accepts: TEXT_ACCEPT,
-				new: true,
 			},
 			{
 				id: 'font-explorer',
@@ -556,7 +551,6 @@ export const toolCategories: ToolCategory[] = [
 				description: 'Text, but big',
 				icon: 'case-upper',
 				href: '/tools/large-type',
-				new: true,
 				wide: true,
 			},
 			{
@@ -790,7 +784,6 @@ export const toolCategories: ToolCategory[] = [
 					'Decode classical ciphers manually or auto-detect the cipher',
 				icon: 'key-round',
 				href: '/tools/decoder',
-				new: true,
 			},
 			{
 				id: 'password-genny',
@@ -954,14 +947,52 @@ export const toolCategories: ToolCategory[] = [
 			},
 		],
 	},
+	{
+		id: 'experiments',
+		name: "Alien Delphi's Experiments",
+		tools: [
+			{
+				id: 'stupid-units',
+				name: 'Stupid Units',
+				// ∑CG: card description for the stupid units converter
+				//   spec: ≤ 60 chars, one clause, deadpan, no period
+				//   sample: "Convert between bananas, Waleses and Warhols"
+				description: '∑CG',
+				icon: 'banana',
+				href: '/tools/stupid-units',
+			},
+			{
+				id: 'recipe-table',
+				name: 'Recipe Table',
+				// ∑CG: card description for the recipe table editor
+				//   spec: ≤ 60 chars, one clause, names the Cooking for Engineers table, no period
+				//   sample: "Write a recipe as a Cooking for Engineers table"
+				description: '∑CG',
+				icon: 'chef-hat',
+				href: '/tools/recipe-table',
+				wide: true,
+			},
+		],
+	},
 ];
+
+export const EXPERIMENTS_ID = 'experiments';
+
+export const experimentsCategory = toolCategories.find(
+	(category) => category.id === EXPERIMENTS_ID,
+)!;
+
+// experiments list on /experiments only
+export const homeCategories = toolCategories.filter(
+	(category) => category !== experimentsCategory,
+);
 
 export const allTools = toolCategories.flatMap((category) => category.tools);
 
 const featuredToolIds = [
 	'substrata',
 	'qr-genny',
-	'palette-genny',
+	'auto-subtitle',
 	'background-remover',
 ];
 export const featuredTools = featuredToolIds
@@ -978,9 +1009,19 @@ const workflowsEntry: Tool = {
 	highlight: true,
 };
 
+const experimentsEntry: Tool = {
+	id: 'experiments',
+	name: "Alien Delphi's Experiments",
+	description: 'Unfinished tool sketches',
+	icon: 'flask-conical',
+	href: '/experiments',
+	route: 'experiments',
+};
+
 export const homeFeatured: Tool[] = [
 	...featuredTools.filter((tool) => tool.highlight),
 	workflowsEntry,
+	experimentsEntry,
 	...featuredTools.filter((tool) => !tool.highlight),
 ];
 

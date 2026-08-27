@@ -29,6 +29,12 @@ const EXTRA = [
 	'arrow-down-left',
 	'arrow-down',
 	'arrow-down-right',
+	// recipe table block palette
+	'folder',
+	'cooking-pot',
+	'carrot',
+	'list-checks',
+	'settings-2',
 	...Object.values(FX_ICONS),
 	FX_ICON_FALLBACK,
 ];

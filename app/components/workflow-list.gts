@@ -42,100 +42,111 @@ export default class WorkflowList extends Component<{
 	};
 
 	<template>
-		<div class="dt-wf-scroll" ...attributes>
-			<table class="dt-wf">
-				<thead>
-					<tr>
-						<th
-							scope="col"
-							class="dt-wf-th"
-						>Workflow</th>
-						<th
-							scope="col"
-							class="dt-wf-th"
-						>First,</th>
-						<th
-							scope="col"
-							class="dt-wf-th"
-						>Then...</th>
-						<th
-							scope="col"
-							class="dt-wf-th"
-						>Finally,</th>
-						<th
-							scope="col"
-							class="dt-wf-th"
-						></th>
-					</tr>
-				</thead>
-				<tbody>
-					{{#each
-						ROWS key="workflow.id"
-						as |row|
-					}}
-						<tr class="dt-wf-row">
+		<div class="dt-wf-list" ...attributes>
+			<img
+				src="/art/delphi-alien.webp"
+				width="815"
+				height="1568"
+				alt=""
+				class="dt-wf-art"
+			/>
+			<div class="dt-wf-scroll">
+				<table class="dt-wf">
+					<thead>
+						<tr>
 							<th
-								scope="row"
-								class="dt-wf-cell"
-							>
-								<button
-									type="button"
-									class="dt-wf-name"
-									{{on
-										"click"
-										(fn
-											this.start
-											row.workflow
-										)
-									}}
-								>
-									<span
-									>{{row.workflow.name}}</span>
-									<span
-										class="dt-wf-in"
-									>{{row.category}}</span>
-								</button>
-							</th>
-							{{#each
-								row.slots
-								as |tool|
-							}}
-								<td
-									class="dt-wf-cell dt-wf-step"
-								>
-									{{#if
-										tool
-									}}
-										<Icon
-											@name={{tool.icon}}
-										/>
-										<span
-										>{{tool.name}}</span>
-									{{/if}}
-								</td>
-							{{/each}}
-							<td class="dt-wf-cell">
-								<button
-									type="button"
-									class="dt-wf-go"
-									{{on
-										"click"
-										(fn
-											this.start
-											row.workflow
-										)
-									}}
-								>
-									Start
-									<Icon
-										@name="arrow-right"
-									/>
-								</button>
-							</td>
+								scope="col"
+								class="dt-wf-th"
+							>Workflow</th>
+							<th
+								scope="col"
+								class="dt-wf-th"
+							>First,</th>
+							<th
+								scope="col"
+								class="dt-wf-th"
+							>Then...</th>
+							<th
+								scope="col"
+								class="dt-wf-th"
+							>Finally,</th>
+							<th
+								scope="col"
+								class="dt-wf-th"
+							></th>
 						</tr>
-					{{/each}}
-				</tbody>
-			</table>
+					</thead>
+					<tbody>
+						{{#each
+							ROWS key="workflow.id"
+							as |row|
+						}}
+							<tr class="dt-wf-row">
+								<th
+									scope="row"
+									class="dt-wf-cell"
+								>
+									<button
+										type="button"
+										class="dt-wf-name"
+										{{on
+											"click"
+											(fn
+												this.start
+												row.workflow
+											)
+										}}
+									>
+										<span
+										>{{row.workflow.name}}</span>
+										<span
+											class="dt-wf-in"
+										>{{row.category}}</span>
+									</button>
+								</th>
+								{{#each
+									row.slots
+									as |tool|
+								}}
+									<td
+										class="dt-wf-cell dt-wf-step"
+									>
+										{{#if
+											tool
+										}}
+											<Icon
+												@name={{tool.icon}}
+											/>
+											<span
+											>{{tool.name}}</span>
+										{{/if}}
+									</td>
+								{{/each}}
+								<td
+									class="dt-wf-cell"
+								>
+									<button
+										type="button"
+										class="dt-wf-go"
+										{{on
+											"click"
+											(fn
+												this.start
+												row.workflow
+											)
+										}}
+									>
+										Start
+										<Icon
+											@name="arrow-right"
+										/>
+									</button>
+								</td>
+							</tr>
+						{{/each}}
+					</tbody>
+				</table>
+			</div>
 		</div>
 	</template>
 }

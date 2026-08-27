@@ -12,7 +12,7 @@ import ToolGrid from 'delphitools-v2/components/tool-grid';
 import {
 	homeFeatured,
 	getToolById,
-	toolCategories,
+	homeCategories,
 	type Tool,
 	allTools,
 } from 'delphitools-v2/lib/tools';
@@ -165,6 +165,7 @@ export default class Omnibox extends Component<OmniboxSignature> {
 			}
 		};
 		document.addEventListener('keydown', onKeydown);
+		element.focus();
 		return () => document.removeEventListener('keydown', onKeydown);
 	});
 
@@ -306,7 +307,6 @@ export default class Omnibox extends Component<OmniboxSignature> {
 					</div>
 				{{else}}
 					<div class="dt-omni-field">
-						<Icon @name="search" />
 						<input
 							class="dt-omni-input"
 							type="text"
@@ -323,9 +323,6 @@ export default class Omnibox extends Component<OmniboxSignature> {
 							}}
 							{{this.focusKey}}
 						/>
-						<span
-							class="dt-omni-kbd"
-						>⌘K</span>
 					</div>
 					{{#if this.isIdle}}
 						<div class="dt-omni-legend">
@@ -524,7 +521,7 @@ export default class Omnibox extends Component<OmniboxSignature> {
 				/>
 			</section>
 
-			{{#each toolCategories as |category|}}
+			{{#each homeCategories as |category|}}
 				<section class="dt-section">
 					<h2 class="dt-section-title">
 						{{category.name}}

@@ -141,7 +141,9 @@ export default class FlowState extends Component {
 			>
 				<span class="dt-flow-name">
 					<Icon @name="workflow" />
-					{{this.name}}
+					<span
+						class="dt-flow-name-text"
+					>{{this.name}}</span>
 				</span>
 				<ol class="dt-flow-steps">
 					{{#each

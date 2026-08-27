@@ -60,32 +60,7 @@ export default class WhatsNew extends Component {
 							class="dt-wn-art"
 						/>
 						<p>
-							Over half a year since
-							it's initial release,
-							delphitools' roof has
-							caved in more times than
-							I'd like. This is
-							indubitably traced back
-							to decisions made by the
-							scoundrels who developed
-							the framework, and
-							certainly not my own
-							limited competence. The
-							React people shall be
-							hearing from me.
-						</p>
-						<p>
-							Nevertheless, the
-							project has been
-							thoroughly rebuilt by
-							European standards, with
-							actual brick walls, on
-							good technology this
-							time and with more
-							attention to detail. So,
-							dear reader, I'd like to
-							officially welcome you
-							to delphitools 2.0,
+							After half a year, I'd like to welcome you to delphitools 2.0,
 							rebuilt from the ground
 							up using
 							<a

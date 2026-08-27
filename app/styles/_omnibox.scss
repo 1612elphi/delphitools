@@ -16,25 +16,24 @@
 .dt-omni-field {
 	display: flex;
 	align-items: center;
-
-	> .dt-icon {
-		width: crayon.size(5);
-		height: crayon.size(5);
-		margin-inline: crayon.size(4);
-		color: var(--muted-foreground);
-		flex: none;
-	}
 }
 
 .dt-omni-input {
 	min-width: 0;
 	flex: 1;
-	padding-block: crayon.size(5);
 	border: 0;
 	background: none;
 	color: inherit;
 	font: inherit;
-	font-size: crayon.font-size("lg");
+	text-align: center;
+	// no css caret width exists; zoom doubles the 1px caret, halved metrics keep layout
+	zoom: 2;
+	font-size: calc(crayon.font-size("lg") / 2);
+	padding: calc(crayon.size(5) / 2) calc(crayon.size(4) / 2);
+
+	&::placeholder {
+		opacity: 0.45;
+	}
 
 	&:focus-visible {
 		outline: none;
@@ -44,15 +43,6 @@
 /* input has no outline */
 .dt-omni:focus-within {
 	border-color: var(--primary);
-}
-
-.dt-omni-kbd {
-	margin-right: crayon.size(4);
-	padding: crayon.size(0.5) crayon.size(1.5);
-	border: 1px solid var(--border);
-	background: var(--muted);
-	color: var(--muted-foreground);
-	font-size: crayon.font-size("xs");
 }
 
 .dt-omni-legend {

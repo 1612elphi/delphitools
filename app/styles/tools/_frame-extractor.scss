@@ -47,16 +47,26 @@
 }
 
 .dt-fx-bar {
-	display: flex;
-	min-height: crayon.size(12);
-	align-items: stretch;
+	display: grid;
 	border-bottom: 1px solid var(--border);
-	flex-wrap: wrap;
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: 1fr 1fr;
+
+	@include crayon.screen("md") {
+		display: flex;
+		min-height: crayon.size(12);
+		align-items: stretch;
+		background: none;
+		flex-wrap: wrap;
+		gap: 0;
+	}
 }
 
 .dt-fx-info {
 	display: flex;
 	flex: 1;
+	background: var(--card);
 	min-width: 0;
 	flex-direction: column;
 	justify-content: center;
@@ -81,9 +91,15 @@
 	@include crayon.hstack(2);
 
 	align-items: center;
+	justify-content: center;
+	background: var(--card);
 	padding-inline: crayon.size(3);
-	border-left: 1px solid var(--border);
 	font-size: crayon.font-size("sm");
+
+	@include crayon.screen("md") {
+		justify-content: flex-start;
+		border-left: 1px solid var(--border);
+	}
 
 	span {
 		color: var(--muted-foreground);
@@ -110,10 +126,17 @@
 	@include crayon.hstack(2);
 
 	align-items: center;
+	justify-content: center;
+	padding-block: crayon.size(2);
 	padding-inline: crayon.size(4);
 	border: 0;
-	border-left: 1px solid var(--border);
-	background: none;
+	background: var(--card);
+
+	@include crayon.screen("md") {
+		justify-content: flex-start;
+		border-left: 1px solid var(--border);
+	}
+
 	color: var(--muted-foreground);
 	font: inherit;
 	font-size: crayon.font-size("sm");
@@ -135,8 +158,16 @@
 	}
 
 	&.is-primary {
+		grid-column: 1 / -1;
+		min-height: crayon.size(16);
 		padding-inline: crayon.size(6);
 		background: var(--primary);
+
+		@include crayon.screen("md") {
+			grid-column: auto;
+			min-height: 0;
+		}
+
 		color: var(--primary-foreground);
 		font-weight: crayon.font-weight("semibold");
 
@@ -162,10 +193,14 @@
 
 .dt-fx-transport {
 	display: grid;
+	grid-template-columns: repeat(4, 1fr);
 	border-top: 2px solid var(--border);
 	background: var(--border);
 	gap: 1px;
-	grid-template-columns: repeat(7, 1fr);
+
+	@include crayon.screen("sm") {
+		grid-template-columns: repeat(7, 1fr);
+	}
 }
 
 .dt-fx-tbtn {

@@ -30,4 +30,9 @@ export const HERO_ART: HeroArt[] = [
 		artist: 'olive',
 		url: 'https://wikipedia.org/wiki/Olive',
 	},
+	{
+		src: '/heroes/katrina.webp',
+		artist: 'Katrina Wold Art',
+		url: 'https://katrinawoldart.com/',
+	},
 ];

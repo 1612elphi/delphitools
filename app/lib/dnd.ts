@@ -1,5 +1,6 @@
 import {
 	DragDropManager,
+	KeyboardSensor,
 	PointerActivationConstraints,
 	PointerSensor,
 } from '@dnd-kit/dom';
@@ -17,6 +18,8 @@ export function createDndManager(): DragDropManager {
 					),
 				],
 			}),
+			// the Accessibility plugin announces keyboard instructions either way
+			KeyboardSensor,
 		],
 	});
 }

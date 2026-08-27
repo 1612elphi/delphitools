@@ -71,6 +71,7 @@
 @use "tools/placeholder-genny";
 @use "tools/px-to-rem";
 @use "tools/qr-genny";
+@use "tools/recipe-table";
 @use "tools/regex-tester";
 @use "tools/request-builder";
 @use "tools/sci-calc";
@@ -78,6 +79,7 @@
 @use "tools/scroll-genny";
 @use "tools/shavian-transliterator";
 @use "tools/social-cropper";
+@use "tools/stupid-units";
 @use "tools/subtitle-converter";
 @use "tools/subtitle-studio";
 @use "tools/svg-optimiser";
@@ -1258,10 +1260,10 @@ $header-height: crayon.size(14);
 	top: $header-height;
 	display: flex;
 	min-height: crayon.size(12);
+	flex-wrap: wrap;
 	align-items: stretch;
 	border-bottom: 2px solid var(--border);
 	background: var(--card);
-	overflow-x: auto;
 	transition: min-height 240ms ease-out;
 
 	&.is-finished {
@@ -1284,12 +1286,19 @@ $header-height: crayon.size(14);
 .dt-flow-name {
 	@include crayon.hstack(2);
 
-	flex: none;
+	flex: 1 1 auto;
+	min-width: 0;
+	min-height: crayon.size(12);
 	align-items: center;
 	padding-inline: crayon.size(4);
 	font-size: crayon.font-size("sm");
 	font-weight: crayon.font-weight("bold");
 	white-space: nowrap;
+
+	.dt-flow-name-text {
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
 
 	.dt-icon {
 		width: crayon.size(5);
@@ -1299,22 +1308,31 @@ $header-height: crayon.size(14);
 
 .dt-flow-steps {
 	display: flex;
-	flex: none;
+	order: 3;
+	width: 100%;
+	min-height: crayon.size(12);
 	margin: 0;
 	padding: 0;
-	border-right: 1px solid var(--border);
+	border-top: 1px solid var(--border);
 	list-style: none;
 
 	li {
 		display: flex;
+		flex: 1;
+	}
+
+	li:first-child .dt-flow-step {
+		border-left: 0;
 	}
 }
 
 .dt-flow-step {
 	@include crayon.hstack(2);
 
+	width: 100%;
 	align-items: center;
 	align-self: stretch;
+	justify-content: center;
 	padding-inline: crayon.size(4);
 	border: 0;
 	border-left: 1px solid var(--border);
@@ -1360,6 +1378,7 @@ $header-height: crayon.size(14);
 }
 
 .dt-flow-label {
+	display: none;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
@@ -1383,9 +1402,20 @@ $header-height: crayon.size(14);
 
 .dt-flow-captures {
 	display: flex;
-	min-width: 0;
-	margin-left: auto;
+	order: 4;
+	width: 100%;
+	border-top: 1px solid var(--border);
 	align-items: stretch;
+	overflow-x: auto;
+
+	// whitespace children from the each block would still draw the hairline
+	&:not(:has(.dt-flow-capture)) {
+		display: none;
+	}
+
+	.dt-flow-capture {
+		flex: none;
+	}
 }
 
 .dt-flow-capture {
@@ -1433,8 +1463,10 @@ $header-height: crayon.size(14);
 .dt-flow-next {
 	@include crayon.hstack(2);
 
-	flex: none;
+	flex: 1;
+	min-height: crayon.size(14);
 	align-items: center;
+	justify-content: center;
 	padding-inline: crayon.size(5);
 	border: 0;
 	border-left: 1px solid var(--border);
@@ -1468,6 +1500,7 @@ $header-height: crayon.size(14);
 
 .dt-flow-exit {
 	display: inline-flex;
+	order: 1;
 	flex: none;
 	width: crayon.size(12);
 	align-items: center;
@@ -1496,8 +1529,70 @@ $header-height: crayon.size(14);
 
 .dt-flow-action {
 	display: flex;
-	min-width: crayon.size(12);
+	order: 5;
+	width: 100%;
+	border-top: 1px solid var(--border);
 	align-items: stretch;
+}
+
+@include crayon.screen("lg") {
+	.dt-flow {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+	}
+
+	.dt-flow-name {
+		flex: none;
+	}
+
+	.dt-flow-steps {
+		order: 0;
+		width: auto;
+		border-top: 0;
+		border-right: 1px solid var(--border);
+
+		li {
+			flex: none;
+		}
+
+		li:first-child .dt-flow-step {
+			border-left: 1px solid var(--border);
+		}
+	}
+
+	.dt-flow-step {
+		width: auto;
+		justify-content: flex-start;
+	}
+
+	.dt-flow-label {
+		display: inline;
+	}
+
+	.dt-flow-captures {
+		order: 0;
+		width: auto;
+		flex: none;
+		margin-left: auto;
+		border-top: 0;
+	}
+
+	.dt-flow-action {
+		order: 0;
+		width: auto;
+		border-top: 0;
+	}
+
+	.dt-flow-next {
+		width: auto;
+		min-height: 0;
+		flex: none;
+		justify-content: flex-start;
+	}
+
+	.dt-flow-exit {
+		order: 0;
+	}
 }
 
 .dt-flow-next.is-done {
@@ -1563,48 +1658,77 @@ $header-height: crayon.size(14);
 	will-change: translate, scale, opacity;
 }
 
-// design.md §12 table
-.dt-wf-scroll {
-	overflow-x: auto;
+.dt-wf-list {
+	// art knobs — tweak in devtools:
+	// --wf-art-h = displayed height
+	// --wf-art-seat = seat line, % from image top (scans at ~67)
+	// --wf-art-x = horizontal nudge
+	// --wf-art-rise = how far the alien rides up over the title bar
+	--wf-art-h: 18rem;
+	--wf-art-seat: 67;
+	--wf-art-x: -28vw;
+	--wf-art-rise: 6rem;
+
+	margin-top: calc(-1 * var(--wf-art-rise));
 }
 
-.dt-wf {
+.dt-wf-art {
+	display: block;
+	width: auto;
+	height: var(--wf-art-h);
+	// seat rests on the table edge: sink everything below it behind the table
+	margin: 0 auto calc(var(--wf-art-h) * (var(--wf-art-seat) - 100) / 100);
+	translate: var(--wf-art-x) 0;
+	// art paints over the table but never eats clicks
+	position: relative;
+	z-index: 1;
+	pointer-events: none;
+}
+
+@container (max-width: 81.25rem) {
+	.dt-wf-art {
+		display: none;
+	}
+
+	.dt-wf-list {
+		margin-top: 0;
+	}
+}
+
+.dt-exp-title {
 	width: 100%;
-	min-width: crayon.size(220);
+	margin: 0 0 crayon.size(3);
+}
+
+.dt-exp-art {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+// the rows stack as cards under 56rem container width; the table returns above it
+.dt-wf {
+	display: block;
+	width: 100%;
 	border: 2px solid var(--border);
-	border-collapse: collapse;
 	background: var(--card);
-	table-layout: fixed;
-}
 
-.dt-wf-th {
-	padding: crayon.size(2) crayon.size(4);
-	border-bottom: 1px solid var(--border);
-	font-size: crayon.font-size("xs");
-	font-weight: crayon.font-weight("medium");
-	letter-spacing: crayon.tracking("wide");
-	text-align: left;
-	text-transform: uppercase;
-	color: var(--muted-foreground);
-
-	& + & {
-		border-left: 1px solid var(--border);
+	thead {
+		display: none;
 	}
 
-	&:first-child {
-		width: 26%;
+	tbody {
+		display: block;
 	}
-
-	&:last-child {
-		width: crayon.size(28);
-	}
-}
-
-.dt-wf-row + .dt-wf-row .dt-wf-cell {
-	border-top: 1px solid var(--border);
 }
 
 .dt-wf-row {
+	display: block;
+
+	& + & {
+		border-top: 1px solid var(--border);
+	}
+
 	@include crayon.hover {
 		background: var(--accent);
 		color: var(--accent-foreground);
@@ -1612,12 +1736,10 @@ $header-height: crayon.size(14);
 }
 
 .dt-wf-cell {
-	height: crayon.size(14);
-	padding: 0;
-	vertical-align: middle;
+	display: block;
 
 	& + & {
-		border-left: 1px solid var(--border);
+		border-top: 1px solid var(--border);
 	}
 }
 
@@ -1658,6 +1780,32 @@ $header-height: crayon.size(14);
 	font-size: crayon.font-size("sm");
 	line-height: crayon.leading("snug");
 
+	// rows without a third step collapse cleanly
+	&:not(:has(.dt-icon)) {
+		display: none;
+	}
+
+	// ordinals repeat the desktop column headers
+	&::before {
+		font-size: crayon.font-size("xs");
+		font-weight: crayon.font-weight("medium");
+		letter-spacing: crayon.tracking("wide");
+		text-transform: uppercase;
+		color: var(--muted-foreground);
+	}
+
+	&:nth-of-type(1)::before {
+		content: "First,\0020";
+	}
+
+	&:nth-of-type(2)::before {
+		content: "Then...\0020";
+	}
+
+	&:nth-of-type(3)::before {
+		content: "Finally,\0020";
+	}
+
 	.dt-icon {
 		display: inline-flex;
 		width: crayon.size(4);
@@ -1696,6 +1844,82 @@ $header-height: crayon.size(14);
 	&:focus-visible {
 		outline: 2px solid var(--ring);
 		outline-offset: -2px;
+	}
+}
+
+@include crayon.containers(56rem) {
+	.dt-wf {
+		display: table;
+		min-width: crayon.size(220);
+		border-collapse: collapse;
+		table-layout: fixed;
+
+		thead {
+			display: table-header-group;
+		}
+
+		tbody {
+			display: table-row-group;
+		}
+	}
+
+	.dt-wf-th {
+		padding: crayon.size(2) crayon.size(4);
+		border-bottom: 1px solid var(--border);
+		font-size: crayon.font-size("xs");
+		font-weight: crayon.font-weight("medium");
+		letter-spacing: crayon.tracking("wide");
+		text-align: left;
+		text-transform: uppercase;
+		color: var(--muted-foreground);
+
+		& + & {
+			border-left: 1px solid var(--border);
+		}
+
+		&:first-child {
+			width: 26%;
+		}
+
+		&:last-child {
+			width: crayon.size(28);
+		}
+	}
+
+	// rows can't paint borders; the divider has to live on the cells
+	.dt-wf-row + .dt-wf-row .dt-wf-cell {
+		border-top: 1px solid var(--border);
+	}
+
+	.dt-wf-row {
+		display: table-row;
+
+		& + & {
+			border-top: 0;
+		}
+	}
+
+	.dt-wf-cell {
+		display: table-cell;
+		height: crayon.size(14);
+		padding: 0;
+		vertical-align: middle;
+
+		& + & {
+			border-top: 0;
+			border-left: 1px solid var(--border);
+		}
+	}
+
+	// must match the nth-of-type specificity of the card labels
+	.dt-wf-step:nth-of-type(-n + 3) {
+		&::before {
+			content: none;
+		}
+
+		&:not(:has(.dt-icon)) {
+			display: table-cell;
+		}
 	}
 }
 
@@ -2195,7 +2419,7 @@ $header-height: crayon.size(14);
 
 .dt-wn-art {
 	display: block;
-	width: min(60%, 12rem);
+	width: 100%;
 	height: auto;
 	margin: 0 auto crayon.size(3);
 }
@@ -2542,6 +2766,7 @@ $header-height: crayon.size(14);
 }
 
 .dt-cell {
+	position: relative;
 	display: block;
 	padding: crayon.size(4);
 	background: var(--card);
@@ -2637,6 +2862,22 @@ $header-height: crayon.size(14);
 	font-size: crayon.font-size("sm");
 }
 
+// .dt-badge.is-new hides below sm via show-from; this one persists
+.dt-cell-badge {
+	position: absolute;
+	top: crayon.size(3);
+	inset-inline-end: crayon.size(3);
+	padding: crayon.size(0.5) crayon.size(1);
+	background: var(--foreground);
+	color: var(--background);
+	font-size: crayon.size(2.5);
+	opacity: 0.5;
+	font-weight: crayon.font-weight("medium");
+	letter-spacing: crayon.tracking("wide");
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
 .dt-cell-desc {
 	display: block;
 	margin-top: crayon.size(1);
@@ -2705,6 +2946,7 @@ $header-height: crayon.size(14);
 }
 
 .dt-tool-page {
+	container-type: inline-size;
 	padding: crayon.size(6);
 
 	@include crayon.screen("md") {
@@ -2773,6 +3015,21 @@ $header-height: crayon.size(14);
 	background: transparent;
 	border: 1px solid color-mix(in oklch, var(--primary) 50%, transparent);
 	color: var(--primary);
+}
+
+.dt-badge.is-experiment {
+	padding-inline-start: crayon.size(1);
+
+	&::before {
+		content: "";
+		display: inline-block;
+		width: 1em;
+		height: 1em;
+		margin-inline-end: crayon.size(1);
+		vertical-align: -0.15em;
+		background: url("/art/alien-badge.webp") center / contain
+			no-repeat;
+	}
 }
 
 .dt-tool-desc {

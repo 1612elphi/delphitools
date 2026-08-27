@@ -232,6 +232,22 @@ export default class AppSidebar extends Component {
 								>Workflows</span>
 							</LinkTo>
 						</NavTip>
+						<NavTip
+							@label="Experiments"
+							@show={{this.collapsed}}
+						>
+							<LinkTo
+								@route="experiments"
+								class="dt-nav-link"
+							>
+								<Icon
+									@name="flask-conical"
+								/>
+								<span
+									class="dt-nav-label"
+								>Experiments</span>
+							</LinkTo>
+						</NavTip>
 					</div>
 				{{/unless}}
 

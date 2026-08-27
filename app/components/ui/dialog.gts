@@ -4,7 +4,6 @@ import { hash } from '@ember/helper';
 import { on } from '@ember/modifier';
 import { modifier } from 'ember-modifier';
 import type { ModifierLike, WithBoundArgs } from '@glint/template';
-import type { TOC } from '@ember/component/template-only';
 
 /**
  * local not vendored: showModal() gives focus trap, escape, top layer
@@ -21,12 +20,28 @@ interface ContentSignature {
 	Blocks: { default: [] };
 }
 
-const Content: TOC<ContentSignature> = <template>
-	{{! hidden until showModal() }}
-	<dialog {{@register}} {{on "close" @onClose}} ...attributes>
-		{{yield}}
-	</dialog>
-</template>;
+// native <dialog> never closes on ::backdrop clicks; those surface as clicks on
+// the dialog element itself. no rect check: a click-release outside after a
+// press inside counts as a backdrop click, matching native conventions.
+class Content extends Component<ContentSignature> {
+	closeOnBackdrop = (event: MouseEvent) => {
+		if (event.target === event.currentTarget) {
+			(event.currentTarget as HTMLDialogElement).close();
+		}
+	};
+
+	<template>
+		{{! hidden until showModal() }}
+		<dialog
+			{{@register}}
+			{{on "click" this.closeOnBackdrop}}
+			{{on "close" @onClose}}
+			...attributes
+		>
+			{{yield}}
+		</dialog>
+	</template>;
+}
 
 export interface DialogSignature {
 	Args: {

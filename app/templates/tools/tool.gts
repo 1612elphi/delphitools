@@ -2,7 +2,10 @@ import RouteTemplate from 'ember-route-template';
 import { pageTitle } from 'ember-page-title';
 import Icon from 'delphitools-v2/components/icon';
 import { PeelSticker } from 'delphitools-v2/components/sticker-wall';
+import { EXPERIMENTS_ID, type ToolCategory } from 'delphitools-v2/lib/tools';
 import type { ToolModel } from 'delphitools-v2/routes/tools/tool';
+
+const isExperiment = (category: ToolCategory) => category.id === EXPERIMENTS_ID;
 
 export default RouteTemplate<{ Args: { model: ToolModel } }>(
 	<template>
@@ -31,7 +34,13 @@ export default RouteTemplate<{ Args: { model: ToolModel } }>(
 							>{{@model.tool.name}}</h1>
 							{{#if @model.category}}
 								<span
-									class="dt-badge"
+									class="dt-badge
+										{{if
+											(isExperiment
+												@model.category
+											)
+											'is-experiment'
+										}}"
 								>{{@model.category.name}}</span>
 							{{/if}}
 							{{#if @model.tool.beta}}

@@ -16,6 +16,9 @@ export interface SortableSignature {
 			data?: Data;
 			handle?: string;
 			disabled?: boolean;
+			// dnd-kit's own filter: a sortable only lands on droppables that accept its type
+			type?: UniqueIdentifier;
+			accept?: UniqueIdentifier | UniqueIdentifier[];
 			manager?: DragDropManager;
 		};
 	};
@@ -63,6 +66,12 @@ export default class SortableModifier extends Modifier<SortableSignature> {
 					group: named.group,
 					data: named.data,
 					disabled: named.disabled ?? false,
+					...(named.type !== undefined
+						? { type: named.type }
+						: {}),
+					...(named.accept !== undefined
+						? { accept: named.accept }
+						: {}),
 				},
 				manager,
 			);
