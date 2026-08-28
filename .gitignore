@@ -1,60 +1,67 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# compiled output
+/dist/
+/tmp/
 
 # dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
+/node_modules/
 
 # misc
-.DS_Store
-*.pem
-# package-lock.json is tracked on purpose: CF Pages can't read the text-format
-# bun.lock and would otherwise npm-install unpinned (broke the 2026-07-24 deploy)
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
+*.local
+/.pnp*
+/.eslintcache
+/coverage/
+*.log
 *.tsbuildinfo
-next-env.d.ts
+/.vite/
+/.cache/
 
-# local design sketches / mockups (not shipped)
-/sketches/
+# broccoli-debug
+/DEBUG/
 
-# claude
+# macOS noise
+.DS_Store
+
+# env: .env.development is tracked; local overrides are not
+.env*.local
+
+# claude / local-only working notes
+AGENTS.md
 CLAUDE.md
-DESIGN.md
-/docs
-.superpowers/
-.claude/scheduled_tasks.lock
+/.claude/
+/.superpowers/
+
+# agent worktrees and scratch clones
+/.delta/
+/.emdash/
+/.context/
+
+# editors
+/.cursor/
+/.vscode/
+/.idea/
+/.zed/
+
+# root markdown is local-only and lives in wheelybin/; LICENSE is the exception
+/README.md
+/ACKNOWLEDGEMENTS.md
+/AI-POLICY.md
+/CONTRIBUTING.md
+/DESIGN.md
+/PARITY.md
+/STATE.md
+
+# wheelybin: local-only scratch
+/wheelybin/
 
 # session scratch (one-off debug/repro rigs land as root dot-files;
 # anything worth keeping graduates into scripts/verify/)
 /.*.mjs
+!/.prettierrc.mjs
+!/.stylelintrc.mjs
+!/.template-lintrc.mjs
 
 # build data (downloaded source files for dictionary builds)
-scripts/data/
+/scripts/data/
+
+# package-lock.json is tracked on purpose: CF Pages can't read the text-format
+# bun.lock and would otherwise npm-install unpinned (broke the 2026-07-24 deploy)

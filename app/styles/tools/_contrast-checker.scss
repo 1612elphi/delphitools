@@ -1,0 +1,265 @@
+@use "../crayon-config" as crayon;
+
+// no green theme token
+$pass: crayon.color("green-500");
+
+.dt-contrast {
+	border: 2px solid var(--border);
+}
+
+.dt-contrast-inputs {
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-contrast-row {
+	display: flex;
+	align-items: stretch;
+
+	& + & {
+		border-top: 1px solid var(--border);
+	}
+}
+
+// input covers whole cell
+.dt-contrast-swatch {
+	position: relative;
+	display: block;
+	width: crayon.size(14);
+	flex-shrink: 0;
+
+	> span {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+
+	input[type="color"] {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		cursor: pointer;
+	}
+}
+
+.dt-contrast-field {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	flex-direction: column;
+	justify-content: center;
+	padding: crayon.size(3) crayon.size(4);
+	border-left: 1px solid var(--border);
+}
+
+.dt-contrast-label {
+	display: block;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+	letter-spacing: crayon.tracking("wide");
+	text-transform: uppercase;
+}
+
+.dt-contrast-hex {
+	width: 100%;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	outline: none;
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-contrast-alt {
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("xs");
+}
+
+// both classes outrank .segmented
+.segmented.dt-contrast-actions {
+	grid-template-columns: repeat(3, 1fr);
+	border-block: 0;
+	border-inline: 0;
+	border-bottom: 2px solid var(--border);
+
+	button {
+		@include crayon.hstack(2);
+
+		align-items: center;
+		justify-content: center;
+		padding: crayon.size(3);
+		background: var(--background);
+		color: inherit;
+		font: inherit;
+		font-size: crayon.font-size("sm");
+		cursor: pointer;
+
+		.dt-icon {
+			width: crayon.size(4);
+			height: crayon.size(4);
+		}
+
+		@include crayon.hover {
+			background: var(--muted);
+		}
+
+		&:disabled {
+			color: var(--muted-foreground);
+			cursor: not-allowed;
+			opacity: 0.5;
+		}
+	}
+}
+
+.dt-contrast-ratio {
+	padding: crayon.size(5) crayon.size(4);
+	border-bottom: 2px solid var(--border);
+	text-align: center;
+}
+
+.dt-contrast-ratio-value {
+	display: block;
+	margin-top: crayon.size(1);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("5xl");
+	font-weight: crayon.font-weight("bold");
+	line-height: crayon.leading("none");
+}
+
+.dt-contrast-verdict {
+	display: block;
+	margin-top: crayon.size(2);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-contrast-block {
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-contrast-head {
+	padding: crayon.size(3) crayon.size(4);
+
+	&.is-ruled {
+		border-bottom: 1px solid var(--border);
+	}
+}
+
+.dt-contrast-heading {
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-contrast-preview {
+	padding: crayon.size(8) crayon.size(6);
+}
+
+.dt-contrast-large {
+	margin-bottom: crayon.size(2);
+	font-size: crayon.font-size("4xl");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-contrast-normal {
+	margin-bottom: crayon.size(4);
+	font-size: crayon.font-size("base");
+}
+
+.dt-contrast-small {
+	font-size: crayon.font-size("sm");
+}
+
+.dt-contrast-check {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+}
+
+.dt-contrast-level {
+	display: flex;
+	width: crayon.size(16);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border-right: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-contrast-desc {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	align-items: baseline;
+	gap: crayon.size(2);
+	padding: crayon.size(3) crayon.size(4);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-contrast-threshold {
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("xs");
+}
+
+.dt-contrast-mark {
+	display: flex;
+	width: crayon.size(16);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border-left: 1px solid var(--border);
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+}
+
+.dt-contrast-mark.is-pass {
+	background: color-mix(in oklch, #{$pass} 10%, transparent);
+	color: crayon.color("green-600");
+
+	@include crayon.dark {
+		color: crayon.color("green-400");
+	}
+}
+
+.dt-contrast-mark.is-fail {
+	background: color-mix(in oklch, var(--destructive) 10%, transparent);
+	color: var(--destructive);
+}
+
+.dt-contrast-about {
+	padding: crayon.size(4);
+}
+
+.dt-contrast-about-title {
+	display: block;
+	margin-bottom: crayon.size(2);
+	font-weight: crayon.font-weight("bold");
+}
+
+// crayon reset needs role="list"
+.dt-contrast-about ul {
+	padding-left: 0;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	list-style: none;
+}
+
+.dt-contrast-about li + li {
+	margin-top: crayon.size(1);
+}

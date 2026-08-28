@@ -1,0 +1,232 @@
+// zero-specificity button reset
+:where(.sub-editor-viewport) :where(button) {
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+}
+
+.dt-switch {
+	appearance: none;
+	position: relative;
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	inline-size: 32px;
+	block-size: 18px;
+	margin: 0;
+	border: 1px solid transparent;
+	border-radius: 9999px;
+	background-color: var(--input);
+	cursor: pointer;
+	transition: background-color 120ms ease;
+
+	&::before {
+		content: "";
+		position: absolute;
+		inset-inline-start: 1px;
+		inline-size: 16px;
+		block-size: 16px;
+		border-radius: 9999px;
+		background-color: var(--background);
+		transition: translate 120ms ease;
+	}
+
+	&:checked {
+		background-color: var(--primary);
+
+		&::before {
+			translate: 13px 0;
+		}
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 1px;
+	}
+
+	&:disabled {
+		cursor: not-allowed;
+		opacity: 0.5;
+	}
+}
+
+.dt-cf-hex {
+	min-inline-size: 0;
+	border: 1px solid var(--border);
+	background-color: var(--card);
+	padding: 4px 8px;
+	font-size: 11px;
+	font-family: var(--font-mono);
+	color: var(--foreground);
+
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -1px;
+	}
+}
+
+.dt-cf-swatch {
+	position: relative;
+}
+
+.dt-cf-swatch-fill {
+	inline-size: 100%;
+	block-size: 100%;
+}
+
+.dt-cf-swatch-input {
+	position: absolute;
+	inset: 0;
+	inline-size: 100%;
+	block-size: 100%;
+	cursor: pointer;
+	opacity: 0;
+}
+
+.sub-seg-cell {
+	display: grid;
+	place-items: center;
+	block-size: 24px;
+	min-inline-size: 26px;
+	padding-inline: 6px;
+	background-color: var(--card);
+	color: var(--muted-foreground);
+	font-size: 10.5px;
+	font-variant-numeric: tabular-nums;
+	cursor: pointer;
+
+	&:hover {
+		background-color: var(--accent);
+		color: var(--foreground);
+	}
+
+	&.is-active {
+		background-color: var(--primary);
+		color: var(--primary-foreground);
+	}
+
+	.dt-icon {
+		inline-size: 14px;
+		block-size: 14px;
+	}
+}
+
+// taller than preset cells
+.sub-seg-4 {
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+
+	> .sub-seg-cell {
+		block-size: 28px;
+		min-inline-size: 30px;
+	}
+}
+
+.sub-preset-row {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 4px;
+}
+
+.sub-stepper {
+	display: inline-flex;
+	align-items: stretch;
+	border: 1px solid var(--border);
+}
+
+.sub-stepper-value {
+	display: grid;
+	place-items: center;
+	block-size: 24px;
+	min-inline-size: 42px;
+	padding-inline: 4px;
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+}
+
+.sub-step-btn {
+	display: grid;
+	place-items: center;
+	block-size: 24px;
+	inline-size: 22px;
+	border-inline-start: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	&:hover {
+		background-color: var(--accent);
+		color: var(--foreground);
+	}
+
+	&:disabled {
+		pointer-events: none;
+		opacity: 0.3;
+	}
+
+	.dt-icon {
+		inline-size: 12px;
+		block-size: 12px;
+	}
+}
+
+.sub-font-trigger {
+	gap: 4px;
+	border-radius: 0;
+	border-color: var(--border);
+	background-color: var(--card);
+	padding-inline: 8px;
+	font-size: 11px;
+	box-shadow: none;
+
+	.dt-icon {
+		inline-size: 12px;
+		block-size: 12px;
+	}
+}
+
+// native range replaces radix slider
+.sub-slider {
+	appearance: none;
+	flex: 1;
+	min-inline-size: 0;
+	block-size: 14px;
+	background: none;
+	cursor: pointer;
+
+	&:disabled {
+		pointer-events: none;
+	}
+
+	&::-webkit-slider-runnable-track {
+		block-size: 2px;
+		background-color: var(--border);
+	}
+
+	&::-moz-range-track {
+		block-size: 2px;
+		background-color: var(--border);
+	}
+
+	&::-webkit-slider-thumb {
+		appearance: none;
+		margin-block-start: -5px;
+		inline-size: 12px;
+		block-size: 12px;
+		border: 1px solid var(--border);
+		background-color: var(--primary);
+	}
+
+	&::-moz-range-thumb {
+		inline-size: 12px;
+		block-size: 12px;
+		border: 1px solid var(--border);
+		border-radius: 0;
+		background-color: var(--primary);
+	}
+}

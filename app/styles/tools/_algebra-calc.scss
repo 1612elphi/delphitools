@@ -1,0 +1,262 @@
+@use "../crayon-config" as crayon;
+
+.dt-alg {
+	border: 2px solid var(--border);
+}
+
+/* two classes outrank segmented */
+.segmented.dt-alg-ops {
+	grid-template-columns: repeat(3, 1fr);
+	border-inline: 0;
+	border-top: 0;
+	border-bottom-width: 2px;
+
+	@include crayon.screen("sm") {
+		grid-template-columns: repeat(6, 1fr);
+	}
+}
+
+.dt-alg-op {
+	height: crayon.size(10);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+
+		@include crayon.hover {
+			background: var(--primary);
+		}
+	}
+}
+
+.dt-alg-section {
+	@include crayon.vstack(1);
+
+	padding: crayon.size(4);
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-alg-label {
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-alg-field {
+	display: flex;
+	align-items: stretch;
+	border: 1px solid var(--border);
+}
+
+.dt-alg-input {
+	min-width: 0;
+	height: crayon.size(12);
+	flex: 1;
+	padding-inline: crayon.size(3);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("lg");
+	outline: none;
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-alg-var {
+	display: flex;
+	align-items: center;
+	border-left: 1px solid var(--border);
+}
+
+.dt-alg-var-label {
+	padding-inline: crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	user-select: none;
+}
+
+.dt-alg-var-input {
+	width: crayon.size(12);
+	height: crayon.size(12);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font-family: crayon.font-family("mono");
+	text-align: center;
+	outline: none;
+}
+
+.dt-alg-run {
+	@include crayon.hstack(2);
+
+	width: 100%;
+	height: crayon.size(14);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-bottom: 2px solid var(--border);
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font: inherit;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--primary) 90%, black);
+	}
+
+	&:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+}
+
+.dt-alg-result {
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-alg-error {
+	padding: crayon.size(4);
+	border-bottom: 1px solid var(--border);
+	color: var(--destructive);
+}
+
+.dt-alg-echo {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding: crayon.size(2) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-alg-echo-value {
+	color: var(--foreground);
+	font-family: crayon.font-family("mono");
+}
+
+.dt-alg-output-row {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+}
+
+/* katex not bundled */
+.dt-alg-output {
+	min-width: 0;
+	flex: 1;
+	align-self: center;
+	overflow-x: auto;
+	padding: crayon.size(6) crayon.size(4);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("2xl");
+}
+
+.dt-alg-copy {
+	display: flex;
+	width: crayon.size(14);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: transparent;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-alg-block {
+	border-bottom: 2px solid var(--border);
+
+	&.is-last {
+		border-bottom: 0;
+	}
+}
+
+.dt-alg-block-head {
+	padding: crayon.size(4) crayon.size(4) crayon.size(2);
+}
+
+.dt-alg-examples {
+	display: flex;
+	flex-wrap: wrap;
+	border-top: 1px solid var(--border);
+}
+
+.dt-alg-example {
+	padding: crayon.size(2) crayon.size(4);
+	border: 0;
+	border-bottom: 1px solid var(--border);
+	background: transparent;
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	& + & {
+		border-left: 1px solid var(--border);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-alg-syntax {
+	border-top: 1px solid var(--border);
+}
+
+.dt-alg-syntax-row {
+	display: flex;
+	align-items: center;
+	border-bottom: 1px solid var(--border);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+}
+
+.dt-alg-syntax-label {
+	flex: 1;
+	padding: crayon.size(2) crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-alg-syntax-code {
+	padding: crayon.size(2) crayon.size(4);
+	border-left: 1px solid var(--border);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+}

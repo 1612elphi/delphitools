@@ -1,0 +1,370 @@
+// tailwind of inspector-panel.tsx, gradient-row.tsx, transient-colour.tsx
+
+.sub-tc {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.sub-tc-swatch {
+	flex-shrink: 0;
+	inline-size: 36px;
+	block-size: 24px;
+	border: 1px solid var(--border);
+}
+
+.sub-tc-hex {
+	inline-size: 76px;
+	block-size: 24px;
+	padding-inline: 6px;
+	font-variant-numeric: tabular-nums;
+	box-shadow: none;
+}
+
+.sub-insp {
+	display: flex;
+	flex-direction: column;
+	block-size: 100%;
+	overflow: hidden;
+	font-size: 12px;
+	line-height: 16px;
+}
+
+.sub-insp-head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	border-block-end: 1px solid var(--border);
+	background-color: var(--accent);
+	padding: 6px 12px;
+}
+
+.sub-insp-badge {
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+	inline-size: 24px;
+	block-size: 24px;
+	background-color: var(--primary);
+	color: var(--primary-foreground);
+
+	.dt-icon {
+		inline-size: 14px;
+		block-size: 14px;
+	}
+}
+
+.sub-insp-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-weight: 600;
+	color: var(--accent-foreground);
+}
+
+.sub-insp-name-placeholder {
+	font-weight: 400;
+	color: color-mix(in oklab, var(--accent-foreground) 70%, transparent);
+}
+
+.sub-insp-name-dim {
+	color: color-mix(in oklab, var(--accent-foreground) 70%, transparent);
+}
+
+.sub-insp-count {
+	flex-shrink: 0;
+	border: 1px solid var(--border);
+	background-color: var(--card);
+	padding-inline: 4px;
+	font-size: 10px;
+	font-variant-numeric: tabular-nums;
+	color: var(--muted-foreground);
+}
+
+.sub-insp-count-end {
+	margin-inline-start: auto;
+}
+
+.sub-insp-dims {
+	margin-inline-start: auto;
+	flex-shrink: 0;
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+	color: var(--muted-foreground);
+}
+
+.sub-insp-scroll {
+	min-block-size: 0;
+	flex: 1 1 0%;
+	overflow-y: auto;
+}
+
+.sub-insp-section-title {
+	padding: 8px 12px 6px;
+	font-size: 10.5px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.025em;
+	color: var(--muted-foreground);
+}
+
+.sub-insp-section {
+	border-block-start: 1px solid var(--border);
+}
+
+.sub-insp-grid {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	border-inline: 0;
+	border-block-end: 0;
+}
+
+.sub-insp-num {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	block-size: 28px;
+	background-color: var(--card);
+	padding-inline: 10px;
+}
+
+.sub-insp-num-glyph {
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+	inline-size: 14px;
+	font-size: 11px;
+	color: var(--muted-foreground);
+
+	.dt-icon {
+		inline-size: 12px;
+		block-size: 12px;
+	}
+}
+
+.sub-insp-num-input {
+	inline-size: 100%;
+	min-inline-size: 0;
+	border: 0;
+	background-color: transparent;
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+	color: inherit;
+	outline: none;
+}
+
+.sub-insp-num-unit {
+	flex-shrink: 0;
+	font-size: 10.5px;
+	color: var(--muted-foreground);
+}
+
+.sub-insp-row,
+.sub-grad-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	min-block-size: 32px;
+	border-block-end: 1px solid var(--border);
+	padding: 4px 12px;
+	font-size: 11px;
+}
+
+.sub-insp-row:last-child,
+.sub-grad-row:last-child {
+	border-block-end: 0;
+}
+
+.sub-insp-row-label,
+.sub-grad-row-label {
+	color: var(--muted-foreground);
+}
+
+.sub-insp-seg-2 {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sub-insp-dir-cell {
+	block-size: 24px;
+	padding-inline: 8px;
+	font-size: 10.5px;
+	text-transform: uppercase;
+}
+
+.sub-insp-font {
+	inline-size: 120px;
+	block-size: 24px;
+}
+
+.sub-insp-appearance {
+	display: flex;
+	align-items: stretch;
+	flex-shrink: 0;
+	block-size: 36px;
+	border-block-start: 2px solid var(--border);
+}
+
+.sub-insp-blend-trigger {
+	flex: 1 1 0%;
+	min-inline-size: 0;
+	gap: 4px;
+	block-size: 100%;
+	border: 0;
+	background-color: var(--card);
+	padding-inline: 12px;
+	font-size: 12px;
+	box-shadow: none;
+
+	&:hover {
+		background-color: var(--accent);
+	}
+
+	&:focus-visible {
+		outline: none;
+	}
+}
+
+.sub-insp-blend-item {
+	font-size: 12px;
+}
+
+.sub-insp-opacity {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	flex-shrink: 0;
+	inline-size: 62px;
+	block-size: 100%;
+	border-inline-start: 1px solid var(--border);
+	background-color: var(--card);
+	padding-inline: 12px;
+}
+
+.sub-insp-opacity-input {
+	inline-size: 100%;
+	min-inline-size: 0;
+	border: 0;
+	background-color: transparent;
+	text-align: end;
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+	color: inherit;
+	outline: none;
+}
+
+.sub-insp-opacity-unit {
+	flex-shrink: 0;
+	font-size: 10px;
+	color: var(--muted-foreground);
+}
+
+.sub-insp-info {
+	border-block-end: 1px solid var(--border);
+}
+
+.sub-insp-info-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 5px 12px;
+	font-size: 11.5px;
+}
+
+.sub-insp-info-label {
+	color: var(--muted-foreground);
+}
+
+.sub-insp-info-value {
+	font-variant-numeric: tabular-nums;
+}
+
+.sub-insp-canvas-size {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	border-block-end: 2px solid var(--border);
+	background: none;
+	padding: 8px 12px;
+	font-size: 11px;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	&:hover {
+		background-color: var(--accent);
+		color: var(--foreground);
+	}
+
+	.dt-icon {
+		inline-size: 14px;
+		block-size: 14px;
+	}
+}
+
+.sub-grad-fill {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 4px;
+}
+
+.sub-grad-mode {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sub-grad-mode-cell {
+	block-size: 24px;
+	padding-inline: 8px;
+	font-size: 10.5px;
+	text-transform: capitalize;
+}
+
+.sub-grad-preview-wrap {
+	border-block-end: 1px solid var(--border);
+	padding: 8px 12px;
+}
+
+.sub-grad-preview {
+	position: relative;
+	margin-inline: 6px;
+	block-size: 24px;
+	border: 1px solid var(--border);
+}
+
+.sub-grad-preview-fill {
+	position: absolute;
+	inset: 0;
+}
+
+.sub-grad-stop {
+	position: absolute;
+	inset-block-start: 0;
+	block-size: 100%;
+	inline-size: 10px;
+	translate: -50% 0;
+	border: 1px solid var(--border);
+	padding: 0;
+	cursor: pointer;
+
+	&.is-selected {
+		z-index: 10;
+		border-color: var(--primary);
+		box-shadow: 0 0 0 1px var(--primary);
+	}
+}
+
+.sub-grad-stopcount {
+	display: inline-flex;
+	align-items: stretch;
+	border: 1px solid var(--border);
+}
+
+.sub-grad-stopcount-value {
+	display: grid;
+	place-items: center;
+	block-size: 24px;
+	min-inline-size: 42px;
+	padding-inline: 4px;
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+}

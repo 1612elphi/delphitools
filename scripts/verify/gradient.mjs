@@ -1,28 +1,16 @@
-// Headless verification for the Inspector gradient authoring UI (delete after use).
-// Pins the Inspector to the right sidebar via localStorage BEFORE load, draws a
-// rect with the real tool, then drives the actual Fill-row buttons and checks
-// rendered pixels + undo granularity.
-import puppeteer from "puppeteer-core";
+import {
+  BASE,
+  check,
+  finish,
+  launch,
+  openModule,
+  sleep,
+} from "./harness.mjs";
 
-const URL = process.env.EDITOR_URL ?? "http://localhost:3000/editor";
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-let failures = 0;
-
-const browser = await puppeteer.launch({
-  executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-  headless: "new",
-  args: ["--window-size=1500,950"],
-});
-const page = await browser.newPage();
-await page.setViewport({ width: 1460, height: 900 });
-page.on("pageerror", (e) => console.log("PAGEERROR:", e.message));
-await page.evaluateOnNewDocument(() => {
-  localStorage.setItem("substrata:layout:pinned", JSON.stringify(["inspector"]));
-  localStorage.setItem("substrata:layout:moduleDock", JSON.stringify({ inspector: "right" }));
-});
-await page.goto(URL, { waitUntil: "networkidle0" });
-await page.waitForFunction(() => window.__substrata, { timeout: 20000 });
-await sleep(800); // layout hydration + sidebar slide-in settle before reading vt
+const { browser, page } = await launch({ viewport: { width: 1500, height: 950 } });
+await page.goto(`${BASE}/editor`, { waitUntil: "networkidle2" });
+await page.waitForFunction(() => window.__substrata, { timeout: 25000 });
+await sleep(600);
 
 const vt = await page.evaluate(() => window.__substrata.vt());
 const rect = await page.evaluate(() => {
@@ -30,138 +18,169 @@ const rect = await page.evaluate(() => {
   return { left: r.left, top: r.top };
 });
 const toCanvas = (sx, sy) => ({ x: sx * vt[0] + vt[4], y: sy * vt[3] + vt[5] });
-const toPage = (sx, sy) => {
-  const p = toCanvas(sx, sy);
-  return { x: rect.left + p.x, y: rect.top + p.y };
-};
 const sample = async (sx, sy) => {
   const p = toCanvas(sx, sy);
+  // rAF or stale reads
+  await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
   return page.evaluate(([x, y]) => window.__substrata.samplePixel(x, y), [p.x, p.y]);
 };
 const near = (px, rgb, tol = 20) =>
-  Math.abs(px[0] - rgb[0]) <= tol && Math.abs(px[1] - rgb[1]) <= tol && Math.abs(px[2] - rgb[2]) <= tol;
-const check = (label, got, ok) => {
-  console.log(`${ok ? "PASS" : "FAIL"}  ${label}  [${Array.isArray(got) ? got.join(",") : got}]`);
-  if (!ok) failures++;
+  !!px && rgb.every((v, i) => Math.abs(px[i] - v) <= tol);
+
+const drag = async (s0, s1) => {
+  const a = toCanvas(s0.x, s0.y);
+  const b = toCanvas(s1.x, s1.y);
+  await page.mouse.move(rect.left + a.x, rect.top + a.y);
+  await page.mouse.down();
+  await page.mouse.move(rect.left + b.x, rect.top + b.y, { steps: 8 });
+  await page.mouse.up();
+  await sleep(350);
 };
 const undo = async () => {
   await page.keyboard.down("Meta");
   await page.keyboard.press("z");
   await page.keyboard.up("Meta");
-  await sleep(300);
-};
-const drag = async (s0, s1) => {
-  const a = toPage(s0.x, s0.y);
-  const b = toPage(s1.x, s1.y);
-  await page.mouse.move(a.x, a.y);
-  await page.mouse.down();
-  await page.mouse.move(b.x, b.y, { steps: 8 });
-  await page.mouse.up();
   await sleep(350);
 };
 
-// ── inspector-panel DOM drivers (all in-page; scoped to the right sidebar) ──
-const inPanel = `(() => document.querySelector("div.w-56.border-l"))`;
-const clickBtn = async (text) => {
-  const ok = await page.evaluate((t) => {
-    const panel = document.querySelector("div.w-56.border-l");
-    const b = [...panel.querySelectorAll("button")].find((x) => x.textContent.trim() === t);
-    if (!b) return false;
-    b.click();
-    return true;
-  }, text);
-  if (!ok) console.log(`  (button "${text}" not found)`);
-  await sleep(300);
-  return ok;
-};
-const rowText = (label) =>
+// module remounts; always re-query
+const clickMode = (text) =>
+  page
+    .evaluate((t) => {
+      const b = [...document.querySelectorAll(".sub-grad-mode-cell")].find(
+        (x) => x.textContent.trim() === t,
+      );
+      b?.click();
+      return !!b;
+    }, text)
+    .then(async (ok) => {
+      await sleep(300);
+      return ok;
+    });
+
+const rowValue = (label) =>
   page.evaluate((l) => {
-    const panel = document.querySelector("div.w-56.border-l");
-    const row = [...panel.querySelectorAll("div")].find(
-      (d) => d.firstElementChild?.tagName === "SPAN" && d.firstElementChild.textContent === l,
+    const row = [...document.querySelectorAll(".sub-grad-row")].find(
+      (r) => r.querySelector(".sub-grad-row-label")?.textContent.trim() === l,
     );
-    return row ? row.textContent.replace(/\s+/g, " ").trim() : null;
+    if (!row) return null;
+    const stepper = row.querySelector(".sub-stepper-value");
+    const stops = row.querySelector(".sub-grad-stopcount-value");
+    return (stepper ?? stops)?.textContent.replace(/\s+/g, " ").trim() ?? null;
   }, label);
-// click the up (first) / down (second) chevron in a labelled Stepper row
-const rowStep = async (label, dir, times = 1) => {
+
+const rowPress = async (label, aria, times = 1) => {
   for (let i = 0; i < times; i++) {
     await page.evaluate(
-      ([l, d]) => {
-        const panel = document.querySelector("div.w-56.border-l");
-        const row = [...panel.querySelectorAll("div")].find(
-          (x) => x.firstElementChild?.tagName === "SPAN" && x.firstElementChild.textContent === l,
+      ([l, a]) => {
+        const row = [...document.querySelectorAll(".sub-grad-row")].find(
+          (r) => r.querySelector(".sub-grad-row-label")?.textContent.trim() === l,
         );
-        row?.querySelectorAll("button")[d === "up" ? 0 : 1]?.click();
+        row?.querySelector(`button[aria-label="${a}"]`)?.click();
       },
-      [label, dir],
+      [label, aria],
     );
     await sleep(120);
   }
-  await sleep(200);
+  await sleep(220);
 };
 
-const BASE = [204, 34, 0]; // #cc2200
+const rowDisabled = (label, aria) =>
+  page.evaluate(
+    ([l, a]) => {
+      const row = [...document.querySelectorAll(".sub-grad-row")].find(
+        (r) => r.querySelector(".sub-grad-row-label")?.textContent.trim() === l,
+      );
+      return row?.querySelector(`button[aria-label="${a}"]`)?.disabled ?? null;
+    },
+    [label, aria],
+  );
 
-// 1) draw a solid rect via the real tool; it stays selected → Inspector shows it.
+const BASE_RGB = [204, 34, 0];
+check("omnibar Inspector trigger found", await openModule(page, "Inspector"));
+
 await page.evaluate(() => {
   window.__substrata.setTool("pieces", "primitives");
-  window.__substrata.toolSettings("pieces", { shape: "rectangle", fill: "#cc2200", stroke: null, cornerRadius: 0 });
+  window.__substrata.toolSettings("pieces", {
+    shape: "rectangle",
+    fill: "#cc2200",
+    stroke: null,
+    cornerRadius: 0,
+  });
 });
 await drag({ x: 600, y: 500 }, { x: 1000, y: 700 });
 let px = await sample(800, 600);
-check("baseline: solid rect drawn", px, near(px, BASE));
+check("baseline: solid rect drawn", near(px, BASE_RGB), `${px}`);
 
-// 2) Fill row → Gradient: converts to a 2-stop linear (base → darker base), 0°.
-check("ui: gradient button present", "click", await clickBtn("gradient"));
+const fillModes = await page.evaluate(() =>
+  [...document.querySelectorAll(".sub-grad-mode-cell")].map((b) => b.textContent.trim()),
+);
+check(
+  "Fill row shows the solid/gradient pair",
+  fillModes.slice(0, 2).join(",") === "solid,gradient",
+  fillModes.join(","),
+);
+
+check("gradient mode cell clicks", await clickMode("gradient"));
 const left0 = await sample(610, 600);
-check("gradient: left edge ≈ stop[0] (base colour)", left0, near(left0, BASE, 26));
-px = await sample(960, 560); // clear of the mid-right selection handle at (1000,600)
-check("gradient: far side darker, same hue-ish", px, px[0] < left0[0] - 30 && px[0] >= px[1] && px[0] >= px[2]);
+check("gradient: left edge is stop[0] (the base colour)", near(left0, BASE_RGB, 26), `${left0}`);
+px = await sample(960, 560); // clear of handle at (1000,600)
+check(
+  "gradient: far side is darker, same hue",
+  px[0] < left0[0] - 30 && px[0] >= px[1] && px[0] >= px[2],
+  `${px}`,
+);
 
-// 3) the whole solid→gradient conversion is ONE undo step.
 await undo();
 px = await sample(960, 560);
-check("gradient toggle = one undo step (flat again)", px, near(px, BASE));
+check("solid→gradient is one undo step", near(px, BASE_RGB), `${px}`);
 
-// 4) re-enter gradient; Angle stepper 0→90 (6 clicks) = vertical ramp, top = stop[0].
-await clickBtn("gradient");
-await rowStep("Angle", "up", 6);
-check("angle stepper reads 90°", await rowText("Angle"), (await rowText("Angle"))?.includes("90 °"));
+await clickMode("gradient");
+await rowPress("Angle", "Increase", 6);
+const angle90 = await rowValue("Angle");
+check("Angle stepper reads 90 °", angle90 === "90 °", angle90 ?? "(no row)");
 const top = await sample(800, 515);
 const bottom = await sample(800, 685);
-check("angle 90°: top ≈ stop[0]", top, near(top, BASE, 30));
-check("angle 90°: bottom darker than top", [top[0], bottom[0]], bottom[0] < top[0] - 40);
+check("angle 90°: top is stop[0]", near(top, BASE_RGB, 30), `${top}`);
+check("angle 90°: bottom darker than top", bottom[0] < top[0] - 40, `${top} → ${bottom}`);
 
-// 5) each stepper click was its own update → one undo rewinds 90° → 75°.
 await undo();
-check("one stepper click = one undo step (75°)", await rowText("Angle"), (await rowText("Angle"))?.includes("75 °"));
-await rowStep("Angle", "up", 1); // back to 90 for the next checks
+const angle75 = await rowValue("Angle");
+check("one stepper click = one undo step (75 °)", angle75 === "75 °", angle75 ?? "(no row)");
+await rowPress("Angle", "Increase", 1);
 
-// 6) Radial: centred coords — centre ≈ stop[0], corners land past r2 (darker).
-await clickBtn("radial");
+check("radial type cell clicks", await clickMode("radial"));
 px = await sample(800, 600);
-check("radial: centre ≈ stop[0]", px, near(px, BASE, 26));
-px = await sample(970, 665); // beyond the r2 ellipse, clear of the corner handle
-check("radial: corner reaches the far stop", px, px[0] < BASE[0] - 40);
+check("radial: centre is stop[0]", near(px, BASE_RGB, 26), `${px}`);
+px = await sample(970, 665); // past r2, clear of handle
+check("radial: corner reaches the far stop", px[0] < BASE_RGB[0] - 40, `${px}`);
 
-// 7) stops: add one (midpoint clone of the selected), select the LAST marker,
-//    recolour it via the swatch input — two streamed events must settle to ONE
-//    undo step (the transient mechanism).
-check("stops: count starts 1/2", await rowText("Stop"), (await rowText("Stop"))?.includes("1/2"));
-await rowStep("Stop", "up", 1); // Plus button is first in the Stop cell
-check("stops: add → selected new stop 2/3", await rowText("Stop"), (await rowText("Stop"))?.includes("2/3"));
+check("radial hides the Angle row", (await rowValue("Angle")) === null);
+check("linear restores it", (await clickMode("linear")) && (await rowValue("Angle")) !== null);
+await clickMode("radial");
+
+check("stops start at 1/2", (await rowValue("Stop")) === "1/2", (await rowValue("Stop")) ?? "");
+await rowPress("Stop", "Add stop", 1);
+check("add selects the new stop, 2/3", (await rowValue("Stop")) === "2/3", (await rowValue("Stop")) ?? "");
+
 await page.evaluate(() => {
-  const panel = document.querySelector("div.w-56.border-l");
-  const markers = [...panel.querySelectorAll("button")].filter((b) => b.style.left);
+  const markers = [...document.querySelectorAll(".sub-grad-stop")];
   markers.sort((a, b) => parseFloat(a.style.left) - parseFloat(b.style.left));
   markers[markers.length - 1].click();
 });
 await sleep(250);
-check("stops: last marker click selects 3/3", await rowText("Stop"), (await rowText("Stop"))?.includes("3/3"));
-const streamStop = async (hex) =>
+check("last marker selects 3/3", (await rowValue("Stop")) === "3/3", (await rowValue("Stop")) ?? "");
+const markerSelected = await page.evaluate(() => {
+  const markers = [...document.querySelectorAll(".sub-grad-stop")];
+  markers.sort((a, b) => parseFloat(a.style.left) - parseFloat(b.style.left));
+  return markers[markers.length - 1].classList.contains("is-selected");
+});
+check("the selected marker carries is-selected", markerSelected);
+
+// picks coalesce within 600ms
+const streamStop = (hex) =>
   page.evaluate((h) => {
-    const panel = document.querySelector("div.w-56.border-l");
-    const input = panel.querySelector('input[type="color"]');
+    const input = document.querySelector('input[type="color"][aria-label="Stop colour"]');
     const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
     set.call(input, h);
     input.dispatchEvent(new Event("input", { bubbles: true }));
@@ -169,39 +188,31 @@ const streamStop = async (hex) =>
 await streamStop("#8800ff");
 await sleep(120);
 await streamStop("#0000ff");
-await sleep(950); // > the 600ms settle pause → commitTransient
+await sleep(950); // > 600ms settle window
 px = await sample(970, 665);
-check("stop swatch: streamed picks recolour the outer stop blue", px, px[2] > 150 && px[0] < 90);
+check("streamed picks recolour the outer stop blue", px[2] > 150 && px[0] < 90, `${px}`);
 await undo();
 px = await sample(970, 665);
-check("stop swatch: the stream coalesced to ONE undo step", px, px[0] >= px[2]);
+check("the stream coalesced to ONE undo step", px[0] >= px[2], `${px}`);
 
-// 8) remove: back to 2 stops; the remove button hits its floor and disables.
-await rowStep("Stop", "down", 1); // Minus button is second
-check("stops: remove → 2 left", await rowText("Stop"), /\/2/.test((await rowText("Stop")) ?? ""));
-const minusDisabled = await page.evaluate(() => {
-  const panel = document.querySelector("div.w-56.border-l");
-  const row = [...panel.querySelectorAll("div")].find(
-    (d) => d.firstElementChild?.tagName === "SPAN" && d.firstElementChild.textContent === "Stop",
-  );
-  return row.querySelectorAll("button")[1].disabled;
-});
-check("stops: remove disabled at the 2-stop floor", minusDisabled, minusDisabled === true);
+await rowPress("Stop", "Remove stop", 1);
+check("remove leaves 2 stops", /\/2$/.test((await rowValue("Stop")) ?? ""), (await rowValue("Stop")) ?? "");
+check("remove disables at the 2-stop floor", (await rowDisabled("Stop", "Remove stop")) === true);
 
-// 9) Solid switch-back adopts stop[0]'s colour as the flat fill.
-await clickBtn("solid");
+await clickMode("solid");
 const c1 = await sample(800, 600);
 const c2 = await sample(970, 665);
-check("solid switch-back: flat stop[0] everywhere", [...c1, ...c2], near(c1, BASE) && near(c2, BASE));
+check("solid switch-back is flat stop[0] everywhere", near(c1, BASE_RGB) && near(c2, BASE_RGB), `${c1} / ${c2}`);
 
-// 10) ratified sink call unchanged: a flat pick REPLACES a gradient fill.
-await clickBtn("gradient");
+await clickMode("gradient");
 await page.evaluate(() => window.__substrata.colour("#0044cc"));
 await sleep(400);
 const s1 = await sample(610, 600);
 const s2 = await sample(960, 560);
-check("sink: flat pick replaces the gradient", [...s1, ...s2], near(s1, [0, 68, 204]) && near(s2, [0, 68, 204]));
+check(
+  "a flat sink pick replaces the gradient",
+  near(s1, [0, 68, 204]) && near(s2, [0, 68, 204]),
+  `${s1} / ${s2}`,
+);
 
-await browser.close();
-console.log(failures === 0 ? "\nALL PASS" : `\n${failures} FAILURES`);
-process.exit(failures === 0 ? 0 : 1);
+await finish(browser);

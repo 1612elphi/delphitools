@@ -1,0 +1,320 @@
+@use "../crayon-config" as crayon;
+
+.dt-porg {
+	@include crayon.vstack(4);
+}
+
+.dt-porg-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-porg-drop {
+	display: block;
+	margin: crayon.size(4);
+	padding: crayon.size(12);
+	border: 2px dashed
+		color-mix(in oklch, var(--muted-foreground) 25%, transparent);
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(8);
+		height: crayon.size(8);
+		margin-bottom: crayon.size(3);
+		color: var(--muted-foreground);
+	}
+
+	@include crayon.hover {
+		border-color: color-mix(
+			in oklch,
+			var(--muted-foreground) 50%,
+			transparent
+		);
+	}
+
+	/* hidden file input focus */
+	&:focus-within {
+		border-color: var(--primary);
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+}
+
+.dt-porg-drop-title {
+	display: block;
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-porg-drop-hint {
+	display: block;
+	margin-top: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-porg-bar {
+	display: flex;
+	min-height: crayon.size(12);
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+	flex-wrap: wrap;
+}
+
+.dt-porg-info {
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	align-items: center;
+	padding: crayon.size(2) crayon.size(4);
+	gap: crayon.size(3);
+}
+
+.dt-porg-count {
+	overflow: hidden;
+	font-size: crayon.font-size("sm");
+	font-variant-numeric: tabular-nums;
+	font-weight: crayon.font-weight("bold");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-porg-reading {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-porg-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		pointer-events: none;
+	}
+
+	&.is-primary {
+		padding-inline: crayon.size(6);
+		background: var(--primary);
+		color: var(--primary-foreground);
+		font-weight: crayon.font-weight("semibold");
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				black
+			);
+		}
+	}
+}
+
+.dt-porg-settings {
+	display: grid;
+	border-bottom: 1px solid var(--border);
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: repeat(auto-fit, minmax(crayon.size(32), 1fr));
+}
+
+.dt-porg-field {
+	display: flex;
+	flex-direction: column;
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--card);
+	gap: crayon.size(1);
+
+	> span {
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+	}
+
+	input {
+		width: 100%;
+		padding: crayon.size(1) crayon.size(2);
+		border: 1px solid var(--border);
+		background: var(--background);
+		color: var(--foreground);
+		font: inherit;
+		font-size: crayon.font-size("sm");
+		font-variant-numeric: tabular-nums;
+
+		&:focus-visible {
+			outline: 2px solid var(--primary);
+			outline-offset: -1px;
+		}
+	}
+}
+
+.dt-porg-splitmode {
+	grid-template-columns: repeat(2, 1fr);
+}
+
+.dt-porg-opt {
+	padding: crayon.size(1) crayon.size(3);
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-porg-splitgo {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	justify-content: center;
+	padding: crayon.size(2) crayon.size(3);
+	border: 0;
+	background: var(--card);
+	color: var(--foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("semibold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&:disabled {
+		color: var(--muted-foreground);
+		opacity: 0.5;
+		pointer-events: none;
+	}
+}
+
+.dt-porg-error {
+	padding: crayon.size(2) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+	color: var(--destructive);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-porg-grid {
+	display: grid;
+	padding: crayon.size(3);
+	gap: crayon.size(3);
+	grid-template-columns: repeat(auto-fill, minmax(crayon.size(44), 1fr));
+	list-style: none;
+}
+
+.dt-porg-cell {
+	border: 1px solid var(--border);
+	background: var(--card);
+	cursor: grab;
+
+	&.is-drag-over {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.dt-porg-thumb {
+	display: block;
+	width: 100%;
+	aspect-ratio: 1 / 1.2;
+	object-fit: contain;
+	background: var(--muted);
+
+	&.is-rot-90 {
+		transform: rotate(90deg) scale(0.83);
+	}
+
+	&.is-rot-180 {
+		transform: rotate(180deg);
+	}
+
+	&.is-rot-270 {
+		transform: rotate(270deg) scale(0.83);
+	}
+}
+
+.dt-porg-thumb-fallback {
+	display: flex;
+	width: 100%;
+	align-items: center;
+	justify-content: center;
+	aspect-ratio: 1 / 1.2;
+	background: var(--muted);
+	color: var(--muted-foreground);
+
+	.dt-icon {
+		width: crayon.size(8);
+		height: crayon.size(8);
+	}
+}
+
+.dt-porg-cell-foot {
+	display: flex;
+	align-items: stretch;
+	justify-content: space-between;
+	border-top: 1px solid var(--border);
+}
+
+.dt-porg-badge {
+	align-self: center;
+	overflow: hidden;
+	padding-inline: crayon.size(2);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-porg-cell-tools {
+	display: flex;
+	align-items: stretch;
+}
+
+.dt-porg-tool {
+	display: flex;
+	align-items: center;
+	padding: crayon.size(1) crayon.size(2);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(3.5);
+		height: crayon.size(3.5);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}

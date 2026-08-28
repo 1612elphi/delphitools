@@ -1,0 +1,227 @@
+@use "../crayon-config" as crayon;
+
+.dt-tcc {
+	border: 2px solid var(--border);
+}
+
+/* avoid doubled border */
+.segmented.dt-tcc-rates {
+	grid-template-columns: repeat(5, 1fr);
+	border-top: 0;
+	border-bottom-width: 2px;
+	border-inline: 0;
+
+	@include crayon.screen("md") {
+		grid-template-columns: repeat(10, 1fr);
+	}
+}
+
+.dt-tcc-rate {
+	min-width: 0;
+	height: crayon.size(9);
+	background: var(--card);
+	color: var(--foreground);
+	font: inherit;
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+	font-variant-numeric: tabular-nums;
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+
+		@include crayon.hover {
+			background: var(--primary);
+		}
+	}
+}
+
+.dt-tcc-strip {
+	display: grid;
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: 1fr;
+
+	@include crayon.screen("sm") {
+		grid-template-columns: 1fr auto 1fr;
+	}
+}
+
+.dt-tcc-cell {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+	padding: crayon.size(3) crayon.size(4);
+	background: var(--card);
+	gap: crayon.size(2);
+
+	&:focus-within {
+		outline: 2px solid var(--ring);
+		outline-offset: -2px;
+	}
+}
+
+.dt-tcc-label {
+	color: var(--muted-foreground);
+	font-size: 10px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	user-select: none;
+}
+
+.dt-tcc-input {
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font-family: var(--font-mono);
+	font-size: crayon.font-size("xl");
+	font-variant-numeric: tabular-nums;
+	letter-spacing: 0.04em;
+	outline: none;
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-tcc-msg {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	border-top: 1px solid var(--border);
+	gap: crayon.size(1.5);
+	padding-top: crayon.size(2);
+	font-size: crayon.font-size("xs");
+
+	&.error {
+		color: var(--destructive);
+	}
+
+	&.info {
+		color: var(--muted-foreground);
+	}
+
+	code {
+		font-family: var(--font-mono);
+		font-size: 11px;
+	}
+}
+
+/* strip owns borders */
+.segmented.dt-tcc-op {
+	border: 0;
+	grid-template-columns: repeat(2, 1fr);
+
+	@include crayon.screen("sm") {
+		grid-template-columns: 1fr;
+		grid-template-rows: repeat(2, 1fr);
+	}
+}
+
+.dt-tcc-op-cell {
+	display: grid;
+	min-width: 0;
+	height: crayon.size(10);
+	place-items: center;
+	background: var(--card);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("lg");
+	cursor: pointer;
+
+	@include crayon.screen("sm") {
+		width: crayon.size(10);
+		height: auto;
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+
+		@include crayon.hover {
+			background: var(--primary);
+		}
+	}
+}
+
+.dt-tcc-result {
+	display: flex;
+	width: 100%;
+	align-items: center;
+	justify-content: space-between;
+	padding: crayon.size(4);
+	border: 0;
+	border-top: 2px solid var(--border);
+	background: var(--muted);
+	color: inherit;
+	cursor: pointer;
+	font: inherit;
+	gap: crayon.size(3);
+	text-align: left;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+		flex-shrink: 0;
+		color: var(--muted-foreground);
+	}
+
+	@include crayon.hover {
+		background: color-mix(
+			in oklch,
+			var(--muted),
+			var(--foreground) 5%
+		);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -2px;
+	}
+}
+
+.dt-tcc-result-tc {
+	font-family: var(--font-mono);
+	font-size: clamp(1.75rem, 6vw, 3rem);
+	font-variant-numeric: tabular-nums;
+	font-weight: 700;
+	letter-spacing: 0.03em;
+}
+
+.dt-tcc-readout {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	margin: 0;
+	border-top: 1px solid var(--border);
+	background: var(--border);
+	gap: 1px;
+
+	dt {
+		color: var(--muted-foreground);
+		font-size: 10px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	dd {
+		margin: 0;
+		font-family: var(--font-mono);
+		font-size: crayon.font-size("sm");
+		font-variant-numeric: tabular-nums;
+	}
+}
+
+.dt-tcc-readout-cell {
+	padding: crayon.size(2) crayon.size(4);
+	background: var(--card);
+}

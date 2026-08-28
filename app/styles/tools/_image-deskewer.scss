@@ -1,0 +1,335 @@
+@use "../crayon-config" as crayon;
+
+.dt-dsk {
+	@include crayon.vstack(4);
+}
+
+.dt-dsk-frame {
+	border: 2px solid var(--border);
+
+	&.is-dragging {
+		border-color: var(--primary);
+		background: color-mix(in oklch, var(--primary) 5%, transparent);
+	}
+}
+
+.dt-dsk-drop {
+	@include crayon.vstack(2);
+
+	align-items: center;
+	justify-content: center;
+	padding: crayon.size(12) crayon.size(4);
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(8);
+		height: crayon.size(8);
+	}
+
+	&:focus-within {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.dt-dsk-drop-title {
+	color: var(--foreground);
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("semibold");
+}
+
+.dt-dsk-drop-hint {
+	font-size: crayon.font-size("sm");
+}
+
+.dt-dsk-bar {
+	display: flex;
+	min-height: crayon.size(10);
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+
+	> .dt-icon {
+		align-self: center;
+		width: crayon.size(4);
+		height: crayon.size(4);
+		margin-left: crayon.size(3);
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-dsk-name {
+	align-self: center;
+	overflow: hidden;
+	padding-inline: crayon.size(2);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("semibold");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-dsk-size {
+	align-self: center;
+	margin-right: auto;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.dt-dsk-bar-tools {
+	display: flex;
+	align-items: stretch;
+}
+
+.dt-dsk-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(3);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&.is-primary {
+		background: var(--primary);
+		color: var(--primary-foreground);
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				transparent
+			);
+			color: var(--primary-foreground);
+		}
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		pointer-events: none;
+	}
+
+	&:focus-within,
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.dt-dsk-btn-text {
+	display: none;
+
+	@include crayon.screen("sm") {
+		display: inline;
+	}
+}
+
+.dt-dsk-settings {
+	display: grid;
+	border-bottom: 1px solid var(--border);
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: 1fr;
+
+	@include crayon.screen("md") {
+		grid-template-columns: 1fr auto;
+	}
+}
+
+.dt-dsk-cell {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--card);
+	gap: crayon.size(1);
+
+	> span:first-child {
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+	}
+}
+
+.dt-dsk-cell-value {
+	font-size: crayon.font-size("sm");
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.dt-dsk-aspects {
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.dt-dsk-aspect {
+	min-width: 0;
+	padding: crayon.size(1) crayon.size(2);
+	background: var(--background);
+	color: var(--foreground);
+	font: inherit;
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+	font-variant-numeric: tabular-nums;
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-dsk-panes {
+	display: grid;
+	grid-template-columns: 1fr;
+
+	@include crayon.screen("md") {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.dt-dsk-pane {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+
+	&.is-right {
+		border-top: 2px solid var(--border);
+
+		@include crayon.screen("md") {
+			border-top: 0;
+			border-left: 2px solid var(--border);
+		}
+	}
+}
+
+.dt-dsk-pane-head {
+	display: flex;
+	min-height: crayon.size(10);
+	align-items: center;
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-dsk-pane-label {
+	padding-inline: crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("semibold");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.dt-dsk-pane-hint {
+	@include crayon.hstack(1);
+
+	align-items: center;
+	margin-left: auto;
+	padding-inline: crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+
+	.dt-icon {
+		width: crayon.size(3);
+		height: crayon.size(3);
+	}
+}
+
+/* prevent preview jumping */
+.dt-dsk-stage-wrap {
+	display: flex;
+	flex: 1;
+	align-items: flex-start;
+	justify-content: center;
+	padding: crayon.size(4);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+}
+
+.dt-dsk-stage {
+	position: relative;
+	display: inline-block;
+	max-width: 100%;
+	touch-action: none;
+	user-select: none;
+
+	&.is-dragging {
+		cursor: grabbing;
+	}
+}
+
+.dt-dsk-source,
+.dt-dsk-result {
+	display: block;
+	max-width: 100%;
+	max-height: crayon.size(120);
+}
+
+.dt-dsk-result {
+	border: 1px solid var(--border);
+}
+
+.dt-dsk-overlay {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+}
+
+.dt-dsk-shade {
+	fill: rgb(0 0 0 / 45%);
+}
+
+.dt-dsk-quad {
+	fill: none;
+	stroke: var(--primary);
+	stroke-width: 2;
+}
+
+.dt-dsk-handle {
+	position: absolute;
+	width: crayon.size(4);
+	height: crayon.size(4);
+	padding: 0;
+	border: 2px solid var(--primary);
+	background: var(--background);
+	cursor: grab;
+	transform: translate(-50%, -50%);
+
+	&.is-active {
+		background: var(--primary);
+		cursor: grabbing;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+}
+
+.dt-dsk-error {
+	padding: crayon.size(3);
+	border: 1px solid
+		color-mix(in oklch, var(--destructive) 50%, transparent);
+	background: color-mix(in oklch, var(--destructive) 10%, transparent);
+	color: var(--destructive);
+	font-size: crayon.font-size("sm");
+}

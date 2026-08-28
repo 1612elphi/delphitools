@@ -1,0 +1,117 @@
+@use "../crayon-config" as crayon;
+
+.dt-brl-frame {
+	border: 2px solid var(--border);
+}
+
+.segmented.dt-brl-modes {
+	border: 0;
+	border-bottom: 1px solid var(--border);
+	grid-template-columns: repeat(3, 1fr);
+}
+
+.dt-brl-mode {
+	min-width: 0;
+	padding: crayon.size(2);
+	background: var(--background);
+	color: var(--foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-brl-input {
+	display: block;
+	width: 100%;
+	min-height: 8rem;
+	padding: crayon.size(3) crayon.size(4);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("base");
+	resize: vertical;
+
+	&:focus {
+		outline: none;
+	}
+}
+
+/* system font carries the braille block */
+.dt-brl-output {
+	min-height: 8rem;
+	padding: crayon.size(3) crayon.size(4);
+	border-top: 2px solid var(--border);
+	font-size: crayon.font-size("2xl");
+	line-height: crayon.leading("loose");
+	overflow-wrap: anywhere;
+	white-space: pre-wrap;
+
+	&.is-text {
+		font-size: crayon.font-size("base");
+		line-height: crayon.leading("relaxed");
+	}
+}
+
+.dt-brl-cell {
+	cursor: default;
+
+	@include crayon.hover {
+		background: var(--accent);
+	}
+}
+
+.dt-brl-actions {
+	display: flex;
+	border-top: 2px solid var(--border);
+}
+
+.dt-brl-copy,
+.dt-brl-download {
+	@include crayon.hstack(2);
+
+	height: crayon.size(14);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	font: inherit;
+	font-size: crayon.font-size("base");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+}
+
+.dt-brl-copy {
+	flex: 1;
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font-weight: crayon.font-weight("bold");
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--primary) 90%, black);
+	}
+}
+
+.dt-brl-download {
+	padding-inline: crayon.size(6);
+	border-left: 1px solid var(--border);
+	background: transparent;
+	color: inherit;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+}

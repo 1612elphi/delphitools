@@ -1,0 +1,226 @@
+
+@use "../crayon-config" as crayon;
+
+.dt-aa {
+	@include crayon.vstack(4);
+}
+
+.dt-aa-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-aa-drop {
+	display: block;
+	margin: crayon.size(4);
+	padding: crayon.size(12);
+	border: 2px dashed
+		color-mix(in oklch, var(--muted-foreground) 25%, transparent);
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(8);
+		height: crayon.size(8);
+		margin-bottom: crayon.size(3);
+		color: var(--muted-foreground);
+	}
+
+	@include crayon.hover {
+		border-color: color-mix(
+			in oklch,
+			var(--muted-foreground) 50%,
+			transparent
+		);
+	}
+
+	/* hidden input focus lands here */
+	&:focus-within {
+		border-color: var(--primary);
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+}
+
+.dt-aa-drop-title {
+	display: block;
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-aa-status {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	justify-content: center;
+	padding-block: crayon.size(6);
+	color: var(--muted-foreground);
+}
+
+.dt-aa-bar {
+	display: flex;
+	min-height: crayon.size(10);
+	align-items: stretch;
+	justify-content: space-between;
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-aa-name {
+	overflow: hidden;
+	align-self: center;
+	padding-inline: crayon.size(4);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-aa-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+	white-space: nowrap;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				black
+			);
+			color: var(--primary-foreground);
+		}
+	}
+}
+
+.dt-aa-meta {
+	display: grid;
+	border-bottom: 1px solid var(--border);
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: repeat(auto-fit, minmax(crayon.size(36), 1fr));
+}
+
+.dt-aa-cell {
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--card);
+
+	dt {
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+	}
+
+	dd {
+		font-size: crayon.font-size("sm");
+		font-variant-numeric: tabular-nums;
+	}
+}
+
+.dt-aa-panel {
+	border-bottom: 1px solid var(--border);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+}
+
+.dt-aa-panel-title {
+	padding: crayon.size(2) crayon.size(3);
+	border-bottom: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("semibold");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.dt-aa-panel-head {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+
+	.dt-aa-panel-title {
+		flex: 1;
+		border-bottom: 0;
+	}
+}
+
+.dt-aa-view {
+	align-self: center;
+	padding-inline: crayon.size(2);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-aa-zoom {
+	display: flex;
+	align-items: stretch;
+}
+
+.dt-aa-zoom-btn {
+	display: flex;
+	align-items: center;
+	padding-inline: crayon.size(2.5);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-aa-wave {
+	display: block;
+	width: 100%;
+	height: crayon.size(36);
+	cursor: pointer;
+}
+
+.dt-aa-spectro {
+	display: block;
+	width: 100%;
+	height: crayon.size(64);
+	cursor: pointer;
+	image-rendering: pixelated;
+}
+
+.dt-aa-error {
+	padding: crayon.size(3);
+	border: 1px solid
+		color-mix(in oklch, var(--destructive) 50%, transparent);
+	background: color-mix(in oklch, var(--destructive) 10%, transparent);
+	color: var(--destructive);
+	font-size: crayon.font-size("sm");
+}

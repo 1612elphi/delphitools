@@ -1,0 +1,406 @@
+
+@use "../crayon-config" as crayon;
+
+.dt-scroll {
+	display: flex;
+	flex-direction: column;
+	gap: crayon.size(6);
+}
+
+.dt-scroll-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-scroll-drop {
+	display: block;
+	padding: crayon.size(12);
+	text-align: center;
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(12);
+		height: crayon.size(12);
+		margin-bottom: crayon.size(4);
+		color: var(--muted-foreground);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--muted) 30%, transparent);
+	}
+
+	&:focus-within {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.dt-scroll-drop-title {
+	display: block;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-scroll-drop-hint {
+	display: block;
+	margin-top: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-scroll-bar {
+	display: flex;
+	min-height: crayon.size(12);
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-scroll-source {
+	@include crayon.hstack(3);
+
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	align-items: center;
+	padding-inline: crayon.size(4);
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+		flex-shrink: 0;
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-scroll-name {
+	overflow: hidden;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-scroll-dims {
+	flex-shrink: 0;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-scroll-ready {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-scroll-bar-btn {
+	@include crayon.hstack(2);
+
+	display: flex;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-scroll-section {
+	border-bottom: 2px solid var(--border);
+
+	&.is-padded {
+		padding: crayon.size(4);
+	}
+
+	/* fill controls inert when strip divides evenly */
+	&.is-inert {
+		opacity: 0.4;
+		pointer-events: none;
+	}
+}
+
+.dt-scroll-label {
+	display: block;
+	padding: crayon.size(4) crayon.size(4) crayon.size(2);
+	font-weight: crayon.font-weight("bold");
+
+	.is-padded & {
+		padding: 0 0 crayon.size(3);
+	}
+}
+
+.dt-scroll-note {
+	margin-left: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("normal");
+}
+
+.dt-scroll-preview {
+	position: relative;
+	overflow: hidden;
+	border-top: 1px solid var(--border);
+
+	img {
+		display: block;
+		width: 100%;
+		max-height: 20rem;
+		background: color-mix(in oklch, var(--muted) 20%, transparent);
+		object-fit: contain;
+	}
+}
+
+.dt-scroll-overlay {
+	position: absolute;
+	display: grid;
+	pointer-events: none;
+	inset: 0;
+}
+
+.dt-scroll-marker {
+	position: relative;
+	border-inline: 1px dashed rgb(255 255 255 / 40%);
+
+	&:first-child {
+		border-left: 0;
+	}
+
+	&:last-child {
+		border-right: 0;
+	}
+}
+
+.dt-scroll-chip {
+	position: absolute;
+	bottom: crayon.size(2);
+	left: 50%;
+	padding: 2px crayon.size(2);
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("medium");
+	transform: translateX(-50%);
+}
+
+.dt-scroll-choices {
+	grid-template-columns: repeat(2, 1fr);
+}
+
+.dt-scroll-choice {
+	padding: crayon.size(3) crayon.size(4);
+	background: var(--background);
+	color: var(--foreground);
+	font: inherit;
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-scroll-swatches {
+	display: flex;
+	margin-top: crayon.size(3);
+	border: 1px solid var(--border);
+	border-inline: 0;
+}
+
+.dt-scroll-swatch {
+	flex: 1;
+	height: crayon.size(12);
+	border: 0;
+	border-left: 1px solid var(--border);
+	cursor: pointer;
+
+	&:first-child {
+		border-left: 0;
+	}
+
+	&.is-active {
+		box-shadow: inset 0 0 0 2px var(--primary);
+	}
+}
+
+.dt-scroll-custom {
+	position: relative;
+	display: flex;
+	flex: 1;
+	height: crayon.size(12);
+	align-items: center;
+	justify-content: center;
+	border-left: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+
+	input {
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		cursor: pointer;
+		inset: 0;
+	}
+}
+
+.dt-scroll-stats {
+	@include crayon.hstack(4);
+
+	display: flex;
+	align-items: center;
+	padding: crayon.size(3) crayon.size(4);
+	border-bottom: 2px solid var(--border);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+}
+
+.dt-scroll-count {
+	font-size: crayon.font-size("2xl");
+	font-weight: crayon.font-weight("bold");
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-scroll-stat {
+	flex: 1;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-scroll-flag {
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("medium");
+
+	&.is-fill {
+		color: #f59e0b;
+	}
+
+	&.is-fit {
+		color: var(--primary);
+	}
+}
+
+.dt-scroll-run {
+	@include crayon.hstack(2);
+
+	display: flex;
+	width: 100%;
+	height: crayon.size(14);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font: inherit;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--primary) 90%, black);
+	}
+}
+
+.dt-scroll-error {
+	padding: crayon.size(4);
+	border-top: 1px solid
+		color-mix(in oklch, var(--destructive) 50%, transparent);
+	background: color-mix(in oklch, var(--destructive) 10%, transparent);
+	color: var(--destructive);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-scroll-strip {
+	display: flex;
+	overflow-x: auto;
+	gap: 1px;
+	background: var(--border);
+}
+
+.dt-scroll-tile {
+	position: relative;
+	flex-shrink: 0;
+	padding: 0;
+	border: 0;
+	background: var(--background);
+	cursor: pointer;
+
+	img {
+		display: block;
+		width: auto;
+		height: crayon.size(64);
+	}
+
+	@include crayon.hover {
+		.dt-scroll-tile-hint {
+			opacity: 1;
+		}
+	}
+
+	&:focus-visible .dt-scroll-tile-hint {
+		opacity: 1;
+	}
+}
+
+.dt-scroll-tile-hint {
+	position: absolute;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: crayon.size(1);
+	background: rgb(0 0 0 / 50%);
+	color: #fff;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	opacity: 0;
+	transition: opacity 150ms;
+	inset: 0;
+
+	.dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dt-scroll-tile-hint {
+		transition: none;
+	}
+}
+
+.dt-scroll-footer {
+	padding: crayon.size(3) crayon.size(4);
+	border-top: 2px solid var(--border);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+
+	p {
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("sm");
+		text-align: center;
+	}
+}

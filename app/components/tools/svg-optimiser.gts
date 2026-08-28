@@ -1,0 +1,388 @@
+import Component from '@glimmer/component';
+import { tracked } from '@glimmer/tracking';
+import { on } from '@ember/modifier';
+import Icon from 'delphitools-v2/components/icon';
+import DownloadLabel from 'delphitools-v2/components/download-label';
+import filePaste from 'delphitools-v2/modifiers/file-paste';
+import { downloadText } from 'delphitools-v2/lib/download';
+import type Owner from '@ember/owner';
+import type { Config } from 'svgo/browser';
+
+/* ~200 kb deferred; same reason bg-removal defers transformers.js */
+async function loadOptimize() {
+	const { optimize } = await import('svgo/browser');
+	return optimize;
+}
+
+const SVGO_CONFIG: Config = {
+	multipass: true,
+	plugins: [
+		'preset-default',
+		{
+			name: 'removeAttrs',
+			params: { attrs: '(data-.*)' },
+		},
+	],
+};
+
+/* root only; svgo/svgo#2217 strips nested too */
+export function stripRootDimensions(svg: string): string {
+	const doc = new DOMParser().parseFromString(svg, 'image/svg+xml');
+	const root = doc.documentElement;
+	if (doc.querySelector('parsererror') || !root.hasAttribute('viewBox'))
+		return svg;
+	root.removeAttribute('width');
+	root.removeAttribute('height');
+	return new XMLSerializer().serializeToString(doc);
+}
+
+const stripped = (result: { data: string }) => ({
+	data: stripRootDimensions(result.data),
+});
+
+/** image tracer writes here before navigate */
+const HANDOFF_KEY = 'svg-optimiser-input';
+const HANDOFF_NAME = 'traced.svg';
+
+const ACCEPT = '.svg,image/svg+xml';
+
+const COPIED_MS = 1500;
+
+export interface OptimiseStats {
+	original: number;
+	optimised: number;
+	saved: number;
+	percent: number;
+}
+
+export function formatBytes(bytes: number): string {
+	if (bytes < 1024) return `${bytes} B`;
+	return `${(bytes / 1024).toFixed(1)} KB`;
+}
+
+/** byte counts, utf-8 */
+export function statsFor(original: string, optimised: string): OptimiseStats {
+	const before = new Blob([original]).size;
+	const after = new Blob([optimised]).size;
+	const saved = before - after;
+	return {
+		original: before,
+		optimised: after,
+		saved,
+		// zero-byte input → NaN% guard
+		percent: before ? Math.round((saved / before) * 100) : 0,
+	};
+}
+
+export function looksLikeSvg(text: string): boolean {
+	const trimmed = text.trim();
+	return trimmed.startsWith('<svg') || trimmed.startsWith('<?xml');
+}
+
+export async function optimiseSvg(
+	original: string,
+): Promise<OptimiseStats | null> {
+	if (!looksLikeSvg(original)) return null;
+	try {
+		const { optimize } = await import('svgo/browser');
+		const { data } = stripped(optimize(original, SVGO_CONFIG));
+		return statsFor(original, data);
+	} catch {
+		return null;
+	}
+}
+
+export default class SvgOptimiserTool extends Component {
+	@tracked input = '';
+	@tracked output = '';
+	@tracked previewUrl = '';
+	@tracked fileName = '';
+	@tracked copied = false;
+	@tracked stats: OptimiseStats | null = null;
+
+	#copiedTimer?: ReturnType<typeof setTimeout>;
+	/** stale async runs must not clobber newer */
+	#runId = 0;
+
+	constructor(owner: Owner, args: object) {
+		super(owner, args);
+
+		const incoming = sessionStorage.getItem(HANDOFF_KEY);
+		if (incoming) {
+			sessionStorage.removeItem(HANDOFF_KEY);
+			this.input = incoming;
+			this.fileName = HANDOFF_NAME;
+			void this.optimise(incoming);
+		}
+	}
+
+	willDestroy() {
+		super.willDestroy();
+		clearTimeout(this.#copiedTimer);
+		this.#setPreview('');
+	}
+
+	get percentLabel() {
+		return `${this.stats?.percent ?? 0}%`;
+	}
+
+	get originalLabel() {
+		return formatBytes(this.stats?.original ?? 0);
+	}
+
+	get optimisedLabel() {
+		return formatBytes(this.stats?.optimised ?? 0);
+	}
+
+	get savedLabel() {
+		return formatBytes(this.stats?.saved ?? 0);
+	}
+
+	/** blob URL + img: no scripts, no cross-origin from main */
+	#setPreview(svg: string) {
+		if (this.previewUrl) URL.revokeObjectURL(this.previewUrl);
+		this.previewUrl = svg
+			? URL.createObjectURL(
+					new Blob([svg], {
+						type: 'image/svg+xml',
+					}),
+				)
+			: '';
+	}
+
+	#clearOutput() {
+		this.output = '';
+		this.stats = null;
+		this.#setPreview('');
+	}
+
+	optimise = async (svg: string) => {
+		const runId = ++this.#runId;
+		try {
+			const optimize = await loadOptimize();
+			if (runId !== this.#runId) return;
+
+			const { data } = stripped(optimize(svg, SVGO_CONFIG));
+			this.output = data;
+			this.stats = statsFor(svg, data);
+			this.#setPreview(data);
+		} catch (error) {
+			if (runId !== this.#runId) return;
+			console.error('SVG optimisation failed:', error);
+			this.#clearOutput();
+		}
+	};
+
+	readFile = (file: File) => {
+		this.fileName = file.name;
+		const reader = new FileReader();
+		reader.onload = () => {
+			const content = reader.result as string;
+			this.input = content;
+			void this.optimise(content);
+		};
+		reader.readAsText(file);
+	};
+
+	handleFileSelect = (event: Event) => {
+		const input = event.target as HTMLInputElement;
+		const file = input.files?.[0];
+		if (file) this.readFile(file);
+		// reset; same file re-fires change
+		input.value = '';
+	};
+
+	handleDrop = (event: DragEvent) => {
+		event.preventDefault();
+		const file = event.dataTransfer?.files[0];
+		if (file?.type === 'image/svg+xml') this.readFile(file);
+	};
+
+	// preventDefault stops navigate-to-file
+	allowDrop = (event: DragEvent) => {
+		event.preventDefault();
+	};
+
+	setInput = (event: Event) => {
+		const content = (event.target as HTMLTextAreaElement).value;
+		this.input = content;
+		this.fileName = '';
+		if (looksLikeSvg(content)) void this.optimise(content);
+		else this.#clearOutput();
+	};
+
+	clear = () => {
+		this.input = '';
+		this.fileName = '';
+		this.#clearOutput();
+	};
+
+	copy = async () => {
+		await navigator.clipboard.writeText(this.output);
+		this.copied = true;
+		clearTimeout(this.#copiedTimer);
+		this.#copiedTimer = setTimeout(
+			() => (this.copied = false),
+			COPIED_MS,
+		);
+	};
+
+	copyOutput = () => void this.copy();
+
+	download = () => {
+		const filename = this.fileName
+			? this.fileName.replace('.svg', '-optimized.svg')
+			: 'optimized.svg';
+		downloadText(this.output, filename, 'image/svg+xml');
+	};
+
+	<template>
+		<div class="dt-svgo" {{filePaste this.readFile accept=ACCEPT}}>
+			<label
+				class="dt-svgo-drop"
+				{{on "drop" this.handleDrop}}
+				{{on "dragover" this.allowDrop}}
+			>
+				<input
+					type="file"
+					accept={{ACCEPT}}
+					class="dt-sr-only"
+					{{on "change" this.handleFileSelect}}
+				/>
+				<Icon @name="upload" />
+				<span class="dt-svgo-drop-title">Drop SVG file
+					here</span>
+				<span class="dt-svgo-drop-hint">or click to
+					select, or paste SVG code below</span>
+			</label>
+
+			<div class="dt-svgo-section">
+				<div class="dt-svgo-bar">
+					<label for="dt-svgo-input">Input SVG</label>
+					{{#if this.input}}
+						<button
+							type="button"
+							class="dt-svgo-bar-btn"
+							{{on
+								"click"
+								this.clear
+							}}
+						>
+							<Icon @name="trash-2" />
+							Clear
+						</button>
+					{{/if}}
+				</div>
+				<textarea
+					id="dt-svgo-input"
+					class="dt-svgo-code"
+					value={{this.input}}
+					placeholder="Paste your SVG code here..."
+					{{on "input" this.setInput}}
+				></textarea>
+			</div>
+
+			{{#if this.stats}}
+				<div class="dt-svgo-section">
+					<div class="dt-svgo-bar">
+						<span>Results</span>
+					</div>
+					<div class="dt-svgo-stats">
+						<div class="dt-svgo-stat">
+							<span
+								class="dt-svgo-stat-label"
+							>Original</span>
+							<span
+								class="dt-svgo-stat-value"
+							>{{this.originalLabel}}</span>
+						</div>
+						<div class="dt-svgo-stat">
+							<span
+								class="dt-svgo-stat-label"
+							>Optimised</span>
+							<span
+								class="dt-svgo-stat-value"
+							>{{this.optimisedLabel}}</span>
+						</div>
+						<div class="dt-svgo-stat">
+							<span
+								class="dt-svgo-stat-label"
+							>Saved</span>
+							<span
+								class="dt-svgo-stat-value is-primary"
+							>{{this.savedLabel}}</span>
+						</div>
+						<div class="dt-svgo-stat">
+							<span
+								class="dt-svgo-stat-label"
+							>Reduction</span>
+							<span
+								class="dt-svgo-stat-value is-primary"
+							>{{this.percentLabel}}</span>
+						</div>
+					</div>
+				</div>
+			{{/if}}
+
+			{{#if this.output}}
+				<div class="dt-svgo-section">
+					<div class="dt-svgo-bar">
+						<label
+							for="dt-svgo-output"
+						>Optimised SVG</label>
+					</div>
+					<textarea
+						id="dt-svgo-output"
+						class="dt-svgo-code is-output"
+						readonly
+						value={{this.output}}
+					></textarea>
+				</div>
+
+				<div class="dt-svgo-section">
+					<div class="dt-svgo-bar">
+						<span>Preview</span>
+					</div>
+					<div class="dt-svgo-preview">
+						{{#if this.previewUrl}}
+							<img
+								src={{this.previewUrl}}
+								alt="Optimised SVG preview"
+							/>
+						{{/if}}
+					</div>
+				</div>
+
+				<div class="dt-svgo-actions">
+					<button
+						type="button"
+						class="dt-svgo-action is-primary"
+						{{on "click" this.download}}
+					>
+						<DownloadLabel
+							@label="Download Optimised SVG"
+						/>
+					</button>
+					<button
+						type="button"
+						class="dt-svgo-action"
+						{{on "click" this.copyOutput}}
+					>
+						<Icon
+							@name={{if
+								this.copied
+								"check"
+								"copy"
+							}}
+						/>
+						{{if
+							this.copied
+							"Copied!"
+							"Copy SVG Code"
+						}}
+					</button>
+				</div>
+			{{/if}}
+		</div>
+	</template>
+}

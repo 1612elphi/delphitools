@@ -1,0 +1,316 @@
+@use "../crayon-config" as crayon;
+
+/* vendored tabs primitive ships without styles */
+.dt-bc-tabs {
+	display: grid;
+	gap: 1px;
+	grid-template-columns: repeat(2, 1fr);
+	background: var(--border);
+	border: 1px solid var(--border);
+}
+
+.dt-bc-tab {
+	display: flex;
+	height: crayon.size(10);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&[data-state="active"] {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-bc-panel {
+	margin-top: crayon.size(3);
+	border: 2px solid var(--border);
+}
+
+.dt-bc-content:focus-visible {
+	outline: 2px solid var(--primary);
+	outline-offset: -2px;
+}
+
+.dt-bc-label {
+	display: block;
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-bc-row {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	&.is-active {
+		background: color-mix(in oklch, var(--muted) 40%, transparent);
+	}
+}
+
+.dt-bc-name {
+	display: flex;
+	width: crayon.size(32);
+	flex-shrink: 0;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("medium");
+
+	&.is-muted {
+		color: var(--muted-foreground);
+		font-weight: crayon.font-weight("normal");
+	}
+}
+
+.dt-bc-field {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	align-items: stretch;
+	border-left: 1px solid var(--border);
+}
+
+.dt-bc-prefix {
+	display: flex;
+	align-items: center;
+	padding-left: crayon.size(3);
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+}
+
+.dt-bc-input {
+	width: 100%;
+	min-width: 0;
+	height: crayon.size(10);
+	flex: 1;
+	padding: 0 crayon.size(3);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	outline: none;
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-bc-copy {
+	display: flex;
+	width: crayon.size(12);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&.is-copied .dt-icon {
+		color: crayon.color("green-500");
+	}
+
+	&:disabled {
+		opacity: 0.3;
+		cursor: default;
+	}
+}
+
+.dt-bc-error {
+	padding: crayon.size(3);
+	border-top: 1px solid var(--border);
+	color: var(--destructive);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-bc-bits {
+	padding: crayon.size(4);
+	border-top: 2px solid var(--border);
+}
+
+/* .segmented frame doubles panel border */
+.segmented.dt-bc-bit-grid {
+	margin-top: crayon.size(3);
+	margin-inline: crayon.size(-4);
+	grid-template-columns: repeat(16, minmax(0, 1fr));
+	border-inline: 0;
+}
+
+.dt-bc-bit {
+	height: crayon.size(10);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-on {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-bc-bit-labels {
+	display: grid;
+	margin-inline: crayon.size(-4);
+	gap: 1px;
+	grid-template-columns: repeat(16, minmax(0, 1fr));
+
+	span {
+		padding-top: crayon.size(1);
+		color: var(--muted-foreground);
+		font-size: 10px;
+		text-align: center;
+	}
+}
+
+.dt-bc-block {
+	padding: crayon.size(4);
+	border-bottom: 2px solid var(--border);
+
+	&.is-last {
+		border-bottom: 0;
+	}
+}
+
+/* only .segmented top rule needed; grids bleed to edges */
+.segmented.dt-bc-ops,
+.segmented.dt-bc-ref {
+	margin: crayon.size(3) crayon.size(-4) crayon.size(-4);
+	border-inline: 0;
+	border-bottom: 0;
+}
+
+.segmented.dt-bc-ops {
+	grid-template-columns: repeat(3, 1fr);
+
+	@include crayon.screen("sm") {
+		grid-template-columns: repeat(6, 1fr);
+	}
+}
+
+.dt-bc-op {
+	height: crayon.size(10);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-bc-operand {
+	margin: crayon.size(3) crayon.size(-4) crayon.size(-4);
+	border-top: 1px solid var(--border);
+}
+
+.dt-bc-shift {
+	width: crayon.size(24);
+	height: crayon.size(10);
+	margin-top: crayon.size(3);
+	padding: 0 crayon.size(3);
+	border: 1px solid var(--border);
+	background: transparent;
+	color: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	outline: none;
+}
+
+.dt-bc-calculate {
+	display: block;
+	width: 100%;
+	height: crayon.size(14);
+	border: 0;
+	border-bottom: 2px solid var(--border);
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font: inherit;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--primary) 90%, black);
+	}
+}
+
+.dt-bc-result {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	align-items: center;
+	overflow: hidden;
+	padding: crayon.size(3) crayon.size(4);
+	border-left: 1px solid var(--border);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.segmented.dt-bc-ref {
+	grid-template-columns: repeat(2, 1fr);
+
+	@include crayon.screen("sm") {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
+.dt-bc-ref-item {
+	padding: crayon.size(3);
+	background: var(--card);
+}
+
+.dt-bc-ref-op {
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-bc-ref-desc {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}

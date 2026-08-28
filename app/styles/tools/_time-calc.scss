@@ -1,0 +1,353 @@
+@use "../crayon-config" as crayon;
+
+.dt-tc {
+	display: flex;
+	flex-direction: column;
+	gap: crayon.size(4);
+}
+
+.dt-tc-label {
+	display: block;
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-tc-now {
+	border: 2px solid var(--border);
+}
+
+.dt-tc-now-head {
+	padding: crayon.size(4);
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-tc-now-body {
+	padding: crayon.size(4);
+}
+
+.dt-tc-clock {
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("2xl");
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-tc-zone {
+	margin-left: crayon.size(2);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("base");
+}
+
+.dt-tc-epoch {
+	margin-top: crayon.size(1);
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+}
+
+.dt-tc-tabs {
+	display: grid;
+	gap: 1px;
+	border: 1px solid var(--border);
+	background: var(--border);
+	grid-template-columns: repeat(3, 1fr);
+}
+
+.dt-tc-tab {
+	display: flex;
+	height: crayon.size(10);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&[data-state="active"] {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-tc-frame {
+	margin-top: crayon.size(3);
+	border: 2px solid var(--border);
+}
+
+.dt-tc-panel {
+	/* ring doubles section borders */
+	outline-offset: -2px;
+}
+
+.dt-tc-row {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	&.is-active {
+		background: color-mix(in oklch, var(--muted) 40%, transparent);
+	}
+}
+
+.dt-tc-row-name {
+	display: flex;
+	width: crayon.size(36);
+	flex-shrink: 0;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-tc-input {
+	flex: 1;
+	min-width: 0;
+	padding: crayon.size(3) crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: inherit;
+	font: inherit;
+	font-family: crayon.font-family("mono");
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+
+	&.is-amount {
+		width: crayon.size(24);
+		flex: 0 0 auto;
+		border-left: 0;
+	}
+}
+
+.dt-tc-copy {
+	display: flex;
+	width: crayon.size(12);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&:disabled {
+		opacity: 0.3;
+		cursor: not-allowed;
+	}
+}
+
+.dt-tc-error {
+	padding: crayon.size(3) crayon.size(4);
+	border-top: 1px solid var(--border);
+	color: var(--destructive);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-tc-wide {
+	width: 100%;
+	height: crayon.size(12);
+	border: 0;
+	border-top: 1px solid var(--border);
+	background: none;
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+}
+
+.dt-tc-relative {
+	padding: crayon.size(4);
+	border-top: 2px solid var(--border);
+}
+
+.dt-tc-relative-value {
+	margin-top: crayon.size(2);
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-tc-section {
+	padding: crayon.size(4);
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-tc-select {
+	margin-top: crayon.size(3);
+}
+
+.dt-tc-combo {
+	display: flex;
+	margin-top: crayon.size(3);
+	align-items: stretch;
+	border: 1px solid var(--border);
+}
+
+.dt-tc-now-btn {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-tc-unit {
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	align-items: stretch;
+	border-left: 1px solid var(--border);
+
+	.dt-select-trigger {
+		flex: 1;
+		border: 0;
+	}
+}
+
+.dt-tc-modes {
+	margin: crayon.size(3) crayon.size(-4) crayon.size(-4);
+	border-inline: 0;
+	border-bottom: 0;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dt-tc-mode {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	justify-content: center;
+	padding: crayon.size(2);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+
+		@include crayon.hover {
+			background: var(--primary);
+		}
+	}
+}
+
+.dt-tc-zone-cell {
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	flex-direction: column;
+	justify-content: center;
+	padding: crayon.size(3) crayon.size(4);
+}
+
+.dt-tc-zone-head {
+	@include crayon.hstack(2);
+
+	align-items: center;
+}
+
+.dt-tc-zone-name {
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-tc-zone-offset {
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+}
+
+.dt-tc-zone-time {
+	margin-top: 2px;
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-tc-note {
+	padding: crayon.size(3) crayon.size(4);
+	border-top: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-tc-results {
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-tc-results-head {
+	padding: crayon.size(3) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-tc-result-name {
+	display: flex;
+	width: crayon.size(24);
+	flex-shrink: 0;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-tc-result-value {
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	align-items: center;
+	padding: crayon.size(3) crayon.size(4);
+	border-left: 1px solid var(--border);
+	overflow-wrap: anywhere;
+
+	&.is-mono {
+		font-family: crayon.font-family("mono");
+		font-variant-numeric: tabular-nums;
+	}
+}

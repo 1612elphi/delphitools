@@ -1,0 +1,321 @@
+@use "../crayon-config" as crayon;
+
+.dt-atlas {
+	border: 2px solid var(--border);
+}
+
+.dt-atlas-input {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+}
+
+// input covers whole cell
+.dt-atlas-swatch {
+	position: relative;
+	display: block;
+	width: crayon.size(20);
+	flex-shrink: 0;
+	border-right: 2px solid var(--border);
+
+	> span {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+
+	input[type="color"] {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		cursor: pointer;
+	}
+}
+
+.dt-atlas-field {
+	min-width: 0;
+	flex: 1;
+	padding: crayon.size(4);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("lg");
+	outline: none;
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-atlas-name {
+	display: flex;
+	align-items: center;
+	padding: 0 crayon.size(4);
+	border-left: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	white-space: nowrap;
+}
+
+.dt-atlas-cols {
+	display: grid;
+	gap: 1px;
+	background: var(--border);
+
+	@include crayon.screen("md") {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
+.dt-atlas-col {
+	min-width: 0;
+	background: var(--background);
+}
+
+.dt-atlas-title {
+	display: block;
+	padding: crayon.size(2) crayon.size(4) crayon.size(1);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+	letter-spacing: crayon.tracking("wide");
+	text-transform: uppercase;
+}
+
+.dt-atlas-notation {
+	display: flex;
+	align-items: center;
+	border-top: 1px solid var(--border);
+
+	> code {
+		display: flex;
+		min-width: 0;
+		flex: 1;
+		align-items: center;
+		overflow: hidden;
+		padding: crayon.size(1) crayon.size(4) crayon.size(1) 0;
+		font-family: crayon.font-family("mono");
+		font-size: crayon.font-size("xs");
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}
+
+.dt-atlas-notation-label {
+	width: crayon.size(24);
+	flex-shrink: 0;
+	padding: crayon.size(1) crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+	text-transform: uppercase;
+}
+
+.dt-atlas-copy {
+	display: flex;
+	width: crayon.size(9);
+	flex-shrink: 0;
+	align-self: stretch;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(3);
+		height: crayon.size(3);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-atlas-hue {
+	position: relative;
+	height: crayon.size(3);
+	margin: 0 crayon.size(4) crayon.size(2);
+	border: 1px solid var(--border);
+	background: linear-gradient(
+		to right,
+		#f00,
+		#ff0,
+		#0f0,
+		#0ff,
+		#00f,
+		#f0f,
+		#f00
+	);
+}
+
+.dt-atlas-plane {
+	position: relative;
+	margin: 0 crayon.size(4);
+	border: 1px solid var(--border);
+
+	canvas {
+		display: block;
+		width: 100%;
+		height: auto;
+	}
+}
+
+.dt-atlas-marker {
+	position: absolute;
+	top: 50%;
+	width: crayon.size(2);
+	height: crayon.size(2);
+	border: 2px solid #fff;
+	border-radius: 9999px;
+	outline: 1px solid #000;
+	transform: translate(-50%, -50%);
+}
+
+.dt-atlas-caption {
+	display: block;
+	padding: crayon.size(1) crayon.size(4) crayon.size(2);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-atlas-contrast {
+	display: flex;
+	align-items: center;
+	border-top: 1px solid var(--border);
+
+	> code {
+		padding: crayon.size(2) crayon.size(3);
+		font-family: crayon.font-family("mono");
+		font-size: crayon.font-size("xs");
+	}
+}
+
+.dt-atlas-chip {
+	display: flex;
+	width: crayon.size(14);
+	flex-shrink: 0;
+	align-self: stretch;
+	align-items: center;
+	justify-content: center;
+	border-right: 1px solid var(--border);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-atlas-verdict {
+	margin-left: auto;
+	padding: 0 crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	white-space: nowrap;
+}
+
+.dt-atlas-section {
+	border-top: 2px solid var(--border);
+	padding-bottom: crayon.size(2);
+
+	&.is-flush {
+		padding-bottom: 0;
+	}
+}
+
+.dt-atlas-row {
+	display: flex;
+	align-items: center;
+	border-top: 1px solid var(--border);
+}
+
+.dt-atlas-row-label {
+	width: crayon.size(32);
+	flex-shrink: 0;
+	padding: crayon.size(2) crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+	text-transform: uppercase;
+}
+
+.dt-atlas-swatches {
+	display: flex;
+	flex-shrink: 0;
+	gap: 1px;
+	border: 1px solid var(--border);
+	background: var(--border);
+
+	i {
+		display: block;
+		width: crayon.size(6);
+		height: crayon.size(6);
+	}
+}
+
+.dt-atlas-row-caption {
+	overflow: hidden;
+	margin-left: crayon.size(3);
+	padding-right: crayon.size(4);
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("xs");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-atlas-strip {
+	display: flex;
+	border-top: 1px solid var(--border);
+
+	i {
+		display: block;
+		flex: 1;
+		height: crayon.size(8);
+	}
+}
+
+.dt-atlas-open {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 1px;
+	border-top: 2px solid var(--border);
+	background: var(--border);
+
+	@include crayon.screen("md") {
+		grid-template-columns: repeat(6, 1fr);
+	}
+
+	a {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: crayon.size(1);
+		padding: crayon.size(3) crayon.size(2);
+		background: var(--background);
+		color: inherit;
+		font-size: crayon.font-size("xs");
+		font-weight: crayon.font-weight("bold");
+		text-align: center;
+		text-decoration: none;
+
+		.dt-icon {
+			width: crayon.size(5);
+			height: crayon.size(5);
+			color: var(--primary);
+		}
+
+		@include crayon.hover {
+			background: var(--accent);
+			color: var(--accent-foreground);
+		}
+	}
+}
+
+.dt-atlas-empty {
+	padding: crayon.size(8) crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	text-align: center;
+}

@@ -1,0 +1,306 @@
+@use "../crayon-config" as crayon;
+
+.dt-cropper-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-cropper-drop {
+	display: block;
+	margin: crayon.size(4);
+	padding: crayon.size(12);
+	border: 2px dashed var(--border);
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(12);
+		height: crayon.size(12);
+		margin-bottom: crayon.size(4);
+		color: var(--muted-foreground);
+	}
+
+	@include crayon.hover {
+		border-color: color-mix(
+			in oklch,
+			var(--primary) 50%,
+			transparent
+		);
+	}
+
+	/* hidden input focus lands here */
+	&:focus-within {
+		border-color: var(--primary);
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+}
+
+.dt-cropper-drop-title {
+	display: block;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-cropper-drop-hint {
+	display: block;
+	margin-top: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-cropper-bar {
+	display: flex;
+	min-height: crayon.size(12);
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-cropper-source {
+	@include crayon.hstack(3);
+
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	align-items: center;
+	padding-inline: crayon.size(4);
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+		flex-shrink: 0;
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-cropper-name {
+	overflow: hidden;
+	font-size: crayon.font-size("sm");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-cropper-dims {
+	flex-shrink: 0;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-cropper-bar-btn {
+	@include crayon.hstack(2);
+
+	display: flex;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-cropper-section {
+	border-bottom: 2px solid var(--border);
+
+	&.is-stage {
+		padding: 0 crayon.size(4) crayon.size(4);
+		text-align: center;
+	}
+}
+
+.dt-cropper-label {
+	@include crayon.hstack(2);
+
+	display: flex;
+	align-items: center;
+	padding: crayon.size(4) crayon.size(4) crayon.size(2);
+	font-weight: crayon.font-weight("bold");
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+}
+
+.dt-cropper-platforms {
+	grid-template-columns: repeat(3, 1fr);
+}
+
+.dt-cropper-ratios {
+	grid-template-columns: repeat(4, 1fr);
+}
+
+.dt-cropper-choice {
+	@include crayon.hstack(2);
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--background);
+	color: var(--foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	font-variant-numeric: tabular-nums;
+	cursor: pointer;
+
+	&.is-stacked {
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-cropper-choice-label {
+	font-size: crayon.font-size("xs");
+}
+
+.dt-cropper-choice-name {
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("normal");
+	opacity: 0.7;
+}
+
+/* stage hugs image for exact scale */
+.dt-cropper-stage {
+	position: relative;
+	display: inline-block;
+	overflow: hidden;
+	max-width: 100%;
+	cursor: move;
+	touch-action: none;
+	user-select: none;
+
+	&.is-dragging {
+		cursor: grabbing;
+	}
+
+	img {
+		display: block;
+		max-width: 100%;
+		max-height: crayon.size(96);
+	}
+}
+
+.dt-cropper-window {
+	position: absolute;
+	border: 2px solid #fff;
+	box-shadow: 0 0 0 9999px rgb(0 0 0 / 50%);
+	pointer-events: none;
+
+	/* thirds via gradients not elements */
+	background-image:
+		repeating-linear-gradient(
+			to right,
+			rgb(255 255 255 / 20%) 0 1px,
+			transparent 1px 33.333%
+		),
+		repeating-linear-gradient(
+			to bottom,
+			rgb(255 255 255 / 20%) 0 1px,
+			transparent 1px 33.333%
+		);
+}
+
+.dt-cropper-stats {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	font-variant-numeric: tabular-nums;
+
+	> span {
+		padding: crayon.size(2) crayon.size(4);
+
+		&:first-child {
+			flex: 1;
+			border-right: 1px solid var(--border);
+		}
+	}
+}
+
+.dt-cropper-result {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: crayon.size(4);
+	border-bottom: 1px solid var(--border);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+
+	img {
+		max-height: crayon.size(64);
+		border: 1px solid var(--border);
+	}
+}
+
+.dt-cropper-actions {
+	display: flex;
+	min-height: crayon.size(14);
+	align-items: stretch;
+	border-top: 1px solid var(--border);
+}
+
+.dt-cropper-summary {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-cropper-download {
+	@include crayon.hstack(2);
+
+	display: flex;
+	align-items: center;
+	padding-inline: crayon.size(6);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font: inherit;
+	font-weight: crayon.font-weight("semibold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--primary) 90%, black);
+	}
+}
+
+.dt-cropper-error {
+	padding: crayon.size(4);
+	border-top: 1px solid
+		color-mix(in oklch, var(--destructive) 50%, transparent);
+	background: color-mix(in oklch, var(--destructive) 10%, transparent);
+	color: var(--destructive);
+	font-size: crayon.font-size("sm");
+}

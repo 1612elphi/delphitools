@@ -1,5 +1,3 @@
-// Headless verification for the Pieces preset-shape gallery (delete after use).
-// Pattern from .verify-select.mjs. Needs `npm run dev` on :3000.
 import puppeteer from "puppeteer-core";
 
 const URL = process.env.EDITOR_URL ?? "http://localhost:3000/editor";
@@ -50,15 +48,14 @@ const drag = async (x0, y0, x1, y1) => {
   await sleep(300);
 };
 
-// ── 1) head sub + heart: drag draws a named, correctly-shaped symbol ─────────
 await page.evaluate(() => {
-  window.__substrata.setTool("pieces", "pieces"); // the gallery HEAD sub
+  window.__substrata.setTool("pieces", "pieces"); // gallery head sub
   window.__substrata.toolSettings("pieces", { symbolId: "heart", fill: "#3e6b33" });
 });
-await drag(600, 300, 1000, 700); // heart in a 400×400 box
+await drag(600, 300, 1000, 700); // 400×400 box
 let ls = await layers();
 check("heart: layer named after the preset", ls[0]?.name, ls.length === 1 && ls[0].name === "Heart");
-// grid(70,110) → inside the left lobe; grid(128,45) → the notch between lobes
+// grid(70,110) left lobe; grid(128,45) notch between lobes
 let px = await sample(600 + (70 / 256) * 400, 300 + (110 / 256) * 400);
 check("heart: lobe filled", px?.join(","), near(px, [62, 107, 51, 255]));
 px = await sample(600 + (128 / 256) * 400, 300 + (45 / 256) * 400);
@@ -68,22 +65,20 @@ await undo();
 ls = await layers();
 check("heart: ONE undo removes it", ls.length, ls.length === 0);
 
-// ── 2) cog: a different preset, hole in the middle proves winding ────────────
 await page.evaluate(() => {
-  window.__substrata.setTool("pieces", "pieces"); // one-shot reverted after the heart
+  window.__substrata.setTool("pieces", "pieces"); // reverts after heart use
   window.__substrata.toolSettings("pieces", { symbolId: "cog" });
 });
 await drag(400, 800, 800, 1200);
 ls = await layers();
 check("cog: layer named Cog", ls[0]?.name, ls.length === 1 && ls[0].name === "Cog");
-// grid centre (128,128) is the gear's HOLE (counter-wound subpath)
+// grid centre (128,128) = gear hole
 px = await sample(400 + 200, 800 + 200);
 check("cog: centre hole is background (nonzero winding)", px?.join(","), near(px, [255, 255, 255, 255]));
-// grid (128, 40) is the top tooth
-px = await sample(400 + 200, 800 + (40 / 256) * 400);
+// grid(128,60) solid body; edges at y=40/y=88 — edge sampling catches AA
+px = await sample(400 + 200, 800 + (60 / 256) * 400);
 check("cog: tooth filled", px?.join(","), near(px, [62, 107, 51, 255]));
 
-// ── 3) primitives sub still draws primitives (settings not clobbered) ────────
 await page.evaluate(() => {
   window.__substrata.setTool("pieces", "primitives");
   window.__substrata.toolSettings("pieces", { shape: "rectangle", fill: "#cc2222" });

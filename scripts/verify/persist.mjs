@@ -1,6 +1,4 @@
-// Headless verification for M5 .substrata round-trip (delete after use).
-// File pickers can't be driven headlessly — the rig packs/unpacks bytes
-// through the same lib the menu uses. Needs `npm run dev` on :3000.
+// headless can't drive file pickers
 import puppeteer from "puppeteer-core";
 
 const URL = process.env.EDITOR_URL ?? "http://localhost:3000/editor";
@@ -47,7 +45,6 @@ const drag = async (x0, y0, x1, y1) => {
   await sleep(300);
 };
 
-// ── 1) author a scene: raster + symbol + guide ───────────────────────────────
 await page.evaluate(() =>
   window.__substrata.addRaster(600, 400, [{ x: 0, y: 0, w: 600, h: 400, colour: "#2244cc" }], { x: 500, y: 400 }),
 );
@@ -57,7 +54,7 @@ await page.evaluate(() => {
   window.__substrata.toolSettings("pieces", { symbolId: "heart", fill: "#3e6b33" });
 });
 await drag(1200, 800, 1600, 1200);
-// band drag in RAW page coords (drag() expects scene coords)
+// page coords, not scene
 const t = toPage(900, 700);
 await page.mouse.move(rect.left + 10, t.y);
 await page.mouse.down();
@@ -68,12 +65,10 @@ const beforeLayers = await layers();
 const beforeGuides = await guides();
 check("setup: raster + heart + guide", `${beforeLayers.length}L ${beforeGuides.length}G`, beforeLayers.length === 2 && beforeGuides.length === 1);
 
-// ── 2) pack ───────────────────────────────────────────────────────────────────
 const bytes = await page.evaluate(() => window.__substrata.packScene());
 check("pack: plausible zip", `${bytes?.length}B`, Array.isArray(bytes) && bytes.length > 1000);
 check("pack: zip magic", bytes?.slice(0, 2).join(","), bytes[0] === 0x50 && bytes[1] === 0x4b);
 
-// ── 3) destroy the scene, then unpack restores everything ────────────────────
 await page.evaluate(() => {
   const ids = window.__substrata.layers().map((l) => l.id);
   window.__substrata.select(ids);
@@ -89,10 +84,9 @@ check("unpack: layers restored", afterLayers.map((l) => l.name).join(","), after
 check("unpack: guide restored at x≈900", afterGuides[0]?.pos, afterGuides.length === 1 && Math.abs(afterGuides[0].pos - 900) <= 1);
 let px = await sample(500, 400);
 check("unpack: raster pixels restored", px?.join(","), near(px, [34, 68, 204, 255]));
-px = await sample(1200 + (70 / 256) * 400 - 200 + 200, 800 + (110 / 256) * 400); // heart lobe
+px = await sample(1200 + (70 / 256) * 400 - 200 + 200, 800 + (110 / 256) * 400); // lobe
 check("unpack: heart renders", px?.join(","), near(px, [62, 107, 51, 255]));
 
-// ── 4) undo history reset on open (setDoc semantics) ─────────────────────────
 await page.keyboard.down("Meta");
 await page.keyboard.press("z");
 await page.keyboard.up("Meta");

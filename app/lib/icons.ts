@@ -1,0 +1,487 @@
+import iAlertCircle from 'lucide-static/icons/alert-circle.svg?raw';
+import iAlertTriangle from 'lucide-static/icons/alert-triangle.svg?raw';
+import iAlignCenter from 'lucide-static/icons/align-center.svg?raw';
+import iAlignCenterHorizontal from 'lucide-static/icons/align-center-horizontal.svg?raw';
+import iAlignCenterVertical from 'lucide-static/icons/align-center-vertical.svg?raw';
+import iAlignEndHorizontal from 'lucide-static/icons/align-end-horizontal.svg?raw';
+import iAlignEndVertical from 'lucide-static/icons/align-end-vertical.svg?raw';
+import iAlignHorizontalDistributeCenter from 'lucide-static/icons/align-horizontal-distribute-center.svg?raw';
+import iAlignJustify from 'lucide-static/icons/align-justify.svg?raw';
+import iAlignLeft from 'lucide-static/icons/align-left.svg?raw';
+import iAlignRight from 'lucide-static/icons/align-right.svg?raw';
+import iAlignStartHorizontal from 'lucide-static/icons/align-start-horizontal.svg?raw';
+import iAlignStartVertical from 'lucide-static/icons/align-start-vertical.svg?raw';
+import iAlignVerticalDistributeCenter from 'lucide-static/icons/align-vertical-distribute-center.svg?raw';
+import iAperture from 'lucide-static/icons/aperture.svg?raw';
+import iArrowDown from 'lucide-static/icons/arrow-down.svg?raw';
+import iArrowDownLeft from 'lucide-static/icons/arrow-down-left.svg?raw';
+import iArrowDownRight from 'lucide-static/icons/arrow-down-right.svg?raw';
+import iArrowDownToLine from 'lucide-static/icons/arrow-down-to-line.svg?raw';
+import iArrowLeft from 'lucide-static/icons/arrow-left.svg?raw';
+import iArrowLeftRight from 'lucide-static/icons/arrow-left-right.svg?raw';
+import iArrowRight from 'lucide-static/icons/arrow-right.svg?raw';
+import iArrowRightLeft from 'lucide-static/icons/arrow-right-left.svg?raw';
+import iArrowUp from 'lucide-static/icons/arrow-up.svg?raw';
+import iArrowUpDown from 'lucide-static/icons/arrow-up-down.svg?raw';
+import iArrowUpLeft from 'lucide-static/icons/arrow-up-left.svg?raw';
+import iArrowUpRight from 'lucide-static/icons/arrow-up-right.svg?raw';
+import iArrowUpToLine from 'lucide-static/icons/arrow-up-to-line.svg?raw';
+import iAudioLines from 'lucide-static/icons/audio-lines.svg?raw';
+import iAudioWaveform from 'lucide-static/icons/audio-waveform.svg?raw';
+import iAxis3d from 'lucide-static/icons/axis-3d.svg?raw';
+import iBanana from 'lucide-static/icons/banana.svg?raw';
+import iBarcode from 'lucide-static/icons/barcode.svg?raw';
+import iBinary from 'lucide-static/icons/binary.svg?raw';
+import iBlend from 'lucide-static/icons/blend.svg?raw';
+import iBold from 'lucide-static/icons/bold.svg?raw';
+import iBookOpen from 'lucide-static/icons/book-open.svg?raw';
+import iBox from 'lucide-static/icons/box.svg?raw';
+import iBoxSelect from 'lucide-static/icons/box-select.svg?raw';
+import iBraces from 'lucide-static/icons/braces.svg?raw';
+import iBrush from 'lucide-static/icons/brush.svg?raw';
+import iCalculator from 'lucide-static/icons/calculator.svg?raw';
+import iCalendarClock from 'lucide-static/icons/calendar-clock.svg?raw';
+import iCamera from 'lucide-static/icons/camera.svg?raw';
+import iCaptions from 'lucide-static/icons/captions.svg?raw';
+import iCarrot from 'lucide-static/icons/carrot.svg?raw';
+import iCaseUpper from 'lucide-static/icons/case-upper.svg?raw';
+import iChartColumnBig from 'lucide-static/icons/chart-column-big.svg?raw';
+import iCheck from 'lucide-static/icons/check.svg?raw';
+import iChefHat from 'lucide-static/icons/chef-hat.svg?raw';
+import iChevronDown from 'lucide-static/icons/chevron-down.svg?raw';
+import iChevronLeft from 'lucide-static/icons/chevron-left.svg?raw';
+import iChevronRight from 'lucide-static/icons/chevron-right.svg?raw';
+import iChevronUp from 'lucide-static/icons/chevron-up.svg?raw';
+import iChevronsLeft from 'lucide-static/icons/chevrons-left.svg?raw';
+import iChevronsRight from 'lucide-static/icons/chevrons-right.svg?raw';
+import iChevronsUpDown from 'lucide-static/icons/chevrons-up-down.svg?raw';
+import iCircle from 'lucide-static/icons/circle.svg?raw';
+import iCircleAlert from 'lucide-static/icons/circle-alert.svg?raw';
+import iCircleCheck from 'lucide-static/icons/circle-check.svg?raw';
+import iCircleCheckBig from 'lucide-static/icons/circle-check-big.svg?raw';
+import iCircleDashed from 'lucide-static/icons/circle-dashed.svg?raw';
+import iCircleDot from 'lucide-static/icons/circle-dot.svg?raw';
+import iCircleSlash from 'lucide-static/icons/circle-slash.svg?raw';
+import iCircleX from 'lucide-static/icons/circle-x.svg?raw';
+import iClapperboard from 'lucide-static/icons/clapperboard.svg?raw';
+import iClipboard from 'lucide-static/icons/clipboard.svg?raw';
+import iClipboardPaste from 'lucide-static/icons/clipboard-paste.svg?raw';
+import iClipboardX from 'lucide-static/icons/clipboard-x.svg?raw';
+import iClock from 'lucide-static/icons/clock.svg?raw';
+import iCode from 'lucide-static/icons/code.svg?raw';
+import iCode2 from 'lucide-static/icons/code-2.svg?raw';
+import iCoffee from 'lucide-static/icons/coffee.svg?raw';
+import iCombine from 'lucide-static/icons/combine.svg?raw';
+import iContrast from 'lucide-static/icons/contrast.svg?raw';
+import iCookingPot from 'lucide-static/icons/cooking-pot.svg?raw';
+import iCopy from 'lucide-static/icons/copy.svg?raw';
+import iCopyPlus from 'lucide-static/icons/copy-plus.svg?raw';
+import iCrop from 'lucide-static/icons/crop.svg?raw';
+import iCrosshair from 'lucide-static/icons/crosshair.svg?raw';
+import iDices from 'lucide-static/icons/dices.svg?raw';
+import iDock from 'lucide-static/icons/dock.svg?raw';
+import iDot from 'lucide-static/icons/dot.svg?raw';
+import iDownload from 'lucide-static/icons/download.svg?raw';
+import iDroplet from 'lucide-static/icons/droplet.svg?raw';
+import iDroplets from 'lucide-static/icons/droplets.svg?raw';
+import iEar from 'lucide-static/icons/ear.svg?raw';
+import iEclipse from 'lucide-static/icons/eclipse.svg?raw';
+import iEllipsis from 'lucide-static/icons/ellipsis.svg?raw';
+import iEraser from 'lucide-static/icons/eraser.svg?raw';
+import iExpand from 'lucide-static/icons/expand.svg?raw';
+import iExternalLink from 'lucide-static/icons/external-link.svg?raw';
+import iEye from 'lucide-static/icons/eye.svg?raw';
+import iEyeOff from 'lucide-static/icons/eye-off.svg?raw';
+import iFastForward from 'lucide-static/icons/fast-forward.svg?raw';
+import iFileAudio from 'lucide-static/icons/file-audio.svg?raw';
+import iFileCode from 'lucide-static/icons/file-code.svg?raw';
+import iFileDigit from 'lucide-static/icons/file-digit.svg?raw';
+import iFileDown from 'lucide-static/icons/file-down.svg?raw';
+import iFileImage from 'lucide-static/icons/file-image.svg?raw';
+import iFilePlus from 'lucide-static/icons/file-plus.svg?raw';
+import iFileSearch from 'lucide-static/icons/file-search.svg?raw';
+import iFileStack from 'lucide-static/icons/file-stack.svg?raw';
+import iFileText from 'lucide-static/icons/file-text.svg?raw';
+import iFileType from 'lucide-static/icons/file-type.svg?raw';
+import iFileType2 from 'lucide-static/icons/file-type-2.svg?raw';
+import iFileUp from 'lucide-static/icons/file-up.svg?raw';
+import iFilm from 'lucide-static/icons/film.svg?raw';
+import iFingerprint from 'lucide-static/icons/fingerprint.svg?raw';
+import iFlame from 'lucide-static/icons/flame.svg?raw';
+import iFlaskConical from 'lucide-static/icons/flask-conical.svg?raw';
+import iFlipHorizontal2 from 'lucide-static/icons/flip-horizontal-2.svg?raw';
+import iFlipVertical2 from 'lucide-static/icons/flip-vertical-2.svg?raw';
+import iFocus from 'lucide-static/icons/focus.svg?raw';
+import iFolder from 'lucide-static/icons/folder.svg?raw';
+import iFolderMinus from 'lucide-static/icons/folder-minus.svg?raw';
+import iFolderPlus from 'lucide-static/icons/folder-plus.svg?raw';
+import iFrame from 'lucide-static/icons/frame.svg?raw';
+import iGalleryVertical from 'lucide-static/icons/gallery-vertical.svg?raw';
+import iGauge from 'lucide-static/icons/gauge.svg?raw';
+import iGitCompare from 'lucide-static/icons/git-compare.svg?raw';
+import iGlobe from 'lucide-static/icons/globe.svg?raw';
+import iGrid2x2 from 'lucide-static/icons/grid-2x2.svg?raw';
+import iGrid3x3 from 'lucide-static/icons/grid-3x3.svg?raw';
+import iGrip from 'lucide-static/icons/grip.svg?raw';
+import iGripVertical from 'lucide-static/icons/grip-vertical.svg?raw';
+import iGroup from 'lucide-static/icons/group.svg?raw';
+import iHardDrive from 'lucide-static/icons/hard-drive.svg?raw';
+import iHash from 'lucide-static/icons/hash.svg?raw';
+import iHome from 'lucide-static/icons/home.svg?raw';
+import iImage from 'lucide-static/icons/image.svg?raw';
+import iImagePlus from 'lucide-static/icons/image-plus.svg?raw';
+import iInfo from 'lucide-static/icons/info.svg?raw';
+import iItalic from 'lucide-static/icons/italic.svg?raw';
+import iKeyRound from 'lucide-static/icons/key-round.svg?raw';
+import iKeySquare from 'lucide-static/icons/key-square.svg?raw';
+import iLanguages from 'lucide-static/icons/languages.svg?raw';
+import iLasso from 'lucide-static/icons/lasso.svg?raw';
+import iLayers from 'lucide-static/icons/layers.svg?raw';
+import iLayoutGrid from 'lucide-static/icons/layout-grid.svg?raw';
+import iLibrary from 'lucide-static/icons/library.svg?raw';
+import iLightbulb from 'lucide-static/icons/lightbulb.svg?raw';
+import iLineChart from 'lucide-static/icons/line-chart.svg?raw';
+import iLink from 'lucide-static/icons/link.svg?raw';
+import iListChecks from 'lucide-static/icons/list-checks.svg?raw';
+import iLock from 'lucide-static/icons/lock.svg?raw';
+import iLockOpen from 'lucide-static/icons/lock-open.svg?raw';
+import iMagnet from 'lucide-static/icons/magnet.svg?raw';
+import iMapPin from 'lucide-static/icons/map-pin.svg?raw';
+import iMaximize from 'lucide-static/icons/maximize.svg?raw';
+import iMaximize2 from 'lucide-static/icons/maximize-2.svg?raw';
+import iMessageSquarePlus from 'lucide-static/icons/message-square-plus.svg?raw';
+import iMic from 'lucide-static/icons/mic.svg?raw';
+import iMinimize from 'lucide-static/icons/minimize.svg?raw';
+import iMinimize2 from 'lucide-static/icons/minimize-2.svg?raw';
+import iMinus from 'lucide-static/icons/minus.svg?raw';
+import iMonitorUp from 'lucide-static/icons/monitor-up.svg?raw';
+import iMoon from 'lucide-static/icons/moon.svg?raw';
+import iMove from 'lucide-static/icons/move.svg?raw';
+import iPaintBucket from 'lucide-static/icons/paint-bucket.svg?raw';
+import iPalette from 'lucide-static/icons/palette.svg?raw';
+import iPanelBottom from 'lucide-static/icons/panel-bottom.svg?raw';
+import iPanelLeft from 'lucide-static/icons/panel-left.svg?raw';
+import iPanelRight from 'lucide-static/icons/panel-right.svg?raw';
+import iPanelTop from 'lucide-static/icons/panel-top.svg?raw';
+import iPartyPopper from 'lucide-static/icons/party-popper.svg?raw';
+import iPause from 'lucide-static/icons/pause.svg?raw';
+import iPenLine from 'lucide-static/icons/pen-line.svg?raw';
+import iPencil from 'lucide-static/icons/pencil.svg?raw';
+import iPentagon from 'lucide-static/icons/pentagon.svg?raw';
+import iPin from 'lucide-static/icons/pin.svg?raw';
+import iPinOff from 'lucide-static/icons/pin-off.svg?raw';
+import iPipette from 'lucide-static/icons/pipette.svg?raw';
+import iPlay from 'lucide-static/icons/play.svg?raw';
+import iPlus from 'lucide-static/icons/plus.svg?raw';
+import iPrinter from 'lucide-static/icons/printer.svg?raw';
+import iQrCode from 'lucide-static/icons/qr-code.svg?raw';
+import iRadio from 'lucide-static/icons/radio.svg?raw';
+import iRadioTower from 'lucide-static/icons/radio-tower.svg?raw';
+import iRainbow from 'lucide-static/icons/rainbow.svg?raw';
+import iRedo2 from 'lucide-static/icons/redo-2.svg?raw';
+import iRefreshCw from 'lucide-static/icons/refresh-cw.svg?raw';
+import iRegex from 'lucide-static/icons/regex.svg?raw';
+import iRepeat from 'lucide-static/icons/repeat.svg?raw';
+import iRewind from 'lucide-static/icons/rewind.svg?raw';
+import iRotateCcw from 'lucide-static/icons/rotate-ccw.svg?raw';
+import iRotateCw from 'lucide-static/icons/rotate-cw.svg?raw';
+import iRuler from 'lucide-static/icons/ruler.svg?raw';
+import iScale from 'lucide-static/icons/scale.svg?raw';
+import iScaling from 'lucide-static/icons/scaling.svg?raw';
+import iScanLine from 'lucide-static/icons/scan-line.svg?raw';
+import iScanSearch from 'lucide-static/icons/scan-search.svg?raw';
+import iScissors from 'lucide-static/icons/scissors.svg?raw';
+import iScissorsLineDashed from 'lucide-static/icons/scissors-line-dashed.svg?raw';
+import iSearch from 'lucide-static/icons/search.svg?raw';
+import iServer from 'lucide-static/icons/server.svg?raw';
+import iSettings from 'lucide-static/icons/settings.svg?raw';
+import iSettings2 from 'lucide-static/icons/settings-2.svg?raw';
+import iShapes from 'lucide-static/icons/shapes.svg?raw';
+import iShieldCheck from 'lucide-static/icons/shield-check.svg?raw';
+import iShrink from 'lucide-static/icons/shrink.svg?raw';
+import iShuffle from 'lucide-static/icons/shuffle.svg?raw';
+import iSignature from 'lucide-static/icons/signature.svg?raw';
+import iSlash from 'lucide-static/icons/slash.svg?raw';
+import iSlidersHorizontal from 'lucide-static/icons/sliders-horizontal.svg?raw';
+import iSmartphone from 'lucide-static/icons/smartphone.svg?raw';
+import iSparkle from 'lucide-static/icons/sparkle.svg?raw';
+import iSparkles from 'lucide-static/icons/sparkles.svg?raw';
+import iSpline from 'lucide-static/icons/spline.svg?raw';
+import iSquare from 'lucide-static/icons/square.svg?raw';
+import iSquareDashed from 'lucide-static/icons/square-dashed.svg?raw';
+import iSquareSlash from 'lucide-static/icons/square-slash.svg?raw';
+import iSquareSquare from 'lucide-static/icons/square-square.svg?raw';
+import iSquareStack from 'lucide-static/icons/square-stack.svg?raw';
+import iSquareTerminal from 'lucide-static/icons/square-terminal.svg?raw';
+import iStamp from 'lucide-static/icons/stamp.svg?raw';
+import iStar from 'lucide-static/icons/star.svg?raw';
+import iStrikethrough from 'lucide-static/icons/strikethrough.svg?raw';
+import iSubtitles from 'lucide-static/icons/subtitles.svg?raw';
+import iSun from 'lucide-static/icons/sun.svg?raw';
+import iSwatchBook from 'lucide-static/icons/swatch-book.svg?raw';
+import iTag from 'lucide-static/icons/tag.svg?raw';
+import iTerminal from 'lucide-static/icons/terminal.svg?raw';
+import iThermometer from 'lucide-static/icons/thermometer.svg?raw';
+import iTrash2 from 'lucide-static/icons/trash-2.svg?raw';
+import iTriangle from 'lucide-static/icons/triangle.svg?raw';
+import iTriangleAlert from 'lucide-static/icons/triangle-alert.svg?raw';
+import iType from 'lucide-static/icons/type.svg?raw';
+import iUndo2 from 'lucide-static/icons/undo-2.svg?raw';
+import iUngroup from 'lucide-static/icons/ungroup.svg?raw';
+import iUnlock from 'lucide-static/icons/unlock.svg?raw';
+import iUpload from 'lucide-static/icons/upload.svg?raw';
+import iVariable from 'lucide-static/icons/variable.svg?raw';
+import iVectorSquare from 'lucide-static/icons/vector-square.svg?raw';
+import iVolumeX from 'lucide-static/icons/volume-x.svg?raw';
+import iWand2 from 'lucide-static/icons/wand-2.svg?raw';
+import iWind from 'lucide-static/icons/wind.svg?raw';
+import iWorkflow from 'lucide-static/icons/workflow.svg?raw';
+import iWrench from 'lucide-static/icons/wrench.svg?raw';
+import iX from 'lucide-static/icons/x.svg?raw';
+import iZoomIn from 'lucide-static/icons/zoom-in.svg?raw';
+import iZoomOut from 'lucide-static/icons/zoom-out.svg?raw';
+
+export const icons: Record<string, string> = {
+	'alert-circle': iAlertCircle,
+	'alert-triangle': iAlertTriangle,
+	'align-center': iAlignCenter,
+	'align-center-horizontal': iAlignCenterHorizontal,
+	'align-center-vertical': iAlignCenterVertical,
+	'align-end-horizontal': iAlignEndHorizontal,
+	'align-end-vertical': iAlignEndVertical,
+	'align-horizontal-distribute-center': iAlignHorizontalDistributeCenter,
+	'align-justify': iAlignJustify,
+	'align-left': iAlignLeft,
+	'align-right': iAlignRight,
+	'align-start-horizontal': iAlignStartHorizontal,
+	'align-start-vertical': iAlignStartVertical,
+	'align-vertical-distribute-center': iAlignVerticalDistributeCenter,
+	aperture: iAperture,
+	'arrow-down': iArrowDown,
+	'arrow-down-left': iArrowDownLeft,
+	'arrow-down-right': iArrowDownRight,
+	'arrow-down-to-line': iArrowDownToLine,
+	'arrow-left': iArrowLeft,
+	'arrow-left-right': iArrowLeftRight,
+	'arrow-right': iArrowRight,
+	'arrow-right-left': iArrowRightLeft,
+	'arrow-up': iArrowUp,
+	'arrow-up-down': iArrowUpDown,
+	'arrow-up-left': iArrowUpLeft,
+	'arrow-up-right': iArrowUpRight,
+	'arrow-up-to-line': iArrowUpToLine,
+	'audio-lines': iAudioLines,
+	'audio-waveform': iAudioWaveform,
+	'axis-3d': iAxis3d,
+	banana: iBanana,
+	barcode: iBarcode,
+	binary: iBinary,
+	blend: iBlend,
+	bold: iBold,
+	'book-open': iBookOpen,
+	box: iBox,
+	'box-select': iBoxSelect,
+	braces: iBraces,
+	brush: iBrush,
+	calculator: iCalculator,
+	'calendar-clock': iCalendarClock,
+	camera: iCamera,
+	captions: iCaptions,
+	carrot: iCarrot,
+	'case-upper': iCaseUpper,
+	'chart-column-big': iChartColumnBig,
+	check: iCheck,
+	'chef-hat': iChefHat,
+	'chevron-down': iChevronDown,
+	'chevron-left': iChevronLeft,
+	'chevron-right': iChevronRight,
+	'chevron-up': iChevronUp,
+	'chevrons-left': iChevronsLeft,
+	'chevrons-right': iChevronsRight,
+	'chevrons-up-down': iChevronsUpDown,
+	circle: iCircle,
+	'circle-alert': iCircleAlert,
+	'circle-check': iCircleCheck,
+	'circle-check-big': iCircleCheckBig,
+	'circle-dashed': iCircleDashed,
+	'circle-dot': iCircleDot,
+	'circle-slash': iCircleSlash,
+	'circle-x': iCircleX,
+	clapperboard: iClapperboard,
+	clipboard: iClipboard,
+	'clipboard-paste': iClipboardPaste,
+	'clipboard-x': iClipboardX,
+	clock: iClock,
+	code: iCode,
+	'code-2': iCode2,
+	coffee: iCoffee,
+	combine: iCombine,
+	contrast: iContrast,
+	'cooking-pot': iCookingPot,
+	copy: iCopy,
+	'copy-plus': iCopyPlus,
+	crop: iCrop,
+	crosshair: iCrosshair,
+	dices: iDices,
+	dock: iDock,
+	dot: iDot,
+	download: iDownload,
+	droplet: iDroplet,
+	droplets: iDroplets,
+	ear: iEar,
+	eclipse: iEclipse,
+	ellipsis: iEllipsis,
+	eraser: iEraser,
+	expand: iExpand,
+	'external-link': iExternalLink,
+	eye: iEye,
+	'eye-off': iEyeOff,
+	'fast-forward': iFastForward,
+	'file-audio': iFileAudio,
+	'file-code': iFileCode,
+	'file-digit': iFileDigit,
+	'file-down': iFileDown,
+	'file-image': iFileImage,
+	'file-plus': iFilePlus,
+	'file-search': iFileSearch,
+	'file-stack': iFileStack,
+	'file-text': iFileText,
+	'file-type': iFileType,
+	'file-type-2': iFileType2,
+	'file-up': iFileUp,
+	film: iFilm,
+	fingerprint: iFingerprint,
+	flame: iFlame,
+	'flask-conical': iFlaskConical,
+	'flip-horizontal-2': iFlipHorizontal2,
+	'flip-vertical-2': iFlipVertical2,
+	focus: iFocus,
+	folder: iFolder,
+	'folder-minus': iFolderMinus,
+	'folder-plus': iFolderPlus,
+	frame: iFrame,
+	'gallery-vertical': iGalleryVertical,
+	gauge: iGauge,
+	'git-compare': iGitCompare,
+	globe: iGlobe,
+	'grid-2x2': iGrid2x2,
+	'grid-3x3': iGrid3x3,
+	grip: iGrip,
+	'grip-vertical': iGripVertical,
+	group: iGroup,
+	'hard-drive': iHardDrive,
+	hash: iHash,
+	home: iHome,
+	image: iImage,
+	'image-plus': iImagePlus,
+	info: iInfo,
+	italic: iItalic,
+	'key-round': iKeyRound,
+	'key-square': iKeySquare,
+	languages: iLanguages,
+	lasso: iLasso,
+	layers: iLayers,
+	'layout-grid': iLayoutGrid,
+	library: iLibrary,
+	lightbulb: iLightbulb,
+	'line-chart': iLineChart,
+	link: iLink,
+	'list-checks': iListChecks,
+	lock: iLock,
+	'lock-open': iLockOpen,
+	magnet: iMagnet,
+	'map-pin': iMapPin,
+	maximize: iMaximize,
+	'maximize-2': iMaximize2,
+	'message-square-plus': iMessageSquarePlus,
+	mic: iMic,
+	minimize: iMinimize,
+	'minimize-2': iMinimize2,
+	minus: iMinus,
+	'monitor-up': iMonitorUp,
+	moon: iMoon,
+	move: iMove,
+	'paint-bucket': iPaintBucket,
+	palette: iPalette,
+	'panel-bottom': iPanelBottom,
+	'panel-left': iPanelLeft,
+	'panel-right': iPanelRight,
+	'panel-top': iPanelTop,
+	'party-popper': iPartyPopper,
+	pause: iPause,
+	'pen-line': iPenLine,
+	pencil: iPencil,
+	pentagon: iPentagon,
+	pin: iPin,
+	'pin-off': iPinOff,
+	pipette: iPipette,
+	play: iPlay,
+	plus: iPlus,
+	printer: iPrinter,
+	'qr-code': iQrCode,
+	radio: iRadio,
+	'radio-tower': iRadioTower,
+	rainbow: iRainbow,
+	'redo-2': iRedo2,
+	'refresh-cw': iRefreshCw,
+	regex: iRegex,
+	repeat: iRepeat,
+	rewind: iRewind,
+	'rotate-ccw': iRotateCcw,
+	'rotate-cw': iRotateCw,
+	ruler: iRuler,
+	scale: iScale,
+	scaling: iScaling,
+	'scan-line': iScanLine,
+	'scan-search': iScanSearch,
+	scissors: iScissors,
+	'scissors-line-dashed': iScissorsLineDashed,
+	search: iSearch,
+	server: iServer,
+	settings: iSettings,
+	'settings-2': iSettings2,
+	shapes: iShapes,
+	'shield-check': iShieldCheck,
+	shrink: iShrink,
+	shuffle: iShuffle,
+	signature: iSignature,
+	slash: iSlash,
+	'sliders-horizontal': iSlidersHorizontal,
+	smartphone: iSmartphone,
+	sparkle: iSparkle,
+	sparkles: iSparkles,
+	spline: iSpline,
+	square: iSquare,
+	'square-dashed': iSquareDashed,
+	'square-slash': iSquareSlash,
+	'square-square': iSquareSquare,
+	'square-stack': iSquareStack,
+	'square-terminal': iSquareTerminal,
+	stamp: iStamp,
+	star: iStar,
+	strikethrough: iStrikethrough,
+	subtitles: iSubtitles,
+	sun: iSun,
+	'swatch-book': iSwatchBook,
+	tag: iTag,
+	terminal: iTerminal,
+	thermometer: iThermometer,
+	'trash-2': iTrash2,
+	triangle: iTriangle,
+	'triangle-alert': iTriangleAlert,
+	type: iType,
+	'undo-2': iUndo2,
+	ungroup: iUngroup,
+	unlock: iUnlock,
+	upload: iUpload,
+	variable: iVariable,
+	'vector-square': iVectorSquare,
+	'volume-x': iVolumeX,
+	'wand-2': iWand2,
+	wind: iWind,
+	workflow: iWorkflow,
+	wrench: iWrench,
+	x: iX,
+	'zoom-in': iZoomIn,
+	'zoom-out': iZoomOut,
+};

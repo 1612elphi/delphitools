@@ -1,0 +1,67 @@
+// tailwind sizes from arrange-panel.tsx
+
+.sub-arr {
+	font-size: 12px;
+}
+
+.sub-arr-empty {
+	padding: 16px;
+	text-align: center;
+	color: var(--muted-foreground);
+	font-size: 12px;
+}
+
+.sub-arr-title {
+	padding: 8px 12px 6px;
+	color: var(--muted-foreground);
+	font-size: 10.5px;
+	font-weight: 700;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+}
+
+.sub-arr-row {
+	border-inline: none;
+
+	&.is-2 {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	&.is-4 {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+
+	&.is-6 {
+		grid-template-columns: repeat(6, minmax(0, 1fr));
+	}
+}
+
+.sub-arr-btn {
+	display: grid;
+	place-items: center;
+	block-size: 36px;
+	border: none;
+	background-color: var(--card);
+	color: var(--muted-foreground);
+	cursor: default;
+
+	&:hover {
+		background-color: var(--accent);
+		color: var(--foreground);
+	}
+
+	&.is-active {
+		background-color: var(--primary);
+		color: var(--primary-foreground);
+	}
+
+	&:disabled {
+		pointer-events: none;
+		opacity: 0.4;
+	}
+
+	.dt-icon {
+		inline-size: 16px;
+		block-size: 16px;
+	}
+}

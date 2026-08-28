@@ -1,0 +1,392 @@
+import Component from '@glimmer/component';
+import { tracked } from '@glimmer/tracking';
+import { on } from '@ember/modifier';
+import { htmlSafe } from '@ember/template';
+import { eq } from 'ember-truth-helpers';
+import Icon from 'delphitools-v2/components/icon';
+import NdsLoader from 'delphitools-v2/components/ui/nds-loader';
+import DownloadLabel from 'delphitools-v2/components/download-label';
+import filePaste from 'delphitools-v2/modifiers/file-paste';
+import { downloadBlob } from 'delphitools-v2/lib/download';
+import { formatBytes } from 'delphitools-v2/lib/image-compress';
+import { VideoIntake } from 'delphitools-v2/lib/video';
+import { VIDEO_ACCEPT, acceptAttr } from 'delphitools-v2/lib/tools';
+import { probeAudio, type AudioProbe } from 'delphitools-v2/lib/media-probe';
+import {
+	AUDIO_TARGETS,
+	audioTargetSupport,
+	extractAudio,
+	type AudioTarget,
+	type ConvertResult,
+} from 'delphitools-v2/lib/media-convert';
+
+const ACCEPT = acceptAttr(VIDEO_ACCEPT);
+
+const DROP_TITLE = 'Drop a video file';
+
+const NO_AUDIO = 'No audio track detected';
+
+const EXTRACT_ERROR = "Couldn't extract, try WAV format";
+
+export default class AudioExtractorTool extends Component {
+	intake = new VideoIntake({
+		onLoad: (file) => {
+			this.#reset();
+			void this.#probe(file);
+		},
+		canLoad: () => !this.busy,
+	});
+
+	/** undefined pending; null silent. */
+	@tracked probe: AudioProbe | null | undefined = undefined;
+	@tracked support: Record<AudioTarget, boolean> | null = null;
+	@tracked target: AudioTarget = 'wav';
+	@tracked busy = false;
+	@tracked pct = 0;
+	@tracked result: ConvertResult | null = null;
+	@tracked resultUrl = '';
+	@tracked errorCode = '';
+
+	#token = 0;
+	#abort: AbortController | null = null;
+
+	willDestroy() {
+		super.willDestroy();
+		this.#token++;
+		this.#abort?.abort();
+		this.intake.release();
+		this.#releaseResult();
+	}
+
+	get hasVideo() {
+		return this.intake.url !== null;
+	}
+
+	get silent() {
+		return this.probe === null;
+	}
+
+	get targets() {
+		return AUDIO_TARGETS.map((t) => ({
+			...t,
+			supported: this.#supports(t.id),
+		}));
+	}
+
+	get ready() {
+		return (
+			!this.busy &&
+			!!this.probe &&
+			this.#supports(this.target)
+		);
+	}
+
+	// wav needs no encoder.
+	#supports(id: AudioTarget) {
+		return this.support?.[id] ?? id === 'wav';
+	}
+
+	get baseName() {
+		return this.intake.baseName || 'audio';
+	}
+
+	get status() {
+		if (this.busy) return `${this.pct}%`;
+		if (this.silent) return NO_AUDIO;
+		const p = this.probe;
+		if (!p) return '';
+		return `${p.codec ?? 'audio'} · ${p.sampleRate} Hz`;
+	}
+
+	get progressStyle() {
+		return htmlSafe(`width: ${this.pct}%`);
+	}
+
+	get resultLabel() {
+		if (!this.result) return '';
+		return `${this.result.ext} · ${formatBytes(this.result.blob.size)}`;
+	}
+
+	get errorMessage() {
+		if (this.intake.error) return this.intake.error;
+		if (this.errorCode === 'extract') return EXTRACT_ERROR;
+		return '';
+	}
+
+	async #probe(file: File) {
+		const token = ++this.#token;
+		const probe = await probeAudio(file);
+		if (token !== this.#token) return;
+		this.probe = probe;
+		if (!probe) return;
+		const support = await audioTargetSupport(probe.codec);
+		if (token !== this.#token) return;
+		this.support = support;
+	}
+
+	setTarget = (event: Event) => {
+		this.target = (event.target as HTMLSelectElement)
+			.value as AudioTarget;
+		this.#releaseResult();
+	};
+
+	extract = () => void this.#extract();
+
+	async #extract() {
+		const file = this.intake.file;
+		if (!file || !this.ready) return;
+		const token = ++this.#token;
+		this.busy = true;
+		this.pct = 0;
+		this.errorCode = '';
+		this.#releaseResult();
+		this.intake.video?.pause();
+		const abort = new AbortController();
+		this.#abort = abort;
+		try {
+			const result = await extractAudio(file, this.target, {
+				signal: abort.signal,
+				onProgress: (fraction) => {
+					if (token !== this.#token) return;
+					const pct = Math.round(fraction * 100);
+					if (pct !== this.pct) this.pct = pct;
+				},
+			});
+			if (token !== this.#token) return;
+			this.result = result;
+			this.resultUrl = URL.createObjectURL(result.blob);
+			this.pct = 100;
+		} catch (error) {
+			if (token !== this.#token) return;
+			if ((error as Error).name === 'AbortError') return;
+			console.error('Extract failed:', error);
+			this.errorCode = 'extract';
+		} finally {
+			if (this.#abort === abort) this.#abort = null;
+			if (token === this.#token) this.busy = false;
+		}
+	}
+
+	download = () => {
+		if (!this.result) return;
+		downloadBlob(
+			this.result.blob,
+			`${this.baseName}.${this.result.ext}`,
+		);
+	};
+
+	#releaseResult() {
+		if (this.resultUrl) URL.revokeObjectURL(this.resultUrl);
+		this.resultUrl = '';
+		this.result = null;
+	}
+
+	#reset() {
+		this.#token++;
+		this.#abort?.abort();
+		this.#abort = null;
+		this.#releaseResult();
+		this.probe = undefined;
+		this.support = null;
+		this.busy = false;
+		this.pct = 0;
+		this.errorCode = '';
+	}
+
+	clear = () => {
+		this.#reset();
+		this.intake.clear();
+	};
+
+	<template>
+		<div class="dt-ax" {{filePaste this.intake.load accept=ACCEPT}}>
+			<div
+				class="dt-ax-frame"
+				{{on "drop" this.intake.drop}}
+				{{on "dragover" this.intake.dragOver}}
+			>
+				<div class="dt-ax-bar">
+					<label
+						class="dt-ax-file"
+						aria-label="Open video file"
+					>
+						<input
+							type="file"
+							class="dt-sr-only"
+							accept={{ACCEPT}}
+							{{on
+								"change"
+								this.intake.chooseFile
+							}}
+						/>
+						<Icon @name="film" />
+						<span
+							class="dt-ax-filename"
+						>{{if
+								this.intake.fileName
+								this.intake.fileName
+								"Choose video"
+							}}</span>
+					</label>
+					{{#if this.status}}
+						<span
+							class="dt-ax-status"
+							role="status"
+						>{{this.status}}</span>
+					{{/if}}
+					<select
+						class="dt-ax-format"
+						aria-label="Audio format"
+						{{on "change" this.setTarget}}
+					>
+						{{#each
+							this.targets key="id"
+							as |t|
+						}}
+							<option
+								value={{t.id}}
+								disabled={{unless
+									t.supported
+									true
+								}}
+								selected={{eq
+									this.target
+									t.id
+								}}
+							>{{t.label}}</option>
+						{{/each}}
+					</select>
+					<button
+						type="button"
+						class="dt-ax-go"
+						disabled={{unless
+							this.ready
+							true
+						}}
+						aria-busy={{if
+							this.busy
+							"true"
+							"false"
+						}}
+						{{on "click" this.extract}}
+					>
+						{{#if this.busy}}
+							<NdsLoader />
+						{{else}}
+							<Icon
+								@name="file-audio"
+							/>
+						{{/if}}
+						<span>Extract</span>
+					</button>
+					<button
+						type="button"
+						class="dt-ax-clear"
+						disabled={{unless
+							this.hasVideo
+							true
+						}}
+						aria-label="Clear"
+						{{on "click" this.clear}}
+					>
+						<Icon @name="x" />
+					</button>
+				</div>
+
+				<div class="dt-ax-stage">
+					{{#if this.hasVideo}}
+						{{! user media lacks captions }}
+						{{! template-lint-disable require-media-caption }}
+						<video
+							src={{this.intake.url}}
+							controls
+							playsinline
+							preload="metadata"
+							{{this.intake.register}}
+							{{on
+								"loadedmetadata"
+								this.intake.ready
+							}}
+							{{on
+								"error"
+								this.intake.failed
+							}}
+						></video>
+					{{else}}
+						<label class="dt-ax-drop">
+							<input
+								type="file"
+								class="dt-sr-only"
+								accept={{ACCEPT}}
+								{{on
+									"change"
+									this.intake.chooseFile
+								}}
+							/>
+							<Icon
+								@name="file-audio"
+							/>
+							<span
+								class="dt-ax-drop-title"
+							>{{DROP_TITLE}}</span>
+							<span
+								class="dt-ax-drop-hint"
+							>or click to select a
+								file, or paste</span>
+						</label>
+					{{/if}}
+				</div>
+
+				{{#if this.result}}
+					<div class="dt-ax-out">
+						<span
+							class="dt-ax-out-label"
+						>Audio</span>
+						{{! user media lacks captions }}
+						{{! template-lint-disable require-media-caption }}
+						<audio
+							class="dt-ax-player"
+							src={{this.resultUrl}}
+							controls
+						></audio>
+						<span
+							class="dt-ax-result-label"
+						>{{this.resultLabel}}</span>
+						<button
+							type="button"
+							class="dt-ax-btn is-primary"
+							{{on
+								"click"
+								this.download
+							}}
+						>
+							<DownloadLabel />
+						</button>
+					</div>
+				{{/if}}
+
+				{{#if this.errorMessage}}
+					<p
+						class="dt-ax-error"
+						role="alert"
+					>{{this.errorMessage}}</p>
+				{{/if}}
+
+				{{#if this.busy}}
+					<span
+						class="dt-ax-progress"
+						role="progressbar"
+						aria-label="Progress"
+						aria-valuemin="0"
+						aria-valuemax="100"
+						aria-valuenow={{this.pct}}
+					>
+						<span
+							style={{this.progressStyle}}
+						></span>
+					</span>
+				{{/if}}
+			</div>
+		</div>
+	</template>
+}

@@ -1,0 +1,36 @@
+# compiled output
+/dist/
+
+# misc
+/coverage/
+!.*
+.*/
+/pnpm-lock.yaml
+ember-cli-update.json
+*.html
+
+# libjxl emscripten build, copied verbatim from @jsquash/jxl
+/public/jxl/
+
+# @jsquash mozjpeg/webp/oxipng/avif codec builds + licenses, copied verbatim,
+# and their hand-written dispatcher worker (kept in /public idiom)
+/public/compress/
+
+# MuPDF.js emscripten build, copied verbatim from the mupdf npm package
+/public/mupdf/
+# mediainfo.js emscripten bundle, copied by scripts/copy-mediainfo.mjs
+/public/mediainfo/
+
+# vendored MIT pandoc-wasm wrapper, copied verbatim
+/app/lib/pandoc/pandoc-core.js
+
+# imagetracerjs standalone build; image-tracer builds its worker from this URL
+/public/lib/imagetracer_v1.2.6.js
+
+# 125k-entry CMU pronunciation dictionary, fetched at runtime, 5.4 MB
+/public/data/shavian-dictionary-full.json
+
+# Substrata harnesses and the dictionary builder moved in with the Next-era
+# root and keep their own formatting.
+/scripts/verify/
+/scripts/build-shavian-dict.ts

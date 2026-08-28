@@ -1,0 +1,305 @@
+@use "../crayon-config" as crayon;
+
+.dt-md {
+	border: 2px solid var(--border);
+}
+
+.dt-md-tabs {
+	display: flex;
+	overflow-x: auto;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-md-tab {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	flex-shrink: 0;
+	padding: crayon.size(2) crayon.size(3);
+	border: 0;
+	border-right: 1px solid var(--border);
+	background: transparent;
+	color: var(--foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("medium");
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	&:last-child {
+		border-right: 0;
+	}
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+
+		@include crayon.hover {
+			background: var(--primary);
+		}
+
+		.dt-md-tab-chevron {
+			transform: rotate(180deg);
+		}
+	}
+}
+
+.dt-md-tab-chevron {
+	width: crayon.size(3);
+	height: crayon.size(3);
+	margin-left: crayon.size(0.5);
+	transition: transform 150ms;
+}
+
+.dt-md-panel {
+	border-bottom: 2px solid var(--border);
+}
+
+/* bleed past segmented frame: both classes needed for specificity */
+.segmented.dt-md-actions {
+	grid-template-columns: repeat(2, 1fr);
+	border-inline: 0;
+	border-top: 0;
+
+	@include crayon.screen("sm") {
+		grid-template-columns: repeat(4, 1fr);
+	}
+
+	&.is-thirds {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
+.dt-md-action {
+	min-height: crayon.size(10);
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	text-align: center;
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-wide {
+		grid-column: span 2;
+	}
+
+	&.is-primary {
+		background: var(--primary);
+		color: var(--primary-foreground);
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				black
+			);
+		}
+	}
+}
+
+.dt-md-find {
+	display: flex;
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-md-find-input {
+	min-width: 0;
+	flex: 1;
+	padding: crayon.size(3) crayon.size(4);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	outline: none;
+
+	& + & {
+		border-left: 1px solid var(--border);
+	}
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-md-find-bar {
+	display: flex;
+	align-items: center;
+	gap: crayon.size(4);
+	padding: crayon.size(2) crayon.size(4);
+}
+
+.dt-md-check {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+	user-select: none;
+}
+
+.dt-md-matches {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.segmented.dt-md-replace-actions {
+	width: auto;
+	min-width: 13.75rem;
+	margin-left: auto;
+	grid-template-columns: repeat(2, 1fr);
+}
+
+.dt-md-extracted {
+	border-top: 1px solid var(--border);
+}
+
+.dt-md-extracted-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: crayon.size(2) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-md-extracted-count {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-md-extracted-copy {
+	@include crayon.hstack(1);
+
+	height: crayon.size(7);
+	align-items: center;
+	padding-inline: crayon.size(2);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(3);
+		height: crayon.size(3);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+}
+
+.dt-md-extracted-list {
+	max-height: crayon.size(32);
+	overflow: auto;
+	padding: crayon.size(2) crayon.size(4);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+}
+
+.dt-md-extracted-item {
+	overflow: hidden;
+	padding-block: crayon.size(0.5);
+	border-bottom: 1px solid var(--border);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+
+	&:last-child {
+		border-bottom: 0;
+	}
+}
+
+.dt-md-editor {
+	display: block;
+	width: 100%;
+	min-height: 31.25rem;
+	padding: crayon.size(4);
+	border: 0;
+	background: var(--card);
+	color: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("base");
+	line-height: crayon.leading("relaxed");
+	resize: vertical;
+
+	&:focus {
+		outline: none;
+	}
+
+	&::placeholder {
+		color: color-mix(
+			in oklch,
+			var(--muted-foreground) 50%,
+			transparent
+		);
+	}
+}
+
+.dt-md-status {
+	display: flex;
+	align-items: stretch;
+	justify-content: space-between;
+	border-top: 2px solid var(--border);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-md-stats {
+	@include crayon.hstack(4);
+
+	align-items: center;
+	padding: crayon.size(2) crayon.size(4);
+}
+
+.dt-md-saved {
+	color: color-mix(in oklch, var(--muted-foreground) 60%, transparent);
+}
+
+.dt-md-status-actions {
+	display: flex;
+	align-items: stretch;
+	border-left: 1px solid var(--border);
+}
+
+.dt-md-status-btn {
+	display: flex;
+	align-items: center;
+	padding-inline: crayon.size(3);
+	border: 0;
+	border-right: 1px solid var(--border);
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+
+	&:last-child {
+		border-right: 0;
+	}
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
