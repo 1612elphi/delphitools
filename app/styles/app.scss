@@ -2081,39 +2081,29 @@ $header-height: crayon.size(14);
 }
 
 .dt-cast {
-	display: grid;
-	margin: 0;
-	padding: 0;
-	border: 2px solid var(--border);
-	background: var(--border);
-	gap: 1px;
-	grid-template-columns: repeat(4, 1fr);
-	list-style: none;
-}
-
-.dt-cast-card {
+	// accents sampled from the ink each character is drawn in
 	--cast-accent: var(--foreground);
+	--cast-glow: color-mix(in oklch, var(--foreground) 45%, transparent);
 
-	display: grid;
-	min-width: 0;
-	background: var(--card);
-	// meta absorbs the slack so every blurb divider lands on the same line
-	grid-template-rows: auto auto 1fr auto;
+	@include crayon.vstack(2);
 
 	&.is-ad {
 		--cast-accent: #274f1c;
+		--cast-glow: #6fbf4e;
 	}
 
 	&.is-emma {
 		--cast-accent: #732a76;
+		--cast-glow: #c561c9;
 	}
 
 	&.is-vito {
 		--cast-accent: #b96f08;
+		--cast-glow: #f0a02a;
 	}
 }
 
-.dark .dt-cast-card {
+.dark .dt-cast {
 	&.is-ad {
 		--cast-accent: #70af5d;
 	}
@@ -2127,59 +2117,123 @@ $header-height: crayon.size(14);
 	}
 }
 
-// busts share a baseline; vito is wider and shorter than the rest
-.dt-cast-portrait {
-	width: 100%;
-	height: crayon.size(30);
-	border-bottom: 1px solid var(--border);
-	background: color-mix(in oklch, var(--cast-accent) 7%, var(--card));
-	object-fit: contain;
-	object-position: center bottom;
-}
-
-.dt-cast-id {
-	@include crayon.vstack(0.5);
-
-	padding: crayon.size(2) crayon.size(2) 0;
+.dt-cast-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	margin: 0;
+	gap: crayon.size(2);
+	min-height: crayon.size(6);
 }
 
 .dt-cast-name {
-	color: var(--cast-accent);
-	font-size: crayon.font-size("sm");
+	color: var(--cast-accent, var(--foreground));
+	font-size: crayon.font-size("base");
 	font-weight: crayon.font-weight("bold");
-	line-height: 1.2;
 }
 
 .dt-cast-role {
 	color: var(--muted-foreground);
 	font-size: crayon.font-size("xs");
-	line-height: 1.2;
 	text-transform: lowercase;
 }
 
-.dt-cast-meta {
-	margin: crayon.size(2) 0 0;
-	padding: 0 crayon.size(2);
-	font-size: crayon.font-size("xs");
+// ---------------------------------------------------------------------------
+// Cast lineup geometry. Everything positional lives in this block.
+//   --cast-overlap  how far each figure tucks behind the one to its left
+//   --fig-w         that figure's share of the row width
+//   --fig-drop      baseline nudge, positive moves the figure DOWN
+//   --fig-lift      how far the hovered figure rises
+// The four --fig-w values keep the scale the characters were drawn at, so
+// changing one alone will make that character bigger or smaller than the rest.
+// ---------------------------------------------------------------------------
+.dt-cast-lineup {
+	--cast-overlap: 0.5rem;
+	--fig-lift: #{crayon.size(1)};
 
-	dt {
-		@extend .dt-sr-only;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	padding-top: crayon.size(2);
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-cast-fig {
+	--fig-drop: 0px;
+
+	display: block;
+	flex: 0 0 var(--fig-w);
+	padding: 0;
+	border: 0;
+	background: none;
+	translate: 0 var(--fig-drop);
+	cursor: pointer;
+	transition:
+		filter 120ms ease-out,
+		opacity 120ms ease-out,
+		translate 120ms ease-out;
+
+	// fixed, not a percentage: percentage margins resolve against the container,
+	// which overlapped the figures far enough to swallow each other's hit areas
+	& + & {
+		margin-left: calc(-1 * var(--cast-overlap));
 	}
 
-	dd {
-		min-width: 0;
-		margin: 0;
-		color: var(--muted-foreground);
-		overflow-wrap: anywhere;
+	img {
+		display: block;
+		width: 100%;
+		height: auto;
+	}
+
+	&.is-delphi {
+		--fig-w: 29%;
+	}
+
+	&.is-ad {
+		--fig-w: 25.5%;
+	}
+
+	&.is-emma {
+		--fig-w: 23%;
+	}
+
+	&.is-vito {
+		--fig-w: 18%;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
 	}
 }
 
-.dt-cast-blurb {
-	margin: crayon.size(2) 0 0;
-	padding: crayon.size(2);
-	border-top: 1px solid var(--border);
+.dt-cast-lineup:hover .dt-cast-fig:not(.is-active),
+.dt-cast-lineup:focus-within .dt-cast-fig:not(.is-active) {
+	opacity: 0.55;
+}
+
+.dt-cast-fig.is-active {
+	position: relative;
+	z-index: 1;
+	translate: 0 calc(var(--fig-drop) - var(--fig-lift));
+	filter: drop-shadow(0 0 2px var(--cast-glow))
+		drop-shadow(0 0 10px var(--cast-glow));
+}
+
+.dt-cast-meta {
+	display: flex;
+	flex-wrap: wrap;
+	margin: 0;
+	gap: crayon.size(1) crayon.size(3);
+	color: var(--muted-foreground);
 	font-size: crayon.font-size("xs");
-	line-height: 1.45;
+}
+
+.dt-cast-blurb {
+	min-height: crayon.size(8);
+	margin: 0;
+	font-size: crayon.font-size("xs");
+	line-height: 1.5;
 }
 
 .dt-about-note {
