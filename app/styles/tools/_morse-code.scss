@@ -1,0 +1,148 @@
+// Styles for the morse-code tool.
+
+@use "../crayon-config" as crayon;
+
+.dt-morse {
+	@include crayon.vstack(4);
+}
+
+.dt-morse-frame {
+	border: 2px solid var(--border);
+}
+
+.segmented.dt-morse-dirs {
+	border-inline: 0;
+	border-top: 0;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dt-morse-dir {
+	min-width: 0;
+	min-height: crayon.size(10);
+	padding: crayon.size(1) crayon.size(2);
+	background: var(--background);
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-morse-input {
+	display: block;
+	width: 100%;
+	min-height: crayon.size(28);
+	padding: crayon.size(3) crayon.size(4);
+	border: 0;
+	border-bottom: 2px solid var(--border);
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("base");
+	resize: vertical;
+
+	&:focus {
+		outline: none;
+	}
+}
+
+.dt-morse-output {
+	display: block;
+	min-height: crayon.size(28);
+	padding: crayon.size(3) crayon.size(4);
+	font-size: crayon.font-size("2xl");
+	line-height: crayon.leading("relaxed");
+	overflow-wrap: anywhere;
+	white-space: pre-wrap;
+	user-select: all;
+}
+
+.dt-morse-bar {
+	display: flex;
+	min-height: crayon.size(12);
+	align-items: stretch;
+	border-top: 2px solid var(--border);
+}
+
+.dt-morse-wpm {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	margin-right: auto;
+	padding-inline: crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+
+	input {
+		width: crayon.size(14);
+		padding: crayon.size(1) crayon.size(2);
+		border: 1px solid var(--border);
+		background: var(--background);
+		color: var(--foreground);
+		font: inherit;
+		font-size: crayon.font-size("sm");
+		font-variant-numeric: tabular-nums;
+
+		&:focus {
+			outline: 2px solid var(--primary);
+			outline-offset: -1px;
+		}
+	}
+}
+
+.dt-morse-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-playing {
+		background: var(--accent);
+	}
+
+	&.is-primary {
+		padding-inline: crayon.size(6);
+		background: var(--primary);
+		color: var(--primary-foreground);
+		font-weight: crayon.font-weight("bold");
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				black
+			);
+		}
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		pointer-events: none;
+	}
+}

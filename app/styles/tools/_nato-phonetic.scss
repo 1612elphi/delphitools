@@ -1,0 +1,275 @@
+@use "../crayon-config" as crayon;
+
+.dt-nato-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-nato-head {
+	display: grid;
+	border-bottom: 1px solid var(--border);
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: 1fr;
+
+	@include crayon.screen("md") {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
+.segmented.dt-nato-alphabets,
+.segmented.dt-nato-directions {
+	border: 0;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dt-nato-seg {
+	min-width: 0;
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--background);
+	color: var(--foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-nato-input {
+	display: block;
+	width: 100%;
+	min-height: 6.25rem;
+	padding: crayon.size(3) crayon.size(4);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("base");
+	resize: none;
+
+	&:focus {
+		outline: none;
+	}
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
+
+.dt-nato-output {
+	min-height: 7.5rem;
+	padding: crayon.size(4);
+	border-top: 2px solid var(--border);
+	background: color-mix(in oklch, var(--muted) 30%, transparent);
+}
+
+.dt-nato-pairs {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: crayon.size(2) crayon.size(4);
+}
+
+.dt-nato-pair {
+	@include crayon.hstack(1.5);
+
+	align-items: baseline;
+}
+
+.dt-nato-char {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+	text-transform: uppercase;
+}
+
+.dt-nato-word {
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("semibold");
+}
+
+.dt-nato-break {
+	padding-inline: crayon.size(2);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("lg");
+}
+
+.dt-nato-read {
+	font-size: crayon.font-size("3xl");
+	font-weight: crayon.font-weight("bold");
+	letter-spacing: crayon.tracking("wide");
+	overflow-wrap: anywhere;
+}
+
+.dt-nato-actions {
+	display: flex;
+	border-top: 2px solid var(--border);
+}
+
+.dt-nato-copy,
+.dt-nato-download {
+	@include crayon.hstack(2);
+
+	height: crayon.size(14);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	font: inherit;
+	font-size: crayon.font-size("base");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+}
+
+.dt-nato-copy {
+	flex: 1;
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font-weight: crayon.font-weight("bold");
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--primary) 90%, black);
+	}
+}
+
+.dt-nato-download {
+	padding-inline: crayon.size(6);
+	border-left: 1px solid var(--border);
+	background: transparent;
+	color: inherit;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+}
+
+.dt-nato-chart-head {
+	display: flex;
+	min-height: crayon.size(10);
+	align-items: center;
+	justify-content: space-between;
+	padding-inline: crayon.size(3);
+	border-top: 2px solid var(--border);
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-nato-chart-label {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("semibold");
+	text-transform: uppercase;
+}
+
+.dt-nato-chart-hint {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+.dt-nato-chart {
+	display: grid;
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: repeat(auto-fill, minmax(crayon.size(36), 1fr));
+}
+
+.dt-nato-tile {
+	display: grid;
+	padding: crayon.size(3);
+	border: 0;
+	background: var(--card);
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+	gap: crayon.size(4) crayon.size(3);
+	grid-template: "letter morse" auto "letter sem" auto "word flag" 1fr / 1fr auto;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-used {
+		background: color-mix(
+			in oklch,
+			var(--primary) 12%,
+			var(--card)
+		);
+	}
+}
+
+.dt-nato-tile-letter {
+	align-self: start;
+	font-size: 4rem;
+	font-weight: crayon.font-weight("bold");
+	grid-area: letter;
+	line-height: 1;
+}
+
+.dt-nato-tile-morse {
+	display: flex;
+	min-height: crayon.size(2);
+	align-items: center;
+	justify-content: flex-end;
+	color: var(--foreground);
+	gap: 3px;
+	grid-area: morse;
+}
+
+.dt-nato-dit,
+.dt-nato-dah {
+	height: 5px;
+	background: currentcolor;
+}
+
+.dt-nato-dit {
+	width: 5px;
+}
+
+.dt-nato-dah {
+	width: 14px;
+}
+
+.dt-nato-sem {
+	width: crayon.size(8);
+	height: crayon.size(8);
+	grid-area: sem;
+	justify-self: end;
+
+	circle {
+		fill: none;
+		stroke: var(--muted-foreground);
+		stroke-width: 2;
+	}
+
+	line {
+		stroke: currentcolor;
+		stroke-width: 2;
+	}
+}
+
+.dt-nato-flag {
+	width: crayon.size(10);
+	height: auto;
+	place-self: end end;
+	grid-area: flag;
+}
+
+.dt-nato-tile-word {
+	overflow: hidden;
+	align-self: end;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("semibold");
+	grid-area: word;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

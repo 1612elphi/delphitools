@@ -1,0 +1,210 @@
+@use "../crayon-config" as crayon;
+
+.dt-vg {
+	@include crayon.vstack(4);
+}
+
+.dt-vg-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-vg-drop {
+	display: block;
+	margin: crayon.size(4);
+	padding: crayon.size(12);
+	border: 2px dashed
+		color-mix(in oklch, var(--muted-foreground) 25%, transparent);
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(8);
+		height: crayon.size(8);
+		margin-bottom: crayon.size(3);
+		color: var(--muted-foreground);
+	}
+
+	@include crayon.hover {
+		border-color: color-mix(
+			in oklch,
+			var(--muted-foreground) 50%,
+			transparent
+		);
+	}
+
+	/* hidden file input: focus ring on container */
+	&:focus-within {
+		border-color: var(--primary);
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+}
+
+.dt-vg-drop-title {
+	display: block;
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-vg-bar {
+	display: flex;
+	min-height: crayon.size(12);
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+	flex-wrap: wrap;
+}
+
+.dt-vg-info {
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	flex-direction: column;
+	justify-content: center;
+	padding: crayon.size(2) crayon.size(4);
+}
+
+.dt-vg-name {
+	overflow: hidden;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-vg-meta {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-vg-settings {
+	display: flex;
+	min-height: crayon.size(10);
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+	flex-wrap: wrap;
+}
+
+.dt-vg-field {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-block: crayon.size(1.5);
+	padding-inline: crayon.size(3);
+	border-right: 1px solid var(--border);
+	font-size: crayon.font-size("sm");
+
+	span {
+		color: var(--muted-foreground);
+		white-space: nowrap;
+	}
+
+	input {
+		width: crayon.size(16);
+		padding: crayon.size(1) crayon.size(2);
+		border: 1px solid var(--border);
+		background: var(--background);
+		color: var(--foreground);
+		font: inherit;
+		font-size: crayon.font-size("sm");
+		font-variant-numeric: tabular-nums;
+
+		&:focus-visible {
+			outline: 2px solid var(--primary);
+			outline-offset: -1px;
+		}
+
+		&:disabled {
+			opacity: 0.4;
+		}
+	}
+}
+
+.dt-vg-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		pointer-events: none;
+	}
+
+	&.is-primary {
+		padding-inline: crayon.size(6);
+		background: var(--primary);
+		color: var(--primary-foreground);
+		font-weight: crayon.font-weight("semibold");
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				black
+			);
+		}
+	}
+}
+
+.dt-vg-stage {
+	background: #000;
+
+	video {
+		display: block;
+		width: 100%;
+		max-height: crayon.size(120);
+	}
+}
+
+.dt-vg-result {
+	border-top: 2px solid var(--border);
+
+	img {
+		display: block;
+		max-width: 100%;
+		margin-inline: auto;
+	}
+}
+
+.dt-vg-result-bar {
+	display: flex;
+	min-height: crayon.size(10);
+	align-items: stretch;
+	justify-content: space-between;
+	border-top: 1px solid var(--border);
+}
+
+.dt-vg-result-meta {
+	align-self: center;
+	padding-inline: crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-vg-error {
+	padding: crayon.size(3);
+	border: 1px solid
+		color-mix(in oklch, var(--destructive) 50%, transparent);
+	background: color-mix(in oklch, var(--destructive) 10%, transparent);
+	color: var(--destructive);
+	font-size: crayon.font-size("sm");
+}

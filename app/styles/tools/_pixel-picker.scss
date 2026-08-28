@@ -1,0 +1,397 @@
+@use "../crayon-config" as crayon;
+
+.dt-pixel-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-pixel-drop {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: crayon.size(3);
+	padding: crayon.size(12);
+	text-align: center;
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(10);
+		height: crayon.size(10);
+		color: var(--muted-foreground);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--muted) 30%, transparent);
+	}
+
+	&:focus-within {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.dt-pixel-drop-title {
+	display: block;
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-pixel-drop-hint {
+	display: block;
+	margin-top: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-pixel-bar {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-pixel-name {
+	display: flex;
+	overflow: hidden;
+	min-width: 0;
+	flex: 1;
+	align-items: center;
+	padding: crayon.size(3) crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-pixel-p3 {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	flex-shrink: 0;
+	padding: crayon.size(3) crayon.size(4);
+	border-left: 1px solid var(--border);
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+}
+
+/* no Switch primitive yet */
+.dt-pixel-p3-input {
+	position: relative;
+	width: crayon.size(9);
+	height: crayon.size(5);
+	flex-shrink: 0;
+	border: 1px solid var(--border);
+	appearance: none;
+	background: var(--muted);
+	border-radius: 9999px;
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	&::after {
+		position: absolute;
+		top: 1px;
+		left: 1px;
+		width: calc(#{crayon.size(5)} - 4px);
+		height: calc(#{crayon.size(5)} - 4px);
+		background: var(--background);
+		border-radius: 9999px;
+		content: "";
+		transition: transform 150ms;
+	}
+
+	&:checked {
+		border-color: var(--primary);
+		background: var(--primary);
+	}
+
+	&:checked::after {
+		transform: translateX(crayon.size(4));
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+}
+
+.dt-pixel-bar-btn {
+	display: flex;
+	width: crayon.size(12);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+	transition:
+		background-color 150ms,
+		color 150ms;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-pixel-stage {
+	position: relative;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-pixel-canvas {
+	display: block;
+	width: 100%;
+	cursor: crosshair;
+}
+
+.dt-pixel-loupe {
+	position: absolute;
+	display: none;
+	overflow: hidden;
+	border: 2px solid var(--background);
+	box-shadow: 0 10px 15px -3px rgb(0 0 0 / 30%);
+	pointer-events: none;
+
+	&.is-on {
+		display: block;
+	}
+
+	canvas {
+		display: block;
+	}
+}
+
+.dt-pixel-hint {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding: crayon.size(2) crayon.size(4);
+	border-bottom: 2px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+
+	.dt-icon {
+		width: crayon.size(3.5);
+		height: crayon.size(3.5);
+		flex-shrink: 0;
+	}
+}
+
+.dt-pixel-active {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-pixel-active-fill {
+	width: crayon.size(14);
+	flex-shrink: 0;
+	align-self: stretch;
+}
+
+.dt-pixel-active-info {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	flex-direction: column;
+	justify-content: center;
+	padding: crayon.size(3) crayon.size(4);
+	border-left: 1px solid var(--border);
+}
+
+.dt-pixel-active-value {
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-pixel-active-name {
+	overflow: hidden;
+	margin-top: crayon.size(0.5);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	text-overflow: ellipsis;
+	text-transform: capitalize;
+	white-space: nowrap;
+}
+
+.dt-pixel-active-p3 {
+	overflow: hidden;
+	margin-top: crayon.size(0.5);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-pixel-active-copy {
+	display: flex;
+	width: crayon.size(12);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+	transition:
+		background-color 150ms,
+		color 150ms;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-pixel-table {
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-pixel-table-head {
+	display: flex;
+	align-items: center;
+	padding: crayon.size(2) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-pixel-table-title {
+	flex: 1;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-pixel-clear {
+	@include crayon.hstack(1.5);
+
+	align-items: center;
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("xs");
+	cursor: pointer;
+	transition: color 150ms;
+
+	.dt-icon {
+		width: crayon.size(3);
+		height: crayon.size(3);
+	}
+
+	@include crayon.hover {
+		color: var(--foreground);
+	}
+}
+
+.dt-pixel-row {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+	transition: background-color 150ms;
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--muted) 50%, transparent);
+	}
+
+	&.is-active {
+		background: var(--muted);
+	}
+}
+
+/* no click-stop needed here */
+.dt-pixel-row-select {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	align-items: stretch;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.dt-pixel-row-fill {
+	width: crayon.size(10);
+	flex-shrink: 0;
+	align-self: stretch;
+}
+
+.dt-pixel-row-info {
+	@include crayon.hstack(3);
+
+	min-width: 0;
+	flex: 1;
+	align-items: center;
+	padding: crayon.size(2.5) crayon.size(3);
+	border-left: 1px solid var(--border);
+}
+
+.dt-pixel-row-hex {
+	flex-shrink: 0;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-pixel-row-name {
+	overflow: hidden;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	text-overflow: ellipsis;
+	text-transform: capitalize;
+	white-space: nowrap;
+}
+
+.dt-pixel-row-btn {
+	display: flex;
+	width: crayon.size(10);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+	transition:
+		background-color 150ms,
+		color 150ms;
+
+	.dt-icon {
+		width: crayon.size(3.5);
+		height: crayon.size(3.5);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-pixel-about {
+	padding: crayon.size(3) crayon.size(4);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-pixel-about-title {
+	color: var(--foreground);
+	font-weight: crayon.font-weight("bold");
+}

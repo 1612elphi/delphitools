@@ -1,0 +1,237 @@
+@use "../crayon-config" as crayon;
+
+.dt-b64 {
+	display: flex;
+	flex-direction: column;
+	gap: crayon.size(6);
+}
+
+.dt-b64-error {
+	padding: crayon.size(4);
+	border: 2px solid var(--destructive);
+	background: color-mix(in oklch, var(--destructive) 10%, transparent);
+	color: var(--destructive);
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-b64-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-b64-drop {
+	display: block;
+	margin: crayon.size(4);
+	padding: crayon.size(8);
+	border: 2px dashed var(--border);
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(12);
+		height: crayon.size(12);
+		margin-bottom: crayon.size(4);
+		color: var(--muted-foreground);
+	}
+
+	@include crayon.hover {
+		border-color: color-mix(
+			in oklch,
+			var(--primary) 50%,
+			transparent
+		);
+	}
+
+	&.is-dragging {
+		border-color: var(--primary);
+		background: color-mix(in oklch, var(--primary) 5%, transparent);
+	}
+
+	/* hidden file input; focus ring on container */
+	&:focus-within {
+		border-color: var(--primary);
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+}
+
+.dt-b64-drop-title {
+	display: block;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-b64-drop-hint {
+	display: block;
+	margin-top: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-b64-bar {
+	display: flex;
+	min-height: crayon.size(12);
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-b64-bar-title {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-b64-bar-btn {
+	padding-inline: crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-b64-item {
+	border-bottom: 2px solid var(--border);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+}
+
+.dt-b64-head {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-b64-thumb {
+	display: flex;
+	width: crayon.size(16);
+	height: crayon.size(16);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	border-right: 1px solid var(--border);
+	background: var(--muted);
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+}
+
+.dt-b64-meta {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	flex-direction: column;
+	justify-content: center;
+	padding: crayon.size(2) crayon.size(4);
+}
+
+.dt-b64-name {
+	overflow: hidden;
+	font-weight: crayon.font-weight("medium");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-b64-size {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-b64-remove {
+	display: flex;
+	width: crayon.size(12);
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+	transition: color 150ms;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+.dt-b64-body {
+	padding: crayon.size(4);
+	background: color-mix(in oklch, var(--muted) 10%, transparent);
+}
+
+.dt-b64-text {
+	display: block;
+	width: 100%;
+	height: crayon.size(32);
+	padding: crayon.size(2) crayon.size(3);
+	border: 2px solid var(--border);
+	background: var(--background);
+	color: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("xs");
+	resize: none;
+
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: -1px;
+	}
+}
+
+/* outrank .segmented: app.scss loads after partials */
+.segmented.dt-b64-actions {
+	grid-template-columns: 1fr 1fr;
+	margin: crayon.size(4) crayon.size(-4) crayon.size(-4);
+	border: 0;
+}
+
+.dt-b64-copy {
+	@include crayon.hstack(2);
+
+	min-height: crayon.size(12);
+	align-items: center;
+	justify-content: center;
+	padding: crayon.size(3);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-copied {
+		background: var(--primary);
+		color: var(--primary-foreground);
+
+		@include crayon.hover {
+			background: var(--primary);
+		}
+	}
+}

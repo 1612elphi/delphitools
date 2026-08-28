@@ -1,0 +1,122 @@
+@use "crayon-config" as crayon;
+
+.dt-sticker-wall {
+	margin-top: crayon.size(16);
+}
+
+.dt-sticker-wall-title {
+	margin-bottom: crayon.size(1);
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("semibold");
+	color: var(--foreground);
+}
+
+.dt-sticker-wall-blurb {
+	max-width: 42rem;
+	margin-bottom: crayon.size(6);
+	font-size: crayon.font-size("sm");
+	color: var(--muted-foreground);
+}
+
+.dt-sticker-bin {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: crayon.size(10) crayon.size(3);
+	padding-block: crayon.size(4);
+
+	@include crayon.screen("sm") {
+		gap: crayon.size(10) crayon.size(6);
+	}
+}
+
+.dt-sticker-btn {
+	appearance: none;
+	border: 0;
+	padding: 0;
+	background: none;
+	cursor: pointer;
+	line-height: 0;
+}
+
+.dt-sticker-lift {
+	display: block;
+	transform: rotate(var(--dt-sticker-rot, 0deg));
+	transition: transform 0.18s ease;
+	will-change: transform, opacity;
+}
+
+.dt-sticker-btn:hover .dt-sticker-lift,
+.dt-sticker-btn:focus-visible .dt-sticker-lift {
+	transform: rotate(var(--dt-sticker-rot, 0deg)) scale(1.04)
+		translateY(-2%);
+}
+
+.dt-sticker-lift.is-hidden {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.dt-sticker-btn.is-peeling .dt-sticker-lift {
+	animation: dt-sticker-peel 1.1s ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dt-sticker-btn.is-peeling .dt-sticker-lift {
+		animation: none;
+	}
+}
+
+@keyframes dt-sticker-peel {
+	0% {
+		transform: rotate(var(--dt-sticker-rot, 0deg)) scale(1);
+	}
+
+	15% {
+		transform: rotate(var(--dt-sticker-rot, 0deg)) scale(1.06)
+			translateY(-3%);
+	}
+
+	45% {
+		transform: rotate(calc(var(--dt-sticker-rot, 0deg) - 6deg))
+			translateY(-14%);
+	}
+
+	100% {
+		transform: rotate(calc(var(--dt-sticker-rot, 0deg) - 18deg))
+			translateY(150%);
+		opacity: 0;
+	}
+}
+
+.dt-sticker-img {
+	display: block;
+	width: 100%;
+	height: auto;
+	pointer-events: none;
+	user-select: none;
+}
+
+.dt-sticker-caption {
+	margin-top: crayon.size(3);
+	text-align: center;
+	font-size: crayon.font-size("sm");
+	color: var(--muted-foreground);
+}
+
+.dt-tool-sticker {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	margin-top: crayon.size(24);
+
+	@include crayon.screen("md") {
+		margin-top: crayon.size(32);
+	}
+
+	// collapse when sticker 404s
+	&:not(:has(.dt-sticker-btn)) {
+		display: none;
+	}
+}

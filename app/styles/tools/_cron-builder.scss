@@ -1,0 +1,320 @@
+@use "../crayon-config" as crayon;
+
+.dt-cb {
+	@include crayon.vstack(4);
+}
+
+.dt-cb-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-cb-bar {
+	display: flex;
+	min-height: crayon.size(12);
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-cb-bar-label {
+	display: flex;
+	align-items: center;
+	padding-inline: crayon.size(4);
+	border-right: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.dt-cb-expr {
+	min-width: 0;
+	flex: 1;
+	padding-inline: crayon.size(4);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	outline: none;
+}
+
+.dt-cb-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	&:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	@include crayon.hover {
+		&:not(:disabled) {
+			background: var(--muted);
+			color: var(--foreground);
+		}
+	}
+
+	&.is-primary {
+		padding-inline: crayon.size(6);
+		background: var(--primary);
+		color: var(--primary-foreground);
+		font-weight: crayon.font-weight("semibold");
+
+		@include crayon.hover {
+			&:not(:disabled) {
+				background: color-mix(
+					in oklch,
+					var(--primary) 90%,
+					black
+				);
+			}
+		}
+	}
+}
+
+.dt-cb-error {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	margin: 0;
+	padding: crayon.size(2) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+	color: var(--destructive);
+	font-size: crayon.font-size("sm");
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+}
+
+.dt-cb-grid {
+	display: grid;
+	border-bottom: 1px solid var(--border);
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: 1fr;
+}
+
+.dt-cb-cell {
+	display: grid;
+	align-items: center;
+	padding: crayon.size(2) crayon.size(4);
+	background: var(--card);
+	gap: crayon.size(2) crayon.size(3);
+	grid-template-columns: 6rem auto minmax(0, 1fr);
+
+	&.is-error {
+		background: color-mix(
+			in oklch,
+			var(--destructive) 5%,
+			transparent
+		);
+	}
+
+	@media (width <= 40rem) {
+		align-items: start;
+		grid-template-columns: 1fr;
+	}
+}
+
+.dt-cb-label {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+// auto cols keep presets tight to labels
+.segmented.dt-cb-modes {
+	grid-template-columns: repeat(4, auto);
+}
+
+.dt-cb-mode {
+	min-width: 0;
+	padding: crayon.size(1) crayon.size(2);
+	background: var(--card);
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+
+		@include crayon.hover {
+			background: var(--primary);
+			color: var(--primary-foreground);
+		}
+	}
+}
+
+.dt-cb-side {
+	@include crayon.hstack(3);
+
+	min-width: 0;
+	align-items: center;
+}
+
+.dt-cb-args {
+	@include crayon.hstack(2);
+
+	align-items: center;
+}
+
+.dt-cb-args-sep {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-cb-num {
+	width: crayon.size(14);
+	padding: crayon.size(1) crayon.size(2);
+	border: 1px solid var(--border);
+	background: var(--background);
+	color: var(--foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	font-variant-numeric: tabular-nums;
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -1px;
+	}
+}
+
+.dt-cb-free {
+	min-width: 0;
+	width: auto;
+	flex: 1;
+	padding: crayon.size(1) crayon.size(2);
+	border: 1px solid var(--border);
+	background: var(--background);
+	color: var(--foreground);
+	font: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	font-variant-numeric: tabular-nums;
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -1px;
+	}
+}
+
+.dt-cb-field-error {
+	grid-column: 1 / -1;
+	margin: 0;
+	color: var(--destructive);
+	font-size: crayon.font-size("xs");
+
+	code {
+		font-family: crayon.font-family("mono");
+	}
+}
+
+.dt-cb-out {
+	display: grid;
+}
+
+.dt-cb-canon-row {
+	display: flex;
+	align-items: center;
+	padding: crayon.size(3) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-cb-canon {
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("bold");
+	font-variant-numeric: tabular-nums;
+	user-select: text;
+}
+
+.dt-cb-desc {
+	margin: 0;
+	padding: crayon.size(3) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-cb-runs {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: crayon.size(2);
+	padding: crayon.size(3) crayon.size(4);
+}
+
+.dt-cb-runs-label {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.dt-cb-run {
+	padding: crayon.size(1) crayon.size(2);
+	border: 1px solid var(--border);
+	background: var(--card);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.dt-cb-errors {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.dt-cb-error-row {
+	display: flex;
+	align-items: baseline;
+	gap: crayon.size(4);
+	padding: crayon.size(2) crayon.size(4);
+
+	& + & {
+		border-top: 1px solid var(--border);
+	}
+}
+
+.dt-cb-error-field {
+	width: crayon.size(28);
+	flex-shrink: 0;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.dt-cb-error-text {
+	color: var(--destructive);
+	font-size: crayon.font-size("sm");
+
+	code {
+		font-family: crayon.font-family("mono");
+	}
+}

@@ -1,0 +1,56 @@
+// vite requires package root
+@forward "crayon-css" hide dark with (
+	$font-families: (
+			"sans": (
+				"iA Writer Quattro",
+				ui-monospace,
+				monospace,
+			),
+			"serif": (
+				Georgia,
+				"Times New Roman",
+				serif,
+			),
+			"mono": (
+				"iA Writer Quattro",
+				ui-monospace,
+				"Cascadia Mono",
+				Menlo,
+				Monaco,
+				Consolas,
+				monospace,
+			)
+		),
+	$default-font: "mono",
+
+	// opacity variants: 1.1 mb
+	$use-color-opacity-modifiers: false,
+
+	$border-radii: (
+			"none": 0,
+			"sm": 0,
+			"DEFAULT": 0,
+			"md": 0,
+			"lg": 0,
+			"xl": 0,
+			"2xl": 0,
+			"3xl": 0,
+			"full": 9999px
+		),
+
+	// satori lacks oklch parser
+	$colors: (
+			"delphi-cream": #faf5e6,
+			"delphi-border": #1b5e20,
+			"delphi-title": #14481a,
+			"delphi-sub": #1e6626,
+			"delphi-sage": #93a98d
+		)
+);
+
+/// class dark mode
+@mixin dark {
+	html.dark & {
+		@content;
+	}
+}

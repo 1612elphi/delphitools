@@ -1,0 +1,223 @@
+@use "../crayon-config" as crayon;
+
+.dt-lh {
+	border: 2px solid var(--border);
+}
+
+.dt-lh-input {
+	padding: crayon.size(4);
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-lh-label {
+	display: block;
+	margin-bottom: crayon.size(3);
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-lh-size {
+	display: flex;
+	align-items: stretch;
+	border: 1px solid var(--border);
+
+	input {
+		width: 100%;
+		height: crayon.size(14);
+		min-width: 0;
+		flex: 1;
+		padding: 0 crayon.size(3);
+		border: 0;
+		background: transparent;
+		color: inherit;
+		font-family: crayon.font-family("mono");
+		font-size: crayon.font-size("2xl");
+		font-weight: crayon.font-weight("bold");
+		outline: none;
+	}
+}
+
+.dt-lh-unit {
+	display: flex;
+	align-items: center;
+	padding: 0 crayon.size(4);
+	border-left: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xl");
+}
+
+.dt-lh-recs {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-lh-rec {
+	padding: crayon.size(4);
+
+	&:first-child {
+		border-right: 1px solid var(--border);
+	}
+}
+
+.dt-lh-cap {
+	display: block;
+	margin-bottom: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-lh-value {
+	display: block;
+	margin-bottom: crayon.size(1);
+	font-size: crayon.font-size("4xl");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-lh-note {
+	display: block;
+	margin-bottom: crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+/* matches next app outline button */
+.dt-lh-btn {
+	@include crayon.hstack(2);
+
+	height: crayon.size(8);
+	align-items: center;
+	padding: 0 crayon.size(3);
+	border: 1px solid var(--border);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+}
+
+.dt-lh-block {
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-lh-head {
+	padding: crayon.size(3) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-lh-heading {
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-lh-row {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+}
+
+.dt-lh-meta {
+	min-width: 0;
+	flex: 1;
+	padding: crayon.size(4);
+}
+
+.dt-lh-names {
+	@include crayon.hstack(3);
+
+	align-items: baseline;
+}
+
+.dt-lh-name {
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-lh-ratio {
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+}
+
+.dt-lh-use {
+	display: block;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-lh-computed {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	padding: 0 crayon.size(4);
+	border-left: 1px solid var(--border);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("2xl");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-lh-copy {
+	display: flex;
+	width: crayon.size(12);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+}
+
+/* stack below sm, fixed grid-cols-3 unreadable on phones */
+.dt-lh-previews {
+	display: grid;
+
+	@include crayon.screen("sm") {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
+.dt-lh-preview {
+	padding: crayon.size(4);
+	border-top: 1px solid var(--border);
+
+	&:first-child {
+		border-top: 0;
+	}
+
+	@include crayon.screen("sm") {
+		border-top: 0;
+
+		& + & {
+			border-left: 1px solid var(--border);
+		}
+	}
+}
+
+.dt-lh-preview-label {
+	display: block;
+	margin-bottom: crayon.size(2);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}

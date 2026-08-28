@@ -1,0 +1,601 @@
+
+@use "../crayon-config" as crayon;
+
+.dt-palette-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-palette-swatches {
+	display: flex;
+	gap: 1px;
+	height: 20rem;
+	background: var(--border);
+	border-bottom: 2px solid var(--border);
+
+	&.is-grid {
+		display: grid;
+		height: auto;
+	}
+
+	&.cols-2.is-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	&.cols-3.is-grid {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
+.dt-swatch {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+	background: var(--background);
+
+	.is-row & {
+		flex: 1;
+	}
+}
+
+.dt-swatch-fill {
+	position: relative;
+	display: block;
+	cursor: pointer;
+
+	.is-row & {
+		flex: 1;
+	}
+
+	.is-grid & {
+		aspect-ratio: 1;
+	}
+
+	input[type="color"] {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		cursor: pointer;
+	}
+}
+
+.dt-swatch-colour {
+	position: absolute;
+	inset: 0;
+}
+
+.dt-swatch-index {
+	position: absolute;
+	top: crayon.size(1);
+	left: crayon.size(1.5);
+	font-size: 10px;
+	font-weight: crayon.font-weight("bold");
+	font-variant-numeric: tabular-nums;
+	opacity: 0.5;
+	pointer-events: none;
+}
+
+.dt-swatch-lock {
+	position: absolute;
+	top: crayon.size(1.5);
+	right: crayon.size(1.5);
+	width: crayon.size(3.5);
+	height: crayon.size(3.5);
+	pointer-events: none;
+}
+
+.dt-swatch-caption {
+	padding: crayon.size(1.5) crayon.size(2);
+	border-top: 1px solid var(--border);
+	line-height: 1.2;
+}
+
+.dt-swatch-value {
+	overflow: hidden;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	letter-spacing: crayon.tracking("tight");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-swatch-name {
+	overflow: hidden;
+	font-size: 11px;
+	color: var(--muted-foreground);
+	text-overflow: ellipsis;
+	text-transform: capitalize;
+	white-space: nowrap;
+}
+
+.dt-swatch-bar {
+	display: flex;
+	border-top: 1px solid var(--border);
+}
+
+.dt-swatch-btn {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+	height: crayon.size(9);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	&:first-child {
+		border-left: 0;
+	}
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&.is-locked {
+		color: var(--primary);
+	}
+
+	&.is-danger:hover {
+		color: var(--destructive);
+	}
+
+	&:disabled {
+		pointer-events: none;
+		opacity: 0.3;
+	}
+}
+
+.dt-palette-controls {
+	display: flex;
+	min-height: crayon.size(16);
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-strategy {
+	@include crayon.hstack(3);
+
+	min-width: 0;
+	flex: 1;
+	align-items: center;
+	padding: crayon.size(2) crayon.size(4);
+	border: 0;
+	border-right: 1px solid var(--border);
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--muted) 50%, transparent);
+	}
+}
+
+.dt-strategy-text {
+	min-width: 0;
+	flex: 1;
+}
+
+.dt-strategy-name {
+	display: block;
+	overflow: hidden;
+	font-weight: crayon.font-weight("bold");
+	line-height: 1.2;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-strategy-desc {
+	display: block;
+	overflow: hidden;
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	line-height: 1.2;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-strategy-chevron {
+	width: crayon.size(4);
+	height: crayon.size(4);
+	flex-shrink: 0;
+	opacity: 0.5;
+}
+
+.dt-strategy-popover {
+	width: min(24rem, 90vw);
+	padding: 0;
+}
+
+.dt-strategy-check {
+	width: crayon.size(4);
+	height: crayon.size(4);
+	flex-shrink: 0;
+	margin-top: 2px;
+	opacity: 0;
+
+	&.is-on {
+		opacity: 1;
+	}
+}
+
+.dt-generate {
+	@include crayon.hstack(2);
+
+	flex: 1.3;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font: inherit;
+	font-size: crayon.font-size("base");
+	font-weight: crayon.font-weight("bold");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(5);
+		height: crayon.size(5);
+	}
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--primary) 90%, black);
+	}
+}
+
+.dt-count {
+	display: flex;
+	align-items: stretch;
+	border-left: 1px solid var(--border);
+
+	button {
+		display: flex;
+		width: crayon.size(12);
+		align-items: center;
+		justify-content: center;
+		border: 0;
+		background: none;
+		color: var(--muted-foreground);
+		cursor: pointer;
+
+		.dt-icon {
+			width: crayon.size(4);
+			height: crayon.size(4);
+		}
+
+		@include crayon.hover {
+			background: var(--muted);
+			color: var(--foreground);
+		}
+
+		&:disabled {
+			pointer-events: none;
+			opacity: 0.3;
+		}
+	}
+
+	span {
+		display: flex;
+		min-width: crayon.size(12);
+		align-items: center;
+		justify-content: center;
+		padding-inline: crayon.size(2);
+		border-inline: 1px solid var(--border);
+		font-size: crayon.font-size("sm");
+		font-weight: crayon.font-weight("bold");
+	}
+}
+
+.dt-palette-export,
+.dt-palette-list {
+	padding: crayon.size(4);
+}
+
+.dt-palette-export {
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-palette-label {
+	display: block;
+	margin-bottom: crayon.size(3);
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-export-grid {
+	grid-template-columns: repeat(2, 1fr);
+	margin: 0 crayon.size(-4) crayon.size(-4);
+	border-inline: 0;
+	border-bottom: 0;
+
+	@include crayon.screen("sm") {
+		grid-template-columns: repeat(4, 1fr);
+	}
+
+	button {
+		@include crayon.hstack(2);
+
+		align-items: center;
+		justify-content: center;
+		padding: crayon.size(3);
+		background: var(--background);
+		color: inherit;
+		font: inherit;
+		font-size: crayon.font-size("sm");
+		cursor: pointer;
+
+		.dt-icon {
+			width: crayon.size(4);
+			height: crayon.size(4);
+		}
+
+		@include crayon.hover {
+			background: var(--muted);
+		}
+	}
+}
+
+.dt-colour-rows {
+	margin: crayon.size(3) crayon.size(-4) crayon.size(-4);
+	border-top: 1px solid var(--border);
+}
+
+.dt-colour-row {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+	background: var(--card);
+
+	@include crayon.hover {
+		background: color-mix(in oklch, var(--card) 80%, transparent);
+	}
+}
+
+.dt-colour-row-swatch {
+	position: relative;
+	width: crayon.size(16);
+	flex-shrink: 0;
+	border-right: 1px solid var(--border);
+	cursor: pointer;
+
+	input[type="color"] {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		cursor: pointer;
+	}
+
+	span {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+}
+
+.dt-colour-row-info {
+	min-width: 0;
+	flex: 1;
+	padding: crayon.size(4);
+}
+
+.dt-colour-row-head {
+	@include crayon.hstack(3);
+
+	align-items: center;
+}
+
+.dt-colour-row-value {
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("bold");
+	letter-spacing: crayon.tracking("wide");
+}
+
+.dt-colour-row-name {
+	font-size: crayon.font-size("sm");
+	color: var(--muted-foreground);
+	text-transform: capitalize;
+}
+
+.dt-colour-row-meta {
+	margin-top: 2px;
+	font-size: crayon.font-size("xs");
+	color: var(--muted-foreground);
+
+	.dt-sep {
+		margin-inline: crayon.size(2);
+		opacity: 0.5;
+	}
+}
+
+.dt-colour-row-actions {
+	@include crayon.hstack(1);
+
+	align-items: center;
+	padding-inline: crayon.size(2);
+	border-left: 1px solid var(--border);
+
+	.dt-icon-btn.is-locked {
+		color: var(--primary);
+	}
+
+	.dt-icon-btn.is-danger:hover {
+		color: var(--destructive);
+	}
+}
+
+.dt-palette-hint {
+	margin-top: crayon.size(4);
+	padding-top: crayon.size(4);
+	border-top: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	text-align: center;
+
+	kbd {
+		padding: 2px crayon.size(1.5);
+		background: var(--muted);
+		font-family: inherit;
+	}
+}
+
+.dt-export-panel {
+	@include crayon.vstack(4);
+
+	padding: crayon.size(4);
+	border-bottom: 2px dashed
+		color-mix(in oklch, oklch(76% 0.16 70deg) 50%, transparent);
+	background: color-mix(in oklch, oklch(76% 0.16 70deg) 5%, transparent);
+
+	label {
+		display: block;
+		margin-bottom: crayon.size(2);
+		font-size: crayon.font-size("sm");
+		font-weight: crayon.font-weight("medium");
+	}
+
+	input[type="text"],
+	select,
+	textarea {
+		width: 100%;
+		padding: crayon.size(2) crayon.size(3);
+		border: 1px solid var(--border);
+		background: var(--background);
+		color: inherit;
+		font: inherit;
+		font-size: crayon.font-size("sm");
+
+		&:focus-visible {
+			outline: 2px solid var(--ring);
+			outline-offset: -1px;
+		}
+	}
+
+	textarea {
+		resize: none;
+	}
+}
+
+.dt-export-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+
+	h3 {
+		font-weight: crayon.font-weight("bold");
+		color: oklch(60% 0.14 70deg);
+	}
+
+	button {
+		border: 0;
+		background: none;
+		color: var(--muted-foreground);
+		font: inherit;
+		font-size: crayon.font-size("xs");
+		cursor: pointer;
+
+		@include crayon.hover {
+			color: var(--foreground);
+		}
+	}
+}
+
+.dt-export-fields {
+	display: grid;
+	gap: crayon.size(4);
+
+	@include crayon.screen("sm") {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
+.dt-export-note {
+	margin-top: crayon.size(2);
+	font-size: crayon.font-size("xs");
+	color: var(--muted-foreground);
+
+	code {
+		padding: 2px crayon.size(1);
+		background: var(--muted);
+	}
+}
+
+.dt-export-import-row {
+	@include crayon.hstack(2);
+
+	align-items: flex-end;
+
+	textarea {
+		flex: 1;
+	}
+
+	button {
+		padding: crayon.size(2) crayon.size(4);
+		border: 1px solid var(--border);
+		background: var(--background);
+		color: inherit;
+		font: inherit;
+		font-size: crayon.font-size("sm");
+		cursor: pointer;
+
+		@include crayon.hover {
+			background: var(--muted);
+		}
+
+		&:disabled {
+			pointer-events: none;
+			opacity: 0.4;
+		}
+	}
+}
+
+.dt-export-json {
+	@include crayon.vstack(2);
+
+	pre {
+		overflow-x: auto;
+		padding: crayon.size(3);
+		background: var(--muted);
+		font-size: crayon.font-size("xs");
+	}
+}
+
+.dt-export-json-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("medium");
+
+	button {
+		@include crayon.hstack(2);
+
+		align-items: center;
+		padding: crayon.size(1) crayon.size(2);
+		border: 1px solid var(--border);
+		background: var(--background);
+		color: inherit;
+		font: inherit;
+		font-size: crayon.font-size("xs");
+		cursor: pointer;
+
+		.dt-icon {
+			width: crayon.size(3);
+			height: crayon.size(3);
+		}
+
+		@include crayon.hover {
+			background: var(--muted);
+		}
+	}
+}

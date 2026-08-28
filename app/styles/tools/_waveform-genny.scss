@@ -1,0 +1,220 @@
+@use "../crayon-config" as crayon;
+
+.dt-wg {
+	@include crayon.vstack(4);
+}
+
+.dt-wg-frame {
+	border: 2px solid var(--border);
+}
+
+.dt-wg-drop {
+	display: block;
+	margin: crayon.size(4);
+	padding: crayon.size(12);
+	border: 2px dashed
+		color-mix(in oklch, var(--muted-foreground) 25%, transparent);
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(8);
+		height: crayon.size(8);
+		margin-bottom: crayon.size(3);
+		color: var(--muted-foreground);
+	}
+
+	@include crayon.hover {
+		border-color: color-mix(
+			in oklch,
+			var(--muted-foreground) 50%,
+			transparent
+		);
+	}
+
+	/* hidden file input: focus ring on container */
+	&:focus-within {
+		border-color: var(--primary);
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+}
+
+.dt-wg-drop-title {
+	display: block;
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-wg-status {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	justify-content: center;
+	padding-block: crayon.size(6);
+	color: var(--muted-foreground);
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+}
+
+.dt-wg-bar {
+	display: flex;
+	min-height: crayon.size(12);
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-wg-info {
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	flex-direction: column;
+	justify-content: center;
+	padding: crayon.size(2) crayon.size(4);
+}
+
+.dt-wg-name {
+	overflow: hidden;
+	font-size: crayon.font-size("sm");
+	font-weight: crayon.font-weight("bold");
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-wg-meta {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+}
+
+.dt-wg-settings {
+	display: grid;
+	border-bottom: 1px solid var(--border);
+	background: var(--border);
+	gap: 1px;
+	grid-template-columns: repeat(auto-fit, minmax(crayon.size(32), 1fr));
+}
+
+.dt-wg-presets {
+	grid-auto-flow: column;
+}
+
+.dt-wg-preset {
+	padding: crayon.size(1) crayon.size(3);
+	border: 0;
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	&.is-active {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-wg-field {
+	display: flex;
+	flex-direction: column;
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--card);
+	gap: crayon.size(1);
+
+	> span {
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+	}
+
+	input,
+	select {
+		width: 100%;
+		padding: crayon.size(1) crayon.size(2);
+		border: 1px solid var(--border);
+		background: var(--background);
+		color: var(--foreground);
+		font: inherit;
+		font-size: crayon.font-size("sm");
+		font-variant-numeric: tabular-nums;
+
+		&:focus-visible {
+			outline: 2px solid var(--primary);
+			outline-offset: -1px;
+		}
+	}
+
+	input[type="color"] {
+		height: crayon.size(7);
+		padding: crayon.size(0.5);
+		cursor: pointer;
+	}
+
+	&.is-size {
+		grid-column: 1 / -1;
+	}
+}
+
+.dt-wg-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(4);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&.is-primary {
+		padding-inline: crayon.size(6);
+		background: var(--primary);
+		color: var(--primary-foreground);
+		font-weight: crayon.font-weight("semibold");
+
+		@include crayon.hover {
+			background: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				black
+			);
+		}
+	}
+}
+
+.dt-wg-stage {
+	padding: crayon.size(4);
+	background: var(--muted);
+}
+
+.dt-wg-preview {
+	display: block;
+	width: 100%;
+	height: auto;
+	border: 1px solid var(--border);
+}
+
+.dt-wg-error {
+	padding: crayon.size(3);
+	border: 1px solid
+		color-mix(in oklch, var(--destructive) 50%, transparent);
+	background: color-mix(in oklch, var(--destructive) 10%, transparent);
+	color: var(--destructive);
+	font-size: crayon.font-size("sm");
+}

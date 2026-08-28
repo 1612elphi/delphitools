@@ -1,4 +1,3 @@
-// Headless verification for TEXT object-level typography props (delete after use).
 import puppeteer from "puppeteer-core";
 
 const URL = process.env.EDITOR_URL ?? "http://localhost:3000/editor";
@@ -40,7 +39,7 @@ const clickScene = async (sx, sy) => {
   await sleep(350);
 };
 
-// any red-ish ink inside a scene-space band (one in-page scan, canvas coords)
+// red-ink scan, canvas coords
 const bandInk = async (sx0, sx1, sy0, sy1) => {
   const a = toCanvas(sx0, sy0);
   const b = toCanvas(sx1, sy1);
@@ -55,23 +54,20 @@ const bandInk = async (sx0, sx1, sy0, sy1) => {
   }, [a.x, b.x, a.y, b.y]);
 };
 
-// 1) create a TWO-LINE text layer via the real tool path (short line over a
-// long line — the only way align visibly moves anything on point text).
+// two-line point text only
 await page.evaluate(() => {
   window.__substrata.setTool("text", "text");
   window.__substrata.toolSettings("text", { fontFamily: "sans", fontSize: 120, style: "regular", align: "left" });
   window.__substrata.colour("#cc2200");
 });
-// off-centre — the empty-scene starter card (2026-07-08) owns the viewport
-// centre on a fresh doc and eats the creation click; bands derive from the
-// committed centre `c`, so the layer's position is otherwise free
+// starter card owns viewport centre
 await clickScene(600, 400);
 await page.keyboard.type("II", { delay: 30 });
 await page.keyboard.press("Enter");
 await page.keyboard.type("MMMMMM", { delay: 30 });
 await page.keyboard.press("Escape");
 await sleep(400);
-await page.evaluate(() => window.__substrata.select([])); // handles paint on the lower canvas at rest
+await page.evaluate(() => window.__substrata.select([])); // drop selection handles
 await sleep(150);
 
 const ls = await layers();
@@ -79,8 +75,7 @@ const id = ls[0]?.id;
 const c = ls[0]?.scene;
 const dump = () => page.evaluate((i) => window.__substrata.textDump(i), id);
 
-// fresh layer: creation stamps align only; the other fields stay ABSENT
-// (undefined drops in serialisation) — old docs restore untouched.
+// align stamped only; old docs round-trip
 let d = await dump();
 check(
   "fresh: align from settings, no other typography fields",
@@ -88,19 +83,16 @@ check(
   ls.length === 1 && d.align === "left" && !("lineHeight" in d) && !("charSpacing" in d) && !("direction" in d),
 );
 
-// line 1 (the short "II") sits in the top half of the committed bbox
 const y0 = c.y - 130;
 const y1 = c.y - 15;
 check("align left: short-line ink in the LEFT band", "band", await bandInk(c.x - 380, c.x - 140, y0, y1));
 check("align left: RIGHT band empty at line 1", "band", !(await bandInk(c.x + 140, c.x + 380, y0, y1)));
 
-// 2) align right — the short line's ink crosses to the right side.
 await page.evaluate((i) => window.__substrata.textProps(i, { align: "right" }), id);
 await sleep(350);
 check("align right: LEFT band empty", "band", !(await bandInk(c.x - 380, c.x - 140, y0, y1)));
 check("align right: short-line ink in the RIGHT band", "band", await bandInk(c.x + 140, c.x + 380, y0, y1));
 
-// 3) the remaining three props round-trip the doc in ONE patch.
 await page.evaluate(
   (i) => window.__substrata.textProps(i, { lineHeight: 2, charSpacing: 400, direction: "rtl" }),
   id,
@@ -113,7 +105,6 @@ check(
   d.align === "right" && d.lineHeight === 2 && d.charSpacing === 400 && d.direction === "rtl",
 );
 
-// 4) one undo = exactly the one patch (align survives, the trio reverts).
 await undo();
 d = await dump();
 check(
@@ -122,7 +113,6 @@ check(
   d.align === "right" && !("lineHeight" in d) && !("charSpacing" in d) && !("direction" in d),
 );
 
-// 5) second undo restores the default alignment — ink returns to the left.
 await undo();
 d = await dump();
 check(

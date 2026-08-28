@@ -1,0 +1,214 @@
+@use "../crayon-config" as crayon;
+
+.dt-glyph {
+	border: 2px solid var(--border);
+}
+
+.dt-glyph-bar {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-glyph-search {
+	position: relative;
+	display: flex;
+	flex: 1;
+	align-items: center;
+
+	.dt-icon {
+		position: absolute;
+		left: crayon.size(3);
+		width: crayon.size(4);
+		height: crayon.size(4);
+		color: var(--muted-foreground);
+		pointer-events: none;
+	}
+
+	input {
+		width: 100%;
+		height: crayon.size(12);
+		padding-left: crayon.size(10);
+		padding-right: crayon.size(3);
+		border: 0;
+		background: none;
+		color: inherit;
+		font: inherit;
+
+		&:focus-visible {
+			outline: 2px solid var(--ring);
+			outline-offset: -2px;
+		}
+	}
+}
+
+.dt-glyph-category {
+	display: flex;
+	border-left: 1px solid var(--border);
+
+	.dt-select-trigger {
+		height: crayon.size(12);
+		min-width: crayon.size(45);
+		padding-inline: crayon.size(4);
+		border: 0;
+	}
+}
+
+.dt-glyph-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: crayon.size(2) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-glyph-head-name {
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-glyph-head-count {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+/* 1px gap hairline dividers */
+.dt-glyph-grid {
+	display: grid;
+	grid-template-columns: repeat(8, 1fr);
+	gap: 1px;
+	background: var(--border);
+
+	@include crayon.screen("sm") {
+		grid-template-columns: repeat(12, 1fr);
+	}
+
+	@include crayon.screen("md") {
+		grid-template-columns: repeat(16, 1fr);
+	}
+
+	@include crayon.screen("lg") {
+		grid-template-columns: repeat(20, 1fr);
+	}
+}
+
+.dt-glyph-cell {
+	display: flex;
+	width: 100%;
+	aspect-ratio: 1;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	background: var(--card);
+	color: var(--foreground);
+	font: inherit;
+	font-size: crayon.font-size("xl");
+	line-height: 1;
+	cursor: pointer;
+	transition: background-color 150ms;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-copied {
+		background: color-mix(
+			in oklch,
+			var(--primary) 20%,
+			var(--card)
+		);
+	}
+
+	&.is-open {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-glyph-popover {
+	width: crayon.size(64);
+	padding: 0;
+	border-width: 2px;
+}
+
+.dt-glyph-detail {
+	@include crayon.hstack(3);
+
+	align-items: center;
+	padding: crayon.size(3) crayon.size(4);
+	border-bottom: 1px solid var(--border);
+}
+
+.dt-glyph-detail-char {
+	font-size: crayon.font-size("4xl");
+	line-height: 1;
+}
+
+.dt-glyph-detail-meta {
+	display: flex;
+	flex-direction: column;
+}
+
+.dt-glyph-detail-code {
+	font-family: crayon.font-family("mono");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-glyph-detail-decimal {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+}
+
+/* both classes outrank .segmented */
+.segmented.dt-glyph-formats {
+	grid-template-columns: 1fr 1fr;
+	border: 0;
+}
+
+.dt-glyph-format {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	justify-content: flex-start;
+	padding: crayon.size(2) crayon.size(3);
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(3);
+		height: crayon.size(3);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&.is-copied {
+		background: var(--primary);
+		color: var(--primary-foreground);
+
+		@include crayon.hover {
+			background: var(--primary);
+		}
+	}
+}
+
+.dt-glyph-overflow {
+	padding: crayon.size(3) crayon.size(4);
+	border-top: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-glyph-tip {
+	padding: crayon.size(3) crayon.size(4);
+	border-top: 2px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+
+	strong {
+		color: var(--foreground);
+	}
+}

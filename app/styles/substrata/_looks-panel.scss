@@ -1,0 +1,138 @@
+// tailwind of looks-panel.tsx
+
+.sub-looks {
+	display: flex;
+	flex-direction: column;
+	// gallery outgrows bloom height
+	block-size: 100%;
+	max-block-size: min(560px, calc(100vh - 140px));
+	font-size: 12px;
+}
+
+.sub-look-empty {
+	padding: 16px;
+	text-align: center;
+	color: var(--muted-foreground);
+	font-size: 12px;
+}
+
+.sub-look-none {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: 6px;
+	border: none;
+	border-block-end: 1px solid var(--border);
+	background: none;
+	block-size: 32px;
+	padding-inline: 10px;
+	color: var(--muted-foreground);
+	font-size: 10.5px;
+	cursor: pointer;
+
+	&:hover {
+		background-color: var(--accent);
+		color: var(--foreground);
+	}
+
+	&.is-active {
+		box-shadow: inset 0 0 0 2px var(--primary);
+		color: var(--primary);
+		font-weight: 600;
+	}
+
+	.dt-icon {
+		inline-size: 14px;
+		block-size: 14px;
+	}
+}
+
+.sub-look-grid {
+	display: grid;
+	grid-auto-rows: min-content;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	flex: 1;
+	min-block-size: 0;
+	gap: 1px;
+	background-color: var(--border);
+	overflow: auto;
+}
+
+.sub-look-card {
+	display: flex;
+	flex-direction: column;
+	border: none;
+	background-color: var(--popover);
+	padding: 0;
+	text-align: start;
+	cursor: pointer;
+
+	&:not(.is-active):hover {
+		filter: brightness(1.1);
+	}
+}
+
+.sub-look-thumb {
+	position: relative;
+	display: block;
+	aspect-ratio: 3 / 2;
+	inline-size: 100%;
+	background-color: var(--muted);
+	overflow: hidden;
+
+	img,
+	.sub-look-swatch {
+		position: absolute;
+		inset: 0;
+		inline-size: 100%;
+		block-size: 100%;
+		object-fit: cover;
+	}
+
+	.sub-look-card.is-active & {
+		box-shadow: inset 0 0 0 2px var(--primary);
+	}
+}
+
+.sub-look-name {
+	display: block;
+	padding: 4px 6px;
+	color: var(--muted-foreground);
+	font-size: 9.5px;
+	line-height: 1.2;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+
+	.sub-look-card.is-active & {
+		color: var(--primary);
+		font-weight: 600;
+	}
+}
+
+.sub-look-intensity {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: 8px;
+	border-block-start: 1px solid var(--border);
+	padding: 8px 10px;
+
+	&.is-disabled {
+		opacity: 0.4;
+	}
+}
+
+.sub-look-intensity-label {
+	flex-shrink: 0;
+	color: var(--muted-foreground);
+	font-size: 10.5px;
+}
+
+.sub-look-intensity-value {
+	flex-shrink: 0;
+	min-inline-size: 34px;
+	text-align: end;
+	font-variant-numeric: tabular-nums;
+	font-size: 10.5px;
+}

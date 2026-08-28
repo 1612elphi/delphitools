@@ -1,8 +1,3 @@
-// Headless verification — two-finger touch navigation (delete after use).
-// CDP multi-point touch: pinch zooms about the gesture centroid, two-finger
-// drag pans, and whatever finger 1 started is CANCELLED (no stray strokes,
-// no nudged objects, no phantom undo entries). Pen/mouse tools unaffected.
-// Needs `npm run dev` on :3000.
 import puppeteer from "puppeteer-core";
 
 const URL = process.env.EDITOR_URL ?? "http://localhost:3000/editor";
@@ -31,14 +26,14 @@ const zoom = () => page.evaluate(() => window.__substrata.vt()[0]);
 const pan = () => page.evaluate(() => window.__substrata.vt().slice(4));
 const layerCount = () => page.evaluate(() => window.__substrata.layers().length);
 
-// seed one raster off-centre (clear of the empty-scene card while it exists)
+// off-centre: dodge empty-scene card
 await page.evaluate(() =>
   window.__substrata.addRaster(400, 300, [{ x: 0, y: 0, w: 400, h: 300, colour: "#88aacc" }], { x: 500, y: 350 }),
 );
 await sleep(600);
 const raster = await page.evaluate(() => window.__substrata.layers()[0]);
 
-// ── 1) pinch out: zoom increases about the centroid ──────────────────────────
+// pinch out zooms about centroid
 const z0 = await zoom();
 await touch("touchStart", [{ x: 600, y: 400, id: 1 }]);
 await sleep(30);
@@ -56,7 +51,7 @@ await sleep(300);
 const z1 = await zoom();
 check("pinch out: zoom increased", `${z0.toFixed(3)} → ${z1.toFixed(3)}`, z1 > z0 * 1.5);
 
-// ── 2) two-finger drag: pans the viewport ─────────────────────────────────────
+// two-finger drag pans
 const p0 = await pan();
 await touch("touchStart", [{ x: 500, y: 400, id: 1 }]);
 await sleep(30);
@@ -75,7 +70,7 @@ const p1 = await pan();
 check("two-finger drag: viewport panned", `[${p0.map(Math.round)}] → [${p1.map(Math.round)}]`,
   Math.abs(p1[0] - p0[0]) > 60 && p1[0] > p0[0]);
 
-// ── 3) pinch starting ON the object (MOVE tool): object not nudged, no undo ──
+// pinch on object: no nudge/undo
 await page.evaluate((id) => window.__substrata.select([id]), raster.id);
 await sleep(200);
 const sceneBefore = await page.evaluate((id) => window.__substrata.layers().find((l) => l.id === id).scene, raster.id);
@@ -83,7 +78,7 @@ const undoBefore = await page.evaluate(() => window.__substrata.canUndoState?.()
 const objScreen = await page.evaluate((id) => window.__substrata.layers().find((l) => l.id === id).screen, raster.id);
 await touch("touchStart", [{ x: objScreen.x, y: objScreen.y, id: 1 }]);
 await sleep(20);
-// finger 1 drags the object a few px before finger 2 lands
+// finger 1 leads before finger 2 lands
 await touch("touchMove", [{ x: objScreen.x + 6, y: objScreen.y + 4, id: 1 }]);
 await sleep(20);
 await touch("touchStart", [{ x: objScreen.x + 6, y: objScreen.y + 4, id: 1 }, { x: objScreen.x + 120, y: objScreen.y + 80, id: 2 }]);
@@ -104,13 +99,13 @@ check(
   Math.abs(sceneAfter.x - sceneBefore.x) < 0.5 && Math.abs(sceneAfter.y - sceneBefore.y) < 0.5,
 );
 
-// ── 4) pinch with BRUSH active: no stroke layer created ───────────────────────
+// pinch under brush: no stroke
 await page.evaluate(() => window.__substrata.setTool("pieces", "brush"));
 await sleep(200);
 const layersBefore = await layerCount();
 await touch("touchStart", [{ x: 420, y: 320, id: 1 }]);
 await sleep(20);
-await touch("touchMove", [{ x: 440, y: 335, id: 1 }]); // stroke starts collecting
+await touch("touchMove", [{ x: 440, y: 335, id: 1 }]);
 await sleep(20);
 await touch("touchStart", [{ x: 440, y: 335, id: 1 }, { x: 560, y: 400, id: 2 }]);
 await sleep(30);
@@ -126,7 +121,7 @@ await sleep(400);
 check("pinch under brush: no stroke committed", `${layersBefore} → ${await layerCount()}`,
   (await layerCount()) === layersBefore);
 
-// ── 5) single finger still draws (brush regression) ───────────────────────────
+// single finger still draws
 await touch("touchStart", [{ x: 400, y: 300, id: 1 }]);
 for (let i = 1; i <= 10; i++) {
   await touch("touchMove", [{ x: 400 + i * 14, y: 300 + i * 8, id: 1 }]);
@@ -137,7 +132,7 @@ await sleep(400);
 check("single finger: brush stroke commits", `${layersBefore} → ${await layerCount()}`,
   (await layerCount()) === layersBefore + 1);
 
-// ── 6) single-finger MOVE drag still works ────────────────────────────────────
+// single-finger move drag works
 await page.evaluate(() => window.__substrata.setTool("move", "move"));
 await sleep(200);
 await page.evaluate((id) => window.__substrata.select([id]), raster.id);

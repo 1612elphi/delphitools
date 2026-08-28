@@ -1,5 +1,5 @@
-// Headless verification for the clarity-review fixes (delete after use).
-// Pattern from .verify-m7.mjs / .verify-select.mjs. Needs `npm run dev` on :3000.
+// clarity-review fixes verification
+// needs npm run dev on :3000
 import puppeteer from "puppeteer-core";
 
 const URL = process.env.EDITOR_URL ?? "http://localhost:3000/editor";
@@ -27,10 +27,10 @@ const check = (label, detail, ok) => {
 const layers = () => page.evaluate(() => window.__substrata.layers());
 const text = (sel) => page.evaluate((s) => document.querySelector(s)?.textContent ?? null, sel);
 
-// ── 1. empty state: starter card visible on a fresh scene ─────────────────────
+// 1. empty state: starter card on fresh scene
 check("empty-state: card shown on empty scene", "data-empty-hint", !!(await page.$("[data-empty-hint]")));
 
-// beforeunload guard: no edits yet + storage off → NOT armed
+// beforeunload guard: no edits + storage off → not armed
 let prevented = await page.evaluate(() => {
   const e = new Event("beforeunload", { cancelable: true });
   window.dispatchEvent(e);
@@ -38,7 +38,7 @@ let prevented = await page.evaluate(() => {
 });
 check("unload-guard: disarmed with no edits", String(prevented), prevented === false);
 
-// ── 2. make an edit → card gone, guard armed ─────────────────────────────────
+// 2. edit → card gone, guard armed
 await page.evaluate(() =>
   window.__substrata.addRaster(200, 150, [{ x: 0, y: 0, w: 200, h: 150, colour: "#cc2200" }], { x: 400, y: 300 }),
 );
@@ -52,7 +52,7 @@ prevented = await page.evaluate(() => {
 });
 check("unload-guard: ARMED with edits + storage off", String(prevented), prevented === true);
 
-// ── 3. Edit menu: honest and wired ────────────────────────────────────────────
+// 3. edit menu: honest and wired
 const clickMenubar = async (label) => {
   await page.evaluate((l) => {
     const btn = [...document.querySelectorAll("nav button")].find((b) => b.textContent?.trim() === l);
@@ -67,11 +67,11 @@ const fakeHistory = await page.evaluate(() =>
 );
 check("edit-menu: fake history list removed", String(fakeHistory), fakeHistory === false);
 
-// Select all → Duplicate → layer count 1 → 2
+// prefix match: items carry shortcut hint ("Duplicate ⌘D"), exact text miss
 const menuBtn = async (label) => {
   const clicked = await page.evaluate((l) => {
     const btn = [...document.querySelectorAll("[data-menu-root] button")].find(
-      (b) => b.textContent?.trim() === l && !b.disabled,
+      (b) => (b.textContent ?? "").replace(/\s+/g, " ").trim().startsWith(l) && !b.disabled,
     );
     if (!btn) return false;
     btn.click();
@@ -92,24 +92,24 @@ const cutDisabled = await page.evaluate(() => {
   return btn ? btn.disabled : null;
 });
 check("edit-menu: Cut visibly disabled (not fake-live)", String(cutDisabled), cutDisabled === true);
-// menu is still open from the Cut check — click Delete directly
+// menu still open from cut check — click delete directly
 check("edit-menu: Delete enabled + clicked", "Delete", await menuBtn("Delete"));
 ls = await layers();
 check("edit-menu: Delete removed the selection", `layers=${ls.length}`, ls.length < 2);
 await page.keyboard.press("Escape");
 
-// ── 4. undo/redo stay visible while a toast shows ─────────────────────────────
-// addRaster fires the image-added toast; undo must still be in the DOM mid-toast.
+// 4. undo/redo visible mid-toast
+// addraster fires image-added toast; undo must stay in dom mid-toast
 await page.evaluate(() =>
   window.__substrata.addRaster(60, 60, [{ x: 0, y: 0, w: 60, h: 60, colour: "#3e6b33" }], { x: 900, y: 500 }),
 );
-await sleep(250); // toast is showing (1.8s) — undo must still be present
+await sleep(250); // toast showing (1.8s), undo must still be present
 const undoPresent = await page.evaluate(
   () => [...document.querySelectorAll("button svg")].some((s) => s.classList.contains("lucide-undo-2")),
 );
 check("toast-slot: undo button present mid-toast", String(undoPresent), undoPresent === true);
 
-// ── 5. flat tools: every subtool visible + clickable without hover ────────────
+// 5. flat tools: subtool visible + clickable without hover
 const flat = await page.evaluate(() => {
   const w = (t) => {
     const el = [...document.querySelectorAll("button[title]")].find((b) => b.title === t);
@@ -131,7 +131,7 @@ const lassoActive = await page.evaluate(
 );
 check("tools: flat subtool click activates", String(lassoActive), lassoActive === "true");
 
-// ── 6. tooltips: spot-check title mirrors landed ──────────────────────────────
+// 6. tooltips: title mirrors landed
 const titledCount = await page.evaluate((m) => {
   // marker built at runtime — the literal must never appear in scannable files
   return document.querySelectorAll(`[title="${m}"], button[title]:not([title=""])`).length;

@@ -1,0 +1,122 @@
+@use "../crayon-config" as crayon;
+
+.dt-su {
+	@include crayon.vstack(3);
+}
+
+.dt-su-tabs {
+	display: grid;
+	gap: 1px;
+	grid-template-columns: repeat(5, 1fr);
+	background: var(--border);
+	border: 1px solid var(--border);
+
+	@include crayon.screen("sm") {
+		grid-template-columns: repeat(10, 1fr);
+	}
+}
+
+.dt-su-tab {
+	display: flex;
+	height: crayon.size(10);
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	padding-inline: crayon.size(1);
+	border: 0;
+	background: var(--background);
+	color: inherit;
+	font: inherit;
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+	white-space: nowrap;
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	&[data-state="active"] {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+}
+
+.dt-su-table {
+	border: 2px solid var(--border);
+}
+
+.dt-su-row {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--border);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	&.is-active {
+		background: color-mix(in oklch, var(--muted) 40%, transparent);
+	}
+}
+
+.dt-su-name {
+	display: flex;
+	width: crayon.size(48);
+	flex-shrink: 0;
+	flex-direction: column;
+	padding: crayon.size(2) crayon.size(4);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-su-unit {
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-su-base {
+	color: var(--muted-foreground);
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("xs");
+}
+
+.dt-su-bar {
+	display: none;
+	flex: 1;
+	align-items: center;
+	padding-inline: crayon.size(3);
+	border-left: 1px solid var(--border);
+
+	@include crayon.screen("sm") {
+		display: flex;
+	}
+}
+
+.dt-su-fill {
+	display: block;
+	min-width: 2px;
+	height: crayon.size(2);
+	background: var(--primary);
+}
+
+.dt-su-input {
+	width: crayon.size(40);
+	min-width: 0;
+	flex: 1;
+	padding: 0 crayon.size(3);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: transparent;
+	color: inherit;
+	font-family: crayon.font-family("mono");
+	font-size: crayon.font-size("sm");
+	text-align: right;
+	outline: none;
+
+	@include crayon.screen("sm") {
+		flex: none;
+	}
+
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+}
