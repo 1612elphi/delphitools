@@ -2080,6 +2080,117 @@ $header-height: crayon.size(14);
 	border-top: 1px solid var(--border);
 }
 
+.dt-cast {
+	display: grid;
+	margin: 0;
+	padding: 0;
+	border: 2px solid var(--border);
+	background: var(--border);
+	gap: 1px;
+	list-style: none;
+}
+
+// the about body only ever renders in a ~512px dialog, so one card per row
+.dt-cast-card {
+	--cast-accent: var(--foreground);
+
+	display: grid;
+	min-width: 0;
+	// floor so the busts keep their size once the blurbs are short
+	min-height: crayon.size(38);
+	background: var(--card);
+	gap: 0 crayon.size(3);
+	// explicit rows so the portrait's 1 / -1 span resolves against them
+	grid-template-columns: crayon.size(28) 1fr;
+	grid-template-rows: auto auto 1fr;
+
+	&.is-ad {
+		--cast-accent: #274f1c;
+	}
+
+	&.is-emma {
+		--cast-accent: #732a76;
+	}
+
+	&.is-vito {
+		--cast-accent: #b96f08;
+	}
+}
+
+.dark .dt-cast-card {
+	&.is-ad {
+		--cast-accent: #70af5d;
+	}
+
+	&.is-emma {
+		--cast-accent: #d273d6;
+	}
+
+	&.is-vito {
+		--cast-accent: #db9334;
+	}
+}
+
+// busts share a baseline; vito is wider and shorter than the rest
+.dt-cast-portrait {
+	width: 100%;
+	height: 100%;
+	align-self: end;
+	border-right: 1px solid var(--border);
+	background: color-mix(in oklch, var(--cast-accent) 7%, var(--card));
+	object-fit: contain;
+	object-position: center bottom;
+	grid-row: 1 / -1;
+}
+
+.dt-cast-id {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	padding-top: crayon.size(3);
+	gap: crayon.size(2);
+}
+
+.dt-cast-name {
+	color: var(--cast-accent);
+	font-size: crayon.font-size("base");
+	font-weight: crayon.font-weight("bold");
+}
+
+.dt-cast-role {
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	text-transform: lowercase;
+}
+
+.dt-cast-meta {
+	display: grid;
+	margin: crayon.size(1) 0 0;
+	gap: 0 crayon.size(2);
+	grid-template-columns: auto 1fr;
+	font-size: crayon.font-size("xs");
+
+	dt {
+		color: var(--muted-foreground);
+	}
+
+	dd {
+		min-width: 0;
+		margin: 0;
+		color: var(--foreground);
+		overflow-wrap: anywhere;
+	}
+}
+
+.dt-cast-blurb {
+	margin: crayon.size(2) 0 0;
+	align-self: start;
+	padding-bottom: crayon.size(3);
+	padding-right: crayon.size(3);
+	font-size: crayon.font-size("xs");
+	line-height: 1.5;
+}
+
 .dt-about-note {
 	font-size: crayon.font-size("xs");
 }

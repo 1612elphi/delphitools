@@ -27,6 +27,53 @@ const DONORS = [
 	},
 ];
 
+const CAST = [
+	{
+		slug: 'delphi',
+		name: 'Delphi',
+		role: 'Designer',
+		given: 'Ruby Morgan',
+		pronouns: 'they/them',
+		// ∑CG: blurb on Delphi's card in the about dialog cast section
+		//   spec: 1-2 sentences, max 140 chars, third person singular they, deadpan, matches the site voice, no exclamation marks
+		//   sample: "Draws the art, writes the tools, and refuses to add a login screen."
+		blurb: '∑CG',
+	},
+	{
+		slug: 'ad',
+		name: 'Alien Delphi',
+		role: 'Nuisance',
+		given: null,
+		pronouns: 'they/them',
+		// ∑CG: blurb on Alien Delphi's card in the about dialog cast section
+		//   spec: 1-2 sentences, max 140 chars, third person singular they, deadpan, matches the site voice, no exclamation marks
+		//   sample: "Turns up uninvited, moves things one pixel, and denies everything."
+		blurb: '∑CG',
+	},
+	{
+		slug: 'emma',
+		name: 'Emma',
+		role: 'Witch',
+		given: 'Amelia Perkins',
+		pronouns: 'she/her',
+		// ∑CG: blurb on Emma's card in the about dialog cast section
+		//   spec: 1-2 sentences, max 140 chars, third person, she/her, deadpan, matches the site voice, no exclamation marks
+		//   sample: "Handles the parts of the stack that only respond to superstition."
+		blurb: '∑CG',
+	},
+	{
+		slug: 'vito',
+		name: 'Vito',
+		role: 'Judgmental Machine',
+		given: 'Digital VT-100 S/N 37345A/4',
+		pronouns: 'he/him',
+		// ∑CG: blurb on Vito's card in the about dialog cast section
+		//   spec: 1-2 sentences, max 140 chars, third person, he/him, deadpan, matches the site voice, no exclamation marks
+		//   sample: "Has opinions about your kerning and shares them without being asked."
+		blurb: '∑CG',
+	},
+];
+
 export const BUILT_WITH = [
 	{ name: 'Ember', url: 'https://emberjs.com' },
 	{ name: 'Glimmer', url: 'https://github.com/glimmerjs/glimmer-vm' },
@@ -59,6 +106,48 @@ const AboutDelphitoolsBody: TOC<{ Element: HTMLDivElement }> = <template>
 				just have to find it. And sometimes, you have to
 				make it yourself.
 			</p>
+		</div>
+
+		<div class="dt-about-block">
+			<h3>Cast</h3>
+			<ul class="dt-cast">
+				{{#each CAST key="slug" as |char|}}
+					<li
+						class="dt-cast-card is-{{char.slug}}"
+					>
+						<img
+							class="dt-cast-portrait"
+							src="/characters/{{char.slug}}.webp"
+							alt=""
+							width="320"
+							height="300"
+							loading="lazy"
+							decoding="async"
+						/>
+						<div class="dt-cast-id">
+							<span
+								class="dt-cast-name"
+							>{{char.name}}</span>
+							<span
+								class="dt-cast-role"
+							>{{char.role}}</span>
+						</div>
+						<dl class="dt-cast-meta">
+							{{#if char.given}}
+								<dt>Name</dt>
+								<dd
+								>{{char.given}}</dd>
+							{{/if}}
+							<dt>Pronouns</dt>
+							<dd
+							>{{char.pronouns}}</dd>
+						</dl>
+						<p
+							class="dt-cast-blurb"
+						>{{char.blurb}}</p>
+					</li>
+				{{/each}}
+			</ul>
 		</div>
 
 		<div class="dt-about-cols">
