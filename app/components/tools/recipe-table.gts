@@ -1,58 +1,15 @@
 import Component from '@glimmer/component';
-import { tracked } from '@glimmer/tracking';
+import { cached, tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
-import { fn, hash, get } from '@ember/helper';
+import { fn } from '@ember/helper';
 import { htmlSafe } from '@ember/template';
-import { eq, not } from 'ember-truth-helpers';
-import type { DragEndEvent } from '@dnd-kit/dom';
+import { and, eq, not } from 'ember-truth-helpers';
 import Icon from 'delphitools-v2/components/icon';
-import Dialog from 'delphitools-v2/components/ui/dialog';
-import sortable from 'delphitools-v2/modifiers/sortable';
-import { createDndManager } from 'delphitools-v2/lib/dnd';
-import { downloadBlob, downloadText } from 'delphitools-v2/lib/download';
-import { layout, type Cell } from 'delphitools-v2/lib/recipe-table';
-import {
-	addDiscard,
-	addIng,
-	addOp,
-	addPrep,
-	addRef,
-	addSection,
-	editDiscard,
-	editIng,
-	editOp,
-	editPrep,
-	editRef,
-	emptyDoc,
-	factorFor,
-	moveInput,
-	moveInputTo,
-	moveOp,
-	moveOpTo,
-	movePrep,
-	moveSection,
-	moveSectionTo,
-	present,
-	removeDiscard,
-	removeInput,
-	removeOp,
-	removePrep,
-	removeSection,
-	renameSection,
-	setMeta,
-	targets,
-	toTree,
-	validate,
-	type Doc,
-	type Id,
-} from 'delphitools-v2/lib/recipe-doc';
-import {
-	parse,
-	serialize,
-	type Diagnostic,
-} from 'delphitools-v2/lib/recipe-dsl';
+import { parse } from 'delphitools-v2/lib/recipe-parse';
+import { EXAMPLES } from 'delphitools-v2/lib/recipe-examples';
+import { render, type Cell } from 'delphitools-v2/lib/recipe-layout';
 import type { Display } from 'delphitools-v2/lib/recipe-scale';
-import { toHtml, toPdf, toText } from 'delphitools-v2/lib/recipe-export';
+import { toHtml, toPrintable, toText } from 'delphitools-v2/lib/recipe-export';
 
 const SAMPLE = `title: Aglio e olio
 serves: 2
@@ -60,25 +17,28 @@ units: metric
 
 > Salt a large pot of water
 
-## sauce
 fry | 2 min
-- 2 Tbsp olive oil
-- 2 cloves garlic | slice
-- pinch chilli flakes
+- olive oil: 2 Tbsp
+- garlic: 2 cloves / slice
+- chilli flakes: 1 pinch
+= sauce
 
-## pasta
 boil | 9 min
-- 200 g spaghetti
-- salted water
-drain = pasta water
+- spaghetti: 200 g
+- water: salted
+drain
 x most of the water
-toss (sauce) | 1 min
-loosen (pasta water: ¼ cup)
+= pasta water
+toss | 1 min
+@ sauce
+loosen
+@ pasta water | ¼ cup
 serve
-- 30 g grated parmesan
-- parsley | chop`;
+- parmesan: 30 g | grated
+- parsley: 1 handful / chop
+- olive oil: 1 Tbsp`;
 
-const STORAGE_KEY = 'dt-recipe-table';
+const STORAGE_KEY = 'dt-recipe-text';
 const DISPLAYS: Display[] = ['written', 'metric', 'imperial'];
 const DISPLAY_LABEL: Record<Display, string> = {
 	written: 'Written',
@@ -86,30 +46,17 @@ const DISPLAY_LABEL: Record<Display, string> = {
 	imperial: 'Imperial',
 };
 
-interface Stored {
-	version: 1;
-	doc: Doc;
-}
-
-function load(): Doc {
+function load(): string {
 	try {
-		const raw = localStorage.getItem(STORAGE_KEY);
-		if (!raw) return parse(SAMPLE).doc;
-		const stored = JSON.parse(raw) as Partial<Stored>;
-		if (stored.version === 1 && stored.doc) return stored.doc;
+		return localStorage.getItem(STORAGE_KEY) ?? SAMPLE;
 	} catch {
-		/* legacy DSL text or private mode */
+		return SAMPLE;
 	}
-	const legacy = localStorage.getItem(STORAGE_KEY);
-	return parse(legacy ?? SAMPLE).doc;
 }
 
-function save(doc: Doc) {
+function save(text: string) {
 	try {
-		localStorage.setItem(
-			STORAGE_KEY,
-			JSON.stringify({ version: 1, doc }),
-		);
+		localStorage.setItem(STORAGE_KEY, text);
 	} catch {
 		/* private mode */
 	}
@@ -121,84 +68,30 @@ const area = (cell: Cell) =>
 	);
 const columns = (cols: number) =>
 	htmlSafe(
-		`grid-template-columns: max-content repeat(${Math.max(0, cols - 1)}, minmax(4rem, 1fr))`,
+		`grid-template-columns: max-content repeat(${Math.max(0, cols - 1)}, minmax(6.5rem, 1fr))`,
 	);
 const displayLabel = (display: Display) => DISPLAY_LABEL[display];
-const joined = (parts: string[]) => parts.join(' | ');
-const slug = (title: string) =>
-	title
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-|-$/g, '') || 'recipe';
-const value = (event: Event) => (event.target as HTMLInputElement).value;
-
-interface Place {
-	kind: string;
-	container: Id;
-	index: number;
-}
-
-const CONTAINER: Record<string, [string, string]> = {
-	input: ['[data-op]', ':scope > .dt-rt-row.is-input'],
-	op: ['[data-section]', ':scope > .dt-rt-op'],
-};
-
-// where the dragged element sits in the DOM after the drop
-function landing(kind: string, el: HTMLElement): Place | null {
-	if (kind === 'section') {
-		const parent = el.parentElement;
-		if (!parent) return null;
-		return {
-			kind,
-			container: 'doc',
-			index: Array.from(
-				parent.querySelectorAll(
-					':scope > .dt-rt-section',
-				),
-			).indexOf(el),
-		};
-	}
-	const [ancestor, siblings] = CONTAINER[kind] ?? ['', ''];
-	const parent = el.closest<HTMLElement>(ancestor);
-	const container = parent?.dataset.op ?? parent?.dataset.section;
-	if (!parent || !container) return null;
-	return {
-		kind,
-		container,
-		index: Array.from(parent.querySelectorAll(siblings)).indexOf(
-			el,
-		),
-	};
-}
 
 export default class RecipeTableTool extends Component {
-	@tracked doc: Doc = load();
+	@tracked text = load();
 	@tracked amountRaw: string | null = null;
 	@tracked display: Display = 'written';
-	@tracked done = new Set<Id>();
-	@tracked copied = false;
-	@tracked dsl = '';
-	@tracked dslErrors: Diagnostic[] = [];
-
-	manager = createDndManager();
+	@tracked done = new Set<string>();
+	@tracked copyState: 'idle' | 'done' | 'failed' = 'idle';
 	#copiedTimer?: ReturnType<typeof setTimeout>;
-
-	constructor(...args: ConstructorParameters<typeof Component>) {
-		super(...args);
-		this.manager.monitor.addEventListener(
-			'dragend',
-			this.onDragEnd,
-		);
-	}
 
 	willDestroy() {
 		super.willDestroy();
-		this.manager.destroy();
 		clearTimeout(this.#copiedTimer);
 	}
 
+	@cached
+	get recipe() {
+		return parse(this.text);
+	}
+
 	get baseline() {
-		return this.doc.serves;
+		return this.recipe.serves;
 	}
 
 	get amount(): number {
@@ -213,244 +106,106 @@ export default class RecipeTableTool extends Component {
 	}
 
 	get factor() {
-		return factorFor(this.doc, this.amount);
+		const { serves } = this.recipe;
+		return serves ? this.amount / serves : this.amount;
 	}
 
-	get scaled() {
-		return this.factor !== 1 || this.display !== 'written';
-	}
-
-	get presented(): Doc {
-		return this.scaled
-			? present(
-					this.doc,
-					this.factor,
-					this.display,
-					this.amount,
-				)
-			: this.doc;
+	@cached
+	get rendered() {
+		return render(this.recipe, {
+			factor: this.factor,
+			display: this.display,
+		});
 	}
 
 	get grid() {
-		return layout(toTree(this.presented));
+		return this.rendered.grid;
 	}
 
-	get preps() {
-		return this.presented.preps
-			.map((p) => p.text.trim())
-			.filter(Boolean);
-	}
-
-	get meta() {
-		return { title: this.doc.title, preps: this.preps };
-	}
-
-	get problems(): Record<Id, string> {
-		const out: Record<Id, string> = {};
-		for (const p of validate(this.doc)) out[p.id] ??= p.message;
-		return out;
+	get problems() {
+		return this.recipe.problems;
 	}
 
 	get displays() {
 		return DISPLAYS;
 	}
 
-	get sections() {
-		const { doc } = this;
-		return doc.sections.map((section, index) => ({
-			section,
-			index,
-			ops: section.ops.map((op, opIndex) => ({
-				op,
-				index: opIndex,
-				targets: targets(doc, op.id),
-				inputs: op.inputs.map((input, inputIndex) => ({
-					input,
-					index: inputIndex,
-				})),
-				discards: op.discard.map(
-					(text, discardIndex) => ({
-						text,
-						index: discardIndex,
-					}),
-				),
-			})),
-		}));
+	get examples() {
+		return EXAMPLES;
 	}
 
-	isDone = (id: Id) => this.done.has(id);
-
-	#commit(doc: Doc) {
-		const before = this.doc.serves;
-		this.doc = doc;
-		if (doc.serves !== before) this.amountRaw = null;
-		save(doc);
+	// skip confirm for samples
+	get untouched() {
+		const text = this.text.trim();
+		return (
+			!text ||
+			text === SAMPLE.trim() ||
+			EXAMPLES.some((e) => e.text.trim() === text)
+		);
 	}
 
-	// header block
-	setTitle = (event: Event) =>
-		this.#commit(setMeta(this.doc, { title: value(event) }));
-	setServes = (event: Event) => {
-		const n = Number.parseFloat(value(event));
-		this.#commit(
-			setMeta(this.doc, {
-				serves: Number.isFinite(n) && n > 0 ? n : null,
-			}),
-		);
-	};
-	setUnits = (event: Event) => {
-		const v = value(event);
-		this.#commit(
-			setMeta(this.doc, {
-				units:
-					v === 'metric' || v === 'imperial'
-						? v
-						: null,
-			}),
-		);
-	};
-	addPrep = () => this.#commit(addPrep(this.doc));
-	editPrep = (id: Id, event: Event) =>
-		this.#commit(editPrep(this.doc, id, value(event)));
-	removePrep = (id: Id) => this.#commit(removePrep(this.doc, id));
-	movePrep = (id: Id, delta: number) =>
-		this.#commit(movePrep(this.doc, id, delta));
+	get copyIcon() {
+		if (this.copyState === 'done') return 'check';
+		return this.copyState === 'failed' ? 'triangle-alert' : 'copy';
+	}
 
-	// sections
-	addSection = () => this.#commit(addSection(this.doc));
-	renameSection = (id: Id, event: Event) =>
-		this.#commit(renameSection(this.doc, id, value(event)));
-	removeSection = (id: Id) => this.#commit(removeSection(this.doc, id));
-	moveSection = (id: Id, delta: number) =>
-		this.#commit(moveSection(this.doc, id, delta));
+	get copyLabel() {
+		if (this.copyState === 'done') return 'Copied';
+		return this.copyState === 'failed'
+			? 'Copy failed'
+			: 'Copy HTML';
+	}
 
-	// operations
-	addOp = (sectionId: Id) => this.#commit(addOp(this.doc, sectionId));
-	editLabel = (id: Id, event: Event) =>
-		this.#commit(editOp(this.doc, id, { label: value(event) }));
-	editDetail = (id: Id, event: Event) =>
-		this.#commit(
-			editOp(this.doc, id, {
-				detail: value(event)
-					.split('|')
-					.map((s) => s.trim())
-					.filter(Boolean),
-			}),
-		);
-	editResult = (id: Id, event: Event) =>
-		this.#commit(editOp(this.doc, id, { result: value(event) }));
-	removeOp = (id: Id) => this.#commit(removeOp(this.doc, id));
-	moveOp = (id: Id, delta: number) =>
-		this.#commit(moveOp(this.doc, id, delta));
+	// no cell identity; positional
+	isDone = (cell: Cell) => this.done.has(`${cell.row}:${cell.col}`);
 
-	// inputs
-	addIng = (opId: Id) => this.#commit(addIng(this.doc, opId));
-	addRef = (opId: Id) => {
-		const first = targets(this.doc, opId)[0];
-		if (first) this.#commit(addRef(this.doc, opId, first.id));
-	};
-	editIngText = (id: Id, event: Event) =>
-		this.#commit(editIng(this.doc, id, { text: value(event) }));
-	editIngPrep = (id: Id, event: Event) =>
-		this.#commit(editIng(this.doc, id, { prep: value(event) }));
-	setRefTarget = (id: Id, event: Event) =>
-		this.#commit(editRef(this.doc, id, { target: value(event) }));
-	editRefNote = (id: Id, event: Event) =>
-		this.#commit(editRef(this.doc, id, { note: value(event) }));
-	removeInput = (id: Id) => this.#commit(removeInput(this.doc, id));
-	moveInput = (id: Id, delta: number) =>
-		this.#commit(moveInput(this.doc, id, delta));
-	addDiscard = (opId: Id) => this.#commit(addDiscard(this.doc, opId));
-	editDiscard = (opId: Id, index: number, event: Event) =>
-		this.#commit(editDiscard(this.doc, opId, index, value(event)));
-	removeDiscard = (opId: Id, index: number) =>
-		this.#commit(removeDiscard(this.doc, opId, index));
-
-	// dnd-kit may have moved the element already; otherwise the drop target says where
-	onDragEnd = (event: DragEndEvent) => {
-		if (event.canceled) return;
-		const { source, target } = event.operation;
-		const from = source?.data as Place | undefined;
-		const el = source?.element as HTMLElement | null | undefined;
-		if (!source || !from || !el) return;
-		const id = String(source.id);
-		const landed = landing(from.kind, el);
-		const to = target?.data as Place | undefined;
-		let dest: { container: Id; index: number } | null = null;
-		if (
-			landed &&
-			(landed.container !== from.container ||
-				landed.index !== from.index)
-		)
-			dest = landed;
-		else if (
-			to &&
-			to.kind === from.kind &&
-			to.container !== from.container
-		)
-			dest = { container: to.container, index: to.index };
-		if (!dest) return;
-		if (from.kind === 'input')
-			this.#commit(
-				moveInputTo(
-					this.doc,
-					id,
-					dest.container,
-					dest.index,
-				),
-			);
-		else if (from.kind === 'op')
-			this.#commit(
-				moveOpTo(
-					this.doc,
-					id,
-					dest.container,
-					dest.index,
-				),
-			);
-		else this.#commit(moveSectionTo(this.doc, id, dest.index));
+	setText = (event: Event) => {
+		this.text = (event.target as HTMLTextAreaElement).value;
+		save(this.text);
 	};
 
-	// scale and units
 	setAmount = (event: Event) => {
-		this.amountRaw = value(event);
+		this.amountRaw = (event.target as HTMLInputElement).value;
 	};
+
 	step = (delta: number) => {
 		const min = this.baseline ? 1 : 0.25;
 		this.amountRaw = String(Math.max(min, this.amount + delta));
 	};
+
 	setDisplay = (display: Display) => {
 		this.display = display;
 	};
-	applyScale = () => {
-		this.#commit(
-			present(
-				this.doc,
-				this.factor,
-				this.display,
-				this.amount,
-			),
-		);
-		this.amountRaw = null;
-		this.display = 'written';
-	};
 
-	toggleDone = (id: Id) => {
+	toggleDone = (cell: Cell) => {
+		const key = `${cell.row}:${cell.col}`;
 		const next = new Set(this.done);
-		if (next.has(id)) next.delete(id);
-		else next.add(id);
+		if (next.has(key)) next.delete(key);
+		else next.add(key);
 		this.done = next;
 	};
 
-	// document actions
-	reset = () => {
-		if (!confirm('Discard recipe?')) return;
-		this.#commit(emptyDoc());
+	loadExample = (id: string) => {
+		const chosen = EXAMPLES.find((e) => e.id === id);
+		if (!chosen) return;
+		if (!this.untouched && !confirm('Discard recipe?')) return;
+		this.text = chosen.text;
+		save(this.text);
 		this.done = new Set();
 	};
+
+	reset = () => {
+		if (!confirm('Discard recipe?')) return;
+		this.text = '';
+		save(this.text);
+		this.done = new Set();
+	};
+
 	copyHtml = async () => {
-		const html = toHtml(this.meta, this.grid);
-		const text = toText(this.meta, this.grid);
+		const out = this.rendered;
+		const html = toHtml(out);
+		const text = toText(out);
+		let ok = true;
 		try {
 			await navigator.clipboard.write([
 				new ClipboardItem({
@@ -463,45 +218,45 @@ export default class RecipeTableTool extends Component {
 				}),
 			]);
 		} catch {
-			await navigator.clipboard.writeText(text);
+			// clipboard needs https, focus
+			try {
+				await navigator.clipboard.writeText(text);
+			} catch {
+				ok = false;
+			}
 		}
-		this.copied = true;
+		this.copyState = ok ? 'done' : 'failed';
 		clearTimeout(this.#copiedTimer);
 		this.#copiedTimer = setTimeout(
-			() => (this.copied = false),
-			1500,
-		);
-	};
-	downloadPdf = async () => {
-		const bytes = await toPdf(this.meta, this.grid);
-		downloadBlob(
-			new Blob([new Uint8Array(bytes)], {
-				type: 'application/pdf',
-			}),
-			`${slug(this.doc.title)}.pdf`,
+			() => (this.copyState = 'idle'),
+			2000,
 		);
 	};
 
-	// recipe text dialog
-	openDsl = (open: () => void) => {
-		this.dsl = serialize(this.doc);
-		this.dslErrors = [];
-		open();
+	// prints exported html directly
+	savePdf = () => {
+		const frame = document.createElement('iframe');
+		frame.setAttribute('aria-hidden', 'true');
+		frame.className = 'dt-rt-print';
+		frame.srcdoc = toPrintable(this.rendered);
+		frame.addEventListener('load', () => {
+			const view = frame.contentWindow;
+			if (!view) return;
+			const drop = () => frame.remove();
+			view.addEventListener('afterprint', drop, {
+				once: true,
+			});
+			// await fonts before print
+			void Promise.resolve(view.document.fonts?.ready).then(
+				() => {
+					view.focus();
+					view.print();
+					setTimeout(drop, 60000);
+				},
+			);
+		});
+		document.body.append(frame);
 	};
-	setDsl = (event: Event) => {
-		this.dsl = (event.target as HTMLTextAreaElement).value;
-	};
-	importDsl = (close: () => void) => {
-		const { doc, errors } = parse(this.dsl);
-		this.dslErrors = errors;
-		if (errors.length) return;
-		this.#commit(doc);
-		this.done = new Set();
-		close();
-	};
-	copyDsl = () => navigator.clipboard.writeText(this.dsl);
-	downloadDsl = () =>
-		downloadText(this.dsl, `${slug(this.doc.title)}.recipe.txt`);
 
 	<template>
 		<div class="dt-rt">
@@ -579,130 +334,12 @@ export default class RecipeTableTool extends Component {
 					{{/each}}
 				</div>
 
-				<button
-					type="button"
-					class="dt-rt-btn"
-					disabled={{not this.scaled}}
-					{{on "click" this.applyScale}}
-				>
-					<Icon @name="check" />
-					<span>Apply</span>
-				</button>
-
 				<span class="dt-rt-spacer"></span>
 
-				<Dialog as |d|>
-					<button
-						type="button"
-						class="dt-rt-btn"
-						{{d.focusOnClose}}
-						{{on
-							"click"
-							(fn this.openDsl d.open)
-						}}
-					>
-						<Icon @name="file-text" />
-						<span>Recipe text</span>
-					</button>
-					<d.Content
-						class="dt-dialog dt-rt-dialog"
-					>
-						<header class="dt-dialog-head">
-							<h2>Recipe text</h2>
-							<button
-								type="button"
-								class="dt-dialog-close"
-								aria-label="Close"
-								{{on
-									"click"
-									d.close
-								}}
-							>
-								<Icon
-									@name="x"
-								/>
-							</button>
-						</header>
-						<textarea
-							class="dt-rt-dsl"
-							aria-label="Recipe text"
-							spellcheck="false"
-							value={{this.dsl}}
-							{{on
-								"input"
-								this.setDsl
-							}}
-						></textarea>
-						{{#if this.dslErrors.length}}
-							<ul
-								class="dt-rt-dsl-errors"
-								role="status"
-							>
-								{{#each
-									this.dslErrors
-									as |error|
-								}}
-									<li>line
-										{{error.line}}:
-										{{error.message}}</li>
-								{{/each}}
-							</ul>
-						{{/if}}
-						<div
-							class="segmented dt-rt-dsl-actions"
-						>
-							<button
-								type="button"
-								class="dt-rt-dsl-btn"
-								{{on
-									"click"
-									this.copyDsl
-								}}
-							>
-								<Icon
-									@name="copy"
-								/>
-								<span
-								>Copy</span>
-							</button>
-							<button
-								type="button"
-								class="dt-rt-dsl-btn"
-								{{on
-									"click"
-									this.downloadDsl
-								}}
-							>
-								<Icon
-									@name="download"
-								/>
-								<span
-								>Download</span>
-							</button>
-							<button
-								type="button"
-								class="dt-rt-dsl-btn is-primary"
-								{{on
-									"click"
-									(fn
-										this.importDsl
-										d.close
-									)
-								}}
-							>
-								<Icon
-									@name="check"
-								/>
-								<span
-								>Import</span>
-							</button>
-						</div>
-					</d.Content>
-				</Dialog>
-
 				<button
 					type="button"
 					class="dt-rt-btn"
+					data-action="new"
 					{{on "click" this.reset}}
 				>
 					<Icon @name="file-plus" />
@@ -710,762 +347,108 @@ export default class RecipeTableTool extends Component {
 				</button>
 				<button
 					type="button"
-					class="dt-rt-btn"
+					class="dt-rt-btn
+						{{if
+							(eq
+								this.copyState
+								'failed'
+							)
+							'is-failed'
+						}}"
+					data-action="copy"
 					{{on "click" this.copyHtml}}
 				>
-					<Icon
-						@name={{if
-							this.copied
-							"check"
-							"copy"
-						}}
-					/>
-					<span>{{if
-							this.copied
-							"Copied"
-							"Copy HTML"
-						}}</span>
+					<Icon @name={{this.copyIcon}} />
+					<span>{{this.copyLabel}}</span>
 				</button>
 				<button
 					type="button"
 					class="dt-rt-btn is-primary"
-					{{on "click" this.downloadPdf}}
+					data-action="pdf"
+					{{on "click" this.savePdf}}
 				>
-					<Icon @name="download" />
-					<span>Download PDF</span>
+					<Icon @name="printer" />
+					<span>Save as PDF</span>
 				</button>
 			</div>
 
 			<div class="dt-rt-body">
-				<div class="dt-rt-editor">
-					<div class="dt-rt-head">
-						<label class="dt-rt-field">
-							<span
-								class="dt-rt-field-label"
-							>Title</span>
-							<input
-								type="text"
-								class="dt-rt-input"
-								value={{this.doc.title}}
-								{{on
-									"input"
-									this.setTitle
-								}}
-							/>
-						</label>
-						<div class="dt-rt-field-row">
-							<label
-								class="dt-rt-field"
-							>
-								<span
-									class="dt-rt-field-label"
-								>Serves</span>
-								<input
-									type="number"
-									class="dt-rt-input"
-									min="1"
-									step="any"
-									value={{this.doc.serves}}
-									{{on
-										"input"
-										this.setServes
-									}}
-								/>
-							</label>
-							<label
-								class="dt-rt-field"
-							>
-								<span
-									class="dt-rt-field-label"
-								>Units</span>
-								<select
-									class="dt-rt-select"
-									{{on
-										"change"
-										this.setUnits
-									}}
-								>
-									<option
-										value=""
-										selected={{not
-											this.doc.units
-										}}
-									>Unset</option>
-									<option
-										value="metric"
-										selected={{eq
-											this.doc.units
-											"metric"
-										}}
-									>Metric</option>
-									<option
-										value="imperial"
-										selected={{eq
-											this.doc.units
-											"imperial"
-										}}
-									>Imperial</option>
-								</select>
-							</label>
-						</div>
-						{{#each
-							this.doc.preps key="id"
-							as |prep index|
-						}}
-							<div
-								class="dt-rt-row is-prep"
-							>
-								<span
-									class="dt-rt-kind"
-									aria-hidden="true"
-								><Icon
-										@name="list-checks"
-									/></span>
-								<input
-									type="text"
-									class="dt-rt-input"
-									aria-label="Prep step {{index}}"
-									placeholder="Prep step"
-									value={{prep.text}}
-									{{on
-										"input"
-										(fn
-											this.editPrep
-											prep.id
-										)
-									}}
-								/>
-								<button
-									type="button"
-									class="dt-rt-icon-btn"
-									aria-label="Move up"
-									{{on
-										"click"
-										(fn
-											this.movePrep
-											prep.id
-											-1
-										)
-									}}
-								><Icon
-										@name="chevron-up"
-									/></button>
-								<button
-									type="button"
-									class="dt-rt-icon-btn"
-									aria-label="Move down"
-									{{on
-										"click"
-										(fn
-											this.movePrep
-											prep.id
-											1
-										)
-									}}
-								><Icon
-										@name="chevron-down"
-									/></button>
-								<button
-									type="button"
-									class="dt-rt-icon-btn"
-									aria-label="Remove prep step"
-									{{on
-										"click"
-										(fn
-											this.removePrep
-											prep.id
-										)
-									}}
-								><Icon
-										@name="x"
-									/></button>
-							</div>
-						{{/each}}
-						<button
-							type="button"
-							class="dt-rt-add"
-							{{on
-								"click"
-								this.addPrep
-							}}
+				<div class="dt-rt-source">
+					<textarea
+						class="dt-rt-text"
+						aria-label="Recipe"
+						spellcheck="false"
+						value={{this.text}}
+						{{on "input" this.setText}}
+					></textarea>
+					{{#if this.problems.length}}
+						<ul
+							class="dt-rt-problems"
+							role="status"
 						>
-							<Icon @name="plus" />
-							<span>Prep step</span>
-						</button>
-					</div>
-
-					{{#each
-						this.sections key="section.id"
-						as |row|
-					}}
-						<section
-							class="dt-rt-section"
-							data-section={{row.section.id}}
-							aria-label={{if
-								row.section.name
-								row.section.name
-								"Section"
-							}}
-							{{sortable
-								id=row.section.id
-								index=row.index
-								group="section"
-								type="section"
-								accept="section"
-								handle=".dt-rt-grip"
-								manager=this.manager
-								data=(hash
-									kind="section"
-									container="doc"
-									index=row.index
-								)
-							}}
-						>
-							<div
-								class="dt-rt-row is-section"
-							>
-								<button
-									type="button"
-									class="dt-rt-grip"
-									aria-label="Drag section"
-								><Icon
-										@name="grip-vertical"
-									/></button>
-								<input
-									type="text"
-									class="dt-rt-input is-section"
-									aria-label="Section name"
-									placeholder="Section"
-									value={{row.section.name}}
-									{{on
-										"input"
-										(fn
-											this.renameSection
-											row.section.id
-										)
-									}}
-								/>
-								<button
-									type="button"
-									class="dt-rt-icon-btn is-move"
-									aria-label="Move section up"
-									{{on
-										"click"
-										(fn
-											this.moveSection
-											row.section.id
-											-1
-										)
-									}}
-								><Icon
-										@name="chevron-up"
-									/></button>
-								<button
-									type="button"
-									class="dt-rt-icon-btn is-move"
-									aria-label="Move section down"
-									{{on
-										"click"
-										(fn
-											this.moveSection
-											row.section.id
-											1
-										)
-									}}
-								><Icon
-										@name="chevron-down"
-									/></button>
-								<button
-									type="button"
-									class="dt-rt-icon-btn"
-									aria-label="Remove section"
-									{{on
-										"click"
-										(fn
-											this.removeSection
-											row.section.id
-										)
-									}}
-								><Icon
-										@name="x"
-									/></button>
-							</div>
-							{{#if
-								(get
-									this.problems
-									row.section.id
-								)
-							}}
-								<p
-									class="dt-rt-problem"
-								>{{get
-										this.problems
-										row.section.id
-									}}</p>
-							{{/if}}
-
 							{{#each
-								row.ops
-								key="op.id"
-								as |item|
+								this.problems
+								as |problem|
 							}}
-								<div
-									class="dt-rt-op"
-									data-op={{item.op.id}}
-									{{sortable
-										id=item.op.id
-										index=item.index
-										group="op"
-										type="op"
-										accept="op"
-										handle=".dt-rt-grip"
-										manager=this.manager
-										data=(hash
-											kind="op"
-											container=row.section.id
-											index=item.index
-										)
-									}}
-								>
-									<div
-										class="dt-rt-row is-op"
-									>
-										<button
-											type="button"
-											class="dt-rt-grip"
-											aria-label="Drag operation"
-										><Icon
-												@name="grip-vertical"
-											/></button>
-										<input
-											type="text"
-											class="dt-rt-input is-label"
-											aria-label="Operation"
-											placeholder="Operation"
-											value={{item.op.label}}
-											{{on
-												"input"
-												(fn
-													this.editLabel
-													item.op.id
-												)
-											}}
-										/>
-										<input
-											type="text"
-											class="dt-rt-input is-detail"
-											aria-label="Detail"
-											placeholder="Detail"
-											value={{joined
-												item.op.detail
-											}}
-											{{on
-												"input"
-												(fn
-													this.editDetail
-													item.op.id
-												)
-											}}
-										/>
-										<input
-											type="text"
-											class="dt-rt-input is-result"
-											aria-label="Result name"
-											placeholder="Name"
-											value={{item.op.result}}
-											{{on
-												"input"
-												(fn
-													this.editResult
-													item.op.id
-												)
-											}}
-										/>
-										<button
-											type="button"
-											class="dt-rt-icon-btn is-move"
-											aria-label="Move operation up"
-											{{on
-												"click"
-												(fn
-													this.moveOp
-													item.op.id
-													-1
-												)
-											}}
-										><Icon
-												@name="chevron-up"
-											/></button>
-										<button
-											type="button"
-											class="dt-rt-icon-btn is-move"
-											aria-label="Move operation down"
-											{{on
-												"click"
-												(fn
-													this.moveOp
-													item.op.id
-													1
-												)
-											}}
-										><Icon
-												@name="chevron-down"
-											/></button>
-										<button
-											type="button"
-											class="dt-rt-icon-btn"
-											aria-label="Remove operation"
-											{{on
-												"click"
-												(fn
-													this.removeOp
-													item.op.id
-												)
-											}}
-										><Icon
-												@name="x"
-											/></button>
-									</div>
-									{{#if
-										(get
-											this.problems
-											item.op.id
-										)
-									}}
-										<p
-											class="dt-rt-problem"
-										>{{get
-												this.problems
-												item.op.id
-											}}</p>
-									{{/if}}
-
-									{{#each
-										item.inputs
-										key="input.id"
-										as |entry|
-									}}
-										<div
-											class="dt-rt-row is-input"
-											{{sortable
-												id=entry.input.id
-												index=entry.index
-												group="input"
-												type="input"
-												accept="input"
-												handle=".dt-rt-grip"
-												manager=this.manager
-												data=(hash
-													kind="input"
-													container=item.op.id
-													index=entry.index
-												)
-											}}
-										>
-											<button
-												type="button"
-												class="dt-rt-grip"
-												aria-label="Drag ingredient"
-											><Icon
-													@name="grip-vertical"
-												/></button>
-											{{#if
-												(eq
-													entry.input.kind
-													"ing"
-												)
-											}}
-												<span
-													class="dt-rt-kind"
-													aria-hidden="true"
-												><Icon
-														@name="carrot"
-													/></span>
-												<input
-													type="text"
-													class="dt-rt-input"
-													aria-label="Ingredient"
-													placeholder="Ingredient"
-													value={{entry.input.text}}
-													{{on
-														"input"
-														(fn
-															this.editIngText
-															entry.input.id
-														)
-													}}
-												/>
-												<input
-													type="text"
-													class="dt-rt-input is-prep"
-													aria-label="Prep"
-													placeholder="Prep"
-													value={{entry.input.prep}}
-													{{on
-														"input"
-														(fn
-															this.editIngPrep
-															entry.input.id
-														)
-													}}
-												/>
-											{{else}}
-												<span
-													class="dt-rt-kind"
-													aria-hidden="true"
-												><Icon
-														@name="link"
-													/></span>
-												<select
-													class="dt-rt-select"
-													aria-label="Reference"
-													{{on
-														"change"
-														(fn
-															this.setRefTarget
-															entry.input.id
-														)
-													}}
-												>
-													{{#each
-														item.targets
-														as |target|
-													}}
-														<option
-															value={{target.id}}
-															selected={{eq
-																target.id
-																entry.input.target
-															}}
-														>{{target.label}}</option>
-													{{/each}}
-												</select>
-												<input
-													type="text"
-													class="dt-rt-input is-prep"
-													aria-label="Amount used"
-													placeholder="Amount"
-													value={{entry.input.note}}
-													{{on
-														"input"
-														(fn
-															this.editRefNote
-															entry.input.id
-														)
-													}}
-												/>
-											{{/if}}
-											<button
-												type="button"
-												class="dt-rt-icon-btn is-move"
-												aria-label="Move up"
-												{{on
-													"click"
-													(fn
-														this.moveInput
-														entry.input.id
-														-1
-													)
-												}}
-											><Icon
-													@name="chevron-up"
-												/></button>
-											<button
-												type="button"
-												class="dt-rt-icon-btn is-move"
-												aria-label="Move down"
-												{{on
-													"click"
-													(fn
-														this.moveInput
-														entry.input.id
-														1
-													)
-												}}
-											><Icon
-													@name="chevron-down"
-												/></button>
-											<button
-												type="button"
-												class="dt-rt-icon-btn"
-												aria-label="Remove"
-												{{on
-													"click"
-													(fn
-														this.removeInput
-														entry.input.id
-													)
-												}}
-											><Icon
-													@name="x"
-												/></button>
-										</div>
-										{{#if
-											(get
-												this.problems
-												entry.input.id
-											)
-										}}
-											<p
-												class="dt-rt-problem"
-											>{{get
-													this.problems
-													entry.input.id
-												}}</p>
-										{{/if}}
-									{{/each}}
-
-									{{#each
-										item.discards
-										as |discard|
-									}}
-										<div
-											class="dt-rt-row is-discard"
-										>
-											<span
-												class="dt-rt-kind"
-												aria-hidden="true"
-											><Icon
-													@name="trash-2"
-												/></span>
-											<input
-												type="text"
-												class="dt-rt-input is-struck"
-												aria-label="Discarded output"
-												placeholder="Discard"
-												value={{discard.text}}
-												{{on
-													"input"
-													(fn
-														this.editDiscard
-														item.op.id
-														discard.index
-													)
-												}}
-											/>
-											<button
-												type="button"
-												class="dt-rt-icon-btn"
-												aria-label="Remove discard"
-												{{on
-													"click"
-													(fn
-														this.removeDiscard
-														item.op.id
-														discard.index
-													)
-												}}
-											><Icon
-													@name="x"
-												/></button>
-										</div>
-									{{/each}}
-
-									<div
-										class="segmented dt-rt-op-foot"
-									>
-										<button
-											type="button"
-											class="dt-rt-add"
-											{{on
-												"click"
-												(fn
-													this.addIng
-													item.op.id
-												)
-											}}
-										>
-											<Icon
-												@name="plus"
-											/>
-											<span
-											>Ingredient</span>
-										</button>
-										<button
-											type="button"
-											class="dt-rt-add"
-											disabled={{not
-												item.targets.length
-											}}
-											{{on
-												"click"
-												(fn
-													this.addRef
-													item.op.id
-												)
-											}}
-										>
-											<Icon
-												@name="link"
-											/>
-											<span
-											>Reference</span>
-										</button>
-										<button
-											type="button"
-											class="dt-rt-add"
-											{{on
-												"click"
-												(fn
-													this.addDiscard
-													item.op.id
-												)
-											}}
-										>
-											<Icon
-												@name="trash-2"
-											/>
-											<span
-											>Discard</span>
-										</button>
-									</div>
-								</div>
+								<li>line
+									{{problem.line}}:
+									{{problem.message}}</li>
 							{{/each}}
-
-							<button
-								type="button"
-								class="dt-rt-add is-op"
-								{{on
-									"click"
-									(fn
-										this.addOp
-										row.section.id
-									)
-								}}
-							>
-								<Icon
-									@name="plus"
-								/>
-								<span
-								>Operation</span>
-							</button>
-						</section>
-					{{/each}}
-
-					<button
-						type="button"
-						class="dt-rt-add is-section"
-						{{on "click" this.addSection}}
-					>
-						<Icon @name="plus" />
-						<span>Section</span>
-					</button>
+						</ul>
+					{{/if}}
 				</div>
 
-				<div class="dt-rt-preview">
-					{{#if this.doc.title}}
+				<div class="dt-rt-table">
+					{{#if this.rendered.title}}
 						<h2
 							class="dt-rt-title"
-						>{{this.doc.title}}</h2>
+						>{{this.rendered.title}}</h2>
 					{{/if}}
-					{{#if this.preps.length}}
-						<ol class="dt-rt-preps">
+					{{#if this.rendered.ingredients.length}}
+						<ul class="dt-rt-shopping">
 							{{#each
-								this.preps
-								as |prep|
+								this.rendered.ingredients
+								as |item|
+							}}
+								<li>
+									<span
+										class="dt-rt-item"
+									>{{item.name}}</span>
+									{{#if
+										item.amount
+									}}
+										<span
+											class="dt-rt-amount-of"
+										>{{item.amount}}</span>
+									{{/if}}
+								</li>
+							{{/each}}
+						</ul>
+					{{/if}}
+					{{#if
+						(and
+							(not this.grid.rows)
+							this.rendered.banners.length
+						)
+					}}
+						<ol class="dt-rt-notes">
+							{{#each
+								this.rendered.banners
+								as |note|
 							}}
 								<li
-								>{{prep}}</li>
+								>{{note}}</li>
+							{{/each}}
+						</ol>
+					{{/if}}
+					{{#if this.rendered.notes.length}}
+						<ol class="dt-rt-notes">
+							{{#each
+								this.rendered.notes
+								as |note|
+							}}
+								<li
+								>{{note}}</li>
 							{{/each}}
 						</ol>
 					{{/if}}
@@ -1483,19 +466,33 @@ export default class RecipeTableTool extends Component {
 								{{#if
 									(eq
 										cell.kind
-										"op"
+										"step"
 									)
 								}}
 									<button
 										type="button"
-										class="dt-rt-cell is-op
+										class="dt-rt-cell is-step
+											{{if
+												(eq
+													cell.row
+													0
+												)
+												'is-top'
+											}}
+											{{if
+												(eq
+													cell.col
+													0
+												)
+												'is-left'
+											}}
 											{{if
 												cell.vertical
 												'is-vertical'
 											}}
 											{{if
 												(this.isDone
-													cell.opId
+													cell
 												)
 												'is-done'
 											}}"
@@ -1504,7 +501,7 @@ export default class RecipeTableTool extends Component {
 										}}
 										aria-pressed={{if
 											(this.isDone
-												cell.opId
+												cell
 											)
 											"true"
 											"false"
@@ -1513,7 +510,7 @@ export default class RecipeTableTool extends Component {
 											"click"
 											(fn
 												this.toggleDone
-												cell.opId
+												cell
 											)
 										}}
 									>
@@ -1521,11 +518,11 @@ export default class RecipeTableTool extends Component {
 											class="dt-rt-label"
 										>{{cell.text}}</span>
 										{{#each
-											cell.notes
+											cell.detail
 											as |line|
 										}}
 											<span
-												class="dt-rt-note"
+												class="dt-rt-detail"
 											>{{line}}</span>
 										{{/each}}
 										{{#each
@@ -1543,16 +540,30 @@ export default class RecipeTableTool extends Component {
 												</span>{{line}}</span>
 										{{/each}}
 										{{#if
-											cell.tag
+											cell.name
 										}}
 											<span
-												class="dt-rt-tag"
-											>{{cell.tag}}</span>
+												class="dt-rt-name"
+											>{{cell.name}}</span>
 										{{/if}}
 									</button>
 								{{else}}
 									<div
-										class="dt-rt-cell is-{{cell.kind}}"
+										class="dt-rt-cell is-{{cell.kind}}
+											{{if
+												(eq
+													cell.row
+													0
+												)
+												'is-top'
+											}}
+											{{if
+												(eq
+													cell.col
+													0
+												)
+												'is-left'
+											}}"
 										style={{area
 											cell
 										}}
@@ -1580,20 +591,90 @@ export default class RecipeTableTool extends Component {
 											>{{cell.text}}</span>
 										{{/if}}
 										{{#each
-											cell.notes
+											cell.detail
 											as |line|
 										}}
 											<span
-												class="dt-rt-note"
+												class="dt-rt-detail"
 											>{{line}}</span>
 										{{/each}}
 									</div>
+								{{/if}}
+							{{/each}}
+
+							{{! badges above all cells }}
+							{{#each
+								this.grid.cells
+								as |cell|
+							}}
+								{{#if
+									cell.marks.length
+								}}
+									<span
+										class="dt-rt-marks"
+										aria-hidden="true"
+										style={{area
+											cell
+										}}
+									>
+										{{#each
+											cell.marks
+											as |mark|
+										}}
+											<span
+												class="dt-rt-mark"
+											>{{mark}}</span>
+										{{/each}}
+									</span>
 								{{/if}}
 							{{/each}}
 						</div>
 					{{/if}}
 				</div>
 			</div>
+
+		</div>
+
+		<div class="dt-rt-about">
+			<p>The Recipe Table experiment lets you write out
+				recipes for cooking (or other things) and
+				outputs them in a nice to read
+				Cooking-For-Engineers style action table. The
+				format is a plain text domain-specific-language
+				called ClaraScript, named after my grandmother.</p>
+			<p>You can download the ClaraScript reference as a PDF
+				by
+				<a
+					href="/clarascript-reference.pdf"
+					download
+				>clicking here</a>. Thank you to Michael Chu for
+				inventing Cooking For Engineers and
+				based.cooking for some of the sample recipes.</p>
+		</div>
+
+		<div class="dt-rt-gallery-head">
+			<span>Examples</span>
+		</div>
+		<div class="dt-rt-gallery">
+			{{#each this.examples as |example|}}
+				<button
+					type="button"
+					class="dt-rt-card"
+					data-action="example"
+					data-example={{example.id}}
+					{{on
+						"click"
+						(fn this.loadExample example.id)
+					}}
+				>
+					<span
+						class="dt-rt-card-name"
+					>{{example.name}}</span>
+					<span
+						class="dt-rt-card-category"
+					>{{example.category}}</span>
+				</button>
+			{{/each}}
 		</div>
 	</template>
 }

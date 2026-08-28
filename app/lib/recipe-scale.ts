@@ -11,7 +11,7 @@ interface UnitDef {
 	plural?: string;
 }
 
-// factor converts to ml, g or cm
+// factor: ml, g, cm
 const UNITS: Record<string, UnitDef> = {
 	tsp: { kind: 'volume', system: 'imperial', factor: 5, label: 'tsp' },
 	tbsp: { kind: 'volume', system: 'imperial', factor: 15, label: 'Tbsp' },
@@ -223,7 +223,7 @@ export function formatAmount(value: number): string {
 
 const roundTo = (value: number, step: number) => {
 	let rounded = Math.round(value / step) * step;
-	// a positive amount never rounds away to nothing
+	// never round to zero
 	while (rounded === 0 && value > 0 && step > 1e-6) {
 		step /= 2;
 		rounded = Math.round(value / step) * step;
@@ -231,7 +231,7 @@ const roundTo = (value: number, step: number) => {
 	return rounded;
 };
 
-// picks the customary unit and rounding for the target system
+// customary unit and rounding
 function present(base: number, kind: Kind, system: System): [number, string] {
 	if (kind === 'volume') {
 		if (system === 'metric') {
@@ -264,7 +264,7 @@ function unitLabel(key: string, amount: number): string {
 	return amount > 1 && def.plural ? def.plural : def.label;
 }
 
-// whole counts stay countable: eggs scale to halves, never to decimals
+// counts snap to halves
 const countable = (value: number) => (value >= 1 ? roundTo(value, 0.5) : value);
 
 function scaleTerm(text: string, factor: number, display: Display): string {
@@ -309,6 +309,65 @@ export function scaleIngredient(
 		.join(' + ');
 }
 
+interface Bucket {
+	key: string;
+	base: number;
+	count: number;
+	kind?: Kind;
+	unit?: string;
+	rest: string;
+}
+
+// unparsed terms pass through
+export function addQuantities(
+	terms: string[],
+	factor: number,
+	display: Display,
+): string {
+	const buckets: Bucket[] = [];
+	const loose: string[] = [];
+	for (const term of terms) {
+		const q = parseQuantity(term);
+		if (!q) {
+			if (term.trim()) loose.push(term.trim());
+			continue;
+		}
+		const def = q.unit ? UNITS[q.unit] : undefined;
+		const key = `${def ? def.kind : 'count'}|${q.rest}`;
+		const base = def ? q.amount * def.factor : q.amount;
+		const found = buckets.find((b) => b.key === key);
+		if (found) {
+			found.base += base;
+			found.count += 1;
+		} else
+			buckets.push({
+				key,
+				base,
+				count: 1,
+				kind: def?.kind,
+				unit: q.unit,
+				rest: q.rest,
+			});
+	}
+	const summed = buckets.map((b) => {
+		if (!b.kind)
+			return `${formatAmount(countable(b.base * factor))} ${b.rest}`.trim();
+		// single term keeps unit
+		if (display === 'written' && b.count === 1) {
+			const own = UNITS[b.unit!]!;
+			const amount = (b.base / own.factor) * factor;
+			return `${formatAmount(amount)} ${unitLabel(b.unit!, amount)} ${b.rest}`.trim();
+		}
+		const system =
+			display === 'written'
+				? UNITS[b.unit!]!.system
+				: display;
+		const [amount, unit] = present(b.base * factor, b.kind, system);
+		return `${formatAmount(amount)} ${unitLabel(unit, amount)} ${b.rest}`.trim();
+	});
+	return [...summed, ...loose].join(' + ');
+}
+
 const TEMP = /(\d{2,3})\s*°?\s*([CF])\b/g;
 const SIZE = `(?:\\d+\\s+\\d+/\\d+|\\d+/\\d+|\\d+(?:\\.\\d+)?[${VULGAR_CHARS}]?|[${VULGAR_CHARS}])`;
 const INCHES = new RegExp(
@@ -320,10 +379,10 @@ const METRIC_LENGTH = new RegExp(
 	'g',
 );
 
-// temperatures and pan sizes inside operation text
+// converts temps, pan sizes
 export function convertProse(text: string, display: Display): string {
 	if (display === 'written') return text;
-	// "350°F (175°C)" already carries both scales
+	// dual-scale text left alone
 	const both = /°\s*F/.test(text) && /°\s*C/.test(text);
 	let out = both
 		? text

@@ -954,20 +954,14 @@ export const toolCategories: ToolCategory[] = [
 			{
 				id: 'stupid-units',
 				name: 'Stupid Units',
-				// ∑CG: card description for the stupid units converter
-				//   spec: ≤ 60 chars, one clause, deadpan, no period
-				//   sample: "Convert between bananas, Waleses and Warhols"
-				description: '∑CG',
+				description: 'Convert between bananas, Waleses and Warhols',
 				icon: 'banana',
 				href: '/tools/stupid-units',
 			},
 			{
 				id: 'recipe-table',
 				name: 'Recipe Table',
-				// ∑CG: card description for the recipe table editor
-				//   spec: ≤ 60 chars, one clause, names the Cooking for Engineers table, no period
-				//   sample: "Write a recipe as a Cooking for Engineers table"
-				description: '∑CG',
+				description: 'Write a recipe as a Cooking for Engineers table',
 				icon: 'chef-hat',
 				href: '/tools/recipe-table',
 				wide: true,
@@ -982,7 +976,7 @@ export const experimentsCategory = toolCategories.find(
 	(category) => category.id === EXPERIMENTS_ID,
 )!;
 
-// experiments list on /experiments only
+// experiments excluded from home
 export const homeCategories = toolCategories.filter(
 	(category) => category !== experimentsCategory,
 );

@@ -39,7 +39,7 @@ function category(
 	};
 }
 
-// factors are the unit's size in the category's SI base
+// factor = si base size
 export const STUPID_CATEGORIES: StupidCategory[] = [
 	category('length', 'Length', 'm', [
 		['Beard-second', 5e-9],
