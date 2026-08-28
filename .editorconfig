@@ -9,14 +9,12 @@ end_of_line = lf
 charset = utf-8
 trim_trailing_whitespace = true
 insert_final_newline = true
+# Fucking fight me
 indent_style = tab
-# Both keys on purpose: the spec says indent_size falls back to tab_width when
-# indent_style is tab, but not every editor implements that fallback.
 indent_size = 8
 tab_width = 8
 max_line_length = 80
 
-# YAML 1.2 §6.1 forbids tab characters in indentation.
 [*.{yml,yaml}]
 indent_style = space
 indent_size = 2

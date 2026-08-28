@@ -6,7 +6,6 @@ import { LinkTo } from '@ember/routing';
 import Dialog from 'delphitools-v2/components/ui/dialog';
 import Icon from 'delphitools-v2/components/icon';
 
-// verbatim approved copy
 const PILL_TEXT = 'welcome to delphitools 2.0!';
 
 const EMBER_URL = 'https://emberjs.com';
@@ -60,9 +59,10 @@ export default class WhatsNew extends Component {
 							class="dt-wn-art"
 						/>
 						<p>
-							After half a year, I'd like to welcome you to delphitools 2.0,
-							rebuilt from the ground
-							up using
+							After half a year, I'd
+							like to welcome you to
+							delphitools 2.0, rebuilt
+							from the ground up using
 							<a
 								href={{EMBER_URL}}
 								target="_blank"
@@ -84,6 +84,13 @@ export default class WhatsNew extends Component {
 							with The Internet.
 						</p>
 					{{else if (eq this.slide 1)}}
+						<img
+							src="/art/wn-av.webp"
+							width="960"
+							height="440"
+							alt=""
+							class="dt-wn-art"
+						/>
 						<p>
 							Version 2.0 comes with a
 							lot of improvements. I
@@ -116,6 +123,13 @@ export default class WhatsNew extends Component {
 							either way!
 						</p>
 					{{else if (eq this.slide 2)}}
+						<img
+							src="/art/wn-workflows.webp"
+							width="960"
+							height="726"
+							alt=""
+							class="dt-wn-art"
+						/>
 						<p>
 							In addition, delphitools
 							now offers
@@ -140,6 +154,13 @@ export default class WhatsNew extends Component {
 							to die.
 						</p>
 					{{else}}
+						<img
+							src="/art/wn-home.webp"
+							width="960"
+							height="497"
+							alt=""
+							class="dt-wn-art"
+						/>
 						<p>
 							There's more, so please,
 							make yourself at home.

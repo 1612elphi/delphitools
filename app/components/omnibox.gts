@@ -3,6 +3,7 @@ import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import { service } from '@ember/service';
 import type RouterService from '@ember/routing/router-service';
+import type ThemeService from 'delphitools-v2/services/theme';
 import { htmlSafe } from '@ember/template';
 import type { SafeString } from '@ember/template';
 import { LinkTo } from '@ember/routing';
@@ -52,6 +53,7 @@ function formatBytes(bytes: number): string {
 
 export default class Omnibox extends Component<OmniboxSignature> {
 	@service declare router: RouterService;
+	@service declare theme: ThemeService;
 
 	#picker: HTMLInputElement | null = null;
 
@@ -71,6 +73,11 @@ export default class Omnibox extends Component<OmniboxSignature> {
 
 	get art() {
 		return HERO_ART[this.artIndex] ?? HERO_ART[0]!;
+	}
+
+	get artSrc() {
+		const art = this.art;
+		return this.theme.dark && art.srcDark ? art.srcDark : art.src;
 	}
 
 	get canShuffle() {
@@ -201,7 +208,6 @@ export default class Omnibox extends Component<OmniboxSignature> {
 		if (file) this.takeFile(file);
 	};
 
-	// prevent dropped-file navigation
 	allowDrop = (event: DragEvent) => {
 		event.preventDefault();
 	};
@@ -273,7 +279,7 @@ export default class Omnibox extends Component<OmniboxSignature> {
 				<WhatsNew />
 				<ChangelogPopup />
 			</div>
-			<img src={{this.art.src}} alt="" class="dt-hero-art" />
+			<img src={{this.artSrc}} alt="" class="dt-hero-art" />
 			<h1 class="dt-sr-only">delphitools</h1>
 		</header>
 

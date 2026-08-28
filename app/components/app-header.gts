@@ -37,6 +37,10 @@ export default class AppHeader extends Component {
 		return this.router.currentRouteName === 'workflows';
 	}
 
+	get isExperiments() {
+		return this.router.currentRouteName === 'experiments';
+	}
+
 	get showsNotation() {
 		return (
 			this.category?.name === 'Colour' &&
@@ -84,6 +88,14 @@ export default class AppHeader extends Component {
 						class="dt-header-icon"
 					/>
 					<h1>Workflows</h1>
+				</span>
+			{{else if this.isExperiments}}
+				<span class="dt-header-title">
+					<Icon
+						@name="flask-conical"
+						class="dt-header-icon"
+					/>
+					<h1>Experiments</h1>
 				</span>
 			{{else}}
 				<span class="dt-header-title">

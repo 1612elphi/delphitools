@@ -5,7 +5,6 @@ import {
 	PointerSensor,
 } from '@dnd-kit/dom';
 
-/** use four-pixel activation */
 export function createDndManager(): DragDropManager {
 	return new DragDropManager({
 		sensors: [
@@ -18,7 +17,7 @@ export function createDndManager(): DragDropManager {
 					),
 				],
 			}),
-			// the Accessibility plugin announces keyboard instructions either way
+			// a11y plugin announces instructions
 			KeyboardSensor,
 		],
 	});

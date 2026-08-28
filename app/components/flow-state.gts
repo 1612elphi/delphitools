@@ -127,7 +127,6 @@ export default class FlowState extends Component {
 			void this.flow.exit();
 	};
 
-	// final button overlaps tool
 	focus = modifier((element: HTMLElement) => {
 		element.focus();
 	});

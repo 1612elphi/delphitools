@@ -5,9 +5,7 @@ import { on } from '@ember/modifier';
 import { modifier } from 'ember-modifier';
 import type { ModifierLike, WithBoundArgs } from '@glint/template';
 
-/**
- * local not vendored: showModal() gives focus trap, escape, top layer
- */
+// showmodal: trap, escape, top-layer
 
 interface ContentSignature {
 	Element: HTMLDialogElement;
@@ -20,9 +18,7 @@ interface ContentSignature {
 	Blocks: { default: [] };
 }
 
-// native <dialog> never closes on ::backdrop clicks; those surface as clicks on
-// the dialog element itself. no rect check: a click-release outside after a
-// press inside counts as a backdrop click, matching native conventions.
+// backdrop click hits dialog
 class Content extends Component<ContentSignature> {
 	closeOnBackdrop = (event: MouseEvent) => {
 		if (event.target === event.currentTarget) {
@@ -31,7 +27,6 @@ class Content extends Component<ContentSignature> {
 	};
 
 	<template>
-		{{! hidden until showModal() }}
 		<dialog
 			{{@register}}
 			{{on "click" this.closeOnBackdrop}}
@@ -94,7 +89,7 @@ export default class Dialog extends Component<DialogSignature> {
 		this.#element?.close();
 	};
 
-	// fires for escape, form[method=dialog], and .close()
+	// escape, method=dialog, close()
 	handleClose = () => {
 		this.isOpen = false;
 		this.#trigger?.focus();

@@ -44,7 +44,6 @@ const STACK = [
 	},
 ];
 
-// links overlay flip cover
 export default class HeroCopy extends Component {
 	@tracked flipped = false;
 

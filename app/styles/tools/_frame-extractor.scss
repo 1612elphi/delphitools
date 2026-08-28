@@ -33,7 +33,7 @@
 		);
 	}
 
-	/* hidden input focus */
+	// hidden input focus
 	&:focus-within {
 		border-color: var(--primary);
 		outline: 2px solid var(--primary);

@@ -53,13 +53,11 @@ for (const file of walk(join(root, 'app')).filter((f) => f.endsWith('.gts'))) {
 	for (const m of src.matchAll(/@name=["']([a-z0-9-]+)["']/g)) {
 		fromTemplates.add(m[1]);
 	}
-	// collect expression string candidates
 	for (const m of src.matchAll(/@name=\{\{[^}]*\}\}/g)) {
 		for (const s of m[0].matchAll(/["']([a-z0-9-]+)["']/g)) {
 			candidates.add(s[1]);
 		}
 	}
-	// collect data icon candidates
 	for (const m of src.matchAll(/\bicon:\s*["']([a-z0-9-]+)["']/g)) {
 		candidates.add(m[1]);
 	}

@@ -16,7 +16,7 @@ export interface SortableSignature {
 			data?: Data;
 			handle?: string;
 			disabled?: boolean;
-			// dnd-kit's own filter: a sortable only lands on droppables that accept its type
+			// dnd-kit type/accept filter
 			type?: UniqueIdentifier;
 			accept?: UniqueIdentifier | UniqueIdentifier[];
 			manager?: DragDropManager;
@@ -24,7 +24,6 @@ export interface SortableSignature {
 	};
 }
 
-// preserve entity for transitions
 export default class SortableModifier extends Modifier<SortableSignature> {
 	#sortable: Sortable | null = null;
 	#element: HTMLElement | null = null;

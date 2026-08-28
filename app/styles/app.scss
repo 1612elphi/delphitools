@@ -1408,7 +1408,7 @@ $header-height: crayon.size(14);
 	align-items: stretch;
 	overflow-x: auto;
 
-	// whitespace children from the each block would still draw the hairline
+	// :empty fails on whitespace
 	&:not(:has(.dt-flow-capture)) {
 		display: none;
 	}
@@ -1659,11 +1659,7 @@ $header-height: crayon.size(14);
 }
 
 .dt-wf-list {
-	// art knobs — tweak in devtools:
-	// --wf-art-h = displayed height
-	// --wf-art-seat = seat line, % from image top (scans at ~67)
-	// --wf-art-x = horizontal nudge
-	// --wf-art-rise = how far the alien rides up over the title bar
+	// seat: % from top
 	--wf-art-h: 18rem;
 	--wf-art-seat: 67;
 	--wf-art-x: -28vw;
@@ -1676,10 +1672,10 @@ $header-height: crayon.size(14);
 	display: block;
 	width: auto;
 	height: var(--wf-art-h);
-	// seat rests on the table edge: sink everything below it behind the table
+	// negative margin seats art
 	margin: 0 auto calc(var(--wf-art-h) * (var(--wf-art-seat) - 100) / 100);
 	translate: var(--wf-art-x) 0;
-	// art paints over the table but never eats clicks
+	// paints over, ignores clicks
 	position: relative;
 	z-index: 1;
 	pointer-events: none;
@@ -1706,7 +1702,7 @@ $header-height: crayon.size(14);
 	height: auto;
 }
 
-// the rows stack as cards under 56rem container width; the table returns above it
+// cards below 56rem container
 .dt-wf {
 	display: block;
 	width: 100%;
@@ -1780,12 +1776,12 @@ $header-height: crayon.size(14);
 	font-size: crayon.font-size("sm");
 	line-height: crayon.leading("snug");
 
-	// rows without a third step collapse cleanly
+	// hide empty third step
 	&:not(:has(.dt-icon)) {
 		display: none;
 	}
 
-	// ordinals repeat the desktop column headers
+	// card ordinals replace headers
 	&::before {
 		font-size: crayon.font-size("xs");
 		font-weight: crayon.font-weight("medium");
@@ -1886,7 +1882,7 @@ $header-height: crayon.size(14);
 		}
 	}
 
-	// rows can't paint borders; the divider has to live on the cells
+	// table-row ignores border
 	.dt-wf-row + .dt-wf-row .dt-wf-cell {
 		border-top: 1px solid var(--border);
 	}
@@ -1911,7 +1907,7 @@ $header-height: crayon.size(14);
 		}
 	}
 
-	// must match the nth-of-type specificity of the card labels
+	// matches card label specificity
 	.dt-wf-step:nth-of-type(-n + 3) {
 		&::before {
 			content: none;
@@ -2862,7 +2858,7 @@ $header-height: crayon.size(14);
 	font-size: crayon.font-size("sm");
 }
 
-// .dt-badge.is-new hides below sm via show-from; this one persists
+// unlike is-new, always shown
 .dt-cell-badge {
 	position: absolute;
 	top: crayon.size(3);
