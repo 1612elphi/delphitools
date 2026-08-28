@@ -1,0 +1,5 @@
+# Tools renamed since the Next app. Each left-hand path was live on
+# delphi.tools, so these stay until the traffic stops.
+/tools/gradient-generator  /tools/gradient-genny  308
+/tools/matte-generator     /tools/matte-genny     308
+/tools/scroll-generator    /tools/scroll-genny    308

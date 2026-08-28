@@ -120,40 +120,40 @@ for (const route of routes) {
 			`  ${written}/${routes.length} (last: ${route.url} -> "${rendered}")`,
 		);
 	}
+}
 
-	// cloudflare serves root 404
-	{
-		const page = await browser.newPage();
-		const errors = [];
-		page.on('pageerror', (e) => errors.push(e.message));
-		await page.goto(`http://localhost:${port}/no-such-page`, {
-			waitUntil: 'networkidle2',
-		});
-		const sceneRendered = await page.evaluate(
-			() => document.querySelector('.dt-404-page') !== null,
+// cloudflare serves root 404
+{
+	const page = await browser.newPage();
+	const errors = [];
+	page.on('pageerror', (e) => errors.push(e.message));
+	await page.goto(`http://localhost:${port}/no-such-page`, {
+		waitUntil: 'networkidle2',
+	});
+	const sceneRendered = await page.evaluate(
+		() => document.querySelector('.dt-404-page') !== null,
+	);
+	await page.close();
+	if (errors.length || !sceneRendered) {
+		console.error(
+			`  /no-such-page: ${errors[0] ?? '404 scene missing (.dt-404-page)'}`,
 		);
-		await page.close();
-		if (errors.length || !sceneRendered) {
-			console.error(
-				`  /no-such-page: ${errors[0] ?? '404 scene missing (.dt-404-page)'}`,
-			);
-			process.exitCode = 1;
-		}
-		writeFileSync(
-			join(dist, '404.html'),
-			withHead(
-				shell,
-				headFor({
-					title: '404 — delphitools',
-					description: 'File not found',
-					url: '/404',
-					image: '/og.png',
-					imageAlt: 'delphitools hero image',
-				}),
-			),
-		);
-		console.log('  404.html written');
+		process.exitCode = 1;
 	}
+	writeFileSync(
+		join(dist, '404.html'),
+		withHead(
+			shell,
+			headFor({
+				title: '404 — delphitools',
+				description: 'File not found',
+				url: '/404',
+				image: '/og.png',
+				imageAlt: 'delphitools hero image',
+			}),
+		),
+	);
+	console.log('  404.html written');
 }
 
 await browser.close();
