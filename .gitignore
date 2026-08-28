@@ -41,15 +41,6 @@ CLAUDE.md
 /.idea/
 /.zed/
 
-# root markdown is local-only and lives in wheelybin/; LICENSE is the exception
-/README.md
-/ACKNOWLEDGEMENTS.md
-/AI-POLICY.md
-/CONTRIBUTING.md
-/DESIGN.md
-/PARITY.md
-/STATE.md
-
 # wheelybin: local-only scratch
 /wheelybin/
 
