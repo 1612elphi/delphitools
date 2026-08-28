@@ -1,6 +1,3 @@
-# unconventional js
-/blueprints/*/files/
-
 # compiled output
 /dist/
 
@@ -37,6 +34,3 @@ ember-cli-update.json
 # root and keep their own formatting.
 /scripts/verify/
 /scripts/build-shavian-dict.ts
-
-# Concept mocks, kept byte-frozen as design reference.
-/docs/

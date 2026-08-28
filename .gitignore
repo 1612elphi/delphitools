@@ -10,9 +10,10 @@
 /.pnp*
 /.eslintcache
 /coverage/
-/npm-debug.log*
-/testem.log
-/yarn-error.log
+*.log
+*.tsbuildinfo
+/.vite/
+/.cache/
 
 # broccoli-debug
 /DEBUG/
@@ -24,11 +25,32 @@
 .env*.local
 
 # claude / local-only working notes
+AGENTS.md
 CLAUDE.md
 /.claude/
 /.superpowers/
 
-# wheelybin: local-only scratch and agent working files, never committed
+# agent worktrees and scratch clones
+/.delta/
+/.emdash/
+/.context/
+
+# editors
+/.cursor/
+/.vscode/
+/.idea/
+/.zed/
+
+# root markdown is local-only and lives in wheelybin/; LICENSE is the exception
+/README.md
+/ACKNOWLEDGEMENTS.md
+/AI-POLICY.md
+/CONTRIBUTING.md
+/DESIGN.md
+/PARITY.md
+/STATE.md
+
+# wheelybin: local-only scratch
 /wheelybin/
 
 # session scratch (one-off debug/repro rigs land as root dot-files;
@@ -40,10 +62,6 @@ CLAUDE.md
 
 # build data (downloaded source files for dictionary builds)
 /scripts/data/
-
-# local-only working notes (agent handoff prompts and the like); the tracked
-# docs live directly under docs/ (docs/frontpage/, ...)
-/docs/handoffs/
 
 # package-lock.json is tracked on purpose: CF Pages can't read the text-format
 # bun.lock and would otherwise npm-install unpinned (broke the 2026-07-24 deploy)
