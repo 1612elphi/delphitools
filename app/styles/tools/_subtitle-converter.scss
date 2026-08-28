@@ -163,15 +163,6 @@
 	}
 }
 
-/* icon-only below sm */
-.dt-sub-btn-text {
-	display: none;
-
-	@include crayon.screen("sm") {
-		display: inline;
-	}
-}
-
 .dt-sub-textarea {
 	min-height: crayon.size(80);
 	flex: 1;

@@ -138,15 +138,6 @@ export async function verifyExportBlob(
 	}
 }
 
-export function estimateBytes(
-	proxyBytes: number,
-	proxyArea: number,
-	fullArea: number,
-): number {
-	if (proxyArea <= 0) return 0;
-	return Math.round(proxyBytes * (fullArea / proxyArea));
-}
-
 export function slugifySceneName(name: string): string {
 	return (
 		name

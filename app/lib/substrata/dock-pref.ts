@@ -98,18 +98,9 @@ export function setOmnibarEdge(edge: Edge): void {
 export function getRailEdge(): RailEdge {
 	return railEdge;
 }
-export function setRailEdge(edge: RailEdge): void {
-	if (edge === railEdge) return;
-	railEdge = edge;
-	saveLayout(RAIL_KEY, railEdge);
-	emit();
-}
 
 export function getModuleDockAll(): Readonly<Record<ModuleId, DockTarget>> {
 	return moduleDock;
-}
-export function getModuleDock(id: ModuleId): DockTarget {
-	return moduleDock[id];
 }
 export function getFloatPosAll(): Readonly<Record<ModuleId, FloatPos | null>> {
 	return floatPos;

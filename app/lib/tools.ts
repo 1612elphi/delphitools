@@ -1019,12 +1019,6 @@ export const homeFeatured: Tool[] = [
 	...featuredTools.filter((tool) => !tool.highlight),
 ];
 
-export function toolPageParams(): { toolId: string }[] {
-	return allTools
-		.filter((tool) => tool.href.startsWith('/tools/'))
-		.map((tool) => ({ toolId: tool.id }));
-}
-
 export function getToolById(id: string): Tool | undefined {
 	return allTools.find((tool) => tool.id === id);
 }

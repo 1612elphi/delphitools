@@ -127,14 +127,6 @@
 	}
 }
 
- .dt-strip-btn-text {
-	display: none;
-
-	@include crayon.screen("sm") {
-		display: inline;
-	}
-}
-
  .dt-strip-settings {
 	display: grid;
 	border-bottom: 1px solid var(--border);

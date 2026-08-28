@@ -199,14 +199,6 @@ export const DEFAULT_ARTBOARD: Artboard = {
 	background: '#ffffff',
 };
 
-export interface ArtboardPreset {
-	id: string;
-	label: string;
-	width: number;
-	height: number;
-	resolution: number;
-}
-
 /** x: vertical; y: horizontal */
 export interface Guide {
 	id: string;

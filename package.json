@@ -129,8 +129,6 @@
 		"browser-fs-access": "^0.38.0",
 		"bwip-js": "^4.11.2",
 		"circle-flags": "^2.8.3",
-		"class-variance-authority": "^0.7.1",
-		"clsx": "^2.1.1",
 		"color-name-list": "^14.47.0",
 		"crayon-css": "^0.9.1",
 		"dexie": "^4.4.4",
@@ -168,7 +166,6 @@
 		"sass-embedded": "^1.100.0",
 		"satori": "^0.29.0",
 		"svgo": "^4.0.2",
-		"tailwind-merge": "^3.6.0",
 		"tracked-built-ins": "^4.1.2"
 	}
 }

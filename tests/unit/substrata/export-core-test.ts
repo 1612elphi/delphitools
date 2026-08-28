@@ -2,7 +2,6 @@ import { module, test } from 'qunit';
 import {
 	EXPORT_FORMATS,
 	areaBudget,
-	estimateBytes,
 	exportFilename,
 	formatMeta,
 	resolveExportDims,
@@ -285,24 +284,6 @@ module('Unit | Substrata | export-core', function () {
 			await verifyExportBlob(bytes(4096, 'image/jxl'), true),
 		);
 		assert.true(await verifyExportBlob(bytes(4096, ''), true));
-	});
-
-	test('scales the proxy byte count by the area ratio', function (assert) {
-		// 1920²/640²=9; 12,000 × 9 = 108,000
-		assert.strictEqual(
-			estimateBytes(12_000, 640 * 640, 1920 * 1920),
-			108_000,
-		);
-		assert.strictEqual(
-			estimateBytes(1000, 3, 4),
-			1333,
-			'rounds to whole bytes',
-		);
-	});
-
-	test('estimates nothing from a proxy with no area', function (assert) {
-		assert.strictEqual(estimateBytes(500, 0, 1_000_000), 0);
-		assert.strictEqual(estimateBytes(500, -4, 1_000_000), 0);
 	});
 
 	test('slugifies a scene name into filesystem-safe characters', function (assert) {

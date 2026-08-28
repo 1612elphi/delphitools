@@ -179,17 +179,6 @@ export function setBlendMode(id: string, blendMode: BlendMode): void {
 	}));
 }
 
-export function setVisibility(id: string, visible: boolean): void {
-	update((doc) => ({
-		...doc,
-		layers: mapLayerInTree(doc.layers, id, (l) => ({
-			...l,
-			visible,
-		})),
-		updatedAt: Date.now(),
-	}));
-}
-
 export function toggleVisibility(id: string): void {
 	update((doc) => ({
 		...doc,

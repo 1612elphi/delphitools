@@ -54,10 +54,6 @@ export function getFormat(id: string): PandocFormat | undefined {
 	return BY_ID.get(id);
 }
 
-export function isBinaryFormat(id: string): boolean {
-	return BY_ID.get(id)?.kind === 'binary';
-}
-
 export const inputFormats = FORMATS.filter((f) => f.input);
 export const outputFormats = FORMATS.filter((f) => f.output);
 

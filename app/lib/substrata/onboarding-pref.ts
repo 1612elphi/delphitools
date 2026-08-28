@@ -5,9 +5,6 @@ import { closeModal, openModal } from './modal';
 
 const SEEN_KEY = 'substrata:onboarding-seen';
 
-type Listener = () => void;
-const listeners = new Set<Listener>();
-
 export function isOnboardingSeen(): boolean {
 	try {
 		return !!localStorage.getItem(SEEN_KEY);
@@ -16,20 +13,12 @@ export function isOnboardingSeen(): boolean {
 	}
 }
 
-export function markOnboardingSeen(): void {
+function markOnboardingSeen(): void {
 	try {
 		localStorage.setItem(SEEN_KEY, '1');
 	} catch {
 		// ignore storage errors
 	}
-	for (const l of listeners) l();
-}
-
-export function subscribeOnboarding(l: Listener): () => void {
-	listeners.add(l);
-	return () => {
-		listeners.delete(l);
-	};
 }
 
 /** open new-scene for blanks */

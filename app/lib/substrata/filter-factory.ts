@@ -188,8 +188,6 @@ const FACTORIES: Record<
 	},
 };
 
-export const isRenderableFilter = (type: string): boolean => type in FACTORIES;
-
 export function buildFabricFilters(
 	stack: readonly Filter[],
 	size: { width: number; height: number },

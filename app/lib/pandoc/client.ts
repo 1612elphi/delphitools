@@ -184,13 +184,3 @@ export function convert(
 export function query<T = unknown>(options: PandocQueryOptions): Promise<T> {
 	return call<T>({ type: 'query', options });
 }
-
-export function disposeEngine(): void {
-	if (worker) {
-		worker.terminate();
-		worker = null;
-	}
-	pending.clear();
-	readyPromise = null;
-	engineState = 'idle';
-}

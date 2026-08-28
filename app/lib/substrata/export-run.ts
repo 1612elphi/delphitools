@@ -1,5 +1,4 @@
 import {
-	estimateBytes,
 	exportFilename,
 	formatMeta,
 	resolveExportDims,
@@ -107,72 +106,4 @@ export async function runExport(
 		scale *= SHRINK_FACTOR;
 	}
 	return { ok: false, reason: 'verify-failed' };
-}
-
-const PROXY_AREA = 262_144;
-
-// quality reuses proxy render
-let proxyCache: {
-	doc: object;
-	scale: number;
-	solo: string | null;
-	flatten: string | undefined;
-	canvas: HTMLCanvasElement;
-} | null = null;
-
-export async function estimateExportBytes(
-	options: ExportOptions,
-): Promise<number | null> {
-	const plan = currentRenderPlan(options);
-	if (!plan) return null;
-	const { doc } = plan;
-
-	const dims = resolveExportDims(
-		doc.artboard.width,
-		doc.artboard.height,
-		options.scale,
-	);
-	const proxyScale = Math.min(
-		dims.effectiveScale,
-		Math.sqrt(
-			PROXY_AREA / (doc.artboard.width * doc.artboard.height),
-		),
-	);
-	let canvas =
-		proxyCache &&
-		proxyCache.doc === doc &&
-		proxyCache.scale === proxyScale &&
-		proxyCache.solo === plan.soloLayerId &&
-		proxyCache.flatten === plan.flattenBackground
-			? proxyCache.canvas
-			: null;
-	if (!canvas) {
-		canvas = renderForExport({
-			scale: proxyScale,
-			soloLayerId: plan.soloLayerId,
-			flattenBackground: plan.flattenBackground,
-		});
-		if (!canvas) return null;
-		proxyCache = {
-			doc,
-			scale: proxyScale,
-			solo: plan.soloLayerId,
-			flatten: plan.flattenBackground,
-			canvas,
-		};
-	}
-	try {
-		const blob = await encodeCanvas(
-			canvas,
-			options.format,
-			options.quality,
-		);
-		return estimateBytes(
-			blob.size,
-			canvas.width * canvas.height,
-			dims.outW * dims.outH,
-		);
-	} catch {
-		return null;
-	}
 }
