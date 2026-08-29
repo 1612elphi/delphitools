@@ -1,0 +1,9 @@
+{
+	"name": "delphitools",
+	"compatibility_date": "2026-08-29",
+	// assets-only worker: build:static writes the prerendered site plus 404.html
+	"assets": {
+		"directory": "./dist",
+		"not_found_handling": "404-page",
+	},
+}
