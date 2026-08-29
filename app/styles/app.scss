@@ -1907,6 +1907,10 @@ $header-height: crayon.size(14);
 		}
 	}
 
+	.dt-wf-step {
+		padding-inline: crayon.size(4);
+	}
+
 	// matches card label specificity
 	.dt-wf-step:nth-of-type(-n + 3) {
 		&::before {
