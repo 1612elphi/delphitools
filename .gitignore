@@ -60,3 +60,8 @@ CLAUDE.md
 # bun.lock stays local: CF Builds prefers it over package-lock.json, and its
 # bun 1.2.15 cannot parse lockfileVersion 2
 /bun.lock
+
+# hero and art masters: the optimised webp under public/ is what ships.
+# assets/og stays tracked, scripts/og.mjs reads it during build:static.
+/assets/heroes/
+/assets/art/
