@@ -56,3 +56,7 @@ CLAUDE.md
 
 # package-lock.json is tracked on purpose: CF Pages can't read the text-format
 # bun.lock and would otherwise npm-install unpinned (broke the 2026-07-24 deploy)
+
+# bun.lock stays local: CF Builds prefers it over package-lock.json, and its
+# bun 1.2.15 cannot parse lockfileVersion 2
+/bun.lock
