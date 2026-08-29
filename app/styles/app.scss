@@ -2986,19 +2986,23 @@ $header-height: crayon.size(14);
 	}
 }
 
-// flagships span 3, hits 2
+// six cells, two rows
 @include crayon.screen("md") {
 	.dt-grid.is-featured {
-		grid-template-columns: repeat(6, 1fr);
-
-		> .dt-cell {
-			grid-column: span 2;
-		}
-
-		> .dt-cell.is-highlight {
-			grid-column: span 3;
-		}
+		grid-template-columns: repeat(3, 1fr);
 	}
+}
+
+.dt-grid.is-featured .dt-cell[href="/experiments"]::after {
+	content: "";
+	position: absolute;
+	right: crayon.size(3);
+	bottom: crayon.size(3);
+	width: crayon.size(12);
+	height: crayon.size(12);
+	background: url("/art/alien-badge.webp") center / contain no-repeat;
+	rotate: -8deg;
+	pointer-events: none;
 }
 
 .dt-cell-icon {
