@@ -36,7 +36,7 @@ export const BUILT_WITH = [
 		url: 'https://github.com/embroider-build/embroider',
 	},
 	{ name: 'Vite', url: 'https://vite.dev' },
-	{ name: 'Crayon', url: 'https://github.com/TeriyakiBomb/crayon' },
+	{ name: 'Crayon', url: 'https://crayoncss.com' },
 	{
 		name: 'shadcn-ember',
 		url: 'https://github.com/IgnaceMaes/shadcn-ember',
@@ -63,7 +63,6 @@ const AboutDelphitoolsBody: TOC<{ Element: HTMLDivElement }> = <template>
 		</div>
 
 		<div class="dt-about-block">
-			<h3>Cast</h3>
 			<CastLineup />
 		</div>
 

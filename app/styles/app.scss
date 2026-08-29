@@ -2121,6 +2121,7 @@ $header-height: crayon.size(14);
 	display: flex;
 	flex-wrap: wrap;
 	align-items: baseline;
+	justify-content: center;
 	margin: 0;
 	gap: crayon.size(2);
 	min-height: crayon.size(6);
@@ -2148,7 +2149,7 @@ $header-height: crayon.size(14);
 // changing one alone will make that character bigger or smaller than the rest.
 // ---------------------------------------------------------------------------
 .dt-cast-lineup {
-	--cast-overlap: 0.5rem;
+	--cast-overlap: 1.2rem;
 	--fig-lift: #{crayon.size(1)};
 
 	display: flex;
@@ -2186,7 +2187,7 @@ $header-height: crayon.size(14);
 	}
 
 	&.is-delphi {
-		--fig-w: 29%;
+		--fig-w: 30%;
 	}
 
 	&.is-ad {
@@ -2198,7 +2199,7 @@ $header-height: crayon.size(14);
 	}
 
 	&.is-vito {
-		--fig-w: 18%;
+		--fig-w: 22%;
 	}
 
 	&:focus-visible {
