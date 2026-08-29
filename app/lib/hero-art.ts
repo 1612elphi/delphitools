@@ -42,4 +42,19 @@ export const HERO_ART: HeroArt[] = [
 		artist: 'Katrina Wold Art',
 		url: 'https://katrinawoldart.com/',
 	},
+	{
+		src: '/heroes/gooblin.webp',
+		artist: 'Gooblin Arts',
+		url: 'https://gooblin-arts.square.site/',
+	},
+	{
+		src: '/heroes/ash.webp',
+		artist: 'Ash Joseph',
+		url: 'https://ashjoseph.com/',
+	},
+	{
+		src: '/heroes/missmaple.webp',
+		artist: 'Missmaple',
+		url: 'https://missmaple.carrd.co/',
+	},
 ];
