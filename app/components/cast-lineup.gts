@@ -74,6 +74,9 @@ export default class CastLineup extends Component {
 	<template>
 		<div class="dt-cast is-{{this.current.slug}}">
 			<p class="dt-cast-head">
+				<span class="dt-cast-role">
+					{{this.current.pronouns}}
+				</span>
 				<span
 					class="dt-cast-name"
 				>{{this.current.name}}</span>
@@ -121,14 +124,6 @@ export default class CastLineup extends Component {
 					</button>
 				{{/each}}
 			</div>
-
-			<p class="dt-cast-meta">
-				{{#if this.current.given}}
-					<span>{{this.current.given}}</span>
-				{{/if}}
-				<span>{{this.current.pronouns}}</span>
-			</p>
-			<p class="dt-cast-blurb">{{this.current.blurb}}</p>
 		</div>
 	</template>
 }
