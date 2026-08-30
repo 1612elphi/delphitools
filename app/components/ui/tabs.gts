@@ -5,6 +5,8 @@
 // divergences from upstream:
 // - upstream has no key handling
 // - upstream has no aria linking
+// - upstream registers @disabled by value; here it is a getter, so a trigger
+//   whose @disabled changes is not re-registered mid-render
 
 import { on } from '@ember/modifier';
 import Component from '@glimmer/component';
@@ -191,9 +193,14 @@ class TabsTrigger extends Component<TabsTriggerSignature> {
 
 	register = modifier((element: HTMLElement) => {
 		this.element = element;
+		const args = this.args;
 		const record: TabRecord = {
-			value: this.args.value,
-			disabled: this.args.disabled ?? false,
+			value: args.value,
+			// consuming @disabled here re-runs the modifier, which
+			// re-registers during render and trips backtracking
+			get disabled() {
+				return args.disabled ?? false;
+			},
 			focus: () => element.focus(),
 		};
 		this.#register(record);

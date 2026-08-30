@@ -1,7 +1,7 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
-import { eq } from 'ember-truth-helpers';
+import { eq, not } from 'ember-truth-helpers';
 import { LinkTo } from '@ember/routing';
 import Dialog from 'delphitools-v2/components/ui/dialog';
 import Icon from 'delphitools-v2/components/icon';
@@ -37,14 +37,27 @@ function parse(line: string): Entry {
 
 const entries = (lines: string[]) => lines.map(parse);
 
+// a release need not fill every tab
+function firstFilledTab(release: Release): string {
+	if (release.features.length) return 'features';
+	if (release.fixes.length) return 'fixes';
+	return 'technical';
+}
+
 export default class ChangelogPopup extends Component {
 	@tracked release: Release = RELEASES[0]!;
+	@tracked tab = firstFilledTab(RELEASES[0]!);
 
 	selectVersion = (event: Event) => {
 		const version = (event.target as HTMLSelectElement).value;
 		this.release =
 			RELEASES.find((entry) => entry.version === version) ??
 			RELEASES[0]!;
+		this.tab = firstFilledTab(this.release);
+	};
+
+	setTab = (value: string) => {
+		this.tab = value;
 	};
 
 	<template>
@@ -83,23 +96,35 @@ export default class ChangelogPopup extends Component {
 						{{/each}}
 					</select>?
 				</h2>
-				<Tabs @defaultValue="features">
+				<Tabs
+					@value={{this.tab}}
+					@onValueChange={{this.setTab}}
+				>
 					<TabsList class="dt-cl-tabs">
 						<TabsTrigger
 							class="dt-cl-tab"
 							@value="features"
+							@disabled={{not
+								this.release.features.length
+							}}
 						>
 							Features
 						</TabsTrigger>
 						<TabsTrigger
 							class="dt-cl-tab"
 							@value="fixes"
+							@disabled={{not
+								this.release.fixes.length
+							}}
 						>
 							Fixes
 						</TabsTrigger>
 						<TabsTrigger
 							class="dt-cl-tab"
 							@value="technical"
+							@disabled={{not
+								this.release.technical.length
+							}}
 						>
 							Technical
 						</TabsTrigger>

@@ -1,4 +1,9 @@
+import { readFileSync } from 'node:fs';
 import { launch, visit, check, finish, sleep } from './harness.mjs';
+
+const VERSION = JSON.parse(
+	readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
+).version;
 
 const { browser, page } = await launch();
 await visit(page, '/');
@@ -366,7 +371,14 @@ await page.$$eval('.dt-hero-pill', (els) => els[1].click());
 await sleep(200);
 check('it opens the changelog popup', await page.$eval('.dt-cl', (el) => el.open));
 check(
-	'with the version picked in the title',
+	'with the current version picked in the title',
+	await page.$eval('.dt-cl-version', (el, v) => el.value === v, VERSION),
+	VERSION,
+);
+await page.select('.dt-cl-version', '2.0.0');
+await sleep(100);
+check(
+	'picking an older version switches the release',
 	await page.$eval('.dt-cl-version', (el) => el.value === '2.0.0'),
 );
 check(
