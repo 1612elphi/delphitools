@@ -8,6 +8,16 @@ export interface Release {
 
 export const RELEASES: Release[] = [
 	{
+		version: '2.0.1',
+		since: '2.0.0',
+		features: ['added new hero art'],
+		fixes: [
+			"Favicon Generator: Fixed an issue where the entire pack wouldn't download as one zip. Thanks, @TheTinkerersHaven on GitHub!",
+			'Picked Alien Delphi up from jail',
+		],
+		technical: [],
+	},
+	{
 		version: '2.0.0',
 		since: '1.0',
 		features: [
