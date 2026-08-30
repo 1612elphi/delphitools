@@ -57,4 +57,9 @@ export const HERO_ART: HeroArt[] = [
 		artist: 'Missmaple',
 		url: 'https://missmaple.carrd.co/',
 	},
+	{
+		src: '/heroes/artandmagic.webp',
+		artist: 'Art&Magic',
+		url: 'https://artandmagic.carrd.co/?utm_source=delphitools',
+	},
 ];
