@@ -15,9 +15,6 @@ const ICO_SIZES = [16, 32, 48, 64];
 
 const PREVIEW_MAX = 48;
 
-// avoid download suppression
-const DOWNLOAD_GAP_MS = 100;
-
 const HTML_SNIPPET = `<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180x180.png">
@@ -44,13 +41,6 @@ export default class FaviconGennyTool extends Component {
 	@tracked favicons: GeneratedFavicon[] = [];
 	@tracked generating = false;
 	@tracked loadFailed = false;
-
-	#timers: ReturnType<typeof setTimeout>[] = [];
-
-	willDestroy() {
-		super.willDestroy();
-		this.#timers.forEach(clearTimeout);
-	}
 
 	get title() {
 		return this.fileName || 'Source Image';
@@ -168,16 +158,21 @@ export default class FaviconGennyTool extends Component {
 		);
 	};
 
-	downloadAll = () => {
-		this.favicons.forEach((favicon, i) => {
-			this.#timers.push(
-				setTimeout(
-					() => this.download(favicon),
-					i * DOWNLOAD_GAP_MS,
-				),
+	downloadAll = () => void this.#zipFavicons();
+
+	async #zipFavicons() {
+		if (this.favicons.length === 0) return;
+		const { default: JSZip } = await import('jszip');
+		const zip = new JSZip();
+		for (const favicon of this.favicons)
+			zip.file(
+				`favicon-${favicon.size}x${favicon.size}.png`,
+				dataUrlToBytes(favicon.dataUrl),
 			);
-		});
-	};
+		const blob = await zip.generateAsync({ type: 'blob' });
+		if (this.isDestroyed) return;
+		downloadBlob(blob, 'favicons.zip');
+	}
 
 	downloadIco = () => {
 		const frames = this.favicons
