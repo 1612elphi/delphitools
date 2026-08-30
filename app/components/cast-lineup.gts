@@ -20,21 +20,15 @@ const CAST: Character[] = [
 		role: 'Designer',
 		given: 'Ruby Morgan',
 		pronouns: 'they/them',
-		// ∑CG: blurb under the cast lineup in the about dialog, shown while Delphi is hovered
-		//   spec: 1-2 sentences, max 140 chars, third person singular they, deadpan, matches the site voice, no exclamation marks
-		//   sample: "Draws the art, writes the tools, and refuses to add a login screen."
-		blurb: '∑CG',
+		blurb: 'null',
 	},
 	{
-		slug: 'ad',
+		slug: 'alien',
 		name: 'Alien Delphi',
 		role: 'Nuisance',
 		given: null,
 		pronouns: 'they/them',
-		// ∑CG: blurb under the cast lineup in the about dialog, shown while Alien Delphi is hovered
-		//   spec: 1-2 sentences, max 140 chars, third person singular they, deadpan, matches the site voice, no exclamation marks
-		//   sample: "Turns up uninvited, moves things one pixel, and denies everything."
-		blurb: '∑CG',
+		blurb: 'null',
 	},
 	{
 		slug: 'emma',
@@ -42,10 +36,7 @@ const CAST: Character[] = [
 		role: 'Witch',
 		given: 'Amelia Perkins',
 		pronouns: 'she/her',
-		// ∑CG: blurb under the cast lineup in the about dialog, shown while Emma is hovered
-		//   spec: 1-2 sentences, max 140 chars, third person, she/her, deadpan, matches the site voice, no exclamation marks
-		//   sample: "Handles the parts of the stack that only respond to superstition."
-		blurb: '∑CG',
+		blurb: 'null',
 	},
 	{
 		slug: 'vito',
@@ -53,10 +44,7 @@ const CAST: Character[] = [
 		role: 'Judgmental Machine',
 		given: 'Digital VT-100 S/N 37345A/4',
 		pronouns: 'he/him',
-		// ∑CG: blurb under the cast lineup in the about dialog, shown while Vito is hovered
-		//   spec: 1-2 sentences, max 140 chars, third person, he/him, deadpan, matches the site voice, no exclamation marks
-		//   sample: "Has opinions about your kerning and shares them without being asked."
-		blurb: '∑CG',
+		blurb: 'null',
 	},
 ];
 

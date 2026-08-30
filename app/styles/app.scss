@@ -2091,7 +2091,7 @@ $header-height: crayon.size(14);
 
 	@include crayon.vstack(2);
 
-	&.is-ad {
+	&.is-alien {
 		--cast-accent: #274f1c;
 		--cast-glow: #6fbf4e;
 	}
@@ -2108,7 +2108,7 @@ $header-height: crayon.size(14);
 }
 
 .dark .dt-cast {
-	&.is-ad {
+	&.is-alien {
 		--cast-accent: #70af5d;
 	}
 
@@ -2194,7 +2194,7 @@ $header-height: crayon.size(14);
 		--fig-w: 30%;
 	}
 
-	&.is-ad {
+	&.is-alien {
 		--fig-w: 25.5%;
 	}
 
