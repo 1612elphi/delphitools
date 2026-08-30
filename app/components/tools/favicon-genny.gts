@@ -168,15 +168,27 @@ export default class FaviconGennyTool extends Component {
 		);
 	};
 
-	downloadAll = () => {
-		this.favicons.forEach((favicon, i) => {
-			this.#timers.push(
-				setTimeout(
-					() => this.download(favicon),
-					i * DOWNLOAD_GAP_MS,
-				),
-			);
-		});
+	downloadAll = async () => {
+		try {
+			const JSZip = (await import('jszip')).default;
+			const zip = new JSZip();
+			this.favicons.forEach((favicon) => {
+				const bytes = dataUrlToBytes(favicon.dataUrl);
+				zip.file(`favicon-${favicon.size}x${favicon.size}.png`, bytes);
+			});
+			const blob = await zip.generateAsync({ type: 'blob' });
+			downloadBlob(blob, 'favicons.zip');
+		} catch (error) {
+			console.error('Error downloading favicons zip, using fallback', error);
+			this.favicons.forEach((favicon, i) => {
+				this.#timers.push(
+					setTimeout(
+						() => this.download(favicon),
+						i * DOWNLOAD_GAP_MS,
+					),
+				);
+			});
+		}
 	};
 
 	downloadIco = () => {
