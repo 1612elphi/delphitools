@@ -54,6 +54,26 @@ check(
 );
 check('search: catalogue dims while filtering', search.dimmed);
 
+// a shavian/cipher answer used to hide the whole Matches section
+await type('QR Generator');
+const spaced = await page.evaluate(() => {
+	const titles = [...document.querySelectorAll('.dt-section-title')].map((el) =>
+		el.textContent.trim().replace(/\s+/g, ' '),
+	);
+	return {
+		matches: titles.find((t) => t.startsWith('Matches')) ?? '',
+		names: [
+			...document.querySelectorAll('.dt-section:first-of-type .dt-cell'),
+		].map((el) => el.textContent.trim().split('\n')[0]),
+	};
+});
+check(
+	'search: a term with a space still finds the tool',
+	spaced.matches.startsWith('Matches') &&
+		spaced.names.some((n) => n.includes('QR')),
+	`${spaced.matches} / ${spaced.names.join(', ')}`,
+);
+
 await type('#2E7D32');
 const colour = await page.evaluate(() => {
 	const rows = [...document.querySelectorAll('.dt-omni-row')];

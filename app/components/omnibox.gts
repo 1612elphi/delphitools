@@ -142,15 +142,14 @@ export default class Omnibox extends Component<OmniboxSignature> {
 
 	get matches(): Tool[] {
 		if (this.file) return this.fileTools;
-		if (this.reading) return [];
 		return searchTools(this.raw);
 	}
 
 	get showMatches() {
-		return (
-			this.file !== null ||
-			(!this.reading && !!this.raw.trim())
-		);
+		if (this.file) return true;
+		if (!this.raw.trim()) return false;
+		// a shavian or cipher answer must not hide a name match
+		return !this.reading || this.matches.length > 0;
 	}
 
 	get fileMeta() {
