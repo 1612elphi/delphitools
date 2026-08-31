@@ -8,6 +8,17 @@ export interface Release {
 
 export const RELEASES: Release[] = [
 	{
+		version: '2.0.2',
+		since: '2.0.1',
+		features: [],
+		fixes: [
+			'Clicking a palette now opens it in the generator correctly. Thanks, @paletteheart on GitHub!',
+			'Bookmarks and links straight to a tool page now load correctly. Thanks, @Jon-Corey on GitHub!',
+			'The omnibox no longer disregards spaces. Thanks again, @Jon-Corey on GitHub!',
+		],
+		technical: [],
+	},
+	{
 		version: '2.0.1',
 		since: '2.0.0',
 		features: ['added new hero art'],
