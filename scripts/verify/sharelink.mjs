@@ -66,4 +66,41 @@ for (const { label, query, expect } of CASES) {
 	await browser.close();
 }
 
+// in-app: the collection card must carry ?colors= through the transition
+{
+	const { browser, page } = await launch();
+	await visit(page, '/tools/palette-collection');
+
+	const strip = await page.$$eval(
+		'.dt-collection-cell:first-child .dt-collection-swatch',
+		(els) =>
+			els.map((el) =>
+				(el.getAttribute('style') ?? '')
+					.replace('background-color:', '')
+					.trim()
+					.toLowerCase(),
+			),
+	);
+
+	await page.click('.dt-collection-card');
+	await sleep(800);
+
+	check(
+		'the collection card keeps colors in the url',
+		new URL(page.url()).searchParams.has('colors'),
+		page.url(),
+	);
+
+	const swatches = await page.$$eval('.dt-swatch-value', (els) =>
+		els.map((el) => el.textContent.trim().toLowerCase()),
+	);
+	check(
+		'and the generator opens on that palette',
+		swatches.join() === strip.join(),
+		`${swatches.join(' ')} vs ${strip.join(' ')}`,
+	);
+
+	await browser.close();
+}
+
 await finish();
