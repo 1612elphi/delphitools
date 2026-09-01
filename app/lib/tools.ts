@@ -412,7 +412,7 @@ export const toolCategories: ToolCategory[] = [
 				id: 'screen-recorder',
 				name: 'Screen Recorder',
 				description:
-					'Record your screen with optional microphone audio',
+					'Record your screen with optional tab audio (supported browsers only) and microphone audio',
 				icon: 'monitor-up',
 				href: '/tools/screen-recorder',
 				new: true,

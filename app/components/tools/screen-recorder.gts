@@ -19,11 +19,17 @@ const MIC_DENIED =
 const UNSUPPORTED = 'Screen recording is not supported in this browser.';
 
 const MIC_LABEL = 'Mix in microphone audio';
+const ECHO_LABEL = 'Echo cancellation';
+const NOISE_LABEL = 'Noise suppression';
+const GAIN_LABEL = 'Auto gain control';
 
 export default class ScreenRecorderTool extends Component {
 	@tracked status: 'idle' | 'recording' | 'paused' | 'finished' = 'idle';
 	@tracked elapsedMs = 0;
 	@tracked micMixIn = false;
+	@tracked echoCancellation = false;
+	@tracked noiseSuppression = false;
+	@tracked autoGainControl = false;
 	@tracked videoBlob: Blob | null = null;
 	@tracked videoUrl: string | null = null;
 	@tracked duration = 0;
@@ -36,6 +42,7 @@ export default class ScreenRecorderTool extends Component {
 	#displayStream: MediaStream | null = null;
 	#micStream: MediaStream | null = null;
 	#combinedStream: MediaStream | null = null;
+	#audioCtx: AudioContext | null = null;
 	#chunks: Blob[] = [];
 	#startedAt = 0;
 	#pausedAt = 0;
@@ -68,17 +75,38 @@ export default class ScreenRecorderTool extends Component {
 
 	start = async () => {
 		this.error = '';
-		if (!navigator.mediaDevices?.getDisplayMedia) {
+		if (
+			!navigator.mediaDevices?.getDisplayMedia ||
+			typeof MediaRecorder === 'undefined'
+		) {
 			this.error = UNSUPPORTED;
 			return;
 		}
 
 		try {
-			this.#displayStream =
-				await navigator.mediaDevices.getDisplayMedia({
-					video: true,
-					audio: true,
-				});
+			try {
+				this.#displayStream =
+					await navigator.mediaDevices.getDisplayMedia(
+						{
+							video: true,
+							audio: {
+								echoCancellation: false,
+								noiseSuppression: false,
+								autoGainControl: false,
+								sampleRate: 48000,
+								channelCount: 2,
+							},
+						},
+					);
+			} catch {
+				this.#displayStream =
+					await navigator.mediaDevices.getDisplayMedia(
+						{
+							video: true,
+							audio: true,
+						},
+					);
+			}
 		} catch (err) {
 			const name = (err as Error)?.name;
 			// cancel throws NotAllowedError
@@ -93,39 +121,112 @@ export default class ScreenRecorderTool extends Component {
 
 		if (!this.#displayStream) return;
 
-		const tracks = [...this.#displayStream.getTracks()];
 		this.#micStream = null;
 
 		if (this.micMixIn) {
+			// request mic with user filters, falling back to basic audio on failure
 			try {
 				this.#micStream =
 					await navigator.mediaDevices.getUserMedia(
 						{
-							audio: true,
+							audio: {
+								echoCancellation:
+									{
+										ideal: this
+											.echoCancellation,
+									},
+								noiseSuppression:
+									{
+										ideal: this
+											.noiseSuppression,
+									},
+								autoGainControl:
+									{
+										ideal: this
+											.autoGainControl,
+									},
+							},
 						},
 					);
-				tracks.push(
-					...this.#micStream.getAudioTracks(),
-				);
 			} catch {
-				this.error = MIC_DENIED;
+				try {
+					this.#micStream =
+						await navigator.mediaDevices.getUserMedia(
+							{ audio: true },
+						);
+				} catch {
+					this.error = MIC_DENIED;
+				}
 			}
 		}
 
-		this.#combinedStream = new MediaStream(tracks);
+		const displayAudio = this.#displayStream.getAudioTracks();
+		const micAudio = this.#micStream?.getAudioTracks() ?? [];
+		const audioTracks = [...displayAudio, ...micAudio];
+		const videoTrack = this.#displayStream.getVideoTracks()[0];
+		const finalTracks: MediaStreamTrack[] = [];
+		if (videoTrack) finalTracks.push(videoTrack);
 
-		const candidates = [
-			'video/webm;codecs=vp9,opus',
-			'video/webm;codecs=vp8,opus',
-			'video/webm',
-		];
+		// Always normalize audio through AudioContext @ 48kHz to avoid Opus
+		// clock drift: tab/system audio is often 44.1kHz while Opus expects 48kHz.
+		// Raw track → slow/pitch-down playback. For >1 tracks this also mixes.
+		if (audioTracks.length >= 1) {
+			try {
+				const ctx = new AudioContext({
+					sampleRate: 48000,
+				});
+				this.#audioCtx = ctx;
+				if (ctx.state === 'suspended')
+					await ctx.resume();
+				const dest = ctx.createMediaStreamDestination();
+				for (const t of audioTracks) {
+					const src = ctx.createMediaStreamSource(
+						new MediaStream([t]),
+					);
+					src.connect(dest);
+				}
+				const mixed = dest.stream.getAudioTracks()[0];
+				if (mixed) finalTracks.push(mixed);
+				else {
+					for (const t of audioTracks)
+						if (t) finalTracks.push(t);
+				}
+			} catch {
+				for (const t of audioTracks)
+					if (t) finalTracks.push(t);
+			}
+		}
+
+		this.#combinedStream = new MediaStream(finalTracks);
+
+		// omit opus codec when no audio tracks exist to prevent recorder onstop hangs
+		const hasAudio = finalTracks.some((t) => t.kind === 'audio');
+		const candidates = hasAudio
+			? [
+					'video/webm;codecs=vp9,opus',
+					'video/webm;codecs=vp8,opus',
+					'video/webm',
+				]
+			: [
+					'video/webm;codecs=vp9',
+					'video/webm;codecs=vp8',
+					'video/webm',
+				];
 		const mimeType =
-			candidates.find((t) =>
-				MediaRecorder.isTypeSupported(t),
-			) ?? '';
+			candidates.find((t) => {
+				try {
+					return MediaRecorder.isTypeSupported(t);
+				} catch {
+					return false;
+				}
+			}) ?? '';
+		const recorderOpts: MediaRecorderOptions = {};
+		if (mimeType) recorderOpts.mimeType = mimeType;
+		if (hasAudio) recorderOpts.audioBitsPerSecond = 128000;
+		recorderOpts.videoBitsPerSecond = 2500000;
 		this.#recorder = new MediaRecorder(
 			this.#combinedStream,
-			mimeType ? { mimeType } : undefined,
+			recorderOpts,
 		);
 		this.#chunks = [];
 		this.#recorder.ondataavailable = (event) => {
@@ -153,7 +254,7 @@ export default class ScreenRecorderTool extends Component {
 		this.elapsedMs = 0;
 		this.#startedAt = performance.now();
 		this.status = 'recording';
-		this.#recorder.start(100);
+		this.#recorder.start();
 		this.#rafId = requestAnimationFrame(this.#tickElapsed);
 	};
 
@@ -165,6 +266,8 @@ export default class ScreenRecorderTool extends Component {
 		this.#displayStream = null;
 		this.#micStream = null;
 		this.#combinedStream = null;
+		void this.#audioCtx?.close().catch(() => {});
+		this.#audioCtx = null;
 		cancelAnimationFrame(this.#rafId);
 
 		if (this.#chunks.length === 0) {
@@ -187,6 +290,8 @@ export default class ScreenRecorderTool extends Component {
 	}
 
 	#stopRecording() {
+		void this.#audioCtx?.close().catch(() => {});
+		this.#audioCtx = null;
 		const recorder = this.#recorder;
 		if (recorder) {
 			// prevent resurrecting discarded takes
@@ -212,8 +317,9 @@ export default class ScreenRecorderTool extends Component {
 	}
 
 	#releaseTake() {
-		if (this.videoUrl) URL.revokeObjectURL(this.videoUrl);
+		const url = this.videoUrl;
 		this.videoUrl = null;
+		if (url) setTimeout(() => URL.revokeObjectURL(url), 500);
 		this.videoBlob = null;
 		this.duration = 0;
 		this.width = 0;
@@ -237,8 +343,42 @@ export default class ScreenRecorderTool extends Component {
 		else if (this.status === 'paused') this.#recorder?.resume();
 	};
 
+	// dynamically update filters on active mic tracks
+	#applyMicConstraints() {
+		for (const track of this.#micStream?.getAudioTracks() ?? []) {
+			void track
+				.applyConstraints({
+					echoCancellation: {
+						ideal: this.echoCancellation,
+					},
+					noiseSuppression: {
+						ideal: this.noiseSuppression,
+					},
+					autoGainControl: {
+						ideal: this.autoGainControl,
+					},
+				})
+				.catch(() => {});
+		}
+	}
+
 	setMicMixIn = (value: boolean) => {
 		this.micMixIn = value;
+	};
+
+	setEchoCancellation = (value: boolean) => {
+		this.echoCancellation = value;
+		this.#applyMicConstraints();
+	};
+
+	setNoiseSuppression = (value: boolean) => {
+		this.noiseSuppression = value;
+		this.#applyMicConstraints();
+	};
+
+	setAutoGainControl = (value: boolean) => {
+		this.autoGainControl = value;
+		this.#applyMicConstraints();
 	};
 
 	clear = () => {
@@ -268,8 +408,14 @@ export default class ScreenRecorderTool extends Component {
 	};
 
 	registerLive = modifier((video: HTMLVideoElement) => {
-		if (this.#combinedStream) {
-			video.srcObject = this.#combinedStream;
+		const vTrack =
+			this.#displayStream?.getVideoTracks()[0] ??
+			this.#combinedStream?.getVideoTracks()[0];
+		if (vTrack) {
+			video.srcObject = new MediaStream([vTrack]);
+			video.muted = true;
+			// Firefox can ignore muted attribute on MediaStream with audio
+			video.volume = 0;
 			void video.play();
 		}
 		return () => {
@@ -286,7 +432,7 @@ export default class ScreenRecorderTool extends Component {
 		return () => {
 			if (this.#video === video) this.#video = null;
 			video.pause();
-			video.src = '';
+			video.removeAttribute('src');
 			video.load();
 		};
 	});
@@ -437,6 +583,34 @@ export default class ScreenRecorderTool extends Component {
 						/>
 					</label>
 				</div>
+				{{#if this.micMixIn}}
+					<div class="dt-sr-fields">
+						<label class="dt-sr-field">
+							<span>Echo cancellation</span>
+							<Switch
+								@checked={{this.echoCancellation}}
+								@onChange={{this.setEchoCancellation}}
+								@label={{ECHO_LABEL}}
+							/>
+						</label>
+						<label class="dt-sr-field">
+							<span>Noise suppression</span>
+							<Switch
+								@checked={{this.noiseSuppression}}
+								@onChange={{this.setNoiseSuppression}}
+								@label={{NOISE_LABEL}}
+							/>
+						</label>
+						<label class="dt-sr-field">
+							<span>Auto gain</span>
+							<Switch
+								@checked={{this.autoGainControl}}
+								@onChange={{this.setAutoGainControl}}
+								@label={{GAIN_LABEL}}
+							/>
+						</label>
+					</div>
+				{{/if}}
 
 				<div class="dt-sr-surface">
 					{{#if (eq this.status "idle")}}
