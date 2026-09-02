@@ -238,6 +238,17 @@ export const toolCategories: ToolCategory[] = [
 				accepts: ['image/*'],
 			},
 			{
+				id: 'image-atlas',
+				name: 'Image Atlas',
+				description:
+					'Everything about one image, on one page',
+				icon: 'image',
+				href: '/tools/image-atlas',
+				accepts: ['image/*'],
+				new: true,
+				beta: true,
+			},
+			{
 				id: 'image-clipper',
 				name: 'Image Clipper',
 				description:

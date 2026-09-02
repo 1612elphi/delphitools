@@ -1,0 +1,289 @@
+@use "../crayon-config" as crayon;
+
+.dt-ia {
+	@include crayon.vstack(6);
+}
+
+.dt-ia-frame {
+	border: 2px solid var(--border);
+	background: var(--card);
+}
+
+.dt-ia-bar {
+	display: flex;
+	min-height: crayon.size(12);
+	align-items: stretch;
+	border-bottom: 2px solid var(--border);
+}
+
+.dt-ia-file {
+	@include crayon.hstack(2);
+
+	flex: 1;
+	min-width: 0;
+	align-items: center;
+	padding-inline: crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	cursor: pointer;
+
+	@include crayon.hover {
+		background: var(--muted);
+	}
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+		flex: none;
+	}
+
+	&:focus-within {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.dt-ia-filename {
+	overflow: hidden;
+	min-width: 0;
+	flex: 1;
+	color: var(--foreground);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dt-ia-status {
+	align-self: center;
+	padding-inline: crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.dt-ia-btn {
+	@include crayon.hstack(2);
+
+	align-items: center;
+	padding-inline: crayon.size(3);
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	font: inherit;
+	font-size: crayon.font-size("sm");
+	white-space: nowrap;
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		pointer-events: none;
+	}
+}
+
+.dt-ia-clear {
+	display: flex;
+	width: crayon.size(12);
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	border: 0;
+	border-left: 1px solid var(--border);
+	background: none;
+	color: var(--muted-foreground);
+	cursor: pointer;
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+	}
+
+	@include crayon.hover {
+		background: var(--muted);
+		color: var(--foreground);
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		pointer-events: none;
+	}
+}
+
+.dt-ia-stage {
+	border-bottom: 1px solid var(--border);
+
+	img {
+		display: block;
+		width: 100%;
+		max-height: crayon.size(100);
+		background: #000;
+		object-fit: contain;
+	}
+}
+
+.dt-ia-drop {
+	display: flex;
+	min-height: crayon.size(56);
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	margin: crayon.size(4);
+	padding: crayon.size(8);
+	border: 2px dashed var(--border);
+	background: var(--card);
+	color: var(--foreground);
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 150ms;
+
+	.dt-icon {
+		width: crayon.size(12);
+		height: crayon.size(12);
+		margin-bottom: crayon.size(4);
+		color: var(--muted-foreground);
+	}
+
+	@include crayon.hover {
+		border-color: var(--primary);
+	}
+
+	&:focus-within {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.dt-ia-drop-title {
+	display: block;
+	font-size: crayon.font-size("lg");
+	font-weight: crayon.font-weight("medium");
+}
+
+.dt-ia-drop-hint {
+	display: block;
+	margin-top: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-ia-panel {
+	overflow: hidden;
+}
+
+.dt-ia-panel-title {
+	margin: 0;
+	padding: crayon.size(2) crayon.size(3);
+	border-bottom: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("semibold");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+// own hairlines, not gap trick; short last row reads clean
+.dt-ia-meta {
+	display: grid;
+	margin: 0;
+	grid-template-columns: repeat(auto-fit, minmax(crayon.size(44), 1fr));
+}
+
+.dt-ia-cell {
+	min-width: 0;
+	padding: crayon.size(2) crayon.size(3);
+	border-right: 1px solid var(--border);
+	border-bottom: 1px solid var(--border);
+	background: var(--card);
+
+	dt {
+		color: var(--muted-foreground);
+		font-size: crayon.font-size("xs");
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+	}
+
+	dd {
+		overflow-wrap: anywhere;
+		margin: 0;
+		font-size: crayon.font-size("sm");
+		font-variant-numeric: tabular-nums;
+	}
+}
+
+.dt-ia-error {
+	margin: 0;
+	padding: crayon.size(3);
+	border: 0;
+	border-top: 1px solid var(--border);
+	background: color-mix(in oklch, var(--destructive) 10%, transparent);
+	color: var(--destructive);
+	font-size: crayon.font-size("sm");
+}
+
+.dt-ia-empty {
+	margin: 0;
+	padding: crayon.size(6) crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("sm");
+	text-align: center;
+}
+
+.dt-ia-badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px crayon.size(1.5);
+	border: 1px solid var(--border);
+	background: var(--muted);
+	font-size: crayon.font-size("xs");
+}
+
+// Camera hero — 2×2: Make | Model on first row, Lens on second row
+.dt-ia-panel.is-camera .dt-ia-meta.is-hero {
+	grid-template-columns: repeat(2, 1fr);
+}
+
+// Other — collapsed by default, uses native <details> like image-tracer
+.dt-ia-advanced {
+	border-top: 1px solid var(--border);
+	background: var(--card);
+}
+
+.dt-ia-summary {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: crayon.size(2) crayon.size(3);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("semibold");
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	cursor: pointer;
+	list-style: none;
+
+	&::-webkit-details-marker {
+		display: none;
+	}
+
+	.dt-icon {
+		width: crayon.size(4);
+		height: crayon.size(4);
+		color: var(--muted-foreground);
+		transition: transform 150ms;
+	}
+}
+
+.dt-ia-advanced[open] .dt-ia-summary .dt-icon {
+	transform: rotate(180deg);
+}
