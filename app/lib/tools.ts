@@ -954,14 +954,16 @@ export const toolCategories: ToolCategory[] = [
 			{
 				id: 'stupid-units',
 				name: 'Stupid Units',
-				description: 'Convert between bananas, Waleses and Warhols',
+				description:
+					'Convert between bananas, Waleses and Warhols',
 				icon: 'banana',
 				href: '/tools/stupid-units',
 			},
 			{
 				id: 'recipe-table',
 				name: 'Recipe Table',
-				description: 'Write a recipe as a Cooking for Engineers table',
+				description:
+					'Write a recipe as a Cooking for Engineers table',
 				icon: 'chef-hat',
 				href: '/tools/recipe-table',
 				wide: true,

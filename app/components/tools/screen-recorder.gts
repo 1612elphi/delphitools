@@ -19,6 +19,12 @@ const MIC_DENIED =
 const UNSUPPORTED = 'Screen recording is not supported in this browser.';
 
 const MIC_LABEL = 'Mix in microphone audio';
+
+// cancel throws NotAllowedError
+const isCancel = (err: unknown) => {
+	const name = (err as Error)?.name;
+	return name === 'NotAllowedError' || name === 'AbortError';
+};
 const ECHO_LABEL = 'Echo cancellation';
 const NOISE_LABEL = 'Noise suppression';
 const GAIN_LABEL = 'Auto gain control';
@@ -98,7 +104,9 @@ export default class ScreenRecorderTool extends Component {
 							},
 						},
 					);
-			} catch {
+			} catch (err) {
+				// rethrow, no second picker
+				if (isCancel(err)) throw err;
 				this.#displayStream =
 					await navigator.mediaDevices.getDisplayMedia(
 						{
@@ -108,14 +116,7 @@ export default class ScreenRecorderTool extends Component {
 					);
 			}
 		} catch (err) {
-			const name = (err as Error)?.name;
-			// cancel throws NotAllowedError
-			if (
-				name !== 'NotAllowedError' &&
-				name !== 'AbortError'
-			) {
-				this.error = DISPLAY_FAILED;
-			}
+			if (!isCancel(err)) this.error = DISPLAY_FAILED;
 			return;
 		}
 
@@ -124,7 +125,6 @@ export default class ScreenRecorderTool extends Component {
 		this.#micStream = null;
 
 		if (this.micMixIn) {
-			// request mic with user filters, falling back to basic audio on failure
 			try {
 				this.#micStream =
 					await navigator.mediaDevices.getUserMedia(
@@ -149,14 +149,7 @@ export default class ScreenRecorderTool extends Component {
 						},
 					);
 			} catch {
-				try {
-					this.#micStream =
-						await navigator.mediaDevices.getUserMedia(
-							{ audio: true },
-						);
-				} catch {
-					this.error = MIC_DENIED;
-				}
+				this.error = MIC_DENIED;
 			}
 		}
 
