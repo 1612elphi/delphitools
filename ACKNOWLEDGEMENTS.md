@@ -20,6 +20,7 @@ ember-click-outside@6.1.1: MIT
 ember-provide-consume-context@0.10.0: MIT
 ember-route-template@1.0.3: MIT
 ember-truth-helpers@5.0.0: MIT
+exifr@7.1.3: MIT
 fabric@7.4.0: MIT
 fflate@0.8.3: MIT
 imagetracerjs@1.2.6: Unlicense
