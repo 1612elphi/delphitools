@@ -8,6 +8,16 @@ export interface Release {
 
 export const RELEASES: Release[] = [
 	{
+		version: '2.0.3',
+		since: '2.0.2',
+		features: [],
+		fixes: [
+			'OpenGraph sharing cards now behave like they did in 1.0',
+			'Screen Recorder: Fixed behaviour on Firefox and fixed mic echoing. Thanks again, @TheTinkerersHaven on GitHub!',
+		],
+		technical: [],
+	},
+	{
 		version: '2.0.2',
 		since: '2.0.1',
 		features: [],
