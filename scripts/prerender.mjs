@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import puppeteer from 'puppeteer-core';
@@ -36,13 +36,22 @@ function headFor({ title, description, url, image, imageAlt }) {
 		`<meta property="og:image:height" content="630">`,
 		`<meta property="og:image:alt" content="${esc(imageAlt)}">`,
 		`<meta name="twitter:card" content="summary_large_image">`,
+		`<meta name="twitter:title" content="${esc(title)}">`,
+		`<meta name="twitter:description" content="${esc(description)}">`,
+		`<meta name="twitter:image" content="${ORIGIN}${image}">`,
+		`<meta name="twitter:image:alt" content="${esc(imageAlt)}">`,
+		`<meta name="twitter:image:width" content="1200">`,
+		`<meta name="twitter:image:height" content="630">`,
 	].join('\n    ');
 }
 
 function withHead(shell, head) {
 	return shell
 		.replace(/<title>[\s\S]*?<\/title>/, '@@HEAD@@')
-		.replace(/\n\s*<meta name="description"[^>]*>/, '')
+		.replace(
+			/\n\s*<meta (?:name="description"|property="og:|name="twitter:)[^>]*>/g,
+			'',
+		)
 		.replace('@@HEAD@@', head);
 }
 
@@ -51,10 +60,29 @@ console.log(`registry: ${toolRoutes.length} tool routes`);
 const shell = readFileSync(join(dist, 'index.html'), 'utf8');
 const port = 4321;
 const server = await serve(dist, port);
-const browser = await puppeteer.launch({
-	executablePath: CHROME,
-	headless: 'new',
-});
+// the deploy image has no chrome
+const browser = existsSync(CHROME)
+	? await puppeteer.launch({ executablePath: CHROME, headless: 'new' })
+	: null;
+if (!browser) console.warn('chrome not found, skipping boot checks');
+
+// evaluate runs in browser context
+async function boot(url, evaluate) {
+	if (!browser) return null;
+	const page = await browser.newPage();
+	const errors = [];
+	page.on('pageerror', (e) => errors.push(e.message));
+	await page.goto(`http://localhost:${port}${url}`, {
+		waitUntil: 'networkidle2',
+	});
+	const result = await page.evaluate(evaluate);
+	await page.close();
+	if (errors.length) {
+		console.error(`  ${url}: ${errors[0]}`);
+		process.exitCode = 1;
+	}
+	return result;
+}
 
 const routes = [
 	{
@@ -93,50 +121,32 @@ for (const route of routes) {
 
 	writeFileSync(join(dir, 'og.png'), await renderPng(route.card));
 
-	// boot routes before writing
-	const page = await browser.newPage();
-	const errors = [];
-	page.on('pageerror', (e) => errors.push(e.message));
-	await page.goto(`http://localhost:${port}${route.url}`, {
-		waitUntil: 'networkidle2',
-	});
-	// runs in browser context
-	const rendered = await page.evaluate(
+	const rendered = await boot(
+		route.url,
 		() =>
 			document
 				.querySelector('.dt-header-title h1')
 				?.textContent?.trim() ?? '',
 	);
-	await page.close();
-	if (errors.length) {
-		console.error(`  ${route.url}: ${errors[0]}`);
-		process.exitCode = 1;
-	}
 
 	writeFileSync(join(dir, 'index.html'), withHead(shell, headFor(route)));
 	written += 1;
 	if (written % 10 === 0 || written === routes.length) {
 		console.log(
-			`  ${written}/${routes.length} (last: ${route.url} -> "${rendered}")`,
+			`  ${written}/${routes.length} (last: ${route.url} -> "${rendered ?? ''}")`,
 		);
 	}
 }
 
 // cloudflare serves root 404
 {
-	const page = await browser.newPage();
-	const errors = [];
-	page.on('pageerror', (e) => errors.push(e.message));
-	await page.goto(`http://localhost:${port}/no-such-page`, {
-		waitUntil: 'networkidle2',
-	});
-	const sceneRendered = await page.evaluate(
+	const sceneRendered = await boot(
+		'/no-such-page',
 		() => document.querySelector('.dt-404-page') !== null,
 	);
-	await page.close();
-	if (errors.length || !sceneRendered) {
+	if (browser && !sceneRendered) {
 		console.error(
-			`  /no-such-page: ${errors[0] ?? '404 scene missing (.dt-404-page)'}`,
+			'  /no-such-page: 404 scene missing (.dt-404-page)',
 		);
 		process.exitCode = 1;
 	}
@@ -156,6 +166,6 @@ for (const route of routes) {
 	console.log('  404.html written');
 }
 
-await browser.close();
+await browser?.close();
 server.close();
 console.log(`wrote ${written} routes with per-route head tags and og.png`);
