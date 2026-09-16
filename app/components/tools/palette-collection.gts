@@ -8,6 +8,13 @@ import { service } from '@ember/service';
 import { LinkTo } from '@ember/routing';
 import Icon from 'delphitools-v2/components/icon';
 import {
+	Select,
+	SelectTrigger,
+	SelectValue,
+	SelectContent,
+	SelectItem,
+} from 'delphitools-v2/components/ui/select';
+import {
 	COLLECTION_CATEGORIES,
 	CURATED_PALETTES,
 	getPalettesByCategory,
@@ -17,6 +24,7 @@ import {
 import type ColourNotationService from 'delphitools-v2/services/colour-notation';
 
 type CategoryFilter = PaletteCollectionCategory | 'all';
+type CountFilter = number | 'all';
 
 const CATEGORIES = Object.entries(COLLECTION_CATEGORIES) as [
 	PaletteCollectionCategory,
@@ -27,6 +35,7 @@ export default class PaletteCollectionTool extends Component {
 	@service declare colourNotation: ColourNotationService;
 
 	@tracked selectedCategory: CategoryFilter = 'all';
+	@tracked selectedCount: CountFilter = 'all';
 	@tracked searchQuery = '';
 
 	total = CURATED_PALETTES.length;
@@ -45,6 +54,20 @@ export default class PaletteCollectionTool extends Component {
 			: COLLECTION_CATEGORIES[this.selectedCategory];
 	}
 
+	get availableCounts(): number[] {
+		return [
+			...new Set(CURATED_PALETTES.map((p) => p.colors.length)),
+		].sort((a, b) => a - b);
+	}
+
+	get hasActiveFilter(): boolean {
+		return (
+			this.selectedCategory !== 'all' ||
+			this.selectedCount !== 'all' ||
+			this.searchQuery.trim() !== ''
+		);
+	}
+
 	get filteredPalettes(): CuratedPalette[] {
 		const category = this.selectedCategory;
 		const inCategory =
@@ -52,11 +75,18 @@ export default class PaletteCollectionTool extends Component {
 				? CURATED_PALETTES
 				: this.palettesByCategory[category];
 
+		const inCount =
+			this.selectedCount === 'all'
+				? inCategory
+				: inCategory.filter(
+						(p) => p.colors.length === this.selectedCount,
+					);
+
 		const query = this.searchQuery.trim().toLowerCase();
-		if (!query) return inCategory;
+		if (!query) return inCount;
 
 		// match displayed notation too
-		return inCategory.filter(
+		return inCount.filter(
 			(p) =>
 				p.name.toLowerCase().includes(query) ||
 				p.colors.some(
@@ -74,7 +104,7 @@ export default class PaletteCollectionTool extends Component {
 
 	// untrimmed: whitespace counts
 	get countLabel() {
-		if (!this.searchQuery) return `${this.total} palettes`;
+		if (!this.hasActiveFilter) return `${this.total} palettes`;
 		const found = this.filteredPalettes.length;
 		return `${found} ${found === 1 ? 'result' : 'results'}`;
 	}
@@ -99,6 +129,36 @@ export default class PaletteCollectionTool extends Component {
 		this.selectedCategory = category;
 	};
 
+	get countOptions(): { value: string; label: string }[] {
+		return this.availableCounts.map((count) => ({
+			value: String(count),
+			label: `${count} colours`,
+		}));
+	}
+
+	get countValue(): string {
+		return this.selectedCount === 'all'
+			? 'all'
+			: String(this.selectedCount);
+	}
+
+	get countName(): string {
+		return this.selectedCount === 'all'
+			? 'Any size'
+			: `${this.selectedCount} colours`;
+	}
+
+	chooseCount = (value: string) => {
+		if (value === 'all') {
+			this.selectedCount = 'all';
+			return;
+		}
+		const parsed = Number(value);
+		this.selectedCount = Number.isInteger(parsed)
+			? parsed
+			: 'all';
+	};
+
 	setSearch = (event: Event) => {
 		this.searchQuery = (event.target as HTMLInputElement).value;
 	};
@@ -116,6 +176,34 @@ export default class PaletteCollectionTool extends Component {
 						{{on "input" this.setSearch}}
 					/>
 				</div>
+				<span class="dt-collection-size">
+					<span
+						class="dt-collection-label"
+					>Colours</span>
+					<Select
+						@value={{this.countValue}}
+						@onValueChange={{this.chooseCount}}
+					>
+						<SelectTrigger>
+							<SelectValue
+							>{{this.countName}}</SelectValue>
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem
+								@value="all"
+							>Any size</SelectItem>
+							{{#each
+								this.countOptions
+								key="value"
+								as |option|
+							}}
+								<SelectItem
+									@value={{option.value}}
+								>{{option.label}}</SelectItem>
+							{{/each}}
+						</SelectContent>
+					</Select>
+				</span>
 				<div
 					class="dt-collection-count"
 				>{{this.countLabel}}</div>
@@ -247,7 +335,7 @@ export default class PaletteCollectionTool extends Component {
 							/>
 							<p>No palettes found
 								matching your
-								search.</p>
+								filters.</p>
 						</div>
 					{{/if}}
 				{{/let}}

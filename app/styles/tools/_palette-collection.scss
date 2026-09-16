@@ -70,6 +70,30 @@
 	}
 }
 
+.dt-collection-size {
+	display: flex;
+	min-width: 9rem;
+	flex-direction: column;
+	justify-content: center;
+	padding: crayon.size(3) crayon.size(4);
+	border-left: 1px solid var(--border);
+}
+
+.dt-collection-label {
+	margin-bottom: crayon.size(1);
+	color: var(--muted-foreground);
+	font-size: crayon.font-size("xs");
+	font-weight: crayon.font-weight("bold");
+}
+
+// chromeless select, cell is box
+.dt-collection-size .dt-select-trigger {
+	height: crayon.size(7);
+	padding: 0;
+	border: 0;
+	font-weight: crayon.font-weight("bold");
+}
+
 .dt-collection-cat {
 	display: flex;
 	overflow: hidden;
