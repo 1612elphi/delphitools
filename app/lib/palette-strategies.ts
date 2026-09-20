@@ -520,7 +520,7 @@ function generateMonochromaticPalette(
 	const [, seedC, seedH] = base;
 	const h = seeded ? seedH : randomInRange(0, 360);
 	const baseC = seeded
-		? Math.max(0.04, Math.min(0.3, seedC || 0.15))
+		? Math.max(0.04, Math.min(0.3, seedC ?? 0.15))
 		: randomInRange(0.1, 0.2);
 	if (count === 1) {
 		if (seeded) {
@@ -548,9 +548,21 @@ function generateMonochromaticPalette(
 	const lStep = (lMax - lMin) / (count - 1);
 
 	return Array.from({ length: count }, (_, i) => {
-		const L = lMax - lStep * i;
+		// Anchor on the seed hue but jitter every swatch so successive
+		// regenerates with a locked colour still produce fresh shades
+		// instead of the identical ramp over and over.
+		const baseL = lMax - lStep * i;
+		const L = Math.max(
+			0.2,
+			Math.min(0.95, baseL + randomInRange(-0.03, 0.03)),
+		);
+		const hJitter = h + randomInRange(-7, 7);
+		const cJitter = Math.max(
+			0.02,
+			Math.min(0.32, baseC + randomInRange(-0.02, 0.02)),
+		);
 		const cMod = L < 0.4 || L > 0.75 ? 0.7 : 1;
-		return oklchToHex(L, baseC * cMod, h);
+		return oklchToHex(L, cJitter * cMod, hJitter);
 	});
 }
 
