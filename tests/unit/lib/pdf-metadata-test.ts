@@ -3,6 +3,7 @@ import { PDFDocument } from 'pdf-lib';
 import {
 	formatPdfDate,
 	parsePdfMetadata,
+	stripPdfMetadata,
 } from 'delphitools-v2/lib/pdf-metadata';
 
 function entry(
@@ -167,6 +168,79 @@ module('Unit | Lib | pdf-metadata', function () {
 			}
 			assert.true(report?.unreadable, 'unreadable flag');
 			assert.deepEqual(report?.entries, [], 'no entries');
+		}
+	});
+
+	test('stripped GTI-like bytes re-parse with no document metadata', async function (assert) {
+		const stripped = await stripPdfMetadata(await buildGtiLike());
+		assert.ok(stripped, 'strip returns bytes');
+		const report = await parsePdfMetadata(stripped!.data);
+		assert.false(report.unreadable, 'cleaned file still readable');
+		for (const label of [
+			'Title',
+			'Author',
+			'Subject',
+			'Keywords',
+			'Creator',
+			'Producer',
+		]) {
+			assert.strictEqual(
+				entry(report, label),
+				undefined,
+				`${label} removed`,
+			);
+		}
+	});
+
+	test('stripped file keeps the page count', async function (assert) {
+		const original = await buildGtiLike();
+		const stripped = await stripPdfMetadata(original);
+		assert.ok(stripped, 'strip returns bytes');
+		const reloaded = await PDFDocument.load(stripped!.data.slice(), {
+			updateMetadata: false,
+		});
+		assert.strictEqual(
+			reloaded.getPageCount(),
+			1,
+			'single page preserved',
+		);
+	});
+
+	test('stripped result names what was removed', async function (assert) {
+		const stripped = await stripPdfMetadata(await buildGtiLike());
+		assert.ok(stripped, 'strip returns bytes');
+		for (const label of [
+			'Title',
+			'Author',
+			'Subject',
+			'Keywords',
+			'Creator',
+			'Producer',
+			'Language',
+		]) {
+			assert.true(
+				stripped!.removed.includes(label),
+				`removed names ${label}`,
+			);
+		}
+	});
+
+	test('corrupt input returns null without throwing', async function (assert) {
+		const garbage = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]);
+		const notPdf = new TextEncoder().encode('hello, not a pdf');
+		const truncated = new TextEncoder().encode('%PDF-1.7 broken');
+
+		for (const bytes of [garbage, notPdf, truncated]) {
+			let result: Awaited<
+				ReturnType<typeof stripPdfMetadata>
+			> | null = null;
+			try {
+				result = await stripPdfMetadata(bytes);
+			} catch (error) {
+				assert.ok(false, `threw: ${String(error)}`);
+				continue;
+			}
+			assert.strictEqual(result, null, 'null for corrupt input');
 		}
 	});
 });

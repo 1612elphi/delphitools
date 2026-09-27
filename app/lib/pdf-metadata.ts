@@ -206,3 +206,70 @@ export async function parsePdfMetadata(
 		}
 	}
 }
+
+export interface PdfStripResult {
+	data: Uint8Array;
+	removed: string[];
+}
+
+const INFO_LABELS: Record<string, string> = {
+	Title: 'Title',
+	Author: 'Author',
+	Subject: 'Subject',
+	Keywords: 'Keywords',
+	Creator: 'Creator',
+	Producer: 'Producer',
+	CreationDate: 'Creation date',
+	ModDate: 'Modification date',
+};
+
+// Deep module: one function hides pdf-lib Info-dict + XMP plumbing.
+// Returns null for non-PDF/corrupt input instead of throwing.
+export async function stripPdfMetadata(
+	data: Uint8Array,
+): Promise<PdfStripResult | null> {
+	if (!(data instanceof Uint8Array) || data.length < 5) return null;
+	if (!isPdfHeader(data)) return null;
+
+	try {
+		const { PDFDocument, PDFName, PDFDict } =
+			await import('pdf-lib');
+		const doc = await PDFDocument.load(data.slice(), {
+			updateMetadata: false,
+		});
+
+		const removed: string[] = [];
+		// getInfoDict() is private: reach the Info dict through the
+		// public context + trailerInfo instead.
+		const infoNode = doc.context.lookup(
+			doc.context.trailerInfo.Info,
+		);
+		if (infoNode instanceof PDFDict) {
+			for (const [key, label] of Object.entries(
+				INFO_LABELS,
+			)) {
+				const name = PDFName.of(key);
+				if (infoNode.get(name) !== undefined) {
+					removed.push(label);
+					infoNode.delete(name);
+				}
+			}
+		}
+		if (doc.catalog.get(PDFName.of('Metadata')) !== undefined) {
+			removed.push('XMP');
+			doc.catalog.delete(PDFName.of('Metadata'));
+		}
+		if (doc.catalog.get(PDFName.of('Lang')) !== undefined) {
+			removed.push('Language');
+			doc.catalog.delete(PDFName.of('Lang'));
+		}
+
+		// save() has no updateMetadata option; plain save() does not
+		// touch the Info dict, and load() above already disabled the
+		// pdf-lib Producer/ModDate stamp.
+		const saved = await doc.save();
+		return { data: new Uint8Array(saved), removed };
+	} catch {
+		return null;
+	}
+}

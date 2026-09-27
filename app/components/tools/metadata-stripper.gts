@@ -42,6 +42,7 @@ export default class MetadataStripperTool extends Component {
 	@tracked keepColourProfile = true;
 	@tracked error = '';
 	@tracked pdfReport: PdfMetadataReport | null = null;
+	@tracked pdfAfterReport: PdfMetadataReport | null = null;
 
 	#bytes: Uint8Array | null = null;
 
@@ -59,6 +60,7 @@ export default class MetadataStripperTool extends Component {
 	}
 
 	get afterEntries() {
+		if (this.pdfAfterReport) return this.pdfAfterReport.entries;
 		return this.afterReport?.entries ?? [];
 	}
 
@@ -82,6 +84,13 @@ export default class MetadataStripperTool extends Component {
 	}
 
 	get clean() {
+		if (this.isPdf) {
+			return (
+				this.pdfReport !== null &&
+				this.entries.length === 0 &&
+				(this.result?.removed.length ?? 0) === 0
+			);
+		}
 		return (
 			this.report !== null &&
 			this.entries.length === 0 &&
@@ -126,11 +135,22 @@ export default class MetadataStripperTool extends Component {
 		this.afterReport = null;
 		this.result = null;
 		this.pdfReport = null;
+		this.pdfAfterReport = null;
 		if (this.isPdfFile(file, this.#bytes)) {
-			const { parsePdfMetadata } = await import(
+			const { parsePdfMetadata, stripPdfMetadata } = await import(
 				'delphitools-v2/lib/pdf-metadata'
 			);
 			this.pdfReport = await parsePdfMetadata(this.#bytes);
+			const stripped = await stripPdfMetadata(this.#bytes);
+			if (stripped) {
+				this.result = {
+					blob: new Blob([stripped.data as BlobPart], {
+						type: 'application/pdf',
+					}),
+					removed: stripped.removed,
+				};
+				this.pdfAfterReport = await parsePdfMetadata(stripped.data);
+			}
 			return;
 		}
 		this.report = parseMetadata(this.#bytes);
@@ -223,6 +243,7 @@ export default class MetadataStripperTool extends Component {
 		this.afterReport = null;
 		this.result = null;
 		this.pdfReport = null;
+		this.pdfAfterReport = null;
 		this.error = '';
 	};
 
@@ -300,23 +321,23 @@ export default class MetadataStripperTool extends Component {
 					</div>
 
 					<div class="dt-strip-settings">
-						<label class="dt-strip-cell">
-							<span>Colour profile</span>
-							<span
-								class="dt-strip-cell-row"
-							>
-								<input
-									type="checkbox"
-									class="dt-strip-switch"
-									checked={{this.keepColourProfile}}
-									{{on
-										"change"
-										this.toggleColourProfile
-									}}
-								/>
-								<span>Keep ICC</span>
-							</span>
-						</label>
+						{{#unless this.isPdf}}
+							<label class="dt-strip-cell">
+								<span>Colour profile</span>
+								<span class="dt-strip-cell-row">
+									<input
+										type="checkbox"
+										class="dt-strip-switch"
+										checked={{this.keepColourProfile}}
+										{{on
+											"change"
+											this.toggleColourProfile
+										}}
+									/>
+									<span>Keep ICC</span>
+								</span>
+							</label>
+						{{/unless}}
 						<div class="dt-strip-cell">
 							<span>Content
 								Credentials</span>
@@ -413,10 +434,11 @@ export default class MetadataStripperTool extends Component {
 									class="dt-strip-pane-label"
 								>After stripping</span>
 							</div>
-							{{#if this.isPdf}}
-								<p class="dt-strip-note">PDF cleaning
-									not yet supported —
-									viewer only</p>
+							{{#if this.unreadable}}
+								<p
+									class="dt-strip-note"
+								>Format not
+									readable</p>
 							{{else if
 								this.afterEntries.length
 							}}
