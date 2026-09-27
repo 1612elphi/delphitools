@@ -78,6 +78,11 @@ module('Unit | Lib | pdf-metadata', function () {
 			'20.02.2026 14:05 (UTC±0)',
 			'ISO UTC marker preserved',
 		);
+		assert.strictEqual(
+			formatPdfDate('2026-02-20T14:05:00+01'),
+			'20.02.2026 14:05 (UTC+1)',
+			'ISO hour-only offset preserved',
+		);
 		assert.strictEqual(formatPdfDate(''), null, 'empty omitted');
 		assert.strictEqual(
 			formatPdfDate(null),

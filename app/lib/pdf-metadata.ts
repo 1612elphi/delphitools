@@ -131,7 +131,7 @@ export function formatPdfDate(raw: unknown): string | null {
 	}
 
 	const iso = text.match(
-		/(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?\s*(Z|[+-]\d{2}:?\d{2})?)?/,
+		/(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?\s*(Z|[+-]\d{2}(?::?\d{2})?)?)?/,
 	);
 	if (iso) {
 		const [, year, month, day, hour, minute, , offsetRaw] = iso;
