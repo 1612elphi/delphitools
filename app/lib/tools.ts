@@ -381,7 +381,7 @@ export const toolCategories: ToolCategory[] = [
 					'image/webp',
 					'image/gif',
 				],
-				accepts: ['image/*'],
+				accepts: ['image/*', 'application/pdf'],
 				new: true,
 			},
 			{

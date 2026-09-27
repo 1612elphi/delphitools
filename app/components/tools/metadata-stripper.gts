@@ -11,10 +11,12 @@ import {
 	parseMetadata,
 	stripMetadata,
 	type ImageContainer,
+	type MetadataEntry,
 	type MetadataReport,
 } from 'delphitools-v2/lib/metadata';
+import type { PdfMetadataReport } from 'delphitools-v2/lib/pdf-metadata';
 
-const FILE_ACCEPT = 'image/*';
+const FILE_ACCEPT = 'image/*,application/pdf';
 
 const MIME: Record<ImageContainer, string> = {
 	jpeg: 'image/jpeg',
@@ -39,14 +41,20 @@ export default class MetadataStripperTool extends Component {
 	@tracked result: StripState | null = null;
 	@tracked keepColourProfile = true;
 	@tracked error = '';
+	@tracked pdfReport: PdfMetadataReport | null = null;
 
 	#bytes: Uint8Array | null = null;
 
-	get loaded() {
-		return this.report !== null;
+	get isPdf() {
+		return this.pdfReport !== null;
 	}
 
-	get entries() {
+	get loaded() {
+		return this.report !== null || this.pdfReport !== null;
+	}
+
+	get entries(): MetadataEntry[] {
+		if (this.pdfReport) return this.pdfReport.entries;
 		return this.report?.entries ?? [];
 	}
 
@@ -69,6 +77,7 @@ export default class MetadataStripperTool extends Component {
 	}
 
 	get unreadable() {
+		if (this.pdfReport) return this.pdfReport.unreadable;
 		return this.report !== null && this.report.format === null;
 	}
 
@@ -98,11 +107,32 @@ export default class MetadataStripperTool extends Component {
 
 	readFile = (file: File) => void this.#load(file);
 
+	isPdfFile(file: File, bytes: Uint8Array): boolean {
+		if (file.type === 'application/pdf') return true;
+		if (file.name.toLowerCase().endsWith('.pdf')) return true;
+		if (bytes.length >= 5) {
+			const head = String.fromCharCode(...bytes.subarray(0, 5));
+			if (head === '%PDF-') return true;
+		}
+		return false;
+	}
+
 	async #load(file: File) {
 		this.error = '';
 		this.fileName = file.name;
 		this.fileSize = file.size;
 		this.#bytes = new Uint8Array(await file.arrayBuffer());
+		this.report = null;
+		this.afterReport = null;
+		this.result = null;
+		this.pdfReport = null;
+		if (this.isPdfFile(file, this.#bytes)) {
+			const { parsePdfMetadata } = await import(
+				'delphitools-v2/lib/pdf-metadata'
+			);
+			this.pdfReport = await parsePdfMetadata(this.#bytes);
+			return;
+		}
 		this.report = parseMetadata(this.#bytes);
 		await this.#restrip();
 	}
@@ -181,6 +211,7 @@ export default class MetadataStripperTool extends Component {
 		this.keepColourProfile = (
 			event.target as HTMLInputElement
 		).checked;
+		if (this.isPdf) return;
 		void this.#restrip();
 	};
 
@@ -191,6 +222,7 @@ export default class MetadataStripperTool extends Component {
 		this.report = null;
 		this.afterReport = null;
 		this.result = null;
+		this.pdfReport = null;
 		this.error = '';
 	};
 
@@ -381,7 +413,11 @@ export default class MetadataStripperTool extends Component {
 									class="dt-strip-pane-label"
 								>After stripping</span>
 							</div>
-							{{#if
+							{{#if this.isPdf}}
+								<p class="dt-strip-note">PDF cleaning
+									not yet supported —
+									viewer only</p>
+							{{else if
 								this.afterEntries.length
 							}}
 								<ul
@@ -438,11 +474,11 @@ export default class MetadataStripperTool extends Component {
 						<Icon @name="upload" />
 						<span
 							class="dt-strip-drop-title"
-						>Drop an image here</span>
+						>Drop an image or PDF here</span>
 						<span
 							class="dt-strip-drop-hint"
-						>or click to select a file, or
-							paste</span>
+						>or click to select an image or
+							PDF, or paste</span>
 					</label>
 				{{/if}}
 			</div>
