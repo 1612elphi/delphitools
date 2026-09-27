@@ -126,6 +126,11 @@ function metadataEntry(
 	return detail ? { label, detail } : null;
 }
 
+function getPdfLanguage(pdf: import('mupdf').PDFDocument): string | null {
+	const language = pdf.getTrailer().get('Root').get('Lang');
+	return language.isString() ? cleanString(language.asString()) : null;
+}
+
 export async function parsePdfMetadata(
 	data: Uint8Array,
 ): Promise<PdfMetadataReport> {
@@ -155,7 +160,7 @@ export async function parsePdfMetadata(
 		const keywords = getInfo(mupdf.Document.META_INFO_KEYWORDS);
 		const creator = getInfo(mupdf.Document.META_INFO_CREATOR);
 		const producer = getInfo(mupdf.Document.META_INFO_PRODUCER);
-		const language = cleanString(pdf.getLanguage());
+		const language = getPdfLanguage(pdf);
 		const version = cleanString(String(pdf.getVersion()));
 		const createdRaw = getInfo(
 			mupdf.Document.META_INFO_CREATIONDATE,
