@@ -499,8 +499,8 @@ export default class MetadataStripperTool extends Component {
 						>Drop an image or PDF here</span>
 						<span
 							class="dt-strip-drop-hint"
-						>or click to select an image or
-							PDF, or paste</span>
+						>or click to select a file, or
+							paste</span>
 					</label>
 				{{/if}}
 			</div>
