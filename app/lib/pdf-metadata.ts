@@ -15,6 +15,18 @@ function pad2(n: number): string {
 	return String(n).padStart(2, '0');
 }
 
+function offsetMinutes(
+	signText: string,
+	hourText: string,
+	minuteText?: string,
+): number | null {
+	const hours = Number(hourText);
+	const minutes = Number(minuteText ?? '0');
+	if (hours > 14 || minutes >= 60 || (hours === 14 && minutes !== 0))
+		return null;
+	return (signText === '+' ? 1 : -1) * (hours * 60 + minutes);
+}
+
 // Human display: DD.MM.YYYY HH:mm (UTC offset appended when stored,
 // e.g. "20.02.2026 13:05 (UTC+1)"). Time omitted when absent.
 // Parses PDF date strings (D:YYYYMMDDHHmmSSOHH'mm) and XMP/ISO dates
@@ -36,18 +48,7 @@ function parsePdfOffset(suffix: string): number | null {
 	if (/^[Zz]$/.test(text)) return 0;
 	const m = text.match(/^([+-])(\d{1,2})(?:'?(\d{2})'?|(?::?(\d{2})))?/);
 	if (!m) return null;
-	const sign = m[1] === '+' ? 1 : -1;
-	const hours = Number(m[2]);
-	const minutes = Number(m[3] ?? m[4] ?? '0');
-	if (
-		Number.isNaN(hours) ||
-		Number.isNaN(minutes) ||
-		hours > 14 ||
-		minutes >= 60
-	) {
-		return null;
-	}
-	return sign * (hours * 60 + minutes);
+	return offsetMinutes(m[1]!, m[2]!, m[3] ?? m[4]);
 }
 
 function parseIsoOffset(suffix: string | undefined): number | null {
@@ -57,18 +58,7 @@ function parseIsoOffset(suffix: string | undefined): number | null {
 	if (/^[Zz]$/.test(text)) return 0;
 	const m = text.match(/^([+-])(\d{2}):?(\d{2})?$/);
 	if (!m) return null;
-	const sign = m[1] === '+' ? 1 : -1;
-	const hours = Number(m[2]);
-	const minutes = Number(m[3] ?? '0');
-	if (
-		Number.isNaN(hours) ||
-		Number.isNaN(minutes) ||
-		hours > 14 ||
-		minutes >= 60
-	) {
-		return null;
-	}
-	return sign * (hours * 60 + minutes);
+	return offsetMinutes(m[1]!, m[2]!, m[3]);
 }
 
 export function formatPdfDate(raw: unknown): string | null {
@@ -125,26 +115,40 @@ function isPdfHeader(data: Uint8Array): boolean {
 	return text.includes('%PDF-');
 }
 
-const UNREADABLE: PdfMetadataReport = { entries: [], unreadable: true };
+function unreadableReport(): PdfMetadataReport {
+	return { entries: [], unreadable: true };
+}
+
+function metadataEntry(
+	label: string,
+	detail: string | null,
+): MetadataEntry | null {
+	return detail ? { label, detail } : null;
+}
 
 export async function parsePdfMetadata(
 	data: Uint8Array,
 ): Promise<PdfMetadataReport> {
 	if (!(data instanceof Uint8Array) || data.length < 5) {
-		return { ...UNREADABLE, entries: [] };
+		return unreadableReport();
 	}
 	if (!isPdfHeader(data)) {
-		return { ...UNREADABLE, entries: [] };
+		return unreadableReport();
 	}
 
 	let doc: import('mupdf').Document | null = null;
 	try {
 		const mupdf = await import('mupdf');
-		doc = mupdf.Document.openDocument(data.slice(), 'application/pdf');
-		const pdf = doc.asPDF();
-		if (!pdf) return { ...UNREADABLE, entries: [] };
+		doc = mupdf.Document.openDocument(
+			data.slice(),
+			'application/pdf',
+		);
+		const document = doc;
+		const pdf = document.asPDF();
+		if (!pdf) return unreadableReport();
 
-		const getInfo = (key: string) => cleanString(doc!.getMetaData(key));
+		const getInfo = (key: string) =>
+			cleanString(document.getMetaData(key));
 		const title = getInfo(mupdf.Document.META_INFO_TITLE);
 		const author = getInfo(mupdf.Document.META_INFO_AUTHOR);
 		const subject = getInfo(mupdf.Document.META_INFO_SUBJECT);
@@ -153,8 +157,12 @@ export async function parsePdfMetadata(
 		const producer = getInfo(mupdf.Document.META_INFO_PRODUCER);
 		const language = cleanString(pdf.getLanguage());
 		const version = cleanString(String(pdf.getVersion()));
-		const createdRaw = getInfo(mupdf.Document.META_INFO_CREATIONDATE);
-		const modifiedRaw = getInfo(mupdf.Document.META_INFO_MODIFICATIONDATE);
+		const createdRaw = getInfo(
+			mupdf.Document.META_INFO_CREATIONDATE,
+		);
+		const modifiedRaw = getInfo(
+			mupdf.Document.META_INFO_MODIFICATIONDATE,
+		);
 		const created = createdRaw
 			? (formatPdfDate(createdRaw) ?? createdRaw)
 			: null;
@@ -162,38 +170,27 @@ export async function parsePdfMetadata(
 			? (formatPdfDate(modifiedRaw) ?? modifiedRaw)
 			: null;
 
-		const entries: MetadataEntry[] = [];
-		if (title) entries.push({ label: 'Title', detail: title });
-		if (author) entries.push({ label: 'Author', detail: author });
-		if (subject)
-			entries.push({ label: 'Subject', detail: subject });
-		if (keywords)
-			entries.push({ label: 'Keywords', detail: keywords });
-		if (creator)
-			entries.push({ label: 'Creator', detail: creator });
-		if (producer)
-			entries.push({ label: 'Producer', detail: producer });
-		if (language)
-			entries.push({ label: 'Language', detail: language });
-		if (version)
-			entries.push({
-				label: 'PDF Version',
-				detail: `${Math.floor(Number(version) / 10)}.${Number(version) % 10}`,
-			});
-		if (created)
-			entries.push({
-				label: 'Creation Date',
-				detail: created,
-			});
-		if (modified)
-			entries.push({
-				label: 'Modification Date',
-				detail: modified,
-			});
+		const entries = [
+			metadataEntry('Title', title),
+			metadataEntry('Author', author),
+			metadataEntry('Subject', subject),
+			metadataEntry('Keywords', keywords),
+			metadataEntry('Creator', creator),
+			metadataEntry('Producer', producer),
+			metadataEntry('Language', language),
+			metadataEntry(
+				'PDF Version',
+				version
+					? `${Math.floor(Number(version) / 10)}.${Number(version) % 10}`
+					: null,
+			),
+			metadataEntry('Creation Date', created),
+			metadataEntry('Modification Date', modified),
+		].filter((entry): entry is MetadataEntry => entry !== null);
 
 		return { entries, unreadable: false };
 	} catch {
-		return { ...UNREADABLE, entries: [] };
+		return unreadableReport();
 	} finally {
 		doc?.destroy();
 	}
