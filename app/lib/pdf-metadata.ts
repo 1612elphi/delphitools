@@ -11,40 +11,6 @@ function cleanString(value: unknown): string | null {
 	return trimmed ? trimmed : null;
 }
 
-function joinValue(value: unknown): string | null {
-	if (typeof value === 'string') return cleanString(value);
-	if (Array.isArray(value)) {
-		const parts = value
-			.map((item) =>
-				typeof item === 'string' ? item.trim() : null,
-			)
-			.filter((item): item is string => !!item);
-		if (parts.length === 0) return null;
-		return parts.join(', ');
-	}
-	return null;
-}
-
-function xmpGet(
-	metadata: { get(name: string): unknown } | null | undefined,
-	...names: string[]
-): string | null {
-	if (!metadata || typeof metadata.get !== 'function') return null;
-	for (const name of names) {
-		for (const candidate of [name, name.toLowerCase()]) {
-			let value: unknown = null;
-			try {
-				value = metadata.get(candidate);
-			} catch {
-				continue;
-			}
-			const joined = joinValue(value);
-			if (joined) return joined;
-		}
-	}
-	return null;
-}
-
 function pad2(n: number): string {
 	return String(n).padStart(2, '0');
 }
@@ -159,14 +125,6 @@ function isPdfHeader(data: Uint8Array): boolean {
 	return text.includes('%PDF-');
 }
 
-interface PdfDocLike {
-	getMetadata(): Promise<{
-		info?: Record<string, unknown>;
-		metadata?: { get(name: string): unknown } | null;
-	}>;
-	cleanup(): Promise<unknown>;
-}
-
 const UNREADABLE: PdfMetadataReport = { entries: [], unreadable: true };
 
 export async function parsePdfMetadata(
@@ -179,50 +137,24 @@ export async function parsePdfMetadata(
 		return { ...UNREADABLE, entries: [] };
 	}
 
-	// Lazy: pdfjs (and its worker) loads only on the PDF path, so the
-	// image-only bundle is untouched. Verified by the absence of a static
-	// pdfjs-dist import in this module.
-	const { loadPdfDocument } = await import('./pdfjs');
-
-	let doc: PdfDocLike | null = null;
+	let doc: import('mupdf').Document | null = null;
 	try {
-		doc = (await loadPdfDocument(
-			data.slice(),
-		)) as unknown as PdfDocLike;
-		const meta = await doc.getMetadata();
-		const info = meta?.info ?? {};
-		const xmp = meta?.metadata ?? null;
+		const mupdf = await import('mupdf');
+		doc = mupdf.Document.openDocument(data.slice(), 'application/pdf');
+		const pdf = doc.asPDF();
+		if (!pdf) return { ...UNREADABLE, entries: [] };
 
-		const title =
-			cleanString(info['Title']) ?? xmpGet(xmp, 'dc:title');
-		const author =
-			cleanString(info['Author']) ??
-			xmpGet(xmp, 'dc:creator');
-		const subject =
-			cleanString(info['Subject']) ??
-			xmpGet(xmp, 'dc:description', 'dc:subject');
-		const keywords =
-			joinValue(info['Keywords']) ??
-			xmpGet(xmp, 'pdf:keywords', 'dc:subject');
-		const creator =
-			cleanString(info['Creator']) ??
-			xmpGet(xmp, 'xmp:creatortool');
-		const producer =
-			cleanString(info['Producer']) ??
-			xmpGet(xmp, 'pdf:producer');
-		const language =
-			joinValue(info['Language']) ??
-			xmpGet(xmp, 'dc:language');
-		const version =
-			cleanString(info['PDFFormatVersion']) ??
-			xmpGet(xmp, 'pdf:pdfversion');
-
-		const createdRaw =
-			cleanString(info['CreationDate']) ??
-			xmpGet(xmp, 'xmp:createdate');
-		const modifiedRaw =
-			cleanString(info['ModDate']) ??
-			xmpGet(xmp, 'xmp:modifydate');
+		const getInfo = (key: string) => cleanString(doc!.getMetaData(key));
+		const title = getInfo(mupdf.Document.META_INFO_TITLE);
+		const author = getInfo(mupdf.Document.META_INFO_AUTHOR);
+		const subject = getInfo(mupdf.Document.META_INFO_SUBJECT);
+		const keywords = getInfo(mupdf.Document.META_INFO_KEYWORDS);
+		const creator = getInfo(mupdf.Document.META_INFO_CREATOR);
+		const producer = getInfo(mupdf.Document.META_INFO_PRODUCER);
+		const language = cleanString(pdf.getLanguage());
+		const version = cleanString(String(pdf.getVersion()));
+		const createdRaw = getInfo(mupdf.Document.META_INFO_CREATIONDATE);
+		const modifiedRaw = getInfo(mupdf.Document.META_INFO_MODIFICATIONDATE);
 		const created = createdRaw
 			? (formatPdfDate(createdRaw) ?? createdRaw)
 			: null;
@@ -244,7 +176,10 @@ export async function parsePdfMetadata(
 		if (language)
 			entries.push({ label: 'Language', detail: language });
 		if (version)
-			entries.push({ label: 'PDF Version', detail: version });
+			entries.push({
+				label: 'PDF Version',
+				detail: `${Math.floor(Number(version) / 10)}.${Number(version) % 10}`,
+			});
 		if (created)
 			entries.push({
 				label: 'Creation Date',
@@ -260,13 +195,7 @@ export async function parsePdfMetadata(
 	} catch {
 		return { ...UNREADABLE, entries: [] };
 	} finally {
-		if (doc) {
-			try {
-				await doc.cleanup();
-			} catch {
-				// ignore cleanup failures
-			}
-		}
+		doc?.destroy();
 	}
 }
 
