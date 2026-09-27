@@ -40,12 +40,12 @@ module('Unit | Lib | pdf-metadata', function () {
 	test('formats PDF and XMP dates as DD.MM.YYYY HH:mm', function (assert) {
 		assert.strictEqual(
 			formatPdfDate("D:20260220140500+01'00'"),
-			'20.02.2026 14:05',
+			'20.02.2026 14:05 (UTC+1)',
 			'GTI sample wall-clock preserved',
 		);
 		assert.strictEqual(
 			formatPdfDate('D:20260220130500Z'),
-			'20.02.2026 13:05',
+			'20.02.2026 13:05 (UTC±0)',
 			'UTC marker preserved',
 		);
 		assert.strictEqual(
@@ -55,8 +55,28 @@ module('Unit | Lib | pdf-metadata', function () {
 		);
 		assert.strictEqual(
 			formatPdfDate('2026-02-20T14:05:00+01:00'),
-			'20.02.2026 14:05',
+			'20.02.2026 14:05 (UTC+1)',
 			'XMP/ISO wall-clock preserved',
+		);
+		assert.strictEqual(
+			formatPdfDate("D:20260220130500-02'00'"),
+			'20.02.2026 13:05 (UTC-2)',
+			'negative offset preserved',
+		);
+		assert.strictEqual(
+			formatPdfDate("D:20260220130500+05'30'"),
+			'20.02.2026 13:05 (UTC+5:30)',
+			'half-hour offset preserved',
+		);
+		assert.strictEqual(
+			formatPdfDate('D:20260220130500'),
+			'20.02.2026 13:05',
+			'no offset shows no suffix',
+		);
+		assert.strictEqual(
+			formatPdfDate('2026-02-20T14:05:00Z'),
+			'20.02.2026 14:05 (UTC±0)',
+			'ISO UTC marker preserved',
 		);
 		assert.strictEqual(formatPdfDate(''), null, 'empty omitted');
 		assert.strictEqual(
@@ -196,9 +216,12 @@ module('Unit | Lib | pdf-metadata', function () {
 		const original = await buildGtiLike();
 		const stripped = await stripPdfMetadata(original);
 		assert.ok(stripped, 'strip returns bytes');
-		const reloaded = await PDFDocument.load(stripped!.data.slice(), {
-			updateMetadata: false,
-		});
+		const reloaded = await PDFDocument.load(
+			stripped!.data.slice(),
+			{
+				updateMetadata: false,
+			},
+		);
 		assert.strictEqual(
 			reloaded.getPageCount(),
 			1,
@@ -240,7 +263,11 @@ module('Unit | Lib | pdf-metadata', function () {
 				assert.ok(false, `threw: ${String(error)}`);
 				continue;
 			}
-			assert.strictEqual(result, null, 'null for corrupt input');
+			assert.strictEqual(
+				result,
+				null,
+				'null for corrupt input',
+			);
 		}
 	});
 });

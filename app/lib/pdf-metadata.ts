@@ -49,36 +49,99 @@ function pad2(n: number): string {
 	return String(n).padStart(2, '0');
 }
 
-// Human display: DD.MM.YYYY HH:mm (time omitted when absent).
+// Human display: DD.MM.YYYY HH:mm (UTC offset appended when stored,
+// e.g. "20.02.2026 13:05 (UTC+1)"). Time omitted when absent.
 // Parses PDF date strings (D:YYYYMMDDHHmmSSOHH'mm) and XMP/ISO dates
 // by wall-clock components, so the shown time matches the stored time
 // regardless of the viewer's timezone.
+function utcLabel(totalMinutes: number): string {
+	if (totalMinutes === 0) return 'UTC±0';
+	const sign = totalMinutes > 0 ? '+' : '-';
+	const abs = Math.abs(totalMinutes);
+	const hours = Math.floor(abs / 60);
+	const minutes = abs % 60;
+	if (minutes === 0) return `UTC${sign}${hours}`;
+	return `UTC${sign}${hours}:${pad2(minutes)}`;
+}
+
+function parsePdfOffset(suffix: string): number | null {
+	const text = suffix.trim();
+	if (!text) return null;
+	if (/^[Zz]$/.test(text)) return 0;
+	const m = text.match(/^([+-])(\d{1,2})(?:'?(\d{2})'?|(?::?(\d{2})))?/);
+	if (!m) return null;
+	const sign = m[1] === '+' ? 1 : -1;
+	const hours = Number(m[2]);
+	const minutes = Number(m[3] ?? m[4] ?? '0');
+	if (
+		Number.isNaN(hours) ||
+		Number.isNaN(minutes) ||
+		hours > 14 ||
+		minutes >= 60
+	) {
+		return null;
+	}
+	return sign * (hours * 60 + minutes);
+}
+
+function parseIsoOffset(suffix: string | undefined): number | null {
+	if (!suffix) return null;
+	const text = suffix.trim();
+	if (!text) return null;
+	if (/^[Zz]$/.test(text)) return 0;
+	const m = text.match(/^([+-])(\d{2}):?(\d{2})?$/);
+	if (!m) return null;
+	const sign = m[1] === '+' ? 1 : -1;
+	const hours = Number(m[2]);
+	const minutes = Number(m[3] ?? '0');
+	if (
+		Number.isNaN(hours) ||
+		Number.isNaN(minutes) ||
+		hours > 14 ||
+		minutes >= 60
+	) {
+		return null;
+	}
+	return sign * (hours * 60 + minutes);
+}
+
 export function formatPdfDate(raw: unknown): string | null {
 	if (typeof raw !== 'string') return null;
 	const text = raw.trim();
 	if (!text) return null;
 
 	const pdf = text.match(
-		/^D:(\d{4})(\d{2})?(\d{2})?(\d{2})?(\d{2})?(\d{2})?/,
+		/^D:(\d{4})(\d{2})?(\d{2})?(\d{2})?(\d{2})?(\d{2})?([Zz]|[+-].*)?$/,
 	);
 	if (pdf) {
-		const [, year, month, day, hour, minute] = pdf;
+		const [, year, month, day, hour, minute, , offsetRaw] = pdf;
 		if (!year || !month || !day) return null;
 		const date = `${day}.${month}.${year}`;
 		if (hour !== undefined && minute !== undefined) {
-			return `${date} ${pad2(Number(hour))}:${pad2(Number(minute))}`;
+			const base = `${date} ${pad2(Number(hour))}:${pad2(Number(minute))}`;
+			const offset =
+				offsetRaw != null
+					? parsePdfOffset(offsetRaw)
+					: null;
+			return offset === null
+				? base
+				: `${base} (${utcLabel(offset)})`;
 		}
 		return date;
 	}
 
 	const iso = text.match(
-		/(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?/,
+		/(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?\s*(Z|[+-]\d{2}:?\d{2})?)?/,
 	);
 	if (iso) {
-		const [, year, month, day, hour, minute] = iso;
+		const [, year, month, day, hour, minute, , offsetRaw] = iso;
 		const date = `${day}.${month}.${year}`;
 		if (hour !== undefined && minute !== undefined) {
-			return `${date} ${hour}:${minute}`;
+			const base = `${date} ${hour}:${minute}`;
+			const offset = parseIsoOffset(offsetRaw);
+			return offset === null
+				? base
+				: `${base} (${utcLabel(offset)})`;
 		}
 		return date;
 	}
