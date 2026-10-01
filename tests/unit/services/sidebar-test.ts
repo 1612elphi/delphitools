@@ -90,4 +90,12 @@ module('Unit | Service | sidebar', function (hooks) {
 		assert.false(sidebar.openMobile);
 		assert.true(sidebar.open, 'rail untouched');
 	});
+
+	test('navigating closes the drawer', function (assert) {
+		const sidebar = lookup(this);
+		sidebar.setMobile(true);
+		sidebar.toggle();
+		sidebar.router.trigger('routeDidChange');
+		assert.false(sidebar.openMobile);
+	});
 });

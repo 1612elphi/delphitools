@@ -1,5 +1,6 @@
-import Service from '@ember/service';
+import Service, { service } from '@ember/service';
 import type Owner from '@ember/owner';
+import type RouterService from '@ember/routing/router-service';
 import { tracked } from '@glimmer/tracking';
 
 const COOKIE = 'sidebar_state';
@@ -8,6 +9,8 @@ const MOBILE_BREAKPOINT = 768;
 const SHORTCUT = 'b';
 
 export default class SidebarService extends Service {
+	@service declare router: RouterService;
+
 	@tracked open = true;
 	@tracked openMobile = false;
 	@tracked isMobile = false;
@@ -31,12 +34,14 @@ export default class SidebarService extends Service {
 		this.#media.addEventListener('change', this.#onMediaChange);
 
 		window.addEventListener('keydown', this.#onKeydown);
+		this.router.on('routeDidChange', this.closeMobile);
 	}
 
 	willDestroy() {
 		super.willDestroy();
 		this.#media?.removeEventListener('change', this.#onMediaChange);
 		window.removeEventListener('keydown', this.#onKeydown);
+		this.router.off('routeDidChange', this.closeMobile);
 	}
 
 	get state() {
