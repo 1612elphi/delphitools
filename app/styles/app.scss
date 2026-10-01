@@ -1138,6 +1138,7 @@ $header-height: crayon.size(14);
 	font: inherit;
 	font-size: crayon.font-size("xs");
 	text-align: left;
+	text-decoration: none;
 	cursor: pointer;
 
 	@include crayon.hover {

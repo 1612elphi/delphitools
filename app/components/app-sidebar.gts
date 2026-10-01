@@ -370,20 +370,6 @@ export default class AppSidebar extends Component {
 			</nav>
 
 			<div class="dt-sidebar-footer">
-				<NavTip
-					@label="Privacy"
-					@show={{this.collapsed}}
-				>
-					<LinkTo
-						@route="privacy"
-						class="dt-nav-link"
-					>
-						<Icon @name="shield-check" />
-						<span
-							class="dt-nav-label"
-						>Privacy</span>
-					</LinkTo>
-				</NavTip>
 				<Dialog as |d|>
 					<button
 						type="button"
@@ -425,6 +411,19 @@ export default class AppSidebar extends Component {
 						<AboutDelphitoolsBody />
 					</d.Content>
 				</Dialog>
+				<LinkTo
+					@route="privacy"
+					class="dt-about"
+					aria-label="Privacy"
+				>
+					<span
+						class="dt-about-text"
+					>Privacy</span>
+					<Icon
+						@name="shield-check"
+						class="dt-about-icon"
+					/>
+				</LinkTo>
 			</div>
 
 			<button
