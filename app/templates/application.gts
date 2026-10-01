@@ -12,7 +12,7 @@ export default class ApplicationTemplate extends Component {
 	@service declare flow: FlowService;
 
 	get isBare() {
-		return ['editor', 'workflow', 'not-found'].includes(
+		return ['editor', 'workflow', 'not-found', 'privacy'].includes(
 			this.router.currentRouteName ?? '',
 		);
 	}

@@ -2749,6 +2749,30 @@ $header-height: crayon.size(14);
 	margin-top: crayon.size(4);
 }
 
+.dt-privacy-page {
+	position: fixed;
+	inset: 0;
+	display: grid;
+	grid-template-rows: 1fr auto;
+	place-items: center;
+	padding: crayon.size(6);
+	background: var(--background);
+}
+
+.dt-privacy-words {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+
+	// quattro glyph is 0.6em; "COLLECTED." is 10 glyphs
+	font-size: min(
+		calc((100vw - #{crayon.size(12)}) / 6.1),
+		calc((100svh - #{crayon.size(32)}) / 2.9)
+	);
+	font-weight: crayon.font-weight("bold");
+	line-height: 0.95;
+}
+
 .dt-btn {
 	@include crayon.hstack(2);
 

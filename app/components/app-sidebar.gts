@@ -370,6 +370,20 @@ export default class AppSidebar extends Component {
 			</nav>
 
 			<div class="dt-sidebar-footer">
+				<NavTip
+					@label="Privacy"
+					@show={{this.collapsed}}
+				>
+					<LinkTo
+						@route="privacy"
+						class="dt-nav-link"
+					>
+						<Icon @name="shield-check" />
+						<span
+							class="dt-nav-label"
+						>Privacy</span>
+					</LinkTo>
+				</NavTip>
 				<Dialog as |d|>
 					<button
 						type="button"

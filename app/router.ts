@@ -14,5 +14,6 @@ Router.map(function () {
 	this.route('workflows');
 	this.route('workflow', { path: '/w/:steps' });
 	this.route('experiments');
+	this.route('privacy');
 	this.route('not-found', { path: '/*path' });
 });
