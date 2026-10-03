@@ -1,5 +1,20 @@
 
 import { launch, visit, check, finish } from './harness.mjs';
+import { PDFDocument } from 'pdf-lib';
+
+// GTI-like fixture mirrors tests/unit/lib/pdf-metadata-test.ts
+const gtiDoc = await PDFDocument.create();
+gtiDoc.setTitle('GTI Handbuch');
+gtiDoc.setAuthor('Company GmbH');
+gtiDoc.setSubject('GTI Dokumentation');
+gtiDoc.setKeywords(['GTI', 'Handbuch']);
+gtiDoc.setCreator('LaTeX with hyperref');
+gtiDoc.setProducer('pdfTeX-1.40.26');
+gtiDoc.setLanguage('en-US');
+gtiDoc.setCreationDate(new Date(Date.UTC(2026, 1, 20, 14, 5, 0)));
+gtiDoc.setModificationDate(new Date(Date.UTC(2026, 1, 20, 14, 5, 0)));
+gtiDoc.addPage([595, 842]);
+const gtiBytes = [...(await gtiDoc.save())];
 
 const { browser, page } = await launch();
 
@@ -212,6 +227,128 @@ check(
 	'after pane now reports nothing left',
 	afterToggle.includes('Nothing left'),
 	afterToggle.trim().slice(0, 80),
+);
+
+// --- PDF viewer slice (#69): drop-PDF-renders-rows ---
+await visit(page, '/tools/metadata-stripper');
+
+const acceptAttr = await page.$eval(
+	'.dt-strip-drop input[type="file"]',
+	(el) => el.getAttribute('accept') ?? '',
+);
+check(
+	'file input accepts PDFs alongside images',
+	acceptAttr.includes('application/pdf') &&
+		acceptAttr.includes('image/*'),
+	acceptAttr,
+);
+
+const dropCopy = await page.$eval('.dt-strip-drop', (el) =>
+	el.textContent.replace(/\s+/g, ' '),
+);
+check(
+	'empty state mentions images and PDFs',
+	/drop.*pdf/i.test(dropCopy) && /image/i.test(dropCopy),
+	dropCopy.trim().slice(0, 80),
+);
+
+await page.evaluate((bytes) => {
+	const transfer = new DataTransfer();
+	transfer.items.add(
+		new File([new Uint8Array(bytes)], 'gti.pdf', {
+			type: 'application/pdf',
+		}),
+	);
+	document.querySelector('.dt-strip-frame').dispatchEvent(
+		new DragEvent('drop', { dataTransfer: transfer, bubbles: true }),
+	);
+}, gtiBytes);
+
+await page.waitForFunction(
+	() =>
+		[...document.querySelectorAll('.dt-strip-row-label')].some(
+			(el) => el.textContent.trim() === 'Title',
+		),
+	{ timeout: 15000 },
+);
+
+const pdfRows = await page.$$eval(
+	'.dt-strip-pane:first-child .dt-strip-row',
+	(els) =>
+		els.map((el) => ({
+			label: el.querySelector('.dt-strip-row-label')?.textContent.trim(),
+			detail: el
+				.querySelector('.dt-strip-row-detail')
+				?.textContent.trim(),
+		})),
+);
+const pdfByLabel = Object.fromEntries(
+	pdfRows.map((r) => [r.label, r]),
+);
+check(
+	'drop-PDF-renders-rows: Title surfaces',
+	pdfByLabel['Title']?.detail === 'GTI Handbuch',
+	pdfByLabel['Title']?.detail,
+);
+check(
+	'drop-PDF-renders-rows: Author surfaces',
+	pdfByLabel['Author']?.detail === 'Company GmbH',
+	pdfByLabel['Author']?.detail,
+);
+check(
+	'drop-PDF-renders-rows: Producer surfaces',
+	pdfByLabel['Producer']?.detail === 'pdfTeX-1.40.26',
+	pdfByLabel['Producer']?.detail,
+);
+check(
+	'drop-PDF-renders-rows: Creation date formatted',
+	(pdfByLabel['Creation Date']?.detail ?? '').startsWith(
+		'20.02.2026',
+	),
+	pdfByLabel['Creation Date']?.detail,
+);
+
+const pdfAfter = await page.$eval('.dt-strip-pane.is-right', (el) =>
+	el.textContent.replace(/\s+/g, ' '),
+);
+check(
+	'PDF after pane is viewer-only (no stripping yet)',
+	/viewer only/i.test(pdfAfter),
+	pdfAfter.trim().slice(0, 80),
+);
+
+// corrupt PDF shows unreadable state instead of crashing
+await visit(page, '/tools/metadata-stripper');
+await page.waitForSelector('.dt-strip-frame', { timeout: 15000 });
+await page.evaluate(() => {
+	const bytes = new TextEncoder().encode('%PDF-1.7 broken');
+	const transfer = new DataTransfer();
+	transfer.items.add(
+		new File([bytes], 'broken.pdf', {
+			type: 'application/pdf',
+		}),
+	);
+	document.querySelector('.dt-strip-frame').dispatchEvent(
+		new DragEvent('drop', { dataTransfer: transfer, bubbles: true }),
+	);
+});
+await page.waitForFunction(
+	() =>
+		(document.body.textContent ?? '').includes(
+			'Format not readable',
+		) ||
+		!!document.querySelector(
+			'.dt-strip-pane:first-child .dt-strip-row, .dt-strip-pane:first-child .dt-strip-note',
+		),
+	{ timeout: 30000, polling: 500 },
+);
+const corruptBody = await page.$eval('.dt-strip-panes', (el) =>
+	el.textContent.replace(/\s+/g, ' '),
+);
+check(
+	'corrupt PDF shows unreadable state without crashing',
+	corruptBody.includes('Format not readable'),
+	corruptBody.trim().slice(0, 80),
 );
 
 await finish(browser);
