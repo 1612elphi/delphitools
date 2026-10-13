@@ -383,7 +383,7 @@ export const toolCategories: ToolCategory[] = [
 				id: 'metadata-stripper',
 				name: 'Metadata Stripper',
 				description:
-					'Strip EXIF and GPS metadata from images',
+					'Strip EXIF, GPS and hidden metadata from images and PDFs',
 				icon: 'shield-check',
 				href: '/tools/metadata-stripper',
 				produces: [
@@ -391,8 +391,9 @@ export const toolCategories: ToolCategory[] = [
 					'image/png',
 					'image/webp',
 					'image/gif',
+					'application/pdf',
 				],
-				accepts: ['image/*'],
+				accepts: ['image/*', 'application/pdf'],
 				new: true,
 			},
 			{
