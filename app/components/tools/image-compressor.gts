@@ -12,6 +12,7 @@ import {
 	compressImageData,
 	formatBytes,
 	savingsPercent,
+	AVIF_TIMEOUT_MS,
 	QUALITY_FORMATS,
 	COMPRESS_EXTENSIONS,
 	type CompressFormat,
@@ -80,6 +81,8 @@ export default class ImageCompressorTool extends Component {
 	@tracked failed = false;
 
 	#encodeSeq = 0;
+	#running = false;
+	#rerun = false;
 
 	get hasQuality(): boolean {
 		return QUALITY_FORMATS.includes(this.format);
@@ -197,47 +200,78 @@ export default class ImageCompressorTool extends Component {
 		downloadUrl(this.compressed.url, this.downloadName);
 	};
 
+	/** single flight: at most one encode runs at a time; changes made while
+	 *  one is in flight coalesce into a single follow-up with the latest
+	 *  settings, so a slider drag can never queue a storm of stale encodes. */
 	async #compress() {
-		const source = this.source;
-		if (!source) return;
-		const seq = ++this.#encodeSeq;
-		this.compressing = true;
-		this.failed = false;
+		if (this.#running) {
+			this.#rerun = true;
+			return;
+		}
+		this.#running = true;
 		try {
-			const { canvas, width, height } = await decodeToCanvas(
-				source.file,
-				// mozjpeg drops alpha
-				this.format === 'mozjpeg' ? '#ffffff' : null,
-			);
-			const imageData = canvas
-				.getContext('2d', { willReadFrequently: true })!
-				.getImageData(0, 0, width, height);
-			const blob = await compressImageData(
-				imageData,
-				this.format,
-				{
-					quality: this.quality,
-					level: this.effort,
-				},
-			);
-			// discard stale encodes
-			if (seq !== this.#encodeSeq) return;
-			source.width = width;
-			source.height = height;
-			this.#revokeCompressed();
-			this.compressed = {
-				blob,
-				url: URL.createObjectURL(blob),
-			};
-		} catch (error) {
-			if (seq !== this.#encodeSeq) return;
-			console.error(
-				`Failed to compress ${source.file.name}:`,
-				error,
-			);
-			this.failed = true;
+			for (;;) {
+				this.#rerun = false;
+				const source = this.source;
+				if (!source) break;
+				const seq = ++this.#encodeSeq;
+				this.compressing = true;
+				this.failed = false;
+				try {
+					const { canvas, width, height } =
+						await decodeToCanvas(
+							source.file,
+							// mozjpeg drops alpha
+							this.format ===
+								'mozjpeg'
+								? '#ffffff'
+								: null,
+						);
+					const imageData = canvas
+						.getContext('2d', {
+							willReadFrequently: true,
+						})!
+						.getImageData(
+							0,
+							0,
+							width,
+							height,
+						);
+					const blob = await compressImageData(
+						imageData,
+						this.format,
+						{
+							quality: this.quality,
+							level: this.effort,
+							timeoutMs:
+								this.format ===
+								'avif'
+									? AVIF_TIMEOUT_MS
+									: undefined,
+						},
+					);
+					// discard stale encodes
+					if (seq !== this.#encodeSeq) continue;
+					source.width = width;
+					source.height = height;
+					this.#revokeCompressed();
+					this.compressed = {
+						blob,
+						url: URL.createObjectURL(blob),
+					};
+				} catch (error) {
+					if (seq !== this.#encodeSeq) continue;
+					console.error(
+						`Failed to compress ${source.file.name}:`,
+						error,
+					);
+					this.failed = true;
+				}
+				if (!this.#rerun) break;
+			}
 		} finally {
-			if (seq === this.#encodeSeq) this.compressing = false;
+			this.#running = false;
+			this.compressing = false;
 		}
 	}
 
