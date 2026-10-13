@@ -15,6 +15,27 @@ const SOURCE = join(mkdtempSync(join(tmpdir(), 'ic-')), 'source.png');
 
 const { browser, page } = await launch();
 
+// count encodes the app posts to the compress worker (regression guard
+// against the queue pile-up that used to stall the tool)
+await page.evaluateOnNewDocument(() => {
+	const Native = window.Worker;
+	window.__wx = { posts: 0, responses: 0 };
+	window.Worker = class extends Native {
+		constructor(url, opts) {
+			super(url, opts);
+			if (!String(url).includes('compress-worker')) return;
+			this.addEventListener('message', () => {
+				window.__wx.responses++;
+			});
+			const post = this.postMessage.bind(this);
+			this.postMessage = (...args) => {
+				window.__wx.posts++;
+				return post(...args);
+			};
+		}
+	};
+});
+
 await visit(page, '/tools/image-compressor');
 
 check('the drop zone renders', await page.$('.dt-ic-drop'));
@@ -117,6 +138,29 @@ check(
 	q15 && q92 ? `${q15.size} vs ${q92.size}` : 'timed out',
 );
 lastSrc = q15?.src ?? lastSrc;
+
+// regression: a slider drag fires an input event per tick; the compressor
+// must coalesce them into at most one queued re-encode instead of running
+// every stale value (the queue pile-up that made the tool appear to stall)
+const wxBefore = await page.evaluate(() => window.__wx);
+await page.$eval('.dt-ic-quality', (el) => {
+	for (let i = 0; i < 10; i++) {
+		el.value = String(30 + i * 5);
+		el.dispatchEvent(new Event('input', { bubbles: true }));
+	}
+});
+const burst = await waitForNewResult(lastSrc);
+await page.waitForFunction(
+	() => window.__wx.posts === window.__wx.responses,
+	{ timeout: 60000, polling: 200 },
+);
+const wxAfter = await page.evaluate(() => window.__wx);
+check(
+	'a 10-event quality drag coalesces into at most 2 encodes',
+	!!burst && wxAfter.posts - wxBefore.posts <= 2,
+	`${wxAfter.posts - wxBefore.posts} encodes for 10 events`,
+);
+lastSrc = burst?.src ?? lastSrc;
 
 // oxipng lossless: effort replaces quality
 await page.$$eval('.dt-ic-format', (buttons) =>
