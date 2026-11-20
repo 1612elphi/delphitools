@@ -9,7 +9,6 @@ export interface IconSignature {
 	};
 }
 
-// css sets icon size
 function markup(name: string) {
 	return htmlSafe(icons[name] ?? '');
 }
@@ -20,7 +19,6 @@ const Icon: TOC<IconSignature> = <template>
 		}}</span>
 </template>;
 
-// canon icon slots size the bare svg
 export const IconSvg: TOC<{ Args: { name: string } }> = <template>
 	{{markup @name}}
 </template>;

@@ -30,8 +30,6 @@ interface Signature {
 
 const MODE_KEY = 'colourTraySliders';
 
-// iOS ChannelSliders: the ring's sliders laid flat, the model over three
-// channel tracks, each drawn through the colour it changes
 export default class ChannelSliders extends Component<Signature> {
 	@tracked mode: SliderMode = SLIDER_MODES.includes(
 		loadLayout<SliderMode>(MODE_KEY, 'lab'),
@@ -58,7 +56,6 @@ export default class ChannelSliders extends Component<Signature> {
 			name,
 			value: values[index]!,
 			figure: shown[index]!,
-			// each track runs through its channel with the other two held
 			track: htmlSafe(
 				`--sub-ct-track: linear-gradient(to right, ${Array.from(
 					{ length: 7 },

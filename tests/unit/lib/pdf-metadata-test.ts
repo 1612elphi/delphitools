@@ -15,7 +15,6 @@ const XMP = `<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>
 </rdf:Description></rdf:RDF></x:xmpmeta>
 <?xpacket end="w"?>`;
 
-// the gti handbuch sample from the issue
 async function gtiPdf(): Promise<Uint8Array> {
 	const doc = await PDFDocument.create();
 	doc.addPage([200, 200]).drawText('GTI', { x: 20, y: 100 });
@@ -161,7 +160,7 @@ module('Unit | lib | pdf-metadata', function () {
 				'application/pdf',
 			);
 			const page = doc.loadPage(0);
-			const out = page.toStructuredText().asText();
+			const out = page.toStructuredText('').asText();
 			page.destroy();
 			doc.destroy();
 			return out;

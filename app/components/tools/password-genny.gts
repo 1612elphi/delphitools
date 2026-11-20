@@ -40,7 +40,6 @@ import Picture, {
 import './password-genny/password-genny.css';
 
 const WORDLIST_URL = '/data/eff-large-wordlist.txt';
-// eff list fixed size, pre-fetch entropy
 const EFF_LIST_SIZE = 7776;
 const WORDLIST_ERROR =
 	'The word list failed to load, password mode still works.';
@@ -57,7 +56,6 @@ const SEPARATORS = [
 	{ value: '.', label: 'Period' },
 	{ value: '_', label: 'Underscore' },
 ];
-// labels match the web tool: the mark itself, Space spelt out
 const SEPARATOR_TITLES = SEPARATORS.map((s) =>
 	s.value === ' ' ? s.label : s.value,
 );
@@ -67,7 +65,6 @@ const CLASSES: { key: ClassKey; title: string }[] = [
 	{ key: 'digits', title: 'Digits' },
 	{ key: 'symbols', title: 'Symbols' },
 ];
-// fade the first screenful only
 const FADE_ROWS = 24;
 const FADE_STEP = 0.018;
 
@@ -76,13 +73,11 @@ interface Wordlist {
 	rolls: Map<string, string>;
 }
 
-// lazy fetch, catch resets for retry
 let wordlistPromise: Promise<Wordlist> | null = null;
 
 function loadWordlist(): Promise<Wordlist> {
 	wordlistPromise ??= fetch(WORDLIST_URL)
 		.then((response) => {
-			// fetch resolves on 404
 			if (!response.ok)
 				throw new Error(`HTTP ${response.status}`);
 			return response.text();
@@ -106,7 +101,6 @@ const Refresh = <template><IconSvg @name="refresh-cw" /></template>;
 const Copy = <template><IconSvg @name="copy" /></template>;
 const Download = <template><IconSvg @name="download" /></template>;
 
-/** The port of PasswordGeneratorViewController. */
 export default class PasswordGennyTool extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -131,7 +125,6 @@ export default class PasswordGennyTool extends Component {
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
-		// ?pwPhrase=1 ?pwLength=<n> ?pwSymbols=0 ?pwSelect=<row>: the iOS -pwPhrase, -pwLength, -pwSymbols, -pwSelect flags
 		const query = new URLSearchParams(window.location.search);
 		const length = Number(query.get('pwLength'));
 		if (length)
@@ -142,7 +135,6 @@ export default class PasswordGennyTool extends Component {
 			);
 		if (query.get('pwSymbols') === '0') this.symbols = false;
 		this.selected = Number(query.get('pwSelect')) || 0;
-		// first fill writes without the scramble; tracked state read here may not change in this render
 		if (query.get('pwPhrase')) {
 			this.phrase = true;
 			queueMicrotask(() => void this.#ensureWordlist());
@@ -195,7 +187,6 @@ export default class PasswordGennyTool extends Component {
 		return BULK_COUNTS.indexOf(this.count);
 	}
 
-	// the last class on stays on: the pool must not be empty
 	get classes() {
 		const last = CLASSES.filter((c) => this[c.key]).length === 1;
 		return CLASSES.map((c) => ({

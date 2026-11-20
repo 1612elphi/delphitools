@@ -61,9 +61,7 @@ const ACCEPT = acceptAttr(VIDEO_ACCEPT);
 const TRIM_ERROR = "Couldn't process. Try MP4, MOV or WEBM";
 const tc = (seconds: number) => formatTimestamp(seconds * 1000, '.');
 
-// ios VideoTrimmerViewController
 const editorHeight = 72;
-// height over width at most 1.25, at most 340 pt tall
 const tallest = 1.25;
 const tallestPreview = 340;
 const DASH = '—';
@@ -73,7 +71,6 @@ type Mode = 'keyframe' | 'exact';
 const MODES: Mode[] = ['keyframe', 'exact'];
 const modeLabels = ['Keyframe', 'Exact'];
 
-/** iOS -vtrimCut "2,7.5" as ?vtrimCut=2,7.5: the selection once a file loads. */
 function presetCut(): [number, number] | null {
 	if (typeof window === 'undefined') return null;
 	const cut = (
@@ -94,7 +91,6 @@ const SetOut = <template><IconSvg @name="arrow-left-to-line" /></template>;
 const Back = <template><IconSvg @name="chevron-left" /></template>;
 const Forward = <template><IconSvg @name="chevron-right" /></template>;
 
-/** The port of VideoTrimmerViewController, on the web tool's mediabunny trim. */
 export default class VideoTrimmer extends Component {
 	intake = new VideoIntake({
 		onLoad: (file) => this.#load(file),
@@ -110,7 +106,6 @@ export default class VideoTrimmer extends Component {
 	@tracked end = 0;
 	@tracked mode: Mode = 'keyframe';
 	@tracked support: Record<Container, boolean> | null = null;
-	/** Empty: the source's own container. */
 	@tracked container: Container | '' = '';
 	@tracked busy = false;
 	@tracked progress = 0;
@@ -171,7 +166,6 @@ export default class VideoTrimmer extends Component {
 		return this.container || this.intake.probe?.container || 'mp4';
 	}
 
-	// no pick: container unknown
 	get containerIndex() {
 		if (!this.container && !this.intake.probe) return -1;
 		return CONTAINERS.findIndex(
@@ -183,7 +177,6 @@ export default class VideoTrimmer extends Component {
 		return MODES.indexOf(this.mode);
 	}
 
-	// presets output before load
 	get locked() {
 		return this.loaded && this.unselected;
 	}
@@ -268,7 +261,6 @@ export default class VideoTrimmer extends Component {
 	}
 
 	#ready() {
-		// iOS: the out point rounds down to the millisecond
 		const end = Math.floor(this.duration * 1000) / 1000;
 		const preset = presetCut();
 		if (preset) this.select(preset[0], Math.min(preset[1], end));
@@ -284,7 +276,6 @@ export default class VideoTrimmer extends Component {
 		const support = await containerSupport(probe.codec);
 		if (token !== this.#token) return;
 		this.support = support;
-		// pre-file pick, unsupported codec
 		if (this.container && !support[this.container])
 			this.container = '';
 	}
@@ -330,7 +321,6 @@ export default class VideoTrimmer extends Component {
 		this.#invalidate();
 	};
 
-	/** iOS job.reset: a change of what to write drops the result and any run. */
 	#invalidate() {
 		if (this.busy) this.cancel();
 		this.failed = false;
@@ -413,7 +403,6 @@ export default class VideoTrimmer extends Component {
 		this.info = [];
 	}
 
-	// abort stops mediabunny decoding
 	#reset() {
 		this.#token++;
 		this.#job++;
@@ -567,7 +556,6 @@ export default class VideoTrimmer extends Component {
 					}}
 				>
 					{{#if this.loaded}}
-						{{! the transport is its control; user media lacks captions }}
 						{{! template-lint-disable require-media-caption }}
 						<video
 							class="vt-video"

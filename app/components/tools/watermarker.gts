@@ -54,7 +54,6 @@ const percent = (value: number) => `${value}%`;
 const pixels = ({ width, height }: { width: number; height: number }) =>
 	`${width} × ${height}`;
 
-// the document paste (filePaste) would load a drop-zone paste a second time
 const keepPaste = (event: Event) => event.stopPropagation();
 
 interface Loaded {
@@ -65,7 +64,6 @@ interface Loaded {
 const decode = (file: Blob) =>
 	createImageBitmap(file, { imageOrientation: 'from-image' });
 
-/** A drawn 256 px badge for ?wmStamp, which stands for the iOS -wmStamp path. */
 function drawnStamp() {
 	const canvas = document.createElement('canvas');
 	canvas.width = 256;
@@ -80,7 +78,6 @@ function drawnStamp() {
 	return createImageBitmap(canvas);
 }
 
-/** The port of WatermarkerViewController, with the web tool's placement, size, blend and random position. */
 export default class Watermarker extends Component {
 	@tracked source?: Loaded;
 	@tracked stamp?: Loaded;
@@ -102,7 +99,6 @@ export default class Watermarker extends Component {
 	#input?: HTMLInputElement;
 	#loading = 0;
 
-	// ?wmSample ?wmStamp ?wmTile ?wmTap=<0-8>: the iOS -wmSample, -wmStamp, -wmTile, -wmTap launch arguments, with drawn images
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -179,18 +175,15 @@ export default class Watermarker extends Component {
 	picked = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
-		// the same file twice fires change again
 		input.value = '';
 		if (file) void this.loadSource(file);
 	};
 
-	// the stamp drop zone takes its own drop
 	dropped = (event: DragEvent) => {
 		if (event.defaultPrevented) this.drop.over = false;
 		else this.drop.drop(event);
 	};
 
-	// the web tool's order: a source first, then the stamp
 	pasted = (file: File) => {
 		if (this.source && !this.isText) void this.loadStamp(file);
 		else void this.loadSource(file);
@@ -520,7 +513,6 @@ export default class Watermarker extends Component {
 						@onClick={{this.export}}
 					/>
 				</CanonRows>
-				{{! the empty picture opens it }}
 				{{! template-lint-disable require-input-label }}
 				<input
 					type="file"

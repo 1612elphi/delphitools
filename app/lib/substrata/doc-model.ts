@@ -75,8 +75,20 @@ interface BaseLayer {
 	transform: Transform;
 	crop?: CropRect | null;
 	mask?: LayerMask | null;
+	/** fixed placement, editable content */
+	stratum?: boolean;
 	filters: Filter[];
 	effects: Effect[];
+}
+
+/** where a catalog image came from, for export credits */
+export interface AssetSource {
+	provider: 'openverse' | 'iconify';
+	title: string;
+	creator: string;
+	url: string;
+	licence: string;
+	licenceUrl: string | null;
 }
 
 export interface RasterLayer extends BaseLayer {
@@ -84,6 +96,7 @@ export interface RasterLayer extends BaseLayer {
 	blobHash: string;
 	naturalWidth: number;
 	naturalHeight: number;
+	source?: AssetSource;
 }
 
 export interface TextPlate {
@@ -100,6 +113,8 @@ export interface TextLayer extends BaseLayer {
 	fontFamily: string;
 	fontSize: number;
 	fill: string;
+	/** css weight, 100-900 */
+	fontWeight?: number;
 	stroke: { colour: string; width: number } | null;
 	plate: TextPlate | null;
 	align?: TextAlign;

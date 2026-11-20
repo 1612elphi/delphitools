@@ -16,8 +16,6 @@ import type { Layer } from 'delphitools-v2/lib/substrata/doc-model';
 
 const BLEND_TITLES = BLEND_OPTIONS.map((o) => o.label);
 
-// iOS LayerFold and the layer menu's controls: opacity and blend mode for
-// every layer in @layers, the last one showing its values
 export default class LayerControls extends Component<{
 	Args: { layers: readonly Layer[] };
 	Element: HTMLDivElement;
@@ -36,12 +34,10 @@ export default class LayerControls extends Component<{
 		return i < 0 ? undefined : i;
 	}
 
-	// the web blends groups as normal
 	get blendOff() {
 		return this.args.layers.some((l) => l.kind === 'group');
 	}
 
-	// a drag is one undo step, a tap or a key is a step of its own
 	setOpacity = (value: number, dragging: boolean) => {
 		if (dragging && !isGestureActive()) {
 			beginTransient();

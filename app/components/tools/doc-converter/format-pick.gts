@@ -19,7 +19,6 @@ interface FormatPickSignature {
 	Args: {
 		value: string;
 		formats: PandocFormat[];
-		/** Accessible name of the cell and the list. */
 		label: string;
 		includeAuto?: boolean;
 		autoDetectedLabel?: string | null;
@@ -29,7 +28,6 @@ interface FormatPickSignature {
 
 const Check = <template><IconSvg @name="check" /></template>;
 
-/** The web tool's searchable format combobox as a kit cell: the pick opens a dialog. */
 export default class FormatPick extends Component<FormatPickSignature> {
 	@tracked open = false;
 

@@ -19,10 +19,8 @@ export interface KeypadSignature {
 	Args: { onPress: (key: string) => void };
 }
 
-/** Grid track of a block row or column: the seam between the blocks is a track of its own. */
 const track = (index: number) => (index < 4 ? index + 1 : index + 2);
 
-/** Holding ⌫ deletes again and again; the click after a hold is not a press. */
 const repeats = modifier(
 	(
 		button: HTMLButtonElement,
@@ -82,7 +80,6 @@ const repeats = modifier(
 	},
 );
 
-/** Flush keys in two blocks, functions and digits: one over the other, side by side when that shapes the keys better. */
 export default class Keypad extends Component<KeypadSignature> {
 	@tracked wide = false;
 	@tracked scale = 1;
@@ -101,7 +98,6 @@ export default class Keypad extends Component<KeypadSignature> {
 				1.5,
 			);
 		};
-		// the observer's first call measures; tracked state is not set mid-render
 		const size = new ResizeObserver(run);
 		size.observe(element);
 		return () => size.disconnect();

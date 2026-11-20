@@ -50,7 +50,6 @@ const swatches = palette.map((entry, index) => ({
 	style: htmlSafe(`background: ${entry.fill}; color: ${entry.ink}`),
 }));
 
-/** One function: its colour and name, relation, expression, visibility and removal, with an error line under it (GraphFunctionRow). */
 export default class GraphFunctionRow extends Component<RowSignature> {
 	get swatchStyle() {
 		const { fill, ink } = paint(this.args.curve.colour);
@@ -118,7 +117,6 @@ export default class GraphFunctionRow extends Component<RowSignature> {
 								swatches
 								as |swatch|
 							}}
-								{{! canon-popover focuses its autofocus child }}
 								{{! template-lint-disable no-autofocus-attribute }}
 								<button
 									type="button"

@@ -13,11 +13,9 @@ interface RibbonsSignature {
 	Args: { diff: DiffLine[] };
 }
 
-// iOS DiffRibbons metrics
 const padding = 12;
 const figureRow = 40;
 const captionRoom = 6 + 14;
-/** characters per column width */
 const fullLine = 72;
 
 export function mapHeight(diff: DiffLine[]) {
@@ -30,7 +28,6 @@ export function mapHeight(diff: DiffLine[]) {
 	return Math.min(220, Math.max(72, Math.max(old, next, 1) * 7));
 }
 
-/** The band's height in px, rules included. */
 export function ribbonsHeight(diff: DiffLine[]) {
 	return (
 		padding +
@@ -70,11 +67,6 @@ function ribbon(
 const box = (x: number, y: number, w: number, h: number) =>
 	`M${x} ${y}h${w}v${h}h${-w}Z`;
 
-/**
- * The two texts as columns of line bars, each line as long as its text, the
- * unchanged runs joined across by grey ribbons, removed and added runs by
- * red and green ones; the counts as figures above.
- */
 export default class Ribbons extends Component<RibbonsSignature> {
 	@tracked width = 0;
 
@@ -181,7 +173,6 @@ export default class Ribbons extends Component<RibbonsSignature> {
 			} else fill = `url(#${this.id}-${block.kind})`;
 			if (block.kind === 'del' && next?.kind === 'add')
 				kind = 'swap';
-			// gap separates bands
 			ribbons.push({
 				d: ribbon(
 					inner.left,
@@ -231,7 +222,6 @@ export default class Ribbons extends Component<RibbonsSignature> {
 									fullLine,
 							),
 					);
-					// left column aligns right
 					const x = leading ? column - width : x0;
 					bars[block.kind] += box(
 						x,

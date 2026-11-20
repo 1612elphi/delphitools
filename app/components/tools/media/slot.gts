@@ -17,31 +17,19 @@ export interface SlotSignature {
 	Args: {
 		prompt: string;
 		icon: string;
-		/** As the file input's accept attribute. */
 		accept?: string;
-		/** The dashed image slot; `fills` covers the positioned parent. */
 		dashed?: boolean;
 		fills?: boolean;
-		/** One row tall, icon beside the prompt and a Files cell: the Source row before a file. */
 		row?: boolean;
 		multiple?: boolean;
-		/** A file is dragged over the tool. */
 		over?: boolean;
 		onFile?: (file: File) => void;
-		/** Every picked file, in place of `onFile`. */
 		onFiles?: (files: File[]) => void;
-		/** Opens the tool's own file input instead of the slot's. */
 		onChoose?: () => void;
 	};
 	Element: HTMLElement;
 }
 
-/**
- * The empty picture: a drop target with Upload and Paste. A click anywhere
- * opens the file picker. Paste reads clipboard images when `accept` takes
- * images; with `onChoose` and no file callback it fires a document paste,
- * which the tool's own paste handler loads.
- */
 export default class Slot extends Component<SlotSignature> {
 	#input?: HTMLInputElement;
 	#root?: HTMLElement;
@@ -62,7 +50,6 @@ export default class Slot extends Component<SlotSignature> {
 	picked = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const files = [...(input.files ?? [])];
-		// the same file twice fires change again
 		input.value = '';
 		if (!files.length) return;
 		if (this.args.onFiles) this.args.onFiles(files);
@@ -76,7 +63,6 @@ export default class Slot extends Component<SlotSignature> {
 		);
 	}
 
-	/** The clipboard API reads images only. */
 	get pastes() {
 		const { accept } = this.args;
 		return (
@@ -146,7 +132,6 @@ export default class Slot extends Component<SlotSignature> {
 				{{this.root}}
 				...attributes
 			>
-				{{! the pointer's whole-slot target; Upload is the keyboard's }}
 				<button
 					type="button"
 					class="media-slot-target"
@@ -181,7 +166,6 @@ export default class Slot extends Component<SlotSignature> {
 			</div>
 		{{/if}}
 		{{#if this.ownInput}}
-			{{! the slot is its label }}
 			{{! template-lint-disable require-input-label }}
 			<input
 				type="file"

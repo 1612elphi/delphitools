@@ -31,7 +31,6 @@ const Convert = <template><IconSvg @name="refresh-cw" /></template>;
 const Trash = <template><IconSvg @name="trash-2" /></template>;
 const percent = (value: number) => `${Math.round(value * 100)} %`;
 
-// a sample picture, so the screen has something to convert before a drop
 function sample(): Promise<Blob> {
 	const canvas = document.createElement('canvas');
 	canvas.width = 640;

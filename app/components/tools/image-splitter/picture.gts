@@ -25,12 +25,10 @@ import {
 
 export interface PictureSignature {
 	Args: {
-		/** Object URL of the source; none shows the slot that takes a file. */
 		url?: string;
 		pixels: Size;
 		rows: number;
 		cols: number;
-		/** Seams closed, before a new cut springs open. */
 		joined: boolean;
 		springs: boolean;
 		over: boolean;
@@ -43,11 +41,6 @@ export interface PictureSignature {
 const px = (value: number) => `${Math.round(value * 100) / 100}px`;
 const percent = (value: number) => `${Math.round(value * 10000) / 100}%`;
 
-/**
- * The image cut into its tiles and pulled apart at the seams, each tile a
- * button whose menu downloads or copies it. The port of iOS
- * ImageSplitterPicture.
- */
 export default class Picture extends Component<PictureSignature> {
 	@tracked area: Size = { width: 0, height: 0 };
 	#chosen?: Cell;
@@ -101,7 +94,6 @@ export default class Picture extends Component<PictureSignature> {
 		return () => observer.disconnect();
 	});
 
-	// shared menu, pointer-anchored
 	menu = modifier((panel: HTMLElement) => {
 		this.#panel = panel;
 		this.#point = panel.previousElementSibling as HTMLElement;
@@ -121,7 +113,6 @@ export default class Picture extends Component<PictureSignature> {
 		this.#tile = tile;
 		const frame = point.offsetParent!.getBoundingClientRect();
 		const box = tile.getBoundingClientRect();
-		// keyboard click: detail 0
 		const pointer = event.detail > 0;
 		const x = pointer
 			? event.clientX

@@ -14,9 +14,7 @@ import {
 	stamp,
 } from 'delphitools-v2/components/tools/uuid-genny/anatomy';
 
-/** Scramble on a new identifier: ms before the first column settles, then between columns (UUIDAnatomy.settle). */
 const settle = { first: 180, step: 14 };
-// the ios display link runs at 20 to 30 fps
 const frameMs = 33;
 
 const hex = '0123456789abcdef';
@@ -29,16 +27,10 @@ interface PictureSignature {
 		raw: string;
 		kind: IdentifierKind;
 		label: string;
-		/** A change scrambles the characters before they settle. */
 		scrambleKey: number;
 	};
 }
 
-/**
- * UUIDAnatomy: one identifier set large, a column of its bits under every
- * character (lit for 1), coloured by field. A bracket under the v7 time
- * reads the moment it encodes; a legend counts each field's bits.
- */
 export default class UuidPicture extends Component<PictureSignature> {
 	@tracked frame = 0;
 	#settle: number[] = [];
@@ -113,7 +105,6 @@ export default class UuidPicture extends Component<PictureSignature> {
 	}
 
 	scramble = modifier((_element: Element, [key]: [number]) => {
-		// the first render and format changes draw at once
 		const first = this.#key === undefined;
 		if (key === this.#key) return;
 		this.#key = key;

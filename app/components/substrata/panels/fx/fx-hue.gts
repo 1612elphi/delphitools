@@ -24,7 +24,6 @@ const paint = modifier((canvas: HTMLCanvasElement, [deg]: [number]) => {
 	);
 });
 
-// iOS FxColourHueBands: the hue circle over itself turned by the angle
 export default class FxHue extends Component<{ Args: { ctx: FxContext } }> {
 	@tracked active = false;
 	#dragged = 0;

@@ -20,14 +20,9 @@ import './stupid-units/stupid-units.css';
 
 const categoryNames = STUPID_CATEGORIES.map((c) => c.name);
 
-// the middle of a category's ladder is a size people know
 const middle = (category: StupidCategory) =>
 	Math.floor(category.units.length / 2);
 
-/**
- * Query flags, for harnesses and screenshots: ?suCategory=<key>
- * ?suUnit=<unit key> ?suValue=<number>.
- */
 function launchFlags(search: string) {
 	const query = new URLSearchParams(search);
 	const category =
@@ -44,7 +39,6 @@ function launchFlags(search: string) {
 	};
 }
 
-/** Every unit of a category against one typed amount; a click on a row converts from it. */
 export default class StupidUnits extends Component {
 	@tracked category: StupidCategory;
 	@tracked fromIndex: number;
@@ -109,7 +103,6 @@ export default class StupidUnits extends Component {
 
 	pickUnit = (index: number) => {
 		if (index === this.fromIndex) return;
-		// the amount follows, so the quantity stays the same
 		const { amount } = this;
 		const unit = this.category.units[index]!;
 		if (amount !== undefined)
@@ -121,7 +114,6 @@ export default class StupidUnits extends Component {
 
 	typed = (text: string) => (this.text = text);
 
-	/** Whole steps, tenths below one, never under zero (UnitConverterViewController.nudge). */
 	step = (direction: -1 | 1) => {
 		const current = this.amount ?? 0;
 		const size = current !== 0 && Math.abs(current) < 1 ? 0.1 : 1;
@@ -129,7 +121,6 @@ export default class StupidUnits extends Component {
 		this.text = String(Math.max(0, Number(next.toFixed(10))));
 	};
 
-	// a click places the caret after focus, so select on the next frame
 	selectAll = (event: FocusEvent) => {
 		const field = event.target;
 		if (field instanceof HTMLInputElement)

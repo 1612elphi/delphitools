@@ -163,7 +163,6 @@ async function unitAnswers(input: string): Promise<OmniAnswer[]> {
 			(u) => u.symbol.toLowerCase() === symbol.toLowerCase(),
 		);
 		if (!unit) continue;
-		// the category's first unit, then two siblings
 		const targets = [
 			units[0]!,
 			...units
@@ -259,13 +258,13 @@ async function algebraAnswers(input: string): Promise<OmniAnswer[]> {
 	)
 		return [];
 
-	const { compute } =
+	const { solveRoots } =
 		await import('delphitools-v2/components/tools/algebra-calc/algebra');
 	const math = await import('mathjs');
 	// infer first variable
 	const variable = /[a-zA-Z]/.exec(input)?.[0] ?? 'x';
 	try {
-		const output = compute(math, 'solve', input, variable);
+		const output = `[${solveRoots(math, input).join(',')}]`;
 		const answers: OmniAnswer[] = [];
 		push(answers, 'algebra-calc', {
 			value: `${variable} = ${output}`,

@@ -70,12 +70,10 @@ import './media/media.css';
 import './pdf-page-numberer/pdf-page-numberer.css';
 
 const ACCEPT = '.pdf,application/pdf';
-// ios PDFStampRenderer maxEdge
 const previewEdge = 1200;
 const styleLabels = STYLES.map((s) => s.label);
 const fontLabels = ['Sans', 'Serif', 'Mono'];
 const modeLabels = ['Label', 'Watermark'];
-// ios PageFormatTip
 const FORMAT_TIP = [
 	'{n} stands for the page number, {N} the page count.',
 	'Page {n} of {N} prints Page 3 of 12.',
@@ -95,7 +93,6 @@ interface Stamped {
 	size: number;
 }
 
-// ios -ppnSample, drawn
 async function drawnSample(count: number) {
 	const { PDFDocument, StandardFonts } = await import('pdf-lib');
 	const doc = await PDFDocument.create();
@@ -110,7 +107,6 @@ async function drawnSample(count: number) {
 	});
 }
 
-/** The port of PDFPageNumbererViewController, on the web tool's pdf-lib export. */
 export default class PdfPageNumberer extends Component {
 	drop = new Drop(ACCEPT, (file) => this.load(file));
 
@@ -146,7 +142,6 @@ export default class PdfPageNumberer extends Component {
 	#shown = 0;
 	#queued?: Section[];
 
-	// ?ppn* ios launch arguments
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -267,7 +262,6 @@ export default class PdfPageNumberer extends Component {
 		);
 	}
 
-	// remount clears held pick
 	get currentKeys() {
 		return [this.current.id];
 	}
@@ -424,7 +418,6 @@ export default class PdfPageNumberer extends Component {
 		if (start !== current.fromPage) this.#edit({ fromPage: start });
 	};
 
-	/** splits at lit page */
 	addSection = () => {
 		const added = splitAt(this.sections, this.page + 1, this.count);
 		if (!added) return;

@@ -6,32 +6,23 @@ import './cue-timeline.css';
 
 export interface CueLane {
 	cues: Cue[];
-	/** Text in the label column; any lane with one adds the column. */
 	label?: string;
-	/** The whole lane in the primary colour; otherwise dim. */
 	lit?: boolean;
-	/** Index of the one cue drawn in the primary colour. */
 	active?: number | null;
 }
 
 export interface CueTimelineSignature {
 	Args: {
 		lanes: CueLane[];
-		/** Milliseconds the axis spans; default the latest cue end. */
 		span?: number;
-		/** Seconds; draws a head across every lane. */
 		playhead?: number | null;
-		/** A press or drag on a lane outside a cue. */
 		onScrub?: (seconds: number) => void;
-		/** A press on a cue: its index in that lane. */
 		onCue?: (index: number) => void;
-		/** The picture's accessible name; none hides it from assistive tech. */
 		label?: string;
 	};
 	Element: HTMLDivElement;
 }
 
-/** Each cue as a share of the span, in percent of the lane. */
 export function blocks(cues: Cue[], span: number) {
 	return cues.map((cue) =>
 		htmlSafe(
@@ -40,15 +31,9 @@ export function blocks(cues: Cue[], span: number) {
 	);
 }
 
-/** Index of the cue playing at `ms`, end exclusive; -1 between cues. */
 export const cueAt = (cues: Cue[], ms: number) =>
 	cues.findIndex((cue) => ms >= cue.start && ms < cue.end);
 
-/**
- * Lanes of cue blocks on one time axis: iOS SubtitleTimeline (the cues as
- * they came in, dim, over the cues as they go out, lit) and the cue lane of
- * SubtitleStudioStrips (one lane, the playing cue lit, a head, press to seek).
- */
 export default class CueTimeline extends Component<CueTimelineSignature> {
 	get span() {
 		if (this.args.span && this.args.span > 0) return this.args.span;
@@ -102,7 +87,6 @@ export default class CueTimeline extends Component<CueTimelineSignature> {
 		return Math.min(Math.max(share, 0), 1) * this.span;
 	}
 
-	// template-lint forbids binding pointerdown; a drag starts there
 	pressing = modifier((element: HTMLElement, [cues]: [Cue[]]) => {
 		const down = (event: PointerEvent) => {
 			if (!this.presses || event.button !== 0) return;

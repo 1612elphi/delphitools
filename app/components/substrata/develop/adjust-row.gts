@@ -12,18 +12,14 @@ import { trackOf } from './render';
 interface AdjustRowSignature {
 	Args: {
 		type: string;
-		/** the filter's amount, or null without the filter */
 		value: number | null;
 		onSet: (type: string, value: number) => void;
-		/** drops the filter */
 		onReset: (type: string) => void;
 	};
 }
 
-// the longest title, so every track starts at the same place
 export const SIZING = 'Temperature';
 
-// template-lint forbids binding dblclick and pointerup on a row
 export const listen = modifier(
 	(el: HTMLElement, [type, fn]: [string, (event: Event) => void]) => {
 		el.addEventListener(type, fn);
@@ -31,7 +27,6 @@ export const listen = modifier(
 	},
 );
 
-/** one adjustment's slider, centred on its origin, with the faint symbol */
 export default class AdjustRow extends Component<AdjustRowSignature> {
 	get def() {
 		return getFilterDef(this.args.type);
@@ -90,7 +85,6 @@ export default class AdjustRow extends Component<AdjustRowSignature> {
 		return trackOf(this.args.type) !== null;
 	}
 
-	// back at the origin the filter goes, once a drag lets go (iOS)
 	change = (value: number, dragging: boolean) => {
 		if (value === this.origin && !dragging) this.reset();
 		else this.args.onSet(this.args.type, value);

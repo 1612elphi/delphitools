@@ -51,18 +51,15 @@ const MIME: Record<ImageContainer, string> = {
 	gif: 'image/gif',
 };
 
-// canvas round-trips these
 const REENCODABLE = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
 const isPdf = (file: File, bytes: Uint8Array) =>
 	file.type === 'application/pdf' ||
 	String.fromCharCode(...bytes.subarray(0, 5)) === '%PDF-';
 
-// a pdf has no exif blocks; only its xmp packet has a lamp
 const pdfBlocks = (report: PdfMetadataReport | null) =>
 	new Set<Block>(report?.xmp ? ['XMP'] : []);
 
-// the image report shape, for the shared panes
 const asReport = (report: PdfMetadataReport): MetadataReport => ({
 	format: null,
 	entries: report.entries,
@@ -81,7 +78,6 @@ interface StripState {
 	removed: string[];
 }
 
-/** The port of MetadataStripperViewController, on the web tool's structural strip. */
 export default class MetadataStripper extends Component {
 	drop = new Drop(FILE_ACCEPT, (file) => this.readFile(file));
 
@@ -227,7 +223,6 @@ export default class MetadataStripper extends Component {
 		}
 	}
 
-	// lossy canvas fallback
 	async #canvasStrip() {
 		const bytes = this.#bytes;
 		if (!bytes) return;

@@ -23,7 +23,6 @@ export interface PreviewContent {
 const barStyle = (share: number) => htmlSafe(`inline-size: ${share * 100}%`);
 const blank = (text: string) => text.trim() === '';
 
-/** A line of text, or grey bars where it will go while it is empty. */
 const Text: TOC<{
 	Args: { text: string; bars: number[] };
 	Element: HTMLSpanElement;
@@ -45,7 +44,6 @@ const Text: TOC<{
 const siteOf = (content: PreviewContent) =>
 	content.siteName.trim() || host(content.url);
 
-/** LinkPreviewResult: the page as a search result, title and description cut where results cut them. */
 export class Result extends Component<{ Args: { content: PreviewContent } }> {
 	get site() {
 		return siteOf(this.args.content);
@@ -103,11 +101,6 @@ export class Result extends Component<{ Args: { content: PreviewContent } }> {
 	</template>
 }
 
-/**
- * LinkPreviewBoard: a caption, the card at the size a feed shows it, and
- * beside it, where the split has room, the search result. The image is never
- * fetched; its frame names the file.
- */
 export default class Board extends Component<{
 	Args: { content: PreviewContent };
 }> {

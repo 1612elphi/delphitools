@@ -7,6 +7,7 @@ export type ModalId =
 	| 'onboarding'
 	| 'shortcuts'
 	| 'about-substrata'
+	| 'strata-help'
 	| 'about-delphitools';
 
 let open: ModalId | null = null;

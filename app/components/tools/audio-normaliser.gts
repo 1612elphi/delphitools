@@ -48,7 +48,6 @@ const targetLabels = TARGETS.map((t) => t.label);
 const LIMITED_NOTE = 'Gain capped at -1 dBFS peak';
 const WRITE_ERROR = "Couldn't write the normalised file.";
 
-// iOS AVInfoProbe.levelFloor
 const levelFloor = -60;
 const level = (value: number) =>
 	Number.isFinite(value)
@@ -73,7 +72,6 @@ interface Measurement {
 	peaks: WaveformPeaks;
 }
 
-/** The port of AudioNormaliserViewController, on the web tool's BS.1770 measure and WAV render. */
 export default class AudioNormaliser extends Component {
 	intake = new AudioIntake({
 		onLoad: () => this.#reset(),
@@ -174,7 +172,6 @@ export default class AudioNormaliser extends Component {
 		};
 	}
 
-	// defer loudness scan
 	async #measure(buffer: AudioBuffer) {
 		const token = ++this.#token;
 		await new Promise((resolve) => setTimeout(resolve, 0));
@@ -208,7 +205,6 @@ export default class AudioNormaliser extends Component {
 		await new Promise((resolve) => setTimeout(resolve, 0));
 		if (this.isDestroyed || token !== this.#token) return;
 		try {
-			// skip output lufs scan
 			const wav = encodeWav(
 				channelsOf(buffer),
 				buffer.sampleRate,
@@ -231,7 +227,6 @@ export default class AudioNormaliser extends Component {
 	#releaseResult() {
 		const url = this.resultUrl;
 		this.resultUrl = '';
-		// the player lets go of it on the next render
 		if (url) setTimeout(() => URL.revokeObjectURL(url));
 		this.result = null;
 	}
@@ -351,7 +346,6 @@ export default class AudioNormaliser extends Component {
 						@onSave={{this.save}}
 					/>
 					{{#if this.resultUrl}}
-						{{! user media lacks captions }}
 						{{! template-lint-disable require-media-caption }}
 						<audio
 							class="an-player"

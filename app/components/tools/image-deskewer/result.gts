@@ -15,21 +15,15 @@ import {
 
 export interface ResultSignature {
 	Args: {
-		/** The corrected preview, redrawn in place. */
 		canvas: HTMLCanvasElement;
-		/** The output size the export writes. */
 		size: Size;
 		valid: boolean;
-		/** False until the first preview is drawn. */
 		drawn: boolean;
-		/** Changes with the quad or the aspect; the guides flash. */
 		stamp: number;
-		/** A size change springs; off while a corner drags. */
 		springs: boolean;
 	};
 }
 
-// iOS DelphiMetrics.panelPadding
 const padding = 16;
 
 const px = (value: number) => `${Math.round(value * 100) / 100}px`;
@@ -44,14 +38,8 @@ const shares = Array.from(
 	(_, i) => `${((i + 1) / divisions) * 100}%`,
 );
 
-// even entries are the down guides, odd the across
 const isOdd = (index: number) => index % 2 === 1;
 
-/**
- * The corrected picture at the output's proportions under dimension lines
- * for its size, with the grid flashing over it after each change. The port
- * of iOS DeskewResultPicture.
- */
 export default class Result extends Component<ResultSignature> {
 	@tracked area: Rect = { x: 0, y: 0, width: 0, height: 0 };
 	@tracked guides = false;

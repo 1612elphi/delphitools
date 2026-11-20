@@ -28,8 +28,6 @@ import './fx/fx.css';
 
 const PlusIcon = <template><IconSvg @name="plus" /></template>;
 
-// iOS FxPanel: filters, a rule, then effects; on the phone an open block
-// shows alone at the tray's full stop
 export default class FxPanel extends Component<{
 	Args: { phone?: boolean };
 }> {
@@ -69,7 +67,6 @@ export default class FxPanel extends Component<{
 		return this.filters.length > 0 && this.effects.length > 0;
 	}
 
-	// another layer, or a duplicate sharing fx ids, starts folded
 	get openId(): string | null {
 		const open = this.open;
 		if (!open || open.layerId !== this.raster?.id) return null;
@@ -89,10 +86,8 @@ export default class FxPanel extends Component<{
 		return effect ? { stack: 'effects', items: [effect] } : null;
 	}
 
-	// tracked writes wait out the render that read them
 	raiseTray = modifier((_el: HTMLElement, [alone]: [boolean]) => {
 		if (!alone) return;
-		// read in the microtask: a read here would rerun the modifier
 		let before: TrayStop = 'short';
 		queueMicrotask(() => {
 			before = editorUi.trayStop;
@@ -128,8 +123,6 @@ export default class FxPanel extends Component<{
 
 	close = () => editorUi.close('fx');
 
-	// the editor's shortcuts nudge or delete the layer on these keys; inside
-	// the panel they belong to the focused control
 	keep = (event: KeyboardEvent) => {
 		if (event.metaKey || event.ctrlKey || event.altKey) return;
 		if (/^(Arrow|Backspace$|Delete$)/.test(event.key))

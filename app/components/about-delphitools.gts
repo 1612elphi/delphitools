@@ -42,7 +42,6 @@ const DONORS = [
 	},
 ];
 
-// a route is a page in the app, opened in place
 export const BUILT_WITH: { name: string; url?: string; route?: string }[] = [
 	{ name: 'Ember', url: 'https://emberjs.com' },
 	{ name: 'Glimmer', url: 'https://github.com/glimmerjs/glimmer-vm' },
@@ -74,7 +73,6 @@ const FONTS = [
 	},
 ];
 
-// the about text sits in a modal dialog; a page link leaves it
 const closeDialog = (event: MouseEvent) =>
 	(event.currentTarget as HTMLElement).closest('dialog')?.close();
 

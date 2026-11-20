@@ -10,25 +10,18 @@ import './cue-row.css';
 
 export interface CueRowSignature {
 	Args: {
-		/** Zero-based; the row shows index + 1. */
 		index: number;
 		cue: Cue;
-		/** Fields for the times and the text; default display only. */
 		editable?: boolean;
-		/** The primary edge mark, as on the cue that is playing. */
 		marked?: boolean;
-		/** The edited cue: the text on every edit, a time when it parses on blur or Enter. */
 		onChange?: (cue: Cue) => void;
-		/** A press anywhere in the row, or focus in one of its fields. */
 		onSelect?: () => void;
 	};
-	/** A div, or a button when display-only with `onSelect`. */
 	Element: HTMLElement;
 }
 
 export const timecode = (ms: number) => formatTimestamp(ms, '.');
 
-/** The cue with a typed time in place; null when the text is no timestamp. */
 export function retimed(
 	cue: Cue,
 	edge: 'start' | 'end',
@@ -38,7 +31,6 @@ export function retimed(
 	return ms === null ? null : { ...cue, [edge]: ms };
 }
 
-// an echo of the arg must not replace what is being typed
 const show = modifier(
 	(field: HTMLInputElement | HTMLTextAreaElement, [value]: [string]) => {
 		if (document.activeElement !== field && field.value !== value)
@@ -50,7 +42,6 @@ function blurOnEnter(event: KeyboardEvent) {
 	if (event.key === 'Enter') (event.target as HTMLElement).blur();
 }
 
-/** One subtitle cue (iOS SubtitleCueRow): number, in and out times, text. */
 export default class CueRow extends Component<CueRowSignature> {
 	get number() {
 		return this.args.index + 1;
@@ -123,7 +114,6 @@ export default class CueRow extends Component<CueRowSignature> {
 						{{on "keydown" blurOnEnter}}
 					/>
 				</div>
-				{{! a cue may span lines, so a textarea, not iOS's one-line field }}
 				<textarea
 					class="cue-row-text"
 					aria-label="Text"

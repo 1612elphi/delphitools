@@ -10,9 +10,7 @@ export interface NumFieldSignature {
 		onCommit: (value: number) => void;
 		min?: number;
 		max?: number;
-		/** Default 1; Shift with an arrow key steps ten times this. */
 		step?: number;
-		/** Places shown; default 0. */
 		decimals?: number;
 		unit?: string;
 		labelledBy?: string;
@@ -21,11 +19,8 @@ export interface NumFieldSignature {
 	Element: HTMLDivElement;
 }
 
-// iOS CanonDecimalField with the web inspector's typed expressions: the
-// draft commits on Enter or blur, Escape drops it
 export default class NumField extends Component<NumFieldSignature> {
 	@tracked draft: string | null = null;
-	// the layer a focus began on keeps the edit when the selection moves
 	#commitTo: ((value: number) => void) | null = null;
 
 	get min() {
@@ -121,7 +116,6 @@ export default class NumField extends Component<NumFieldSignature> {
 			...attributes
 		>
 			<span class="canon-stepper-value">
-				{{! the stepper's label wraps the field; spinbutton names its role }}
 				{{! template-lint-disable require-input-label no-redundant-role }}
 				<input
 					type="text"

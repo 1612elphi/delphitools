@@ -19,7 +19,6 @@ const hertz = [220, 440, 880];
 const bandHeight = readoutBandHeight(72);
 const noFrames: string[] = [];
 
-// a plucked major arpeggio up from the root, then the octave held
 function pluck(root: number) {
 	const samples = new Float32Array(rate * seconds);
 	[0, 4, 7, 12].forEach((semitones, n) => {
@@ -92,7 +91,6 @@ export default class TonePattern extends Component {
 			@onChange={{this.pick}}
 		/>
 		<Transport @playback={{this.playback}} @ready={{true}} />
-		{{! the transport is its control }}
 		{{! template-lint-disable require-media-caption }}
 		<audio
 			src={{this.url}}

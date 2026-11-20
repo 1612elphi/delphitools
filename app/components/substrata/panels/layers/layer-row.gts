@@ -37,7 +37,6 @@ interface Signature {
 		active: boolean;
 		collapsed: boolean;
 		folded: boolean;
-		// the row Tab reaches; the others answer the arrow keys
 		current: boolean;
 		dragging: boolean;
 		manager: DragDropManager;
@@ -47,8 +46,6 @@ interface Signature {
 	};
 }
 
-// iOS LayerRow: indent, thumbnail, name over kind and blend, then lock or
-// the group's fold chevron, then the visibility lamp
 export default class LayerRow extends Component<Signature> {
 	get layer() {
 		return this.args.row.layer;
@@ -122,7 +119,6 @@ export default class LayerRow extends Component<Signature> {
 		if (layersState.renaming !== this.layer.id) return;
 		layersState.renaming = null;
 		if (keep) renameLayer(this.layer.id, input.value);
-		// focus goes back to the row the field stood in
 		requestAnimationFrame(() =>
 			document
 				.querySelector<HTMLElement>(
@@ -201,7 +197,11 @@ export default class LayerRow extends Component<Signature> {
 						>{{this.title}}</span>
 						<span
 							class="sub-layer-kind"
-						>{{this.kind}}</span>
+						>{{#if
+								this.layer.stratum
+							}}<IconSvg
+									@name="pin"
+								/>{{/if}}{{this.kind}}</span>
 					</span>
 				</button>
 			{{/if}}

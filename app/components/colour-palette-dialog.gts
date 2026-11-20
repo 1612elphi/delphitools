@@ -14,8 +14,6 @@ import {
 } from 'delphitools-v2/lib/colour-maths';
 import './colour-palette-dialog.css';
 
-// canvas resolves theme tokens
-
 const TOKENS = [
 	'background',
 	'foreground',
@@ -60,7 +58,6 @@ function readPalette(nameOf: (hex: string) => string): Entry[] {
 	const ctx = canvas.getContext('2d', { willReadFrequently: true });
 	if (!ctx) return [];
 
-	// deduplicate resolved colours
 	const byHex = new Map<string, Entry>();
 	for (const token of TOKENS) {
 		const authored = styles.getPropertyValue(`--${token}`).trim();
@@ -98,7 +95,6 @@ export default class ColourPaletteDialog extends Component {
 	@tracked isOpen = false;
 
 	open = (event: Event) => {
-		// webkit leaves a clicked button unfocused; the dialog returns focus to it
 		(event.currentTarget as HTMLElement).focus();
 		this.isOpen = true;
 		void this.load();
@@ -108,7 +104,6 @@ export default class ColourPaletteDialog extends Component {
 		this.isOpen = false;
 	};
 
-	// defer colour-name database
 	load = async () => {
 		const { getColourName } =
 			await import('delphitools-v2/lib/colour-names');

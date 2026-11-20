@@ -59,18 +59,12 @@ main() {
 	case ":$PATH:" in
 	*":$dir:"*) ;;
 	*)
-		# ∑CG: install dir is not on PATH; printed after a successful install
-		#   spec: one line, names $dir, tells the user to add it to PATH, ≤ 60 chars plus the path, lowercase, no period
-		#   sample: "dt-install: add $dir to your PATH"
-		echo "∑CG" >&2
+		echo "dt-install: add $dir to your PATH" >&2
 		;;
 	esac
 	found="$(command -v dt 2>/dev/null || true)"
 	if [ -n "$found" ] && [ "$found" != "$dir/dt" ]; then
-		# ∑CG: another dt (e.g. the deprecated cargo build in ~/.cargo/bin) is earlier on PATH
-		#   spec: one line, names $found, tells the user it shadows the new install and to remove it, lowercase, no period
-		#   sample: "dt-install: $found comes first on PATH; remove it (cargo uninstall delphitools-cli)"
-		echo "∑CG" >&2
+		echo "dt-install: $found comes first on PATH; remove it first (cargo uninstall delphitools-cli)" >&2
 	fi
 }
 

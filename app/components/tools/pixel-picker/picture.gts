@@ -22,14 +22,11 @@ export type Move = 'drag' | 'tap' | 'key';
 
 interface PixelPictureSignature {
 	Args: {
-		/** The full-size image; none shows the slot that takes a file. */
 		canvas?: HTMLCanvasElement;
 		pixel: Point;
 		loupe?: ImageData;
 		colour: Rgb;
-		/** The sampled colour in the header notation, above the lens. */
 		value: string;
-		/** Read out as the lens moves. */
 		reading: string;
 		onMove: (pixel: Point, how: Move) => void;
 		onPick: () => void;
@@ -37,7 +34,6 @@ interface PixelPictureSignature {
 	};
 }
 
-/** iOS PixelPickerPicture: 15 pixels across the loupe. */
 const loupeRadius = 7;
 const loupeSides = { min: 84, max: 128 };
 const keySteps: Record<string, Point> = {
@@ -47,20 +43,8 @@ const keySteps: Record<string, Point> = {
 	ArrowDown: { x: 0, y: 1 },
 };
 
-/**
- * `image`: the lens follows the pointer's travel over the image, so the
- * pointer never covers it. `lens`: a press on the lens moves one image
- * pixel per loupe cell.
- */
 type Grab = { kind: 'image' | 'lens'; from: Point; at: Point };
 
-/**
- * The image fitted to the pane with the lens, a loupe centred on the
- * sampled pixel. A drag anywhere on the image moves the lens by the drag;
- * a click or tap moves it there. Once it rests, a Pick button sits under
- * it and the sampled value above it. The arrow keys move one pixel
- * (Shift: ten) and Enter picks.
- */
 export default class PixelPicture extends Component<PixelPictureSignature> {
 	@tracked area: Size = { width: 0, height: 0 };
 	@tracked eases = false;
@@ -102,7 +86,6 @@ export default class PixelPicture extends Component<PixelPictureSignature> {
 		return this.fit.width > this.image.width;
 	}
 
-	/** The reticle shows only where an edge holds the lens well off the pixel. */
 	get reticleShown() {
 		const { lens } = this.layout;
 		const { x, y } = this.centre;
@@ -237,7 +220,6 @@ export default class PixelPicture extends Component<PixelPictureSignature> {
 			);
 	};
 
-	// taps land here: a touch the grab took gives no click
 	#tap(point: Point) {
 		if (
 			this.#onPick(point) ||

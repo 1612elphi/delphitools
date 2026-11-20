@@ -55,8 +55,6 @@ function placeSignature(dataUrl: string): void {
 	img.src = dataUrl;
 }
 
-// Fill & sign as a tool panel in the settings bar's place: the draw pad,
-// the saved signatures, Upload; Place puts the drawing on the page
 export default class SignatureModal extends Component {
 	shown = new TrackedExternal(modal.subscribe, modal.get);
 	saved = new TrackedExternal(signatures.subscribe, signatures.get);
@@ -76,7 +74,6 @@ export default class SignatureModal extends Component {
 		modal.set(null);
 	}
 
-	// one panel at a time: a mode or the toolbox closes this one
 	opened(open: boolean) {
 		for (const off of this.#whileOpen.splice(0)) off();
 		if (!open) return;
@@ -113,7 +110,6 @@ export default class SignatureModal extends Component {
 		ctx.lineJoin = 'round';
 		ctx.strokeStyle = '#111';
 		let drawing = false;
-		// the pad's css size follows the panel column
 		const pt = (e: PointerEvent) => {
 			const r = canvas.getBoundingClientRect();
 			return [

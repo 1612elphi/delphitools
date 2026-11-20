@@ -57,7 +57,6 @@ import './shavian-transliterator/shavian-transliterator.css';
 
 const defaultText = 'Mankind, be vigilant; we loved you.';
 const coreOnlyStatus = 'Core dictionary only, uncommon words are guessed';
-// iOS ShavianMarkerTip
 const markerTip =
 	'A namer dot · marks a proper noun. An acroring ⸰ marks an initialism (like FBI), an acroarc ꤮ an acronym said as a word (like NASA).';
 
@@ -66,7 +65,6 @@ type DictStatus = 'loading-core' | 'loading-full' | 'core-only' | 'ready';
 const InfoIcon = <template><IconSvg @name="info" /></template>;
 const DownloadIcon = <template><IconSvg @name={{(downloadIcon)}} /></template>;
 
-/** The port of ShavianTransliteratorViewController and its view model. */
 export default class ShavianTransliterator extends Component {
 	@tracked input = defaultText;
 	@tracked tokens: GlossToken[] = [];
@@ -83,7 +81,6 @@ export default class ShavianTransliterator extends Component {
 		void this.#loadDictionaries();
 	}
 
-	// core first, the full dictionary re-resolves the guesses
 	async #loadDictionaries() {
 		const core = await loadCoreDictionary();
 		if (this.isDestroyed) return;
@@ -106,7 +103,6 @@ export default class ShavianTransliterator extends Component {
 		}
 	}
 
-	// ?shavianWord=<1-based> ?shavianMarker=<0-3> ?shavianSwap: the iOS launch arguments
 	#launch() {
 		const query = new URLSearchParams(window.location.search);
 		const word = Number(query.get('shavianWord'));
@@ -251,7 +247,6 @@ export default class ShavianTransliterator extends Component {
 	setInput = (text: string) => {
 		this.input = text;
 		this.selected = null;
-		// before the core tier, nothing to gloss with
 		if (this.dictStatus !== 'loading-core')
 			this.tokens = carryEdits(this.tokens, tokenise(text));
 	};
@@ -270,7 +265,6 @@ export default class ShavianTransliterator extends Component {
 	};
 
 	measured = (height: number) => {
-		// 2 px rule under the picture
 		if (height + 2 !== this.pictureHeight)
 			this.pictureHeight = height + 2;
 	};

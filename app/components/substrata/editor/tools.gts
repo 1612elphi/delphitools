@@ -7,8 +7,6 @@ import {
 	type ToolId,
 } from 'delphitools-v2/lib/substrata/tool';
 
-// the omnibar's tools: iOS editor mode (move, crop, image, text, shape) plus
-// the web's select and draw; each maps onto tool.ts's tool and subtool
 export type EditorTool =
 	'move' | 'crop' | 'select' | 'image' | 'text' | 'shape' | 'draw';
 
@@ -16,7 +14,6 @@ export interface EditorToolDef {
 	id: EditorTool;
 	title: string;
 	icon: string;
-	// letter keys from the web omnibar; a tool with several takes each
 	keys: Record<string, [ToolId, string]>;
 }
 
@@ -87,7 +84,6 @@ export function currentEditorTool(): EditorTool {
 	return 'move';
 }
 
-// last subtool per group, so Select and Shape come back as they were left
 export function chooseTool(id: EditorTool): void {
 	const subs = getActiveSubs();
 	switch (id) {
@@ -116,7 +112,6 @@ export function chooseTool(id: EditorTool): void {
 	}
 }
 
-// iOS: the image tool opens the import and goes back to move
 export async function pickImages(): Promise<void> {
 	try {
 		const files = await fileOpen({

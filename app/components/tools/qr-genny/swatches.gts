@@ -5,16 +5,13 @@ import { modifier } from 'ember-modifier';
 
 export interface Swatch {
 	title: string;
-	/** CSS colour behind the drawing; none: a checked transparent paper. */
 	paper?: string;
-	/** Draws the look into a square of `side` px from the origin. */
 	draw: (context: CanvasRenderingContext2D, side: number) => void;
 }
 
 interface SwatchesSignature {
 	Args: {
 		items: Swatch[];
-		/** None lights no cell. */
 		selected?: number;
 		label: string;
 		onChange: (index: number) => void;
@@ -22,7 +19,6 @@ interface SwatchesSignature {
 	Element: HTMLDivElement;
 }
 
-// iOS: a 40 pt preview, the drawing inset 6
 const preview = 40;
 const inset = 6;
 
@@ -42,11 +38,6 @@ const paint = modifier((canvas: HTMLCanvasElement, [item]: [Swatch]) => {
 	item.draw(context, preview - 2 * inset);
 });
 
-/**
- * A choice of looks, each cell a small drawing on its own paper over the
- * look's name, the chosen cell lit. As many columns as fit, three to six.
- * The port of iOS QRStyleSwatches.
- */
 export default class Swatches extends Component<SwatchesSignature> {
 	get cells() {
 		return this.args.items.map((item, index) => ({
@@ -78,7 +69,6 @@ export default class Swatches extends Component<SwatchesSignature> {
 					}}
 					{{on "click" (fn @onChange cell.index)}}
 				>
-					{{! a hidden drawing, not a control }}
 					{{! template-lint-disable no-nested-interactive }}
 					<canvas
 						class="qr-swatch-preview

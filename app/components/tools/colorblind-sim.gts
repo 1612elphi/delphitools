@@ -59,7 +59,6 @@ const closestName = (colour: Rgb) => getColourName(hex(colour));
 const Trash = <template><IconSvg @name="trash-2" /></template>;
 const Save = <template><IconSvg @name={{(downloadIcon)}} /></template>;
 
-// the document paste (filePaste) would load a drop-zone paste a second time
 const keepPaste = (event: Event) => event.stopPropagation();
 
 function drawn(bitmap: ImageBitmap, edge: number) {
@@ -103,7 +102,6 @@ interface Source {
 	pixels: ImageData;
 }
 
-/** The port of ColourBlindnessSimulatorViewController, on the web tool's matrices. */
 export default class ColorblindSim extends Component {
 	@service declare colourNotation: ColourNotationService;
 
@@ -121,7 +119,6 @@ export default class ColorblindSim extends Component {
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const flags = launchFlags(window.location.search);
-		// sliced row, rgb blue
 		this.state = new CanonColourSolidState({
 			space: 'rgb',
 			colour: flags.colour ?? startColour,
@@ -238,7 +235,6 @@ export default class ColorblindSim extends Component {
 		return colour !== undefined;
 	};
 
-	// the web field answered every keystroke; the kit input waits 400 ms
 	typeLive = (event: Event) => {
 		const colour = readColour(
 			(event.target as HTMLInputElement).value,
@@ -246,7 +242,6 @@ export default class ColorblindSim extends Component {
 		if (colour) this.state.use(colour);
 	};
 
-	// a click places the caret after focus, so select on the next frame
 	selectAll = (event: FocusEvent) => {
 		const field = event.target;
 		if (field instanceof HTMLInputElement)
@@ -275,7 +270,6 @@ export default class ColorblindSim extends Component {
 			event.preventDefault();
 	};
 
-	// a drop anywhere loads; the drop zone handles its own
 	dropAnywhere = (event: DragEvent) => {
 		if (event.defaultPrevented) return;
 		const file = [...(event.dataTransfer?.files ?? [])].find((f) =>
@@ -347,13 +341,11 @@ export default class ColorblindSim extends Component {
 		this.thumbs = {};
 	};
 
-	// cached until the image changes; one run at a time, the selection at its end runs next
 	simulate = async () => {
 		const { source, selected } = this;
 		if (!this.imageMode || !source || this.busy) return;
 		if (this.results[selected]) return;
 		this.busy = true;
-		// a frame for the loader before the pixel loop
 		await new Promise((resolve) => setTimeout(resolve, 16));
 		const url = await blobUrl(painted(source.pixels, selected));
 		this.busy = false;
@@ -678,7 +670,6 @@ export default class ColorblindSim extends Component {
 							indicators.</p>
 					</div>
 				</CanonRows>
-				{{! the empty picture opens it }}
 				{{! template-lint-disable require-input-label }}
 				<input
 					type="file"

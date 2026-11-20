@@ -9,7 +9,6 @@ import {
 } from 'delphitools-v2/components/tools/graph-calc/graph';
 import type { PlotCurve } from 'delphitools-v2/components/tools/graph-calc/plot';
 
-/** Rows shown either side of the trace row. */
 export const reach = 3;
 export const rowHeight = 34;
 const pitch = rowHeight + 1;
@@ -42,7 +41,6 @@ const slides = modifier((body: HTMLElement, [slide]: [Slide]) => {
 	);
 });
 
-/** Values around the trace: x and each plotted curve, the trace's row fixed in a lit band while stepped rows slide through it (GraphValueTable). */
 export default class GraphTable extends Component<TableSignature> {
 	get columns() {
 		return [

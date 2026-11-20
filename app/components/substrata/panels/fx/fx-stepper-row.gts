@@ -15,7 +15,6 @@ interface Signature {
 	Args: { ctx: FxContext; key: string };
 }
 
-// iOS FxBlock.row(.stepper): each step is one undo step
 export default class FxStepperRow extends Component<Signature> {
 	get spec() {
 		return specOf(this.args.ctx, this.args.key) as StepperParam;

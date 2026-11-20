@@ -28,7 +28,6 @@ const card = (d: { type: string; label: string }) => ({
 	icon: FX_ICONS[d.type] ?? FX_ICON_FALLBACK,
 });
 
-// film-sim is a look, kept out of the fx list
 const GROUPS: Group[] = [
 	{
 		stack: 'filters',
@@ -44,8 +43,6 @@ const GROUPS: Group[] = [
 	},
 ];
 
-// the card sits outside the panel, so it keeps these keys from the
-// editor's shortcuts itself
 function keep(event: KeyboardEvent) {
 	if (event.metaKey || event.ctrlKey || event.altKey) return;
 	if (/^(Arrow|Backspace$|Delete$)/.test(event.key))
@@ -61,12 +58,9 @@ interface Signature {
 	};
 }
 
-// iOS FxPicker: four cards a row, filters then effects; a type the layer
-// already has is greyed
 export default class FxPicker extends Component<Signature> {
 	groups = GROUPS;
 
-	// FloatingCard sizes the card from @width alone; on a phone 416 is too wide
 	get width() {
 		const room =
 			this.args.anchor.closest('.sub-ed')?.clientWidth ?? 432;

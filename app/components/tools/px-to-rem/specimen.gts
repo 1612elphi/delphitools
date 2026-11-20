@@ -10,7 +10,6 @@ import {
 
 export interface SpecimenSignature {
 	Args: {
-		/** The value in pixels; undefined draws the grid alone. */
 		pixels?: number;
 		base: number;
 		result: string;
@@ -39,7 +38,6 @@ function paint(element: HTMLElement, pose: Pose) {
 	);
 }
 
-/** The glyphs and the grid spring to a new value over 0.6 s. */
 const settle = modifier(
 	(
 		element: HTMLElement,
@@ -79,7 +77,6 @@ const settle = modifier(
 	},
 );
 
-/** The value set as type on a grid of one line per rem, with the converted result beside it. */
 const Specimen: TOC<SpecimenSignature> = <template>
 	<div class="px-to-rem-specimen" {{settle @pixels @base}} ...attributes>
 		<div class="px-to-rem-grid" aria-hidden="true"></div>

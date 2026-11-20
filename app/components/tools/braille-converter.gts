@@ -30,14 +30,12 @@ const dash = '—';
 
 const isSpace = (char: string) => char === ' ' || char === '⠀';
 
-/** The port of BrailleConverterViewController. */
 export default class BrailleConverter extends Component {
 	@tracked input = '';
 	@tracked mode = 0;
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
-		// ?brailleText= ?brailleMode=<0-2>: the iOS launch arguments
 		const query = new URLSearchParams(window.location.search);
 		const mode = Number(query.get('brailleMode'));
 		if (mode >= 0 && mode < modes.length)
@@ -70,7 +68,6 @@ export default class BrailleConverter extends Component {
 		return read(this.braille);
 	}
 
-	// what the cells say
 	get spoken() {
 		return this.toText ? this.converted : this.input;
 	}
@@ -87,7 +84,6 @@ export default class BrailleConverter extends Component {
 		return `Page size · ${page.cells} × ${page.lines}`;
 	}
 
-	// each cell titled with its dot numbers, as the web tool had it
 	get resultCells() {
 		return [...this.converted].map((char) => ({
 			char,

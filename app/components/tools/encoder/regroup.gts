@@ -26,7 +26,6 @@ const metrics = {
 	rowGap: 12,
 	gap: groupGap,
 };
-// CanonGlyphFlow's panel padding
 const padding = 16;
 
 interface Glyph {
@@ -57,7 +56,6 @@ const observe = modifier(
 	},
 );
 
-/** Labels and brackets of a row of units, in px along the group. */
 function units(list: Group['top'], pitch: number, y: number, down: boolean) {
 	let start = 0;
 	return list.map((unit, index) => {
@@ -189,12 +187,6 @@ const Strip: TOC<{
 	</svg>
 </template>;
 
-/**
- * BitRegroupStrip for Base64: the input's units over their bits, the bits,
- * the output's units under them. A one is a full bar, a zero a stub, a
- * padding bit a grey outline; bits and output characters alternate in
- * colour so the regrouping shows.
- */
 export default class Regroup extends Component<RegroupSignature> {
 	@tracked width = 0;
 
@@ -214,7 +206,6 @@ export default class Regroup extends Component<RegroupSignature> {
 		);
 	}
 
-	// the rows fed move four at a time, so typing at the end keeps the glyphs and their animation
 	get glyphs(): Glyph[] {
 		const { reading } = this.args;
 		const { perRow, pitch } = this;

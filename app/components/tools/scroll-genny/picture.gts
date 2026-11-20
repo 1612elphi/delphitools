@@ -11,10 +11,8 @@ import type { Geometry } from 'delphitools-v2/components/tools/scroll-genny/scro
 export interface PictureSignature {
 	Args: {
 		geometry?: Geometry;
-		/** Object URLs of the drawn slides; none shows the slot that takes a file. */
 		slides: string[];
 		busy: boolean;
-		/** A file is dragged over the tool. */
 		over: boolean;
 		onFile: (file: File) => void;
 	};
@@ -22,7 +20,6 @@ export interface PictureSignature {
 
 const pct = (value: number) => `${Math.round(value * 10000) / 100}%`;
 
-// iOS: spring over 0.5 s, damping 0.8
 const morph = { duration: 500, easing: springEasing(0.8) };
 
 const layoutOf = (element: Element) =>
@@ -30,11 +27,6 @@ const layoutOf = (element: Element) =>
 		.getPropertyValue('--canon-split-layout')
 		.trim();
 
-/**
- * The slides side by side as the carousel shows them, fitted to the band:
- * dashed seams, dotted edges where the image meets the fill, a number on
- * each slide. The port of iOS ScrollCarouselPicture.
- */
 export default class Picture extends Component<PictureSignature> {
 	get strip() {
 		const g = this.args.geometry;
@@ -42,7 +34,6 @@ export default class Picture extends Component<PictureSignature> {
 		const width = g.tileWidth * g.slideCount;
 		return [
 			{
-				// a new count draws a new strip, which fades in
 				count: g.slideCount,
 				style: htmlSafe(
 					`--scroll-ratio: ${width / g.tileHeight}`,
@@ -77,11 +68,6 @@ export default class Picture extends Component<PictureSignature> {
 		}));
 	}
 
-	/**
-	 * When the split turns between stacked and side by side, the strip
-	 * moves and resizes from where it was to where it lands; a plain resize
-	 * follows the window at once.
-	 */
 	morphOnLayout = modifier((strip: HTMLElement) => {
 		const body = strip.closest('.canon-split-body');
 		if (!body) return;
@@ -92,7 +78,6 @@ export default class Picture extends Component<PictureSignature> {
 			const next = layoutOf(body);
 			const flipped = next !== layout;
 			layout = next;
-			// a resize during the morph retargets it from where the strip is shown
 			const moving = running?.playState === 'running';
 			const shown = strip.getBoundingClientRect();
 			running?.cancel();

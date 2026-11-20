@@ -54,10 +54,20 @@ const SIZE_PRESETS = [16, 24, 48, 96].map((v) => ({
 	value: v,
 	label: String(v),
 }));
+const WEIGHT_TITLES = [
+	'Thin',
+	'Extra Light',
+	'Light',
+	'Regular',
+	'Medium',
+	'Semi Bold',
+	'Bold',
+	'Extra Bold',
+	'Black',
+];
+const WEIGHTS = WEIGHT_TITLES.map((_, i) => (i + 1) * 100);
 const TYPING_SETTLE_MS = 600;
 
-// iOS textRows; ranges and steps from the web's TextSection, which also
-// gave the size presets and Direction
 export default class TextSection extends Component<{
 	Args: { layer: TextLayer };
 }> {
@@ -93,6 +103,10 @@ export default class TextSection extends Component<{
 		return this.families.indexOf(this.args.layer.fontFamily);
 	}
 
+	get weightIndex(): number {
+		return WEIGHTS.indexOf(this.args.layer.fontWeight ?? 400);
+	}
+
 	get styleIndex(): number {
 		const style = deriveTextStyle(this.args.layer);
 		return TEXT_STYLE_PRESETS.findIndex((p) => p.id === style);
@@ -126,7 +140,6 @@ export default class TextSection extends Component<{
 		return textAccent(this.args.layer);
 	}
 
-	// a typing burst is one undo step
 	typed = (text: string) => {
 		if (this.#typingId === null) {
 			this.#typingId = this.id;
@@ -148,6 +161,11 @@ export default class TextSection extends Component<{
 	pickFamily = (index: number) => {
 		const fontFamily = this.families[index];
 		if (fontFamily) setTextProps(this.id, { fontFamily });
+	};
+
+	pickWeight = (index: number) => {
+		const fontWeight = WEIGHTS[index];
+		if (fontWeight) setTextProps(this.id, { fontWeight });
 	};
 
 	setSize = (fontSize: number) => setTextProps(this.id, { fontSize });
@@ -213,6 +231,14 @@ export default class TextSection extends Component<{
 				@selected={{this.familyIndex}}
 				@labelledBy={{titleId}}
 				@onChange={{this.pickFamily}}
+			/>
+		</CanonRow>
+		<CanonRow @title="Weight" @form="flush" as |titleId|>
+			<CanonMenuCell
+				@items={{WEIGHT_TITLES}}
+				@selected={{this.weightIndex}}
+				@labelledBy={{titleId}}
+				@onChange={{this.pickWeight}}
 			/>
 		</CanonRow>
 		<CanonRow @title="Size" @form="flush" as |titleId|>

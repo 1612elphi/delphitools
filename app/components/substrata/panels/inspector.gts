@@ -41,9 +41,6 @@ import './inspector/inspector.css';
 
 const close = () => editorUi.close('inspector');
 
-// iOS InspectorPanel: the artboard with nothing selected, shared fields for
-// several layers, else the layer's appearance, transform and kind; arrange
-// closes every selection
 export default class InspectorPanel extends Component {
 	doc = new TrackedExternal(subscribe, getSnapshot);
 	selected = new TrackedExternal(subscribeSelection, getSelectedLayerIds);
@@ -73,7 +70,6 @@ export default class InspectorPanel extends Component {
 		return id ? findLayer(doc.layers, id) : null;
 	}
 
-	// rows with their own state start over for each layer
 	get keyed(): Layer[] {
 		return this.layer ? [this.layer] : [];
 	}
@@ -119,7 +115,6 @@ export default class InspectorPanel extends Component {
 		return l?.kind === 'freehand' ? l : null;
 	}
 
-	// a mask stretches over the layer's box
 	get maskable(): boolean {
 		return this.leaf ? layerDims(this.leaf) !== null : false;
 	}
@@ -197,9 +192,13 @@ export default class InspectorPanel extends Component {
 									@ids={{this.ids}}
 									@layer={{layer}}
 								/>
-								<TransformSection
-									@layer={{this.leaf}}
-								/>
+								{{#unless
+									this.leaf.stratum
+								}}
+									<TransformSection
+										@layer={{this.leaf}}
+									/>
+								{{/unless}}
 								{{#if
 									this.raster
 								}}

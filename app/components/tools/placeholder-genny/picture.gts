@@ -19,7 +19,6 @@ import {
 interface PlaceholderPictureSignature {
 	Args: {
 		spec: PlaceholderSpec;
-		/** Receives the export canvas, drawn at full size. */
 		onCanvas: (canvas: HTMLCanvasElement) => void;
 	};
 }
@@ -32,11 +31,6 @@ function box({ x, y, width, height }: Rect) {
 	);
 }
 
-/**
- * The placeholder as the export writes it, fitted to the pane under
- * dimension lines for its width and height. The port of iOS
- * PlaceholderPicture, drawing the web export itself.
- */
 export default class PlaceholderPicture extends Component<PlaceholderPictureSignature> {
 	@tracked area: Rect = { x: 0, y: 0, width: 0, height: 0 };
 	@tracked fontReady = false;
@@ -45,7 +39,6 @@ export default class PlaceholderPicture extends Component<PlaceholderPictureSign
 
 	constructor(owner: Owner, args: PlaceholderPictureSignature['Args']) {
 		super(owner, args);
-		// a canvas draws with a fallback until the face is loaded
 		void document.fonts
 			.load(`bold 16px ${this.font}`)
 			.finally(() => {
@@ -85,7 +78,6 @@ export default class PlaceholderPicture extends Component<PlaceholderPictureSign
 		return () => observer.disconnect();
 	});
 
-	// autotracked: redraws on every change of the spec and once the font loads
 	paint = modifier((canvas: HTMLCanvasElement) => {
 		if (!this.fontReady) return;
 		drawPlaceholder(canvas, this.args.spec, this.font);

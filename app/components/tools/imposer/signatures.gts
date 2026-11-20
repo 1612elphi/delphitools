@@ -4,7 +4,6 @@ import { on } from '@ember/modifier';
 import { modifier } from 'ember-modifier';
 import type { Signature } from 'delphitools-v2/components/tools/imposer/sheet';
 
-/** Height of the canvas holding the block, as iOS SignatureBlockView. */
 export const blockHeight = 128;
 
 const top = 14;
@@ -13,7 +12,6 @@ const spine = blockHeight - 14 - label - 8;
 
 const range = (signature: Signature) => `${signature.from}–${signature.to}`;
 
-// ios scrollRectToVisible, 24px slack
 const reveal = modifier((element: HTMLElement, [lit]: [number]) => {
 	void lit;
 	const button = element.querySelector<HTMLElement>(
@@ -30,17 +28,13 @@ const reveal = modifier((element: HTMLElement, [lit]: [number]) => {
 export interface SignatureBlockSignature {
 	Args: {
 		signatures: Signature[];
-		/** 0-based lit sheet, across signatures. */
 		lit: number;
-		/** perfect bind: a glue bar under the spines. */
 		glued: boolean;
-		/** 0-based first sheet of the picked signature. */
 		onSelect: (sheet: number) => void;
 	};
 	Element: HTMLDivElement;
 }
 
-/** The iOS SignatureBlockView: a U per sheet in each signature, the lit sheet bold. */
 export default class SignatureBlock extends Component<SignatureBlockSignature> {
 	get label() {
 		return this.args.signatures.map(range).join(', ');

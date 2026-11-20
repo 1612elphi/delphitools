@@ -19,9 +19,11 @@ import {
 	rgb,
 	type PDFFont,
 	type PDFObject,
+	type PDFOperator,
 	type PDFPage,
 } from 'pdf-lib';
 import {
+	ITEXT,
 	contentBox,
 	contentPlacement,
 	displayedToUser,
@@ -43,7 +45,7 @@ function colour(hex: string) {
 	return rgb(r / 255, g / 255, b / 255);
 }
 
-// WinAnsi only; anything else becomes '?'
+// winansi only, else '?'
 export function encodable(font: PDFFont, text: string): string {
 	let out = '';
 	for (const ch of text) {
@@ -57,14 +59,68 @@ export function encodable(font: PDFFont, text: string): string {
 	return out;
 }
 
+type Embedded = Awaited<ReturnType<PDFDocument['embedPng']>>;
+
+interface Faces {
+	font: PDFFont;
+	bold?: PDFFont;
+	images: Map<string, Embedded>;
+}
+
+async function drawObjects(
+	out: PDFDocument,
+	pdfPage: PDFPage,
+	page: ErrataPage,
+	faces: Faces,
+): Promise<void> {
+	for (const object of page.objects) {
+		const face =
+			object.kind === 'text' && object.bold
+				? (faces.bold ??= await out.embedFont(
+						StandardFonts.HelveticaBold,
+					))
+				: faces.font;
+		await drawObject(pdfPage, page, object, face, faces.images);
+	}
+	writeComments(pdfPage, page);
+}
+
+function isolateContent(pdfPage: PDFPage, ...ops: PDFOperator[]): void {
+	const ctx = pdfPage.doc.context;
+	pdfPage.node.normalize();
+	pdfPage.node.wrapContentStreams(
+		ctx.register(ctx.contentStream([pushGraphicsState(), ...ops])),
+		ctx.register(ctx.contentStream([popGraphicsState()])),
+	);
+}
+
+/** Draws each page's objects over the same page of a PDF; pages line up by index. */
+export async function flattenObjects(
+	bytes: Uint8Array,
+	pages: readonly ErrataPage[],
+): Promise<Uint8Array> {
+	const out = await PDFDocument.load(bytes);
+	const faces: Faces = {
+		font: await out.embedFont(StandardFonts.Helvetica),
+		images: new Map(),
+	};
+	for (const [i, page] of pages.entries()) {
+		if (!page.objects.length) continue;
+		const pdfPage = out.getPage(i);
+		// content may leave transforms
+		isolateContent(pdfPage);
+		await drawObjects(out, pdfPage, page, faces);
+	}
+	return out.save();
+}
+
 async function drawObject(
 	pdfPage: PDFPage,
 	page: ErrataPage,
 	object: PageObject,
 	font: PDFFont,
-	images: Map<string, Awaited<ReturnType<PDFDocument['embedPng']>>>,
+	images: Map<string, Embedded>,
 ): Promise<void> {
-	// annotations or burnt in
 	if (
 		object.kind === 'comment' ||
 		object.kind === 'redact' ||
@@ -102,15 +158,15 @@ async function drawObject(
 	switch (object.kind) {
 		case 'text': {
 			const size = object.fontSize;
-			// fabric IText metrics: lineHeight 1.16 * _fontSizeMult 1.13, baseline at 0.778 of that
 			pdfPage.drawText(encodable(font, object.text), {
 				x: -w / 2,
-				y: h / 2 - size * 1.13 * 0.778,
+				y: h / 2 - size * ITEXT.mult * ITEXT.baseline,
 				size,
 				font,
 				color: colour(object.colour),
 				opacity: object.opacity,
-				lineHeight: size * 1.16 * 1.13,
+				lineHeight:
+					size * ITEXT.lineHeight * ITEXT.mult,
 			});
 			break;
 		}
@@ -166,9 +222,15 @@ async function drawObject(
 		case 'image': {
 			let embedded = images.get(object.dataUrl);
 			if (!embedded) {
-				embedded = await pdfPage.doc.embedPng(
-					object.dataUrl,
-				);
+				embedded = object.dataUrl.startsWith(
+					'data:image/jpeg',
+				)
+					? await pdfPage.doc.embedJpg(
+							object.dataUrl,
+						)
+					: await pdfPage.doc.embedPng(
+							object.dataUrl,
+						);
 				images.set(object.dataUrl, embedded);
 			}
 			pdfPage.drawImage(embedded, {
@@ -240,16 +302,7 @@ function mirror(pdfPage: PDFPage, page: ErrataPage): void {
 	const tx = e + box.x - a * box.x;
 	const ty = f + box.y - d * box.y;
 	const ctx = pdfPage.doc.context;
-	pdfPage.node.normalize();
-	pdfPage.node.wrapContentStreams(
-		ctx.register(
-			ctx.contentStream([
-				pushGraphicsState(),
-				concatTransformationMatrix(a, 0, 0, d, tx, ty),
-			]),
-		),
-		ctx.register(ctx.contentStream([popGraphicsState()])),
-	);
+	isolateContent(pdfPage, concatTransformationMatrix(a, 0, 0, d, tx, ty));
 	const x = (v: number) => a * v + tx;
 	const y = (v: number) => d * v + ty;
 	const annots = pdfPage.node.Annots();
@@ -331,11 +384,7 @@ export async function exportPdf(
 	const source = sourceBytes ? await PDFDocument.load(sourceBytes) : null;
 	if (source) applyEditsToDoc(source, doc.pages);
 	const font = await out.embedFont(StandardFonts.Helvetica);
-	let bold: PDFFont | undefined;
-	const images = new Map<
-		string,
-		Awaited<ReturnType<PDFDocument['embedPng']>>
-	>();
+	const faces: Faces = { font, images: new Map() };
 
 	const flipped = (p: ErrataPage) => p.flipX || p.flipY;
 	const copyable = (p: ErrataPage) => p.sourceIndex !== null && !p.resize;
@@ -383,7 +432,7 @@ export async function exportPdf(
 						),
 					),
 				);
-			// pdf-lib cannot embed a page without a content stream
+			// pdf-lib needs content stream
 			if (
 				page.sourceIndex !== null &&
 				source &&
@@ -426,7 +475,7 @@ export async function exportPdf(
 									.dataUrl,
 							),
 						);
-				// clip to the placed content box, the image is drawn whole
+				// clip to content box
 				pdfPage.pushOperators(
 					pushGraphicsState(),
 					rectangle(
@@ -456,16 +505,7 @@ export async function exportPdf(
 				pdfPage.pushOperators(popGraphicsState());
 		}
 		pdfPage.setRotation(degrees(totalRotation(page)));
-		for (const object of page.objects) {
-			const face =
-				object.kind === 'text' && object.bold
-					? (bold ??= await out.embedFont(
-							StandardFonts.HelveticaBold,
-						))
-					: font;
-			await drawObject(pdfPage, page, object, face, images);
-		}
-		writeComments(pdfPage, page);
+		await drawObjects(out, pdfPage, page, faces);
 	}
 	if (source) carryAcroForm(source, out, kept);
 	addFormFields(out, doc, font);

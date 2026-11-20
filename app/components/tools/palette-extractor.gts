@@ -61,17 +61,14 @@ const Code = <template><IconSvg @name="code" /></template>;
 const Save = <template><IconSvg @name={{(downloadIcon)}} /></template>;
 const Choose = <template><IconSvg @name="image" /></template>;
 
-// the document paste (filePaste) would load a drop-zone paste a second time
 const keepPaste = (event: Event) => event.stopPropagation();
 
 interface Source {
 	url: string;
 	bitmap: ImageBitmap;
-	/** File name less the extension, for the download. */
 	stem: string;
 }
 
-/** ?extractSample ?extractCount=<3-11> ?extractStrategy=<index>: the iOS launch arguments. */
 function launchFlags(search: string) {
 	const query = new URLSearchParams(search);
 	const count = Number(query.get('extractCount'));
@@ -96,14 +93,12 @@ const pngOf = (canvas: HTMLCanvasElement) =>
 const percentText = (share: number) =>
 	share > 0 && share < 0.01 ? '<1%' : `${Math.round(share * 100)}%`;
 
-/** The port of PaletteExtractorViewController, on the web tool's engine. */
 export default class PaletteExtractor extends Component {
 	@service declare colourNotation: ColourNotationService;
 	@service('canon-toast') declare toast: CanonToastService;
 
 	@tracked source?: Source;
 	@tracked clusters: Cluster[] = [];
-	/** Counts extractions, so a new run's rows enter again. */
 	@tracked run = 0;
 	@tracked strategy: number;
 	@tracked count: number;
@@ -169,7 +164,6 @@ export default class PaletteExtractor extends Component {
 				percent: percentText(share),
 				figure: (share * 100).toFixed(1),
 				fill: htmlSafe(`background: ${cluster.hex}`),
-				// min share keeps slivers
 				segment: htmlSafe(
 					`flex-grow: ${Math.max(share, 0.012)}; background: ${cluster.hex}; color: ${ink}`,
 				),
@@ -210,12 +204,10 @@ export default class PaletteExtractor extends Component {
 		return this.extracting && this.clusters.length === 0;
 	}
 
-	// palette-genny decodes this
 	get gennyColours() {
 		return this.palette.map((c) => c.hex.slice(1)).join(',');
 	}
 
-	// listener dies with tool
 	shortcuts = modifier((element: HTMLElement) => {
 		const onKeyDown = (event: KeyboardEvent) => {
 			const target = event.target as HTMLElement | null;
@@ -256,7 +248,6 @@ export default class PaletteExtractor extends Component {
 		if (this.#frame !== undefined)
 			cancelAnimationFrame(this.#frame);
 		this.extracting = true;
-		// lets dim state paint
 		this.#frame = requestAnimationFrame(() => {
 			this.#frame = undefined;
 			if (this.isDestroying || this.isDestroyed) return;
@@ -270,7 +261,6 @@ export default class PaletteExtractor extends Component {
 		});
 	};
 
-	/** The palettised picture for the compare, a frame after the palette changes. */
 	repaint() {
 		if (this.#paintFrame !== undefined)
 			cancelAnimationFrame(this.#paintFrame);
@@ -330,7 +320,6 @@ export default class PaletteExtractor extends Component {
 	picked = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
-		// lets same file re-fire
 		input.value = '';
 		if (file) void this.readFile(file);
 	};
@@ -582,7 +571,6 @@ export default class PaletteExtractor extends Component {
 						</CanonGrid>
 					</CanonRows>
 				{{/if}}
-				{{! the empty picture and Choose open it }}
 				{{! template-lint-disable require-input-label }}
 				<input
 					type="file"

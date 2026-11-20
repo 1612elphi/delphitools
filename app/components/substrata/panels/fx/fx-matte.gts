@@ -13,7 +13,6 @@ import {
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 import type { FxContext } from './fx-context';
 
-// iOS FxEffectsMatte with the web's states: a loader and the cut-out's state
 export default class FxMatte extends Component<{ Args: { ctx: FxContext } }> {
 	#mattes = new TrackedExternal(subscribeMattes, matteEpoch);
 
@@ -57,7 +56,6 @@ export default class FxMatte extends Component<{ Args: { ctx: FxContext } }> {
 		return this.state === 'done' && this.status?.device === 'wasm';
 	}
 
-	// a render may not write; the modifier starts the matte
 	kick = modifier((_el: HTMLElement, [hash]: [string]) => {
 		ensureMatte(hash);
 	});

@@ -41,10 +41,8 @@ import './placeholder-genny/placeholder-genny.css';
 
 const formats = ['PNG', 'SVG'];
 const presetNames = presets.map((preset) => preset.label);
-// big pngs encode slowly
 const measureMs = 300;
 
-// iOS: spring over 0.55 s, damping 0.82
 const spring = htmlSafe(`--ph-spring: ${springEasing(0.82)}`);
 
 const Copy = <template><IconSvg @name="copy" /></template>;
@@ -55,7 +53,6 @@ const toBlob = (canvas: HTMLCanvasElement) =>
 		canvas.toBlob(resolve, 'image/png'),
 	);
 
-// ?phSize=1920x1080 ?phText=<label> ?phFormat=<0 png, 1 svg> ?phColours=%231e6626,%23faf5e6: the iOS -phsize, -phtext, -phformat, -phcolours arguments
 function launchFlags() {
 	const query = new URLSearchParams(window.location.search);
 	const size = (query.get('phSize') ?? '')
@@ -73,7 +70,6 @@ function launchFlags() {
 	};
 }
 
-/** The port of PlaceholderGeneratorViewController, on the web tool's export. */
 export default class PlaceholderGenny extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 	@tracked width: number;
@@ -107,7 +103,6 @@ export default class PlaceholderGenny extends Component {
 		return {
 			width: this.width,
 			height: this.height,
-			// the export writes lowercase hex, as the web tool did
 			background: hex(this.background).toLowerCase(),
 			foreground: hex(this.foreground).toLowerCase(),
 			text: this.text,
@@ -170,7 +165,6 @@ export default class PlaceholderGenny extends Component {
 		return passAlong(`Download ${formats[this.format]!}`);
 	}
 
-	// the picture draws the export canvas; the PNG size follows after a pause
 	keepCanvas = (canvas: HTMLCanvasElement) => {
 		this.#canvas = canvas;
 		const spec = this.spec;

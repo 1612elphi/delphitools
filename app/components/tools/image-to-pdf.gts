@@ -72,12 +72,10 @@ const MAX_MARGIN_MM = 30;
 const mmText = (mm: number) => `${mm} mm`;
 const MIN_DPI = 72;
 const MAX_DPI = 300;
-// step divides common dpis
 const DPI_STEP = 6;
 const dpiText = (dpi: number) => `${dpi} DPI`;
 const FORMATS: PageFormat[] = ['png', 'jpeg', 'webp'];
 const formatLabels = ['PNG', 'JPEG', 'WebP'];
-// jpeg scans 3x smaller
 const DEFAULT_DPI = 150;
 const DEFAULT_FORMAT: PageFormat = 'jpeg';
 const DEFAULT_QUALITY = 0.85;
@@ -117,7 +115,6 @@ function loadItem(file: File): Promise<Item> {
 		image.onload = () => {
 			const { naturalWidth: width, naturalHeight: height } =
 				image;
-			// sizeless svg reports zero
 			if (!width || !height) return fail();
 			resolve({
 				id: nextId++,
@@ -137,7 +134,6 @@ const isPdf = (file: File) => matchesAccept(file, PDF_ACCEPT);
 const isImage = (file: File) => matchesAccept(file, IMAGE_ACCEPT);
 const pages = (n: number) => (n === 1 ? '1 page' : `${n} pages`);
 
-// ?i2pSample: ios -i2pImages
 function drawnSamples(): Promise<File[]> {
 	const specs: [string, number, number, string][] = [
 		['page10.png', 1200, 800, '#c0392b'],
@@ -197,11 +193,6 @@ function ranged(query: URLSearchParams, key: string, min: number, max: number) {
 		: undefined;
 }
 
-/**
- * The port of ImageToPDFViewController: images into one PDF, or a PDF's
- * pages into images. Both tool entries load this component and the route's
- * id picks the direction; the instance and its files outlive the switch.
- */
 export default class ImageToPdf extends Component {
 	@service declare router: RouterService;
 
@@ -233,10 +224,8 @@ export default class ImageToPdf extends Component {
 	#token = 0;
 	#run = 0;
 	#build = 0;
-	// serialises adds, keeps order
 	#adding: Promise<void> = Promise.resolve();
 
-	// ?i2p* ios launch arguments
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -376,7 +365,6 @@ export default class ImageToPdf extends Component {
 		);
 	}
 
-	/** images queue; pdf flips */
 	take = (files: File[]) => {
 		const pdf = files.find(isPdf);
 		const images = files.filter(isImage);
@@ -683,7 +671,6 @@ export default class ImageToPdf extends Component {
 		this.rendering = false;
 	};
 
-	// sliders stay live mid-run
 	#drawer() {
 		const { dpi, format, quality, stem } = this;
 		return async (pdf: PDFDocumentProxy, at: number) => {
@@ -883,7 +870,6 @@ export default class ImageToPdf extends Component {
 						{{/if}}
 					</CanonRows>
 					<CanonRows @framed={{true}}>
-						{{! saves after pages draw }}
 						<DownloadAll
 							class="i2p-zip"
 							@files={{this.pageFiles}}

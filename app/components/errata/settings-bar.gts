@@ -36,8 +36,6 @@ const STROKES = [1, 2, 4, 8];
 
 const titles = (values: number[]) => values.map(String);
 
-// the old omnibar's settings unit as Substrata settings cells: colour,
-// size and shape for the markup tools, zoom for Select and Edit
 export default class SettingsBar extends Component<{
 	Args: { phone: boolean };
 }> {

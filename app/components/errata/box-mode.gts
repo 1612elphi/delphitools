@@ -40,6 +40,7 @@ import { dropRedactions, redactIds } from 'delphitools-v2/lib/errata/redact';
 import { boxMode, closeMode, onMode } from 'delphitools-v2/lib/errata/ui';
 import {
 	DEFAULT_IMPOSITION_CONFIG,
+	DIRECTION_AWARE_LAYOUTS,
 	DUPLEX_AWARE_LAYOUTS,
 	GANG_RUN_GRIDS,
 	IMPOSITION_LAYOUTS,
@@ -92,7 +93,6 @@ const STAMP_HEADS: Record<StampMode, { icon: string; label: string }> = {
 type Orientation = ImpositionConfig['orientation'];
 type Flip = NonNullable<ImpositionConfig['duplexFlip']>;
 
-// imposer.gts forces landscape
 const FOLD_LAYOUTS = new Set([
 	'saddle-stitch',
 	'perfect-bind',
@@ -109,6 +109,11 @@ const FLIPS: SegmentedOption<Flip>[] = [
 	{ value: 'short-edge', label: 'Short edge' },
 ];
 
+const DIRECTIONS: SegmentedOption<'ltr' | 'rtl'>[] = [
+	{ value: 'ltr', label: 'Left to right' },
+	{ value: 'rtl', label: 'Right to left' },
+];
+
 const LAYOUT_NAMES = IMPOSITION_LAYOUTS.map((l) => l.name);
 
 const COPIES: SegmentedOption<number>[] = Object.keys(GANG_RUN_GRIDS).map(
@@ -117,7 +122,6 @@ const COPIES: SegmentedOption<number>[] = Object.keys(GANG_RUN_GRIDS).map(
 
 const CUSTOM_SIZE = -1;
 
-/** presets, and a stepper behind Custom for any other size */
 class SizeField extends Component<{
 	Args: {
 		options: SegmentedOption<number>[];
@@ -465,7 +469,6 @@ export class CompressPanel extends ReplacePanel {
 		before: number;
 		after: number;
 	} | null = null;
-	// results last one session
 	#off = onMode('compress', {
 		enter: () => {
 			this.compressed = null;
@@ -480,7 +483,6 @@ export class CompressPanel extends ReplacePanel {
 		this.#off();
 	}
 
-	// hidden once undone
 	get result() {
 		const c = this.compressed;
 		return c && c.source === this.doc.current?.source
@@ -578,6 +580,7 @@ export class ImposePanel extends ReplacePanel {
 	@tracked rows = 2;
 	@tracked cols = 2;
 	@tracked flip: Flip = 'long-edge';
+	@tracked direction: 'ltr' | 'rtl' = 'ltr';
 	#off = onMode('impose', {
 		enter: () => (this.failed = false),
 		exit: this.discard,
@@ -596,7 +599,10 @@ export class ImposePanel extends ReplacePanel {
 		(this as unknown as Record<string, unknown>)[key] = value;
 	};
 
-	// layouts ignore foreign fields
+	get directionAware() {
+		return DIRECTION_AWARE_LAYOUTS.has(this.layout);
+	}
+
 	impose = (bytes: Uint8Array) =>
 		imposePdf(bytes, {
 			...DEFAULT_IMPOSITION_CONFIG,
@@ -612,6 +618,7 @@ export class ImposePanel extends ReplacePanel {
 			nUp: this.copies,
 			customGrid: [this.rows, this.cols],
 			duplexFlip: this.flip,
+			rtl: this.direction === 'rtl',
 		});
 
 	apply = async () => {
@@ -702,13 +709,24 @@ export class ImposePanel extends ReplacePanel {
 				</Field>
 			{{/if}}
 			<Field @label="Orientation">
-				{{! fold layouts force landscape }}
 				<Segmented
 					@options={{ORIENTATIONS}}
 					@value={{this.orientation}}
 					@onChange={{fn this.pick "orientation"}}
 				/>
 			</Field>
+			{{#if this.directionAware}}
+				<Field @label="Reading">
+					<Segmented
+						@options={{DIRECTIONS}}
+						@value={{this.direction}}
+						@onChange={{fn
+							this.pick
+							"direction"
+						}}
+					/>
+				</Field>
+			{{/if}}
 			{{#if this.duplexAware}}
 				<Field @label="Duplex">
 					<Segmented
@@ -759,13 +777,11 @@ export class ImposePanel extends ReplacePanel {
 	</template>
 }
 
-// export burns marks in
 const burn = (bytes: Uint8Array) => bytes;
 
 export class RedactPanel extends ReplacePanel {
 	doc = new TrackedExternal(store.subscribe, store.getSnapshot);
 	#kept = new Set<string>();
-	// cancel drops new marks
 	#off = onMode('redact', {
 		enter: () => {
 			this.#kept = redactIds(store.getSnapshot());

@@ -12,7 +12,6 @@ import './tools.css';
 
 export type { CanonPlacement };
 
-// a menu item that carries its own action
 export type BarMenuItem = CanonMenuItem & { run?: () => void };
 export type BarMenuEntry = BarMenuItem | CanonMenuEntry;
 
@@ -20,7 +19,6 @@ export function menuIcon(name: string): ComponentLike {
 	return <template><IconSvg @name={{name}} /></template>;
 }
 
-// a value cell reads as its setting and its value
 function named(label: string, text?: string): string {
 	return text ? `${label}: ${text}` : label;
 }
@@ -29,7 +27,6 @@ function runItem(item: CanonMenuItem): void {
 	(item as BarMenuItem).run?.();
 }
 
-// iOS menuCell: a cell showing the current choice, opening a menu
 export const MenuCell: TOC<{
 	Args: {
 		label: string;
@@ -59,13 +56,13 @@ export const MenuCell: TOC<{
 	</CanonMenu>
 </template>;
 
-// a cell opening a panel of settings the iOS bar has no cell for
 export const PopoverCell: TOC<{
 	Args: {
 		label: string;
 		text?: string;
 		icon?: string;
 		placement: CanonPlacement;
+		tip?: CanonPlacement;
 	};
 	Blocks: { default: [close: () => void] };
 	Element: HTMLButtonElement;
@@ -76,6 +73,7 @@ export const PopoverCell: TOC<{
 				@label={{@label}}
 				@text={{@text}}
 				@icon={{@icon}}
+				@tip={{@tip}}
 				aria-label={{named @label @text}}
 				...attributes
 				{{p.trigger}}

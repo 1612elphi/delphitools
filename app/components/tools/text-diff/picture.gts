@@ -22,7 +22,6 @@ interface PictureSignature {
 		onFile: (side: SideId, file: File) => void;
 		onCopy: (side: SideId) => void;
 		onSwap: () => void;
-		/** The picture's own height in px at its current width. */
 		onHeight: (height: number) => void;
 	};
 }
@@ -36,7 +35,6 @@ const CopyIcon = <template><IconSvg @name="copy" /></template>;
 const ClearIcon = <template><IconSvg @name="trash-2" /></template>;
 const SwapIcon = <template><IconSvg @name="arrow-up-down" /></template>;
 
-// .td-side-head: 6 px over a 44 px head, one per side
 const headHeight = 50;
 
 const reportHeight = modifier(
@@ -69,7 +67,6 @@ function lines(text: string, marks: SideMark[]) {
 		const mark = marks[index] ?? plain;
 		return {
 			lit: mark.lit,
-			// an empty line keeps its height
 			pieces: line
 				? pieces(line, mark.spans)
 				: [{ text: ' ', on: false }],
@@ -77,11 +74,6 @@ function lines(text: string, marks: SideMark[]) {
 	});
 }
 
-/**
- * Both texts as typed, numbered, each with its own side of the diff lit in
- * place: removed lines and words on the original, added on the modified. A
- * transparent textarea over each takes the typing.
- */
 export default class Picture extends Component<PictureSignature> {
 	get sides() {
 		const { oldText, newText, oldMarks, newMarks } = this.args;
@@ -113,7 +105,6 @@ export default class Picture extends Component<PictureSignature> {
 	chooseFile = (side: SideId, event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
-		// the same file can be chosen again
 		input.value = '';
 		if (file) this.args.onFile(side, file);
 	};
@@ -126,7 +117,6 @@ export default class Picture extends Component<PictureSignature> {
 
 	openFile = (side: SideId) => this.#pickers[side]?.click();
 
-	// a file dropped on a side loads into that side
 	drop = (side: SideId, event: DragEvent) => {
 		const file = event.dataTransfer?.files[0];
 		if (!file) return;

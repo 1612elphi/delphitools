@@ -12,7 +12,6 @@ interface ContrastRowSignature {
 	};
 }
 
-/** ColourAtlasContrastRow: the colour as type on white or black, the ratio and a lamp per WCAG level. */
 const ContrastRow: TOC<ContrastRowSignature> = <template>
 	<div class="colour-atlas-contrast">
 		<span

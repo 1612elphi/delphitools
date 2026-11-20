@@ -10,7 +10,6 @@ interface CandidateSignature {
 		candidate: Candidate;
 		lit: boolean;
 		onCopy: () => void;
-		/** Opens the candidate in Manual; none when it has no settings. */
 		onTweak?: () => void;
 	};
 }
@@ -19,11 +18,6 @@ const TweakIcon = <template><IconSvg @name="sliders-horizontal" /></template>;
 
 const percent = (score: number) => `${Math.round(score * 100)}%`;
 
-/**
- * CipherCandidateRow: the cipher, its detail and score over a score bar and
- * the first lines of the output. Pressing copies the output; the trailing
- * cell opens it in Manual.
- */
 const CandidateRow: TOC<CandidateSignature> = <template>
 	<div class="dec-candidate {{if @lit 'dec-candidate--lit'}}">
 		<button

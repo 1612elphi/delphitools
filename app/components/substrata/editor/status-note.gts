@@ -17,9 +17,9 @@ const TEXT: Record<ToastId, string> = {
 	exported: 'Exported',
 	'wand-needs-layer': 'Select a layer first',
 	'open-failed': "Couldn't open that file",
+	'asset-failed': "Sorry, couldn't load that one.",
 };
 
-// the web's toasts, under the title panel in the iOS caption chip's look
 export default class StatusNote extends Component {
 	note = new TrackedExternal(subscribeToast, getToast);
 
@@ -28,7 +28,6 @@ export default class StatusNote extends Component {
 		this.note.unsubscribe();
 	}
 
-	// keyed by seq, so a repeat replays the fade
 	get notes() {
 		const n = this.note.current;
 		return n ? [{ seq: n.seq, text: TEXT[n.id] }] : [];

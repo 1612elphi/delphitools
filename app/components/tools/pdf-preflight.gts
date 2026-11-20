@@ -60,7 +60,6 @@ const Trash = <template><IconSvg @name="trash-2" /></template>;
 const Cross = <template><IconSvg @name="x" /></template>;
 const Save = <template><IconSvg @name={{(downloadIcon)}} /></template>;
 
-/** The port of PDFPreflightViewController, on the web tool's pdf-lib and pdf.js checks. */
 export default class PdfPreflight extends Component {
 	drop = new Drop(ACCEPT, (file) => this.load(file));
 
@@ -69,20 +68,16 @@ export default class PdfPreflight extends Component {
 	@tracked analysing = false;
 	@tracked report: PreflightReport | null = null;
 	@tracked pages: CanonPage[] = [];
-	/** null: all pages */
 	@tracked page: number | null = null;
 	@tracked preview = '';
 	@tracked boxes: PageBoxMark[] = [];
 	@tracked flagged: PreflightIssue | null = null;
 
 	#pdf: PDFDocumentProxy | null = null;
-	// bumps per file
 	#token = 0;
-	// bumps per preview
 	#shown = 0;
 	#startPage: number | null = null;
 
-	// ?pfSample, ?pfPage: ios flags
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -264,7 +259,6 @@ export default class PdfPreflight extends Component {
 			});
 		} catch (e) {
 			if (!live()) return;
-			// import failure = parse error
 			console.error('pdf-preflight analysis failed:', e);
 			const message = e instanceof Error ? e.message : '';
 			this.error =
@@ -304,7 +298,6 @@ export default class PdfPreflight extends Component {
 		this.flagged = issue;
 	};
 
-	// preview is other pane
 	revealFlags = modifier((paper: HTMLElement, [count]: [number]) => {
 		if (count) paper.scrollIntoView({ block: 'nearest' });
 	});
@@ -335,7 +328,6 @@ export default class PdfPreflight extends Component {
 	downloadFont = (font: FontInfo) => {
 		const bytes = font.data;
 		if (!bytes) return;
-		// BlobPart rejects ArrayBufferLike view
 		const buffer = bytes.buffer.slice(
 			bytes.byteOffset,
 			bytes.byteOffset + bytes.byteLength,

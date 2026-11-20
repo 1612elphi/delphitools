@@ -17,14 +17,12 @@ interface ShapePictureSignature {
 		invalid: boolean;
 		selected: string | null;
 		onTap: (cell: ShapeCell) => void;
-		/** Arrow keys move the selection without zooming. */
 		onSelect: (cell: ShapeCell) => void;
 	};
 }
 
 export const rowHeight = 26;
 
-/** Band height in px for a shape of `levels` rows, frames included. */
 export const shapeHeight = (levels: number) => 52 + levels * rowHeight;
 
 const legendNames: [ShapeKind, string][] = [
@@ -35,10 +33,6 @@ const legendNames: [ShapeKind, string][] = [
 	['literal', 'true false null'],
 ];
 
-/**
- * JSONShapePicture: the document as rows of cells, each as wide as its share
- * of the bytes. A container cell zooms in, the focus cell zooms out.
- */
 export default class ShapePicture extends Component<ShapePictureSignature> {
 	@cached
 	get view() {
@@ -179,7 +173,6 @@ export default class ShapePicture extends Component<ShapePictureSignature> {
 	<template>
 		<div class="jf-shape">
 			{{#if this.view}}
-				{{! one tab stop: arrows walk the cells, Enter zooms, Escape zooms out }}
 				<div
 					class="jf-shape-rows"
 					role="group"

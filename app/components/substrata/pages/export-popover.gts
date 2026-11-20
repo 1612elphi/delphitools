@@ -4,6 +4,7 @@ import { tracked } from '@glimmer/tracking';
 import CanonButton from 'delphicanon/components/canon-button';
 import CanonDecimalField from 'delphicanon/components/canon-decimal-field';
 import CanonFigure from 'delphicanon/components/canon-figure';
+import CanonGrid from 'delphicanon/components/canon-grid';
 import CanonHeading from 'delphicanon/components/canon-heading';
 import CanonLoader from 'delphicanon/components/canon-loader';
 import CanonRow from 'delphicanon/components/canon-row';
@@ -11,6 +12,12 @@ import CanonSegmented from 'delphicanon/components/canon-segmented';
 import CanonSlider from 'delphicanon/components/canon-slider';
 import CanonStatus from 'delphicanon/components/canon-status';
 import { IconSvg } from 'delphitools-v2/components/icon';
+import {
+	creditLines,
+	creditSources,
+} from 'delphitools-v2/lib/substrata/assets';
+import type { AssetSource } from 'delphitools-v2/lib/substrata/doc-model';
+import { toast } from 'delphitools-v2/lib/substrata/toast';
 import { getSnapshot, subscribe } from 'delphitools-v2/lib/substrata/doc-store';
 import { editorUi } from 'delphitools-v2/lib/substrata/editor-ui';
 import {
@@ -42,8 +49,11 @@ import { anchorFor } from './page-state';
 
 const ESTIMATE_MS = 300;
 
-// iOS ExportSheet in a popover beside the share cell: format, quality,
-// scale, the size in pixels and bytes, and Export
+const creditDetail = (s: AssetSource) => `${s.creator}, ${s.licence}`;
+
+const CREDITS_NOTE =
+	'This image uses licensed assets. Please publish the credits listed below along with it.';
+
 class ExportForm extends Component<{ Args: { onDone: () => void } }> {
 	doc = new TrackedExternal(subscribe, getSnapshot);
 	activeLayer = new TrackedExternal(subscribeSelection, getActiveLayerId);
@@ -78,6 +88,26 @@ class ExportForm extends Component<{ Args: { onDone: () => void } }> {
 		window.clearTimeout(this.#timer);
 		this.#seq += 1;
 	}
+
+	creditsNote = CREDITS_NOTE;
+
+	get sources() {
+		const doc = this.doc.current;
+		return doc ? creditSources(doc) : [];
+	}
+
+	copyCredits = async () => {
+		const doc = this.doc.current;
+		if (!doc) return;
+		try {
+			await navigator.clipboard.writeText(
+				creditLines(doc).join('\n'),
+			);
+			toast('copied');
+		} catch {
+			// clipboard refused
+		}
+	};
 
 	get meta() {
 		return EXPORT_FORMATS[this.format]!;
@@ -117,7 +147,6 @@ class ExportForm extends Component<{ Args: { onDone: () => void } }> {
 		return this.bytes ? `≈${this.bytes[0]}` : '—';
 	}
 
-	// layer export needs alpha; JXL needs a secure context
 	get disabledFormats() {
 		return EXPORT_FORMATS.flatMap((f, i) =>
 			(f.id === 'jxl' && !this.jxlOk) ||
@@ -285,20 +314,53 @@ class ExportForm extends Component<{ Args: { onDone: () => void } }> {
 				@row={{true}}
 			/>
 		{{/if}}
+		{{#if this.sources.length}}
+			<CanonHeading @text="Credits" />
+			<CanonStatus
+				@text={{this.creditsNote}}
+				@tone="muted"
+				@row={{true}}
+			/>
+			{{#each this.sources as |s|}}
+				<CanonRow
+					class="sub-pg-credit"
+					@title={{s.title}}
+					@detail={{creditDetail s}}
+				/>
+			{{/each}}
+		{{/if}}
 		{{#if this.busy}}
 			<CanonRow @title="Exporting…">
 				<CanonLoader @cell={{5}} @gap={{1}} />
 			</CanonRow>
 		{{/if}}
-		<CanonButton
-			class="sub-pg-primary"
-			@kind="primary"
-			@text="Export"
-			@icon={{component IconSvg name="share"}}
-			@iconStyle="oversized"
-			@disabled={{this.busy}}
-			@onClick={{this.run}}
-		/>
+		{{#if this.sources.length}}
+			<CanonGrid>
+				<CanonButton
+					@text="Copy credits"
+					@icon={{component IconSvg name="copy"}}
+					@onClick={{this.copyCredits}}
+				/>
+				<CanonButton
+					@kind="primary"
+					@text="Export"
+					@icon={{component IconSvg name="share"}}
+					@iconStyle="oversized"
+					@disabled={{this.busy}}
+					@onClick={{this.run}}
+				/>
+			</CanonGrid>
+		{{else}}
+			<CanonButton
+				class="sub-pg-primary"
+				@kind="primary"
+				@text="Export"
+				@icon={{component IconSvg name="share"}}
+				@iconStyle="oversized"
+				@disabled={{this.busy}}
+				@onClick={{this.run}}
+			/>
+		{{/if}}
 	</template>
 }
 
@@ -313,7 +375,6 @@ export default class ExportPopover extends Component<Signature> {
 
 	constructor(owner: Owner, args: Signature['Args']) {
 		super(owner, args);
-		// the web's ⌘E and menus open the modal id; the popover takes it
 		const take = () => {
 			if (getOpenModal() !== 'export') return;
 			closeModal();

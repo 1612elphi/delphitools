@@ -21,11 +21,8 @@ interface RibbonsSignature {
 	Args: {
 		space: SolidSpace;
 		values: number[];
-		/** Channel drawn in the primary colour, for the solid's space and slice. */
 		lit?: number;
-		/** Ticks ease to the new values; drags follow at once. */
 		animated: boolean;
-		/** New channel values; animated for a tap or a key, not for a drag. */
 		onPick: (
 			space: SolidSpace,
 			values: number[],
@@ -43,11 +40,6 @@ const keySteps: Record<string, number> = {
 	PageDown: -10,
 };
 
-/**
- * ColourChannelRibbons: one space's channels as ribbons, each running its
- * channel's range with the others held at the colour, a tick at the colour.
- * Outside sRGB a ribbon dims. A press or a sideways drag sets that channel.
- */
 export default class Ribbons extends Component<RibbonsSignature> {
 	get name() {
 		return spaceNames[this.args.space];
@@ -118,7 +110,6 @@ export default class Ribbons extends Component<RibbonsSignature> {
 		this.#setChannel(index, min + (max - min) * share, animated);
 	}
 
-	// a press picks at once, as the iOS tap; the drag follows the pointer
 	press = modifier((ribbon: HTMLElement, [index]: [number]) => {
 		const move = (event: PointerEvent) => {
 			if (ribbon.hasPointerCapture(event.pointerId))

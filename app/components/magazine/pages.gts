@@ -7,12 +7,10 @@ import {
 import { CANON_KIT_ID, getToolById } from 'delphitools-v2/lib/tools';
 import './pages.css';
 
-/** CSS px of one page; the textures scale from this. */
 export const PAGE_WIDTH = 600;
 export const PAGE_HEIGHT = 800;
 
 export interface MagazineLink {
-	/** `https://…` opens a tab, `/…` routes in-app, `#<page id>` turns to that page. */
 	href: string;
 	label: string;
 }
@@ -23,20 +21,14 @@ export interface PageSignature {
 
 export interface MagazinePage {
 	id: string;
-	/** Read out on a turn and used as the page's accessible name. */
 	name: string;
 	component: ComponentLike<PageSignature>;
 	links: MagazineLink[];
 	description?: string;
-	/** An image in public/magazine. */
 	art?: string;
-	/** Small capitals above the page. */
 	kicker?: string;
-	/** Window screenshots in public/magazine, overlapping. */
 	shots?: string[];
-	/** Listed on the contents page. */
 	listed?: boolean;
-	/** Words printed in a full-page image, for screen readers. */
 	printed?: string[];
 }
 
@@ -66,7 +58,6 @@ export const MagazineLinkButton: TOC<{ Args: { link: MagazineLink } }> =
 		{{/if}}
 	</template>;
 
-// a full-bleed image page; its printed words stay readable for screen readers
 const Plate: TOC<PageSignature> = <template>
 	<div class="dt-mag-plate">
 		<img class="dt-mag-plate-art" src={{@page.art}} alt="" />
@@ -76,7 +67,6 @@ const Plate: TOC<PageSignature> = <template>
 	</div>
 </template>;
 
-// a plate with Apple's badge in the space the art leaves for it
 const AppStorePlate: TOC<PageSignature> = <template>
 	<div class="dt-mag-plate">
 		<img class="dt-mag-plate-art" src={{@page.art}} alt="" />
@@ -147,7 +137,6 @@ const Contents: TOC<PageSignature> = <template>
 	</div>
 </template>;
 
-// two overlapping window shots
 const Shots: TOC<PageSignature> = <template>
 	<div class="dt-mag-product">
 		{{#if @page.kicker}}
@@ -247,10 +236,6 @@ const BackCover: TOC<PageSignature> = <template>
 	</div>
 </template>;
 
-/**
- * The magazine, one entry per page in reading order: front cover first,
- * back cover last. The count must stay even (pages pair into leaves).
- */
 export const MAGAZINE_PAGES: MagazinePage[] = [
 	{
 		id: 'cover',

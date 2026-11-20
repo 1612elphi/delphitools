@@ -21,7 +21,6 @@ export interface DisplaySignature {
 		glyphs: string[];
 		size: number;
 		widest: number;
-		/** Advance of one glyph as a share of the size, for the marquee. */
 		advance: number;
 		positions: boolean;
 		colours: boolean;
@@ -39,18 +38,10 @@ interface Caret {
 	end: number;
 }
 
-/** UTF-16 offset of glyph `index`. */
 function offsetOf(glyphs: string[], index: number) {
 	return glyphs.slice(0, index).join('').length;
 }
 
-/**
- * The text a character per cell, as large as the settings ask, in rows that
- * wrap; alternate cells shaded, each with its position. A transparent
- * textarea over the cells takes the typing, and the caret and selection are
- * drawn on the cells. As a marquee the text is one line moving right to
- * left in a loop.
- */
 export default class Display extends Component<DisplaySignature> {
 	@tracked box: Size = { width: 0, height: 0 };
 	@tracked caret?: Caret;
@@ -134,7 +125,6 @@ export default class Display extends Component<DisplaySignature> {
 		);
 	}
 
-	// the marquee: the text and a gap, repeated to cover the band
 	get advancePx() {
 		return this.args.size * this.args.advance;
 	}
@@ -189,7 +179,6 @@ export default class Display extends Component<DisplaySignature> {
 
 	#ran?: { text: string; advance: number; width: number };
 
-	// new text enters at the leading edge; a new size keeps the place in characters
 	run = modifier((_: HTMLElement, [text, period]: [string, number]) => {
 		const advance = this.advancePx;
 		const ran = this.#ran;
@@ -197,7 +186,6 @@ export default class Display extends Component<DisplaySignature> {
 		let frame = 0;
 		let last = performance.now();
 		const step = (now: number) => {
-			// stalls do not jump
 			const elapsed =
 				Math.min(Math.max(0, now - last), 100) / 1000;
 			last = now;
@@ -224,7 +212,6 @@ export default class Display extends Component<DisplaySignature> {
 		return () => cancelAnimationFrame(frame);
 	});
 
-	// the textarea's own layout is hidden, so the caret is read back and drawn on the cells
 	track = modifier((editor: HTMLTextAreaElement) => {
 		this.editor = editor;
 		const read = () => {
@@ -252,7 +239,6 @@ export default class Display extends Component<DisplaySignature> {
 	input = (event: Event) =>
 		this.args.onInput((event.target as HTMLTextAreaElement).value);
 
-	// a click puts the caret before or after the cell under it
 	place = (event: MouseEvent) => {
 		const editor = this.editor;
 		const { frames } = this;

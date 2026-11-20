@@ -104,7 +104,6 @@ export default class FlowState extends Component {
 			const flight = flyTo(origin, element).finally(() => {
 				this.flow.landing = false;
 			});
-			// advance after lift-off
 			const committed = new Promise<void>((resolve) =>
 				setTimeout(resolve, FLIGHT_MS * LIFT_OFF),
 			);

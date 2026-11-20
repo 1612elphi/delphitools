@@ -1,4 +1,5 @@
 import Component from '@glimmer/component';
+import { tracked } from '@glimmer/tracking';
 import { fn } from '@ember/helper';
 import { modifier } from 'ember-modifier';
 import { eq } from 'ember-truth-helpers';
@@ -33,6 +34,14 @@ import {
 	toolbox,
 	type BoxMode,
 } from 'delphitools-v2/lib/errata/ui';
+import { inserts } from 'delphitools-v2/components/errata/write/insert-menu';
+import { startMarkup } from 'delphitools-v2/lib/errata/write/markup';
+import {
+	continueAsPdf,
+	exportWrite,
+} from 'delphitools-v2/lib/errata/write/session';
+import { writeStore } from 'delphitools-v2/lib/errata/write/store';
+import { showTab, writePanel } from 'delphitools-v2/lib/errata/write/view';
 import { allTools } from 'delphitools-v2/lib/tools';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 
@@ -47,7 +56,6 @@ interface BoxCell {
 	tool: BoxTool;
 }
 
-// descriptions come from the registry where a delphitools tool exists
 function fromRegistry(id: string): string {
 	return allTools.find((t) => t.id === id)?.description ?? '';
 }
@@ -175,14 +183,65 @@ const BOX_GROUPS: { heading: string; cells: BoxCell[] }[] = [
 	},
 ];
 
-// the Toolbox: a bottom drawer of the PDF tools in Substrata's MenuCard
-// grid; a picked tool runs as a panel in the settings bar's place
-export default class Toolbox extends Component<{ Args: { phone: boolean } }> {
+const WRITE_TOOLS = new Set<BoxTool>([
+	'page-size',
+	'insert',
+	'page-numbers',
+	'fill-sign',
+	'stamp',
+	'watermark',
+	'comment',
+	'export',
+]);
+
+const WRITE_TEXT: Partial<Record<BoxTool, string>> = {
+	'page-size': 'Set paper size and orientation',
+	insert: 'Start a new page at the caret',
+};
+
+const WRITE_GROUPS = [
+	...BOX_GROUPS.map((g) => ({
+		heading: g.heading,
+		cells: g.cells
+			.filter((c) => WRITE_TOOLS.has(c.tool))
+			.map((c) => ({
+				...c,
+				description:
+					WRITE_TEXT[c.tool] ?? c.description,
+			})),
+	})).filter((g) => g.cells.length),
+	{
+		heading: 'As a PDF',
+		cells: BOX_GROUPS.flatMap((g) =>
+			g.cells.filter((c) => !WRITE_TOOLS.has(c.tool)),
+		),
+	},
+];
+
+let session = writeStore.session();
+writeStore.subscribe(() => {
+	const now = writeStore.session();
+	if (now !== session && boxMode.get() === 'as-pdf') closeMode();
+	session = now;
+});
+
+export default class Toolbox extends Component<{
+	Args: { phone: boolean; write?: boolean };
+}> {
+	@tracked pending: BoxMode | null = null;
+	@tracked busy = false;
+	@tracked failed = false;
+
 	boxOpen = new TrackedExternal(toolbox.subscribe, toolbox.get);
 	mode = new TrackedExternal(boxMode.subscribe, boxMode.get);
 	draft = new TrackedExternal(cropDraft.subscribe, cropDraft.get);
 
 	cropHint = 'Drag on the page';
+	asPdfHint = 'Text will no longer be editable';
+
+	get groups() {
+		return this.args.write ? WRITE_GROUPS : BOX_GROUPS;
+	}
 
 	willDestroy() {
 		super.willDestroy();
@@ -206,7 +265,6 @@ export default class Toolbox extends Component<{ Args: { phone: boolean } }> {
 		closeMode();
 	};
 
-	// a press outside the drawer and its key closes it
 	outsideClose = modifier((sheet: HTMLElement, [open]: [boolean]) => {
 		if (!open) return;
 		const onDown = (event: PointerEvent) => {
@@ -225,9 +283,41 @@ export default class Toolbox extends Component<{ Args: { phone: boolean } }> {
 
 	run = (tool: BoxTool) => {
 		toolbox.set(false);
+		if (this.args.write) return this.runWrite(tool);
 		if (tool === 'fill-sign') modal.set('signature');
 		else if (tool === 'export') void exportCurrent();
 		else setMode(tool);
+	};
+
+	runWrite(tool: BoxTool) {
+		writePanel.set(null);
+		if (tool === 'export') void exportWrite();
+		else if (tool === 'page-size') {
+			if (!showTab('paper')) writePanel.set('setup');
+		} else if (tool === 'insert') inserts.pageBreak();
+		else if (tool === 'page-numbers') inserts.numbers();
+		else if (tool === 'fill-sign') {
+			startMarkup();
+			modal.set('signature');
+		} else if (WRITE_TOOLS.has(tool)) {
+			startMarkup();
+			setMode(tool);
+		} else {
+			this.pending = tool;
+			this.failed = false;
+			setMode('as-pdf');
+		}
+	}
+
+	asPdf = async () => {
+		const tool = this.pending;
+		this.busy = true;
+		const ok = await continueAsPdf(
+			() => boxMode.get() !== 'as-pdf',
+		).catch(() => false);
+		this.busy = false;
+		this.failed = !ok;
+		if (ok) setMode(tool);
 	};
 
 	<template>
@@ -247,7 +337,7 @@ export default class Toolbox extends Component<{ Args: { phone: boolean } }> {
 				@onClose={{this.closeBox}}
 			/>
 			<div class="err-sheet-body">
-				{{#each BOX_GROUPS key="heading" as |g|}}
+				{{#each this.groups key="heading" as |g|}}
 					<div class="err-sheet-group">
 						<CanonHeading
 							@text={{g.heading}}
@@ -293,6 +383,22 @@ export default class Toolbox extends Component<{ Args: { phone: boolean } }> {
 					<span
 						class="err-mode-tag"
 					>{{this.cropHint}}</span>
+				</:status>
+			</ToolPanel>
+			<ToolPanel
+				@open={{eq this.mode.current "as-pdf"}}
+				@mode="as-pdf"
+				@label="Continue as PDF"
+				@onCancel={{closeMode}}
+				@onApply={{this.asPdf}}
+				@applyLabel="Continue"
+				@busy={{this.busy}}
+				@failed={{this.failed}}
+			>
+				<:status>
+					<span
+						class="err-mode-tag"
+					>{{this.asPdfHint}}</span>
 				</:status>
 			</ToolPanel>
 			{{#each STAMP_MODES as |m|}}

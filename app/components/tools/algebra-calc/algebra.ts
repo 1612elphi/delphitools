@@ -1,11 +1,25 @@
 type MathModule = typeof import('mathjs');
+type Cas = typeof import('nerdamer');
+
+export interface Engines {
+	math: MathModule;
+	// mathjs lacks factor, integrate
+	cas: Cas;
+}
+
+let engines: Promise<Engines> | null = null;
+export function loadEngines(): Promise<Engines> {
+	engines ??= Promise.all([
+		import('mathjs'),
+		import('delphitools-v2/components/tools/algebra-calc/cas'),
+	]).then(([math, cas]) => ({ math, cas: cas.default }));
+	return engines;
+}
 
 export type Operation =
 	'simplify' | 'expand' | 'factor' | 'solve' | 'derivative' | 'integral';
 
 const ROOT_PRECISION = 10;
-
-const UNSUPPORTED_OP = 'This operation is not supported at this time';
 
 export const OPERATIONS: {
 	id: Operation;
@@ -71,14 +85,14 @@ export function solveRoots(math: MathModule, expression: string): string[] {
 }
 
 export function compute(
-	math: MathModule,
+	{ math, cas }: Engines,
 	operation: Operation,
 	expression: string,
 	variable: string,
 ): string {
 	switch (operation) {
 		case 'simplify':
-			// rationalize expands polynomials.
+			// rationalize expands polynomials
 			try {
 				return math
 					.simplify(math.rationalize(expression))
@@ -97,8 +111,19 @@ export function compute(
 			return math.derivative(expression, variable).toString();
 
 		case 'factor':
-		case 'integral':
-			throw new Error(UNSUPPORTED_OP);
+		case 'integral': {
+			const polynomial = equationToPolynomial(expression);
+			try {
+				return operation === 'factor'
+					? cas
+							.factor(polynomial)
+							.text('fractions')
+					: `${cas.integrate(polynomial, variable).text('fractions')} + C`;
+			} finally {
+				// nerdamer persists assignments
+				cas.clearVars();
+			}
+		}
 	}
 }
 

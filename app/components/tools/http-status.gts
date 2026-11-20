@@ -33,7 +33,6 @@ const classTitles = ['All', ...STATUS_CLASSES.map((info) => `${info.class}xx`)];
 const placeholder = `Search ${TOTAL_STATUSES} codes…`;
 const fallback = lookupStatus(200)!;
 
-/** The port of HTTPStatusViewController. */
 export default class HttpStatusTool extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -43,7 +42,6 @@ export default class HttpStatusTool extends Component {
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
-		// ?httpSearch= ?httpClass=<1-5> ?httpSelect=<code>: the iOS -httpSearch, -httpClass, -httpSelect flags
 		const query = new URLSearchParams(window.location.search);
 		this.search = query.get('httpSearch') ?? '';
 		const cls = Number(query.get('httpClass'));

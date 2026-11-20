@@ -1,4 +1,3 @@
-/* the picture: entry, caption and figure, then the register in what is left */
 .bc-picture {
 	position: absolute;
 	inset: 0;
@@ -11,7 +10,6 @@
 	border-block-end: var(--canon-hairline) solid var(--canon-border);
 }
 
-/* iOS shrinks the entry to fit its width, down to 15 pt */
 .bc-entry .canon-big-number-field-input {
 	font-size: clamp(
 		15px,
@@ -191,7 +189,6 @@ button.bc-lamp:focus-visible {
 	}
 }
 
-/* a 64-bit binary value wraps instead of being cut off */
 .bc-values .canon-value-line-value {
 	overflow-wrap: anywhere;
 	white-space: normal;

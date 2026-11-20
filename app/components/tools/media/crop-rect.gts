@@ -20,23 +20,16 @@ import './crop-rect.css';
 
 export interface CropRectSignature {
 	Args: {
-		/** The picture under the crop; none shows only the block. */
 		url?: string;
 		alt: string;
-		/** In the crop's units: image pixels, page points. */
 		size: Size;
 		crop: Rect;
-		/** The slider's spoken value. */
 		valueText: string;
-		/** Thirds inside the crop. */
 		thirds?: boolean;
-		/** Every drag step and key. */
 		onCrop: (crop: Rect) => void;
-		/** A drag or key ended. */
 		onSettle: () => void;
 	};
 	Blocks: {
-		/** The picture's box in the area, and the area. */
 		default: [frame: Rect, area: Size];
 	};
 	Element: HTMLDivElement;
@@ -49,11 +42,6 @@ export const box = ({ x, y, width, height }: Rect) =>
 		`left: ${px(x)}; top: ${px(y)}; width: ${px(width)}; height: ${px(height)}`,
 	);
 
-/**
- * The picture fitted to the area with a crop over it: dimmed outside, edges
- * and corners drag, inside moves, arrow keys nudge (Alt resizes). The port
- * of iOS PDFCropCanvas.
- */
 export default class CropRect extends Component<CropRectSignature> {
 	@tracked area: Size = { width: 0, height: 0 };
 	#grabbed?: Edges;
@@ -142,7 +130,6 @@ export default class CropRect extends Component<CropRectSignature> {
 		};
 	}
 
-	// uncropped: pane scrolls
 	grabs = (point: Point) => {
 		if (!this.args.url) return false;
 		const shown = this.shownCrop;

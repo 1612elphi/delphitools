@@ -12,7 +12,6 @@ import {
 interface ChartSignature {
 	Args: {
 		selected: HttpStatus;
-		/** Codes the search and class leave in the list. */
 		matches: Set<number>;
 		onSelect: (code: number) => void;
 	};
@@ -23,11 +22,6 @@ const table = STATUS_CLASSES.map((info) => ({
 	statuses: HTTP_STATUSES.filter((status) => status.class === info.class),
 }));
 
-/**
- * HTTPStatusChart: the selected code large over its phrase and facts, then
- * every code as a tile by class; the selected one filled, the matches full
- * strength, codes outside the registry's standard set dashed.
- */
 export default class Chart extends Component<ChartSignature> {
 	get facts() {
 		return statusFacts(this.args.selected).slice(1);

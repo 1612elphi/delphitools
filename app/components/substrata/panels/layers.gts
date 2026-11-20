@@ -28,12 +28,8 @@ const ADD_TOOLS: { id: EditorTool; title: string; icon: string }[] = [
 	{ id: 'shape', title: 'Shape', icon: 'shapes' },
 ];
 
-// presses that never close an unpinned panel: its own key, and the cards
-// it opened
 const KEEPS_OPEN = '.sub-card-layer, [title="Layers"]';
 
-// iOS LayersPanel: header cells Add Layer, Select, Pin and Close over the
-// layer list
 export default class LayersPanel extends Component {
 	@tracked addCell: HTMLElement | null = null;
 
@@ -41,7 +37,6 @@ export default class LayersPanel extends Component {
 
 	togglePicking = () => {
 		layersState.picking = !layersState.picking;
-		// leaving picking keeps the primary layer only
 		if (!layersState.picking) setActiveLayer(getActiveLayerId());
 	};
 
@@ -55,6 +50,12 @@ export default class LayersPanel extends Component {
 		cell?.focus();
 	};
 
+	openAssets = () => {
+		const phone = !!this.addCell?.closest('.is-tray');
+		this.addCell = null;
+		if (!editorUi.assetsOpen) editorUi.toggleAssets(phone);
+	};
+
 	add = (id: EditorTool) => {
 		this.addCell = null;
 		chooseTool(id);
@@ -66,7 +67,6 @@ export default class LayersPanel extends Component {
 		return () => el.removeEventListener('click', open);
 	});
 
-	// iOS: unpinned, the panel closes when a press that began outside it ends
 	unpinned = modifier((panel: HTMLElement) => {
 		let outside = false;
 		const down = (e: PointerEvent) => {
@@ -147,6 +147,11 @@ export default class LayersPanel extends Component {
 							}}
 						/>
 					{{/each}}
+					<MenuCard
+						@title="Assets"
+						@icon="images"
+						@onClick={{this.openAssets}}
+					/>
 				</div>
 			</FloatingCard>
 		{{/if}}

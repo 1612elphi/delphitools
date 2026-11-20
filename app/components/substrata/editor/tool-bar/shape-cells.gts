@@ -34,7 +34,6 @@ interface Signature {
 	Args: { axis: 'row' | 'column'; placement: CanonPlacement };
 }
 
-// iOS ShapeKind; Symbol is the web's pieces gallery
 const KINDS: { shape: PieceShape; title: string; icon: string }[] = [
 	{ shape: 'rectangle', title: 'Rectangle', icon: 'square' },
 	{ shape: 'ellipse', title: 'Ellipse', icon: 'circle' },
@@ -47,9 +46,6 @@ const KINDS: { shape: PieceShape; title: string; icon: string }[] = [
 const STYLE = { title: 'Style', icon: 'sliders-horizontal' };
 const SYMBOLS = { title: 'Symbols', icon: 'shapes' };
 
-// iOS shape cells: one kind menu. The web's shape settings (stroke,
-// corner, sides, points, inner) sit in a Style panel, the symbol gallery
-// in a Symbols panel; the fill is the colour key's, as on iOS
 export default class ShapeCells extends Component<Signature> {
 	ts = new TrackedExternal(subscribeToolSettings, getToolSettings);
 	sub = new TrackedExternal(subscribeTool, () => getActiveSubs().pieces);

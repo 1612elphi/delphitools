@@ -8,20 +8,13 @@ import './drop-more.css';
 
 export interface DropMoreSignature {
 	Args: {
-		/** As the file input's accept attribute; default image/*. */
 		accept?: string;
-		/** Defaults to the images wording. */
 		prompt?: string;
 		onFiles: (files: File[]) => void;
 	};
 	Element: HTMLButtonElement;
 }
 
-/**
- * The empty item after a multi-file list: a dashed row that adds the files
- * dropped on it or picked through it. Its drop calls preventDefault, so a
- * tool-wide multiple `Drop` skips it.
- */
 export default class DropMore extends Component<DropMoreSignature> {
 	@tracked over = false;
 	#input?: HTMLInputElement;
@@ -83,7 +76,6 @@ export default class DropMore extends Component<DropMoreSignature> {
 					"Drop additional images here"
 				}}</span>
 		</button>
-		{{! the row is its label }}
 		{{! template-lint-disable require-input-label }}
 		<input
 			type="file"

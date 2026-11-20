@@ -12,7 +12,6 @@ export default class PalettePattern extends Component {
 	@tracked hue = 145;
 	@tracked selected?: number = 5;
 
-	// chroma eases off towards white and black so every shade stays in gamut
 	get shades(): Rgb[] {
 		return steps.map((l) =>
 			fromOklch(

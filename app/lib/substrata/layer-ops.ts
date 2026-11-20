@@ -30,13 +30,16 @@ import type {
 	Transform,
 } from './doc-model';
 
+// strata never move
+const place = (l: Layer, transform: Transform): Layer =>
+	l.stratum ? l : { ...l, transform };
+
 export function setTransform(id: string, transform: Transform): void {
 	update((doc) => ({
 		...doc,
-		layers: mapLayerInTree(doc.layers, id, (l) => ({
-			...l,
-			transform,
-		})),
+		layers: mapLayerInTree(doc.layers, id, (l) =>
+			place(l, transform),
+		),
 		updatedAt: Date.now(),
 	}));
 }
@@ -49,10 +52,9 @@ export function setTransforms(
 	update((doc) => {
 		let layers = doc.layers;
 		for (const { id, transform } of entries) {
-			layers = mapLayerInTree(layers, id, (l) => ({
-				...l,
-				transform,
-			}));
+			layers = mapLayerInTree(layers, id, (l) =>
+				place(l, transform),
+			);
 		}
 		return { ...doc, layers, updatedAt: Date.now() };
 	});
@@ -140,6 +142,7 @@ export function setTextProps(
 			TextLayer,
 			| 'text'
 			| 'fontFamily'
+			| 'fontWeight'
 			| 'fontSize'
 			| 'fill'
 			| 'stroke'
@@ -186,7 +189,6 @@ export function setBlendMode(id: string, blendMode: BlendMode): void {
 	}));
 }
 
-// a blank name or the same name leaves the doc and the undo stack alone
 export function renameLayer(id: string, name: string): void {
 	const next = name.trim();
 	const doc = getSnapshot();

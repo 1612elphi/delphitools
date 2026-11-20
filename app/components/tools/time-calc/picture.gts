@@ -47,13 +47,6 @@ const observe = modifier(
 	},
 );
 
-/**
- * TimeCalcPicture: the result on a time axis, its difference as a figure.
- * Timestamp: the epoch from 1970 to the signed 32-bit limit in 2038, counted
- * seconds lit, the date and now marked. Arithmetic: a calendar ruler,
- * weekends shaded, the span lit. Timezone: a faint world and a day strip per
- * zone, hours shaded day and night, the instant across both.
- */
 export default class Picture extends Component<PictureSignature> {
 	@tracked size = { width: 0, height: 0 };
 	@tracked shown?: Pose;
@@ -112,7 +105,6 @@ export default class Picture extends Component<PictureSignature> {
 		);
 	}
 
-	/** The figure: a distance from now, the span's largest unit, or the zones' offset. */
 	get figure(): { number?: string; unit: string; note?: string } {
 		const { scene, now } = this.args;
 		if (scene.kind === 'epoch') {
@@ -189,7 +181,6 @@ export default class Picture extends Component<PictureSignature> {
 		const kind = this.args.scene.kind;
 		const turned = kind !== this.#kind;
 		this.#kind = kind;
-		// old drawing already gone
 		if (turned && this.shown && !still())
 			for (const layer of element.querySelectorAll(
 				'.tc-drawing, .tc-readout',
@@ -202,7 +193,6 @@ export default class Picture extends Component<PictureSignature> {
 		this.#target = key;
 		cancelAnimationFrame(this.#frame);
 		const start = this.shown;
-		// the clock alone moves the axis without a spring
 		const ticked =
 			start && start.a === target.a && start.b === target.b;
 		if (!start || turned || ticked || still()) {
@@ -214,7 +204,6 @@ export default class Picture extends Component<PictureSignature> {
 		const began = performance.now();
 		const step = (now: number) => {
 			const progress = Math.min(1, (now - began) / settleMs);
-			// damped spring, one overshoot
 			const eased =
 				progress === 1
 					? 1
@@ -223,7 +212,6 @@ export default class Picture extends Component<PictureSignature> {
 							Math.cos(9 * progress);
 			const mix = (a: number, b: number) =>
 				a + (b - a) * eased;
-			// zoom eases logarithmically
 			const from = Math.log(Math.max(start.hi - start.lo, 1));
 			const to = Math.log(Math.max(target.hi - target.lo, 1));
 			const width = Math.exp(

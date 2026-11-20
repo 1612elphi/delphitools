@@ -27,9 +27,7 @@ interface FieldSignature {
 		source: string;
 		parse: FieldParse;
 		subs: Subs;
-		/** The expression has five fields; else the row is blank and still. */
 		editable: boolean;
-		/** Why the field fails, in words. */
 		issue?: string;
 		open: boolean;
 		onToggle: () => void;
@@ -42,11 +40,6 @@ interface FieldSignature {
 
 const Chevron = <template><IconSvg @name="chevron-down" /></template>;
 
-/**
- * iOS CronFieldEditor: a row with the field's name, what it keeps in words
- * and its text to type into; open, the mode as segments and the numbers that
- * mode takes under it.
- */
 export default class Field extends Component<FieldSignature> {
 	panelId = `${guidFor(this)}-panel`;
 

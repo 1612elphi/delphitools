@@ -10,7 +10,6 @@ export interface TonesHandle {
 	key: string;
 	label: string;
 	track: 0 | 1;
-	// 0…255 along the track
 	position: number;
 	fill: 'black' | 'grey' | 'white';
 	text: string;
@@ -20,12 +19,10 @@ interface Signature {
 	Args: {
 		bins: number[] | null;
 		handles: TonesHandle[];
-		// null: a black to white ramp; a level: black below it, white above
 		split: number | null;
 		barTrack: 0 | 1;
 		shadeBelow?: number;
 		shadeAbove?: number;
-		// travel in levels since the drag began
 		onDrag: (key: string, travel: number) => void;
 		onEnd: () => void;
 		onStep: (key: string, direction: 1 | -1) => void;
@@ -33,7 +30,6 @@ interface Signature {
 	};
 }
 
-// iOS FxTonesGraph metrics
 const INSET = 22;
 const TOP = 12;
 const PLOT = 80;
@@ -44,7 +40,6 @@ const TIP = 10;
 const at = (level: number) =>
 	`calc(${INSET}px + (100% - ${2 * INSET}px) * ${Math.min(255, Math.max(0, level)) / 255})`;
 
-// iOS FxTonesGraph: the histogram, a bar and triangles that drag along it
 export default class FxTonesGraph extends Component<Signature> {
 	@tracked shades = false;
 	#fade?: number;
@@ -112,7 +107,6 @@ export default class FxTonesGraph extends Component<Signature> {
 		}, 1000);
 	}
 
-	// the nearest triangle under the pointer wins
 	nearest(event: PointerEvent): string | undefined {
 		const graph = event.currentTarget as HTMLElement;
 		let best: { key: string; d: number } | undefined;

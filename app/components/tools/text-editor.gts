@@ -51,7 +51,6 @@ const PLACEHOLDER =
 	'The Karman Institute for Planetary Observation has confirmed that Earth is no longer able to sustain organic life. After decades of atmospheric collapse, sensor data from the Donna Shirley Space Telescope indicates that oxygen and nitrogen concentrations in the atmosphere have reached irreversible levels of depletion. Carbon dioxide levels, combined with solar radiation and the absence of a protective ozone layer, have rendered the surface barren. The final viable microbial traces recorded last year by automated spectroscopic satellites have now vanished.';
 
 const HIDE_MS = 2500;
-// iOS ManuscriptView: the bubble's half width and height
 const BUBBLE = { half: 96, height: 44 };
 const fonts = ['Sans', 'Serif', 'Mono'];
 const fontClasses = ['', 'te-pane--serif', 'te-pane--mono'];
@@ -125,7 +124,6 @@ function isEmptyDoc(doc: PMNode): boolean {
 const clamp = (value: number, low: number, high: number) =>
 	Math.min(Math.max(value, low), Math.max(low, high));
 
-/** The port of TextEditorViewController, on the web's ProseMirror editor. */
 export default class TextEditorTool extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -141,17 +139,14 @@ export default class TextEditorTool extends Component {
 	@tracked bubble: Bubble | null = null;
 	@tracked menuNode: PMNode | null = null;
 	@tracked choices: BlockChoice[] = [];
-	// in the browser's full screen, not the overlay
 	@tracked native = false;
 	@tracked overlay = false;
 	@tracked settingsOpen = false;
 
 	view: EditorView | null = null;
-	// arrived before mount
 	#pendingText: string | null = null;
 	#startsInSource = false;
 	frame = 0;
-	// never persisted, privacy
 	dirty = false;
 	hideTimer: ReturnType<typeof setTimeout> | null = null;
 	#pane?: HTMLElement;
@@ -169,9 +164,6 @@ export default class TextEditorTool extends Component {
 			'fullscreenchange',
 			this.fullscreenChanged,
 		);
-		// ?teText= ?teFont=0-2 ?teSentence=1 ?teParagraph=1 ?teDim=1
-		// ?teTypewriter=1 ?teGutter=0 ?teMargin=0 ?teFields=words,chars
-		// ?teSource=1: the iOS launch arguments
 		const query = new URLSearchParams(window.location.search);
 		const text = query.get('teText');
 		if (text !== null) this.#pendingText = text;
@@ -259,12 +251,10 @@ export default class TextEditorTool extends Component {
 			mark: blockMark(row.type),
 			name: this.choiceName(row) ?? row.type,
 			active: row.pos === this.activeBlockPos,
-			// offsets from prosemirror measurements
 			style: htmlSafe(`top: ${row.top}px`),
 		}));
 	}
 
-	// rows lag a replaced document by a frame
 	nodeAt(pos: number): PMNode | null {
 		const doc = this.view?.state.doc;
 		return doc && pos < doc.content.size ? doc.nodeAt(pos) : null;
@@ -287,7 +277,6 @@ export default class TextEditorTool extends Component {
 		}));
 	}
 
-	// cached: a pick is found by identity, titles repeat while capturing
 	@cached
 	get exportItems(): CanonMenuEntry[] {
 		return exports.map((entry) => ({
@@ -431,13 +420,11 @@ export default class TextEditorTool extends Component {
 
 	openSettings = () => (this.settingsOpen = true);
 
-	// safari: no invoker focus
 	closeSettings = () => {
 		this.settingsOpen = false;
 		this.#settingsCell?.focus();
 	};
 
-	// one menu for every gutter row, anchored to a point moved to the row
 	keepMenu = modifier((panel: HTMLElement) => {
 		this.#menuPanel = panel;
 		this.#menuPoint = panel.previousElementSibling as HTMLElement;
@@ -456,7 +443,6 @@ export default class TextEditorTool extends Component {
 	mount = modifier((element: HTMLElement) => {
 		let gone = false;
 		let tearDown: (() => void) | undefined;
-		// a synchronous set-up autotracks this.settings, so each settings change would rebuild the editor
 		queueMicrotask(() => {
 			if (!gone) tearDown = this.#setUp(element);
 		});
@@ -469,7 +455,6 @@ export default class TextEditorTool extends Component {
 	#setUp(element: HTMLElement) {
 		this.choices = ed.blockChoices(ed.schema);
 
-		// older-build leftovers
 		try {
 			localStorage.removeItem(DOC_KEY);
 		} catch {
@@ -498,11 +483,9 @@ export default class TextEditorTool extends Component {
 				'aria-label': 'Text',
 			},
 			nodeViews: ed.buildNodeViews(),
-			// plain-text clipboard only
 			clipboardTextParser: (text) => {
 				const doc = ed.parseMarkdown(text);
 				const first = doc.firstChild;
-				// single paragraph pastes inline
 				if (
 					doc.childCount === 1 &&
 					first &&
@@ -622,7 +605,6 @@ export default class TextEditorTool extends Component {
 		this.dirty = true;
 	};
 
-	// replaces the whole document
 	readFile = async (file: File) => {
 		if (!matchesAccept(file, ACCEPT)) return;
 		const text = await file.text();
@@ -632,14 +614,12 @@ export default class TextEditorTool extends Component {
 	chooseFile = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
-		// the same file can be chosen again
 		input.value = '';
 		if (file) void this.readFile(file);
 	};
 
 	openFile = () => this.#picker?.click();
 
-	// a file dropped anywhere on the tool; text drops stay with the editor
 	drop = (event: DragEvent) => {
 		const file = event.dataTransfer?.files[0];
 		if (!file) return;
@@ -678,7 +658,6 @@ export default class TextEditorTool extends Component {
 		this.dirty = true;
 	}
 
-	// one undo step, unlike a loaded file
 	clear = () => {
 		const v = this.view;
 		if (this.settings.codeMode) {
@@ -686,7 +665,6 @@ export default class TextEditorTool extends Component {
 				document.querySelector<HTMLTextAreaElement>(
 					'.text-editor .te-source',
 				);
-			// execCommand keeps it undoable
 			area?.focus();
 			area?.select();
 			document.execCommand('delete');
@@ -795,7 +773,6 @@ export default class TextEditorTool extends Component {
 			view.state.schema.nodes;
 		const block = view.state.doc.nodeAt(pos);
 
-		// in-place list type swap
 		if (
 			choice.listType &&
 			block &&
@@ -825,7 +802,6 @@ export default class TextEditorTool extends Component {
 				),
 			),
 		);
-		// else heading-sized list items
 		if (choice.wrap && paragraph) {
 			const parent = view.state.selection.$from.parent;
 			if (parent.isTextblock && parent.type !== paragraph) {
@@ -846,7 +822,6 @@ export default class TextEditorTool extends Component {
 		}
 		const pane = this.#pane;
 		this.enterZen();
-		// iPhone Safari has no element full screen
 		if (pane?.requestFullscreen)
 			pane.requestFullscreen()
 				.then(() => (this.native = true))
@@ -855,7 +830,6 @@ export default class TextEditorTool extends Component {
 		this.view?.focus();
 	};
 
-	// the canvas's container query contains position: fixed; the top layer does not
 	#overlay() {
 		const pane = this.#pane;
 		if (!pane || !this.zen) return;
@@ -1120,7 +1094,6 @@ export default class TextEditorTool extends Component {
 				</div>
 
 				{{#if this.bubble}}
-					{{! mousedown moves selection }}
 					{{! template-lint-disable no-pointer-down-event-binding no-invalid-interactive }}
 					<div
 						class="te-bubble

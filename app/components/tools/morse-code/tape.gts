@@ -17,29 +17,21 @@ import {
 interface TapeSignature {
 	Args: {
 		morse: string;
-		/** Units played; none while stopped. */
 		step?: number;
-		/** What the tape says, for assistive technology. */
 		label: string;
 	};
 }
 
-/** Strip heights in px: full and collapsed. */
 export const stripHeight = 118;
 export const collapsedStrip = 70;
 
 const mark = 7;
-// the glyph flow's side padding
 const flowPadding = 32;
 
 const kind = (glyph: TapeGlyph): GlyphKind => (glyph.code ? 'glyph' : 'space');
 const equals = (a: TapeGlyph, b: TapeGlyph) =>
 	a.code === b.code && a.label === b.label;
 
-/**
- * The message as a paper tape: each letter's dots and dashes at true length,
- * its letter under it, lit as the tone plays; the sounding mark glows.
- */
 export default class Tape extends Component<TapeSignature> {
 	@tracked width = 0;
 
@@ -78,7 +70,6 @@ export default class Tape extends Component<TapeSignature> {
 
 	measure = (glyph: TapeGlyph) => units(glyph.code) * this.unit;
 
-	// units of this glyph played; undefined while stopped or fading out
 	played(index: number | null) {
 		const { step } = this.args;
 		if (step === undefined || index === null) return undefined;

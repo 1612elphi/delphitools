@@ -62,7 +62,6 @@ const SizeRow: TOC<SizeRowSignature> = <template>
 	</button>
 </template>;
 
-/** The port of LineHeightCalcViewController. */
 export default class LineHeightCalc extends Component {
 	@tracked size = 16;
 	@tracked text = '16';
@@ -70,7 +69,6 @@ export default class LineHeightCalc extends Component {
 	@tracked custom = 1.5;
 	#timer?: number;
 
-	// ?lhSize=<px> and ?lhRatio=<multiplier>: the iOS -lhsize and -lhratio flags
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -148,7 +146,6 @@ export default class LineHeightCalc extends Component {
 
 	use = (size: number) => this.#show(size);
 
-	// custom keeps the ratio
 	pickPreset = (index: number) => {
 		if (index === customIndex) this.custom = this.multiplier;
 		this.selected = index;

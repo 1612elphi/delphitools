@@ -16,9 +16,7 @@ import {
 import type Playback from 'delphitools-v2/components/tools/media/playback';
 import './recorder.css';
 
-/** A take the band and the platter run through while it plays. */
 export interface RecorderTake {
-	/** One per `peakInterval`, 0 to 1. */
 	peaks: number[];
 	duration: number;
 }
@@ -26,15 +24,12 @@ export interface RecorderTake {
 const lamps: CanonLamp[] = ['record', 'play', 'pause'];
 const none: number[] = [];
 
-/** Platter travel in px per second of audio: the strip's two px per peak. */
 const platterSpeed = 2 / peakInterval;
-/** Hatch period in px, the platter's background-size in recorder.css. */
 const hatch = 10;
 
 interface Shown {
 	peaks: number[];
 	position: number;
-	/** Draws what lies past the head, dimmed: a take that plays. */
 	ahead: boolean;
 	head: boolean;
 }
@@ -101,20 +96,12 @@ function paint(
 export interface RecorderBandSignature {
 	Args: {
 		capture: Capture;
-		/** The loaded take's player; while it plays, the take runs under the head. */
 		playback?: Playback;
-		/** The loaded take; its length shows while nothing runs. */
 		take?: RecorderTake | null;
 	};
 	Element: HTMLDivElement;
 }
 
-/**
- * The iOS AVInfoRecorder band (VoiceTakeStrip): the take as a waveform
- * running under a fixed head, the input level along the top while it
- * records, and the counter with record, play and pause lamps. With reduced
- * motion the whole take fits the width and the head moves instead.
- */
 export class RecorderBand extends Component<RecorderBandSignature> {
 	get transport(): CanonTransport {
 		const { capture, playback } = this.args;
@@ -233,19 +220,12 @@ export class RecorderBand extends Component<RecorderBandSignature> {
 export interface RecorderTransportSignature {
 	Args: {
 		capture: Capture;
-		/** The loaded take's player: Stop, Pause and the platter run it while it plays. */
 		playback?: Playback;
-		/** The loaded take's length, so a platter drag stops at its end. */
 		duration?: number;
-		/** Record, while nothing runs. */
 		onRecord: () => void;
-		/** Stop, while recording. */
 		onStop: () => void;
-		/** Pause or Resume while recording; a held platter calls it on press and release. */
 		onPause: () => void;
-		/** Turns Record off. */
 		disabled?: boolean;
-		/** The Record button's text; default Record. */
 		recordText?: string;
 	};
 }
@@ -255,12 +235,6 @@ const StopIcon = <template><IconSvg @name="square" /></template>;
 const PauseIcon = <template><IconSvg @name="pause" /></template>;
 const ResumeIcon = <template><IconSvg @name="play" /></template>;
 
-/**
- * The iOS recorder footer: Record alone, then Stop, the platter and Pause.
- * The platter (the TP-7 hatch) runs with the position; pressing it pauses
- * until release, and a drag during playback moves through the take. It is
- * pointer-only: Pause and the take's own scrub cover the keyboard.
- */
 export class RecorderTransport extends Component<RecorderTransportSignature> {
 	get active() {
 		return this.args.capture.active || !!this.args.playback?.active;
@@ -297,7 +271,6 @@ export class RecorderTransport extends Component<RecorderTransportSignature> {
 		else this.args.playback?.toggle();
 	};
 
-	// template-lint forbids binding pointerdown; a hold starts there
 	platter = modifier((element: HTMLElement) => {
 		let lastX = 0;
 		let pausedHere = false;
@@ -316,7 +289,6 @@ export class RecorderTransport extends Component<RecorderTransportSignature> {
 			if (capture.active || !playback?.active) return;
 			if (getComputedStyle(element).direction === 'rtl')
 				dx = -dx;
-			// the tape follows the finger
 			const to = this.position - dx / platterSpeed;
 			playback.scrub(
 				Math.min(Math.max(0, to), duration ?? Infinity),

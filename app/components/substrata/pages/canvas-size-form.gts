@@ -7,7 +7,6 @@ import CanonColourWell from 'delphicanon/components/canon-colour-well';
 import CanonHeading from 'delphicanon/components/canon-heading';
 import CanonNumberField from 'delphicanon/components/canon-number-field';
 import CanonRow from 'delphicanon/components/canon-row';
-import CanonSegmented from 'delphicanon/components/canon-segmented';
 import CanonSwitch from 'delphicanon/components/canon-switch';
 import { hex, parseHex, type Rgb } from 'delphicanon/lib/colour';
 import { IconSvg } from 'delphitools-v2/components/icon';
@@ -23,11 +22,12 @@ import {
 import { createScene } from 'delphitools-v2/lib/substrata/file-ops';
 import { importImageFile } from 'delphitools-v2/lib/substrata/import-raster';
 import { viewport } from 'delphitools-v2/lib/substrata/viewport';
-import { CANVAS_PRESETS, clampSide, presetIndex, presetLabel } from './figures';
+import type { CanvasSize } from 'delphitools-v2/lib/substrata/canvas-sizes';
+import { clampSide } from './figures';
+import SizePopover from './size-popover';
 
 interface Signature {
 	Args: {
-		// a new document instead of resizing the open one
 		new?: boolean;
 		onDone: () => void;
 	};
@@ -35,8 +35,6 @@ interface Signature {
 
 const WHITE: Rgb = [255, 255, 255];
 
-// iOS CanvasSizeSheet: presets, width and height, then reflow for a resize
-// or the background for a new document
 export default class CanvasSizeForm extends Component<Signature> {
 	seed: Artboard = this.args.new
 		? DEFAULT_ARTBOARD
@@ -48,19 +46,14 @@ export default class CanvasSizeForm extends Component<Signature> {
 	@tracked transparent = this.seed.background === null;
 	@tracked colour: Rgb = parseHex(this.seed.background ?? '') ?? WHITE;
 
-	presetLabels = CANVAS_PRESETS.map(presetLabel);
+	@tracked picked?: string;
 
 	#file: HTMLInputElement | null = null;
 
-	get preset() {
-		return presetIndex(this.width, this.height);
-	}
-
-	pickPreset = (index: number) => {
-		const p = CANVAS_PRESETS[index];
-		if (!p) return;
-		this.width = p.width;
-		this.height = p.height;
+	pickSize = (size: CanvasSize) => {
+		this.picked = size.id;
+		this.width = size.width;
+		this.height = size.height;
 	};
 
 	setWidth = (v: number) => (this.width = v);
@@ -107,7 +100,6 @@ export default class CanvasSizeForm extends Component<Signature> {
 
 	pickPhoto = () => this.#file?.click();
 
-	// web canvas-size-modal fromImage: the size of the image, the image on it
 	fromPhoto = async (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
@@ -129,11 +121,11 @@ export default class CanvasSizeForm extends Component<Signature> {
 
 	<template>
 		<CanonHeading @text={{if @new "New" "Canvas Size"}} />
-		<CanonSegmented
-			@items={{this.presetLabels}}
-			@columns={{2}}
-			@selected={{this.preset}}
-			@onChange={{this.pickPreset}}
+		<SizePopover
+			@width={{this.width}}
+			@height={{this.height}}
+			@picked={{this.picked}}
+			@onPick={{this.pickSize}}
 		/>
 		<CanonRow @title="Width" @form="flush" as |id|>
 			<CanonNumberField

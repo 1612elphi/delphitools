@@ -23,6 +23,7 @@ import {
 	updatePage,
 } from './store';
 import { imagePage } from './source';
+import { decodeImageFile, headerOf } from './write/image';
 import { textObject } from './stamps';
 import { activeTool } from './tool';
 import { selectObject } from './ui';
@@ -258,11 +259,22 @@ export function addContentEdits(pageId: string, edits: ContentEdit[]): void {
 	});
 }
 
+/** The file typed by its bytes when PNG or JPEG, else the image as PNG, or JPEG when large; throws when the browser cannot decode it. */
+export async function embeddableImage(file: File): Promise<File> {
+	const head = await file.slice(0, 32).arrayBuffer();
+	const known = headerOf(new Uint8Array(head));
+	if (known) return new File([file], file.name, { type: known.mime });
+	const asset = await decodeImageFile(file);
+	return new File([asset.bytes as BlobPart], file.name, {
+		type: asset.mime,
+	});
+}
+
 /** an image file becomes an object at the centre of the current page, at most half the page each way */
 export async function placeImage(file: File): Promise<void> {
 	const page = currentPage();
 	if (!page) return;
-	const { image } = await imagePage(file);
+	const { image } = await imagePage(await embeddableImage(file));
 	if (!image) return;
 	const size = pageSize(page);
 	const scale = Math.min(

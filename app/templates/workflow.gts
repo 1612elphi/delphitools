@@ -27,7 +27,6 @@ const GLYPHS: Record<string, string[]> = {
 const WORD = 'DELPHI';
 const BARCODE_WIDTH = WORD.length * 6 - 1;
 
-// bar per vertical run
 const BARS = [...WORD].flatMap((letter, k) => {
 	const rows = GLYPHS[letter]!;
 	const bars: { x: number; y: number; h: number }[] = [];

@@ -23,7 +23,6 @@ interface PictureSignature {
 		result: JwtResult;
 		now: Date;
 		onInput: (text: string) => void;
-		/** The picture's own height in px at its current width. */
 		onHeight: (height: number) => void;
 	};
 }
@@ -45,11 +44,6 @@ function markClass(mark: Mark, failed: boolean[]) {
 	return `jwt-mark--${mark.part}${failed[mark.part] ? ' jwt-mark--failed' : ''}`;
 }
 
-/**
- * JWTAnatomy around the token itself: the typed token marked by segment, the
- * three parts as bars sized by their bytes, the time claims on an axis with
- * now, and the time to expiry (or to the start) as a figure.
- */
 export default class Picture extends Component<PictureSignature> {
 	get decoded() {
 		const { result } = this.args;

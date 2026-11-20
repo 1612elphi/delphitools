@@ -5,7 +5,6 @@ import { modifier } from 'ember-modifier';
 import { getSnapshot } from 'delphitools-v2/lib/substrata/doc-store';
 import { renderForExport } from 'delphitools-v2/lib/substrata/export-source';
 
-// the open document drawn at most `side` px on its long edge
 export function renderThumbnail(side = 240): HTMLCanvasElement | null {
 	const doc = getSnapshot();
 	if (!doc) return null;
@@ -15,8 +14,6 @@ export function renderThumbnail(side = 240): HTMLCanvasElement | null {
 	});
 }
 
-// iOS GalleryFan and SaveAsPages at rest: the open canvas as a card, or
-// two blank pages stacked
 // ponytail: still pictures; iOS plays a fan and a page turn before the action
 export default class ThumbnailArt extends Component<{
 	Args: { kind: 'fan' | 'pages' };

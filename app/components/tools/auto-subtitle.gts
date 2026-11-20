@@ -69,7 +69,6 @@ const FAILURES: Record<Exclude<Failure, ''>, string> = {
 	webgpu: 'WebGPU required',
 	generic: 'Transcription failed. Try again',
 };
-// wording by Ruby, from the web tool
 const EXPERIMENTAL_WARNING =
 	'This will download 760 MB of engine files to work, and needs a pretty beefy computer, are you sure?';
 
@@ -81,7 +80,6 @@ const Info = <template><IconSvg @name="info" /></template>;
 const Copy = <template><IconSvg @name="copy" /></template>;
 const Save = <template><IconSvg @name={{(downloadIcon)}} /></template>;
 
-// the document paste (filePaste) would load a drop-zone paste a second time
 const keepPaste = (event: Event) => event.stopPropagation();
 
 const device = () =>
@@ -101,11 +99,6 @@ const flag = (query: URLSearchParams, key: string) => {
 	return query.has(key) && Number.isInteger(value) ? value : undefined;
 };
 
-/**
- * The port of AutoSubtitleViewController on the web tool's Whisper in the
- * browser: the source and the cues the user corrects are the main pane,
- * the model, language and format the sidebar.
- */
 export default class AutoSubtitleTool extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -123,15 +116,12 @@ export default class AutoSubtitleTool extends Component {
 	@tracked original: Cue[] = [];
 	@tracked finished = false;
 	@tracked warning = false;
-	/** One key per refused Experimental pick, so the segmented remounts on the old mode. */
 	@tracked refused = 0;
 
 	#token = 0;
 	#scan = 0;
 	#experimentalOk = false;
 
-	// ?asMode= ?asFormat= (indices) ?asSample=<same-origin path> ?asOffer=yes: the iOS launch
-	// arguments; ?asCues=<srt or vtt text> stands in for a finished -asRun
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -274,7 +264,6 @@ export default class AutoSubtitleTool extends Component {
 		if (files[0]) this.load(files[0]);
 	};
 
-	// iOS AVEditExport.waveform: the band and the file row's detail
 	async #decode(file: File, scan: number) {
 		try {
 			const buffer = await audioContext().decodeAudioData(
@@ -297,7 +286,6 @@ export default class AutoSubtitleTool extends Component {
 			event.preventDefault();
 	};
 
-	// a drop anywhere loads the file; the drop zone handles its own
 	dropAnywhere = (event: DragEvent) => {
 		if (event.defaultPrevented) return;
 		const file = [...(event.dataTransfer?.files ?? [])].find((f) =>

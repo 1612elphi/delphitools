@@ -28,7 +28,6 @@ import {
 interface Signature {
 	Args: {
 		model: GradientModel;
-		/** Pixels of the exported image; only the aspect is drawn. */
 		width: number;
 		height: number;
 		onSelect: (id: string) => void;
@@ -49,19 +48,13 @@ interface Rect {
 	height: number;
 }
 
-/** Room around the image, so handles on its edges stay whole. */
 const margin = 30;
 const hintRoom = 22;
-/** Pointer distance that grabs a handle. */
 const reach = 24;
-/** A stop pulled this far off its line is removed on release. */
 const pullDistance = 64;
-/** A freeform point pulled this far outside the image is removed on release. */
 const pullOutside = 36;
-/** Distance from the centre to the linear and radial grip. */
 const gripReach = 44;
 const slop = 4;
-/** Longest side of a per-pixel preview; a canvas gradient draws at full size. */
 const pixelCap = 640;
 
 const corner = (key: CornerKey, r: Rect): Point => ({
@@ -73,21 +66,11 @@ const px = (value: number) => `${value.toFixed(1)}px`;
 const pair = (p: Point) =>
 	`${Math.round(p.x * 100)} %, ${Math.round(p.y * 100)} %`;
 
-/**
- * The gradient as it will be written, fitted to the pane at the export's
- * aspect, with its stops as handles on it (the iOS GradientPicture). Handles
- * drag along the CSS line (linear), the centre-to-corner ray (radial) or the
- * ring (conic); pulled off, a stop is removed on release. A click adds a
- * stop; the grip or ring knob turns the gradient; a radial or conic centre
- * drags. Freeform points drag on the image; corners only select.
- */
 export default class GradientPicture extends Component<Signature> {
 	@tracked box = { width: 0, height: 0 };
 	@tracked grab: Grab | null = null;
-	/** Where a dragged handle is drawn, and the place on its line it is tied to. */
 	@tracked lifted: Point | null = null;
 	@tracked tether: Point | null = null;
-	/** A stop or point held off the picture: out of the model until it comes back or is let go. */
 	@tracked pulled: Stop | FreeformPoint | null = null;
 	@tracked figure: { text: string; unit: string; top: boolean } | null =
 		null;
@@ -165,14 +148,12 @@ export default class GradientPicture extends Component<Signature> {
 			return { kind: 'line', from: c, to: far };
 		}
 		if (mode === 'conic') {
-			// image edges, not pane
 			const edge = Math.min(
 				c.x - r.x,
 				r.x + r.width - c.x,
 				c.y - r.y,
 				r.y + r.height - c.y,
 			);
-			// knob stays in margin
 			const radius = Math.max(
 				28,
 				Math.min(
@@ -195,7 +176,6 @@ export default class GradientPicture extends Component<Signature> {
 		};
 	}
 
-	/** Keeps a handle inside the picture. */
 	inside(p: Point): Point {
 		const { width, height } = this.box;
 		return {
@@ -207,7 +187,6 @@ export default class GradientPicture extends Component<Signature> {
 	get hubPoint(): Point | undefined {
 		const { mode } = this.model;
 		const c = this.centre;
-		// rail flips; grip holds
 		if (this.grab?.kind === 'centre' && mode === 'radial')
 			return this.inside({
 				x: c.x + this.grab.grip.x,
@@ -219,7 +198,6 @@ export default class GradientPicture extends Component<Signature> {
 				x: c.x + away.x * gripReach,
 				y: c.y + away.y * gripReach,
 			});
-		// normal turned a quarter, behind the centre
 		if (mode === 'radial')
 			return this.inside({
 				x: c.x - away.y * gripReach,
@@ -438,14 +416,11 @@ export default class GradientPicture extends Component<Signature> {
 
 	get hint() {
 		const { mode } = this.model;
-		// wording carried over from the web tool (corners, freeform) and iOS (stops)
 		if (mode === 'corners') return 'Click dots to change colours';
 		if (mode === 'freeform')
 			return 'Drag dots to reposition, click to change colour';
 		return 'Tap to add a stop, drag one off to remove it';
 	}
-
-	// measure
 
 	observe = modifier((element: HTMLElement) => {
 		const read = () => {
@@ -457,7 +432,6 @@ export default class GradientPicture extends Component<Signature> {
 			)
 				this.box = { width, height };
 		};
-		// the first callback comes after render; a read here would be a render-time write
 		const observer = new ResizeObserver(read);
 		observer.observe(element);
 		return () => observer.disconnect();
@@ -478,8 +452,6 @@ export default class GradientPicture extends Component<Signature> {
 			this.model,
 		);
 	});
-
-	// pointer
 
 	target(p: Point): Grab | undefined {
 		const selected = this.model.selected;
@@ -618,7 +590,6 @@ export default class GradientPicture extends Component<Signature> {
 		let t = projected.t;
 		const off = projected.off;
 		if (rail.kind === 'ring') {
-			// unwrap across the seam, then clamp
 			t = clamp(t + Math.round(this.#lastRingT - t), 0, 1);
 			this.#lastRingT = t;
 		} else {
@@ -637,7 +608,6 @@ export default class GradientPicture extends Component<Signature> {
 			this.pulled = null;
 		}
 		if (!this.pulled) model.setPosition(id, t * 100);
-		// capped when two remain
 		const raw = Math.max(0, Math.abs(off) - 16);
 		const lift = this.canRemove ? raw : Math.min(raw, 10);
 		const base = this.inside(railPoint(rail, t));
@@ -798,8 +768,6 @@ export default class GradientPicture extends Component<Signature> {
 			this.cancel();
 		};
 	});
-
-	// keys
 
 	select = (id: string) => this.args.onSelect(id);
 

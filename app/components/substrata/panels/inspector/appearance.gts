@@ -51,7 +51,6 @@ export interface OpacityRowSignature {
 	Args: { ids: readonly string[]; value: number };
 }
 
-// iOS DocumentStore.bind(slider): a drag is one undo step, a key press its own
 export class OpacityRow extends Component<OpacityRowSignature> {
 	#began = false;
 	#ids: readonly string[] = [];

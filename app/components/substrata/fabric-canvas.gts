@@ -7,6 +7,7 @@ import {
 	InteractiveFabricObject,
 	LayoutManager,
 	Point,
+	cache as fabricCache,
 	controlsUtils,
 	util as fabricUtil,
 } from 'fabric';
@@ -60,7 +61,18 @@ import {
 	type ExportOptions,
 } from 'delphitools-v2/lib/substrata/export-core';
 import { initSubstrataFilterBackend } from 'delphitools-v2/lib/substrata/filter-backend';
+import { loadBundledFonts } from 'delphitools-v2/lib/substrata/fonts';
 import { importImageFile } from 'delphitools-v2/lib/substrata/import-raster';
+import {
+	isFrame,
+	moveIntoFrame,
+	replaceFrameImage,
+} from 'delphitools-v2/lib/substrata/strata';
+import {
+	ASSET_DRAG,
+	placeAsset,
+	takeDraggedAsset,
+} from 'delphitools-v2/lib/substrata/assets';
 import {
 	deleteLayers,
 	groupLayers,
@@ -158,6 +170,8 @@ import {
 import { resizeArtboardReflow } from 'delphitools-v2/lib/substrata/artboard-ops';
 import { openModal } from 'delphitools-v2/lib/substrata/modal';
 import { isOnboardingSeen } from 'delphitools-v2/lib/substrata/onboarding-pref';
+import { editorUi } from 'delphitools-v2/lib/substrata/editor-ui';
+import Backdrop from 'delphitools-v2/components/errata/backdrop';
 import {
 	getLayerMenu,
 	openCanvasMenu,
@@ -202,7 +216,6 @@ import {
 	type SnapBox,
 } from 'delphitools-v2/lib/substrata/snap-engine';
 
-// fabric serialization key
 class AnchorBoxLayout extends FitContentLayout {
 	calcBoundingBox(
 		objects: FabricObject[],
@@ -233,7 +246,6 @@ function chromeInset(wrap: HTMLElement, rulers: boolean): Inset {
 		left: rulers ? RULER_PX : 0,
 	};
 	const area = wrap.closest<HTMLElement>('.sub-shell-canvas-area');
-	// the canon editor measures its floating pieces
 	const measured = area?.dataset['inset']?.split(',').map(Number);
 	if (measured?.length === 4 && measured.every(Number.isFinite)) {
 		const [top, right, bottom, left] = measured as [
@@ -284,7 +296,6 @@ function fitView(canvas: Canvas, artboard: Artboard, inset: Inset): void {
 	canvas.setViewportTransform([z, 0, 0, z, tx, ty]);
 }
 
-// fabric 7.4 internals
 interface FabricInternals {
 	_currentTransform?: {
 		target?: FabricObject;
@@ -309,7 +320,6 @@ export default class FabricCanvas extends Component {
 		const canvas = new Canvas(el, {
 			selection: true,
 			preserveObjectStacking: true,
-			// show controls above clip
 			controlsAboveOverlay: true,
 			...(import.meta.env.DEV &&
 			new URLSearchParams(window.location.search).has('dpr1')
@@ -317,8 +327,41 @@ export default class FabricCanvas extends Component {
 				: {}),
 		});
 		initSubstrataFilterBackend();
+		void loadBundledFonts().then(() => {
+			fabricCache.clearFontCache();
+			for (const o of canvas.getObjects())
+				if (o instanceof SubstrataText) {
+					o.initDimensions();
+					o.setCoords();
+				}
+			canvas.requestRenderAll();
+		});
 		const state = createReconcileState();
 		let maskDocId: string | null = null;
+
+		const frameAt = (
+			p: Point,
+			skip?: FabricObject,
+		): string | undefined => {
+			const layers = getSnapshot()?.layers ?? [];
+			const objects = canvas.getObjects();
+			for (let i = objects.length - 1; i >= 0; i--) {
+				const o = objects[i]!;
+				const id = getLayerIdForObject(o);
+				if (
+					o === skip ||
+					!id ||
+					!o.visible ||
+					!o.evented
+				)
+					continue;
+				if (!o.containsPoint(p)) continue;
+				return isFrame(findLayer(layers, id))
+					? id
+					: undefined;
+			}
+			return undefined;
+		};
 
 		const sharedControls =
 			controlsUtils.createObjectDefaultControls();
@@ -356,7 +399,6 @@ export default class FabricCanvas extends Component {
 			canvas.requestRenderAll();
 		};
 		applySelectionChrome();
-		// avoid per-frame style reads
 		let themeInk: {
 			foreground: string;
 			primary: string;
@@ -387,7 +429,6 @@ export default class FabricCanvas extends Component {
 			attributeFilter: ['class'],
 		});
 
-		// suppress selection echo
 		let squelchSelectionEvents = false;
 
 		const selectedLeafObjects = (): FabricObject[] => {
@@ -400,6 +441,7 @@ export default class FabricCanvas extends Component {
 				]),
 			);
 			const out: FabricObject[] = [];
+			const pinned = new Set<FabricObject>();
 			for (const id of getSelectedLayerIds()) {
 				const layer = findLayer(doc.layers, id);
 				if (!layer) continue;
@@ -412,11 +454,16 @@ export default class FabricCanvas extends Component {
 					)
 						continue;
 					const obj = state.byId.get(leaf.id);
-					if (obj && !out.includes(obj))
+					if (obj && !out.includes(obj)) {
 						out.push(obj);
+						if (entry.pinned)
+							pinned.add(obj);
+					}
 				}
 			}
-			return out;
+			return out.length > 1
+				? out.filter((o) => !pinned.has(o))
+				: out;
 		};
 
 		const anchorStyled = new WeakSet<ActiveSelection>();
@@ -429,7 +476,6 @@ export default class FabricCanvas extends Component {
 			const sameSet =
 				objs.length === current.length &&
 				objs.every((o) => current.includes(o));
-			// preserve active fabric selection
 			if (
 				sameSet &&
 				active instanceof ActiveSelection &&
@@ -480,7 +526,6 @@ export default class FabricCanvas extends Component {
 		const render = () => {
 			const doc = getSnapshot();
 			if (!doc) return;
-			// selection uses relative coordinates
 			if (
 				canvas.getActiveObject() instanceof
 				ActiveSelection
@@ -532,7 +577,6 @@ export default class FabricCanvas extends Component {
 		};
 
 		const retinaAtRest = canvas.enableRetinaScaling;
-		// reduce touch backing resolution
 		const resDropEnabled =
 			navigator.maxTouchPoints > 1 &&
 			retinaAtRest &&
@@ -912,7 +956,6 @@ export default class FabricCanvas extends Component {
 			});
 			appendLayer(layer);
 			setSelection([layer.id]);
-			// wait for reconciled text
 			requestAnimationFrame(() => {
 				if (navActive) {
 					deleteLayers([layer.id]);
@@ -1095,7 +1138,6 @@ export default class FabricCanvas extends Component {
 			);
 		};
 
-		// preserve active layer selection
 		const selectPointerDown = (px: number, py: number): boolean => {
 			const sub = selectSub();
 			if (!sub) return false;
@@ -1126,7 +1168,6 @@ export default class FabricCanvas extends Component {
 					return true;
 				}
 				const s = getToolSettings().select;
-				// preserve pixel hit test
 				const mask =
 					s.wandMode === 'global'
 						? globalMask(
@@ -1224,7 +1265,6 @@ export default class FabricCanvas extends Component {
 		let antPhase = 0;
 		let antTimer: number | null = null;
 		const syncAntTimer = () => {
-			// iOS: the ants stand still under reduced motion
 			const has =
 				getPixelSelection() !== null &&
 				!window.matchMedia(
@@ -1260,7 +1300,6 @@ export default class FabricCanvas extends Component {
 		canvas.on('selection:updated', syncSelectionToStore);
 		canvas.on('selection:cleared', syncSelectionToStore);
 
-		// use composed selection transform
 		const absoluteTransformOf = (obj: FabricObject): Transform => {
 			const d = fabricUtil.qrDecompose(
 				obj.calcTransformMatrix(),
@@ -1299,14 +1338,22 @@ export default class FabricCanvas extends Component {
 								]
 							: [];
 					});
-				// defer fabric selection commit
 				queueMicrotask(() => setTransforms(entries));
 				return;
 			}
 
 			const id = getLayerIdForObject(target);
 			if (!id) return;
-			setTransform(id, {
+			const frame =
+				e.action === 'drag' && e.e
+					? frameAt(
+							canvas.getScenePoint(
+								e.e,
+							),
+							target,
+						)
+					: undefined;
+			const transform = {
 				x: target.left,
 				y: target.top,
 				scaleX: target.scaleX,
@@ -1314,7 +1361,13 @@ export default class FabricCanvas extends Component {
 				angle: target.angle,
 				flipX: target.flipX,
 				flipY: target.flipY,
-			});
+			};
+			if (frame)
+				queueMicrotask(() => {
+					if (!moveIntoFrame(frame, id))
+						setTransform(id, transform);
+				});
+			else setTransform(id, transform);
 		});
 
 		const SNAP_SCREEN_PX = 6;
@@ -1354,7 +1407,6 @@ export default class FabricCanvas extends Component {
 					: null;
 		});
 
-		// transform members independently
 		const transformSeparately = (
 			target: FabricObject,
 			kind: 'rotate' | 'scale',
@@ -1547,7 +1599,6 @@ export default class FabricCanvas extends Component {
 		};
 		canvas.on('mouse:up', clearGuides);
 
-		// screen pixels
 		const GUIDE_GRAB_PX = 4;
 		const niceStep = (min: number): number => {
 			const pow = 10 ** Math.floor(Math.log10(min));
@@ -1563,7 +1614,6 @@ export default class FabricCanvas extends Component {
 		} | null = null;
 		let guideHover = false;
 
-		// avoid gesture layout reads
 		let claimRect: DOMRect | null = null;
 		const wrapPoint = (e: PointerEvent) => {
 			const r =
@@ -1645,7 +1695,6 @@ export default class FabricCanvas extends Component {
 				},
 			};
 		};
-		// centre-origin local to screen
 		const cropProject = (
 			t: Transform,
 			dims: { width: number; height: number },
@@ -1803,7 +1852,6 @@ export default class FabricCanvas extends Component {
 			} else if (getActiveTool() === 'move') {
 				const hit = guideAt(px, py);
 				if (!hit) return;
-				// defer guide persistence
 				const current = getSnapshot()?.guides.find(
 					(gd) => gd.id === hit.id,
 				);
@@ -1936,7 +1984,6 @@ export default class FabricCanvas extends Component {
 			canvas.requestRenderAll();
 		};
 
-		// cancel drawing before navigation
 		const navTouches = new Map<number, { x: number; y: number }>();
 		let navPrev: { cx: number; cy: number; dist: number } | null =
 			null;
@@ -1965,7 +2012,6 @@ export default class FabricCanvas extends Component {
 			const transform = internals._currentTransform;
 			if (transform?.target) {
 				const pose = { ...(transform.original ?? {}) };
-				// fabric origin is transient
 				delete pose['originX'];
 				delete pose['originY'];
 				transform.target.set(pose);
@@ -1977,7 +2023,6 @@ export default class FabricCanvas extends Component {
 					x: 0,
 					y: 0,
 				};
-				// end fabric touch lifecycle
 				internals._onTouchEnd({
 					type: 'touchend',
 					touches: [],
@@ -2012,7 +2057,6 @@ export default class FabricCanvas extends Component {
 				e.stopImmediatePropagation();
 			}
 		};
-		// block fabric touch starts
 		const onNavTouchStart = (e: TouchEvent) => {
 			if (!navActive) return;
 			if (e.cancelable) e.preventDefault();
@@ -2112,7 +2156,6 @@ export default class FabricCanvas extends Component {
 					: null;
 			const ctx = canvas.contextTop;
 			if (!ctx) return;
-			// clear stale overlay chrome
 			canvas.clearContext(ctx);
 			const doc = getSnapshot();
 			const showRulers = g.rulers;
@@ -2164,7 +2207,6 @@ export default class FabricCanvas extends Component {
 			}
 
 			if (showGrid) {
-				// iOS: the step doubles until lines are 8 px apart
 				let step = GRID_SIZE;
 				while (step * z < 8) step *= 2;
 				ctx.save();
@@ -2436,7 +2478,6 @@ export default class FabricCanvas extends Component {
 				ctx.strokeStyle = ink.primary;
 				ctx.lineWidth = 1;
 				for (const child of sepMembers) {
-					// fabric v7 parent coordinates
 					const c = child.calcACoords();
 					const pts = [
 						c.tl,
@@ -2500,7 +2541,6 @@ export default class FabricCanvas extends Component {
 					ctx.closePath();
 				};
 				ctx.save();
-				// veil: layer minus crop
 				ctx.fillStyle = 'rgba(0,0,0,0.35)';
 				ctx.beginPath();
 				quad(0, 0, dims.width, dims.height);
@@ -2555,7 +2595,6 @@ export default class FabricCanvas extends Component {
 					text = `${Math.round(((t.angle % 360) + 360) % 360)}°`;
 				}
 				ctx.save();
-				// iOS CanvasOverlay badge: mono figures on a hairline card
 				ctx.font =
 					'13px Iosevka, ui-monospace, monospace';
 				const w = ctx.measureText(text).width + 16;
@@ -2637,7 +2676,6 @@ export default class FabricCanvas extends Component {
 				ctx.textBaseline = 'top';
 				ctx.textAlign = 'left';
 				for (
-					// remove tick rounding error
 					let i = Math.ceil(iX0 / 5) * 5;
 					i <= iX1;
 					i += 5
@@ -2676,7 +2714,6 @@ export default class FabricCanvas extends Component {
 			canvas.requestRenderAll();
 		});
 
-		// prevent selection feedback loop
 		const unsubscribeSelection = subscribeSelection(applySelection);
 
 		const stopColourSink = startColourSink();
@@ -3006,6 +3043,7 @@ export default class FabricCanvas extends Component {
 				exportBlob: async (
 					opts?: Partial<ExportOptions>,
 					probeAt?: [number, number][],
+					withBytes?: boolean,
 				) => {
 					const outcome: ExportOutcome =
 						await runExport(
@@ -3094,6 +3132,13 @@ export default class FabricCanvas extends Component {
 						downscaled: outcome.downscaled,
 						filename: outcome.filename,
 						probe,
+						bytes: withBytes
+							? Array.from(
+									new Uint8Array(
+										await outcome.blob.arrayBuffer(),
+									),
+								)
+							: undefined,
 					};
 				},
 				samplePixel: (sxp: number, syp: number) => {
@@ -3280,7 +3325,6 @@ export default class FabricCanvas extends Component {
 				let busyMs = 0;
 				let ltMs = 0;
 				let ltSupported = false;
-				// safari lacks longtask entries
 				let po: PerformanceObserver | null = null;
 				try {
 					po = new PerformanceObserver((list) => {
@@ -3395,15 +3439,13 @@ export default class FabricCanvas extends Component {
 				fit();
 				return;
 			}
-			// automation bypasses onboarding
 			if (navigator.webdriver) {
 				setDoc(createEmptyDoc());
 				fit();
 				return;
 			}
-			openModal(
-				isOnboardingSeen() ? 'new-scene' : 'onboarding',
-			);
+			if (!isOnboardingSeen()) openModal('onboarding');
+			editorUi.newOpen = true;
 		})();
 
 		let stopAutosave: (() => void) | null = null;
@@ -3430,7 +3472,11 @@ export default class FabricCanvas extends Component {
 			dropHint?.classList.toggle('hidden', !on);
 		const onDragOver = (e: DragEvent) => {
 			e.preventDefault();
-			if (e.dataTransfer?.types.includes('Files'))
+			const types = e.dataTransfer?.types ?? [];
+			if (
+				types.includes('Files') ||
+				types.includes(ASSET_DRAG)
+			)
 				setDropHint(true);
 		};
 		const onDragLeave = (e: DragEvent) => {
@@ -3440,12 +3486,19 @@ export default class FabricCanvas extends Component {
 		const onDrop = (e: DragEvent) => {
 			e.preventDefault();
 			setDropHint(false);
-			const files = e.dataTransfer?.files;
-			if (!files) return;
-			for (const f of Array.from(files)) {
-				if (f.type.startsWith('image/'))
-					void importImageFile(f);
+			const at = canvas.getScenePoint(e);
+			const frame = frameAt(at);
+			const asset = takeDraggedAsset();
+			if (asset) {
+				void placeAsset(asset, { frame, at });
+				return;
 			}
+			const files = Array.from(
+				e.dataTransfer?.files ?? [],
+			).filter((f) => f.type.startsWith('image/'));
+			if (frame && files[0])
+				void replaceFrameImage(frame, files.shift()!);
+			for (const f of files) void importImageFile(f);
 		};
 		wrap.addEventListener('dragover', onDragOver);
 		wrap.addEventListener('dragleave', onDragLeave);
@@ -3515,7 +3568,6 @@ export default class FabricCanvas extends Component {
 			registerExportRenderer(null);
 			registerLayerBaker(null);
 			ro.disconnect();
-			// commit active crop transient
 			if (cropDrag) commitTransient();
 			guideDrag = null;
 			cropDrag = null;
@@ -3620,14 +3672,15 @@ export default class FabricCanvas extends Component {
 
 	<template>
 		<div
-			class="sub-canvas-wrap"
+			class="sub-canvas-wrap {{if editorUi.newOpen 'is-new'}}"
 			{{this.mount}}
 			{{filePaste this.paste accept="image/*"}}
 		>
-			<div
-				class="sub-canvas-wordmark"
-				aria-hidden="true"
-			></div>
+			<Backdrop
+				class="sub-canvas-backdrop"
+				@name="Substrata"
+				@kind="IMAGE EDITOR"
+			/>
 			<canvas></canvas>
 			<div
 				class="sub-canvas-drop-hint hidden"

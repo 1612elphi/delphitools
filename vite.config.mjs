@@ -32,7 +32,7 @@ const PDFJS_WASM_DIR = join(
 	'wasm',
 );
 const PDFJS_WASM_ROUTE = '/pdfjs-wasm/';
-// non-embedded standard 14 fonts render from pdf.js's own files instead of whatever the system has
+// pdf.js standard fonts
 const PDFJS_FONTS_DIR = join(
 	dirname(wasmRequire.resolve('pdfjs-dist/package.json')),
 	'standard_fonts',
@@ -97,11 +97,30 @@ function pdfjsWasm() {
 	};
 }
 
+// http lacks secure context
+function devCrypto() {
+	return {
+		name: 'dev-crypto',
+		apply: 'serve',
+		transformIndexHtml: () => [
+			{
+				tag: 'script',
+				injectTo: 'head-prepend',
+				children: readFileSync(
+					'scripts/dev-insecure-crypto.mjs',
+					'utf8',
+				),
+			},
+		],
+	};
+}
+
 export default defineConfig({
 	plugins: [
 		classicEmberSupport(),
 		ember(),
 		pdfjsWasm(),
+		devCrypto(),
 		babel({
 			babelHelpers: 'runtime',
 			extensions,
@@ -112,7 +131,7 @@ export default defineConfig({
 		__DT_PRIDE__: JSON.stringify(prideEnabled()),
 	},
 	optimizeDeps: {
-		// the html crawl misses worker entries; a dep found late re-bundles and 504s in-flight imports
+		// prebundle worker entries
 		entries: [
 			'index.html',
 			'tests/index.html',

@@ -119,7 +119,6 @@ import 'delphitools-v2/components/canon-docs/icons';
 import { componentGroups } from 'delphitools-v2/lib/canon-docs';
 import { icons as iconSvgs } from 'delphitools-v2/lib/icons';
 
-// the showcase's Icon took raw svg; here it takes a dt icon name
 const Icon: TOC<{ Args: { svg: string } }> = <template>
 	<IconSvg @name={{@svg}} />
 </template>;
@@ -233,7 +232,6 @@ function bands(saturation: number) {
 const before = bands(0.8);
 const after = bands(0);
 
-// the colour's shades around the middle pixel, as the iOS gallery draws them
 function loupePixels(colour: Rgb): ImageData {
 	const side = 15;
 	const pixels = new ImageData(side, side);
@@ -1255,7 +1253,6 @@ const pxPer: Record<string, number> = {
 	in: 96,
 };
 
-/** The Omnibox units answer, for lengths only: "12 pt" answers in the other units. */
 function answers(query: string): CanonCommandItem[] {
 	const match = /^(-?\d+(?:\.\d+)?)\s*(px|pt|mm|in)$/i.exec(query.trim());
 	if (!match) return [];
@@ -1906,7 +1903,6 @@ const windowMenus: CanonMenuBarMenu[] = [
 ];
 
 class Window extends Pick {
-	// undefined follows the window's width
 	@tracked collapsed?: true;
 	@tracked closed = false;
 	@tracked minimised = false;
@@ -1988,8 +1984,6 @@ class Window extends Pick {
 		{{/if}}
 	</template>
 }
-
-// tiles for the kit components the showcase leaves out
 
 class CompressionScale extends Component {
 	@tracked quality = 0.6;
@@ -2089,7 +2083,6 @@ const JumpHeading = <template>
 </template>;
 
 export interface Tile {
-	/** The registry item name and the addon module, `canon-<name>`. */
 	name: string;
 	Live: ComponentLike;
 }

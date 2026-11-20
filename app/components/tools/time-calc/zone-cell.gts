@@ -12,7 +12,6 @@ import {
 
 interface ZoneCellSignature {
 	Args: {
-		/** Undefined shows the placeholder. */
 		zone?: string;
 		date: Date;
 		placeholder?: string;
@@ -34,7 +33,6 @@ interface Group {
 
 let last: { quarter: number; groups: Group[] } | undefined;
 
-/** Every zone by region with its offset; offsets change on the quarter hour at most, so the list is built once a quarter. */
 function listed(quarter: number): Group[] {
 	if (last?.quarter === quarter) return last.groups;
 	everyZone ??= allZones();
@@ -51,10 +49,6 @@ function listed(quarter: number): Group[] {
 	return groups;
 }
 
-/**
- * TimeCalcZoneCell: a flush cell showing a zone over a native menu, common
- * zones first, then every zone by region. The kit CanonMenuCell has no groups.
- */
 export default class ZoneCell extends Component<ZoneCellSignature> {
 	get shown() {
 		const { zone, date } = this.args;

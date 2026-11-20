@@ -6,15 +6,10 @@ import type { Rect, Size } from 'delphitools-v2/lib/crop-rect';
 
 export interface PictureSignature {
 	Args: {
-		/** The page drawn at its shown rotation; none while it draws. */
 		url?: string;
-		/** Display points; none before a file, which shows a blank A4. */
 		size?: Size;
-		/** Display points. */
 		crop: Rect;
-		/** Every drag step and key, display points. */
 		onCrop: (crop: Rect) => void;
-		/** A drag or key ended. */
 		onSettle: () => void;
 	};
 }
@@ -23,7 +18,6 @@ const A4 = { width: 595.28, height: 841.89 };
 
 const mm = (points: number) => Math.round(points / MM_TO_POINTS);
 
-/** The page fitted to the pane with the crop over it; a blank A4 before a file. */
 export default class Picture extends Component<PictureSignature> {
 	get size() {
 		return this.args.size ?? A4;

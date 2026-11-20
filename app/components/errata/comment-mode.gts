@@ -72,7 +72,6 @@ export default class CommentPanel extends Component<{
 		return this.entries.map((e) => e.label);
 	}
 
-	// none selected: the menu shows the count
 	get entryIndex(): number | undefined {
 		const entry = this.entry;
 		return entry ? this.entries.indexOf(entry) : undefined;

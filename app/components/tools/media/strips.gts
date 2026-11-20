@@ -9,26 +9,19 @@ import { formatTimestamp } from 'delphitools-v2/lib/subtitles';
 import { spread } from 'delphitools-v2/components/tools/media/frames';
 import { share } from 'delphitools-v2/components/tools/media/trim-span';
 
-/** Every A/V band: filmstrip 40 + waveform 56 (iOS AVEditTrackStrips) and the readout row. */
 export const bandHeight = readoutBandHeight(96);
 
 export interface StripsSignature {
 	Args: {
-		/** Thumbnail URLs of the whole file, in order. */
 		thumbnails: string[];
-		/** Thumbnail width over height. */
 		aspect?: number;
-		/** Draws the audio lane under the frames. */
 		waveform?: boolean;
 		peaks?: WaveformPeaks | null;
-		/** Dims the waveform and rules it out: the file's audio is gone. */
 		audioRemoved?: boolean;
 		duration: number;
 		playhead?: number | null;
 		onScrub?: (seconds: number) => void;
-		/** In and out seconds; the frames outside are dimmed (iOS AVEditFilmstrip selection). */
 		selection?: [number, number] | null;
-		/** No file yet: blank frame cells and a flat waveform. */
 		blank?: boolean;
 	};
 	Element: HTMLDivElement;
@@ -37,10 +30,6 @@ export interface StripsSignature {
 const step = 1;
 const bigStep = 10;
 
-/**
- * The iOS AVEditTrackStrips: a filmstrip of as many frames as fit, over the
- * audio waveform, under one playhead and one scrub (pointer or arrow keys).
- */
 export default class Strips extends Component<StripsSignature> {
 	@tracked cells = 0;
 
@@ -158,7 +147,6 @@ export default class Strips extends Component<StripsSignature> {
 			render();
 			const observer = new ResizeObserver(render);
 			observer.observe(canvas);
-			// the theme flips colours on the root
 			const theme = new MutationObserver(render);
 			theme.observe(document.documentElement, {
 				attributeFilter: ['class'],
@@ -180,7 +168,6 @@ export default class Strips extends Component<StripsSignature> {
 		);
 	}
 
-	// template-lint forbids binding pointerdown; a drag starts there
 	scrubbing = modifier((element: HTMLElement) => {
 		const down = (event: PointerEvent) => {
 			if (!this.scrubs || event.button !== 0) return;

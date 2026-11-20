@@ -3,7 +3,6 @@ import CanonRow from 'delphicanon/components/canon-row';
 import FxColourWell from './fx-colour-well';
 import { labelOf, type FxContext } from './fx-context';
 
-// iOS FxBlock.row(.colour)
 const FxColourRow: TOC<{ Args: { ctx: FxContext; key: string } }> = <template>
 	<CanonRow
 		class="sub-fxp-row"

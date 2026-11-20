@@ -9,7 +9,6 @@ import type { Tool } from 'delphitools-v2/lib/tools';
 
 const KEY = 'dt-canon-expanded';
 
-// the iOS keyboard's one-handed chevron: tall, thin, faint
 const Chevron: TOC<{ Args: { points: 'start' | 'end' } }> = <template>
 	<svg
 		class="dt-canon-chevron is-{{@points}}"
@@ -39,15 +38,8 @@ function scrolls(el: Element, dy: number): boolean {
 		: el.scrollTop > 0;
 }
 
-/**
- * A wheel over a split's picture scrolls the split's page. The browser does
- * not: a banner beside the panes, or one floating while it collapses, is
- * outside the scroller's containing-block chain. A picture element that
- * scrolls, or a handler that called preventDefault, keeps its wheel.
- */
 const wheelToPage = modifier((slot: HTMLElement) => {
 	const wheel = (event: WheelEvent) => {
-		// ctrl: a trackpad pinch
 		if (event.defaultPrevented || event.ctrlKey) return;
 		if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
 		const target = event.target as Element;
@@ -87,15 +79,12 @@ interface CanonToolSignature {
 	Args: { tool: Tool; component: ComponentLike<object> | undefined };
 }
 
-// the sheet's slot for a canon tool; an `expands` tool can leave the 1200 px column
 export default class CanonTool extends Component<CanonToolSignature> {
 	@tracked expandedIds = stored();
 	@tracked stickerSlot: HTMLElement | null = null;
 
-	// outermost split, as ios
 	findStickerSlot = modifier(
 		(tool: HTMLElement, [component]: [unknown]) => {
-			// defer: avoids render backtracking
 			queueMicrotask(() => {
 				this.stickerSlot = component
 					? tool.querySelector<HTMLElement>(
@@ -138,7 +127,6 @@ export default class CanonTool extends Component<CanonToolSignature> {
 				<@component />
 			{{/if}}
 			{{#if this.stickerSlot}}
-				{{! whitespace breaks :empty }}
 				{{~#in-element
 					this.stickerSlot insertBefore=null
 				~}}
@@ -165,7 +153,6 @@ export default class CanonTool extends Component<CanonToolSignature> {
 						aria-pressed="false"
 						{{on "click" this.toggle}}
 					><Chevron @points="start" /></button>
-					{{! one tab stop; the mirror is for the pointer }}
 					<button
 						type="button"
 						class="dt-canon-edge is-end"

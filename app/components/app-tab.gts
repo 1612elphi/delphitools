@@ -12,7 +12,6 @@ interface AppTabSignature {
 	Args: { title: string; icon: string };
 }
 
-// the iOS folder tab (FanItemView): the current page, and the drawer's handle
 export default class AppTab extends Component<AppTabSignature> {
 	@service declare breakpoint: BreakpointService;
 	@service declare sidebar: SidebarService;
@@ -27,7 +26,6 @@ export default class AppTab extends Component<AppTabSignature> {
 		let size = 0;
 		let pointer: number | undefined;
 		let drawer = 0;
-		// phones put the band at the bottom; dragging up opens
 		let along = (event: PointerEvent) => event.clientX;
 
 		const down = (event: PointerEvent) => {
@@ -79,7 +77,6 @@ export default class AppTab extends Component<AppTabSignature> {
 		};
 	});
 
-	// a drag ends in a click; only a press toggles
 	click = () => {
 		if (this.#dragged) {
 			this.#dragged = false;

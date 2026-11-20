@@ -75,7 +75,6 @@ export default class PreflightPanel extends Component<{
 		];
 	}
 
-	// export bytes include edits
 	check = async (doc: ErrataDoc, runId: number) => {
 		const stale = () => runId !== this.#runId;
 		this.#started = runId;
@@ -104,7 +103,6 @@ export default class PreflightPanel extends Component<{
 		}
 	};
 
-	// closing or editing supersedes
 	run = modifier(
 		(_el: HTMLElement, [doc]: [ErrataDoc | null | undefined]) => {
 			const runId = ++this.#runId;

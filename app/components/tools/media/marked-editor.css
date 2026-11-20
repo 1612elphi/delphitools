@@ -13,6 +13,7 @@
 
 .media-marked-line {
 	display: grid;
+	align-items: baseline;
 	grid-template-columns: var(--media-marked-gutter) minmax(0, 1fr);
 }
 

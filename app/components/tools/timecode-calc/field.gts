@@ -11,9 +11,7 @@ import {
 
 export interface TimecodeFieldSignature {
 	Args: {
-		/** Starting text; its digits fill the field. */
 		value?: string;
-		/** Drop-frame timecode separates the frames with a semicolon. */
 		dropFrame: boolean;
 		label: string;
 		onChange: (text: string) => void;
@@ -25,10 +23,6 @@ const wholeSelected = (input: HTMLInputElement) =>
 	input.selectionStart === 0 &&
 	input.selectionEnd === input.value.length;
 
-/**
- * Timecode typed as on a cash register: digits come in from the right and the
- * separators are put in. Backspace takes the last digit, wherever the caret is.
- */
 export default class TimecodeField extends Component<TimecodeFieldSignature> {
 	@tracked digits = digitsOf(this.args.value ?? '');
 
@@ -42,7 +36,6 @@ export default class TimecodeField extends Component<TimecodeFieldSignature> {
 
 	#fill(input: HTMLInputElement, digits: string) {
 		this.digits = digits.slice(-fieldWidth);
-		// the property binding skips an unchanged text, so a refused key would stay
 		input.value = this.text;
 		const end = input.value.length;
 		input.setSelectionRange(end, end);
@@ -74,7 +67,6 @@ export default class TimecodeField extends Component<TimecodeFieldSignature> {
 				);
 			}
 		};
-		// undo, autofill and composition, which beforeinput cannot refuse
 		const after = () => this.#fill(input, digitsOf(input.value));
 		input.addEventListener('beforeinput', before);
 		input.addEventListener('input', after);
@@ -84,7 +76,6 @@ export default class TimecodeField extends Component<TimecodeFieldSignature> {
 		};
 	});
 
-	// a click places the caret after focus, so select on the next frame
 	selectAll = (event: FocusEvent) => {
 		const input = event.target as HTMLInputElement;
 		requestAnimationFrame(() => input.select());

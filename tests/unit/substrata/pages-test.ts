@@ -2,7 +2,6 @@ import { module, test } from 'qunit';
 import {
 	byteFigure,
 	clampSide,
-	presetIndex,
 	scaleLabel,
 } from 'delphitools-v2/components/substrata/pages/figures';
 import {
@@ -13,6 +12,7 @@ import {
 	type Measure,
 	type Target,
 } from 'delphitools-v2/components/substrata/pages/help-layout';
+import { findSizes, sizeFor } from 'delphitools-v2/lib/substrata/canvas-sizes';
 import { uniqueName } from 'delphitools-v2/lib/substrata/projects';
 
 module('Unit | Substrata | pages', function () {
@@ -24,9 +24,30 @@ module('Unit | Substrata | pages', function () {
 		assert.deepEqual(byteFigure(1_250_000, 'de'), ['1,3', 'MB']);
 	});
 
-	test('canvas presets and sides', function (assert) {
-		assert.strictEqual(presetIndex(1080, 1920), 2);
-		assert.strictEqual(presetIndex(1081, 1920), -1);
+	test('canvas sizes and sides', function (assert) {
+		assert.strictEqual(sizeFor(1080, 1920)?.id, 'instagram-story');
+		assert.strictEqual(
+			sizeFor(1080, 1920, 'tiktok-video')?.id,
+			'tiktok-video',
+		);
+		assert.strictEqual(
+			sizeFor(1080, 1920, 'x-post')?.id,
+			'instagram-story',
+		);
+		assert.strictEqual(sizeFor(1081, 1920), undefined);
+		const ids = (q: string) =>
+			findSizes(q).flatMap((s) => s.sizes.map((z) => z.id));
+		assert.deepEqual(ids('insta story'), ['instagram-story']);
+		assert.deepEqual(ids('1500 × 500'), ['x-header']);
+		assert.deepEqual(ids('zzz'), []);
+		assert.strictEqual(
+			new Set(
+				findSizes('').flatMap((s) =>
+					s.sizes.map((z) => z.id),
+				),
+			).size,
+			findSizes('').flatMap((s) => s.sizes).length,
+		);
 		assert.strictEqual(clampSide(0), 1);
 		assert.strictEqual(clampSide(25_000), 20_000);
 		assert.strictEqual(clampSide(1079.6), 1080);

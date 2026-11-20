@@ -19,7 +19,7 @@ import { IconSvg } from 'delphitools-v2/components/icon';
 import { parse } from 'delphitools-v2/lib/recipe-parse';
 import { EXAMPLES } from 'delphitools-v2/lib/recipe-examples';
 import { render, type Cell } from 'delphitools-v2/lib/recipe-layout';
-import type { Display } from 'delphitools-v2/lib/recipe-scale';
+import { parseNumber, type Display } from 'delphitools-v2/lib/recipe-scale';
 import { toHtml, toPrintable, toText } from 'delphitools-v2/lib/recipe-export';
 import MarkedEditor from 'delphitools-v2/components/tools/media/marked-editor';
 import Picture from 'delphitools-v2/components/tools/recipe-table/picture';
@@ -53,8 +53,9 @@ serve
 - parsley: 1 handful / chop
 - olive oil: 1 Tbsp`;
 
-// the tool's description in tools.ts
 const PLACEHOLDER = 'Write a recipe as a Cooking for Engineers table';
+const ABOUT =
+	'The Recipe Table tool lets you write out recipes for cooking (or other things) and outputs them in a nice to read Cooking-For-Engineers style action table. The format is a plain text domain-specific-language called ClaraScript, named after my grandmother.';
 const STORAGE_KEY = 'dt-recipe-text';
 const DISPLAYS: Display[] = ['written', 'metric', 'imperial'];
 const DISPLAY_LABELS = ['Written', 'Metric', 'Imperial'];
@@ -76,7 +77,7 @@ function save(text: string) {
 	try {
 		localStorage.setItem(STORAGE_KEY, text);
 	} catch {
-		// private mode: the recipe lasts this visit only
+		// private mode: visit only
 	}
 }
 
@@ -90,12 +91,10 @@ export default class RecipeTableTool extends Component {
 	@tracked copyFailed = false;
 	@tracked pictureHeight?: number;
 	#failedTimer?: ReturnType<typeof setTimeout>;
-	// query never overwrites draft
 	#persists = true;
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
-		// ?rtSample=<example id> ?rtText= ?rtUnits=metric|imperial ?rtScale=4
 		const query = new URLSearchParams(window.location.search);
 		const sample = EXAMPLES.find(
 			(e) => e.id === query.get('rtSample'),
@@ -124,7 +123,6 @@ export default class RecipeTableTool extends Component {
 			this.recipe.problems.map((p) => p.line),
 		);
 		return syntaxLines(this.text).map((runs, index) => ({
-			// keeps empty line height
 			runs: runs.length ? runs : [{ text: ' ', kind: null }],
 			lit: flagged.has(index + 1),
 		}));
@@ -137,7 +135,7 @@ export default class RecipeTableTool extends Component {
 	get amount(): number {
 		const fallback = this.baseline ?? 1;
 		if (this.amountRaw === null) return fallback;
-		const n = Number.parseFloat(this.amountRaw);
+		const n = parseNumber(this.amountRaw);
 		return Number.isFinite(n) && n > 0 ? n : fallback;
 	}
 
@@ -188,7 +186,6 @@ export default class RecipeTableTool extends Component {
 		return PLACEHOLDER;
 	}
 
-	// skip confirm for samples
 	get untouched() {
 		const text = this.text.trim();
 		return (
@@ -206,7 +203,6 @@ export default class RecipeTableTool extends Component {
 		return this.copyFailed ? AlertIcon : CopyIcon;
 	}
 
-	// no cell identity; positional
 	isDone = (cell: Cell) => this.done.has(`${cell.row}:${cell.col}`);
 
 	setText = (text: string) => {
@@ -251,7 +247,7 @@ export default class RecipeTableTool extends Component {
 	};
 
 	reset = () => {
-		if (!confirm('Discard recipe?')) return;
+		if (!this.untouched && !confirm('Discard recipe?')) return;
 		this.setText('');
 		this.done = new Set();
 	};
@@ -273,7 +269,6 @@ export default class RecipeTableTool extends Component {
 				}),
 			]);
 		} catch {
-			// clipboard needs https, focus
 			try {
 				await navigator.clipboard.writeText(text);
 			} catch {
@@ -291,7 +286,6 @@ export default class RecipeTableTool extends Component {
 			);
 	};
 
-	// prints exported html directly
 	savePdf = () => {
 		const frame = document.createElement('iframe');
 		frame.setAttribute('aria-hidden', 'true');
@@ -304,7 +298,6 @@ export default class RecipeTableTool extends Component {
 			view.addEventListener('afterprint', drop, {
 				once: true,
 			});
-			// await fonts before print
 			void Promise.resolve(view.document.fonts?.ready).then(
 				() => {
 					view.focus();
@@ -317,7 +310,6 @@ export default class RecipeTableTool extends Component {
 	};
 
 	measured = (height: number) => {
-		// 2 px rules above and below the picture
 		if (height + 4 !== this.pictureHeight)
 			this.pictureHeight = height + 4;
 	};
@@ -475,19 +467,7 @@ export default class RecipeTableTool extends Component {
 				</CanonRows>
 				<CanonRows @framed={{true}}>
 					<div class="rt-about">
-						<p>The Recipe Table experiment
-							lets you write out
-							recipes for cooking (or
-							other things) and
-							outputs them in a nice
-							to read
-							Cooking-For-Engineers
-							style action table. The
-							format is a plain text
-							domain-specific-language
-							called ClaraScript,
-							named after my
-							grandmother.</p>
+						<p>{{ABOUT}}</p>
 						<p>You can download the
 							ClaraScript reference as
 							a PDF by

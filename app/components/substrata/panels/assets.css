@@ -1,0 +1,124 @@
+/* mirrors rail frame */
+.sub-ed-assets {
+	position: absolute;
+	inset-block: calc(
+			var(--sub-pad) + var(--sub-small-box) + var(--sub-gap)
+		)
+		var(--sub-pad);
+	inset-inline-start: var(--sub-pad);
+	z-index: 15;
+	display: flex;
+	flex-direction: column;
+	inline-size: var(--sub-rail);
+	pointer-events: none;
+}
+
+.sub-ed-assets > .sub-assets-panel {
+	flex: 0 1 auto;
+	min-block-size: 0;
+}
+
+.sub-assets-panel .sub-rail-body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--canon-hairline);
+	background: var(--canon-border);
+}
+
+.sub-assets-search {
+	box-sizing: border-box;
+	inline-size: 100%;
+	min-block-size: var(--sub-cell);
+	padding-inline: var(--sub-pad);
+	border: 0;
+	background: var(--canon-card);
+	color: var(--canon-foreground);
+	font: inherit;
+}
+
+.sub-assets-loading {
+	display: grid;
+	place-items: center;
+	padding: var(--sub-pad);
+	background: var(--canon-card);
+	color: var(--canon-muted-foreground);
+}
+
+.sub-assets-grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: var(--canon-hairline);
+}
+
+.sub-assets-grid.is-icons {
+	grid-template-columns: repeat(4, 1fr);
+}
+
+.sub-assets-grid:empty {
+	display: none;
+}
+
+.sub-asset {
+	position: relative;
+	aspect-ratio: 1;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	border: 0;
+	background: var(--canon-card);
+	cursor: pointer;
+}
+
+.sub-asset[hidden] {
+	display: none;
+}
+
+.sub-asset img {
+	display: block;
+	inline-size: 100%;
+	block-size: 100%;
+	object-fit: cover;
+}
+
+.is-icons .sub-asset img {
+	box-sizing: border-box;
+	padding: 20%;
+	object-fit: contain;
+}
+
+.sub-asset:focus-visible {
+	outline: 2px solid var(--canon-primary);
+	outline-offset: -2px;
+}
+
+.sub-asset.is-placing {
+	opacity: 0.5;
+}
+
+.sub-asset-licence {
+	position: absolute;
+	inset-block-end: 0;
+	inset-inline-start: 0;
+	padding: 1px 4px;
+	background: var(--canon-card);
+	color: var(--canon-muted-foreground);
+	font-size: var(--canon-text-caption);
+}
+
+/* licence in tooltip */
+.is-icons .sub-asset-licence {
+	display: none;
+}
+
+.sub-assets-note {
+	margin: 0;
+	padding: var(--sub-pad);
+	background: var(--canon-card);
+	color: var(--canon-muted-foreground);
+	font-size: var(--canon-text-footnote);
+}
+
+.sub-assets-more,
+.sub-assets-on {
+	inline-size: 100%;
+}

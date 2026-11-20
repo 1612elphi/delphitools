@@ -40,18 +40,13 @@ export interface PictureSignature {
 	Args: {
 		layout: Layout | null;
 		batch: boolean;
-		/** The lit tile's leaf key. */
 		selected: string | null;
 		loading: boolean;
-		/** A layout edit: tiles spring to their new places. */
 		springs: boolean;
-		/** A file is dragged over the tool. */
 		over: boolean;
-		/** The empty picture's target. */
 		first: Target;
 		onChoose: (target: Target) => void;
 		onPaste: (target: Target) => void;
-		/** A tile's leaf key; null for a press beside the tiles. */
 		onSelect: (key: string | null) => void;
 		onDrag: (key: string, drop: Drop) => void;
 		onDropFiles: (target: Target, files: File[]) => void;
@@ -65,7 +60,6 @@ const menuItems: CanonMenuEntry[] = [
 	{ title: 'Paste', icon: Clipboard },
 ];
 
-// the web tool's names
 const addNames: Record<Side, string> = {
 	top: 'Add top',
 	left: 'Add left',
@@ -109,16 +103,6 @@ interface Held {
 	dragging: boolean;
 }
 
-/**
- * The stitched image to scale under dimension lines for its size in pixels.
- * Individual: a press lights a tile, a held tile drags onto another to swap
- * or to its edge to place, and plus buttons along the composite, in the
- * seams and around the lit tile add images. Batch: the numbered grid with
- * its empty cells dashed; a held cell drags onto another to swap, or to its
- * edge to move before or after it. Files dropped on it land where the mark
- * shows. The
- * port of iOS ImageStitcherPicture.
- */
 export default class Picture extends Component<PictureSignature> {
 	@tracked area: Rect = { x: 0, y: 0, width: 0, height: 0 };
 	@tracked dragged?: { key: string; drop?: Drop; x: number; y: number };
@@ -384,7 +368,6 @@ export default class Picture extends Component<PictureSignature> {
 		return () => observer.disconnect();
 	});
 
-	// one menu for every plus button, anchored to a point placed at the pointer
 	menu = modifier((panel: HTMLElement) => {
 		this.#panel = panel;
 		this.#point = panel.previousElementSibling as HTMLElement;
@@ -405,7 +388,6 @@ export default class Picture extends Component<PictureSignature> {
 		this.#trigger = trigger;
 		const frame = point.offsetParent!.getBoundingClientRect();
 		const button = trigger.getBoundingClientRect();
-		// a keyboard click has detail 0 and no position: below the button
 		const pointer = event.detail > 0;
 		point.style.left = px(
 			(pointer ? event.clientX : button.left) - frame.left,
@@ -448,7 +430,6 @@ export default class Picture extends Component<PictureSignature> {
 		return { x: event.clientX - r.left, y: event.clientY - r.top };
 	}
 
-	// held tiles drag; touch waits for a hold so the page still scrolls
 	drags = modifier((root: HTMLElement) => {
 		const begin = (held: Held) => {
 			held.dragging = true;
@@ -467,7 +448,6 @@ export default class Picture extends Component<PictureSignature> {
 			this.dragged = undefined;
 			if (!held?.dragging) return;
 			this.#swallowClick = true;
-			// a click follows only a release over the same element
 			window.setTimeout(
 				() => (this.#swallowClick = false),
 				0,
@@ -520,7 +500,6 @@ export default class Picture extends Component<PictureSignature> {
 			if (event.pointerId === this.#held?.pointer) end(true);
 		};
 		const cancel = () => end(false);
-		// once a hold has begun a drag, the finger moves the tile, not the page
 		const touchMove = (event: TouchEvent) => {
 			if (this.#held?.dragging) event.preventDefault();
 		};
@@ -546,7 +525,6 @@ export default class Picture extends Component<PictureSignature> {
 		};
 	});
 
-	/** Where files dropped at a point land, and the mark that shows it. */
 	fileTarget(x: number, y: number): { target: Target; mark: Mark } {
 		const c = this.frame;
 		const at = (f: { rect: Rect }) => contains(f.rect, x, y);

@@ -57,10 +57,8 @@ const unitNames = units.map((u) => u.label);
 const dash = '—';
 const maxZones = 6;
 const addZonePlaceholder = 'Add timezone...';
-// outlast transition's last frame
 const FRAME_MS = 50;
 
-/** kit band ease, ms */
 function refitMs() {
 	const value = getComputedStyle(document.documentElement)
 		.getPropertyValue('--canon-canvas-refit')
@@ -76,7 +74,6 @@ const CalendarIcon = <template><IconSvg @name="calendar-clock" /></template>;
 const SwapIcon = <template><IconSvg @name="arrow-up-down" /></template>;
 const RemoveIcon = <template><IconSvg @name="x" /></template>;
 
-// a click places the caret after focus, so select on the next frame
 function selectAll(event: FocusEvent) {
 	const field = event.target;
 	if (field instanceof HTMLInputElement)
@@ -85,7 +82,6 @@ function selectAll(event: FocusEvent) {
 
 let measureContext: CanvasRenderingContext2D | null | undefined;
 
-/** The field's type shrinks to fit a long date, down to 14 px (iOS adjustsFontSizeToFitWidth). */
 const fit = modifier((element: HTMLElement, [text]: [string]) => {
 	const input = element.querySelector('input');
 	if (!input) return;
@@ -128,7 +124,6 @@ function openPicker(input?: HTMLInputElement) {
 	}
 }
 
-/** "2026-10-17T09:30" or with seconds, as the field's wall-clock text. */
 function fromPicker(value: string) {
 	const text = value.replace('T', ' ');
 	return text.length === 16 ? `${text}:00` : text;
@@ -137,10 +132,8 @@ function fromPicker(value: string) {
 const decimal = (value: number, places: number) =>
 	value.toLocaleString(undefined, { maximumFractionDigits: places });
 
-/** The port of TimeCalcViewController. */
 export default class TimeCalc extends Component {
 	@tracked mode: Mode = 'timestamp';
-	/** The field follows the clock until it is typed in, stepped or focused. */
 	@tracked live = true;
 	@tracked text = '';
 	@tracked now = new Date();
@@ -155,7 +148,6 @@ export default class TimeCalc extends Component {
 	@tracked amount = 1;
 	@tracked unit: Unit = 'weeks';
 	@tracked subtracts = false;
-	/** An End picked on its own; unset, End is the start moved by the amount. */
 	@tracked endPicked?: Date;
 	@tracked width = 0;
 	@tracked refitting = false;
@@ -164,8 +156,6 @@ export default class TimeCalc extends Component {
 	#clock?: ReturnType<typeof setInterval>;
 	#refit?: ReturnType<typeof setTimeout>;
 
-	// ?timeMode=timestamp|arithmetic|timezone ?timeEpoch= ?timeStart= ?timeZoneDate= (the field) ?timeEnd=
-	// ?timeFrom= ?timeTo= (zone ids) ?timeNow=<date> (a stopped clock): the iOS launch arguments
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -222,7 +212,6 @@ export default class TimeCalc extends Component {
 		return this.mode === 'timezone';
 	}
 
-	/** Zone a typed date with no zone is read in: From for Timezone, else local. */
 	get readZone() {
 		return this.isTimezone ? this.fromZone : localZone;
 	}
@@ -436,7 +425,6 @@ export default class TimeCalc extends Component {
 
 	pickMode = (index: number) => {
 		this.mode = modes[index] ?? 'timestamp';
-		// only mode changes ease
 		this.refitting = true;
 		clearTimeout(this.#refit);
 		this.#refit = setTimeout(
@@ -445,7 +433,6 @@ export default class TimeCalc extends Component {
 		);
 	};
 
-	/** Focus stops the clock so the selection holds what is shown. */
 	focusField = (event: FocusEvent) => {
 		if (this.live) {
 			this.text = this.fieldText;
@@ -459,7 +446,6 @@ export default class TimeCalc extends Component {
 		this.live = false;
 	};
 
-	/** One second either way, written the way it was typed. */
 	step = (direction: -1 | 1) => {
 		const { reading } = this;
 		const base = reading

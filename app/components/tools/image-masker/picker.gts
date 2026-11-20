@@ -13,9 +13,7 @@ import {
 export interface PickerSignature {
 	Args: {
 		shape: MaskShape;
-		/** A custom SVG is the cut; no cell is chosen. */
 		custom: boolean;
-		/** Data URL of the framed image, shown through the variant cells. */
 		thumb?: string;
 		onPick: (shape: MaskShape) => void;
 	};
@@ -46,14 +44,8 @@ const Glyph: TOC<{
 	</svg>
 </template>;
 
-// fills the wide grid's last row of 14
 const fillers = Array.from({ length: (14 - (families.length % 14)) % 14 });
 
-/**
- * The families, each drawn by its first shape, over the chosen family's
- * variants, the image showing through them once one is loaded. The port of
- * iOS MaskShapePicker.
- */
 export default class Picker extends Component<PickerSignature> {
 	get family() {
 		return Math.max(0, familyIndex(this.args.shape));

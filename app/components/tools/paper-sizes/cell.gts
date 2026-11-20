@@ -27,18 +27,16 @@ const pop = modifier((badge: HTMLElement, [mark]: [number | undefined]) => {
 
 interface CellSignature {
 	Args: {
-		size: PaperSize;
+		size: Pick<PaperSize, 'name' | 'widthMM' | 'heightMM'>;
 		text: string;
 		mark?: number;
-		/** tick replaces slot number */
 		tick?: boolean;
 		detail?: string;
 		onPick: () => void;
 	};
 }
 
-/** fits a 40px box */
-function glyph(size: PaperSize) {
+function glyph(size: Pick<PaperSize, 'widthMM' | 'heightMM'>) {
 	const long = Math.max(size.widthMM, size.heightMM, 1);
 	return htmlSafe(
 		`inline-size: ${Math.round((40 * size.widthMM) / long)}px; block-size: ${Math.round((40 * size.heightMM) / long)}px`,
@@ -49,7 +47,6 @@ function concat(...parts: unknown[]) {
 	return parts.join('');
 }
 
-/** The iOS PaperSizeCell: a sheet glyph, the name and the dimensions. */
 const Cell: TOC<CellSignature> = <template>
 	<button
 		type="button"

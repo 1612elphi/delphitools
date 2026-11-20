@@ -8,7 +8,6 @@ import type { Node } from 'delphicanon/lib/math/node';
 import { Typesetter, type Ink } from 'delphicanon/lib/math/typeset';
 
 export interface PictureLine {
-	/** Set as plain text when undefined: input that does not parse. */
 	node?: Node;
 	fallback: string;
 	size: number;
@@ -18,28 +17,18 @@ export interface PictureLine {
 interface PictureSignature {
 	Args: {
 		lines: PictureLine[];
-		/** The placeholder, shown with nothing typed. */
 		faint: boolean;
-		/** A new value moves the result line's glyphs up into the input line. */
 		promoted: number;
 		label: string;
 	};
 }
 
-/** The band's height, as AlgebraPicture.height. */
 export const pictureHeight = 188;
 const faintAlpha = 0.3;
 const lineGap = 12;
-/** Largest the maths grows to fill a roomy band, as a share of its set size. */
 const growth = 1.25;
 const padding = 16;
 
-/**
- * The working as it is written: the input with its operation's notation,
- * and under it the result, set as mathematics. A change morphs: glyphs that
- * stay slide to their new places, new ones grow in, removed ones fade
- * (AlgebraPicture).
- */
 export default class Picture extends Component<PictureSignature> {
 	@tracked width = 0;
 	@tracked height = 0;
@@ -63,7 +52,6 @@ export default class Picture extends Component<PictureSignature> {
 			const box = line.node
 				? setter.layout(line.node)
 				: setter.text(line.fallback);
-			// steady baselines while typing
 			box.ascent = Math.max(box.ascent, line.size * 0.72);
 			box.descent = Math.max(box.descent, line.size * 0.24);
 			return box;
@@ -147,7 +135,6 @@ export default class Picture extends Component<PictureSignature> {
 			this.#morphs.set(group, morph);
 			if (promoted !== this.#promoted) {
 				this.#promoted = promoted;
-				// result keys become input
 				morph.rename((key) =>
 					key.startsWith('1|')
 						? `0|${key.slice(2)}`
@@ -156,7 +143,6 @@ export default class Picture extends Component<PictureSignature> {
 							: key,
 				);
 			}
-			// a resize lands at once
 			const size = `${this.width}x${this.height}`;
 			const resized = size !== this.#size;
 			this.#size = size;

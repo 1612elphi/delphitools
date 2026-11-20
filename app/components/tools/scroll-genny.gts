@@ -53,7 +53,6 @@ const clampSide = (side: number) =>
 	Math.min(Math.max(Math.round(side), 1), maxRatioSide);
 const fills = ['Blur', 'Solid Colour'];
 
-// iOS: spring over 0.5 s, damping 0.8
 const spring = htmlSafe(`--scroll-spring: ${springEasing(0.8)}`);
 
 const Trash = <template><IconSvg @name="trash-2" /></template>;
@@ -64,7 +63,6 @@ interface Source {
 	stem: string;
 }
 
-// ?scrollShape=<index> ?scrollFill=<index> ?scrollColour=<rrggbb> ?scrollSample: the iOS -scrollShape, -scrollFill, -scrollColour, -scrollSample flags; ?scrollRatio=W:H is web only
 function launchFlags() {
 	const query = new URLSearchParams(window.location.search);
 	const index = (name: string) =>
@@ -85,7 +83,6 @@ function launchFlags() {
 	};
 }
 
-/** The port of ScrollGeneratorViewController. */
 export default class ScrollGenny extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -260,7 +257,6 @@ export default class ScrollGenny extends Component {
 		this.#rerender();
 	};
 
-	/** Every slide at full size, for Download all and Zip. */
 	slideFiles = async (): Promise<NamedBlob[]> => {
 		const { source, geometry: g } = this;
 		if (!source || !g) return [];
@@ -326,7 +322,6 @@ export default class ScrollGenny extends Component {
 
 	select = (index: number) => void this.export(index);
 
-	// one draw a frame however fast the colour picker reports
 	#rerender() {
 		cancelAnimationFrame(this.#frame);
 		this.#frame = requestAnimationFrame(() => void this.#render());

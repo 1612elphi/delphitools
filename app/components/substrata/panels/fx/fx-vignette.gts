@@ -28,8 +28,6 @@ const HEIGHT = 160;
 const PAD_X = 16;
 const PAD_Y = 12;
 
-// iOS FxStyliseVignette: the mask over a grey stand-in at the layer's
-// aspect; drag the ring to move the midpoint
 export default class FxVignette extends Component<{
 	Args: { ctx: FxContext };
 }> {

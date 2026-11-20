@@ -12,9 +12,7 @@ interface Signature {
 		min: number;
 		max: number;
 		step: number;
-		// the value the fill grows from, a hairline marks it
 		origin: number;
-		// a gradient track; without it the span fills with @fill
 		stops?: string[] | null;
 		fill?: string;
 		readout: (v: number) => string;
@@ -26,7 +24,6 @@ interface Signature {
 	Element: HTMLDivElement;
 }
 
-// iOS FxColourSlider: a centred slider over the filter's own colours
 export default class FxColourSlider extends Component<Signature> {
 	@tracked active = false;
 	#dragged = 0;
@@ -101,7 +98,6 @@ export default class FxColourSlider extends Component<Signature> {
 		},
 		move: (event, first) => {
 			if (first) {
-				// absolute first, then relative
 				this.#dragged = this.at(event) ?? this.value;
 				this.#lastX = event.clientX;
 				this.apply(this.#dragged, true);

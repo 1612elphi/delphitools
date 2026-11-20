@@ -40,6 +40,11 @@ import Icon, { IconSvg } from 'delphitools-v2/components/icon';
 import { downloadBlob } from 'delphitools-v2/lib/download';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import CodeSheetPicture from './qr-genny/picture';
+import {
+	eventEndsBeforeStart,
+	eventString,
+	type EventData,
+} from './qr-genny/event';
 import Swatches, { type Swatch } from './qr-genny/swatches';
 import {
 	drawDots,
@@ -92,10 +97,9 @@ export async function qrDataUrl(
 	}
 }
 
-type Mode = 'single' | 'wifi' | 'vcard' | 'batch';
+type Mode = 'single' | 'wifi' | 'vcard' | 'batch' | 'event';
 type SecurityType = 'nopass' | 'WPA' | 'WEP';
 
-// alias, not interface: TrackedObject needs an implicit index signature
 export type VCardData = {
 	firstName: string;
 	lastName: string;
@@ -116,12 +120,11 @@ export type WifiData = {
 
 const URL_CHECK_MS = 500;
 const URL_LIKE = /^https?:\/\/.+/i;
-// one undo step per burst of edits
 const UNDO_PAUSE_MS = 600;
 const UNDO_LIMIT = 100;
 
-const MODES: Mode[] = ['single', 'wifi', 'vcard', 'batch'];
-const MODE_TITLES = ['Single', 'WiFi', 'vCard', 'Batch'];
+const MODES: Mode[] = ['single', 'wifi', 'vcard', 'batch', 'event'];
+const MODE_TITLES = ['Single', 'WiFi', 'vCard', 'Batch', 'Event'];
 
 const DOT_STYLES: { value: DotType; label: string }[] = [
 	{ value: 'square', label: 'Boxy' },
@@ -153,7 +156,6 @@ const CORNER_DOT_STYLES: { value: CornerDotType; label: string }[] = [
 ];
 
 const ERROR_LEVELS: ErrorLevel[] = ['L', 'M', 'Q', 'H'];
-// iOS QRGeneratorViewModel.ErrorCorrection.label
 const ERROR_TITLES = [
 	'Low (7%)',
 	'Medium (15%)',
@@ -263,13 +265,14 @@ const SECURITY_TYPES: { value: SecurityType; label: string }[] = [
 ];
 const SECURITY_TITLES = SECURITY_TYPES.map((type) => type.label);
 
-// Every string below is the web tool's wording, carried across unchanged.
 const CHECKING_URL = 'Checking URL...';
 const VALID_URL = 'Valid URL format';
 const INVALID_URL = 'Invalid URL format';
 const EMPTY_WIFI = 'Enter network details to generate QR code';
 const EMPTY_VCARD = 'Fill in contact details to generate QR code';
 const EMPTY_SINGLE = 'Enter content to generate QR code';
+const EMPTY_EVENT = 'Fill in event details to generate code...';
+const EVENT_BACKWARDS = 'Causality violation: End date before start date.';
 const CONTENT_PLACEHOLDER = 'Enter URL, text, or data...';
 const NEEDS_PASSWORD = 'Enter the password to generate the QR code.';
 const HIDDEN_DETAIL = "For networks that don't broadcast their SSID.";
@@ -280,7 +283,6 @@ const LEVEL_HINT =
 	'Higher error correction allows the QR code to be readable even if partially damaged or obscured (e.g., by a logo).';
 const LOGO_TIP =
 	'Tip: Use High (H) error correction when adding a logo to ensure the QR code remains scannable.';
-// iOS wording
 const TOO_LONG = 'Too long for a QR code. Shorten your text!';
 const LOGO_PROMPT = 'Add a logo to the centre';
 
@@ -308,14 +310,10 @@ export function vcardString(data: VCardData): string {
 	return lines.join('\n');
 }
 
-// ZXing WIFI: escape \ ; , " :
-// unescaped quotes are parsed as hex/quoted, not literal
 function escapeWifiValue(value: string): string {
 	return value.replace(/[\\;,":]/g, '\\$&');
 }
 
-// format: WIFI:T:{security};S:{ssid};P:{password};H:true;;
-// secured without password encodes an unjoinable QR
 export function wifiString(data: WifiData): string {
 	if (!data.ssid.trim()) return '';
 	if (data.securityType !== 'nopass' && !data.password) return '';
@@ -371,6 +369,7 @@ interface Snapshot {
 	content: string;
 	wifi: WifiData;
 	vcard: VCardData;
+	event: EventData;
 	size: number;
 	padding: number;
 	foreground: string;
@@ -397,7 +396,6 @@ const Info = <template><IconSvg @name="info" /></template>;
 const Peek = <template><IconSvg @name="eye" /></template>;
 const Hide = <template><IconSvg @name="eye-off" /></template>;
 
-/** The port of QRGeneratorViewController, on the web tool's qr-code-styling export. */
 export default class QrGennyTool extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -436,6 +434,15 @@ export default class QrGennyTool extends Component {
 		address: '',
 	});
 
+	event = new TrackedObject<EventData>({
+		title: '',
+		location: '',
+		notes: '',
+		allDay: false,
+		start: '',
+		end: '',
+	});
+
 	wifi = new TrackedObject<WifiData>({
 		ssid: '',
 		password: '',
@@ -464,7 +471,6 @@ export default class QrGennyTool extends Component {
 		});
 	}
 
-	// ?qrKind=<0 single, 1 wifi, 2 vcard, 3 batch> ?qrText= ?qrPassword= ?qrPreset=<quick style> ?qrInfo=1 ?qrFormat=1 ?qrGrow=<text> ?qrFocus=1: the iOS -qrKind, -qrText, -qrPassword, -qrPreset, -qrInfo, -qrFormat, -qrGrow, -qrFocus flags
 	#launch(query: URLSearchParams) {
 		const kind = Number(query.get('qrKind'));
 		if (MODES[kind]) this.mode = MODES[kind];
@@ -505,14 +511,13 @@ export default class QrGennyTool extends Component {
 
 	focusFirst = false;
 
-	// snapshots
-
 	#snapshot(): Snapshot {
 		return {
 			mode: this.mode,
 			content: this.content,
 			wifi: { ...this.wifi },
 			vcard: { ...this.vcard },
+			event: { ...this.event },
 			size: this.size,
 			padding: this.padding,
 			foreground: this.foreground,
@@ -533,6 +538,7 @@ export default class QrGennyTool extends Component {
 		this.content = s.content;
 		Object.assign(this.wifi, s.wifi);
 		Object.assign(this.vcard, s.vcard);
+		Object.assign(this.event, s.event);
 		this.size = s.size;
 		this.padding = s.padding;
 		this.foreground = s.foreground;
@@ -547,7 +553,6 @@ export default class QrGennyTool extends Component {
 		this.showInfo = s.showInfo;
 	}
 
-	/** Call before a change; edits close together make one step. */
 	#remember() {
 		const time = performance.now();
 		if (time - this.#lastEdit > UNDO_PAUSE_MS) {
@@ -586,8 +591,6 @@ export default class QrGennyTool extends Component {
 		return () => document.removeEventListener('keydown', keydown);
 	});
 
-	// content
-
 	get isBatch() {
 		return this.mode === 'batch';
 	}
@@ -602,6 +605,18 @@ export default class QrGennyTool extends Component {
 
 	get isVcard() {
 		return this.mode === 'vcard';
+	}
+
+	get isEvent() {
+		return this.mode === 'event';
+	}
+
+	get eventBackwards() {
+		return eventEndsBeforeStart(this.event);
+	}
+
+	get eventPreview() {
+		return eventString(this.event);
 	}
 
 	get modeIndex() {
@@ -644,6 +659,7 @@ export default class QrGennyTool extends Component {
 
 	get qrContent() {
 		if (this.mode === 'vcard') return vcardString(this.vcard);
+		if (this.mode === 'event') return eventString(this.event);
 		if (this.mode === 'wifi') return wifiString(this.wifi);
 		if (this.mode === 'batch')
 			return (
@@ -657,10 +673,10 @@ export default class QrGennyTool extends Component {
 	get emptyMessage() {
 		if (this.mode === 'wifi') return EMPTY_WIFI;
 		if (this.mode === 'vcard') return EMPTY_VCARD;
+		if (this.mode === 'event') return EMPTY_EVENT;
 		return EMPTY_SINGLE;
 	}
 
-	// unparseable colour would paint nothing or break out of SVG/style markup
 	get safeForeground() {
 		return CSS.supports('color', this.foreground)
 			? this.foreground
@@ -686,7 +702,6 @@ export default class QrGennyTool extends Component {
 		return this.urlValid ? 'ok' : 'warn';
 	}
 
-	// label-less entries render as bare lines
 	get infoTexts(): string[] {
 		const entries: { label?: string; value: string }[] = [];
 
@@ -720,6 +735,28 @@ export default class QrGennyTool extends Component {
 				{ label: 'Website', value: this.vcard.website },
 				{ label: 'Address', value: this.vcard.address },
 			);
+		} else if (this.mode === 'event') {
+			entries.push(
+				{
+					label: 'Event',
+					value: this.event.title.trim(),
+				},
+				{
+					label: 'Starts',
+					value: this.event.start.replace(
+						'T',
+						' ',
+					),
+				},
+				{
+					label: 'Ends',
+					value: this.event.end.replace('T', ' '),
+				},
+				{
+					label: 'Location',
+					value: this.event.location,
+				},
+			);
 		} else {
 			entries.push({
 				label: 'Content',
@@ -744,8 +781,6 @@ export default class QrGennyTool extends Component {
 		);
 	}
 
-	// the picture
-
 	get matrix() {
 		const data = this.qrContent;
 		return data.trim()
@@ -759,13 +794,11 @@ export default class QrGennyTool extends Component {
 		const style = this.#style(
 			this.includeInfo ? this.infoTexts : [],
 		);
-		// one object per look: the picture fades or sweeps only on a new one
 		const key = JSON.stringify({
 			...style,
 			logo: style.logo?.id,
 			data: this.qrContent,
 		});
-		// a plain field, not tracked: the cache only keeps identity
 		if (this.#picture?.key !== key)
 			// eslint-disable-next-line ember/no-side-effects
 			this.#picture = { key, value: qrSheet(matrix, style) };
@@ -838,8 +871,6 @@ export default class QrGennyTool extends Component {
 			},
 		];
 	}
-
-	// style swatches
 
 	get presetItems(): Swatch[] {
 		return QUICK_STYLES.map((style) => ({
@@ -946,8 +977,6 @@ export default class QrGennyTool extends Component {
 		return this.batchGenerating || this.batchItems.length === 0;
 	}
 
-	// actions
-
 	#applyStyle(style: QuickStyle) {
 		this.dotType = style.dotType;
 		this.cornerSquareType = style.cornerSquareType;
@@ -973,7 +1002,6 @@ export default class QrGennyTool extends Component {
 		this.#queueUrlCheck();
 	};
 
-	// a click places the caret after focus, so select on the next frame
 	selectAll = (event: FocusEvent) => {
 		const field = event.target;
 		if (field instanceof HTMLTextAreaElement)
@@ -1003,6 +1031,27 @@ export default class QrGennyTool extends Component {
 		this.#remember();
 		this.wifi.securityType =
 			SECURITY_TYPES[index]?.value ?? 'nopass';
+	};
+
+	setEvent = (
+		field: 'title' | 'location' | 'notes' | 'start' | 'end',
+		value: string,
+	) => {
+		this.#remember();
+		this.event[field] = value;
+	};
+
+	// ponytail: timed fallback is 09:00, no per-field memory of the old time
+	setAllDay = (on: boolean) => {
+		this.#remember();
+		const convert = (value: string) => {
+			if (!value) return value;
+			const day = value.slice(0, 10);
+			return on ? day : `${day}T09:00`;
+		};
+		this.event.allDay = on;
+		this.event.start = convert(this.event.start);
+		this.event.end = convert(this.event.end);
 	};
 
 	setHidden = (on: boolean) => {
@@ -1196,11 +1245,9 @@ export default class QrGennyTool extends Component {
 			]);
 			if (!this.#destroyed) this.toast.show();
 		} catch {
-			// denied clipboard leaves the button unchanged
+			// clipboard denied: no-op
 		}
 	}
-
-	// batch
 
 	addBatchItem = () => {
 		this.batchItems = [...this.batchItems, new BatchItem('')];
@@ -1283,7 +1330,6 @@ export default class QrGennyTool extends Component {
 				item.dataUrl = await blobToDataUrl(blob);
 				item.status = 'done';
 			} catch {
-				// single failure must not abort the batch
 				item.status = 'error';
 			}
 		}
@@ -1320,7 +1366,7 @@ export default class QrGennyTool extends Component {
 					<CanonSegmented
 						@items={{MODE_TITLES}}
 						@selected={{this.modeIndex}}
-						@columns={{4}}
+						@columns={{5}}
 						@onChange={{this.setMode}}
 						aria-label="Type"
 					/>
@@ -1570,6 +1616,135 @@ export default class QrGennyTool extends Component {
 						{{#if this.hasName}}
 							<CanonCodeBlock
 								@code={{this.vcardPreview}}
+							/>
+						{{/if}}
+					{{else if this.isEvent}}
+						<CanonRow
+							@title="Title"
+							@form="flush"
+							as |titleId|
+						>
+							<CanonTextCell
+								@value={{this.event.title}}
+								@onChange={{fn
+									this.setEvent
+									"title"
+								}}
+								aria-labelledby={{titleId}}
+								{{this.focusOnLaunch}}
+							/>
+						</CanonRow>
+						<CanonRow
+							@title="Location"
+							@form="flush"
+							as |titleId|
+						>
+							<CanonTextCell
+								@value={{this.event.location}}
+								@onChange={{fn
+									this.setEvent
+									"location"
+								}}
+								aria-labelledby={{titleId}}
+							/>
+						</CanonRow>
+						<CanonRow
+							@title="All day"
+							as |titleId|
+						>
+							<CanonSwitch
+								@on={{this.event.allDay}}
+								@onChange={{this.setAllDay}}
+								aria-labelledby={{titleId}}
+							/>
+						</CanonRow>
+						{{#if this.event.allDay}}
+							<CanonRow
+								@title="Starts"
+								@form="flush"
+								as |titleId|
+							>
+								<CanonTextCell
+									type="date"
+									@value={{this.event.start}}
+									@onChange={{fn
+										this.setEvent
+										"start"
+									}}
+									aria-labelledby={{titleId}}
+								/>
+							</CanonRow>
+							<CanonRow
+								@title="Ends"
+								@form="flush"
+								as |titleId|
+							>
+								<CanonTextCell
+									type="date"
+									@value={{this.event.end}}
+									@onChange={{fn
+										this.setEvent
+										"end"
+									}}
+									aria-labelledby={{titleId}}
+								/>
+							</CanonRow>
+						{{else}}
+							<CanonRow
+								@title="Starts"
+								@form="flush"
+								as |titleId|
+							>
+								<CanonTextCell
+									type="datetime-local"
+									@value={{this.event.start}}
+									@onChange={{fn
+										this.setEvent
+										"start"
+									}}
+									aria-labelledby={{titleId}}
+								/>
+							</CanonRow>
+							<CanonRow
+								@title="Ends"
+								@form="flush"
+								as |titleId|
+							>
+								<CanonTextCell
+									type="datetime-local"
+									@value={{this.event.end}}
+									@onChange={{fn
+										this.setEvent
+										"end"
+									}}
+									aria-labelledby={{titleId}}
+								/>
+							</CanonRow>
+						{{/if}}
+						<CanonRow
+							@title="Notes"
+							@form="flush"
+							as |titleId|
+						>
+							<CanonTextCell
+								@value={{this.event.notes}}
+								@onChange={{fn
+									this.setEvent
+									"notes"
+								}}
+								aria-labelledby={{titleId}}
+							/>
+						</CanonRow>
+						{{#if this.eventBackwards}}
+							<CanonStatus
+								@text={{EVENT_BACKWARDS}}
+								@tone="warn"
+								@row={{true}}
+							/>
+						{{/if}}
+						{{#if this.eventPreview}}
+							<CanonCodeBlock
+								@code={{this.eventPreview}}
 							/>
 						{{/if}}
 					{{else}}

@@ -4,10 +4,8 @@ import CanonFigure from 'delphicanon/components/canon-figure';
 import { contrastFigure, hex, type Rgb } from 'delphicanon/lib/colour';
 import { IconSvg } from 'delphitools-v2/components/icon';
 
-/** Band height in px, as ContrastSpecimen.height. */
 export const specimenHeight = 276;
 
-// wcag 2.2 large text: 18 pt, or 14 pt bold, at 4/3 px per pt
 const lines = [
 	{ text: 'Large', size: 'large', note: '18 pt' },
 	{ text: 'Bold', size: 'bold', note: '14 pt' },
@@ -39,7 +37,6 @@ interface SpecimenSignature {
 	};
 }
 
-/** The foreground on the background: the ratio as a figure, type at the sizes WCAG names and a row of controls. */
 const Specimen: TOC<SpecimenSignature> = <template>
 	<div
 		class="contrast-specimen"

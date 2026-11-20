@@ -47,7 +47,6 @@ import './social-cropper/social-cropper.css';
 
 const loadFailed = 'Image could not be read. Try another file?';
 
-// iOS: CASpringAnimation damping 20, stiffness 190, mass 1 (ratio 0.725)
 const spring = htmlSafe(`--social-spring: ${springEasing(0.725)}`);
 const springMs = 500;
 
@@ -67,13 +66,11 @@ interface Source {
 	stem: string;
 }
 
-/** The port of SocialCropperViewController, on the web tool's export. */
 export default class SocialCropper extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 	@tracked platform: CropPlatform;
 	@tracked ratio: CropRatio;
 	@tracked centre: Point = middleOf(emptyPixels);
-	/** The crop's width as a share of the largest. */
 	@tracked fraction = 1;
 	@tracked zoom = 1;
 	@tracked source?: Source;
@@ -86,7 +83,6 @@ export default class SocialCropper extends Component {
 	#loading = 0;
 	#springTimer?: number;
 
-	// ?cropPlatform=<id> ?cropRatio=<index> ?cropSample ?cropMove=<px>: the iOS -cropPlatform, -cropRatio, -cropSample, -cropMove
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -214,7 +210,6 @@ export default class SocialCropper extends Component {
 	picked = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
-		// the same file twice fires change again
 		input.value = '';
 		if (file) void this.load(file);
 	};
@@ -498,7 +493,6 @@ export default class SocialCropper extends Component {
 						/>
 					</CanonGrid>
 				</CanonRows>
-				{{! the empty picture opens it }}
 				{{! template-lint-disable require-input-label }}
 				<input
 					type="file"

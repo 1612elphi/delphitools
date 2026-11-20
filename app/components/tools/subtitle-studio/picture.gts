@@ -9,16 +9,12 @@ import { snap } from 'delphitools-v2/components/tools/subtitle-studio/board';
 
 export interface PictureSignature {
 	Args: {
-		/** Frame width over height. */
 		aspect: number;
-		/** The drawn text, in fractions of the frame; none hides the handle. */
 		box: TextBox | null;
 		style: BurnStyle;
 		disabled?: boolean;
-		/** Frame fractions, snapped; the caller clamps. */
 		onMove: (x: number, y: number) => void;
 	};
-	/** The canvas the frame and the text are drawn on. */
 	Blocks: { default: [] };
 }
 
@@ -38,11 +34,6 @@ const BIG_STEP = 0.05;
 
 const percent = (share: number) => `${share * 100}%`;
 
-/**
- * The iOS SubtitleStudioBoard over a canvas: the frame letterboxed in its
- * box, graphics-safe corners, a handle on the subtitle that drags it (and
- * takes the arrow keys), snap guides while dragging, and the hint.
- */
 export default class Picture extends Component<PictureSignature> {
 	@tracked drag: Drag | null = null;
 
@@ -72,7 +63,6 @@ export default class Picture extends Component<PictureSignature> {
 		);
 	}
 
-	/** The edge away from the subtitle. */
 	get hintAtTop() {
 		const handle = this.handle;
 		return !!handle && handle.y + handle.height / 2 >= 0.5;

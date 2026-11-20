@@ -10,7 +10,6 @@ import {
 } from 'delphitools-v2/lib/substrata/crop-ratio';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 
-// iOS crop cells: Free, 1:1, 4:5, 16:9, the chosen one filled
 export default class CropCells extends Component<{
 	Args: { axis: 'row' | 'column' };
 }> {

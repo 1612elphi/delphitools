@@ -14,12 +14,9 @@ import {
 
 export interface PictureSignature {
 	Args: {
-		/** The decoded source; none shows the slot that takes a file. */
 		base?: ImageBitmap;
 		spec: WatermarkSpec;
-		/** The anchor in use, -1 for random. */
 		zone: number;
-		/** A file is dragged over the tool. */
 		over: boolean;
 		onChoose: () => void;
 		onZone: (index: number) => void;
@@ -55,13 +52,7 @@ const draw = modifier(
 	},
 );
 
-/**
- * The image with its watermark, drawn on every change, fitted to the pane.
- * Away from tiling, a press on a third of the image moves the watermark
- * there; marks show the other anchors. The port of iOS WatermarkPicture.
- */
 export default class Picture extends Component<PictureSignature> {
-	// redraws once the condensed bold has loaded
 	@tracked fonts = 0;
 
 	constructor(owner: Owner, args: PictureSignature['Args']) {

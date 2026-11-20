@@ -203,7 +203,6 @@ const POINT_SLIDERS = [
 const optionValue = (options: TracerOptions, key: string) =>
 	options[key as NumericOption];
 
-// the document paste (filePaste) would load a drop-zone paste a second time
 const keepPaste = (event: Event) => event.stopPropagation();
 
 const Trash = <template><IconSvg @name="trash-2" /></template>;
@@ -240,7 +239,6 @@ function pixelsOf(bitmap: ImageBitmap) {
 	return context.getImageData(0, 0, canvas.width, canvas.height);
 }
 
-/** The port of ImageTracerViewController, on the web tool's tracer. */
 export default class ImageTracer extends Component {
 	@service declare router: RouterService;
 	@service('canon-toast') declare toast: CanonToastService;
@@ -258,7 +256,6 @@ export default class ImageTracer extends Component {
 	#run = 0;
 	#worker?: Promise<Worker | null>;
 
-	// ?traceSample ?tracePreset=<index> ?traceOutlines: the iOS -traceSample, -tracePreset, -traceOutlines launch arguments
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -361,7 +358,6 @@ export default class ImageTracer extends Component {
 		return passAlong('Download');
 	}
 
-	// a drop on the Source drop zone loads there
 	dropped = (event: DragEvent) => {
 		if (event.defaultPrevented) this.drop.over = false;
 		else this.drop.drop(event);
@@ -389,7 +385,6 @@ export default class ImageTracer extends Component {
 			return;
 		}
 		const shown = displaySize(bitmap.width, bitmap.height);
-		// CanonDropZone names a clipboard image "pasted"
 		const named = !!file.name && file.name !== 'pasted';
 		const source: Source = {
 			name: named ? file.name : 'Image',
@@ -456,7 +451,6 @@ export default class ImageTracer extends Component {
 		const worker = await this.#tracer();
 		if (id !== this.#run) return;
 		if (worker) {
-			// the transfer detaches the copy, not the source's pixels
 			const buffer = new Uint8ClampedArray(source.pixels.data)
 				.buffer;
 			worker.postMessage(
@@ -531,7 +525,6 @@ export default class ImageTracer extends Component {
 	pickStroke = (index: number) =>
 		this.setOption('strokewidth', STROKES[index] ?? 1);
 
-	// presets never set scale
 	pickScale = (index: number) => {
 		const scale = SCALES[index] ?? 1;
 		if (scale === this.options.scale) return;

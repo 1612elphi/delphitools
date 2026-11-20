@@ -33,7 +33,6 @@ const InsertIcon = <template><IconSvg @name="plus" /></template>;
 const SpaceIcon = <template><IconSvg @name="space" /></template>;
 const DeleteIcon = <template><IconSvg @name="delete" /></template>;
 
-/** Enters braille cells without pasting: six dot toggles for one cell, or a Perkins chord typed on f d s j k l. */
 export default class BrailleKeyboard extends Component<KeyboardSignature> {
 	@tracked raised: number[] = [];
 	#held = new Set<string>();
@@ -79,7 +78,6 @@ export default class BrailleKeyboard extends Component<KeyboardSignature> {
 
 	space = () => this.args.onInsert(' ');
 
-	// chord inserts on release
 	keydown = (event: KeyboardEvent) => {
 		if (event.ctrlKey || event.metaKey || event.altKey) return;
 		const dot = perkins[event.key.toLowerCase()];
@@ -97,7 +95,6 @@ export default class BrailleKeyboard extends Component<KeyboardSignature> {
 	};
 
 	keyup = (event: KeyboardEvent) => {
-		// firefox: space keyup toggles
 		if (event.key === ' ') event.preventDefault();
 		if (!this.#held.delete(event.key.toLowerCase())) return;
 		if (this.#held.size || !this.#chord.length) return;
@@ -105,7 +102,6 @@ export default class BrailleKeyboard extends Component<KeyboardSignature> {
 		this.#chord = [];
 	};
 
-	// outside keyups never arrive
 	release = () => {
 		this.#held.clear();
 		this.#chord = [];
@@ -135,7 +131,6 @@ export default class BrailleKeyboard extends Component<KeyboardSignature> {
 				/>
 			</:trigger>
 			<:content>
-				{{! keys bubble from controls }}
 				{{! template-lint-disable no-invalid-interactive }}
 				<div
 					class="brl-keyboard-panel"
@@ -159,7 +154,6 @@ export default class BrailleKeyboard extends Component<KeyboardSignature> {
 							this.toggles
 							as |toggle|
 						}}
-							{{! canon-popover focuses autofocus }}
 							{{! template-lint-disable no-autofocus-attribute }}
 							<button
 								type="button"

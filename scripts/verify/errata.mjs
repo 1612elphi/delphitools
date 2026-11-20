@@ -1,5 +1,3 @@
-// errata smoke: open, annotate, page ops, export
-
 import { mkdtempSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -14,7 +12,7 @@ await page.waitForFunction(() => window.__errata, { timeout: 20000 });
 
 const src = await PDFDocument.create();
 src.addPage([400, 500]).drawText('one', { x: 40, y: 450, size: 24 });
-// page 2: a font whose Widths cover only e..o, so a typed z has no glyph
+// widths cover e..o only
 const limited = src.addPage([500, 300]);
 limited.node.setFontDictionary(
 	PDFName.of('F9'),
@@ -67,7 +65,6 @@ const box = await page.$eval('.sub-canvas-wrap canvas', (c) => {
 const cx = box.x + box.w / 2;
 const cy = box.y + box.h / 2;
 
-// content tool: move a source text run, delete it, undo
 await page.keyboard.press('e');
 await sleep(700);
 const rect0 = await page.evaluate(() => window.__errata.pageRect(0));
@@ -102,7 +99,6 @@ await sleep(600);
 check('content undo', (await doc()).pages[0].edits.length === 1);
 await sleep(600);
 
-// text editing: double-click the line, type, Enter
 const line2 = await page.evaluate(async () => (await window.__errata.content(0)).lines[0]);
 const ex = rect0.x + (line2.box.x + line2.box.width / 2) * zoom;
 const ey = rect0.y + (line2.box.y + line2.box.height / 2) * zoom;
@@ -120,7 +116,6 @@ edits = (await doc()).pages[0].edits;
 check('text edit stored', edits.length === 2 && edits[1].kind === 'text' && edits[1].text === 'two' && edits[1].codes.join() === '116,119,111', JSON.stringify(edits[1]));
 check('text edit re-read', (await page.evaluate(async () => (await window.__errata.content(0)).lines[0]?.text)) === 'two');
 check('text editor closed', await page.evaluate(() => !window.__errataCanvas.getObjects().some((o) => o.isEditing)));
-// a character the font cannot show is refused and the editor stays open
 await page.mouse.click(ex, ey);
 await page.mouse.click(ex, ey);
 await sleep(700);
@@ -133,7 +128,6 @@ await page.keyboard.press('Escape');
 await sleep(400);
 check('text edit cancelled', (await doc()).pages[0].edits.length === 2 && (await page.evaluate(() => !window.__errataCanvas.getObjects().some((o) => o.isEditing))));
 
-// substitute font: page 2's font has no z; the edit goes out in Helvetica and the hud says so
 await page.keyboard.press(']');
 await sleep(900);
 const rect1 = await page.evaluate(() => window.__errata.pageRect(1));
@@ -161,7 +155,6 @@ await sleep(600);
 await page.keyboard.press('v');
 await sleep(200);
 
-// image tool: I opens the picker; the chosen file lands centred on the current page
 const pngPath = join(tmpdir(), 'errata-harness.png');
 const pngData = await page.evaluate(() => { const c = document.createElement('canvas'); c.width = 64; c.height = 64; const g = c.getContext('2d'); g.fillStyle = '#c33'; g.fillRect(0, 0, 64, 64); return c.toDataURL().split(',')[1]; });
 writeFileSync(pngPath, Buffer.from(pngData, 'base64'));
@@ -171,7 +164,6 @@ await sleep(800);
 let objs = await objects();
 check('image placed', objs.length === 1 && objs[0].kind === 'image' && Math.round(objs[0].cx) === 200 && Math.round(objs[0].cy) === 250 && objs[0].w === 64 && objs[0].h === 64, JSON.stringify(objs[0]).slice(0, 160));
 check('image tool returns to select', (await activeTool()) === 'Select (V)');
-// dragged past the page edge it dims; back inside it is opaque again
 const imgOpacity = () => page.evaluate(() => window.__errataCanvas.getActiveObject()?.opacity);
 check('image opaque inside', (await imgOpacity()) === 1);
 const rectImg = await page.evaluate(() => window.__errata.pageRect(0));
@@ -192,7 +184,6 @@ await page.keyboard.press('Delete');
 await sleep(300);
 check('image removed', (await objects()).length === 0);
 
-// highlight: drag
 await page.keyboard.press('h');
 await page.mouse.move(cx - 60, cy - 20);
 await page.mouse.down();
@@ -203,7 +194,6 @@ objs = await objects();
 check('highlight added', objs.length === 1 && objs[0].kind === 'shape' && objs[0].shape === 'highlight', JSON.stringify(objs[0]));
 check('highlight size', objs[0] && objs[0].w > 50 && objs[0].h > 10, `${objs[0]?.w}x${objs[0]?.h}`);
 
-// pen: drag
 await page.keyboard.press('p');
 await page.mouse.move(cx - 40, cy + 60);
 await page.mouse.down();
@@ -222,7 +212,6 @@ const inkScreen = await page.evaluate(() => {
 });
 check('ink stays where drawn', Math.abs(inkScreen.x - cx) < 4 && Math.abs(inkScreen.y - (cy + 75)) < 4, JSON.stringify({ inkScreen, want: [cx, cy + 75] }));
 
-// text: click, type, escape
 await page.keyboard.press('t');
 await page.mouse.click(cx - 100, cy - 120);
 await sleep(150);
@@ -233,7 +222,6 @@ objs = await objects();
 check('text added', objs.length === 3 && objs[2].kind === 'text' && objs[2].text === 'Hello', JSON.stringify(objs[2]));
 check('text measured', objs[2] && objs[2].w > 10 && objs[2].h > 5, `${objs[2]?.w}x${objs[2]?.h}`);
 
-// select and move the highlight
 await page.keyboard.press('v');
 await page.mouse.click(cx, cy - 5);
 await page.mouse.down();
@@ -243,19 +231,16 @@ await sleep(200);
 const moved = (await objects())[0];
 check('highlight moved', Math.abs(moved.cx - objs[0].cx) > 5, `${objs[0].cx} -> ${moved.cx}`);
 
-// delete
 await page.keyboard.press('Delete');
 await sleep(150);
 check('delete removes', (await objects()).length === 2);
 
-// undo restores
 await page.keyboard.down('Meta');
 await page.keyboard.press('z');
 await page.keyboard.up('Meta');
 await sleep(150);
 check('undo restores', (await objects()).length === 3);
 
-// rotate current page
 const before = (await doc()).pages[0];
 await page.click('.err-page-cell.is-current .err-page-action[aria-label="Rotate page"]');
 await sleep(400);
@@ -263,7 +248,6 @@ const after = (await doc()).pages[0];
 check('rotation stored', after.rotation === 90, String(after.rotation));
 check('objects carried', after.objects[2].angle === before.objects[2].angle + 90);
 
-// continuous scroll: wheeling down past page 1 changes the current page
 await page.keyboard.press('v');
 await page.mouse.move(cx, cy);
 await page.mouse.wheel({ deltaY: 3000 });
@@ -273,7 +257,6 @@ await page.mouse.wheel({ deltaY: -3000 });
 await sleep(400);
 check('scroll back', (await page.evaluate(() => window.__errata.pageIndex())) === 0);
 
-// insert a blank page via the navigator gap between page 1 and 2
 await page.hover('.err-page-gap[data-index="1"]');
 await page.click('.err-page-gap[data-index="1"] [aria-label="Insert blank page"]');
 await sleep(200);
@@ -286,7 +269,6 @@ await page.keyboard.press(']');
 await sleep(150);
 check('page key', (await page.evaluate(() => window.__errata.pageIndex())) === 2);
 
-// toolbox: open the sheet, pick Crop, the mode bar shows
 await page.click('[data-toolbox]');
 await sleep(500);
 check('sheet opens', await page.$eval('.err-sheet', (e) => e.classList.contains('is-open')));
@@ -296,7 +278,6 @@ await sleep(500);
 check('sheet closes', !(await page.$eval('.err-sheet', (e) => e.classList.contains('is-open'))));
 check('mode bar', await page.$eval('.err-mode', (e) => e.classList.contains('is-open')));
 
-// crop page 3 (500x300) by dragging with the crop tool
 await sleep(300);
 const box3 = await page.evaluate(() => window.__errata.pageRect(2));
 check('page 3 rect', !!box3 && box3.w > 100 && box3.h > 50, JSON.stringify(box3));
@@ -350,7 +331,7 @@ const clickIn = (label) => page.evaluate((l) => [...document.querySelectorAll('.
 
 await page.click('.sub-ed-stack [aria-label="Menu"]');
 await sleep(300);
-await page.evaluate(() => [...document.querySelectorAll('.sub-menu-card')].find((b) => b.textContent.includes('Page size'))?.click());
+await page.click('.err-menu [data-menu="page-size"]');
 await sleep(500);
 check('page size panel', await modeOpen('page-size'));
 check('page size not a dialog', !(await page.$('dialog[open]')));
@@ -393,7 +374,6 @@ await page.keyboard.up('Meta');
 await sleep(300);
 check('page size range one undo step', JSON.stringify(await sizesOf()) === JSON.stringify(sizesBefore), JSON.stringify(await sizesOf()));
 
-// signature: draw, place
 await page.keyboard.press('g');
 await sleep(700);
 const barVisible = () => page.evaluate(() => document.querySelector('.sub-ed-bar')?.offsetParent != null);
@@ -414,26 +394,25 @@ objs = await objects();
 check('signature placed', objs.length === 1 && objs[0].kind === 'image' && objs[0].dataUrl.startsWith('data:image/png'));
 check('signature saved', await page.evaluate(() => JSON.parse(localStorage.getItem('errata:signatures') ?? '[]').length === 1));
 
-// export
 const out = await page.evaluate(() => window.__errata.export());
 check('export bytes', Array.isArray(out) && out.length > 500);
 const result = await PDFDocument.load(new Uint8Array(out));
 check('export pages', result.getPageCount() === 3);
 check('export resized page', Math.round(result.getPage(2).getWidth()) === 859 && Math.round(result.getPage(2).getHeight()) === 612);
 check('export rotation', result.getPage(0).getRotation().angle === 90);
-// the export wraps the source stream in q/Q streams and appends its own; read them all
+// export wraps q/Q streams
 const contents0 = result.getPage(0).node.Contents();
 const streams0 = contents0.constructor.name === 'PDFArray' ? contents0.asArray().map((r) => result.context.lookup(r)) : [contents0];
 const text0 = streams0.map((st) => new TextDecoder('latin1').decode(decodePDFRawStream(st).decode())).join('\n');
 check('export edited stream', /Tm\s*\[[-\d.]+\]\s*TJ/.test(text0));
 check('export edited text', /<74776f> Tj/i.test(text0));
-// the substituted page was resized, so its stream is an embedded XObject: search every stream
+// resized page is xobject
 const allText = result.context.enumerateIndirectObjects().flatMap(([, obj]) => {
 	if (!obj || typeof obj.getContents !== 'function' || obj.constructor.name !== 'PDFRawStream') return [];
 	try { return [new TextDecoder('latin1').decode(decodePDFRawStream(obj).decode())]; } catch { return []; }
 }).join('\n');
 check('export substitute font', /\/ErrHelv 24 Tf\s*<7a6f6e65> Tj\s*\/F9 24 Tf/.test(allText));
-// blank copies the rotated page 0 size
+// blank copies rotated size
 check('export blank size', result.getPage(1).getWidth() === 500 && result.getPage(1).getHeight() === 400);
 
 const openCell = async (name) => {
@@ -447,7 +426,6 @@ const texts = async () => (await doc()).pages.map((p) => p.objects.filter((o) =>
 
 await openCell('Page numbers');
 check('numbers mode bar', await modeOpen('page-numbers'));
-// distinct label x positions
 const fieldColumns = (sel = '.err-mode.is-open') => page.$$eval(`${sel} .err-mode-body > .err-mode-field .canon-row-title`, (ls) => new Set(ls.map((l) => Math.round(l.getBoundingClientRect().left))).size);
 const panelBox = () => page.$eval('.err-mode.is-open', (e) => {
 	const r = e.getBoundingClientRect();
@@ -695,6 +673,7 @@ const imposeApply = async () => {
 await openCell('Impose');
 check('impose mode bar', await modeOpen('impose'));
 check('impose form grid', (await fieldColumns('.err-mode.is-open[data-mode="impose"]')) >= 2);
+check('impose has a reading direction', await page.$eval('.err-mode.is-open[data-mode="impose"]', (e) => [...e.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Right to left')));
 await imposeApply();
 const afterImpose = await doc();
 // padded to 4 pages
@@ -781,7 +760,6 @@ check('organise insert blank', orgDoc.pages.length === 4 && orgDoc.pages[2].sour
 await undo();
 await sleep(200);
 
-// page 1 to end
 await page.evaluate(() => {
 	const cells = [...document.querySelectorAll('.err-organise-cell')];
 	const dt = new DataTransfer();
@@ -959,7 +937,7 @@ await sleep(200);
 const listSelect = `${bar} select[aria-label="List"]`;
 const options = await page.$$eval(`${listSelect} option:not([hidden])`, (els) => els.map((e) => e.textContent.trim()));
 check('comment list', options.length === 2 && options[0] === '1 · Imported note line two' && options[1] === '1 · Fresh note second line', JSON.stringify(options));
-// a native select fires no change for the option already shown
+// select ignores same option
 const pickListed = (text) =>
 	page.$eval(
 		listSelect,
@@ -1140,7 +1118,6 @@ check('redact applied in place', burnt.source !== beforeBurn.source && (await ma
 check('redact no download', !readdirSync(downloads).some((n) => /-redacted/.test(n)));
 const linesOf = async (i) => (await page.evaluate(async (n) => (await window.__errata.content(n)).lines.map((l) => l.text), i)).join(' ');
 check('redact source text gone', !(await linesOf(0)).includes('TOPSECRET') && (await linesOf(0)).includes('KEEPME'), await linesOf(0));
-// export equals source now
 {
 	const outBytes = await exportBytes();
 	const pdf = await loadPdf(outBytes);
@@ -1444,7 +1421,7 @@ check('flip one undo step', !sp[0].flipX && sp[0].rotation === 0, JSON.stringify
 await clickIn('Rotate right');
 await clickIn('Flip horizontal');
 await sleep(300);
-// turned: mirror swaps axis
+// turned mirror swaps axis
 sp = await pagesNow();
 check('flip on a turned page', sp[0].rotation === 90 && sp[0].flipY === true && !sp[0].flipX, JSON.stringify(sp[0]));
 await clickIn('All');
@@ -1604,5 +1581,29 @@ for (const [m, want] of [['page-numbers', /^\d+ \/ \d+$/], ['watermark', /^DRAFT
 await page.evaluate(() => window.__errata.setMode(null));
 await sleep(300);
 check('previews cleared', (await previews()).length === 0);
+
+{
+	await page.evaluate(() => window.__errata.setTool?.('select'));
+	const vy = () => page.evaluate(() => window.__errataCanvas.viewportTransform[5]);
+	const finger = (type, y) =>
+		page.evaluate(
+			(type, y) => {
+				const el = document.querySelector('.sub-canvas-wrap canvas.upper-canvas');
+				const r = el.getBoundingClientRect();
+				const t = new Touch({ identifier: 1, target: el, clientX: r.left + 3, clientY: r.top + y });
+				el.dispatchEvent(new TouchEvent(type, { bubbles: true, cancelable: true, touches: type === 'touchend' ? [] : [t], changedTouches: [t] }));
+			},
+			type,
+			y,
+		);
+	await page.evaluate(() => window.__errataCanvas.setZoom(2));
+	await finger('touchstart', 300);
+	const y0 = await vy();
+	await finger('touchmove', 240);
+	const y1 = await vy();
+	await finger('touchend', 240);
+	check('touch: a finger on empty space pans', Math.abs(y1 - y0) > 1, JSON.stringify({ y0, y1 }));
+	check('touch: marquee selection is back after the pan', await page.evaluate(() => window.__errataCanvas.selection));
+}
 
 await finish(browser);

@@ -46,7 +46,6 @@ import DevelopPicture from './picture';
 import type { Histogram } from './render';
 import './develop.css';
 
-// iOS DevelopViewController.groups; every type has an `amount` slider
 const GROUPS = [
 	{
 		title: 'Light',
@@ -64,11 +63,6 @@ interface DevelopViewSignature {
 	Args: { layerId: string };
 }
 
-/**
- * One image layer with its adjustments and look, the picture beside the
- * settings. Everything done here is one undo step; Revert goes back to how
- * it opened.
- */
 export default class DevelopView extends Component<DevelopViewSignature> {
 	@tracked histogram: Histogram | null = null;
 
@@ -171,7 +165,6 @@ export default class DevelopView extends Component<DevelopViewSignature> {
 		editorUi.developOpen = false;
 	};
 
-	// the editor's shortcuts listen on window: keys stop here
 	keys = modifier((root: HTMLElement) => {
 		root.focus();
 		const down = (event: KeyboardEvent) => {

@@ -32,9 +32,11 @@ import {
 	OPERATIONS,
 	SYNTAX,
 	compute,
+	loadEngines,
 	needsVariable,
 	solutionName,
 	solveRoots,
+	type Engines,
 	type Operation,
 } from 'delphitools-v2/components/tools/algebra-calc/algebra';
 import Picture, {
@@ -43,20 +45,11 @@ import Picture, {
 } from 'delphitools-v2/components/tools/algebra-calc/picture';
 import './algebra-calc/algebra-calc.css';
 
-type MathModule = typeof import('mathjs');
-
-let mathModule: Promise<MathModule> | null = null;
-function loadMath(): Promise<MathModule> {
-	mathModule ??= import('mathjs');
-	return mathModule;
-}
-
 const CopyIcon = <template><IconSvg @name="copy" /></template>;
 const ReuseIcon = <template><IconSvg @name="corner-left-up" /></template>;
 
 const operationLabels = OPERATIONS.map((op) => op.label);
 const operationIds = OPERATIONS.map((op) => op.id);
-/** Keys under the field: each opens the keypad and types itself. */
 const keys: Key[] = [
 	{ kind: 'fraction' },
 	{ kind: 'power' },
@@ -80,18 +73,16 @@ function withoutConstant(text: string) {
 	return text.endsWith(' + C') ? text.slice(0, -4) : text;
 }
 
-/** The port of AlgebraCalcViewController, on the web tool's engine. */
 export default class AlgebraCalcTool extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
 	@tracked expression = '';
 	@tracked variableText = 'x';
 	@tracked operation: Operation = 'simplify';
-	@tracked math?: MathModule;
+	@tracked engines?: Engines;
 	@tracked promoted = 0;
 	handle = new CanonMathFieldHandle();
 
-	// ?algExpr= ?algOp=<simplify|expand|factor|solve|derivative|integral> ?algVar=: the iOS launch flags
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -100,8 +91,8 @@ export default class AlgebraCalcTool extends Component {
 		if (operationIds.includes(op as Operation))
 			this.operation = op as Operation;
 		this.variableText = query.get('algVar')?.slice(0, 2) ?? 'x';
-		void loadMath().then((math) => {
-			if (!this.isDestroying) this.math = math;
+		void loadEngines().then((engines) => {
+			if (!this.isDestroying) this.engines = engines;
 		});
 	}
 
@@ -114,14 +105,19 @@ export default class AlgebraCalcTool extends Component {
 	}
 
 	evaluate(expression: string): Outcome | undefined {
-		const { math } = this;
-		if (!math || !expression) return undefined;
+		const { engines } = this;
+		if (!engines || !expression) return undefined;
 		try {
 			if (this.operation === 'solve')
-				return { roots: solveRoots(math, expression) };
+				return {
+					roots: solveRoots(
+						engines.math,
+						expression,
+					),
+				};
 			return {
 				output: compute(
-					math,
+					engines,
 					this.operation,
 					expression,
 					this.variable,
@@ -137,7 +133,6 @@ export default class AlgebraCalcTool extends Component {
 		}
 	}
 
-	// the web answered on Calculate; iOS answers as you type, and so does this
 	get outcome() {
 		return this.evaluate(this.trimmed);
 	}
@@ -194,7 +189,6 @@ export default class AlgebraCalcTool extends Component {
 		});
 	}
 
-	// the picture: the input with its operation's notation, the result under it
 	inputNode(input: string): Node | undefined {
 		const node = parse(input);
 		if (!node) return undefined;
@@ -241,8 +235,17 @@ export default class AlgebraCalcTool extends Component {
 				? relations[0]
 				: N.list(relations);
 		}
-		const parsed = parse(outcome.output ?? '');
-		return parsed && N.relation('=', N.word(''), present(parsed));
+		const output = outcome.output ?? '';
+		const constant = output !== withoutConstant(output);
+		const parsed = parse(withoutConstant(output));
+		if (!parsed) return undefined;
+		const shown = present(parsed);
+		const terms = shown.k === 'sum' ? shown.items : [shown];
+		return N.relation(
+			'=',
+			N.word(''),
+			constant ? N.sum([...terms, N.symbol('C')]) : shown,
+		);
 	}
 
 	lines(input: string, outcome: Outcome | undefined): PictureLine[] {

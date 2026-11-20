@@ -1,4 +1,3 @@
-/* picture: the card scrolls inside the band */
 .rt-picture {
 	box-sizing: border-box;
 	block-size: 100%;
@@ -33,7 +32,6 @@
 	border: var(--canon-hairline) dashed var(--canon-muted-foreground);
 }
 
-/* side by side the picture fills its pane; stacked it takes the card's height */
 @container canon-split ((min-width: 640px) and (orientation: landscape)) or (min-width: 900px) {
 	.rt-card {
 		min-block-size: 100%;
@@ -87,14 +85,13 @@
 	display: grid;
 }
 
-/* each cell draws its right and bottom line; the first row and column close the box */
+/* cells draw right, bottom */
 .rt-cell {
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
 	justify-content: center;
 	box-sizing: border-box;
-	min-inline-size: 0;
 	margin: 0;
 	padding: 8px 12px;
 	border: 0;
@@ -106,7 +103,9 @@
 	font-size: var(--canon-text-subheadline);
 	line-height: 1.3;
 	text-align: start;
-	overflow-wrap: anywhere;
+
+	/* word-wide column minimum */
+	overflow-wrap: break-word;
 }
 
 .rt-cell.is-top {
@@ -163,7 +162,6 @@
 	padding: 0;
 }
 
-/* a preamble note spans the head of the table */
 .rt-cell.is-banner {
 	align-items: center;
 	background: color-mix(
@@ -174,7 +172,6 @@
 	text-align: center;
 }
 
-/* a note's badge straddles the line before its step, above every cell */
 .rt-marks {
 	position: relative;
 	z-index: 3;
@@ -216,7 +213,6 @@
 	font-size: var(--canon-text-caption);
 }
 
-/* a discard is a dashed tag; a kept output (name) is a solid one */
 .rt-discard,
 .rt-name {
 	padding: 0 4px;
@@ -235,7 +231,6 @@
 	color: var(--canon-primary);
 }
 
-/* the source editor */
 .rt-editor-head {
 	display: flex;
 	align-items: stretch;
@@ -265,7 +260,14 @@
 	min-block-size: 240px;
 }
 
-/* the script by role; colour only, so the marks keep the textarea's metrics */
+/* rule centred in padding */
+.rt-editor .media-marked-source:not(:placeholder-shown) {
+	background: linear-gradient(var(--canon-border), var(--canon-border))
+		no-repeat calc(var(--media-marked-gutter) - 5px) 0 /
+		var(--canon-hairline) 100%;
+}
+
+/* colour only: keeps metrics */
 .rt-t--step {
 	color: var(--canon-primary);
 }
@@ -302,7 +304,6 @@
 	color: var(--canon-destructive);
 }
 
-/* examples: a row a recipe, its category trailing */
 .rt-example {
 	display: flex;
 	gap: 12px;
@@ -362,7 +363,7 @@
 	text-underline-offset: 2px;
 }
 
-/* the print carrier, appended to body */
+/* appended to body */
 .rt-print {
 	position: fixed;
 	inset: 0;

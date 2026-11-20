@@ -1,5 +1,7 @@
+import { htmlSafe } from '@ember/template';
 import {
 	contrastLevels,
+	hex,
 	contrastRatio,
 	fromHsl,
 	hsl,
@@ -9,10 +11,14 @@ import {
 
 const { aaLarge, aa, aaa } = contrastLevels;
 
+export const swatch = (colour: Rgb) => htmlSafe(`background: ${hex(colour)}`);
+export const pair = (foreground: Rgb, background: Rgb) =>
+	htmlSafe(`color: ${hex(foreground)}; background: ${hex(background)}`);
+
 /** The thresholds marked on the scale. */
 export const notches = [aaLarge, aa, aaa];
 
-// wcag 2.2: 1.4.3, 1.4.6, 1.4.11
+// wcag 1.4.3, 1.4.6, 1.4.11
 export const rules: { name: string; aa: number; aaa?: number }[] = [
 	{ name: 'Normal', aa, aaa },
 	{ name: 'Large', aa: aaLarge, aaa: aa },
@@ -77,4 +83,11 @@ export function suggest(
 	return contrastRatio(candidate, fixed) >= target.ratio
 		? candidate
 		: undefined;
+}
+
+/** The best WCAG level a ratio reaches for normal text, then large text. */
+export function grade(ratio: number): string {
+	if (ratio >= aaa) return 'AAA';
+	if (ratio >= aa) return 'AA';
+	return ratio >= aaLarge ? 'AA Large' : 'Fail';
 }

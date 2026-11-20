@@ -2,6 +2,7 @@ import { module, test } from 'qunit';
 import {
 	compute,
 	equationToPolynomial,
+	loadEngines,
 	needsVariable,
 	solutionName,
 	solveRoots,
@@ -29,16 +30,40 @@ module('Unit | Tool | algebra-calc', function () {
 	});
 
 	test('roots and the omnibox string agree', async function (assert) {
-		const math = await import('mathjs');
+		const engines = await loadEngines();
+		const { math } = engines;
 		assert.deepEqual(solveRoots(math, 'x^2 - 4 = 0'), ['2', '-2']);
 		assert.strictEqual(
-			compute(math, 'solve', 'x^2 - 4 = 0', 'x'),
+			compute(engines, 'solve', 'x^2 - 4 = 0', 'x'),
 			'[2,-2]',
 		);
 		assert.strictEqual(
-			compute(math, 'derivative', 'x^3', 'x'),
+			compute(engines, 'derivative', 'x^3', 'x'),
 			'3 * x ^ 2',
 		);
-		assert.throws(() => compute(math, 'factor', 'x^2 - 4', 'x'));
+	});
+
+	test('factor and integral match iOS', async function (assert) {
+		const engines = await loadEngines();
+		assert.strictEqual(
+			compute(engines, 'factor', 'x^3 - 1', 'x'),
+			'(-1+x)*(1+x+x^2)',
+		);
+		assert.strictEqual(
+			compute(engines, 'integral', 'x^2', 'x'),
+			'(1/3)*x^3 + C',
+		);
+	});
+
+	test('an equation does not set a variable', async function (assert) {
+		const engines = await loadEngines();
+		assert.strictEqual(
+			compute(engines, 'factor', 'x = 4', 'x'),
+			'-4+x',
+		);
+		assert.strictEqual(
+			compute(engines, 'factor', 'x^2 - 4', 'x'),
+			'(-2+x)*(2+x)',
+		);
 	});
 });

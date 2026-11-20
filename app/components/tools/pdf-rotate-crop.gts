@@ -71,7 +71,6 @@ const Copy = <template><IconSvg @name="copy" /></template>;
 const Cross = <template><IconSvg @name="x" /></template>;
 const Crop = <template><IconSvg @name="crop" /></template>;
 
-// ?rc* ios launch arguments
 const query = () => new URLSearchParams(window.location.search);
 
 const sameSize = (a: Size, b: Size) =>
@@ -94,7 +93,6 @@ interface Exported {
 	name: string;
 }
 
-/** The port of PDFRotateCropViewController, on pdf.js pictures and a pdf-lib write. */
 export default class PdfRotateCrop extends Component {
 	drop = new Drop(ACCEPT, (file) => this.load(file));
 
@@ -103,7 +101,6 @@ export default class PdfRotateCrop extends Component {
 	@tracked geometry: Geometry[] = [];
 	@tracked edits: Edit[] = [];
 	@tracked page = 0;
-	/** cleared on edit */
 	@tracked papers: Record<number, string> = {};
 	@tracked thumbs: string[] = [];
 	@tracked picture: {
@@ -111,9 +108,7 @@ export default class PdfRotateCrop extends Component {
 		page: number;
 		rotation: number;
 	} | null = null;
-	/** drag crop, display points */
 	@tracked live: CropBox | null = null;
-	/** remounts fields after refusal */
 	@tracked refused = 0;
 	@tracked busy = false;
 	@tracked failed = false;
@@ -121,9 +116,7 @@ export default class PdfRotateCrop extends Component {
 
 	#bytes: ArrayBuffer | null = null;
 	#pdf?: PDFDocumentProxy;
-	// bumps per file
 	#token = 0;
-	// bumps per picture
 	#run = 0;
 
 	constructor(owner: Owner, args: object) {
@@ -172,13 +165,11 @@ export default class PdfRotateCrop extends Component {
 		);
 	}
 
-	/** display space; uncropped: whole */
 	cropRect(index: number): CropBox {
 		const size = this.displaySize(index);
 		const whole = { x: 0, y: 0, ...size };
 		const crop = this.edits[index]!.crop;
 		if (!crop) return whole;
-		// paper crops may overflow
 		const shown = toDisplay(
 			crop,
 			this.geometry[index]!.box,
@@ -222,7 +213,6 @@ export default class PdfRotateCrop extends Component {
 					width: rect.width,
 					height: rect.height,
 				},
-				// pdf points, bottom-left origin
 				placement: {
 					x: -rect.x,
 					y: rect.y + rect.height - full.height,
@@ -360,7 +350,6 @@ export default class PdfRotateCrop extends Component {
 		this.setCrop(rect);
 	};
 
-	/** paper turns for landscape */
 	#paperCrop(index: number, id: string) {
 		const paper = paperSizeFor(id);
 		if (!paper) return undefined;
@@ -385,7 +374,6 @@ export default class PdfRotateCrop extends Component {
 		this.#paper(this.page, id);
 	};
 
-	/** same fraction or paper */
 	cropAll = () => {
 		if (!this.loaded) return;
 		const { page } = this;
@@ -491,7 +479,6 @@ export default class PdfRotateCrop extends Component {
 		}
 	}
 
-	// ios DEBUG launch arguments
 	#launch() {
 		const flags = query();
 		const turn = Number(flags.get('rcRotate') ?? NaN);
@@ -594,7 +581,6 @@ export default class PdfRotateCrop extends Component {
 			if (token !== this.#token || edits !== this.edits)
 				return;
 			this.exported = {
-				// BlobPart rejects ArrayBufferLike view
 				blob: new Blob([new Uint8Array(saved)], {
 					type: 'application/pdf',
 				}),

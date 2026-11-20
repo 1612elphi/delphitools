@@ -77,7 +77,6 @@ const DEFAULT_PREVIEW = 'The quick brown fox jumps over the lazy dog';
 const NOT_A_FONT = 'Please upload a font file (.ttf, .otf, .woff, .woff2)';
 const LOAD_FAILED =
 	'Failed to load font. The file may be corrupted or invalid.';
-/** The web preview's sizes, so the waterfall still reaches 72 and 96. */
 const WATERFALL_SIZES = [12, 14, 16, 18, 24, 32, 48, 64, 72, 96];
 const SAMPLE_TEXTS = [
 	'The quick brown fox jumps over the lazy dog',
@@ -93,12 +92,10 @@ const rowPadding = 20;
 const FontIcon = <template><IconSvg @name="file-type" /></template>;
 const Trash = <template><IconSvg @name="trash-2" /></template>;
 
-// the document paste (filePaste) would load a drop-zone paste a second time
 const keepPaste = (event: Event) => event.stopPropagation();
 
 let familySeq = 0;
 
-/** Shares measured from the loaded face when the file's tables cannot be read (WOFF2). */
 function measured(family: string): Shares {
 	const context = document.createElement('canvas').getContext('2d');
 	if (!context) return standIn;
@@ -122,7 +119,6 @@ interface Loaded {
 	shares: Shares;
 }
 
-/** The port of FontExplorerViewController. */
 export default class FontExplorerTool extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -133,10 +129,8 @@ export default class FontExplorerTool extends Component {
 
 	#objectUrl: string | null = null;
 	#fontFace: FontFace | null = null;
-	// ignore stale font loads
 	#runId = 0;
 
-	// ?fxText=: the iOS -fxText flag
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const text = new URLSearchParams(window.location.search).get(
@@ -390,7 +384,6 @@ export default class FontExplorerTool extends Component {
 
 	allowDrop = (event: DragEvent) => event.preventDefault();
 
-	// a drop anywhere in the tool loads the font; the drop zone handles its own
 	dropAnywhere = (event: DragEvent) => {
 		if (event.defaultPrevented) return;
 		event.preventDefault();
@@ -585,7 +578,6 @@ export default class FontExplorerTool extends Component {
 									@framed={{true}}
 									class="fx-sample-rows"
 								>
-									{{! wording carried over from the Next app }}
 									<CanonHeading
 										@text="Sample Texts"
 									/>

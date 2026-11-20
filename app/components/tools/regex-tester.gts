@@ -25,7 +25,6 @@ import {
 import './regex-tester/regex-tester.css';
 
 const typingDelay = 400;
-// runaway exec() can't be killed except by terminating its thread
 const timeLimit = 400;
 
 const WORKER_SOURCE = `const run = ${runRegex.toString()};
@@ -41,7 +40,6 @@ const flagOptions = [
 	{ flag: 's', label: 'Dotall' },
 ];
 
-// iOS presets; the flags are g for all four
 const presets = [
 	{
 		name: 'Email',
@@ -52,7 +50,6 @@ const presets = [
 	{ name: 'Date', pattern: '\\d{1,4}[-/.]\\d{1,2}[-/.]\\d{1,4}' },
 ];
 
-// iOS -regexSample launch argument
 const samplePattern = String.raw`([\w.]+)@([\w-]+\.\w+)`;
 const sampleText = `Ruby <ruby@delphi.tools> filed this on 2026-09-25, cc bob.smith@example.org.
 Call +44 20 7946 0958 or visit https://delphi.tools/regex-tester today.
@@ -60,7 +57,6 @@ Invoice #4471 is due 2026-10-01; support@delphi-tools.co.uk has a copy.`;
 
 const CopyIcon = <template><IconSvg @name="copy" /></template>;
 
-/** The port of RegexTesterViewController. */
 export default class RegexTester extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -68,7 +64,6 @@ export default class RegexTester extends Component {
 	@tracked flags = 'g';
 	@tracked text = '';
 	@tracked outcome: RegexOutcome = { kind: 'empty' };
-	// the text the outcome was run on
 	@tracked shownText = '';
 	@tracked pictureHeight?: number;
 
@@ -81,7 +76,6 @@ export default class RegexTester extends Component {
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
-		// ?regexSample ?regexPattern= ?regexFlags= ?regexText=: the iOS launch arguments
 		const query = new URLSearchParams(window.location.search);
 		const sample = query.has('regexSample');
 		this.pattern =
@@ -206,7 +200,6 @@ export default class RegexTester extends Component {
 		);
 	};
 
-	// the worker is quick; marks follow every keystroke, as the web tool did
 	setText = (text: string) => {
 		this.text = text;
 		this.refresh();
@@ -229,7 +222,6 @@ export default class RegexTester extends Component {
 		void this.toast.copy(`/${this.pattern}/${this.flags}`);
 
 	measured = (height: number) => {
-		// 2 px rule under the picture
 		if (height + 2 !== this.pictureHeight)
 			this.pictureHeight = height + 2;
 	};

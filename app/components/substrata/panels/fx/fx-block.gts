@@ -26,7 +26,6 @@ import type { FxContext } from './fx-context';
 const ResetIcon = <template><IconSvg @name="rotate-ccw" /></template>;
 const RemoveIcon = <template><IconSvg @name="trash-2" /></template>;
 
-// iOS RowActions.buttonWidth
 const DELETE_WIDTH = 88;
 
 interface Signature {
@@ -41,8 +40,6 @@ interface Signature {
 	};
 }
 
-// iOS FxBlock: a bar (grip, name, lamp, more) that folds out the editor;
-// a slide towards the trailing edge shows Delete
 export default class FxBlock extends Component<Signature> {
 	@tracked slide = 0;
 	@tracked revealed = false;
@@ -129,7 +126,6 @@ export default class FxBlock extends Component<Signature> {
 			);
 	};
 
-	// sideways only, so the panel still scrolls; grip, lamp and more keep theirs
 	slider = modifier((bar: HTMLElement) => {
 		let pointer: number | undefined;
 		let x0 = 0;
@@ -172,7 +168,6 @@ export default class FxBlock extends Component<Signature> {
 				bar.setPointerCapture(e.pointerId);
 			}
 			const reach = from + dx;
-			// past the button it moves a third as far
 			this.slide =
 				leads() *
 				Math.max(
@@ -194,7 +189,6 @@ export default class FxBlock extends Component<Signature> {
 				e.type === 'pointerup' &&
 				reach > DELETE_WIDTH / 2;
 			this.slide = this.revealed ? leads() * DELETE_WIDTH : 0;
-			// the click that ends a slide is not a toggle
 			window.setTimeout(() => (this.#slid = false));
 		};
 		bar.addEventListener('pointerdown', down);

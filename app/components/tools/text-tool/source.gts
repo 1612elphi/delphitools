@@ -9,17 +9,12 @@ interface SourceSignature {
 	Args: {
 		heading: string;
 		text: string;
-		/** Accessible name of the field; default Input. */
 		label?: string;
 		onChange: (text: string) => void;
 	};
 	Blocks: { default: [] };
 }
 
-/**
- * CanonTextInput without its 0.4 s typing pause: the web tools answered on
- * every keystroke. Goes inside a CanonRows.
- */
 const Source: TOC<SourceSignature> = <template>
 	<CanonHeading @text={{@heading}} />
 	<CanonTextArea

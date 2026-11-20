@@ -4,7 +4,6 @@ import { modifier } from 'ember-modifier';
 import CanonFigure from 'delphicanon/components/canon-figure';
 import { signed } from 'delphitools-v2/components/tools/font-explorer/sfnt';
 
-/** Em fractions, descent positive. */
 export interface Shares {
 	ascent: number;
 	capHeight: number;
@@ -24,10 +23,8 @@ export const standIn: Shares = {
 interface PictureSignature {
 	Args: {
 		text: string;
-		/** CSS font-family of the face to set the text in. */
 		family: string;
 		shares: Shares;
-		/** Shows each line's value in font units. */
 		values: boolean;
 		caption: string;
 		detail?: string;
@@ -40,7 +37,6 @@ export const captionHeight = 44;
 const padding = 16;
 const labelRoom = 16;
 const labelGap = 12;
-/** Least share of the height-fitted size before the text clips instead of shrinking. */
 const widthFloor = 0.5;
 
 let context: CanvasRenderingContext2D | null | undefined;
@@ -51,7 +47,6 @@ function width(text: string, font: string): number {
 	return context.measureText(text).width;
 }
 
-/** Em size and baseline that fit the text's depth to the area's height, and its advance to the width down to a floor. */
 export function fit(
 	shares: Shares,
 	advance: number,
@@ -66,11 +61,6 @@ export function fit(
 	return { em, baseline: top + shares.ascent * em };
 }
 
-/**
- * The specimen set on its metric lines: ascent, cap height and x-height
- * dashed, the baseline in the primary colour, descent; the x-height band
- * tinted and each line named with its value (FontMetricsPicture).
- */
 export default class FontPicture extends Component<PictureSignature> {
 	@tracked width = 0;
 	@tracked height = 0;
@@ -141,7 +131,6 @@ export default class FontPicture extends Component<PictureSignature> {
 		};
 		const advance = width(text, `100px ${family}`) / 100;
 		const { em, baseline } = fit(shares, advance, typeArea);
-		// overlapping labels are dropped, the lowest kept
 		let ceiling = Infinity;
 		const placed = labels
 			.map((label) => ({

@@ -22,7 +22,6 @@ import type {
 	ShapeParams,
 } from 'delphitools-v2/lib/substrata/doc-model';
 
-// iOS LayerThumbnails.side
 const SIDE = 32;
 
 function shapePath(params: ShapeParams): Path2D {
@@ -162,8 +161,6 @@ function paint(ctx: CanvasRenderingContext2D, layer: Layer): void {
 	ctx.drawImage(src, (SIDE - w) / 2, (SIDE - h) / 2, w, h);
 }
 
-// redraws only when the content changes, not on every doc emit; freehand
-// points are immutable once committed, so their count is their identity
 function signature(layer: Layer): string {
 	switch (layer.kind) {
 		case 'raster':
@@ -183,7 +180,6 @@ function signature(layer: Layer): string {
 	}
 }
 
-// iOS LayerThumbnails: the layer's own content at 32 px; a folder for a group
 export default class LayerThumb extends Component<{
 	Args: { layer: Layer };
 }> {

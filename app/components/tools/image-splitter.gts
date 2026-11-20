@@ -46,7 +46,6 @@ import {
 import Picture from 'delphitools-v2/components/tools/image-splitter/picture';
 import './image-splitter/image-splitter.css';
 
-// iOS: usingSpringWithDamping 0.62 over 0.6 s
 const spring = htmlSafe(`--split-spring: ${springEasing(0.62)}`);
 const springMs = 650;
 const emptyPixels = { width: 4, height: 3 };
@@ -62,7 +61,6 @@ interface Source {
 	stem: string;
 }
 
-/** The port of ImageSplitterViewController, on the web tool's downloads. */
 export default class ImageSplitter extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 	@tracked rows = 3;
@@ -78,7 +76,6 @@ export default class ImageSplitter extends Component {
 	#frame?: number;
 	#timers: number[] = [];
 
-	// ?splitGrid=<columns>x<rows> ?splitSample: the iOS -splitGrid, -splitSample
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -169,7 +166,6 @@ export default class ImageSplitter extends Component {
 	picked = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
-		// the same file twice fires change again
 		input.value = '';
 		if (file) void this.load(file);
 	};
@@ -219,13 +215,11 @@ export default class ImageSplitter extends Component {
 		this.#cut();
 	};
 
-	/** The tiles part again from the whole picture: seams closed, then sprung open. */
 	#cut() {
 		if (!this.source || reducedMotion()) return;
 		this.joined = true;
 		this.springs = false;
 		if (this.#frame) cancelAnimationFrame(this.#frame);
-		// two frames: the closed seams are painted before they open
 		this.#frame = requestAnimationFrame(() => {
 			this.#frame = requestAnimationFrame(() => {
 				this.#frame = undefined;
@@ -287,7 +281,6 @@ export default class ImageSplitter extends Component {
 				new ClipboardItem({ 'image/png': blob }),
 			]);
 		} catch {
-			// a denied clipboard leaves no toast
 			return;
 		}
 		this.toast.show();
@@ -412,7 +405,6 @@ export default class ImageSplitter extends Component {
 						</CanonRow>
 					{{/if}}
 				</CanonRows>
-				{{! the empty picture opens it }}
 				{{! template-lint-disable require-input-label }}
 				<input
 					type="file"

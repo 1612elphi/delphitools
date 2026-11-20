@@ -93,11 +93,9 @@ const ANY = `${VIDEO},${SUBS}`;
 const SUBS_RE = /\.(srt|vtt)$/i;
 
 const CAPTURE_FPS = 30;
-// iOS: height over width at most 1.25, at most 420 pt tall
 const tallest = 1.25;
 const tallestPreview = 420;
 const BLANK_BOARD = htmlSafe(`--ss-aspect: ${16 / 9}`);
-/** Opacity of the next cue between cues (iOS ghost). */
 const GHOST = 0.45;
 const LAMPS: CanonLamp[] = ['play', 'pause'];
 const [SIZE_MIN, SIZE_MAX] = SIZE_RANGE;
@@ -114,7 +112,6 @@ const BURN_ERROR = 'Writing failed, please try again';
 const HIDDEN_ERROR =
 	'Burn failed because the tab was backgrounded. Please try again and keep it in focus.';
 
-// probed once; static per browser
 const FORMATS = supportedFormats();
 
 const Trash = <template><IconSvg @name="trash-2" /></template>;
@@ -155,11 +152,6 @@ const sameBox = (a: TextBox | null, b: TextBox | null) =>
 		a.width === b.width &&
 		a.height === b.height);
 
-/**
- * The port of SubtitleStudioViewController, on the web tool's burners: the
- * preview and the cue list are the main pane, the look and the export the
- * sidebar.
- */
 export default class SubtitleStudioTool extends Component {
 	intake = new VideoIntake({
 		onLoad: (file) => this.#load(file),
@@ -177,7 +169,6 @@ export default class SubtitleStudioTool extends Component {
 	@tracked subsFailed = false;
 	@tracked style: BurnStyle = DEFAULT_STYLE;
 	@tracked currentMs = 0;
-	/** The drawn text in frame fractions. */
 	@tracked box: TextBox | null = null;
 	@tracked frames: string[] = [];
 	@tracked burning = false;
@@ -185,7 +176,6 @@ export default class SubtitleStudioTool extends Component {
 	@tracked resultBlob: Blob | null = null;
 	@tracked resultUrl = '';
 	@tracked resultExt = 'webm';
-	/** sec of video / wall clock sec; 0 unknown */
 	@tracked resultSpeed = 0;
 	@tracked info: Section[] = [];
 	@tracked encoders: Set<BurnCodec> | null = null;
@@ -208,14 +198,11 @@ export default class SubtitleStudioTool extends Component {
 	#frameKind: 'video' | 'raf' = 'raf';
 	#launch: { at?: number; run?: boolean } = {};
 
-	// ?ssFont= ?ssWeight= ?ssText= ?ssPlace= (indices) ?ssSubs=<srt or vtt text>
-	// ?ssSample=<same-origin video path> ?ssAt=<seconds> ?ssRun=1: the iOS launch arguments
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
 		const index = (key: string) =>
 			query.has(key) ? Number(query.get(key)) : undefined;
-		// set once: a tracked value read and then written in one render throws
 		const style = { ...DEFAULT_STYLE };
 		style.font = FONTS[index('ssFont') ?? -1] ?? style.font;
 		if (query.has('ssWeight')) style.bold = index('ssWeight') === 1;
@@ -267,8 +254,6 @@ export default class SubtitleStudioTool extends Component {
 		void this.#audio?.ctx.close();
 	}
 
-	// per-encoder support with webcodecs;
-	// else mediarecorder answers stand.
 	get formats() {
 		return this.encoders
 			? supportedFormats(this.encoders)
@@ -302,7 +287,6 @@ export default class SubtitleStudioTool extends Component {
 		return this.intake.url !== null;
 	}
 
-	/** The video plays and steps. */
 	get playable() {
 		return this.intake.duration > 0 && !this.burning;
 	}
@@ -315,7 +299,6 @@ export default class SubtitleStudioTool extends Component {
 		return shown(this.cues, this.currentMs);
 	}
 
-	/** The row of the cue on screen; none between cues. */
 	get markedIndex() {
 		const shown = this.shown;
 		return shown && !shown.ghost ? shown.index : null;
@@ -456,7 +439,6 @@ export default class SubtitleStudioTool extends Component {
 		this.draw();
 	}
 
-	// routed by extension: srt/vtt → subs, else video
 	readAny = (file: File) => {
 		if (SUBS_RE.test(file.name)) void this.readSubs(file);
 		else this.intake.load(file);
@@ -469,7 +451,6 @@ export default class SubtitleStudioTool extends Component {
 			event.preventDefault();
 	};
 
-	// a drop anywhere loads the files; the drop zones handle their own
 	dropAnywhere = (event: DragEvent) => {
 		if (event.defaultPrevented) return;
 		const files = [...(event.dataTransfer?.files ?? [])].filter(
@@ -532,7 +513,6 @@ export default class SubtitleStudioTool extends Component {
 		if (!this.burning) this.playback.scrub(seconds);
 	};
 
-	// exact seek lands early
 	seekCue = (index: number) => {
 		const cue = this.cues[index];
 		if (!cue || !this.playable) return;
@@ -581,7 +561,6 @@ export default class SubtitleStudioTool extends Component {
 		ctx.drawImage(video, 0, 0, width, height);
 		const ms = video.currentTime * 1000;
 		this.currentMs = ms;
-		// the live burn records this canvas: no ghost then
 		const on = this.burning ? null : shown(this.cues, ms);
 		const cue = on ? this.cues[on.index] : activeCue(this.cues, ms);
 		ctx.globalAlpha = on?.ghost ? GHOST : 1;
@@ -604,7 +583,6 @@ export default class SubtitleStudioTool extends Component {
 		}
 	};
 
-	// rVFC one draw/frame (chrome 83+, safari 15.4+, firefox 132+); rAF fallback
 	#loop = () => {
 		this.#cancelFrame();
 		if (!this.intake.playing && !this.burning) return;
@@ -635,7 +613,6 @@ export default class SubtitleStudioTool extends Component {
 			video.videoWidth,
 			video.videoHeight,
 		);
-		// webcodecs present; no encoder valid → mediarecorder
 		if (this.isDestroying || this.intake.file !== file) return;
 		this.encoders = encoders?.size ? encoders : null;
 		const { at, run } = this.#launch;
@@ -652,7 +629,6 @@ export default class SubtitleStudioTool extends Component {
 		this.draw();
 	}
 
-	// source binds element permanently
 	#audioGraph(video: HTMLVideoElement) {
 		if (this.#audio?.video === video) return this.#audio;
 		void this.#audio?.ctx.close();
@@ -793,13 +769,11 @@ export default class SubtitleStudioTool extends Component {
 					},
 				),
 			);
-			// stop must abort or burn suspends; watcher drops listeners too
 			const aborted = new Promise<never>((_, reject) =>
 				watcher.signal.addEventListener('abort', () =>
 					reject(new Error('stopped')),
 				),
 			);
-			// backgrounded tab throttles capture; abort rather than stutter
 			const hidden = new Promise<never>((_, reject) =>
 				document.addEventListener(
 					'visibilitychange',
@@ -1115,7 +1089,6 @@ export default class SubtitleStudioTool extends Component {
 							@disabled={{this.burning}}
 							@onMove={{this.move}}
 						>
-							{{! the canvas shows it; user media lacks captions }}
 							{{! template-lint-disable require-media-caption }}
 							<video
 								src={{this.intake.url}}

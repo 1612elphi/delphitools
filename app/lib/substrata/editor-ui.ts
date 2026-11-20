@@ -1,7 +1,7 @@
 import { tracked } from '@glimmer/tracking';
 import { loadLayout, saveLayout } from './layout-storage';
 
-// colour: the phone's colour tray, never in the rail
+// colour: phone tray only
 export type EditorPanel = 'layers' | 'inspector' | 'fx' | 'colour';
 export type EditorEdge = 'top' | 'bottom' | 'leading' | 'trailing';
 export type TrayStop = 'short' | 'tall' | 'full';
@@ -9,8 +9,7 @@ export type TrayStop = 'short' | 'tall' | 'full';
 export const PANELS: readonly EditorPanel[] = ['layers', 'inspector', 'fx'];
 const EDGES: readonly EditorEdge[] = ['top', 'bottom', 'leading', 'trailing'];
 
-// a colour well's pick: the ring sends to it and restores the working
-// colour on close (iOS ColourPickerPresenter.redirect)
+// ios colourpickerpresenter.redirect
 export interface RingTarget {
 	hex: string;
 	alpha: number;
@@ -21,7 +20,6 @@ const SETTINGS_EDGE_KEY = 'canonSettingsEdge';
 const TOOLS_HIDDEN_KEY = 'canonToolsHidden';
 const LAYERS_PINNED_KEY = 'canonLayersPinned';
 
-// state of the floating pieces; the document stays in doc-store
 class EditorUi {
 	@tracked panels: EditorPanel[] = [];
 	@tracked settingsEdge: EditorEdge = 'bottom';
@@ -31,6 +29,9 @@ class EditorUi {
 	@tracked bloomOpen = false;
 	@tracked pageOpen = false;
 	@tracked galleryOpen = false;
+	@tracked galleryMode: 'projects' | 'templates' = 'projects';
+	@tracked newOpen = false;
+	@tracked assetsOpen = false;
 	@tracked developOpen = false;
 	@tracked helpOpen = false;
 	@tracked exportOpen = false;
@@ -53,23 +54,42 @@ class EditorUi {
 			this.settingsEdge = edge as EditorEdge;
 		this.toolsHidden =
 			loadLayout<unknown>(TOOLS_HIDDEN_KEY, false) === true;
-		// iOS LayersPanel.isPinned defaults to pinned
+		// ios default: pinned
 		this.layersPinned =
 			loadLayout<unknown>(LAYERS_PINNED_KEY, true) !== false;
 	}
 
 	isOpen = (panel: EditorPanel): boolean => this.panels.includes(panel);
 
-	// the rail keeps the column's order; the phone's tray shows one panel
+	// phone tray shows one
 	toggle = (panel: EditorPanel, phone = false): void => {
 		if (this.isOpen(panel)) {
 			this.panels = this.panels.filter((p) => p !== panel);
 			return;
 		}
 		this.trayStop = 'short';
+		if (phone) this.assetsOpen = false;
 		this.panels = phone
 			? [panel]
 			: PANELS.filter((p) => p === panel || this.isOpen(p));
+	};
+
+	openGallery = (mode: 'projects' | 'templates'): void => {
+		this.newOpen = false;
+		this.pageOpen = false;
+		this.galleryMode = mode;
+		this.galleryOpen = true;
+	};
+
+	toggleAssets = (phone = false): void => {
+		this.assetsOpen = !this.assetsOpen;
+		if (phone && this.assetsOpen) this.panels = [];
+	};
+
+	toggleNew = (): void => {
+		this.pageOpen = false;
+		this.galleryOpen = false;
+		this.newOpen = !this.newOpen;
 	};
 
 	close = (panel: EditorPanel): void => {

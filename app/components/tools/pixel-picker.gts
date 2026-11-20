@@ -39,7 +39,6 @@ import {
 	type Point,
 } from 'delphitools-v2/components/tools/pixel-picker/geometry';
 import Picture from 'delphitools-v2/components/tools/pixel-picker/picture';
-// the card markup without the component, which shows hex whatever the notation
 import 'delphicanon/components/canon-colour-card.css';
 import './pixel-picker/pixel-picker.css';
 
@@ -51,7 +50,6 @@ const Copy = <template><IconSvg @name="copy" /></template>;
 const Remove = <template><IconSvg @name="x" /></template>;
 const Eyedropper = <template><IconSvg @name="pipette" /></template>;
 
-// the document paste (filePaste) would load a drop-zone paste a second time
 const NOTE = 'Drag or tap to move the lens, then Pick to select the colour';
 
 const keepPaste = (event: Event) => event.stopPropagation();
@@ -80,7 +78,6 @@ function context(canvas: HTMLCanvasElement, colorSpace: PredefinedColorSpace) {
 	});
 }
 
-/** The port of PixelPickerViewController, without saved palettes and export. */
 export default class PixelPicker extends Component {
 	@service declare colourNotation: ColourNotationService;
 	@service('canon-toast') declare toast: CanonToastService;
@@ -263,7 +260,6 @@ export default class PixelPicker extends Component {
 				pixel: this.shown,
 			},
 		];
-		// inside the list only: scrolling the page would collapse the picture
 		const list = this.#list;
 		requestAnimationFrame(() =>
 			list?.scrollTo({
@@ -309,7 +305,6 @@ export default class PixelPicker extends Component {
 			event.preventDefault();
 	};
 
-	// a drop anywhere loads; the drop zone handles its own
 	dropAnywhere = (event: DragEvent) => {
 		if (event.defaultPrevented) return;
 		const file = [...(event.dataTransfer?.files ?? [])].find((f) =>
@@ -588,7 +583,6 @@ export default class PixelPicker extends Component {
 						{{/unless}}
 					</p>
 				</CanonRows>
-				{{! the empty picture opens it }}
 				{{! template-lint-disable require-input-label }}
 				<input
 					type="file"

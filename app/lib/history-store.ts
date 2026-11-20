@@ -1,4 +1,4 @@
-// property syntax: consumers pass these around unbound
+// unbound: property syntax
 export interface HistoryStore<T> {
 	getSnapshot: () => T | null;
 	subscribe: (listener: () => void) => () => void;
@@ -15,6 +15,8 @@ export interface HistoryStore<T> {
 	redo: () => void;
 	/** all reachable states, current included */
 	states: () => T[];
+	/** While off, changes leave no undo states. */
+	record: (on: boolean) => void;
 }
 
 const HISTORY_LIMIT = 100;
@@ -25,11 +27,13 @@ export function createHistoryStore<T>(): HistoryStore<T> {
 	const undoStack: T[] = [];
 	const redoStack: T[] = [];
 	const listeners = new Set<() => void>();
+	let recording = true;
 
 	const emit = () => {
 		for (const l of listeners) l();
 	};
 	const pushUndo = (previous: T) => {
+		if (!recording) return;
 		undoStack.push(previous);
 		if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
 		redoStack.length = 0;
@@ -90,6 +94,9 @@ export function createHistoryStore<T>(): HistoryStore<T> {
 				...undoStack,
 				...redoStack,
 			].filter((s): s is T => s !== null),
+		record(on) {
+			recording = on;
+		},
 		canUndo: () => undoStack.length > 0,
 		canRedo: () => redoStack.length > 0,
 		undo() {

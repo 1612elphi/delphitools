@@ -56,7 +56,6 @@ let context: CanvasRenderingContext2D | null | undefined;
 let family: string | undefined;
 const advances = new Map<string, number>();
 
-/** Advance of `ch` in the mono face as a share of the size; cached once the fonts are in. */
 function advanceOf(ch: string, cacheable: boolean): number {
 	const known = advances.get(ch);
 	if (known !== undefined) return known;
@@ -77,7 +76,6 @@ function advanceOf(ch: string, cacheable: boolean): number {
 const sizeText = (value: number) => `${Math.round(value)} px`;
 const speedText = (value: number) => `${formatDecimal(value, 2)}×`;
 
-/** The port of LargeTypeViewController. */
 export default class LargeTypeTool extends Component {
 	@tracked text = '';
 	@tracked maximum = true;
@@ -95,7 +93,6 @@ export default class LargeTypeTool extends Component {
 	#alive = true;
 	#display?: HTMLElement;
 
-	// ?ltText= ?ltSize=<px> ?ltPositions=no ?ltColours=no ?ltTheme=<0-4> ?ltMarquee=yes ?ltSpeed=<multiple>: the iOS launch flags; ?ltFore=<hex> ?ltBack=<hex> are web only
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -124,7 +121,6 @@ export default class LargeTypeTool extends Component {
 				speedRange.min,
 				speedRange.max,
 			);
-		// remeasure after font load
 		void document.fonts?.ready.then(() => {
 			if (this.#alive) this.fontsReady = true;
 		});
@@ -157,7 +153,6 @@ export default class LargeTypeTool extends Component {
 		return advanceOf('M', this.fontsReady);
 	}
 
-	/** The size in use: the slider's, or the largest that fits. */
 	get size() {
 		const manual = this.maximum ? undefined : this.manualSize;
 		const { width, height } = this.box;
@@ -257,7 +252,6 @@ export default class LargeTypeTool extends Component {
 		this.maximum = on;
 	};
 
-	// a drag turns Maximum off
 	setSize = (value: number) => {
 		this.manualSize = value;
 		this.maximum = false;

@@ -26,7 +26,6 @@ import {
 import type ColourNotationService from 'delphitools-v2/services/colour-notation';
 import { COLOUR_NOTATIONS } from 'delphitools-v2/lib/colour-notation';
 import Deck from 'delphitools-v2/components/tools/palette-collection/deck';
-// the card markup without the component, which formats rows as hex
 import 'delphicanon/components/canon-colour-card.css';
 import './palette-collection/palette-collection.css';
 
@@ -39,7 +38,6 @@ const shelves = Object.keys(
 const byCategory = getPalettesByCategory();
 const views = ['Fan', 'Grid'];
 
-/** Bands of the palette's colours, left to right, for a CSS background. */
 function bands(colours: string[]) {
 	return `linear-gradient(to right, ${colours
 		.map(
@@ -49,10 +47,6 @@ function bands(colours: string[]) {
 		.join(', ')})`;
 }
 
-/**
- * The iOS launch arguments as query flags: ?collectionCategory=<key or
- * label> ?collectionPalette=<id>, and ?collectionView=grid (web only).
- */
 function launchFlags(search: string) {
 	const query = new URLSearchParams(search);
 	const asked = query.get('collectionCategory')?.toLowerCase();
@@ -75,13 +69,11 @@ function launchFlags(search: string) {
 	};
 }
 
-/** The port of PaletteCollectionViewController, without saved palettes. */
 export default class PaletteCollection extends Component {
 	@service declare colourNotation: ColourNotationService;
 
 	@tracked shelf: number;
 	@tracked selected: number;
-	/** Every palette of the shelf at once, in place of the deck. */
 	@tracked grid: boolean;
 
 	constructor(owner: Owner, args: object) {
@@ -117,7 +109,6 @@ export default class PaletteCollection extends Component {
 		];
 	}
 
-	// the kit's row CanonColourCard shows hex whatever its format
 	get colours() {
 		return (this.palette?.colors ?? []).map((hex) => ({
 			name: getColourName(hex),
@@ -386,7 +377,6 @@ export default class PaletteCollection extends Component {
 
 const wheelStyle = htmlSafe(`--pc-row: ${rowHeight}px`);
 
-/** Titles grow, darken and gain weight towards the centre line. */
 function focusStyle(focus: number) {
 	return htmlSafe(
 		`--pc-focus: ${focus}; font-size: ${15 + 5 * focus}px; font-weight: ${400 + Math.round(200 * focus)}`,

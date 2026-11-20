@@ -63,9 +63,7 @@ type Phase =
 	| { kind: 'failure'; text: string };
 
 const historyLimit = 20;
-/** Titles need 110 px a cell. */
 const titleRoom = 110;
-/** The lines and gaps of the display, rules included. */
 const displayHeight = 124;
 
 const CopyIcon = <template><IconSvg @name="copy" /></template>;
@@ -92,7 +90,6 @@ const constantValues = new Map(
 	MATH_CONSTANTS.map((c) => [`${c.category}-${c.name}`, c.value]),
 );
 
-/** The port of ScientificCalculatorViewController, on the web tool's mathjs engine. */
 export default class SciCalcTool extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -102,7 +99,6 @@ export default class SciCalcTool extends Component {
 	@tracked history: TapeEntry[] = [];
 	@tracked lastAnswer = 0;
 	#carried: Carried[] = [];
-	/** The value the expression gave last; an unfinished one keeps it. */
 	@tracked lastPreview?: string;
 	@tracked math?: MathModule;
 	@tracked stacked = false;
@@ -111,7 +107,6 @@ export default class SciCalcTool extends Component {
 	@tracked constantsOpen = false;
 	#nextId = 0;
 
-	// ?sciKeys=sin 30 ) + √ 2 × π = ?sciHistory ?sciConstants: the iOS -scikeys, -scihistory, -sciconstants flags
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -190,12 +185,10 @@ export default class SciCalcTool extends Component {
 			: undefined;
 	}
 
-	/** full precision, not display */
 	exact(text: string) {
 		return withExact(text, this.#carried);
 	}
 
-	/** The value the expression would give now, its open brackets closed. */
 	preview(raw: string) {
 		if (!this.math) return undefined;
 		const value = calculate(
@@ -215,7 +208,6 @@ export default class SciCalcTool extends Component {
 		else this.lastPreview = this.preview(raw) ?? this.lastPreview;
 	}
 
-	/** After a result, a number or a function starts a new expression and an operator carries the result on. */
 	insert(value: string, of: Kind) {
 		const base =
 			this.phase.kind === 'result' && of !== 'other'
@@ -340,7 +332,6 @@ export default class SciCalcTool extends Component {
 		this.#settle();
 	};
 
-	// document, so typing works wherever focus is in the tool
 	keyboard = modifier((element: HTMLElement) => {
 		const onKeyDown = (event: KeyboardEvent) => {
 			if (event.defaultPrevented) return;
@@ -353,7 +344,6 @@ export default class SciCalcTool extends Component {
 				)
 			)
 				return;
-			// Enter and Space keep activating a focused control
 			if (
 				event.key === 'Enter' &&
 				target?.closest('button, a, [role="button"]')
@@ -384,7 +374,6 @@ export default class SciCalcTool extends Component {
 		};
 	});
 
-	/** Stacked, the history leaves the page for a sheet; titles drop under 110 px a cell. */
 	layout = modifier((row: HTMLElement) => {
 		const body = row.closest('.canon-split-body');
 		const run = () => {

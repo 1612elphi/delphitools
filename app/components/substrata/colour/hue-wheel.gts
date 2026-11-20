@@ -35,9 +35,6 @@ type Channel = 'hue' | 'saturation' | 'brightness';
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const px = (v: number) => `${v.toFixed(2)}px`;
 
-// iOS HueWheel: a hue ring, red at the top and turning clockwise, round a
-// square of saturation (across) and brightness (up); the top-left chip holds
-// the colour before and now, and a tap on the before half goes back to it
 export default class HueWheel extends Component<Signature> {
 	@tracked hue = 0;
 	@tracked saturation = 1;
@@ -52,7 +49,6 @@ export default class HueWheel extends Component<Signature> {
 		this.show(args.colour);
 	}
 
-	/** a grey keeps the hue it had, as it has none of its own */
 	show(colour: RingColour) {
 		const [h, s, b] = hsb([colour.r, colour.g, colour.b]);
 		if (s > 0) this.hue = h / 360;
@@ -184,7 +180,6 @@ export default class HueWheel extends Component<Signature> {
 		};
 	});
 
-	/** hue, saturation or brightness, a twentieth a step */
 	key = (channel: Channel, e: KeyboardEvent) => {
 		const step = {
 			ArrowUp: 0.05,

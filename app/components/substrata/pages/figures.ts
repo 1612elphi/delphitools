@@ -1,27 +1,7 @@
-// web canvas-size-modal PRESETS, as iOS CanvasPreset keeps them
-export const CANVAS_PRESETS = [
-	{ width: 2000, height: 1500 },
-	{ width: 1080, height: 1080 },
-	{ width: 1080, height: 1920 },
-	{ width: 1920, height: 1080 },
-	{ width: 1200, height: 630 },
-	{ width: 1600, height: 900 },
-] as const;
-
+// web canvas-size-modal presets
 const SIDE_MAX = 20_000;
 
-export function presetLabel(p: { width: number; height: number }): string {
-	return `${p.width} × ${p.height}`;
-}
-
-// -1 selects no segment
-export function presetIndex(width: number, height: number): number {
-	return CANVAS_PRESETS.findIndex(
-		(p) => p.width === width && p.height === height,
-	);
-}
-
-// whole pixels from 1 to 20 000
+// whole pixels, 1-20000
 export function clampSide(side: number): number {
 	if (!Number.isFinite(side)) return 1;
 	return Math.min(Math.max(Math.round(side), 1), SIDE_MAX);
@@ -34,8 +14,7 @@ export function scaleLabel(scale: number, locale?: string): string {
 	return `${scale.toLocaleString(locale)}×`;
 }
 
-// iOS ExportSheet.byteFigure: decimal units as Finder shows sizes, one
-// decimal below 100 except for bytes
+// ios bytefigure, decimal units
 export function byteFigure(bytes: number, locale?: string): [string, string] {
 	const units = ['B', 'KB', 'MB', 'GB'];
 	let value = bytes;

@@ -40,7 +40,6 @@ const Copy = <template><IconSvg @name="copy" /></template>;
 const Trash = <template><IconSvg @name="trash-2" /></template>;
 const Remove = <template><IconSvg @name="x" /></template>;
 
-// the document paste (filePaste) would load a drop-zone paste a second time
 const keepPaste = (event: Event) => event.stopPropagation();
 
 const selectAll = (event: Event) =>
@@ -56,7 +55,6 @@ function readDataUri(file: File): Promise<string> {
 	});
 }
 
-// an Image decodes SVG too, which createImageBitmap does not
 async function thumbnailOf(dataUri: string) {
 	const image = new Image();
 	image.src = dataUri;
@@ -81,14 +79,12 @@ async function thumbnailOf(dataUri: string) {
 	return canvas;
 }
 
-/** The port of Base64ImageEncoderViewController. */
 export default class Base64ImageEncoder extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 	@tracked images: Encoded[] = [];
 	@tracked selected?: string;
 	@tracked skipped: string[] = [];
 
-	// ?b64Sample: the iOS -b64Samples launch argument, with a drawn image
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		if (
@@ -128,7 +124,6 @@ export default class Base64ImageEncoder extends Component {
 			event.preventDefault();
 	};
 
-	// a drop on the banner or the list adds too; the drop zone handles its own
 	dropAnywhere = (event: DragEvent) => {
 		if (event.defaultPrevented) return;
 		const files = [...(event.dataTransfer?.files ?? [])];

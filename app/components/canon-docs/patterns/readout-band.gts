@@ -17,7 +17,6 @@ import '../../tools/media/media.css';
 const rate = 22050;
 const seconds = 4;
 
-// a sweep from 220 to 440 Hz that swells and fades
 function sweep() {
 	const samples = new Float32Array(rate * seconds);
 	let phase = 0;
@@ -84,7 +83,6 @@ export default class ReadoutBandPattern extends Component {
 						@detail="4 s · 22050 Hz"
 					/>
 				</CanonRows>
-				{{! the transport is its control }}
 				{{! template-lint-disable require-media-caption }}
 				<audio
 					src={{this.url}}

@@ -57,14 +57,12 @@ const runFormat = new Intl.DateTimeFormat(undefined, {
 	minute: '2-digit',
 });
 
-// a click places the caret after focus, so select on the next frame
 const selectAll = (event: FocusEvent) => {
 	const field = event.target;
 	if (field instanceof HTMLInputElement)
 		requestAnimationFrame(() => field.select());
 };
 
-/** The port of CronBuilderViewController, CronFieldEditor and CronRails. */
 export default class CronBuilder extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -79,7 +77,6 @@ export default class CronBuilder extends Component {
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
-		// ?cronExpr= ?cronField=<0-4> ?cronFocus=expression|field: the iOS launch arguments
 		const query = new URLSearchParams(window.location.search);
 		const expr = query.get('cronExpr');
 		if (expr !== null) this.state = withBox(initialState(), expr);
@@ -124,7 +121,6 @@ export default class CronBuilder extends Component {
 		return parsedOf(this.state);
 	}
 
-	// a long expression shrinks to stay whole in a 340 px sidebar, down to 17 px
 	get expressionStyle() {
 		const size = Math.max(
 			17,
@@ -157,7 +153,6 @@ export default class CronBuilder extends Component {
 		return `Next runs · ${this.timeZone}`;
 	}
 
-	// once a minute; one spare, as the minute's own run may pass while it lasts
 	@cached
 	get upcoming(): Date[] {
 		const { parsed } = this;

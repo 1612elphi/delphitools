@@ -15,7 +15,6 @@ import { LANGUAGES } from 'delphitools-v2/lib/transcribe';
 
 export interface LanguagePickSignature {
 	Args: {
-		/** '' = auto-detect */
 		value: string;
 		disabled?: boolean;
 		onChange: (code: string) => void;
@@ -67,7 +66,6 @@ const ALL = [...LANGUAGES]
 	.sort((a, b) => a.name.localeCompare(b.name))
 	.map((l) => item(l.code, l.code, l.name, 'All languages'));
 
-/** The web tool's language combobox as a kit row: the pick opens a searchable dialog. */
 export default class LanguagePick extends Component<LanguagePickSignature> {
 	@tracked open = false;
 	@tracked query = '';
@@ -85,7 +83,6 @@ export default class LanguagePick extends Component<LanguagePickSignature> {
 		return (code && FLAGS.get(code)) || Globe;
 	}
 
-	// a query lists each language once
 	get items() {
 		return this.query.trim()
 			? [autoItem, ...ALL]

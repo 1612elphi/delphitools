@@ -12,7 +12,6 @@ interface PictureSignature {
 		blank: boolean;
 		isDone: (cell: Cell) => boolean;
 		onToggle: (cell: Cell) => void;
-		/** The card's own height in px at its current width. */
 		onHeight: (height: number) => void;
 	};
 }
@@ -33,10 +32,9 @@ const area = (cell: Cell) =>
 	);
 const columns = (cols: number) =>
 	htmlSafe(
-		`grid-template-columns: max-content repeat(${Math.max(0, cols - 1)}, minmax(6.5rem, 1fr))`,
+		`grid-template-columns: fit-content(12rem) repeat(${Math.max(0, cols - 1)}, minmax(4.5rem, 1fr))`,
 	);
 
-/** The Cooking for Engineers card: title, shopping list, notes and the table. */
 const Picture: TOC<PictureSignature> = <template>
 	<div
 		class="rt-picture"
@@ -229,7 +227,6 @@ const Picture: TOC<PictureSignature> = <template>
 						{{/if}}
 					{{/each}}
 
-					{{! badges above all cells }}
 					{{#each @rendered.grid.cells as |cell|}}
 						{{#if cell.marks.length}}
 							<span

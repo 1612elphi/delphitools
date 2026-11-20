@@ -4,7 +4,6 @@ import CanonCanvas from 'delphicanon/components/canon-canvas';
 import CanonImageCompare from 'delphicanon/components/canon-image-compare';
 import CanonSegmented from 'delphicanon/components/canon-segmented';
 
-// a hue sweep of hills under a sun, drawn as SVG
 function landscape(filter: string) {
 	const hills = Array.from({ length: 5 }, (_, i) => {
 		const y = 90 + i * 14;

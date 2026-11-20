@@ -7,7 +7,6 @@ import { SHELF, thumbsOf } from './render';
 interface LookStripSignature {
 	Args: {
 		blobHash: string;
-		/** the active look's id, null for none */
 		active: string | null;
 		lutEpoch: number;
 		onPick: (id: string | null) => void;
@@ -29,10 +28,7 @@ function cachedThumbs(blobHash: string, epoch: number) {
 	return memo.value;
 }
 
-/** a look's thumbnail over its name, the active one framed */
 export default class LookStrip extends Component<LookStripSignature> {
-	// keyed on the pixels and the colour tables only: a look or slider
-	// change must not re-encode every thumbnail
 	get thumbs(): Record<string, string> {
 		return cachedThumbs(this.args.blobHash, this.args.lutEpoch);
 	}

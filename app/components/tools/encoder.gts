@@ -37,7 +37,6 @@ const bandHeight = 172;
 
 const SwapIcon = <template><IconSvg @name="arrow-up-down" /></template>;
 
-/** The port of EncoderViewController: one input, three schemes, a picture each. */
 export default class Encoder extends Component {
 	@tracked text = '';
 	@tracked scheme = 0;
@@ -47,7 +46,6 @@ export default class Encoder extends Component {
 	@tracked flips?: number[];
 	#run = 0;
 
-	// ?encText= ?encScheme=0-2 ?encDecode=1 ?encAlgo=0-2 (SHA-1, SHA-256, SHA-512): the iOS launch arguments
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -158,7 +156,6 @@ export default class Encoder extends Component {
 
 	async #hash(text: string) {
 		const run = ++this.#run;
-		// always async: the constructor calls this while rendering
 		const next = await (text ? digests(text) : Promise.resolve([]));
 		if (run !== this.#run) return;
 		const before = this.digests;
@@ -178,7 +175,6 @@ export default class Encoder extends Component {
 		this.flips = undefined;
 	};
 
-	// the output becomes the input, the direction turns round
 	swap = () => {
 		const { output } = this;
 		if (!output) return;

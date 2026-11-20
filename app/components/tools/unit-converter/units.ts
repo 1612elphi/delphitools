@@ -131,8 +131,16 @@ export const categories: { name: string; units: Unit[] }[] = [
 		units: [
 			u('s', 'Seconds', 1),
 			u('ms', 'Milliseconds', 0.001),
+			u('µs', 'Microseconds', 1e-6),
+			u('ns', 'Nanoseconds', 1e-9),
 			u('min', 'Minutes', 60),
 			u('hr', 'Hours', 3600),
+			u('d', 'Days', 86_400),
+			u('wk', 'Weeks', 604_800),
+			u('ftn', 'Fortnights', 1_209_600),
+			// gregorian mean: 365.2425 days
+			u('mo', 'Months', 2_629_746),
+			u('yr', 'Years', 31_556_952),
 		],
 	},
 	{
@@ -148,6 +156,9 @@ export const categories: { name: string; units: Unit[] }[] = [
 		],
 	},
 ];
+
+/** Pixels at `ppi` pixels (or dots) per inch, a Length unit. */
+export const pixels = (ppi: number) => u('px', 'Pixels', 0.0254 / ppi);
 
 /** The pair a category opens on, by symbol: from, to. */
 export const openingPairs: Record<string, [string, string]> = {
@@ -362,7 +373,7 @@ export function weightsOf(value: number): Weights | undefined {
 	if (!(value > 0) || !Number.isFinite(value)) return undefined;
 	const denomination = 10 ** Math.floor(Math.log10(value));
 	let count = value / denomination;
-	// 9.99999 becomes the next size
+	// 9.99999 becomes next size
 	if (count > 9.995)
 		return { denomination: denomination * 10, full: 1, part: 0 };
 	count = Math.round(count * 100) / 100;

@@ -8,6 +8,7 @@ import {
 } from 'delphicanon/lib/colour';
 import {
 	adjust,
+	grade,
 	share,
 	suggest,
 	targets,
@@ -18,6 +19,18 @@ const white = colour('FFFFFF');
 const black = colour('000000');
 
 module('Unit | Tool | contrast-checker', function () {
+	test('grades at the thresholds', function (assert) {
+		assert.deepEqual([21, 7, 6.99, 4.5, 4.49, 3, 2.99].map(grade), [
+			'AAA',
+			'AAA',
+			'AA',
+			'AA',
+			'AA Large',
+			'AA Large',
+			'Fail',
+		]);
+	});
+
 	test('the figure never rounds up past a threshold', function (assert) {
 		assert.strictEqual(contrastFigure(4.499), '4.49');
 		assert.strictEqual(contrastFigure(4.5), '4.5');
@@ -40,7 +53,7 @@ module('Unit | Tool | contrast-checker', function () {
 		const fixed = adjust(grey, white, 4.5);
 		assert.true(contrastRatio(fixed, white) >= 4.5);
 		assert.true(hsl(fixed)[2] < hsl(grey)[2]);
-		// nearest, not the extreme: one step lighter fails
+		// nearest lightness, not extreme
 		const [h, s, l] = hsl(fixed);
 		assert.true(contrastRatio(fromHsl(h, s, l + 1), white) < 4.5);
 	});
@@ -61,7 +74,7 @@ module('Unit | Tool | contrast-checker', function () {
 		assert.true(contrastRatio(candidate!, grey) >= 4.5);
 		const moved = suggest(bgAa!, grey, grey);
 		assert.true(contrastRatio(grey, moved!) >= 4.5);
-		// white reaches 3.95:1 on mid grey and black 5.32:1, so no lightness reaches 7:1
+		// max 5.32:1 on grey
 		assert.strictEqual(suggest(fgAaa!, grey, grey), undefined);
 	});
 });

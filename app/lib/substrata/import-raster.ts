@@ -2,7 +2,7 @@
 
 import { clampToCap } from './webgl-limits';
 import { createRasterLayer } from './doc-model';
-import type { Artboard, Transform } from './doc-model';
+import type { Artboard, AssetSource, Transform } from './doc-model';
 import { getSnapshot, update } from './doc-store';
 import { setActiveLayer } from './selection';
 import { getRaster, putRaster, sha256Hex } from './raster-cache';
@@ -24,13 +24,46 @@ function placeOnArtboard(artboard: Artboard, w: number, h: number): Transform {
 
 export interface ImportOptions {
 	at?: { x: number; y: number };
+	source?: AssetSource;
 }
 
 export async function importImageFile(
 	file: File,
 	opts?: ImportOptions,
 ): Promise<void> {
-	if (!file.type.startsWith('image/')) return;
+	const raster = await ingestImage(file);
+	if (!raster) return;
+	const { hash, width: w, height: h } = raster;
+	const artboard = getSnapshot()?.artboard;
+	if (!artboard) return;
+
+	const transform = placeOnArtboard(artboard, w, h);
+	if (opts?.at) {
+		transform.x = opts.at.x;
+		transform.y = opts.at.y;
+	}
+	const layer = createRasterLayer({
+		name: file.name,
+		blobHash: hash,
+		naturalWidth: w,
+		naturalHeight: h,
+		transform,
+	});
+	if (opts?.source) layer.source = opts.source;
+	// select before update
+	setActiveLayer(layer.id);
+	update((doc) => ({
+		...doc,
+		layers: [...doc.layers, layer],
+		updatedAt: Date.now(),
+	}));
+	toast('image-added');
+}
+
+export async function ingestImage(
+	file: File,
+): Promise<{ hash: string; width: number; height: number } | null> {
+	if (!file.type.startsWith('image/')) return null;
 
 	const buf = await file.arrayBuffer();
 	const hash = await sha256Hex(buf);
@@ -60,42 +93,16 @@ export async function importImageFile(
 		const ctx = raster.getContext('2d');
 		if (!ctx) {
 			bitmap.close();
-			return;
+			return null;
 		}
 		ctx.drawImage(bitmap, 0, 0);
 		bitmap.close();
 		putRaster(hash, raster);
-		void persistRaster(hash); // reload persistence
+		void persistRaster(hash);
 	}
-
-	const w = raster.width;
-	const h = raster.height;
-	const artboard = getSnapshot()?.artboard;
-	if (!artboard) return;
-
-	const transform = placeOnArtboard(artboard, w, h);
-	if (opts?.at) {
-		transform.x = opts.at.x;
-		transform.y = opts.at.y;
-	}
-	const layer = createRasterLayer({
-		name: file.name,
-		blobHash: hash,
-		naturalWidth: w,
-		naturalHeight: h,
-		transform,
-	});
-	// select before update
-	setActiveLayer(layer.id);
-	update((doc) => ({
-		...doc,
-		layers: [...doc.layers, layer],
-		updatedAt: Date.now(),
-	}));
-	toast('image-added');
+	return { hash, width: raster.width, height: raster.height };
 }
 
-/* menu paste: async clipboard */
 export async function importClipboardImage(
 	opts?: ImportOptions,
 ): Promise<void> {

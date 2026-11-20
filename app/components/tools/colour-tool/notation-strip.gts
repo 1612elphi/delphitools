@@ -6,7 +6,6 @@ import press from 'delphicanon/modifiers/canon-press';
 import type CanonToastService from 'delphicanon/services/canon-toast';
 import { getColourName } from 'delphitools-v2/lib/colour-names';
 import type ColourNotationService from 'delphitools-v2/services/colour-notation';
-// the strip markup without the component, whose formats lack decimal rgb, hsv and ycbcr
 import 'delphicanon/components/canon-colour-strip.css';
 
 interface NotationStripSignature {
@@ -14,7 +13,6 @@ interface NotationStripSignature {
 	Element: HTMLDivElement;
 }
 
-/** CanonColourStrip in the header notation: swatch, nearest name, value; a tap copies the value. */
 export default class NotationStrip extends Component<NotationStripSignature> {
 	@service declare colourNotation: ColourNotationService;
 	@service('canon-toast') declare toast: CanonToastService;

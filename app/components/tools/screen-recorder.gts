@@ -48,11 +48,9 @@ const MIC_LABEL = 'Mix in microphone audio';
 const ASIDE = "Isn't it crazy that your browser can do this, by the way?";
 
 const overviewHeight = 96;
-// iOS AVEdit preview: height over width at most 1.25
 const tallest = 1.25;
 const tallestPreview = 480;
 
-// cancel throws NotAllowedError
 const isCancel = (err: unknown) => {
 	const name = (err as Error)?.name;
 	return name === 'NotAllowedError' || name === 'AbortError';
@@ -106,11 +104,6 @@ const StopIcon = <template><IconSvg @name="square" /></template>;
 const TrashIcon = <template><IconSvg @name="trash-2" /></template>;
 const SaveIcon = <template><IconSvg @name={{(downloadIcon)}} /></template>;
 
-/**
- * The web screen recorder in the iOS voice recorder's frame: the recorder
- * band, the screen in the main pane, options and takes in the sidebar and
- * the transport footer. getDisplayMedia and MediaRecorder as on the web.
- */
 export default class ScreenRecorder extends Component {
 	capture = new Capture();
 	playback = new Playback();
@@ -137,7 +130,6 @@ export default class ScreenRecorder extends Component {
 		super.willDestroy();
 		const recorder = this.#recorder;
 		if (recorder) {
-			// discard in-flight take on detach
 			recorder.ondataavailable = null;
 			recorder.onstop = null;
 			if (recorder.state !== 'inactive') recorder.stop();
@@ -223,7 +215,6 @@ export default class ScreenRecorder extends Component {
 						},
 					);
 			} catch (err) {
-				// rethrow, no second picker
 				if (isCancel(err)) throw err;
 				display =
 					await navigator.mediaDevices.getDisplayMedia(
@@ -264,7 +255,6 @@ export default class ScreenRecorder extends Component {
 			...display.getAudioTracks(),
 			...(this.#mic?.getAudioTracks() ?? []),
 		];
-		// tab audio is often 44.1 kHz; a raw track into Opus plays back slow. This also mixes.
 		if (audio.length) {
 			try {
 				const context = new AudioContext({
@@ -292,7 +282,6 @@ export default class ScreenRecorder extends Component {
 		}
 		const stream = new MediaStream(tracks);
 
-		// opus with no audio track hangs onstop
 		const hasAudio = tracks.some((track) => track.kind === 'audio');
 		const candidates = hasAudio
 			? [
@@ -350,7 +339,6 @@ export default class ScreenRecorder extends Component {
 			if (recorder.state !== 'inactive') recorder.stop();
 			this.#release();
 		};
-		// the browser's own Stop sharing bar
 		video?.addEventListener('ended', this.stop);
 		this.#recorder = recorder;
 		this.liveSize = [0, 0];
@@ -412,7 +400,6 @@ export default class ScreenRecorder extends Component {
 
 	setMicMixIn = (on: boolean) => (this.micMixIn = on);
 
-	// filters apply to a live mic at once
 	#applyMic() {
 		for (const track of this.#mic?.getAudioTracks() ?? [])
 			void track
@@ -470,7 +457,6 @@ export default class ScreenRecorder extends Component {
 		this.current = take;
 	};
 
-	// after playback.register on the same element: the new take's player is bound
 	playQueued = modifier((_element: HTMLVideoElement, [take]: [Take]) => {
 		if (this.#queued !== take) return;
 		this.#queued = null;
@@ -494,7 +480,6 @@ export default class ScreenRecorder extends Component {
 		}
 		this.takes = this.takes.filter((other) => other !== take);
 		release(take.frames);
-		// the player lets go of it on the next render
 		setTimeout(() => URL.revokeObjectURL(take.url));
 	};
 
@@ -668,7 +653,6 @@ export default class ScreenRecorder extends Component {
 					@background={{this.previewBackground}}
 				>
 					{{#if this.capture.active}}
-						{{! a muted live picture; captions do not apply }}
 						{{! template-lint-disable require-media-caption }}
 						<video
 							class="sr-video sr-live"
@@ -690,7 +674,6 @@ export default class ScreenRecorder extends Component {
 							this.loaded key="id"
 							as |take|
 						}}
-							{{! the transport is its control; user media lacks captions }}
 							{{! template-lint-disable require-media-caption }}
 							<video
 								class="sr-video sr-player"

@@ -45,7 +45,6 @@ const TYPES: SegmentedOption<FieldType>[] = [
 	{ value: 'signature', icon: 'signature', label: 'Signature' },
 ];
 
-/** selected field, else draft */
 export default class FormPanel extends Component<{ Args: { open: boolean } }> {
 	doc = new TrackedExternal(store.subscribe, store.getSnapshot);
 	selected = new TrackedExternal(selection.subscribe, selection.get);
@@ -89,7 +88,6 @@ export default class FormPanel extends Component<{ Args: { open: boolean } }> {
 		return ['None', ...this.props.options];
 	}
 
-	// 0 is None; a value outside the options shows the placeholder
 	get choice(): number | undefined {
 		const { value, options } = this.props;
 		if (value === '') return 0;

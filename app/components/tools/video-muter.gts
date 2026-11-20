@@ -54,7 +54,6 @@ import './media/media.css';
 const ACCEPT = acceptAttr(VIDEO_ACCEPT);
 const NO_AUDIO = 'No audio track';
 const MUTE_ERROR = "Couldn't remux. Try MP4, MOV or WEBM.";
-// iOS: height over width at most 1.25, at most 340 pt tall
 const tallest = 1.25;
 const tallestPreview = 340;
 const containerLabels = CONTAINERS.map((c) => c.label);
@@ -63,7 +62,6 @@ const BLANK_INFO = blankSections(['General', 'Video']);
 const Trash = <template><IconSvg @name="trash-2" /></template>;
 const Mute = <template><IconSvg @name="volume-x" /></template>;
 
-/** The port of VideoMuterViewController, on the web tool's mediabunny remux. */
 export default class VideoMuter extends Component {
 	intake = new VideoIntake({
 		onLoad: (file) => this.#load(file),
@@ -75,7 +73,6 @@ export default class VideoMuter extends Component {
 	playback = new Playback();
 
 	@tracked support: Record<Container, boolean> | null = null;
-	/** Empty: the source's own container. */
 	@tracked container: Container | '' = '';
 	@tracked busy = false;
 	@tracked progress = 0;
@@ -125,7 +122,6 @@ export default class VideoMuter extends Component {
 		return this.container || this.probe?.container || 'mp4';
 	}
 
-	// no pick: container unknown
 	get containerIndex() {
 		if (!this.container && !this.probe) return -1;
 		return CONTAINERS.findIndex(
@@ -213,13 +209,11 @@ export default class VideoMuter extends Component {
 		const support = await containerSupport(probe.codec);
 		if (token !== this.#token) return;
 		this.support = support;
-		// pre-file pick, unsupported codec
 		if (this.container && !support[this.container])
 			this.container = '';
 	}
 
 	metadata = (event: Event) => {
-		// the result plays in the same element; the source sets the length
 		if (!this.result) this.intake.ready(event);
 		const video = event.target as HTMLVideoElement;
 		if (video.videoWidth && video.videoHeight)
@@ -303,13 +297,11 @@ export default class VideoMuter extends Component {
 	#releaseResult() {
 		const url = this.resultUrl;
 		this.resultUrl = '';
-		// the player lets go of it on the next render
 		if (url) setTimeout(() => URL.revokeObjectURL(url));
 		this.result = null;
 		this.info = [];
 	}
 
-	// abort stops mediabunny decoding
 	#reset() {
 		this.#token++;
 		this.#job++;
@@ -435,7 +427,6 @@ export default class VideoMuter extends Component {
 					}}
 				>
 					{{#if this.loaded}}
-						{{! the transport is its control; user media lacks captions }}
 						{{! template-lint-disable require-media-caption }}
 						<video
 							class="vm-video"

@@ -19,33 +19,20 @@ export type TrimEdge = 'start' | 'end';
 
 export interface TrimSignature {
 	Args: {
-		/** Seconds; 0 hides the handles. */
 		duration: number;
-		/** The in point, seconds. */
 		start: number;
-		/** The out point, seconds. */
 		end: number;
-		/** Hides the frame and the handles (iOS isEnabled). */
 		disabled?: boolean;
-		/** Seconds an arrow key moves a handle; default a hundredth of the file, at least 0.1. */
 		step?: number;
-		/** Seconds at the strip's leading edge, added to what the grips announce; default 0. */
 		origin?: number;
-		/** The new points, already through clampSpan, and the edge that moved. */
 		onChange: (start: number, end: number, moved: TrimEdge) => void;
 	};
-	/** The strip of the whole file (a filmstrip, a waveform), drawn under the handles. */
 	Blocks: { default: [] };
 	Element: HTMLDivElement;
 }
 
 const tc = (seconds: number) => formatTimestamp(seconds * 1000, '.');
 
-/**
- * The iOS AVEditTrimEditor: a frame round the selection over any strip, with
- * a grip either side of it. Grips drag, take the arrow keys (Shift for ten
- * steps, Home and End for the limits) and are named sliders.
- */
 export default class Trim extends Component<TrimSignature> {
 	#origin = 0;
 	#x = 0;
@@ -117,7 +104,6 @@ export default class Trim extends Component<TrimSignature> {
 			this.args.onChange(from, to, edge);
 	}
 
-	// template-lint forbids binding pointerdown; a drag starts there
 	drags = modifier((grip: HTMLElement, [edge]: [TrimEdge]) => {
 		const down = (event: PointerEvent) => {
 			if (!this.shows || event.button !== 0) return;

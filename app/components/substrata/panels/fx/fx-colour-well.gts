@@ -8,7 +8,6 @@ interface Signature {
 	Element: HTMLDivElement;
 }
 
-// iOS CanonColourWell: the swatch opens the ring, the hex takes typing
 export default class FxColourWell extends Component<Signature> {
 	get hex() {
 		return stringOf(this.args.ctx, this.args.key).toLowerCase();

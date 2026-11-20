@@ -8,6 +8,43 @@ export interface Release {
 
 export const RELEASES: Release[] = [
 	{
+		version: '2.4.0',
+		since: '2.3.0',
+		features: [
+			'Substrata: Templates made of strata, changeable special locked layers. Start from one of the new handmade templates, or make your own.',
+			'Substrata: Pull in assets from approved Creative Commons sources, Drag one into your Substrata project today!',
+			'Substrata: Text now has a weight settings. Some fonts now come bundled.',
+			'Substrata: Save your own templates with Save Template.',
+			'QR Generator: New Event mode turns a calendar event into a scannable code.',
+			'Recipe Table: Graduated from experiments. Write a recipe in ClaraScript and get a Cooking for Engineers table.',
+			'Contrast Checker: Network mode checks every colour in a set against every other.',
+			'Unit Converter: Set a PPI and convert pixels to inches, centimetres and the rest.',
+			'Install the dt command-line tools with one line from delphi.tools/install.',
+			'Errata: Write in Errata is here! Write directly in the browser with rich text capabilities, and save Errata-editable PDFs.',
+			'Errata: Write in Errata adds columns, headers, tables, images, footnotes and a table of contents as well as much more.',
+			'Errata: Margins can be set through the use of Rulers, and formatting edges are represented through coloured flags.',
+			'Errata: Add page numbers and dynamic fields like page counts or date of export.',
+			'Errata: Stamp, draw an annotate right on top of your Write in Errata documents.',
+			'Errata: Write in Errata now works on phones, along with an improved PDF editor design for mobile.',
+			'Errata: Save your documents locally in the new Documents drawer.',
+			'Errata and Substrata have had their onboardings updated.',
+			'Image Ditherer: A new tool that dithers your images with ten classic, tried and true algorithms.',
+			'Substrata: A new Dither effect with the same algorithms as the new tool.',
+			'Substrata: Better canvas size selection.',
+			'Imposer: Impose right-to-left books like Manga, with the spine on the right. Thanks, @sadkins-work on GitHub!',
+			'Unit Converter: More time units are now supported.',
+			'Every icon you see is now drawn by hand, and no longer from the Lucide icon pack.',
+		],
+		fixes: [
+			'Substrata: Side panels stay where you scrolled them.',
+			'On phones, the bottom strip and menu are tidier, with no more blank shuffle cell.',
+			'Algebra Calculator: Factoring and integrating have been fixed to work properly.',
+		],
+		technical: [
+			'Updated dependencies to Ember 7.4 and more. See the lockfile if you actually care.',
+		],
+	},
+	{
 		version: '2.3.0',
 		since: '2.2.1',
 		features: [

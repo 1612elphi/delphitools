@@ -17,7 +17,6 @@ import { caption } from 'delphitools-v2/components/tools/image-atlas/report';
 export interface PictureSignature {
 	Args: {
 		url: string | null;
-		/** The image's pixels once known; none keeps the blank sheet's. */
 		pixels: Size | null;
 		transparent: boolean;
 		busy: boolean;
@@ -28,7 +27,6 @@ export interface PictureSignature {
 	};
 }
 
-// iOS: the empty sheet matches a loaded layout
 export const emptyPixels: Size = { width: 1600, height: 1200 };
 
 const px = (value: number) => `${Math.round(value * 100) / 100}px`;
@@ -37,11 +35,6 @@ const box = ({ x, y, width, height }: Rect) =>
 		`inset-inline-start: ${px(x)}; inset-block-start: ${px(y)}; inline-size: ${px(width)}; block-size: ${px(height)}`,
 	);
 
-/**
- * The image to scale with dimension lines for its pixel width and height,
- * checks where it lets the background through, its aspect ratio and
- * megapixels under its trailing corner. The port of iOS ImageAtlasPicture.
- */
 export default class Picture extends Component<PictureSignature> {
 	@tracked area: Rect = { x: 0, y: 0, width: 0, height: 0 };
 

@@ -26,7 +26,6 @@ export default class WhatsNew extends Component {
 	titleId = `${guidFor(this)}-title`;
 
 	open = (event: Event) => {
-		// webkit leaves a clicked button unfocused; the dialog returns focus to it
 		(event.currentTarget as HTMLElement).focus();
 		this.isOpen = true;
 	};

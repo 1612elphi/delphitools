@@ -8,8 +8,6 @@ import {
 import { editorUi } from 'delphitools-v2/lib/substrata/editor-ui';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 
-// iOS colour key: the working colour as a dot; opens and closes the ring,
-// or on the phone the colour tray
 export default class ColourKey extends Component<{
 	Args: { phone?: boolean };
 }> {

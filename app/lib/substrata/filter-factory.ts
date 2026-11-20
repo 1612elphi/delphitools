@@ -4,11 +4,13 @@ import { filters as fabricFilters } from 'fabric';
 import type { FabricImage } from 'fabric';
 import type { Filter } from './doc-model';
 import { defaultParams } from './param-spec';
+import type { DitherAlgorithm } from 'delphitools-v2/lib/dither';
 import { getFilterDef, FILM_SIM_GRADES } from './filters';
 import { hexToRgb } from './colour-convert';
 import {
 	ColourNoise,
 	SubstrataColourBalance,
+	SubstrataDither,
 	SubstrataDuotone,
 	SubstrataFilmSim,
 	SubstrataLevels,
@@ -135,6 +137,13 @@ const FACTORIES: Record<
 			blocksize: Math.max(2, Math.round(num(p, 'blockSize'))),
 		}),
 
+	dither: (p) =>
+		new SubstrataDither({
+			algorithm: String(p.algorithm) as DitherAlgorithm,
+			colour: p.mode === 'colour',
+			levels: num(p, 'levels'),
+			scale: num(p, 'scale'),
+		}),
 	levels: (p) =>
 		new SubstrataLevels({
 			inBlack: num(p, 'inBlack') / 255,

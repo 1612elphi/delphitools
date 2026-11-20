@@ -57,7 +57,6 @@ const formatLabels = AUDIO_TARGETS.map((t) => t.label);
 const Trash = <template><IconSvg @name="trash-2" /></template>;
 const Extract = <template><IconSvg @name="file-audio" /></template>;
 
-/** The port of AudioExtractorViewController, on the web tool's mediabunny export. */
 export default class AudioExtractor extends Component {
 	intake = new VideoIntake({
 		onLoad: (file) => this.#load(file),
@@ -66,7 +65,6 @@ export default class AudioExtractor extends Component {
 	drop = new Drop(ACCEPT, (file) => this.intake.load(file));
 	playback = new Playback();
 
-	/** undefined pending; null silent. */
 	@tracked probe: AudioProbe | null | undefined = undefined;
 	@tracked support: Record<AudioTarget, boolean> | null = null;
 	@tracked target: AudioTarget = 'wav';
@@ -114,7 +112,6 @@ export default class AudioExtractor extends Component {
 		return AUDIO_TARGETS.findIndex((t) => t.id === this.target);
 	}
 
-	// wav needs no encoder
 	get unsupported() {
 		return AUDIO_TARGETS.flatMap((t, index) =>
 			(this.support?.[t.id] ?? t.id === 'wav') ? [] : [index],
@@ -189,7 +186,6 @@ export default class AudioExtractor extends Component {
 	}
 
 	metadata = (event: Event) => {
-		// the result plays in the same element; the source sets the length
 		if (!this.result) this.intake.ready(event);
 		const video = event.target as HTMLVideoElement;
 		if (video.videoWidth && video.videoHeight)
@@ -268,7 +264,6 @@ export default class AudioExtractor extends Component {
 	#releaseResult() {
 		const url = this.resultUrl;
 		this.resultUrl = '';
-		// the player lets go of it on the next render
 		if (url) setTimeout(() => URL.revokeObjectURL(url));
 		this.result = null;
 		this.info = [];
@@ -402,7 +397,6 @@ export default class AudioExtractor extends Component {
 					/>
 				</CanonRows>
 				{{#if this.loaded}}
-					{{! the transport is its control; user media lacks captions }}
 					{{! template-lint-disable require-media-caption }}
 					<video
 						src={{this.playUrl}}

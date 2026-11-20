@@ -10,7 +10,7 @@ import FabricCanvas from 'delphitools-v2/components/substrata/fabric-canvas';
 import Sheets from 'delphitools-v2/components/substrata/pages/sheets';
 import { pageState } from 'delphitools-v2/components/substrata/pages/page-state';
 import SecureContextNotice from 'delphitools-v2/components/substrata/secure-context-notice';
-import EmptyHint from 'delphitools-v2/components/substrata/empty-hint';
+import NewStart from 'delphitools-v2/components/substrata/pages/new-start';
 import { Cell, Cells } from 'delphitools-v2/components/substrata/editor/cells';
 import ToolBar from 'delphitools-v2/components/substrata/editor/tool-bar';
 import StatusNote from 'delphitools-v2/components/substrata/editor/status-note';
@@ -18,6 +18,7 @@ import ColourKey from 'delphitools-v2/components/substrata/editor/colour-key';
 import Overlays from 'delphitools-v2/components/substrata/editor/overlays';
 import LayersPanel from 'delphitools-v2/components/substrata/panels/layers';
 import InspectorPanel from 'delphitools-v2/components/substrata/panels/inspector';
+import AssetsPanel from 'delphitools-v2/components/substrata/panels/assets';
 import FxPanel from 'delphitools-v2/components/substrata/panels/fx';
 import ColourTray from 'delphitools-v2/components/substrata/colour/tray';
 import {
@@ -29,6 +30,7 @@ import {
 	type EditorTool,
 } from 'delphitools-v2/components/substrata/editor/tools';
 import editorShortcuts from 'delphitools-v2/modifiers/editor-shortcuts';
+import { ensureScene } from 'delphitools-v2/lib/substrata/file-ops';
 import {
 	canRedo,
 	canUndo,
@@ -57,7 +59,6 @@ import { isTextEntry } from 'delphitools-v2/lib/text-entry';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 import './editor/editor.css';
 
-// iOS EditorLayout metrics, 1 pt = 1 px
 const CELL = 44;
 const FRAME = 2;
 const BOX = CELL + FRAME * 2;
@@ -65,14 +66,13 @@ const PAD = 16;
 const GAP = 8;
 const SEAM = FRAME * 2 + GAP;
 const TAB = 28 + FRAME * 2 - FRAME;
-// iOS phone: compact width, regular height
 const PHONE_WIDTH = 600;
 
 const length = (cells: number, seams = 0) =>
 	cells * CELL + (cells - 1 - seams) + seams * SEAM + FRAME * 2;
 
 const STACK_FULL = length(4);
-const OMNIBAR_FULL = length(EDITOR_TOOLS.length + PANEL_DEFS.length, 1);
+const OMNIBAR_FULL = length(EDITOR_TOOLS.length + PANEL_DEFS.length + 1, 1);
 
 const TRAY_SHARE = { short: 0.42, tall: 0.75, full: 1 } as const;
 
@@ -102,8 +102,6 @@ export default class SubstrataEditor extends Component {
 		return this.width < PHONE_WIDTH && this.height > this.width;
 	}
 
-	// iOS: when the full omnibar fits in no stretch of the column, one tool
-	// cell blooms and the stack drops redo
 	get compact() {
 		if (this.phone) return true;
 		const room =
@@ -119,7 +117,6 @@ export default class SubstrataEditor extends Component {
 	}
 
 	get activeTool(): EditorTool {
-		// tool store read for tracking
 		void this.tool.current;
 		return currentEditorTool();
 	}
@@ -160,17 +157,31 @@ export default class SubstrataEditor extends Component {
 	};
 
 	togglePanel = (id: EditorPanel) => editorUi.toggle(id, this.phone);
+	toggleAssets = () => editorUi.toggleAssets(this.phone);
+
+	get trayEmpty() {
+		return (
+			editorUi.panels.length === 0 &&
+			!(this.phone && editorUi.assetsOpen)
+		);
+	}
 
 	toggleBloom = () => {
 		editorUi.bloomOpen = !editorUi.bloomOpen;
 	};
 
-	// the settings page and the gallery share the drawer
 	openMenu = () => {
+		if (!getSnapshot()) ensureScene();
+		editorUi.newOpen = false;
 		editorUi.pageOpen = !(
 			editorUi.pageOpen || editorUi.galleryOpen
 		);
 		editorUi.galleryOpen = false;
+	};
+
+	openNew = () => {
+		if (editorUi.newOpen && !getSnapshot()) ensureScene();
+		editorUi.toggleNew();
 	};
 
 	openShare = () => {
@@ -195,8 +206,6 @@ export default class SubstrataEditor extends Component {
 	cycleZoom = () => viewport.cycle();
 
 	bloomStyle = (index: number) => {
-		// iOS fan: 125 to 235 degrees around the tool key; the web's seven
-		// tools need a wider radius than iOS's 120 for the cells to clear
 		const count = EDITOR_TOOLS.length;
 		const spread = (110 * Math.PI) / 180;
 		const radius = Math.max(
@@ -213,7 +222,6 @@ export default class SubstrataEditor extends Component {
 
 	measure = modifier((root: HTMLElement) => {
 		editorUi.hydrate();
-		// harnesses drive the floating pieces
 		if (import.meta.env.DEV)
 			(window as unknown as Record<string, unknown>)[
 				'__substrataUi'
@@ -224,8 +232,6 @@ export default class SubstrataEditor extends Component {
 			this.placeInset(root);
 		});
 		ro.observe(root);
-		// the phone's bar rides on the tray, and a fitted artboard refits
-		// above it (iOS: the canvas area ends above the open panel)
 		let fitted = getZoom();
 		const tray = new ResizeObserver(([entry]) => {
 			const h = entry?.contentRect.height ?? 0;
@@ -244,7 +250,6 @@ export default class SubstrataEditor extends Component {
 		const rail = root.querySelector<HTMLElement>('.sub-ed-rail');
 		if (rail) tray.observe(rail);
 		const stop = rail ? this.shareRail(rail) : () => {};
-		// the settings page mirrors the frame (data-hand)
 		const hand = new MutationObserver(() => this.placeInset(root));
 		hand.observe(root, { attributeFilter: ['data-hand'] });
 		return () => {
@@ -255,11 +260,10 @@ export default class SubstrataEditor extends Component {
 		};
 	});
 
-	// iOS stackPanels: open panels as tall as their content; when they do
-	// not all fit, the tallest give up room first
 	shareRail = (rail: HTMLElement) => {
 		let frame = 0;
 		const content = new ResizeObserver(() => schedule());
+		const watched = new Set<Element>();
 		const lay = () => {
 			frame = 0;
 			const panels = [
@@ -267,31 +271,48 @@ export default class SubstrataEditor extends Component {
 					':scope > .sub-rail-panel',
 				),
 			];
-			content.disconnect();
-			content.observe(rail);
+			const now = new Set<Element>([rail]);
 			for (const p of panels)
 				for (const c of p.querySelectorAll(
 					':scope > .sub-rail-body > *',
 				))
-					content.observe(c);
-			// panels may scroll inside their body; free height reads the
-			// whole content
-			for (const p of panels)
-				p.style.removeProperty('block-size');
-			if (this.phone) return;
-			const naturals = panels.map((p) => p.offsetHeight);
-			const room =
-				rail.clientHeight -
-				GAP * Math.max(0, panels.length - 1);
-			sharePanels(room, naturals).forEach((h, i) =>
-				panels[i]!.style.setProperty(
-					'block-size',
-					`${h}px`,
+					now.add(c);
+			for (const el of watched)
+				if (!now.has(el)) {
+					content.unobserve(el);
+					watched.delete(el);
+				}
+			for (const el of now)
+				if (!watched.has(el)) {
+					content.observe(el);
+					watched.add(el);
+				}
+			const bodies = panels.map((p) =>
+				p.querySelector<HTMLElement>(
+					':scope > .sub-rail-body',
 				),
 			);
+			const scrolls = bodies.map((b) => b?.scrollTop ?? 0);
+			for (const p of panels)
+				p.style.removeProperty('block-size');
+			if (!this.phone) {
+				const naturals = panels.map(
+					(p) => p.offsetHeight,
+				);
+				const room =
+					rail.clientHeight -
+					GAP * Math.max(0, panels.length - 1);
+				sharePanels(room, naturals).forEach((h, i) =>
+					panels[i]!.style.setProperty(
+						'block-size',
+						`${h}px`,
+					),
+				);
+			}
+			bodies.forEach((b, i) => {
+				if (b) b.scrollTop = scrolls[i]!;
+			});
 		};
-		// a row drag moves rows in and out of the list; heights hold until
-		// the pointer lets go
 		let held = false;
 		const schedule = () => {
 			if (!held) frame ||= requestAnimationFrame(lay);
@@ -322,8 +343,6 @@ export default class SubstrataEditor extends Component {
 		};
 	};
 
-	// the fitted artboard keeps clear of the title, the column and the
-	// settings bar; open panels float over it (iOS artboardArea)
 	placeInset = (root: HTMLElement) => {
 		const area = root.querySelector<HTMLElement>(
 			'.sub-shell-canvas-area',
@@ -335,7 +354,6 @@ export default class SubstrataEditor extends Component {
 			root.querySelector(sel)?.getBoundingClientRect();
 		const title = rect('.sub-ed-title');
 		if (title) inset.top = title.bottom - box.top + PAD;
-		// sides by position: the left hand mirrors the frame (data-hand)
 		const onLeft = (r: DOMRect) =>
 			r.left + r.width / 2 < box.left + box.width / 2;
 		const column = rect('.sub-ed-column');
@@ -379,12 +397,10 @@ export default class SubstrataEditor extends Component {
 		].join(',');
 	};
 
-	// the open fan or tool column closes on a press elsewhere or Esc
 	bloomClose = modifier((el: HTMLElement) => {
 		const close = () => (editorUi.bloomOpen = false);
 		const onDown = (e: PointerEvent) => {
 			const target = e.target as Element;
-			// the tool key toggles it itself
 			if (
 				!el.contains(target) &&
 				!target.closest('.sub-ed-tools')
@@ -410,7 +426,6 @@ export default class SubstrataEditor extends Component {
 				e.ctrlKey ||
 				e.altKey ||
 				isTextEntry(e.target) ||
-				// an open menu or card takes letters for type-ahead
 				(e.target instanceof Element &&
 					e.target.closest(
 						'[role=menu], [role=dialog], [role=listbox]',
@@ -436,7 +451,7 @@ export default class SubstrataEditor extends Component {
 		>
 			<div class="sub-shell-canvas-area">
 				<FabricCanvas />
-				<EmptyHint />
+				<NewStart />
 			</div>
 			<StatusNote />
 			<SecureContextNotice />
@@ -484,6 +499,12 @@ export default class SubstrataEditor extends Component {
 						@icon="menu"
 						@selected={{editorUi.pageOpen}}
 						@onClick={{this.openMenu}}
+					/>
+					<Cell
+						@label="New"
+						@icon="plus"
+						@selected={{editorUi.newOpen}}
+						@onClick={{this.openNew}}
 					/>
 					<Cell
 						@label="Share"
@@ -573,6 +594,12 @@ export default class SubstrataEditor extends Component {
 							@onClick={{this.openMenu}}
 						/>
 						<Cell
+							@label="New"
+							@icon="plus"
+							@selected={{editorUi.newOpen}}
+							@onClick={{this.openNew}}
+						/>
+						<Cell
 							@label="Undo"
 							@icon="undo-2"
 							@disabled={{this.undoOff}}
@@ -656,6 +683,12 @@ export default class SubstrataEditor extends Component {
 									}}
 								/>
 							{{/each}}
+							<Cell
+								@label="Assets"
+								@icon="images"
+								@selected={{editorUi.assetsOpen}}
+								@onClick={{this.toggleAssets}}
+							/>
 						</Cells>
 						{{#if
 							(this.showBloom
@@ -715,10 +748,7 @@ export default class SubstrataEditor extends Component {
 			<div
 				class="sub-ed-rail
 					{{if this.phone 'is-tray'}}
-					{{if
-						(eq editorUi.panels.length 0)
-						'is-empty'
-					}}"
+					{{if this.trayEmpty 'is-empty'}}"
 			>
 				{{#each editorUi.panels as |p|}}
 					{{#if (eq p "layers")}}
@@ -733,7 +763,19 @@ export default class SubstrataEditor extends Component {
 						/>
 					{{/if}}
 				{{/each}}
+				{{#if this.phone}}
+					{{#if editorUi.assetsOpen}}
+						<AssetsPanel />
+					{{/if}}
+				{{/if}}
 			</div>
+			{{#unless this.phone}}
+				{{#if editorUi.assetsOpen}}
+					<div class="sub-ed-assets">
+						<AssetsPanel />
+					</div>
+				{{/if}}
+			{{/unless}}
 
 			<ToolBar
 				@tool={{this.activeTool}}

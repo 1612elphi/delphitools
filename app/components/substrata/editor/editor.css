@@ -1,4 +1,4 @@
-/* iOS EditorLayout: the canvas full-bleed, floating pieces over it */
+/* ios editorlayout */
 .sub-ed {
 	--sub-cell: 44px;
 	--sub-small: 36px;
@@ -30,11 +30,25 @@
 	background: var(--canon-muted);
 }
 
-.sub-ed .sub-canvas-wordmark {
-	display: none;
+/* animated behind new card */
+.sub-canvas-wrap > .err-backdrop.sub-canvas-backdrop {
+	--err-ink: var(--canon-primary);
+
+	opacity: 0.035;
+	transition: opacity 0.8s ease;
+	animation-play-state: paused;
 }
 
-/* FloatingCells */
+.sub-canvas-wrap.is-new > .err-backdrop.sub-canvas-backdrop {
+	opacity: 0.1;
+	animation-play-state: running;
+}
+
+.sub-canvas-wrap.is-new > .canvas-container {
+	visibility: hidden;
+}
+
+/* ios floatingcells */
 .sub-cells {
 	display: flex;
 	flex-direction: column;
@@ -97,7 +111,7 @@
 	font-weight: var(--canon-weight-semibold);
 }
 
-/* TitlePanel: the title and the zoom figure; only the figure takes taps */
+/* only figure takes taps */
 .sub-ed-title {
 	position: absolute;
 	inset-block-start: var(--sub-gap);
@@ -153,7 +167,6 @@
 	font-size: var(--canon-text-footnote);
 }
 
-/* the trailing column: edit stack, omnibar, tools tab, colour key */
 .sub-ed-column {
 	position: absolute;
 	inset-block: var(--sub-pad);
@@ -183,7 +196,7 @@
 	display: none;
 }
 
-/* the tab shares the frame of whatever it hangs under */
+/* tab shares parent frame */
 .sub-ed-tab {
 	margin-block: calc(-1 * (var(--sub-gap) + var(--sub-frame))) auto;
 	box-shadow: var(--sub-shadow);
@@ -222,7 +235,6 @@
 	background: var(--canon-accent-bg);
 }
 
-/* compact column: one tool cell that blooms into a fan towards the canvas */
 .sub-ed-bloom {
 	position: absolute;
 	inset-block-start: var(--sub-frame);
@@ -248,7 +260,6 @@
 	}
 }
 
-/* the rail: open panels on the column's canvas side, floating */
 .sub-ed-rail {
 	position: absolute;
 	inset-block: var(--sub-pad);
@@ -308,7 +319,6 @@
 	background: var(--canon-card);
 }
 
-/* the tool settings bar, 36 px cells, along its edge */
 .sub-ed-bar {
 	position: absolute;
 	z-index: 18;
@@ -367,8 +377,6 @@
 	transform: translate(var(--sub-drag-x), var(--sub-drag-y));
 }
 
-/* the phone: title row along the top, a row of keys along the bottom, one
-   open panel in a tray above it */
 .sub-ed.is-phone .sub-ed-help {
 	inset-inline-start: var(--sub-pad);
 }
@@ -378,7 +386,7 @@
 			var(--sub-pad) + var(--sub-small-box) + var(--sub-gap)
 		)
 		calc(
-			var(--sub-pad) + 2 * var(--sub-small) + 1px + 2 *
+			var(--sub-pad) + 3 * var(--sub-small) + 2px + 2 *
 				var(--sub-frame) + var(--sub-gap)
 		);
 	max-inline-size: none;
@@ -466,8 +474,7 @@
 	inline-size: 180px;
 }
 
-/* the colour ring fades the column, title, rail and bar; the help cell and
-   the colour key stay (iOS setRingOpen) */
+/* ios setringopen */
 .sub-ed
 	:is(
 		.sub-ed-title,
@@ -518,8 +525,7 @@
 	}
 }
 
-/* settings page hooks: Handedness mirrors the frame, its pieces keep their
-   own direction; Help Button hides the help cell */
+/* settings page hooks */
 .sub-ed[data-hand="left"] {
 	direction: rtl;
 }
@@ -538,7 +544,7 @@
 	display: none;
 }
 
-/* FloatingCard over its scrim */
+/* ios floatingcard */
 .sub-card-layer {
 	position: absolute;
 	inset: 0;
@@ -621,7 +627,7 @@
 	}
 }
 
-/* the web's toasts, as the iOS caption chip under the title */
+/* ios caption chip */
 .sub-ed-note-slot {
 	position: absolute;
 	inset-block-start: calc(

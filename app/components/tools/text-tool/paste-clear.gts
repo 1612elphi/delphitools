@@ -6,7 +6,6 @@ interface PasteClearSignature {
 	Args: {
 		text: string;
 		onChange: (text: string) => void;
-		/** icon-only cell buttons */
 		cells?: boolean;
 	};
 }
@@ -14,7 +13,6 @@ interface PasteClearSignature {
 const PasteIcon = <template><IconSvg @name="clipboard" /></template>;
 const ClearIcon = <template><IconSvg @name="trash-2" /></template>;
 
-/** Paste replaces the text with the clipboard; Clear empties it. */
 export default class PasteClear extends Component<PasteClearSignature> {
 	paste = async () => {
 		const text = await navigator.clipboard

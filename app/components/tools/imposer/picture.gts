@@ -30,7 +30,6 @@ const draw = modifier(
 		],
 	) => {
 		const redraw = () => {
-			// transform-free layout size
 			const [width, height] = [
 				canvas.clientWidth,
 				canvas.clientHeight,
@@ -60,21 +59,18 @@ export interface SheetPictureSignature {
 		front?: PrintSheet;
 		back?: PrintSheet;
 		options: PaintOptions;
-		/** Changes when a page picture arrives. */
 		version: number;
 		legend: string;
 		detail: string;
 		total: string;
 		unit: string;
 		showsBack: boolean;
-		/** y: a book-page turn; x: top over bottom. */
 		axis: 'x' | 'y';
 		onFlip: () => void;
 	};
 	Element: HTMLDivElement;
 }
 
-/** The iOS PrintSheetView: legend, sheet count, and the sheet that turns over. */
 export default class SheetPicture extends Component<SheetPictureSignature> {
 	get style() {
 		const sheet = this.args.front;

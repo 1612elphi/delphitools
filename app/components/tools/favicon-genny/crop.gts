@@ -14,20 +14,13 @@ interface FaviconCropSignature {
 		width: number;
 		height: number;
 		square: Square;
-		/** On every drag step and key. */
 		onChange: (square: Square) => void;
 	};
 }
 
-// touch reach around the handle, as iOS has it
 const reach = 22;
 const nudge = 1.1;
 
-/**
- * The source with the square that becomes the icon lit, outside dimmed.
- * Drag the corner handle to resize, inside to move; arrow keys resize. The
- * port of iOS FaviconCropView.
- */
 export default class FaviconCrop extends Component<FaviconCropSignature> {
 	@tracked bounds = { width: 0, height: 0 };
 	#grab?: { resizing: boolean; dx: number; dy: number };
@@ -138,7 +131,6 @@ export default class FaviconCrop extends Component<FaviconCropSignature> {
 		const { square, width, height } = this.args;
 		let next: Square;
 		if (grab.resizing) {
-			// top-leading corner fixed
 			const side = Math.max(
 				pixel.x - square.x,
 				pixel.y - square.y,
@@ -192,7 +184,6 @@ export default class FaviconCrop extends Component<FaviconCropSignature> {
 	};
 
 	<template>
-		{{! a drag starts on pointerdown }}
 		{{! template-lint-disable no-pointer-down-event-binding }}
 		<div
 			class="favicon-crop"

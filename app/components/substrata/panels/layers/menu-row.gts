@@ -2,8 +2,6 @@ import type { TOC } from '@ember/component/template-only';
 import { on } from '@ember/modifier';
 import { IconSvg } from 'delphitools-v2/components/icon';
 
-// iOS MenuRow: one line of a floating card's list, an icon then its name;
-// the web's shortcut hint trails it
 const MenuRow: TOC<{
 	Args: {
 		title: string;

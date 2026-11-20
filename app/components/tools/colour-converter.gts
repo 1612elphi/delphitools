@@ -40,14 +40,12 @@ import './colour-converter/colour-converter.css';
 
 const startColour = parseHex('3B82F6')!;
 
-/** Fits "Decimal RGB" in the caption face. */
 const labelWidth = 76;
 
 const closestName = (colour: Rgb) => getColourName(hex(colour));
 
 const Grid = <template><IconSvg @name="layout-grid" /></template>;
 
-/** The port of ColourConverterViewController, without its colour management. */
 export default class ColourConverter extends Component {
 	state: CanonColourSolidState;
 	@tracked grid = false;
@@ -55,7 +53,6 @@ export default class ColourConverter extends Component {
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const flags = launchFlags(window.location.search);
-		// sliced row, rgb blue
 		this.state = new CanonColourSolidState({
 			space: flags.space ?? 'rgb',
 			colour: flags.colour ?? startColour,
@@ -78,7 +75,6 @@ export default class ColourConverter extends Component {
 		return this.hex.toLowerCase();
 	}
 
-	/** The solid's own numbers keep a grey's hue. */
 	values(space: SolidSpace) {
 		return space === this.state.space
 			? valuesAt(this.state.point, space)
@@ -117,7 +113,6 @@ export default class ColourConverter extends Component {
 		});
 	}
 
-	/** The grid's solids, one per space, each at the colour. */
 	get cells() {
 		return solidSpaces.map((space) => ({
 			space,
@@ -132,7 +127,6 @@ export default class ColourConverter extends Component {
 
 	toggleGrid = () => (this.grid = !this.grid);
 
-	/** A pick on a grid solid; drags follow at once. */
 	pickColour = (_point: unknown, colour: Rgb) =>
 		this.state.setPoint(pointFor(this.state.space, colour), false);
 
@@ -144,7 +138,6 @@ export default class ColourConverter extends Component {
 		return decimalRgb(this.colour);
 	}
 
-	/** Values in `space` reach the solid as its point, or as the colour they name. */
 	pick = (space: SolidSpace, values: number[], animated: boolean) => {
 		const point =
 			space === this.state.space
@@ -162,15 +155,12 @@ export default class ColourConverter extends Component {
 		return values;
 	}
 
-	/** The notation input's own read, after a pause and on Return; blank text is not marked as unread. */
 	parse = (text: string) =>
 		this.#take(text) !== undefined || text.trim() === '';
 
-	// the web field answered every keystroke; the kit input waits 400 ms
 	typeLive = (event: Event) =>
 		void this.#take((event.target as HTMLInputElement).value);
 
-	// a click places the caret after focus, so select on the next frame
 	selectAll = (event: FocusEvent) => {
 		const field = event.target;
 		if (field instanceof HTMLInputElement)

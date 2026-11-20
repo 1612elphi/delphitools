@@ -10,7 +10,6 @@ import CanonSwitch from 'delphicanon/components/canon-switch';
 import { IconSvg } from 'delphitools-v2/components/icon';
 import type { PageSignature } from 'delphitools-v2/components/magazine/pages';
 
-// built at runtime so the gap tooling does not read it as a gap
 const GAP = String.fromCharCode(0x2211) + 'CG';
 const LOREM =
 	'lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat'.split(

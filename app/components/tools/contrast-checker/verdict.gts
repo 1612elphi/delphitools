@@ -37,7 +37,6 @@ const lampRows = rules.map((rule) => ({
 const passes = (ratio: number, threshold: number) => ratio >= threshold;
 const figure = (ratio: number) => `${contrastFigure(ratio)}:1`;
 
-/** The ratio on a log scale from 1 to 21, with the WCAG thresholds as notches. */
 export const Scale: TOC<{ Args: { ratio: number } }> = <template>
 	<div class="contrast-scale" style={{scaleStyle}}>
 		<meter
@@ -73,7 +72,6 @@ export const Scale: TOC<{ Args: { ratio: number } }> = <template>
 	</div>
 </template>;
 
-/** Normal, large and controls against AA and AAA, a lamp per rule, lit when the ratio passes. */
 export const Lamps: TOC<{ Args: { ratio: number } }> = <template>
 	<div class="contrast-lamps" role="table" aria-label="WCAG">
 		<div class="contrast-lamps-row" role="row">

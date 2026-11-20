@@ -9,7 +9,6 @@ import type { SpellingAlphabet } from 'delphitools-v2/lib/spelling-alphabets';
 interface ChartSignature {
 	Args: {
 		alphabet: SpellingAlphabet;
-		/** Upper-cased text whose letters light their tiles. */
 		used: string;
 		onLetter: (letter: string) => void;
 	};
@@ -22,7 +21,6 @@ const semaphore = (letter: string) => htmlSafe(semaphoreSvg(letter));
 const symbols = (letter: string) => [...(MORSE[letter] ?? '')];
 const isDah = (mark: string) => mark === '-';
 
-/** NATOChart: a tile per letter with its Morse, semaphore and flag; a tap spells it. */
 export default class Chart extends Component<ChartSignature> {
 	get tiles() {
 		return letters.map((letter) => ({

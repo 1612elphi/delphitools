@@ -33,7 +33,6 @@ export default class TimecodePattern extends Component {
 		return this.running ? lamps : [];
 	}
 
-	// hours, minutes, seconds and frames at the chosen rate
 	smpte = (seconds: number) => {
 		const fps = rates[this.rate]!;
 		const whole = Math.floor(seconds);

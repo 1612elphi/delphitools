@@ -55,7 +55,6 @@ function upper(text: string) {
 	return text.toUpperCase();
 }
 
-/** The port of PxToRemViewController. */
 export default class PxToRem extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -63,7 +62,6 @@ export default class PxToRem extends Component {
 	@tracked remToPixel = false;
 	@tracked base: number = baseRange.start;
 
-	// ?pxValue=<number>: the iOS -pxvalue flag; ?pxDirection=1 starts in REM → PX, ?pxBase=<1-48> sets the base
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -122,7 +120,6 @@ export default class PxToRem extends Component {
 		}));
 	}
 
-	// the web fields answered every keystroke; iOS waits 400 ms
 	typed = (text: string) => (this.text = text);
 
 	nudge = (direction: -1 | 1) =>
@@ -132,14 +129,12 @@ export default class PxToRem extends Component {
 			this.remToPixel,
 		));
 
-	// a click places the caret after focus, so select on the next frame
 	selectAll = (event: FocusEvent) => {
 		const field = event.target;
 		if (field instanceof HTMLInputElement)
 			requestAnimationFrame(() => field.select());
 	};
 
-	// the result becomes the input, so the pair on screen stays
 	pickDirection = (index: number) => {
 		const { result } = this;
 		this.remToPixel = index === 1;

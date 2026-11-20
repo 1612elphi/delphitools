@@ -32,10 +32,8 @@ type TextField = Exclude<keyof MetaFields, 'ogType' | 'twitterCard'>;
 
 const CopyIcon = <template><IconSvg @name="copy" /></template>;
 
-// the web tool's wording
 const DESCRIPTION_PLACEHOLDER = 'A brief description of your page...';
 const IMAGE_NOTE = 'Recommended size: 1200×630px';
-// template lint reads @ as path
 const HANDLE_PLACEHOLDER = '@username';
 
 const SAMPLE: Omit<MetaFields, 'ogType' | 'twitterCard'> = {
@@ -52,7 +50,6 @@ const SAMPLE: Omit<MetaFields, 'ogType' | 'twitterCard'> = {
 const LONG_TITLE =
 	'Field Notes: a weekly letter on printing, paper and the small tools that make both a little easier';
 
-/** The port of MetaTagGeneratorViewController. */
 export default class MetaTagGennyTool extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -65,12 +62,10 @@ export default class MetaTagGennyTool extends Component {
 	@tracked siteName = '';
 	@tracked twitterHandle = '';
 	@tracked ogType = 0;
-	// summary_large_image is common
 	@tracked twitterCard = 1;
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
-		// ?metaSample=1 ?metaLong=1 ?metaCard=summary|summary_large_image: the iOS -metaSample, -metaLong, -metaCard flags
 		const query = new URLSearchParams(window.location.search);
 		if (query.get('metaSample')) {
 			Object.assign(this, SAMPLE);

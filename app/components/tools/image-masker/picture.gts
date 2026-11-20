@@ -20,29 +20,21 @@ import {
 
 export interface PictureSignature {
 	Args: {
-		/** The decoded source; none shows the grey shape under the slot. */
 		image?: HTMLImageElement;
-		/** Object URL of the source, for the faint image outside the cut. */
 		url?: string;
 		cut: Cut;
-		/** The shape's path for the outline; a custom SVG has none. */
 		outline?: string;
 		view: View;
-		/** The export side, for the dimension line. */
 		side: number;
 		label: string;
 		busy: boolean;
-		/** A file is dragged over the tool. */
 		over: boolean;
 		onChoose: () => void;
-		/** Moves the image by a share of the square's side. */
 		onMove: (x: number, y: number) => void;
-		/** Multiplies the zoom. */
 		onZoom: (factor: number) => void;
 	};
 }
 
-// a drag grabs this far outside the square, as iOS has it
 const reach = 8;
 const gap = 8;
 const hintMargin = 12;
@@ -77,12 +69,6 @@ const draw = modifier(
 	},
 );
 
-/**
- * The cut as the export writes it, in a square fitted to the pane under a
- * dimension line for its side, the image faint outside the cut, the shape
- * outlined. A drag moves the image, the wheel zooms it. The port of iOS
- * MaskBoard.
- */
 export default class Picture extends Component<PictureSignature> {
 	@tracked area: Size = { width: 0, height: 0 };
 	@tracked dragging = false;
@@ -178,7 +164,6 @@ export default class Picture extends Component<PictureSignature> {
 		};
 	}
 
-	/** Two fingers on the square zoom by their spread and move by their centre. */
 	pinch = modifier((element: HTMLElement) => {
 		const local = (event: PointerEvent) => {
 			const box = element.getBoundingClientRect();
@@ -213,7 +198,6 @@ export default class Picture extends Component<PictureSignature> {
 			this.#touches.delete(event.pointerId);
 			if (this.#touches.size < 2) this.#spread = undefined;
 		};
-		// pointerdown comes first, so a pinch on the square is known here
 		const touch = (event: TouchEvent) => {
 			if (event.touches.length > 1 && this.#touches.size)
 				event.preventDefault();
@@ -278,7 +262,6 @@ export default class Picture extends Component<PictureSignature> {
 	};
 
 	key = (event: KeyboardEvent) => {
-		// a hundredth of the side a press, a tenth with Shift
 		const step = event.shiftKey ? 0.1 : 0.01;
 		const arrows: Record<string, [number, number]> = {
 			ArrowLeft: [-step, 0],

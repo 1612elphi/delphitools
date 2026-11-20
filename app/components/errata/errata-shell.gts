@@ -1,4 +1,5 @@
 import Component from '@glimmer/component';
+import type { TOC } from '@ember/component/template-only';
 import { tracked } from '@glimmer/tracking';
 import { fn } from '@ember/helper';
 import { on } from '@ember/modifier';
@@ -8,6 +9,8 @@ import CanonFigure from 'delphicanon/components/canon-figure';
 import CanonLoader from 'delphicanon/components/canon-loader';
 import { IconSvg } from 'delphitools-v2/components/icon';
 import CommentPopover from 'delphitools-v2/components/errata/comment-popover';
+import Onboarding from 'delphitools-v2/components/errata/onboarding';
+import Library from 'delphitools-v2/components/errata/library';
 import ErrataMenu from 'delphitools-v2/components/errata/menu';
 import PageCanvas from 'delphitools-v2/components/errata/page-canvas';
 import PageRail from 'delphitools-v2/components/errata/page-rail';
@@ -15,6 +18,34 @@ import PreflightPanel from 'delphitools-v2/components/errata/preflight-panel';
 import SettingsBar from 'delphitools-v2/components/errata/settings-bar';
 import SignatureModal from 'delphitools-v2/components/errata/signature-modal';
 import Toolbox from 'delphitools-v2/components/errata/toolbox';
+import UndoCells from 'delphitools-v2/components/errata/undo-cells';
+import FormatBar from 'delphitools-v2/components/errata/write/format-bar';
+import FindPanel from 'delphitools-v2/components/errata/write/find-panel';
+import LinkPanel from 'delphitools-v2/components/errata/write/link-panel';
+import SetupPanel from 'delphitools-v2/components/errata/write/setup-panel';
+import NumbersPanel from 'delphitools-v2/components/errata/write/numbers-panel';
+import TableMenu from 'delphitools-v2/components/errata/write/table-menu';
+import WriteRail from 'delphitools-v2/components/errata/write/write-rail';
+import WriteView from 'delphitools-v2/components/errata/write/write-view';
+import { currentLayout, inner } from 'delphitools-v2/lib/errata/write/editor';
+import type { WriteDoc } from 'delphitools-v2/lib/errata/write/types';
+import {
+	newDocument,
+	ataBytes,
+	openWriteFile,
+	pdfBytes,
+	rtfText,
+} from 'delphitools-v2/lib/errata/write/session';
+import { openDoc } from 'delphitools-v2/lib/errata/write/library';
+import { writeStore } from 'delphitools-v2/lib/errata/write/store';
+import { insertImageFile } from 'delphitools-v2/lib/errata/write/image-edit';
+import { focusEditor, writePanel } from 'delphitools-v2/lib/errata/write/view';
+import {
+	markup,
+	startMarkup,
+	stopMarkup,
+} from 'delphitools-v2/lib/errata/write/markup';
+import { activeDoc, subscribeActive } from 'delphitools-v2/lib/errata/active';
 import { Cell, Cells } from 'delphitools-v2/components/substrata/editor/cells';
 import {
 	MenuCell,
@@ -24,7 +55,6 @@ import {
 import errataShortcuts from 'delphitools-v2/modifiers/errata-shortcuts';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import { exportPdf } from 'delphitools-v2/lib/errata/export';
-import { exportCurrent } from 'delphitools-v2/lib/errata/export-file';
 import {
 	getSourceBytes,
 	openFile,
@@ -64,25 +94,18 @@ import {
 	type ModalId,
 } from 'delphitools-v2/lib/errata/ui';
 import { pageContent } from 'delphitools-v2/lib/errata/content';
-import {
-	getZoom,
-	subscribeViewport,
-	viewport,
-} from 'delphitools-v2/lib/substrata/viewport';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 import 'delphitools-v2/components/substrata/editor/editor.css';
 import 'delphitools-v2/components/substrata/editor/tool-bar/tools.css';
 import './errata.css';
 
-// the Substrata frame's metrics (editor.gts), 1 pt = 1 px
 const CELL = 44;
 const FRAME = 2;
 const PAD = 16;
 const GAP = 8;
 const PHONE_WIDTH = 600;
-// the Toolbox key with its upright label, .err-box-key in errata.css
+const RAIL_ROOM = 1080;
 const BOX_KEY = 112;
-// edit stack, tools, panel keys, the gaps and the frame
 const COLUMN_FULL =
 	(4 + TOOL_ORDER.length + 1) * CELL +
 	BOX_KEY +
@@ -92,6 +115,9 @@ const COLUMN_FULL =
 	2 * GAP +
 	6 * FRAME;
 
+const WRITE_FULL =
+	(4 + 3 + TOOL_ORDER.length) * CELL + BOX_KEY + 2 * GAP + 6 * FRAME + 16;
+
 function toolTitle(tool: ToolEntry): string {
 	return `${tool.label} (${tool.key})`;
 }
@@ -99,36 +125,48 @@ function toolTitle(tool: ToolEntry): string {
 export default class ErrataShell extends Component {
 	@tracked width = 1400;
 	@tracked height = 1000;
-	// the phone starts with the pages closed
 	@tracked pagesChoice: boolean | null = null;
-	@tracked menuAnchor: HTMLElement | null = null;
+	@tracked menuOpen = false;
+	@tracked libraryOpen = false;
 	@tracked exporting = false;
 	@tracked exportFailed = false;
+	@tracked openFailed = false;
 
 	doc = new TrackedExternal(store.subscribe, store.getSnapshot);
-	undoable = new TrackedExternal(store.subscribe, store.canUndo);
-	redoable = new TrackedExternal(store.subscribe, store.canRedo);
+	active = new TrackedExternal(subscribeActive, activeDoc);
+	title = new TrackedExternal(
+		subscribeActive,
+		() => activeDoc()?.title() ?? '',
+	);
+	zoom = new TrackedExternal(subscribeActive, () =>
+		Math.round((activeDoc()?.zoom() ?? 1) * 100),
+	);
 	mode = new TrackedExternal(boxMode.subscribe, boxMode.get);
 	sheet = new TrackedExternal(modal.subscribe, modal.get);
 	boxOpen = new TrackedExternal(toolbox.subscribe, toolbox.get);
 	tool = new TrackedExternal(activeTool.subscribe, activeTool.get);
 	loading = new TrackedExternal(opening.subscribe, opening.get);
-	zoom = new TrackedExternal(subscribeViewport, getZoom);
 	pageIndex = new TrackedExternal(subscribePage, getPageIndex);
+	panel = new TrackedExternal(writePanel.subscribe, writePanel.get);
+	marking = new TrackedExternal(markup.subscribe, markup.get);
+	inner = new TrackedExternal(inner.subscribe, inner.get);
 	#pdfInput: HTMLInputElement | null = null;
 	#imageInput: HTMLInputElement | null = null;
 
 	willDestroy() {
 		super.willDestroy();
+		this.active.unsubscribe();
+		this.title.unsubscribe();
+		this.zoom.unsubscribe();
+		this.panel.unsubscribe();
+		this.marking.unsubscribe();
+		this.inner.unsubscribe();
 		this.doc.unsubscribe();
-		this.undoable.unsubscribe();
-		this.redoable.unsubscribe();
 		this.mode.unsubscribe();
 		this.sheet.unsubscribe();
 		this.boxOpen.unsubscribe();
 		this.tool.unsubscribe();
 		this.loading.unsubscribe();
-		this.zoom.unsubscribe();
 		this.pageIndex.unsubscribe();
 	}
 
@@ -136,23 +174,119 @@ export default class ErrataShell extends Component {
 		return this.width < PHONE_WIDTH && this.height > this.width;
 	}
 
-	// the column keeps one tool cell, a menu of the rest, when the full
-	// column does not fit the height
+	get formatBarShown() {
+		return (
+			this.inner.current?.kind === 'cell' &&
+			!this.panel.current
+		);
+	}
+
+	get writing() {
+		return this.active.current?.kind === 'write';
+	}
+
+	get pdfOpen() {
+		return this.active.current?.kind === 'pdf';
+	}
+
+	get writeRailShown() {
+		const panel = this.panel.current;
+		return (
+			this.pagesOpen &&
+			panel !== 'setup' &&
+			!(this.phone && panel)
+		);
+	}
+
+	get titleOnPage() {
+		return this.writing && !this.phone;
+	}
+
+	get toolboxShown() {
+		return (
+			this.pdfOpen ||
+			(this.writing && (!this.phone || this.marking.current))
+		);
+	}
+
+	get setupShown() {
+		return this.panel.current === 'setup';
+	}
+
+	newDocument = () => {
+		stopMarkup();
+		newDocument();
+	};
+
+	openLibrary = () => {
+		this.libraryOpen = true;
+	};
+
+	closeLibrary = () => {
+		this.libraryOpen = false;
+	};
+
+	openStored = async (id: string) => {
+		stopMarkup();
+		this.openFailed = !(await openDoc(id).catch(() => false));
+	};
+	openSetup = () =>
+		writePanel.set(writePanel.get() === 'setup' ? null : 'setup');
+
 	get compact() {
 		return this.phone || this.height - 2 * PAD < COLUMN_FULL;
 	}
 
+	get writeCompact() {
+		return this.height - 2 * PAD < WRITE_FULL;
+	}
+
+	get markupEntry(): ToolEntry {
+		return (
+			TOOL_ORDER.find((m) => this.isMarkup(m.id)) ??
+			TOOL_ORDER[0]!
+		);
+	}
+
+	get markupItems(): BarMenuEntry[] {
+		return TOOL_ORDER.map((m) => ({
+			title: m.label,
+			kind: 'radio',
+			checked: this.isMarkup(m.id),
+			icon: menuIcon(m.icon),
+			run: () => this.pickMarkup(m.id),
+		}));
+	}
+
+	isMarkup = (id: ToolId) => {
+		if (!this.marking.current) return id === 'content';
+		return !this.mode.current && this.tool.current === id;
+	};
+
+	pickMarkup = (id: ToolId) => {
+		if (id === 'content') return this.pickWrite();
+		this.#imageOnly = id === 'image' && !this.marking.current;
+		startMarkup();
+		setMode(null);
+		if (id === 'image') return pickImageFile();
+		if (id === 'signature') modal.set('signature');
+		else activeTool.set(id);
+	};
+
+	#imageOnly = false;
+	imageCancel = () => {
+		if (this.#imageOnly) this.pickWrite();
+		this.#imageOnly = false;
+	};
+
+	pickWrite = () => {
+		stopMarkup();
+		focusEditor();
+	};
+
 	get layoutClass() {
 		if (this.phone) return 'is-phone';
 		return this.compact ? 'is-compact' : 'is-full';
-	}
-
-	get hasDoc() {
-		return this.doc.current !== null;
-	}
-
-	get title() {
-		return this.doc.current?.name ?? '';
 	}
 
 	get pageLabel() {
@@ -161,14 +295,17 @@ export default class ErrataShell extends Component {
 	}
 
 	get zoomPercent() {
-		return String(Math.round(this.zoom.current * 100));
+		return String(this.zoom.current);
 	}
 
 	get pagesOpen() {
-		return this.pagesChoice ?? !this.phone;
+		return (
+			this.pagesChoice ??
+			(!this.phone &&
+				!(this.writing && this.width < RAIL_ROOM))
+		);
 	}
 
-	// on the phone a panel or the toolbox takes the tray's place
 	get phonePanel() {
 		return (
 			this.phone &&
@@ -177,13 +314,11 @@ export default class ErrataShell extends Component {
 	}
 
 	get railShown() {
-		return this.hasDoc && this.pagesOpen && !this.phonePanel;
+		return this.pagesOpen && !this.phonePanel;
 	}
 
-	// a mode or the toolbox takes the settings bar's place
 	get barShown() {
 		return (
-			this.hasDoc &&
 			!this.boxOpen.current &&
 			this.mode.current === null &&
 			this.sheet.current === null
@@ -223,21 +358,12 @@ export default class ErrataShell extends Component {
 		activeTool.set(id);
 	};
 
-	#menuCell: HTMLElement | null = null;
-
-	keepMenuCell = modifier((el: HTMLElement) => {
-		this.#menuCell = el;
-		return () => {
-			if (this.#menuCell === el) this.#menuCell = null;
-		};
-	});
-
 	openMenu = () => {
-		this.menuAnchor = this.menuAnchor ? null : this.#menuCell;
+		this.menuOpen = !this.menuOpen;
 	};
 
 	closeMenu = () => {
-		this.menuAnchor = null;
+		this.menuOpen = false;
 	};
 
 	togglePages = () => {
@@ -246,24 +372,72 @@ export default class ErrataShell extends Component {
 
 	toggleBox = () => toolbox.set(!this.boxOpen.current);
 
-	doUndo = () => store.undo();
-	doRedo = () => store.redo();
-	fit = () => viewport.fit();
+	fit = () => activeDoc()?.fit();
+
+	get renamable() {
+		return !!this.active.current?.rename;
+	}
+
+	rename = (event: Event) => {
+		const input = event.target as HTMLInputElement;
+		const name = input.value.trim() || 'Untitled';
+		input.value = name;
+		this.active.current?.rename?.(name);
+	};
+
+	renameKey = (event: KeyboardEvent) => {
+		const input = event.target as HTMLInputElement;
+		if (event.key === 'Escape') input.value = this.title.current;
+		else if (event.key !== 'Enter') return;
+		event.preventDefault();
+		input.blur();
+		focusEditor();
+	};
 	prev = () => setPageIndex(getPageIndex() - 1);
 	next = () => setPageIndex(getPageIndex() + 1);
 
 	export = async () => {
-		if (!this.hasDoc || this.exporting) return;
+		const doc = activeDoc();
+		if (!doc || this.exporting) return;
 		this.exporting = true;
 		this.exportFailed = false;
-		this.exportFailed = !(await exportCurrent());
+		this.exportFailed = !(await doc.exportFile());
 		this.exporting = false;
 	};
 
-	// scripts/verify/errata.mjs drives this
 	rig = modifier(() => {
 		if (!import.meta.env.DEV) return;
 		const w = window as unknown as Record<string, unknown>;
+		w.__write = {
+			state: () => writeStore.get(),
+			layout: () => {
+				const s = writeStore.get();
+				return s ? currentLayout(s.doc) : null;
+			},
+			exportPdf: async () => [...((await pdfBytes()) ?? [])],
+			ata: () => [...(ataBytes() ?? [])],
+			rtf: rtfText,
+			open: (bytes: number[], name: string) =>
+				openWriteFile(
+					new File([new Uint8Array(bytes)], name),
+				),
+			setDoc: (doc: WriteDoc) => writeStore.open(doc),
+			insertImage: (bytes: number[], type: string) =>
+				insertImageFile(
+					new Blob([new Uint8Array(bytes)], {
+						type,
+					}),
+				),
+			cell: () => {
+				const e = inner.get();
+				return e?.kind === 'cell' ? e : null;
+			},
+			note: () => {
+				const e = inner.get();
+				return e?.kind === 'note' ? e : null;
+			},
+			mode: () => boxMode.get(),
+		};
 		w.__errata = {
 			open: (
 				bytes: ArrayBuffer,
@@ -403,6 +577,34 @@ export default class ErrataShell extends Component {
 			this.height = root.clientHeight;
 		});
 		size.observe(root);
+		const vv = window.visualViewport;
+		let kbFrame = 0;
+		const keyboard = () => {
+			if (!vv || kbFrame) return;
+			kbFrame = requestAnimationFrame(() => {
+				kbFrame = 0;
+				const kb =
+					root.getBoundingClientRect().bottom -
+					vv.offsetTop -
+					vv.height;
+				root.style.setProperty(
+					'--err-kb',
+					`${Math.max(0, Math.round(kb))}px`,
+				);
+				if (
+					kb > 0 &&
+					!root.querySelector(
+						'.err-write-input[data-tracking]',
+					)
+				)
+					root.querySelector(
+						'.err-write-caret',
+					)?.scrollIntoView({ block: 'nearest' });
+				this.placeInset(root);
+			});
+		};
+		vv?.addEventListener('resize', keyboard);
+		vv?.addEventListener('scroll', keyboard);
 		const children = new MutationObserver(() => {
 			watch();
 			this.placeInset(root);
@@ -413,11 +615,12 @@ export default class ErrataShell extends Component {
 			pieces.disconnect();
 			size.disconnect();
 			children.disconnect();
+			vv?.removeEventListener('resize', keyboard);
+			vv?.removeEventListener('scroll', keyboard);
+			cancelAnimationFrame(kbFrame);
 		};
 	});
 
-	// the pages keep clear of the title, the column, the rail and the
-	// settings bar; panels and the toolbox float over them
 	placeInset = (root: HTMLElement) => {
 		const area = root.querySelector<HTMLElement>(
 			':scope > .sub-shell-canvas-area',
@@ -435,7 +638,6 @@ export default class ErrataShell extends Component {
 		if (title) inset.top = title.bottom - box.top + PAD;
 		const column = rect('.sub-ed-column');
 		if (column) inset.right = box.right - column.left + PAD;
-		// the findings rail slides in; its offset ignores the slide
 		const findings = root.querySelector<HTMLElement>(
 			':scope > .err-preflight.is-open',
 		);
@@ -470,7 +672,6 @@ export default class ErrataShell extends Component {
 		area.dispatchEvent(new CustomEvent('err-inset'));
 	};
 
-	// a mode opening or closing moves the findings rail
 	reinset = modifier(
 		(
 			root: HTMLElement,
@@ -485,11 +686,24 @@ export default class ErrataShell extends Component {
 		},
 	);
 
-	// with a document open an image file lands on the page; a pdf always opens
-	take = (file: File) =>
-		store.getSnapshot() && file.type.startsWith('image/')
-			? placeImage(file)
-			: openFile(file);
+	take = async (file: File) => {
+		this.openFailed = false;
+		try {
+			await this.#open(file);
+		} catch {
+			this.openFailed = true;
+		}
+	};
+
+	#open = async (file: File) => {
+		const image = file.type.startsWith('image/');
+		if (image && this.marking.current) return placeImage(file);
+		if (image && this.writing) return insertImageFile(file);
+		if (image && this.pdfOpen) return placeImage(file);
+		stopMarkup();
+		if (await openWriteFile(file)) return;
+		await openFile(file);
+	};
 
 	paste = (file: File) => void this.take(file);
 
@@ -516,6 +730,7 @@ export default class ErrataShell extends Component {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		input.value = '';
+		this.#imageOnly = false;
 		if (file) void this.take(file);
 	};
 
@@ -533,7 +748,10 @@ export default class ErrataShell extends Component {
 
 	<template>
 		<div
-			class="sub-ed err-ed {{this.layoutClass}}"
+			class="sub-ed err-ed
+				{{this.layoutClass}}
+				{{if this.writing 'is-writing'}}
+				{{if this.marking.current 'is-marking'}}"
 			{{this.measure}}
 			{{this.reinset this.mode.current this.sheet.current}}
 			{{this.rig}}
@@ -546,10 +764,9 @@ export default class ErrataShell extends Component {
 			{{on "drop" this.drop}}
 		>
 			<div class="sub-shell-canvas-area">
-				{{! always mounted: the Image tool and the empty hint share them }}
 				<input
 					type="file"
-					accept="application/pdf"
+					accept="application/pdf,.ata,.rtf"
 					class="dt-sr-only"
 					aria-label="Open PDF"
 					{{this.registerPdfInput}}
@@ -562,9 +779,22 @@ export default class ErrataShell extends Component {
 					aria-label="Open image"
 					{{this.registerImageInput}}
 					{{on "change" this.onPick}}
+					{{on "cancel" this.imageCancel}}
 				/>
 				<PageCanvas />
-				{{#unless this.hasDoc}}
+				{{#if this.writing}}
+					<WriteView
+						@phone={{this.phone}}
+						@onImage={{this.pickImage}}
+					>
+						<:title>
+							<TitleChip
+								@shell={{this}}
+							/>
+						</:title>
+					</WriteView>
+				{{/if}}
+				{{#unless this.active.current}}
 					{{#unless this.loading.current}}
 						<div
 							class="sub-empty"
@@ -576,6 +806,20 @@ export default class ErrataShell extends Component {
 								<div
 									class="sub-empty-actions"
 								>
+									<Cell
+										@label="New document"
+										@text="New document"
+										@icon="file-plus"
+										data-new-document
+										@onClick={{this.newDocument}}
+									/>
+									<Cell
+										@label="Documents"
+										@text="Documents"
+										@icon="library"
+										data-open-library
+										@onClick={{this.openLibrary}}
+									/>
 									<Cell
 										@label="Open PDF"
 										@text="Open PDF"
@@ -603,50 +847,10 @@ export default class ErrataShell extends Component {
 				{{/if}}
 			</div>
 
-			{{#if this.hasDoc}}
-				<div
-					class="sub-ed-title"
-					role="group"
-					aria-label="Document"
-				>
-					<span
-						class="sub-ed-title-name"
-					>{{this.title}}</span>
-					<button
-						type="button"
-						class="err-title-step"
-						aria-label="Previous page"
-						title="Previous page"
-						{{on "click" this.prev}}
-					><IconSvg
-							@name="chevron-left"
-						/></button>
-					<span
-						class="err-title-page"
-						data-page-label
-					>{{this.pageLabel}}</span>
-					<button
-						type="button"
-						class="err-title-step"
-						aria-label="Next page"
-						title="Next page"
-						{{on "click" this.next}}
-					><IconSvg
-							@name="chevron-right"
-						/></button>
-					<button
-						type="button"
-						class="sub-ed-title-zoom"
-						aria-label="Fit page"
-						title="Fit page"
-						{{on "click" this.fit}}
-					><CanonFigure
-							@text={{this.zoomPercent}}
-							@unit="%"
-							@size={{13}}
-							@colour="var(--canon-muted-foreground)"
-						/></button>
-				</div>
+			{{#if this.active.current}}
+				{{#unless this.titleOnPage}}
+					<TitleChip @shell={{this}} />
+				{{/unless}}
 				{{#if this.exportFailed}}
 					<div class="sub-ed-note-slot">
 						<span
@@ -655,6 +859,14 @@ export default class ErrataShell extends Component {
 						>Export failed</span>
 					</div>
 				{{/if}}
+			{{/if}}
+			{{#if this.openFailed}}
+				<div class="sub-ed-note-slot">
+					<span
+						class="sub-ed-note err-open-failed"
+						role="status"
+					>Open failed</span>
+				</div>
 			{{/if}}
 
 			{{#if this.phone}}
@@ -666,26 +878,45 @@ export default class ErrataShell extends Component {
 					<Cell
 						@label="Menu"
 						@icon="menu"
-						@selected={{if
-							this.menuAnchor
-							true
-							false
-						}}
+						@selected={{this.menuOpen}}
 						@onClick={{this.openMenu}}
-						{{this.keepMenuCell}}
 					/>
+					{{#if this.writing}}
+						<MenuCell
+							@label={{this.markupEntry.label}}
+							@icon={{this.markupEntry.icon}}
+							@items={{this.markupItems}}
+							@placement="bottom-start"
+							data-tool-menu
+						/>
+						<UndoCells />
+						<Cell
+							@label="Document setup"
+							@icon="settings-2"
+							@selected={{this.setupShown}}
+							data-tool="setup"
+							@onClick={{this.openSetup}}
+						/>
+						<Cell
+							@label="Pages"
+							@icon="panel-left"
+							@selected={{this.pagesOpen}}
+							data-tool="pages"
+							@onClick={{this.togglePages}}
+						/>
+					{{/if}}
 					<Cell
 						@label="Export"
 						@icon="download"
 						@disabled={{if
-							this.hasDoc
+							this.active.current
 							false
 							true
 						}}
 						@onClick={{this.export}}
 					/>
 				</Cells>
-				{{#if this.hasDoc}}
+				{{#if this.pdfOpen}}
 					<div class="sub-ed-row">
 						<Cells @axis="row">
 							<MenuCell
@@ -696,26 +927,7 @@ export default class ErrataShell extends Component {
 							/>
 						</Cells>
 						<Cells @axis="row">
-							<Cell
-								@label="Undo"
-								@icon="undo-2"
-								@disabled={{if
-									this.undoable.current
-									false
-									true
-								}}
-								@onClick={{this.doUndo}}
-							/>
-							<Cell
-								@label="Redo"
-								@icon="redo-2"
-								@disabled={{if
-									this.redoable.current
-									false
-									true
-								}}
-								@onClick={{this.doRedo}}
-							/>
+							<UndoCells />
 						</Cells>
 						<span
 							class="sub-ed-row-fill"
@@ -727,19 +939,8 @@ export default class ErrataShell extends Component {
 								@selected={{this.pagesOpen}}
 								@onClick={{this.togglePages}}
 							/>
-							<Cell
-								@label="Toolbox"
-								@text="Toolbox"
-								class="err-box-key"
-								@icon="briefcase"
-								@selected={{this.boxOpen.current}}
-								aria-expanded={{if
-									this.boxOpen.current
-									"true"
-									"false"
-								}}
-								data-toolbox
-								@onClick={{this.toggleBox}}
+							<BoxKey
+								@shell={{this}}
 							/>
 						</Cells>
 					</div>
@@ -751,49 +952,93 @@ export default class ErrataShell extends Component {
 							@tip="left"
 							@label="Menu"
 							@icon="menu"
-							@selected={{if
-								this.menuAnchor
-								true
-								false
-							}}
+							@selected={{this.menuOpen}}
 							@onClick={{this.openMenu}}
-							{{this.keepMenuCell}}
 						/>
-						<Cell
-							@tip="left"
-							@label="Undo"
-							@icon="undo-2"
-							@disabled={{if
-								this.undoable.current
-								false
-								true
-							}}
-							@onClick={{this.doUndo}}
-						/>
-						<Cell
-							@tip="left"
-							@label="Redo"
-							@icon="redo-2"
-							@disabled={{if
-								this.redoable.current
-								false
-								true
-							}}
-							@onClick={{this.doRedo}}
-						/>
+						<UndoCells @tip="left" />
 						<Cell
 							@tip="left"
 							@label="Export"
 							@icon="download"
 							@disabled={{if
-								this.hasDoc
+								this.active.current
 								false
 								true
 							}}
 							@onClick={{this.export}}
 						/>
 					</Cells>
-					{{#if this.hasDoc}}
+					{{#if this.writing}}
+						<div class="sub-ed-omni">
+							<Cells
+								class="sub-ed-tools"
+							>
+								{{#if
+									this.writeCompact
+								}}
+									<MenuCell
+										@label={{this.markupEntry.label}}
+										@icon={{this.markupEntry.icon}}
+										@items={{this.markupItems}}
+										@placement="left-start"
+										data-markup-menu
+									/>
+								{{else}}
+									{{#each
+										TOOL_ORDER
+										as |m|
+									}}
+										<Cell
+											@tip="left"
+											@label={{m.label}}
+											@icon={{m.icon}}
+											@selected={{this.isMarkup
+												m.id
+											}}
+											aria-pressed={{if
+												(this.isMarkup
+													m.id
+												)
+												"true"
+												"false"
+											}}
+											data-markup={{m.id}}
+											@onClick={{fn
+												this.pickMarkup
+												m.id
+											}}
+										/>
+									{{/each}}
+								{{/if}}
+								<TableMenu
+									@cellOnly={{true}}
+								/>
+								<Cell
+									@tip="left"
+									@label="Document setup"
+									@icon="settings-2"
+									@selected={{this.setupShown}}
+									data-tool="setup"
+									@onClick={{this.openSetup}}
+								/>
+							</Cells>
+							<Cells
+								class="sub-ed-panel-keys"
+							>
+								<Cell
+									@tip="left"
+									@label="Pages"
+									@icon="panel-left"
+									@selected={{this.pagesOpen}}
+									@onClick={{this.togglePages}}
+								/>
+								<BoxKey
+									@shell={{this}}
+									@tip="left"
+								/>
+							</Cells>
+						</div>
+					{{else if this.pdfOpen}}
 						<div class="sub-ed-omni">
 							<Cells
 								class="sub-ed-tools"
@@ -847,20 +1092,9 @@ export default class ErrataShell extends Component {
 									@selected={{this.pagesOpen}}
 									@onClick={{this.togglePages}}
 								/>
-								<Cell
+								<BoxKey
+									@shell={{this}}
 									@tip="left"
-									@label="Toolbox"
-									@text="Toolbox"
-									class="err-box-key"
-									@icon="briefcase"
-									@selected={{this.boxOpen.current}}
-									aria-expanded={{if
-										this.boxOpen.current
-										"true"
-										"false"
-									}}
-									data-toolbox
-									@onClick={{this.toggleBox}}
 								/>
 							</Cells>
 						</div>
@@ -868,20 +1102,53 @@ export default class ErrataShell extends Component {
 				</div>
 			{{/if}}
 
-			{{#if this.railShown}}
-				<PageRail
-					class="err-rail
-						{{if this.phone 'is-tray'}}"
-					@onClose={{this.togglePages}}
+			{{#if this.toolboxShown}}
+				<Toolbox
+					@phone={{this.phone}}
+					@write={{this.writing}}
 				/>
 			{{/if}}
-
-			{{#if this.barShown}}
-				<SettingsBar @phone={{this.phone}} />
-			{{/if}}
-
-			{{#if this.hasDoc}}
-				<Toolbox @phone={{this.phone}} />
+			{{#if this.writing}}
+				{{#if this.writeRailShown}}
+					<WriteRail
+						class="err-rail
+							{{if
+								this.phone
+								'is-tray'
+							}}"
+						@onClose={{this.togglePages}}
+					/>
+				{{/if}}
+				{{#if this.marking.current}}
+					{{#if this.barShown}}
+						<SettingsBar
+							@phone={{this.phone}}
+						/>
+					{{/if}}
+					<CommentPopover />
+				{{else if this.formatBarShown}}
+					<FormatBar
+						@onImage={{this.pickImage}}
+					/>
+				{{/if}}
+				<SetupPanel />
+				<NumbersPanel />
+				<FindPanel />
+				<LinkPanel />
+			{{else if this.pdfOpen}}
+				{{#if this.railShown}}
+					<PageRail
+						class="err-rail
+							{{if
+								this.phone
+								'is-tray'
+							}}"
+						@onClose={{this.togglePages}}
+					/>
+				{{/if}}
+				{{#if this.barShown}}
+					<SettingsBar @phone={{this.phone}} />
+				{{/if}}
 				<PreflightPanel
 					@open={{eq
 						this.mode.current
@@ -891,15 +1158,93 @@ export default class ErrataShell extends Component {
 				<CommentPopover />
 			{{/if}}
 
-			{{#if this.menuAnchor}}
+			{{#if this.menuOpen}}
 				<ErrataMenu
-					@anchor={{this.menuAnchor}}
+					@phone={{this.phone}}
 					@onOpenPdf={{this.pickPdf}}
+					@onLibrary={{this.openLibrary}}
 					@onExport={{this.export}}
 					@onClose={{this.closeMenu}}
 				/>
 			{{/if}}
+			{{#if this.libraryOpen}}
+				<Library
+					@phone={{this.phone}}
+					@onNew={{this.newDocument}}
+					@onOpen={{this.openStored}}
+					@onOpenFile={{this.pickPdf}}
+					@onClose={{this.closeLibrary}}
+				/>
+			{{/if}}
+			<Onboarding @phone={{this.phone}} />
 			<SignatureModal />
 		</div>
 	</template>
 }
+
+const BoxKey: TOC<{ Args: { shell: ErrataShell; tip?: 'left' } }> = <template>
+	<Cell
+		@tip={{@tip}}
+		@label="Toolbox"
+		@text="Toolbox"
+		class="err-box-key"
+		@icon="briefcase"
+		@selected={{@shell.boxOpen.current}}
+		aria-expanded={{if @shell.boxOpen.current "true" "false"}}
+		data-toolbox
+		@onClick={{@shell.toggleBox}}
+	/>
+</template>;
+
+const TitleChip: TOC<{ Args: { shell: ErrataShell } }> = <template>
+	<div class="sub-ed-title" role="group" aria-label="Document">
+		{{#if @shell.renamable}}
+			<input
+				class="sub-ed-title-name err-title-name"
+				value={{@shell.title.current}}
+				aria-label="Document name"
+				spellcheck="false"
+				autocomplete="off"
+				data-title-name
+				{{on "change" @shell.rename}}
+				{{on "keydown" @shell.renameKey}}
+			/>
+		{{else}}
+			<span
+				class="sub-ed-title-name"
+			>{{@shell.title.current}}</span>
+		{{/if}}
+		{{#if @shell.pdfOpen}}
+			<button
+				type="button"
+				class="err-title-step"
+				aria-label="Previous page"
+				title="Previous page"
+				{{on "click" @shell.prev}}
+			><IconSvg @name="chevron-left" /></button>
+			<span
+				class="err-title-page"
+				data-page-label
+			>{{@shell.pageLabel}}</span>
+			<button
+				type="button"
+				class="err-title-step"
+				aria-label="Next page"
+				title="Next page"
+				{{on "click" @shell.next}}
+			><IconSvg @name="chevron-right" /></button>
+		{{/if}}
+		<button
+			type="button"
+			class="sub-ed-title-zoom"
+			aria-label="Fit page"
+			title="Fit page"
+			{{on "click" @shell.fit}}
+		><CanonFigure
+				@text={{@shell.zoomPercent}}
+				@unit="%"
+				@size={{13}}
+				@colour="var(--err-title-muted, var(--canon-muted-foreground))"
+			/></button>
+	</div>
+</template>;

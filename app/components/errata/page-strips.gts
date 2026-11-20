@@ -181,7 +181,6 @@ const INSERTS: Strip<Insert>[] = [
 	},
 ];
 
-/** inserts after current page */
 export class InsertPanel extends Component<Signature> {
 	#input: HTMLInputElement | null = null;
 

@@ -12,7 +12,6 @@ export interface PictureSignature {
 	Args: {
 		size: number;
 		lineHeight: number;
-		/** The line height as the figure shows it, without the unit. */
 		figure: string;
 		text: string;
 	};
@@ -39,7 +38,6 @@ function paint(element: HTMLElement, pose: Pose, room: number) {
 	);
 }
 
-/** Size and line height spring to a new value over 0.6 s. */
 const settle = modifier(
 	(element: HTMLElement, [size, lineHeight]: [number, number]) => {
 		const padding =
@@ -95,10 +93,6 @@ function figureSize(text: string) {
 	return length <= 7 ? 34 : Math.max(18, Math.floor((34 * 7) / length));
 }
 
-/**
- * Text in line boxes of the chosen height, as CSS lays them out, the content
- * area shaded and a bracket over the first box.
- */
 const Picture: TOC<PictureSignature> = <template>
 	<div
 		class="line-height-calc-picture"

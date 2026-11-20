@@ -73,11 +73,9 @@ const READ_ERROR = "Couldn't read that file's metadata.";
 const BLANK_OPEN = toolsForFile(sample('image/png')).filter(
 	(tool) => tool.id !== 'image-atlas' && !tool.route,
 );
-// iOS ImageAtlas pixels: the colour scan reads a copy this wide at most
 const SCAN_EDGE = 512;
 const PALETTE = 6;
 const SCOPES_HEIGHT = 208;
-// png/jfif housekeeping excluded
 const PERSONAL = new Set([
 	'Camera',
 	'Capture',
@@ -93,10 +91,8 @@ const Down = <template><IconSvg @name="chevron-down" /></template>;
 const Up = <template><IconSvg @name="chevron-up" /></template>;
 const MapPin = <template><IconSvg @name="map-pin" /></template>;
 
-// the document paste (filePaste) would load a drop-zone paste a second time
 const keepPaste = (event: Event) => event.stopPropagation();
 
-// skips browser sRGB conversion
 async function ownPixels(file: File, width: number, height: number) {
 	const bitmap = await createImageBitmap(file, {
 		colorSpaceConversion: 'none',
@@ -136,7 +132,6 @@ async function scanOf(image: HTMLImageElement, file: File, icc: ExifData) {
 		context.getImageData(0, 0, canvas.width, canvas.height).data,
 		pixels && space ? { pixels, space } : undefined,
 	);
-	// lut/cmyk: no matrix
 	if (!pixels && Object.keys(icc).length && !('GrayTRC' in icc))
 		scan.outside = null;
 	const palette = rankClusters(
@@ -150,7 +145,6 @@ async function scanOf(image: HTMLImageElement, file: File, icc: ExifData) {
 	return { scan, palette };
 }
 
-// ?iaSample: the iOS -imageAtlasSample launch argument, with a drawn image
 function drawnSample(): Promise<File> {
 	const canvas = document.createElement('canvas');
 	canvas.width = 1200;
@@ -178,7 +172,6 @@ function drawnSample(): Promise<File> {
 	);
 }
 
-/** The port of ImageAtlasViewController, on the web tool's exifr report. */
 export default class ImageAtlas extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -199,12 +192,10 @@ export default class ImageAtlas extends Component {
 	@tracked bannerWidth = 390;
 
 	#token = 0;
-	// scan awaits profile read
 	#read: Promise<void> = Promise.resolve();
 	#input?: HTMLInputElement;
 	#otherFlag = false;
 
-	// ?iaOther: the iOS -imageAtlasOther launch argument, applied to each load
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -288,7 +279,6 @@ export default class ImageAtlas extends Component {
 
 	get colourTiles() {
 		const { scan, icc, format } = this;
-		// untagged pixels are sRGB to the browser
 		const gamut = icc
 			? Object.keys(icc).length
 				? gamutOverSRGB(icc)
@@ -374,7 +364,6 @@ export default class ImageAtlas extends Component {
 	picked = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
-		// the same file twice fires change again
 		input.value = '';
 		if (file) this.load(file);
 	};
@@ -383,7 +372,6 @@ export default class ImageAtlas extends Component {
 		if (files[0]) this.load(files[0]);
 	};
 
-	// the drop zone loads its own drops
 	dropAnywhere = (event: DragEvent) => {
 		if (event.defaultPrevented) {
 			this.drop.over = false;
@@ -451,7 +439,6 @@ export default class ImageAtlas extends Component {
 								longitude?: unknown;
 						  }
 						| undefined;
-					// malformed tags give strings ("ENaNNaN")
 					gps = gpsFromExif({
 						latitude: g?.latitude,
 						longitude: g?.longitude,
@@ -500,7 +487,6 @@ export default class ImageAtlas extends Component {
 		const token = this.#token;
 		const { file } = this;
 		await this.#read;
-		// a frame first, so the picture shows before the scan
 		await new Promise(requestAnimationFrame);
 		if (token !== this.#token || this.isDestroying || !file) return;
 		const read = await scanOf(image, file, this.icc ?? {});
@@ -574,7 +560,6 @@ export default class ImageAtlas extends Component {
 						@onLoad={{this.imageLoaded}}
 						@onError={{this.imageFailed}}
 					/>
-					{{! the slot and the drop zone are its label }}
 					{{! template-lint-disable require-input-label }}
 					<input
 						type="file"
@@ -750,7 +735,6 @@ export default class ImageAtlas extends Component {
 						@self="image-atlas"
 					/>
 				{{else}}
-					{{! no file to hand off yet }}
 					<OpenIn
 						class="ia-open ia-open--blank"
 						@tools={{BLANK_OPEN}}

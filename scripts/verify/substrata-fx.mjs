@@ -1,4 +1,3 @@
-// FX panel, picker and editors on the canon kit; needs the dev server
 import { BASE, check, finish, launch, sleep } from './harness.mjs';
 
 const { browser, page } = await launch({
@@ -101,7 +100,7 @@ const picker = await run(() => {
 	};
 });
 check('picker: Filters then Effects', JSON.stringify(picker.heads) === '["Filters","Effects"]', JSON.stringify(picker.heads));
-check('picker: every web type is a card', picker.cards === 33, `${picker.cards}`);
+check('picker: every web type is a card', picker.cards === 34, `${picker.cards}`);
 check('picker: every card has an icon and a name', picker.named === picker.cards);
 check('picker: 416 px card, no sideways scroll', picker.width === 416 && picker.scroll, `${picker.width}`);
 await page.keyboard.press('Escape');
@@ -207,7 +206,6 @@ check('picker greys the types the layer has', greyed.taken && !greyed.free);
 await page.keyboard.press('Escape');
 await sleep(300);
 
-// reorder: pointer on the grip, within the filters stack
 const before = (await fxOf('filters')).map((f) => f.type).join();
 const grips = await run(() =>
 	[...document.querySelectorAll('.sub-fxp-zone[data-stack="filters"] .sub-fxp-grip')].map((g) => {
@@ -235,7 +233,6 @@ const shown = await run(() =>
 );
 check('the blocks show in the new order', shown === after, shown);
 
-// slide to delete
 await dragBy(`${block('brightness')} .sub-fxp-title`, 120, 0, 0.2);
 const revealed = await run((b) => document.querySelector(b).classList.contains('is-revealed'), block('brightness'));
 check('a slide shows Delete', revealed);
@@ -249,13 +246,12 @@ await run(() => [...document.querySelectorAll('.canon-menu-item')].find((i) => i
 await sleep(300);
 check('More > Remove drops the effect and the rule', (await fxOf('effects')).length === 0 && !(await run(() => !!document.querySelector('.sub-fxp-rule'))));
 
-// every editor renders and has named controls
 const TYPES = [
 	['filters', 'contrast'], ['filters', 'exposure'], ['filters', 'saturation'], ['filters', 'vibrance'],
 	['filters', 'hue-rotate'], ['filters', 'temperature'], ['filters', 'grayscale'], ['filters', 'sepia'],
 	['filters', 'invert'], ['filters', 'threshold'], ['filters', 'gamma'], ['filters', 'posterize'],
 	['filters', 'colour-balance'], ['filters', 'duotone'], ['filters', 'gaussian-blur'], ['filters', 'sharpen'],
-	['filters', 'emboss'], ['filters', 'edge-detect'], ['filters', 'noise'], ['filters', 'pixelate'],
+	['filters', 'emboss'], ['filters', 'edge-detect'], ['filters', 'noise'], ['filters', 'pixelate'], ['filters', 'dither'],
 	['filters', 'vignette'], ['effects', 'outer-glow'], ['effects', 'stroke'], ['effects', 'inner-shadow'],
 	['effects', 'inner-glow'], ['effects', 'colour-overlay'],
 ];
@@ -284,7 +280,6 @@ for (const [, type] of TYPES) {
 check('every editor opens in place', unopened.length === 0, unopened.join(', '));
 check('every control has a name', unnamed.length === 0, unnamed.join(' | '));
 
-// duotone: presets write both colours; Custom shows the wells
 await run((b) => document.querySelector(`${b} .sub-fxp-title`).click(), block('duotone'));
 await sleep(300);
 await run(() => document.querySelector('.sub-fxp-chip[aria-label="Xerox"]').click());
@@ -298,14 +293,12 @@ check('duotone: Custom folds out the wells', wellsBefore === 0 && wellsAfter ===
 await dragBy(`${block('duotone')} .sub-fxp-duo-track`, 40, 0, 0.5);
 check('duotone: dragging the track moves the midpoint', (await param('filters', 'duotone', 'midpoint')) > 50);
 
-// stroke position cells
 await run((b) => document.querySelector(`${b} .sub-fxp-title`).click(), block('stroke'));
 await sleep(300);
 await run((b) => document.querySelector(`${b} .sub-fxp-position-cell.is-inner`).click(), block('stroke'));
 await sleep(200);
 check('stroke: a position cell writes the position', (await param('effects', 'stroke', 'position')) === 'inner');
 
-// hue bands
 await run((b) => document.querySelector(`${b} .sub-fxp-title`).click(), block('hue-rotate'));
 await sleep(300);
 await run((b) => document.querySelector(`${b} .sub-fxp-cover`).focus(), block('hue-rotate'));
@@ -319,7 +312,6 @@ const panelOverflow = await run(() => {
 });
 check('panel body never scrolls sideways', !panelOverflow);
 
-// group and non-raster states
 await run(() =>
 	window.__substrata.addRaster(80, 80, [{ x: 0, y: 0, w: 80, h: 80, colour: '#aa3333' }], { x: 200, y: 200 }),
 );
@@ -333,7 +325,6 @@ await sleep(400);
 const grouped = await run(() => document.querySelector('.sub-fxp-panel .canon-empty-row')?.textContent.trim());
 check('a group asks for a layer inside it', grouped === 'Select a layer inside this group...', grouped);
 
-// phone: an open block shows alone at the tray's full stop
 const phone = await browser.newPage();
 await phone.setViewport({ width: 390, height: 844 });
 await boot(phone);

@@ -45,7 +45,6 @@ const sceneHeight = 196;
 const Trash = <template><IconSvg @name="trash-2" /></template>;
 const Save = <template><IconSvg @name={{(downloadIcon)}} /></template>;
 
-// the document paste (filePaste) would load a drop-zone paste a second time
 const keepPaste = (event: Event) => event.stopPropagation();
 
 interface Source {
@@ -65,7 +64,6 @@ function readDataUrl(file: File): Promise<string> {
 	});
 }
 
-// img misreports unsized svgs; pinSvgSize gives them one
 async function dataUrlOf(file: File) {
 	if (file.type !== 'image/svg+xml') return readDataUrl(file);
 	const svg = pinSvgSize(await file.text());
@@ -73,7 +71,6 @@ async function dataUrlOf(file: File) {
 	return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
-/** The port of FaviconGeneratorViewController, on the web tool's export. */
 export default class FaviconGenny extends Component {
 	@tracked source?: Source;
 	@tracked square?: Square;
@@ -84,7 +81,6 @@ export default class FaviconGenny extends Component {
 	#frame = 0;
 	#requestedSide?: number;
 
-	// ?faviconSample: the iOS -faviconsample argument, with a drawn image; ?faviconCrop=<side>: the iOS -faviconcrop
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -151,7 +147,6 @@ export default class FaviconGenny extends Component {
 			event.preventDefault();
 	};
 
-	// a drop on the banner or the sizes replaces the image; the drop zone handles its own
 	dropAnywhere = (event: DragEvent) => {
 		if (event.defaultPrevented) return;
 		const file = [...(event.dataTransfer?.files ?? [])].find((f) =>
@@ -207,7 +202,6 @@ export default class FaviconGenny extends Component {
 
 	crop = (square: Square) => {
 		this.square = square;
-		// one render per frame while the square is dragged
 		if (!this.#frame)
 			this.#frame = requestAnimationFrame(() => {
 				this.#frame = 0;

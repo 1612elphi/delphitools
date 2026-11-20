@@ -51,17 +51,14 @@ const GRAB_ERROR = "Couldn't save that frame.";
 const SHEET_ERROR = "Couldn't build the contact sheet.";
 const tc = (seconds: number) => formatTimestamp(seconds * 1000, '.');
 
-// ios FrameExtractorViewController preview cap
 const tallest = 1.25;
 const tallestPreview = 340;
 const lamps: CanonLamp[] = ['play', 'pause'];
 const sheetMin = 2;
 const sheetMax = 48;
-// seconds the sheet times stay on the strip after the slider moves
 const sheetMarksLinger = 1.5;
 const whole = (value: number) => String(Math.round(value));
 
-/** iOS launch arguments as query flags: ?fxGrab=1.5,3 ?fxStep=5 ?fxSheet=yes. */
 function flags() {
 	if (typeof window === 'undefined') return null;
 	const query = new URLSearchParams(window.location.search);
@@ -84,7 +81,6 @@ const Forward = <template><IconSvg @name="chevron-right" /></template>;
 const PlayIcon = <template><IconSvg @name="play" /></template>;
 const PauseIcon = <template><IconSvg @name="pause" /></template>;
 
-/** The port of FrameExtractorViewController, on the web tool's canvas grabs. */
 export default class FrameExtractor extends Component {
 	intake = new VideoIntake({
 		onLoad: (file) => this.#load(file),
@@ -234,7 +230,6 @@ export default class FrameExtractor extends Component {
 
 	grab = () => void this.#grab();
 
-	/** The frame on screen, or the one at `seconds`, as a PNG still. */
 	async #grab(seconds?: number) {
 		const video = this.intake.video;
 		if (!video || !this.ready || this.grabbing) return;
@@ -333,7 +328,6 @@ export default class FrameExtractor extends Component {
 		if (this.sheet) downloadBlob(this.sheet.blob, this.sheetName);
 	};
 
-	/** iOS sheetJob.reset: drops the run and the result. */
 	#resetSheet() {
 		this.#job++;
 		this.sheetBusy = false;
@@ -529,7 +523,6 @@ export default class FrameExtractor extends Component {
 					@background={{if this.loaded "#000"}}
 				>
 					{{#if this.loaded}}
-						{{! the transport is its control; user media lacks captions }}
 						{{! template-lint-disable require-media-caption }}
 						<video
 							class="fx-video"

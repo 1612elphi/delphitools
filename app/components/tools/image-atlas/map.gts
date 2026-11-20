@@ -10,7 +10,6 @@ import {
 } from 'delphitools-v2/lib/world-map';
 import type { GpsPoint } from 'delphitools-v2/components/tools/image-atlas/report';
 
-/** Where the photo was taken: the land faint, the point lit with its latitude and longitude lines (iOS PhotoLocationMap). */
 export default class LocationMap extends Component<{
 	Args: { gps: GpsPoint | null; missing?: boolean };
 }> {

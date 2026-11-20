@@ -1,5 +1,3 @@
-// parse, chain, scale, tick
-
 import { launch, visit, check, finish, sleep } from './harness.mjs';
 
 const { browser, page } = await launch();
@@ -335,7 +333,6 @@ check(
 		);
 	}),
 );
-// regression: neighbour overpainted badge
 check(
 	'and nothing paints over it',
 	await page.evaluate(() => {
@@ -517,7 +514,6 @@ check(
 	blocked.label,
 );
 
-// banner note spans table
 await type(
 	`> Butter and flour an 8x8-in pan
 > Preheat oven to 170 C
@@ -585,7 +581,6 @@ check(
 	banners.marks.join(),
 );
 
-// regression: scrolled lines lost
 await type(
 	`title: Wide
 
@@ -596,6 +591,10 @@ x the water
 simmer | until reduced by half | stirring now and then
 season | with plenty of salt and coarse black pepper
 rest | 10 min | off the heat
+taste | adjust the seasoning again
+ladle | into a jug
+strain | through a fine sieve
+garnish | with chopped herbs
 serve | into warmed bowls`,
 );
 const lattice = await page.evaluate(() => {

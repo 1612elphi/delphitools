@@ -18,22 +18,17 @@ export interface JobResult {
 
 export interface JobSignature {
 	Args: {
-		/** The verb on the export button. */
 		title: string;
 		icon: ComponentLike;
-		/** Shown when the job fails. */
 		failure: string;
 		disabled?: boolean;
 		busy: boolean;
-		/** 0 to 1 while busy; none for a job that cannot tell, which shows the loader alone. */
 		progress?: number;
 		failed: boolean;
 		result?: JobResult | null;
 		onRun: () => void;
-		/** Shows Cancel while busy. */
 		onCancel?: () => void;
 		onSave: () => void;
-		/** Shows Preview beside Download, as iOS. */
 		onPreview?: () => void;
 	};
 }
@@ -42,7 +37,6 @@ const Cancel = <template><IconSvg @name="x" /></template>;
 const Eye = <template><IconSvg @name="eye" /></template>;
 const Save = <template><IconSvg @name={{(downloadIcon)}} /></template>;
 
-/** Job's busy rows: progress, its bar when known, and Cancel. */
 export class JobProgress extends Component<{
 	Args: { progress?: number; onCancel?: () => void };
 }> {
@@ -78,11 +72,6 @@ export class JobProgress extends Component<{
 	</template>
 }
 
-/**
- * The iOS AVEditJobPanel, as rows for a CanonRows: the export button,
- * progress with Cancel, then the finished file with Download (a workflow
- * passes it along) in place of Preview and Share.
- */
 const Job: TOC<JobSignature> = <template>
 	{{#if @busy}}
 		<JobProgress @progress={{@progress}} @onCancel={{@onCancel}} />

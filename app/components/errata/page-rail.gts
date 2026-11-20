@@ -33,7 +33,6 @@ import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 
 const painted = new WeakMap<HTMLImageElement, string>();
 
-// rows rebuild every change
 export function paintThumb(
 	img: HTMLImageElement,
 	page: ErrataPage,

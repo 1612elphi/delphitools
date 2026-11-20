@@ -28,7 +28,6 @@ export function svg(body: string, extra = '') {
 	return `<svg class="tw-specimen" viewBox="0 0 ${DESIGN.width} ${DESIGN.height}" aria-hidden="true" focusable="false"${extra}>${body}</svg>`;
 }
 
-/** Columns and cell size that fit `count` cells at the largest size (iOS TailwindSiblings.cells). */
 export function siblingCells(count: number, width: number, height: number) {
 	for (let rows = 1; rows <= Math.max(1, count); rows++) {
 		const columns = Math.ceil(count / rows);
@@ -44,11 +43,6 @@ export function siblingCells(count: number, width: number, height: number) {
 	return { columns: count, width: 1, height: 1 };
 }
 
-/**
- * TailwindStage: the lit class large, its specimen moving where the class
- * is about motion, beside its category, name, CSS and example. Wide, the
- * rest of its category as small specimens, the lit one framed.
- */
 export default class Stage extends Component<StageSignature> {
 	@tracked cells = { columns: 1, width: 0, height: 0 };
 
@@ -126,7 +120,6 @@ export default class Stage extends Component<StageSignature> {
 		return () => observer.disconnect();
 	});
 
-	/** Plays the class's motion and the iOS cross-dissolve on each new class. */
 	animate = modifier((stage: HTMLElement, [name]: [string]) => {
 		void name;
 		if (!this.moves) return;

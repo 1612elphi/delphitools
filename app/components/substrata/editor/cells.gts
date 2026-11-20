@@ -5,8 +5,6 @@ import CanonTooltip from 'delphicanon/components/canon-tooltip';
 import type { CanonPlacement } from 'delphicanon/lib/popover';
 import { IconSvg } from 'delphitools-v2/components/icon';
 
-// iOS FloatingCells: cells under hairlines in a 2 px frame, floating with
-// the CanonSplit footer shadow; a group per element
 export const Cells: TOC<{
 	Args: { axis?: 'row' | 'column'; small?: boolean };
 	Blocks: { default: [] };
@@ -24,7 +22,6 @@ function eqRow(axis?: string) {
 	return axis === 'row';
 }
 
-// iOS CanonButton.editorCell: an icon cell, filled while selected
 export const Cell: TOC<{
 	Args: {
 		label: string;
@@ -33,7 +30,6 @@ export const Cell: TOC<{
 		selected?: boolean;
 		disabled?: boolean;
 		onClick?: () => void;
-		/** the label as a kit tooltip on this side, in place of title */
 		tip?: CanonPlacement;
 	};
 	Element: HTMLButtonElement;
@@ -72,7 +68,6 @@ export const Cell: TOC<{
 	{{/if}}
 </template>;
 
-// iOS PanelHeader: the title, any extra cells, then a close cell
 export const PanelHeader: TOC<{
 	Args: { title: string; onClose: () => void };
 	Blocks: { default: [] };
@@ -84,8 +79,6 @@ export const PanelHeader: TOC<{
 	</div>
 </template>;
 
-// iOS RailPanel: header over its body in the floating frame; the body
-// scrolls when the rail cuts it short
 export const RailPanel: TOC<{
 	Args: { id: string; title: string; onClose: () => void };
 	Blocks: { header: []; default: [] };

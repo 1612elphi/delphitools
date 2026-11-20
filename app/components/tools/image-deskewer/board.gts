@@ -27,28 +27,21 @@ import {
 
 export interface BoardSignature {
 	Args: {
-		/** The full-size source; none shows the slot that takes a file. */
 		canvas?: HTMLCanvasElement;
-		/** In source pixels, clockwise from the top left. */
 		quad: Quad;
 		valid: boolean;
-		/** A file is dragged over the tool. */
 		over: boolean;
-		/** Shows the loupe on this corner without a drag (`?deskewGrab`). */
 		held?: number;
 		onChoose: () => void;
 		onMove: (quad: Quad) => void;
-		/** A drag or a key press ended: the result renders at full preview size. */
 		onSettle: () => void;
 	};
 }
 
 export const corners = ['Top left', 'Top right', 'Bottom right', 'Bottom left'];
 
-// iOS DelphiMetrics.panelPadding
 const padding = 16;
 const bracketArm = 22;
-// iOS DeskewBoard.loupe: radius in source pixels, the rest in points
 const loupe = { radius: 8, side: 116, gap: 34 };
 
 const keySteps: Record<string, Point> = {
@@ -71,13 +64,6 @@ interface Drag {
 	from: Point;
 }
 
-/**
- * The source fitted to the pane, dimmed outside the quad, with the output's
- * grid drawn through it, corner brackets, a loupe on a dragged corner and a
- * drag hint in the widest dimmed strip. A corner, an edge or the inside
- * drags; each corner takes the arrow keys (Shift: ten pixels). The port of
- * iOS DeskewBoard.
- */
 export default class Board extends Component<BoardSignature> {
 	@tracked area: Size = { width: 0, height: 0 };
 	@tracked hintSize: Size = { width: 0, height: 0 };
@@ -177,7 +163,6 @@ export default class Board extends Component<BoardSignature> {
 			: undefined;
 	}
 
-	/** The corner under the loupe. */
 	get loupeIndex() {
 		const { drag } = this;
 		if (drag)
@@ -245,7 +230,6 @@ export default class Board extends Component<BoardSignature> {
 		};
 	}
 
-	/** The corner's two edges leaving the loupe's centre. */
 	get rays() {
 		const placed = this.loupeFrame;
 		if (!placed) return '';
@@ -323,7 +307,6 @@ export default class Board extends Component<BoardSignature> {
 		const point = this.#local(event);
 		const grab = grabAt(point, this.points);
 		if (!grab) return;
-		// keeps the focus given below
 		event.preventDefault();
 		this.drag = {
 			grab,

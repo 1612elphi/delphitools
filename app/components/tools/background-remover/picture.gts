@@ -7,19 +7,14 @@ import Slot from 'delphitools-v2/components/tools/media/slot';
 
 interface CutoutPictureSignature {
 	Args: {
-		/** Object URL of the source; none shows the slot that takes a file. */
 		source?: string | null;
 		width?: number;
 		height?: number;
-		/** The cut-out is ready: `cut` draws it on a canvas and takes the brush. */
 		done?: boolean;
 		cut?: ModifierLike<{ Element: HTMLCanvasElement }>;
-		/** Where the brush ring is, over the picture. */
 		ring?: SafeString;
-		/** CSS colour behind the cut-out; none shows the checks. */
 		fill?: string;
 		busy: boolean;
-		/** A file is dragged over the tool. */
 		over: boolean;
 		onChoose: () => void;
 	};
@@ -35,10 +30,6 @@ const boxStyle = (width = 4, height = 3, fill?: string) =>
 			.join('; '),
 	);
 
-/**
- * The source fitted to the pane over checks, the cut-out laid on it while
- * the source fades to a trace. The port of iOS CutoutPicture.
- */
 const CutoutPicture: TOC<CutoutPictureSignature> = <template>
 	<div class="cutout-picture">
 		<div class="cutout-area">

@@ -4,7 +4,6 @@ import CanonRows from 'delphicanon/components/canon-rows';
 import CanonTiles from 'delphicanon/components/canon-tiles';
 import type { Section } from 'delphitools-v2/lib/mediainfo';
 
-/** MediaInfo's report as headed tiles, one block per track (iOS setSections). */
 const Sections: TOC<{
 	Args: { sections: Section[] };
 	Element: HTMLDivElement;

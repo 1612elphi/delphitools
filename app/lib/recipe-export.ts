@@ -37,6 +37,10 @@ const parts = (cell: Cell): Part[] =>
 		...(cell.name ? [{ cls: 'n', text: `[${cell.name}]` }] : []),
 	].filter((part) => part.text);
 
+// banners list without table
+const withBanners = ({ banners, notes, grid }: Rendered) =>
+	grid.rows ? notes : [...banners, ...notes];
+
 const lines = (cell: Cell): string[] => parts(cell).map((p) => p.text);
 
 const byRow = (grid: Grid): Cell[][] => {
@@ -47,7 +51,9 @@ const byRow = (grid: Grid): Cell[][] => {
 };
 
 // blank cells suppress borders
-export function toHtml({ title, notes, ingredients, grid }: Rendered): string {
+export function toHtml(rendered: Rendered): string {
+	const { title, ingredients, grid } = rendered;
+	const notes = withBanners(rendered);
 	const rows = byRow(grid).map((cells) => {
 		const tds = cells
 			.map((cell) => {
@@ -84,15 +90,17 @@ export function toHtml({ title, notes, ingredients, grid }: Rendered): string {
 	});
 	const caption = title ? `<caption>${escape(title)}</caption>` : '';
 	const shopping = ingredients.length
-		? `<tr class="shopping"><td colspan="${grid.cols}">${listed(ingredients).map(escape).join('<br>')}</td></tr>`
+		? `<tr class="shopping"><td colspan="${grid.cols || 1}">${listed(ingredients).map(escape).join('<br>')}</td></tr>`
 		: '';
 	const preps = notes.length
-		? `<tr class="notes"><td colspan="${grid.cols}">${numbered(notes).map(escape).join('<br>')}</td></tr>`
+		? `<tr class="notes"><td colspan="${grid.cols || 1}">${numbered(notes).map(escape).join('<br>')}</td></tr>`
 		: '';
 	return `<table border="1" cellspacing="0" cellpadding="6">${caption}${shopping}${preps}${rows.join('')}</table>`;
 }
 
-export function toText({ title, notes, ingredients, grid }: Rendered): string {
+export function toText(rendered: Rendered): string {
+	const { title, ingredients, grid } = rendered;
+	const notes = withBanners(rendered);
 	const out: string[] = [];
 	if (title) out.push(title, '');
 	out.push(...listed(ingredients));

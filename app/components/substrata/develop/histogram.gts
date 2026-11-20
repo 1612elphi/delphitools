@@ -33,7 +33,6 @@ function draw(view: HTMLCanvasElement, histogram: Histogram) {
 	const w = view.clientWidth;
 	const h = view.clientHeight - 2 * INSET;
 	const dark = document.documentElement.classList.contains('dark');
-	// inks on light, light on dark
 	ctx.globalCompositeOperation = dark ? 'screen' : 'multiply';
 	const inks: [Float32Array, string][] = [
 		[histogram.red, 'rgb(255 59 48 / 55%)'],
@@ -72,7 +71,6 @@ const paint = modifier(
 	},
 );
 
-/** red, green and blue counts over each other, the luminance outline on top */
 const DevelopHistogram: TOC<{ Args: { histogram: Histogram | null } }> =
 	<template>
 		<canvas

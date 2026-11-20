@@ -15,15 +15,11 @@ interface ResultSignature {
 	Args: {
 		heading: string;
 		text: string;
-		/** Name of the file Download saves. */
 		fileName: string;
-		/** The result is still to come; the empty row stays away. */
 		busy?: boolean;
 	};
 	Blocks: {
-		/** The result with its marks, shown in place of `text`; each text run in an element. */
 		default: [];
-		/** Rows between the text and the actions. */
 		extra: [];
 	};
 	Element: HTMLDivElement;
@@ -32,10 +28,6 @@ interface ResultSignature {
 const CopyIcon = <template><IconSvg @name="copy" /></template>;
 const DownloadIcon = <template><IconSvg @name={{(downloadIcon)}} /></template>;
 
-/**
- * CanonTextOutput with the web's Download (a workflow passes the file along)
- * in place of Share, and Copy confirmed by the toast.
- */
 export default class Result extends Component<ResultSignature> {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -60,7 +52,6 @@ export default class Result extends Component<ResultSignature> {
 				{{/unless}}
 			{{else}}
 				{{#if (has-block)}}
-					{{! marked text: every run is an element, the template's own whitespace collapses }}
 					<output
 						class="tt-result-text tt-result-text--marked"
 						aria-label={{@heading}}

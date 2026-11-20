@@ -275,17 +275,18 @@ function scaleTerm(text: string, factor: number, display: Display): string {
 	let unit = q.unit;
 	const def = unit ? UNITS[unit] : undefined;
 	if (def && display !== 'written' && def.system !== display) {
-		[amount, unit] = present(
-			amount * def.factor,
-			def.kind,
-			display,
-		);
-		if (upper !== undefined)
-			[upper] = present(
+		const low = amount * def.factor;
+		if (upper === undefined)
+			[amount, unit] = present(low, def.kind, display);
+		else {
+			// upper bound picks unit
+			[upper, unit] = present(
 				upper * def.factor,
 				def.kind,
 				display,
 			);
+			amount = low / UNITS[unit]!.factor;
+		}
 	} else if (!unit) {
 		amount = countable(amount);
 		if (upper !== undefined) upper = countable(upper);
@@ -312,6 +313,8 @@ export function scaleIngredient(
 interface Bucket {
 	key: string;
 	base: number;
+	upper: number;
+	ranged: boolean;
 	count: number;
 	kind?: Kind;
 	unit?: string;
@@ -326,7 +329,7 @@ export function addQuantities(
 ): string {
 	const buckets: Bucket[] = [];
 	const loose: string[] = [];
-	for (const term of terms) {
+	for (const term of terms.flatMap((t) => t.split(' + '))) {
 		const q = parseQuantity(term);
 		if (!q) {
 			if (term.trim()) loose.push(term.trim());
@@ -334,15 +337,21 @@ export function addQuantities(
 		}
 		const def = q.unit ? UNITS[q.unit] : undefined;
 		const key = `${def ? def.kind : 'count'}|${q.rest}`;
-		const base = def ? q.amount * def.factor : q.amount;
+		const per = def ? def.factor : 1;
+		const base = q.amount * per;
+		const upper = (q.upper ?? q.amount) * per;
 		const found = buckets.find((b) => b.key === key);
 		if (found) {
 			found.base += base;
+			found.upper += upper;
+			found.ranged ||= q.upper !== undefined;
 			found.count += 1;
 		} else
 			buckets.push({
 				key,
 				base,
+				upper,
+				ranged: q.upper !== undefined,
 				count: 1,
 				kind: def?.kind,
 				unit: q.unit,
@@ -350,20 +359,30 @@ export function addQuantities(
 			});
 	}
 	const summed = buckets.map((b) => {
+		const span = (low: number, high: number) =>
+			b.ranged
+				? `${formatAmount(low)}–${formatAmount(high)}`
+				: formatAmount(low);
 		if (!b.kind)
-			return `${formatAmount(countable(b.base * factor))} ${b.rest}`.trim();
+			return `${span(countable(b.base * factor), countable(b.upper * factor))} ${b.rest}`.trim();
+		let unit = b.unit!;
+		let high = (b.upper / UNITS[unit]!.factor) * factor;
 		// single term keeps unit
-		if (display === 'written' && b.count === 1) {
-			const own = UNITS[b.unit!]!;
-			const amount = (b.base / own.factor) * factor;
-			return `${formatAmount(amount)} ${unitLabel(b.unit!, amount)} ${b.rest}`.trim();
+		if (display !== 'written' || b.count > 1) {
+			const system =
+				display === 'written'
+					? UNITS[unit]!.system
+					: display;
+			[high, unit] = present(
+				b.upper * factor,
+				b.kind,
+				system,
+			);
 		}
-		const system =
-			display === 'written'
-				? UNITS[b.unit!]!.system
-				: display;
-		const [amount, unit] = present(b.base * factor, b.kind, system);
-		return `${formatAmount(amount)} ${unitLabel(unit, amount)} ${b.rest}`.trim();
+		const low = b.ranged
+			? (b.base / UNITS[unit]!.factor) * factor
+			: high;
+		return `${span(low, high)} ${unitLabel(unit, high)} ${b.rest}`.trim();
 	});
 	return [...summed, ...loose].join(' + ');
 }

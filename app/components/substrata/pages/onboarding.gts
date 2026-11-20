@@ -57,8 +57,6 @@ class StorageButton extends Component {
 	</template>
 }
 
-// iOS OnboardingSheet: a page of art and text, Back and Next in a bar with
-// the dots between; the web's slides and words
 export default class Onboarding extends Component<{
 	Args: { open: boolean; phone: boolean };
 }> {
@@ -91,7 +89,6 @@ export default class Onboarding extends Component<{
 	};
 
 	closed = () => {
-		// closing it any way counts as read
 		if (this.args.open) finishOnboarding();
 	};
 
@@ -107,10 +104,10 @@ export default class Onboarding extends Component<{
 					<div class="sub-pg-onb-page">
 						{{#if (this.is "hello")}}
 							<img
-								src="/substrata/onboarding/workshop.png"
+								src="/substrata/onboarding/welcome.webp"
 								alt=""
-								width="999"
-								height="1000"
+								width="1000"
+								height="786"
 								class="sub-pg-onb-art"
 							/>
 							<p>
@@ -130,7 +127,7 @@ export default class Onboarding extends Component<{
 								excitement.</p>
 						{{else if (this.is "local")}}
 							<img
-								src="/substrata/onboarding/local.png"
+								src="/substrata/onboarding/local.webp"
 								alt=""
 								width="1000"
 								height="731"
@@ -148,10 +145,10 @@ export default class Onboarding extends Component<{
 							</p>
 						{{else if (this.is "private")}}
 							<img
-								src="/substrata/onboarding/private.png"
+								src="/substrata/onboarding/private.webp"
 								alt=""
 								width="1000"
-								height="622"
+								height="749"
 								class="sub-pg-onb-art"
 							/>
 							<p>
@@ -202,11 +199,11 @@ export default class Onboarding extends Component<{
 								storage.
 							</p>
 							<img
-								src="/substrata/onboarding/still-private.png"
+								src="/substrata/onboarding/still-private.webp"
 								alt=""
 								width="800"
 								height="561"
-								class="sub-pg-onb-art is-small"
+								class="sub-pg-onb-art"
 							/>
 							<StorageButton />
 							<p>
@@ -238,11 +235,11 @@ export default class Onboarding extends Component<{
 							</p>
 						{{else}}
 							<img
-								src="/substrata/onboarding/not-finished.png"
+								src="/substrata/onboarding/not-finished.webp"
 								alt=""
 								width="1000"
 								height="394"
-								class="sub-pg-onb-art is-medium"
+								class="sub-pg-onb-art"
 							/>
 							<p>
 								Substrata is

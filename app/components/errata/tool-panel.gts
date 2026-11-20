@@ -26,28 +26,20 @@ export interface ToolPanelSignature {
 	Element: HTMLElement;
 	Args: {
 		open: boolean;
-		/** data-mode, for rigs */
 		mode?: string | null;
-		/** kept for callers; the panel header shows the title only */
 		icon?: string;
 		label: string;
-		/** absent: no cancel cell */
 		onCancel?: () => void;
 		cancelLabel?: string;
-		/** absent: no primary cell */
 		onApply?: () => void;
 		applyLabel?: string;
-		/** default true */
 		canApply?: boolean;
 		busy?: boolean;
 		failed?: boolean;
 	};
 	Blocks: {
-		/** fields, laid out by the body grid */
 		default: [];
-		/** tags after the title */
 		status: [];
-		/** cells before cancel and apply */
 		actions: [];
 	};
 }
@@ -56,7 +48,6 @@ function applyOff(busy?: boolean, canApply?: boolean): boolean {
 	return busy === true || canApply === false;
 }
 
-/** Substrata's PanelHeader over a hairline grid of rows, in the bar's place */
 const ToolPanel: TOC<ToolPanelSignature> = <template>
 	<section
 		class="err-mode {{if @open 'is-open'}}"
@@ -122,7 +113,6 @@ const ToolPanel: TOC<ToolPanelSignature> = <template>
 
 export default ToolPanel;
 
-/** fields sharing one column */
 export const Group: TOC<{
 	Element: HTMLDivElement;
 	Blocks: { default: [] };
@@ -130,7 +120,6 @@ export const Group: TOC<{
 	<div class="err-mode-group" ...attributes>{{yield}}</div>
 </template>;
 
-/** a CanonRow: the label, the control flush to the trailing edge */
 export const Field: TOC<{
 	Element: HTMLDivElement;
 	Args: { label: string };
@@ -146,17 +135,14 @@ export const Field: TOC<{
 	</CanonRow>
 </template>;
 
-/** kept for callers: the control names itself */
 export const InputField = Field;
 
 export interface SegmentedOption<V> {
 	value: V;
 	label?: string;
-	/** icon only */
 	icon?: string;
 }
 
-/** CanonSegmented over values instead of indices */
 export class Segmented<V extends string | number> extends Component<{
 	Element: HTMLDivElement;
 	Args: {
@@ -164,6 +150,7 @@ export class Segmented<V extends string | number> extends Component<{
 		value: V | null;
 		onChange: (value: V) => void;
 		label?: string;
+		columns?: number;
 	};
 }> {
 	get items(): string[] {
@@ -196,9 +183,34 @@ export class Segmented<V extends string | number> extends Component<{
 			@icons={{this.icons}}
 			@selected={{this.selected}}
 			@onChange={{this.change}}
+			@columns={{@columns}}
 			aria-label={{@label}}
 			...attributes
 		/>
+	</template>
+}
+
+export class Choice<V extends string | number> extends Component<{
+	Element: HTMLDivElement;
+	Args: {
+		label: string;
+		options: readonly SegmentedOption<V>[];
+		value: V | null;
+		onChange: (value: V) => void;
+		columns?: number;
+	};
+}> {
+	<template>
+		<CanonRow @title={{@label}} @form="stacked" class="err-choice">
+			<Segmented
+				@options={{@options}}
+				@value={{@value}}
+				@onChange={{@onChange}}
+				@label={{@label}}
+				@columns={{@columns}}
+				...attributes
+			/>
+		</CanonRow>
 	</template>
 }
 
@@ -212,7 +224,19 @@ export function readText(onChange: (value: string) => void) {
 		onChange((event.target as HTMLInputElement).value);
 }
 
-/** setMode clears these */
+export const focusOnOpen = modifier(
+	(
+		el: HTMLInputElement,
+		[open]: [boolean],
+		{ onOpen }: { onOpen?: (el: HTMLInputElement) => void },
+	) => {
+		if (!open) return;
+		onOpen?.(el);
+		el.focus({ preventScroll: true });
+		el.select();
+	},
+);
+
 export const livePreview = modifier(
 	(_el: Element, [items]: [Stamped[] | undefined]) => {
 		if (items) preview(items);
@@ -265,7 +289,6 @@ export class PageScopeState {
 	setScope = (scope: Scope) => (this.scope = scope);
 	setRange = (range: string) => (this.range = range);
 
-	/** null on bad range */
 	indices(pageCount: number, pageIndex: { current: number }) {
 		return scopePages(
 			this.scope,
@@ -279,7 +302,6 @@ export class PageScopeState {
 export const PageScope: TOC<{
 	Args: {
 		state: PageScopeState;
-		/** range fails to parse */
 		invalid: boolean;
 	};
 }> = <template>
@@ -303,10 +325,10 @@ export const PageScope: TOC<{
 	</Field>
 </template>;
 
-/** a page-shaped 3x3 grid */
 export const AnchorPicker: TOC<{
 	Args: {
-		value: Anchor;
+		value: Anchor | null;
+		anchors?: Anchor[];
 		onChange: (anchor: Anchor) => void;
 	};
 }> = <template>
@@ -316,7 +338,7 @@ export const AnchorPicker: TOC<{
 			role="radiogroup"
 			aria-label="Position"
 		>
-			{{#each ANCHORS as |a|}}
+			{{#each (if @anchors @anchors ANCHORS) as |a|}}
 				<button
 					type="button"
 					role="radio"

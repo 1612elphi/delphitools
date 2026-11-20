@@ -3,7 +3,6 @@ import FxColourSliderRow from './fx-colour-slider-row';
 import { numberOf, type FxContext } from './fx-context';
 import { gammaPath } from './fx-maths';
 
-// toned for both themes (iOS FxColourGammaGraph.channels)
 const CHANNELS = [
 	{ key: 'red', colour: 'rgb(235 66 61)', width: 6 },
 	{ key: 'green', colour: 'rgb(46 173 77)', width: 4 },
@@ -20,7 +19,6 @@ function longest(ctx: FxContext) {
 		.reduce((a, b) => (b.length > a.length ? b : a), '');
 }
 
-// iOS gamma editor: the three curves over the channel sliders
 const FxGamma: TOC<{ Args: { ctx: FxContext } }> = <template>
 	<div class="sub-fxp-gamma" aria-hidden="true">
 		<svg viewBox="0 0 100 100" preserveAspectRatio="none">

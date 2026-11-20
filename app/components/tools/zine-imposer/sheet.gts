@@ -9,7 +9,6 @@ import type { ZineImage } from './images';
 
 const pct = (share: number) => `${Math.round(share * 10000) / 100}%`;
 
-// ios PrintSheet dash patterns
 const DASHES = { valley: '6 4', mountain: '8 3 1.5 3' };
 
 interface FaceSignature {
@@ -70,7 +69,6 @@ class Face extends Component<FaceSignature> {
 		});
 	}
 
-	// front only, as pdf
 	get cuts() {
 		if (this.back) return [];
 		return this.args.layout.cutLines.map((cut) => ({
@@ -183,22 +181,18 @@ export interface SheetSignature {
 	Args: {
 		layout: ZineFoldLayout;
 		images: (ZineImage | null)[];
-		/** Millimetres, landscape. */
 		width: number;
 		height: number;
-		/** 1-based page. */
 		lit?: number;
 		back: boolean;
 		legend: string;
 		detail: string;
 		figure: string;
 		onFlip: () => void;
-		/** Files dropped on a page, 0-based. */
 		onDropAt: (index: number, files: File[]) => void;
 	};
 }
 
-/** The iOS PrintSheetView: legend, detail and figure over the sheet, which turns over when duplex. */
 export default class Sheet extends Component<SheetSignature> {
 	@tracked dropAt?: number;
 
@@ -254,7 +248,6 @@ export default class Sheet extends Component<SheetSignature> {
 		this.dropAt = undefined;
 		const files = [...(event.dataTransfer?.files ?? [])];
 		if (page === undefined || !files.length) return;
-		// tool-wide drop skips handled
 		event.preventDefault();
 		this.args.onDropAt(page - 1, files);
 	};

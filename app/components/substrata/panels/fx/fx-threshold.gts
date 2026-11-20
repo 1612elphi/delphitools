@@ -16,7 +16,6 @@ import {
 
 const clampLevel = (v: number) => Math.min(255, Math.max(0, Math.round(v)));
 
-// iOS FxTonesThreshold: one triangle over a bar split black and white
 export default class FxThreshold extends Component<{
 	Args: { ctx: FxContext };
 }> {

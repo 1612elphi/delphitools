@@ -5,7 +5,6 @@ import CanonSegmented from 'delphicanon/components/canon-segmented';
 import { IconSvg } from 'delphitools-v2/components/icon';
 import './anchors.css';
 
-// ios Anchor reading order
 const ANCHOR_NAMES = [
 	'Top left',
 	'Top centre',
@@ -32,7 +31,6 @@ const ANCHOR_ICONS = [
 
 export interface AnchorPickerSignature {
 	Args: {
-		/** Index into ANCHOR_NAMES; -1 picks none. */
 		selected: number;
 		disabled?: boolean;
 		onChange: (index: number) => void;
@@ -40,7 +38,6 @@ export interface AnchorPickerSignature {
 	Element: HTMLDivElement;
 }
 
-/** The 3 x 3 grid of arrow cells that picks an anchor. */
 export const AnchorPicker: TOC<AnchorPickerSignature> = <template>
 	<CanonSegmented
 		@items={{ANCHOR_NAMES}}
@@ -55,7 +52,6 @@ export const AnchorPicker: TOC<AnchorPickerSignature> = <template>
 
 export interface AnchorZonesSignature {
 	Args: {
-		/** Index of the anchor in use; its mark hides. */
 		current: number;
 		onPick: (index: number) => void;
 	};
@@ -65,10 +61,6 @@ export interface AnchorZonesSignature {
 const zoneClass = (index: number, current: number) =>
 	`media-anchor-zone media-anchor-zone--row${Math.floor(index / 3)} media-anchor-zone--column${index % 3}${index === current ? ' media-anchor-zone--current' : ''}`;
 
-/**
- * Press zones over a picture, one a third: a press moves the anchor there,
- * marks show the other anchors. Mouse only; the picker takes the keys.
- */
 export const AnchorZones: TOC<AnchorZonesSignature> = <template>
 	<div class="media-anchor-zones" ...attributes>
 		{{#each ANCHOR_NAMES as |name index|}}

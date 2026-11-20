@@ -17,11 +17,10 @@ import FormPopover from './form-popover';
 import Onboarding from './onboarding';
 import RenameForm from './rename-form';
 import Shortcuts from './shortcuts';
+import StrataHelp from './strata-help';
 import { anchorFor, pageState } from './page-state';
 import './pages.css';
 
-// the forms the modal store names, in place of the old modal host; export
-// opens the share cell's popover (export-popover.gts)
 export default class Sheets extends Component<{ Args: { phone: boolean } }> {
 	open = new TrackedExternal(subscribeModal, getOpenModal);
 
@@ -40,18 +39,15 @@ export default class Sheets extends Component<{ Args: { phone: boolean } }> {
 		closeModal();
 	};
 
-	// the gallery stays under the New form it opened until it creates (iOS)
 	created = () => {
 		this.done();
 		editorUi.galleryOpen = false;
 	};
 
-	// a sheet reports its close after the store has moved on to another form
 	closeIf = (id: string) => () => {
 		if (this.open.current === id) this.done();
 	};
 
-	// a new document closed without one leaves the default scene
 	closeNew = () => {
 		if (this.open.current !== 'new-scene') return;
 		this.done();
@@ -102,6 +98,11 @@ export default class Sheets extends Component<{ Args: { phone: boolean } }> {
 			{{/if}}
 		</FormPopover>
 		<Onboarding @open={{this.is "onboarding"}} @phone={{@phone}} />
+		<StrataHelp
+			@open={{this.is "strata-help"}}
+			@phone={{@phone}}
+			@onClose={{this.closeIf "strata-help"}}
+		/>
 		{{#let (if @phone CanonSheet CanonDialog) as |Frame|}}
 			<Frame
 				class="sub-pg-dialog"

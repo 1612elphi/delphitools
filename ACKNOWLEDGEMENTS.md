@@ -53,6 +53,24 @@ svgo@4.0.2: MIT
 three@0.186.1: MIT
 tracked-built-ins@4.1.2: MIT
 
+## Fonts
+
+Inter (The Inter Project Authors, via fontsource 5.3.0): OFL-1.1
+Jost (The Jost Project Authors, via fontsource 5.3.0): OFL-1.1
+Oswald (The Oswald Project Authors, via fontsource 5.3.0): OFL-1.1
+Source Serif 4 (Adobe, via fontsource 5.3.1): OFL-1.1
+IBM Plex Mono (IBM Corp., via fontsource 5.3.0): OFL-1.1
+CMU Serif, CMU Sans Serif, CMU Typewriter Text (Computer Modern Unicode 0.7.0, Andrey V. Panov, via CTAN cm-unicode): OFL-1.1
+
+## Data
+
+Hyphenation patterns, American English (Gerard D.C. Kuiken, after Knuth and Liang, via CTAN hyph-utf8, 2005-05-30): all-permissive notice, see public/hyphenation/hyph-en-us.licence.txt
+Hyphenation patterns, German reformed orthography (Deutschsprachige Trennmustermannschaft, via CTAN hyph-utf8, 2024-02-28): MIT, see public/hyphenation/hyph-de-1996.licence.txt
+
+## Images
+
+"Losta classification yard 1" by Sergeev Pavel, 2009, Wikimedia Commons (https://commons.wikimedia.org/wiki/File:Losta_classification_yard_1.jpg): CC0-1.0
+
 # Build and Test
 
 @babel/core@7.29.7: MIT

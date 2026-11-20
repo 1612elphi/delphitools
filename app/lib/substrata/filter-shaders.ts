@@ -8,6 +8,7 @@ import type {
 	TWebGLPipelineState,
 	TWebGLUniformLocationMap,
 } from 'fabric';
+import { dither, type DitherOptions } from 'delphitools-v2/lib/dither';
 import { applyGradeToImageData } from './filters';
 import { applyLutToImageData, type LoadedLut } from './lut-data';
 
@@ -154,6 +155,73 @@ export class SubstrataLevels extends BaseFilter<
 			this.outBlack === 0 &&
 			this.outWhite === 1
 		);
+	}
+}
+
+export class SubstrataDither extends BaseFilter<
+	'SubstrataDither',
+	DitherOptions
+> {
+	declare algorithm: DitherOptions['algorithm'];
+	declare colour: boolean;
+	declare levels: number;
+	declare scale: number;
+	static type = 'SubstrataDither';
+	static defaults: DitherOptions = {
+		algorithm: 'floyd-steinberg',
+		colour: false,
+		levels: 2,
+		scale: 1,
+	};
+
+	applyTo2d({
+		imageData: { data, width, height },
+	}: T2DPipelineState): void {
+		dither(data, width, height, this);
+	}
+
+	// diffusion needs cpu readback
+	applyToWebGL(options: TWebGLPipelineState): void {
+		const gl = options.context;
+		const { sourceWidth: w, sourceHeight: h } = options;
+		const target = gl.getParameter(
+			gl.FRAMEBUFFER_BINDING,
+		) as WebGLFramebuffer | null;
+		const reader = gl.createFramebuffer();
+		gl.bindFramebuffer(gl.FRAMEBUFFER, reader);
+		gl.framebufferTexture2D(
+			gl.FRAMEBUFFER,
+			gl.COLOR_ATTACHMENT0,
+			gl.TEXTURE_2D,
+			options.pass === 0
+				? options.originalTexture
+				: options.sourceTexture,
+			0,
+		);
+		const bytes = new Uint8Array(w * h * 4);
+		gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, bytes);
+		gl.bindFramebuffer(gl.FRAMEBUFFER, target);
+		gl.deleteFramebuffer(reader);
+		dither(new Uint8ClampedArray(bytes.buffer), w, h, this);
+		const sourceTexture = options.filterBackend.createTexture(
+			gl,
+			w,
+			h,
+		);
+		gl.texImage2D(
+			gl.TEXTURE_2D,
+			0,
+			gl.RGBA,
+			w,
+			h,
+			0,
+			gl.RGBA,
+			gl.UNSIGNED_BYTE,
+			bytes,
+		);
+		// pass 0 draws original
+		super.applyToWebGL({ ...options, sourceTexture, pass: 1 });
+		gl.deleteTexture(sourceTexture);
 	}
 }
 
@@ -494,8 +562,7 @@ export class SubstrataColourBalance extends BaseFilter<
 	}
 }
 
-// iOS FilterPipeline "tones": weights peak at 1 on luminance 2/3
-// (highlights) and 1/3 (shadows), 0 at black and white
+// ios tones: peaks 2/3, 1/3
 export const toneLift = (l: number, highlights: number, shadows: number) =>
 	0.25 * 6.75 * l * (1 - l) * (highlights * l + shadows * (1 - l));
 

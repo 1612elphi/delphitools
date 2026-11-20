@@ -55,7 +55,6 @@ const ActionGrid: TOC<{
 	</CanonGrid>
 </template>;
 
-// iOS ArrangeSection on arrange-ops, shared with the move tool's bar
 export default class ArrangeSection extends Component<{
 	Args: {
 		doc: SubstrataDoc;

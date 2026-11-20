@@ -10,7 +10,6 @@ function kindOf(ctx: FxContext, key: string) {
 	return specOf(ctx, key)?.kind;
 }
 
-// pairs and presets have editors of their own
 function keysOf(ctx: FxContext, keys?: string[]) {
 	return (
 		keys ??
@@ -24,7 +23,6 @@ function keysOf(ctx: FxContext, keys?: string[]) {
 	);
 }
 
-// the default rows of a block, one per parameter (iOS FxBlock.row)
 const FxRows: TOC<{ Args: { ctx: FxContext; keys?: string[] } }> = <template>
 	{{#each (keysOf @ctx @keys) as |key|}}
 		{{#let (kindOf @ctx key) as |kind|}}

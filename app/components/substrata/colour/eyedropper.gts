@@ -20,12 +20,8 @@ interface Signature {
 
 const SIDE = 120;
 const GAP = 28;
-/** pixels across the loupe */
 const ACROSS = 15;
 
-// iOS Eyedropper: over the canvas above the tray, on a still of the canvas
-// taken as it opens; the loupe beside the finger, the pixel under it picked
-// when the finger lifts
 export default class Eyedropper extends Component<Signature> {
 	@tracked loupe: {
 		style: ReturnType<typeof htmlSafe>;

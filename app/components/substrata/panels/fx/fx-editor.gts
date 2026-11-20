@@ -18,7 +18,6 @@ import FxStrokePosition from './fx-stroke-position';
 import FxMatte from './fx-matte';
 import { specOf, type FxContext } from './fx-context';
 
-// iOS FxColourEditor's types
 const COLOUR = new Set([
 	'brightness',
 	'contrast',
@@ -55,7 +54,6 @@ function present(ctx: FxContext, keys: string[]) {
 	return keys.filter((k) => specOf(ctx, k));
 }
 
-// iOS FxEditors.make: one editor per group, the plain rows otherwise
 const FxEditor: TOC<{ Args: { ctx: FxContext } }> = <template>
 	{{#let (editorOf @ctx) as |kind|}}
 		{{#if (eq kind "levels")}}

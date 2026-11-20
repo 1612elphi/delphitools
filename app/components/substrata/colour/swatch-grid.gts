@@ -26,7 +26,6 @@ interface Laid {
 interface Signature {
 	Args: {
 		columns: GridColumn[];
-		/** wraps each column's swatches into as many columns as the height holds */
 		flows: boolean;
 		picked: string | null;
 		label: string;
@@ -36,14 +35,10 @@ interface Signature {
 
 const SWATCH_WIDTH = 44;
 const HEADING_WIDTH = 22;
-/** tallest a library swatch gets, and a flowing one's height */
 const TALLEST = 56;
 const FLOW_HEIGHT = 44;
-/** shortest swatch that carries its code */
 const LABELLED = 16;
 
-// iOS SwatchGrid: columns of swatches scrolling sideways only, each family
-// headed by a narrow column of turned text
 export default class SwatchGrid extends Component<Signature> {
 	@tracked announce = '';
 	#laid: Laid[] = [];
@@ -250,7 +245,6 @@ export default class SwatchGrid extends Component<Signature> {
 		},
 	);
 
-	// mouse drags scroll; a tap picks and a hold stars
 	gestures = modifier((scroller: HTMLElement) => {
 		let start: { x: number; left: number; id: number } | null =
 			null;
@@ -328,7 +322,6 @@ export default class SwatchGrid extends Component<Signature> {
 		};
 	});
 
-	/** arrows move a cursor over the swatches, Enter picks */
 	key = (e: KeyboardEvent) => {
 		const filled = this.#laid
 			.map((c, i) => [c, i] as const)

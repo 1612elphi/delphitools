@@ -17,11 +17,6 @@ function heights(count: number, rails: number) {
 	return railPattern(count, rails).map((rail) => rail / (effective - 1));
 }
 
-/**
- * RailFenceZigzag: the plain text laid along the rails as the cipher reads
- * it, even rails in ink, odd rails lit. A change of rails springs the
- * characters to their new rails.
- */
 export default class Fence extends Component<FenceSignature> {
 	@tracked width = 0;
 	@tracked height = 0;
@@ -47,7 +42,6 @@ export default class Fence extends Component<FenceSignature> {
 		return () => observer.disconnect();
 	});
 
-	// iOS springs only when the rails move, from where the characters are shown
 	follow = modifier((_: Element, [text, rails]: [string, number]) => {
 		const before = this.#shown;
 		this.#shown = { text, rails };

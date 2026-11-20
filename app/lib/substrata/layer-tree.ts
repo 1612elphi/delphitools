@@ -122,6 +122,7 @@ export interface LeafRenderEntry {
 	layer: Layer;
 	visible: boolean;
 	locked: boolean;
+	pinned: boolean;
 	opacity: number;
 }
 
@@ -131,13 +132,22 @@ export function leafRenderList(
 	visible = true,
 	locked = false,
 	opacity = 1,
+	pinned = false,
 ): LeafRenderEntry[] {
 	for (const l of layers) {
 		const v = visible && l.visible;
 		const k = locked || l.locked;
 		const o = opacity * l.opacity;
-		if (isGroup(l)) leafRenderList(l.children, into, v, k, o);
-		else into.push({ layer: l, visible: v, locked: k, opacity: o });
+		const p = pinned || !!l.stratum;
+		if (isGroup(l)) leafRenderList(l.children, into, v, k, o, p);
+		else
+			into.push({
+				layer: l,
+				visible: v,
+				locked: k,
+				pinned: p,
+				opacity: o,
+			});
 	}
 	return into;
 }

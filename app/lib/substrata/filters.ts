@@ -1,3 +1,4 @@
+import { DITHER_ALGORITHMS } from 'delphitools-v2/lib/dither';
 import type { FxDefinition, ParamSpec } from './param-spec';
 
 export type FilterCategory = 'colour' | 'filter';
@@ -341,7 +342,6 @@ export const FILTER_REGISTRY: Record<string, FilterDefinition> = {
 		label: 'Invert',
 		params: [],
 	},
-	// custom shader filters
 	threshold: {
 		type: 'threshold',
 		category: 'filter',
@@ -378,6 +378,53 @@ export const FILTER_REGISTRY: Record<string, FilterDefinition> = {
 		],
 	},
 
+	dither: {
+		type: 'dither',
+		category: 'filter',
+		tier: 1,
+		label: 'Dither',
+		params: [
+			{
+				kind: 'select',
+				key: 'algorithm',
+				label: 'Algorithm',
+				default: 'floyd-steinberg',
+				options: DITHER_ALGORITHMS.map((a) => ({
+					value: a.id,
+					label: a.label,
+				})),
+			},
+			{
+				kind: 'select',
+				key: 'mode',
+				label: 'Mode',
+				default: 'mono',
+				options: [
+					{ value: 'mono', label: 'Monochrome' },
+					{ value: 'colour', label: 'Colour' },
+				],
+			},
+			{
+				kind: 'stepper',
+				key: 'levels',
+				label: 'Levels',
+				min: 2,
+				max: 8,
+				step: 1,
+				default: 2,
+			},
+			{
+				kind: 'stepper',
+				key: 'scale',
+				label: 'Cell size',
+				min: 1,
+				max: 16,
+				step: 1,
+				default: 1,
+				unit: 'px',
+			},
+		],
+	},
 	levels: {
 		type: 'levels',
 		category: 'filter',

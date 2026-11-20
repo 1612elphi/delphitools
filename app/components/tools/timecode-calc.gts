@@ -58,7 +58,6 @@ function note(parsed: ParseResult, rate: Rate) {
 	return text ? { tone: 'warn' as const, text } : undefined;
 }
 
-/** The port of TimecodeCalcViewController. */
 export default class TimecodeCalc extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -66,11 +65,9 @@ export default class TimecodeCalc extends Component {
 	@tracked subtracts = false;
 	@tracked a = '';
 	@tracked b = '';
-	/** The fields' starting text; the fields own what is typed after. */
 	startA = '';
 	startB = '';
 
-	// ?tcA=01:00:00;00 ?tcB=00:10:00;02 ?tcSubtract ?tcRate=29.97df: the iOS -tca, -tcb, -tcsubtract, -tcrate flags
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -102,7 +99,6 @@ export default class TimecodeCalc extends Component {
 		return parse(this.b, this.rate);
 	}
 
-	/** A alone gives A, B alone gives nothing. */
 	get frames(): number | undefined {
 		const { parsedA: a, parsedB: b } = this;
 		if (!a.ok) return undefined;
@@ -175,7 +171,6 @@ export default class TimecodeCalc extends Component {
 		];
 	}
 
-	// the web fields answered every keystroke; iOS waits 400 ms
 	typeA = (text: string) => (this.a = text);
 	typeB = (text: string) => (this.b = text);
 

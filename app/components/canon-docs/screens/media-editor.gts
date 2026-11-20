@@ -40,7 +40,6 @@ const steps = [
 const Export = <template><IconSvg @name="download" /></template>;
 const db = (value: number) => `${value > 0 ? '+' : ''}${value.toFixed(1)} dB`;
 
-// eight plucked notes up a scale from A3, one every 0.75 s
 function melody(scale: number) {
 	const samples = new Float32Array(rate * seconds);
 	const step = (seconds / 8) * rate;
@@ -59,7 +58,6 @@ function melody(scale: number) {
 	return samples;
 }
 
-// a filmstrip of eight frames in the scale's colours
 const frames = (scale: number) =>
 	Array.from(
 		{ length: 8 },
@@ -257,7 +255,6 @@ export default class MediaEditorScreen extends Component {
 						/>
 					</CanonRow>
 				</CanonRows>
-				{{! the transport is its control }}
 				{{! template-lint-disable require-media-caption }}
 				<audio
 					src={{this.url}}

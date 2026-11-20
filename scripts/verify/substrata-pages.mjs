@@ -1,6 +1,3 @@
-// substrata pages: the settings page, gallery, export popover, help overlay
-// and the forms (canvas size, new, rename, onboarding, shortcuts, about)
-// needs the dev server (BASE_URL)
 import { readFileSync } from 'node:fs';
 import { BASE, check, finish, launch, sleep } from './harness.mjs';
 
@@ -60,7 +57,6 @@ const segment = (title, label) =>
 		[title, label],
 	);
 
-// usability: every control in an open surface is named
 const unnamed = (sel) =>
 	page.evaluate((s) => {
 		const root = document.querySelector(s);
@@ -85,7 +81,6 @@ const unnamed = (sel) =>
 			.map((el) => el.outerHTML.slice(0, 80));
 	}, sel);
 
-// settings page
 check('nothing open at start', !(await rect('.sub-pg-drawer')));
 await click(cell('Menu'));
 const drawer = await rect('.sub-pg-drawer');
@@ -177,19 +172,21 @@ const gridAfter = await page.evaluate(() => JSON.parse(localStorage.getItem('sub
 check('grid switch writes the guides pref', gridAfter === !gridBefore, `${gridBefore} → ${gridAfter}`);
 await switchIn('Grid');
 
-// canvas size form from the settings row
 await click('.sub-pg-link-cell');
 check('canvas size row opens the form', await page.evaluate(() => !!document.querySelector('.sub-pg-pop:popover-open')));
-await clickText('.sub-pg-pop button', '1920 × 1080');
+await click('.sub-pg-pop .paper-popover-trigger');
+await sleep(300);
+await page.keyboard.type('1920x1080');
+await sleep(200);
+await click('.paper-popover:popover-open .paper-cell');
+await sleep(300);
 await clickText('.sub-pg-pop button', 'Apply');
 check('apply resizes the artboard', (await rowValue('Canvas Size')) === '1920 × 1080 px', await rowValue('Canvas Size'));
 check('the form closes', !(await page.evaluate(() => !!document.querySelector('.sub-pg-pop'))));
 
-// reset asks first
 await clickText('.sub-pg-block button', 'Reset');
 check('reset asks to confirm', await clickText('.sub-pg-block button', 'Cancel'));
 
-// about links open their dialogs
 await clickText('.sub-pg-link', 'Keyboard shortcuts');
 check('keyboard shortcuts dialog', await page.evaluate(() => !!document.querySelector('dialog[open] .sub-pg-key-row')));
 await page.keyboard.press('Escape');
@@ -199,7 +196,6 @@ check('about delphitools dialog', await page.evaluate(() => !!document.querySele
 await page.keyboard.press('Escape');
 await sleep(400);
 
-// gallery
 await page.evaluate(() => document.querySelector('.sub-pg-tile')?.click());
 await sleep(500);
 check('gallery tile swaps the page for the gallery', (await text('.sub-pg-drawer .sub-panel-title')) === 'Projects', await text('.sub-pg-drawer .sub-panel-title'));
@@ -207,7 +203,17 @@ check('gallery shows New and the open document', await page.evaluate(() => docum
 check('gallery controls are named', (await unnamed('.sub-pg-drawer')).length === 0, (await unnamed('.sub-pg-drawer')).join(' | '));
 await click('.sub-gal-tile.is-new');
 check('new tile opens the new form', await page.evaluate(() => !!document.querySelector('.sub-pg-pop:popover-open')));
-await clickText('.sub-pg-pop button', '1080 × 1080');
+await click('.sub-pg-pop .paper-popover-trigger');
+await sleep(300);
+check('size popover opens', await page.evaluate(() => !!document.querySelector('.paper-popover:popover-open')));
+await page.keyboard.type('instagram square');
+await sleep(200);
+const found = await page.$$eval('.paper-popover:popover-open .paper-cell', (c) => c.map((x) => x.textContent.trim()));
+check('find narrows to one size', found.length === 1, found.join(' | '));
+await click('.paper-popover .paper-cell');
+await sleep(300);
+check('pick closes the size popover, keeps the form', await page.evaluate(() => !document.querySelector('.paper-popover:popover-open') && !!document.querySelector('.sub-pg-pop:popover-open')));
+check('trigger names the size', (await text('.sub-pg-pop .paper-popover-trigger')) === 'Instagram Square', await text('.sub-pg-pop .paper-popover-trigger'));
 await clickText('.sub-pg-pop button', 'Create');
 check('create closes the gallery', !(await rect('.sub-pg-drawer')));
 await click(cell('Menu'));
@@ -216,7 +222,6 @@ check('it has no layers', (await rowValue('Layers')) === '0');
 await click(cell('Menu'));
 check('menu closes the page', !(await rect('.sub-pg-drawer')));
 
-// export popover
 await page.evaluate(() =>
 	window.__substrata.addRaster(200, 200, [{ x: 0, y: 0, w: 200, h: 200, colour: '#cc2222' }], { x: 540, y: 540 }),
 );
@@ -256,7 +261,6 @@ await page.keyboard.press('Escape');
 await sleep(300);
 check('escape closes it', !(await rect('.sub-pg-pop')));
 
-// rename from the title
 await click('.sub-ed-title-name');
 check('the title opens the rename form', await page.evaluate(() => document.activeElement?.matches('.sub-pg-pop input')));
 await page.keyboard.type('Flyer');
@@ -264,7 +268,6 @@ await page.keyboard.press('Enter');
 await sleep(300);
 check('enter renames', (await text('.sub-ed-title-name')) === 'Flyer', await text('.sub-ed-title-name'));
 
-// help overlay
 await click('.sub-ed-help .sub-cell');
 await sleep(800);
 const help = await page.evaluate(() => {
@@ -279,7 +282,6 @@ await page.mouse.click(700, 500);
 await sleep(400);
 check('a click closes help', !(await rect('.sub-help')));
 
-// persistence: gallery lists, duplicates and deletes projects
 await click(cell('Menu'));
 await switchIn('Save in this browser');
 await sleep(800);
@@ -312,10 +314,8 @@ await switchIn('Save in this browser');
 await sleep(300);
 await click(cell('Menu'));
 
-// no page scroll
 check('no horizontal page scroll', await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
 
-// phone layout
 await page.setViewport({ width: 390, height: 844 });
 await sleep(800);
 await click('.sub-ed-phone-stack [title="Menu"]');
@@ -338,7 +338,6 @@ const phoneHelp = await page.evaluate(() =>
 check('phone: help notes stay on screen', phoneHelp);
 check('phone: no horizontal page scroll', await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
 
-// onboarding on a fresh start, then the new form for the blank scene
 const fresh = await browser.newPage();
 await fresh.setViewport({ width: 1400, height: 1000 });
 await fresh.evaluateOnNewDocument(() => {
@@ -360,10 +359,10 @@ for (let i = 0; i < 6; i++) {
 	if (done) break;
 }
 await sleep(400);
-check('onboarding ends in the new form', await fresh.evaluate(() => !document.querySelector('dialog[open] .sub-pg-onb-page') && !!document.querySelector('.sub-pg-pop:popover-open')));
+check('onboarding ends on the New card', await fresh.evaluate(() => !document.querySelector('dialog[open] .sub-pg-onb-page') && !!document.querySelector('.sub-new .sub-empty-card')));
 await fresh.keyboard.press('Escape');
 await sleep(400);
-check('closing the new form leaves the default scene', (await fresh.evaluate(() => document.querySelector('.sub-ed-title-name')?.textContent.trim())) === 'Untitled scene');
+check('closing the New card leaves the default scene', (await fresh.evaluate(() => document.querySelector('.sub-ed-title-name')?.textContent.trim())) === 'Untitled scene');
 
 await page.evaluate(() => {
 	window.__substrataUi.helpOpen = false;

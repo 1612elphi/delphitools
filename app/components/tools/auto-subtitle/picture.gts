@@ -10,12 +10,9 @@ import Strips from 'delphitools-v2/components/tools/media/strips';
 export interface PictureSignature {
 	Args: {
 		peaks: WaveformPeaks | null;
-		/** Seconds of the file; 0 before it decodes. */
 		duration: number;
 		cues: Cue[];
-		/** The run finished: the waveform lights up. */
 		done: boolean;
-		/** The figure's number; empty hides it. */
 		figure: string;
 		unit: string;
 		label: string;
@@ -24,7 +21,6 @@ export interface PictureSignature {
 
 const noFrames: string[] = [];
 
-/** iOS AutoSubtitlePicture: the file's waveform over a lane of the cues, a figure at the trailing end. */
 export default class Picture extends Component<PictureSignature> {
 	get lanes(): CueLane[] {
 		return [{ cues: this.args.cues, lit: true }];

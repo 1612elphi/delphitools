@@ -56,7 +56,6 @@ const blank = (width: number, height: number) => {
 	return canvas;
 };
 
-/** A stand-in for the model: a centred ellipse, grey mask style. */
 function drawnMask(width: number, height: number) {
 	const canvas = blank(width, height);
 	const context = canvas.getContext('2d')!;
@@ -87,7 +86,6 @@ function readDataUrl(file: File): Promise<string> {
 	});
 }
 
-/** Mean opacity of a mask, measured on a copy at most 256 px across. */
 function keptShare(mask: HTMLCanvasElement) {
 	const scale = Math.min(1, 256 / Math.max(mask.width, mask.height));
 	const canvas = blank(
@@ -107,7 +105,6 @@ function keptShare(mask: HTMLCanvasElement) {
 	return sum / 255 / (data.length / 4);
 }
 
-/** The source cut by `mask`, on `fill` when one is set. */
 function cutOut(
 	source: HTMLImageElement,
 	mask: HTMLCanvasElement,
@@ -134,7 +131,6 @@ const pngOf = (canvas: HTMLCanvasElement) =>
 		canvas.toBlob(resolve, 'image/png'),
 	);
 
-/** The port of BackgroundRemoverViewController, on the web tool's model. */
 export default class BackgroundRemover extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 	@tracked sourceImage: string | null = null;
@@ -161,16 +157,13 @@ export default class BackgroundRemover extends Component {
 	#loading = 0;
 	#fakeMask = false;
 	#image: HTMLImageElement | null = null;
-	/** The model's mask, white with the subject opaque, at the source size. */
 	#mask: HTMLCanvasElement | null = null;
-	/** The mask with the brush strokes; every view and export uses it. */
 	#refined: HTMLCanvasElement | null = null;
 	#undo: HTMLCanvasElement | null = null;
 	#view: HTMLCanvasElement | null = null;
 	#stroke: { x: number; y: number; scale: number } | null = null;
 	#frame = 0;
 
-	// ?bgSample: the iOS -bgSample launch argument, with a drawn image; ?bgFill=<hex>: the iOS -bgFill
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -179,7 +172,6 @@ export default class BackgroundRemover extends Component {
 			this.mode = 1;
 			this.colour = fill;
 		}
-		// ?bgMask (dev builds): a drawn mask stands in for the model, the iOS -bgMask
 		this.#fakeMask = import.meta.env.DEV && query.has('bgMask');
 		if (query.has('bgSample'))
 			void drawnSample().then((file) => this.readFile(file));
@@ -189,7 +181,6 @@ export default class BackgroundRemover extends Component {
 		super.willDestroy();
 		this.#destroyed = true;
 		cancelAnimationFrame(this.#frame);
-		// release model memory
 		this.#remover?.dispose();
 		this.#remover = null;
 	}
@@ -255,7 +246,6 @@ export default class BackgroundRemover extends Component {
 		);
 	}
 
-	/** The cut-out view: the source through the refined mask, painted on by the brush. */
 	cutCanvas = modifier((canvas: HTMLCanvasElement) => {
 		this.#view = canvas;
 		this.#draw();
@@ -300,7 +290,6 @@ export default class BackgroundRemover extends Component {
 		});
 	}
 
-	/** Where the pointer is, in mask pixels; `scale` is mask pixels per screen pixel. */
 	#point(event: PointerEvent) {
 		const view = event.currentTarget as HTMLCanvasElement;
 		const box = view.getBoundingClientRect();
@@ -412,7 +401,6 @@ export default class BackgroundRemover extends Component {
 	picked = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
-		// reset permits reselect
 		input.value = '';
 		if (file) void this.readFile(file);
 	};
@@ -509,7 +497,6 @@ export default class BackgroundRemover extends Component {
 							this.percent = percent;
 					},
 				);
-				// dispose after teardown
 				if (this.#destroyed) {
 					remover.dispose();
 					return;
@@ -765,7 +752,6 @@ export default class BackgroundRemover extends Component {
 						@row={{true}}
 					/>
 				</CanonRows>
-				{{! the empty picture opens it }}
 				{{! template-lint-disable require-input-label }}
 				<input
 					type="file"

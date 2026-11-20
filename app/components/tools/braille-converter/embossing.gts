@@ -14,7 +14,6 @@ export interface Glyph {
 interface EmbossingSignature {
 	Args: {
 		readings: Reading[];
-		/** What the cells say, for assistive technology. */
 		label: string;
 	};
 }
@@ -24,17 +23,14 @@ const cellWidth = dot.pitch + dot.radius * 2;
 const labelRoom = 18;
 const cellHeight = (rows: number) => dot.pitch * (rows - 1) + dot.radius * 2;
 
-/** The banner's height and the band it collapses to, in px. */
 export const bandHeight = 150;
 export const collapsedHeight = 84;
 
-// dot 1 lowest bit
 function mask(cell: string): number | undefined {
 	const code = cell.codePointAt(0) ?? 0;
 	return code >= 0x2800 && code <= 0x28ff ? code - 0x2800 : undefined;
 }
 
-// unicode braille dot order
 function position(bit: number): [column: number, row: number] {
 	if (bit < 3) return [0, bit];
 	if (bit < 6) return [1, bit - 3];
@@ -48,7 +44,6 @@ function indicatorLabel(cells: string) {
 	return '';
 }
 
-/** BrailleEmbossing.show: one glyph per cell, the reading's text under its first cell. */
 export function glyphsOf(readings: Reading[]): Glyph[] {
 	const glyphs: Glyph[] = [];
 	for (const reading of readings) {
@@ -106,7 +101,6 @@ function dotsOf(glyph: Glyph, rows: number) {
 	});
 }
 
-/** The cells as embossed dots, raised or a faint pit, each labelled with what it reads. */
 export default class Embossing extends Component<EmbossingSignature> {
 	get glyphs() {
 		return glyphsOf(this.args.readings);

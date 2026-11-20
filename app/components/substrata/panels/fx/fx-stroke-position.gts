@@ -11,7 +11,6 @@ import {
 	type FxContext,
 } from './fx-context';
 
-// iOS FxEffectsPositionChoice: where the band sits on the edge, drawn
 export default class FxStrokePosition extends Component<{
 	Args: { ctx: FxContext };
 }> {

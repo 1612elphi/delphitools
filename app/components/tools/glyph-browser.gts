@@ -23,14 +23,11 @@ import {
 } from 'delphitools-v2/components/tools/glyph-browser/glyphs';
 import './glyph-browser/glyph-browser.css';
 
-/** g: descender and bowl. */
 const firstGlyph = 0x67;
-/** Row header width and the smallest cell before the chart drops to 8 columns (GlyphChart.Geometry). */
 const rowHeader = 52;
 const minCell = 34;
 const collapsedHeight = 140 + 16 * 2;
 
-/** The port of GlyphBrowserViewController. */
 export default class GlyphBrowserTool extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -40,7 +37,6 @@ export default class GlyphBrowserTool extends Component {
 	@tracked cardHeight = 0;
 	chartElement?: HTMLElement;
 
-	// ?gbCode=<hex> ?gbSearch=<query>: the iOS -gbcode and -gbsearch flags
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -88,7 +84,6 @@ export default class GlyphBrowserTool extends Component {
 		);
 	}
 
-	/** The selected glyph takes the tab stop, or the first shown when the search hides it. */
 	get tabStop() {
 		const codes = this.visibleCodes;
 		return codes.includes(this.selected) ? this.selected : codes[0];
@@ -156,7 +151,6 @@ export default class GlyphBrowserTool extends Component {
 
 	copyLabel = () => void this.toast.copy(this.label);
 
-	// arrows move the selection through the chart, a row is `columns` cells
 	key = (event: KeyboardEvent) => {
 		const codes = this.visibleCodes;
 		const at = codes.indexOf(this.selected);
@@ -324,7 +318,6 @@ export default class GlyphBrowserTool extends Component {
 						/>
 					{{/if}}
 				</CanonRows>
-				{{! wording carried over from the Next app }}
 				<p class="gb-tip">Double-click any glyph to
 					quickly copy the character.</p>
 			</:main>

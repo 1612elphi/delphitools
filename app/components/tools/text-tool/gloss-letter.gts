@@ -9,7 +9,6 @@ import type { Sound } from 'delphitools-v2/components/tools/text-tool/gloss-piec
 export interface LetterEdits {
 	pick: (sound: Sound) => void;
 	insert: (after: boolean, sound: Sound) => void;
-	/** None for the sole letter of a word. */
 	remove?: () => void;
 }
 
@@ -17,7 +16,6 @@ interface GlossLetterSignature {
 	Args: {
 		sound: Sound;
 		alternatives: Sound[];
-		/** null draws a separator */
 		alphabet: (Sound | null)[];
 		edits: LetterEdits;
 	};
@@ -29,7 +27,6 @@ type Entry = CanonMenuEntry & {
 	remove?: boolean;
 };
 
-// system font lacks glyphs
 const glyphs = new Map<string, ComponentLike>();
 function glyphIcon(glyph: string): ComponentLike {
 	let icon = glyphs.get(glyph);
@@ -45,7 +42,6 @@ function glyphIcon(glyph: string): ComponentLike {
 const titled = (sound: Sound) =>
 	sound.name ? `${sound.name} /${sound.ipa}/` : `/${sound.ipa}/`;
 
-// menus shared per alphabet
 const insertMenus = new WeakMap<
 	(Sound | null)[],
 	{ before: Entry[]; after: Entry[] }
@@ -74,17 +70,11 @@ function insertMenu(alphabet: (Sound | null)[], after: boolean): Entry[] {
 	return after ? menus.after : menus.before;
 }
 
-/**
- * iOS ShavianLetterCell: one letter of the picked word, its name and sound
- * under it; its menu inserts a letter before or after, removes it, or swaps
- * it for one of its alternatives.
- */
 export default class GlossLetter extends Component<GlossLetterSignature> {
 	get label() {
 		return titled(this.args.sound);
 	}
 
-	// ipa glyph is sound
 	get showsIpa() {
 		return this.args.sound.ipa !== this.args.sound.glyph;
 	}

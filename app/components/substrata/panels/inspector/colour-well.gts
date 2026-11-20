@@ -13,7 +13,6 @@ import 'delphicanon/components/canon-colour-well.css';
 export interface ColourWellSignature {
 	Args: {
 		hex: string;
-		/** `transient` writes go through the doc-store gesture. */
 		onApply: (hex: string, transient: boolean) => void;
 		label: string;
 	};
@@ -22,8 +21,6 @@ export interface ColourWellSignature {
 
 const HEX = /^[\da-f]{6}$/i;
 
-// iOS CanonColourWell: the swatch opens the colour ring aimed at this
-// well; the ring's stream is one undo step, ended by its final send
 export default class ColourWell extends Component<ColourWellSignature> {
 	get digits(): string {
 		const hex = this.args.hex.replace('#', '');

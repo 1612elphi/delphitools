@@ -27,7 +27,6 @@ import { IconSvg } from 'delphitools-v2/components/icon';
 const formats: ColourFormat[] = ['hex', 'rgb', 'hsl', 'oklch', 'lab'];
 const Copy = <template><IconSvg @name="copy" /></template>;
 
-// hue turns round OKLCH that keep the lightness and chroma
 const turned = (colour: Rgb, turns: number[]): Rgb[] => {
 	const [l, c, h] = oklch(colour);
 	return turns.map((turn) => fromOklch(l, c, h + turn));

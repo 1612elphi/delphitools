@@ -25,13 +25,9 @@ import './code-sheet.css';
 interface CodeSheetPictureSignature {
 	Args: {
 		sheet?: CodeSheet;
-		/** The code's name under the sheet. */
 		caption: string;
-		/** The written image's size, shown as a figure. */
 		pixels?: { width: number; height: number };
-		/** What assistive technology reads for the picture. */
 		label: string;
-		/** Lucide symbol in the empty sheet. */
 		emptyIcon: string;
 		emptyText?: string;
 	};
@@ -40,7 +36,6 @@ interface CodeSheetPictureSignature {
 
 export interface CodeSheetStats {
 	frames: number;
-	/** Draw time of each frame in ms, the last 240. */
 	drawMs: number[];
 	sweeps: number;
 	fades: number;
@@ -57,14 +52,6 @@ interface Colours {
 	hairline: number;
 }
 
-/**
- * The code as it will be written, fitted to the pane on whole device pixels
- * per module, with crop marks at the sheet's corners, its name and its pixel
- * size under it. A change of modules sweeps through the code in its own
- * order: new dark modules grow in, old ones shrink away, and a code that
- * changes size slides from its old layout to the new one. The port of iOS
- * CodeSheetPicture.
- */
 export default class CodeSheetPicture extends Component<CodeSheetPictureSignature> {
 	motion = new SheetMotion();
 	stats: CodeSheetStats = { frames: 0, drawMs: [], sweeps: 0, fades: 0 };
@@ -75,7 +62,6 @@ export default class CodeSheetPicture extends Component<CodeSheetPictureSignatur
 	#drawn = false;
 	#frame = 0;
 	#fade?: { image: HTMLCanvasElement; began: number };
-	// a matrix with two DOMMatrix fields is cheaper than one per module per frame
 	#place = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
 
 	get areaRect(): Rect | undefined {
@@ -117,7 +103,6 @@ export default class CodeSheetPicture extends Component<CodeSheetPictureSignatur
 			this.draw();
 		});
 		resize.observe(host);
-		// canvas colours do not follow the theme by themselves
 		const repaint = () => this.draw();
 		const theme = new MutationObserver(repaint);
 		theme.observe(document.documentElement, {
@@ -432,7 +417,6 @@ export default class CodeSheetPicture extends Component<CodeSheetPictureSignatur
 		context.stroke();
 	}
 
-	/** A margin under the code's quiet zone: the zone it needs, dashed in red. */
 	#drawQuietZone(
 		context: CanvasRenderingContext2D,
 		sheet: CodeSheet,

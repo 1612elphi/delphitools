@@ -46,12 +46,6 @@ function still() {
 	return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-/**
- * UnitConverterPicture: the quantity on an instrument graduated twice, in
- * the from unit (ink) and in the result unit (primary), with the converted
- * figure beside it. Each category has its own instrument; all of them ease
- * out to a new value without overshoot.
- */
 export default class Picture extends Component<PictureSignature> {
 	@tracked size = { width: 0, height: 0 };
 	@tracked readoutSize = { width: 0, height: 0 };
@@ -95,7 +89,6 @@ export default class Picture extends Component<PictureSignature> {
 				};
 	}
 
-	// .uc-readout: 6 px from the top, the panel padding from the end
 	get readout() {
 		const { width, height } = this.readoutSize;
 		return { x: this.size.width - 16 - width, y: 6, width, height };
@@ -104,7 +97,6 @@ export default class Picture extends Component<PictureSignature> {
 	get readoutStyle() {
 		const { instrument } = this.args;
 		const area = innerArea(this.size.width, this.size.height);
-		// the balance sits under the readout
 		const lead =
 			isStrip(instrument) || instrument === 'balance'
 				? 16
@@ -130,7 +122,6 @@ export default class Picture extends Component<PictureSignature> {
 		);
 	}
 
-	/** A new pose on the same instrument springs there; a new instrument jumps. */
 	settle = modifier(() => {
 		const target = this.target;
 		const key = JSON.stringify(target);
@@ -149,14 +140,12 @@ export default class Picture extends Component<PictureSignature> {
 		const began = performance.now();
 		const step = (now: number) => {
 			const progress = Math.min(1, (now - began) / settleMs);
-			// spring overshoot jumped weights
 			const eased = easeOutCubic(progress);
 			this.shown = {
 				value:
 					start.value +
 					(target.value - start.value) * eased,
 				lo: start.lo + (target.lo - start.lo) * eased,
-				// zoom eases logarithmically
 				span: Math.exp(
 					Math.log(start.span) +
 						(Math.log(target.span) -

@@ -18,7 +18,6 @@ export interface Operand {
 	value: bigint;
 	sign?: string;
 	role: Role;
-	/** Names the operand's lamps for assistive technology. */
 	label: string;
 }
 
@@ -35,7 +34,6 @@ interface RegisterSignature {
 		onInput: (text: string) => void;
 		onStep: (direction: -1 | 1) => void;
 		onToggle: (operand: number, bit: number) => void;
-		/** The picture's width and the entry's height, for the stacked band. */
 		onMeasure: (width: number, entry: number) => void;
 	};
 }
@@ -60,20 +58,12 @@ const inputMode = modifier((element: HTMLElement, [mode]: [string]) => {
 	input.autocapitalize = 'characters';
 });
 
-// a click places the caret after focus, so select on the next frame
 function selectAll(event: FocusEvent) {
 	const field = event.target;
 	if (field instanceof HTMLInputElement)
 		requestAnimationFrame(() => field.select());
 }
 
-/**
- * BitRegister with the number typed over it: the lamps most significant bit
- * first, in nibbles with each nibble's hex digit under it and the bit numbers
- * over the first operand; the decimal value is the figure. With an operation
- * it is set as a sum: A, the sign and B, a rule, and the result. A click on a
- * lamp of A or B flips that bit.
- */
 export default class Register extends Component<RegisterSignature> {
 	@tracked area = { width: 0, height: 0 };
 	#width = 0;

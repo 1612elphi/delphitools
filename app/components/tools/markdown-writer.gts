@@ -59,7 +59,6 @@ import './markdown-writer/markdown-writer.css';
 const STORAGE_KEY = 'delphitools-scratchpad';
 const ACCEPT = acceptAttr(TEXT_ACCEPT);
 const saveDelay = 1000;
-// copy all ignores the limit
 const listed = 50;
 // ponytail: marks past this stay unlit; the count stays exact
 const markLimit = 10_000;
@@ -135,7 +134,6 @@ function writeStore(text: string) {
 	}
 }
 
-/** The port of TextScratchpadViewController, ScratchpadEditor as the picture. */
 export default class MarkdownWriterTool extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -150,12 +148,10 @@ export default class MarkdownWriterTool extends Component {
 	#editor?: HTMLTextAreaElement;
 	#file?: HTMLInputElement;
 	#saveTimer?: number;
-	// a text from the query never touches the saved draft (iOS shared text)
 	#persists = true;
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
-		// ?padText= ?padFind= ?padRegex=1 ?padExtract=emails|urls|numbers: the iOS launch arguments
 		const query = new URLSearchParams(window.location.search);
 		const padText = query.get('padText');
 		if (padText !== null) {
@@ -288,7 +284,6 @@ export default class MarkdownWriterTool extends Component {
 		}, saveDelay);
 	};
 
-	// insertText keeps the whole change as one step of the browser's undo
 	#write(next: string) {
 		const editor = this.#editor;
 		if (!editor || next === editor.value) return;
@@ -299,7 +294,6 @@ export default class MarkdownWriterTool extends Component {
 		editor.focus({ preventScroll: true });
 		editor.select();
 		document.execCommand('insertText', false, next);
-		// insertText no-op fallback
 		if (editor.value !== next) editor.value = next;
 		editor.setSelectionRange(caret, caret);
 		if (scroller) scroller.scrollTop = top;
@@ -378,7 +372,6 @@ export default class MarkdownWriterTool extends Component {
 		if (!this.isDestroying) this.#write(text);
 	};
 
-	// a file dropped anywhere on the tool; text drops stay with the editor
 	drop = (event: DragEvent) => {
 		const file = event.dataTransfer?.files[0];
 		if (!file) return;

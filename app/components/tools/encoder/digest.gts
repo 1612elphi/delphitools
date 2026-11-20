@@ -9,14 +9,11 @@ interface DigestSignature {
 	Args: {
 		name: string;
 		bits: number;
-		/** Undefined for no input: the grid shows the digest's size, empty. */
 		bytes?: Uint8Array;
-		/** Bits that flipped since the last digest of this algorithm. */
 		flipped?: number;
 	};
 }
 
-// .enc-digest-head: 12 px over a 32 px header
 const header = 44;
 const padding = 16;
 const flipMs = 320;
@@ -34,7 +31,6 @@ const observe = modifier(
 
 const shown = new WeakMap<HTMLElement, string>();
 
-/** A changed digit turns over; the first digest of an algorithm does not. */
 const turn = modifier(
 	(element: HTMLElement, [face, index]: [string, number]) => {
 		const before = shown.get(element);
@@ -63,11 +59,6 @@ const turn = modifier(
 	},
 );
 
-/**
- * DigestGrid: the digest as its hex digits in a grid, each cell shaded by
- * the digit's value. A new input turns over the digits that changed, and
- * the figure counts the bits that flipped.
- */
 export default class Digest extends Component<DigestSignature> {
 	@tracked area = { width: 0, height: 0 };
 

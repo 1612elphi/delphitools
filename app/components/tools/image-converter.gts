@@ -72,7 +72,6 @@ const whole = (value: number) => String(Math.round(value));
 const colourOf = (text: string): Rgb => parseHex(text) ?? [1, 1, 1];
 const is = (a: unknown, b: unknown) => a === b;
 
-// the document paste (filePaste) would load a drop-zone paste a second time
 const keepPaste = (event: Event) => event.stopPropagation();
 
 const Trash = <template><IconSvg @name="trash-2" /></template>;
@@ -128,11 +127,6 @@ function divisor(a: number, b: number): number {
 	return b ? divisor(b, a % b) : a;
 }
 
-/**
- * ?convFormat=<PNG|JPEG|WebP|JXL|GIF|BMP|TIFF|ICO|ICNS> ?convQuality=<1-100>
- * ?convResize=<0 original, 1 percentage, 2 custom> ?convPercent=<1-1000>
- * ?convFlatten=<hex> ?convSample: the iOS launch arguments, with a drawn image
- */
 function launchFlags() {
 	const query = new URLSearchParams(window.location.search);
 	const settings = { ...DEFAULTS };
@@ -164,7 +158,6 @@ function launchFlags() {
 	return { settings, sample: query.has('convSample') };
 }
 
-/** The port of ImageConverterViewController, on the web tool's encoders, batch and zip. */
 export default class ImageConverter extends Component {
 	@tracked sources: Source[] = [];
 	@tracked current?: Source;
@@ -173,7 +166,6 @@ export default class ImageConverter extends Component {
 	@tracked failed = false;
 	@tracked busy = false;
 	@tracked loadError = '';
-	// files added after the first; each one replays the arrival
 	@tracked arrivals = 0;
 	drop = new Drop(ACCEPT, (files) => void this.add(files), true);
 
@@ -274,7 +266,6 @@ export default class ImageConverter extends Component {
 		];
 	}
 
-	// iOS: the output's own shape, from 0.8 to 1.5; empty, the slot's 3:2
 	get aspect() {
 		const output = this.output;
 		if (!output) return 1.5;
@@ -330,7 +321,6 @@ export default class ImageConverter extends Component {
 	picked = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const files = [...(input.files ?? [])];
-		// the same file twice fires change again
 		input.value = '';
 		void this.add(files);
 	};
@@ -342,7 +332,6 @@ export default class ImageConverter extends Component {
 	add = async (files: File[]) => {
 		const images = files.filter((f) => matchesAccept(f, ACCEPT));
 		if (!images.length) return;
-		// sequential; bounds memory
 		const loaded: (Source | string)[] = [];
 		for (const file of images) loaded.push(await readSource(file));
 		if (isDestroying(this)) {
@@ -439,7 +428,6 @@ export default class ImageConverter extends Component {
 	pickQuantisation = (index: number) =>
 		this.change({ gifQuantisation: QUANTISATIONS[index]!.value });
 
-	// iOS: a locked side follows the typed one; the batch keeps the typed side
 	setWidth = (width: number) => {
 		this.settings = {
 			...this.settings,
@@ -461,8 +449,7 @@ export default class ImageConverter extends Component {
 	setLock = (lock: boolean) => {
 		const { target } = this;
 		this.settings = lock
-			? // iOS: relocking follows the width
-				{ ...this.settings, lock, drives: 'width' }
+			? { ...this.settings, lock, drives: 'width' }
 			: {
 					...this.settings,
 					lock,
@@ -525,7 +512,6 @@ export default class ImageConverter extends Component {
 		return image;
 	}
 
-	// live on every change; one encode in flight, the newest settings run next
 	#convert() {
 		if (!this.current) return;
 		if (this.busy) {
@@ -1145,7 +1131,6 @@ export default class ImageConverter extends Component {
 						/>
 					{{/if}}
 				</CanonRows>
-				{{! the empty picture and the Files cell open it }}
 				{{! template-lint-disable require-input-label }}
 				<input
 					type="file"

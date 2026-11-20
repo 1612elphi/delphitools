@@ -13,20 +13,16 @@ interface GlossEditorSignature {
 	Args: {
 		text: string;
 		pieces: GlossPiece[];
-		/** token index, not char */
 		selected: number | null;
 		onInput: (text: string) => void;
 		onWord: (index: number) => void;
-		/** picture height in px */
 		onHeight: (height: number) => void;
 	};
 	Blocks: { gloss: [piece: GlossPiece] };
 }
 
-/** Height of the gloss picture once collapsed, in px. */
 export const collapsedHeight = 96;
 
-/** narrows colliding gloss runs */
 function fit(text: HTMLElement) {
 	const words = [...text.querySelectorAll<HTMLElement>('.gl-word')];
 	const glosses = words.map((w) =>
@@ -37,7 +33,6 @@ function fit(text: HTMLElement) {
 	const lineEnd =
 		text.getBoundingClientRect().right -
 		parseFloat(style.paddingRight);
-	// ruling overhang past spelling
 	const tail = 0.6 * parseFloat(style.fontSize);
 	const boxes = words.map((word, i) => {
 		const rect = word.getBoundingClientRect();
@@ -121,13 +116,7 @@ const fitGlosses = modifier((text: HTMLElement, [pieces]: [GlossPiece[]]) => {
 	};
 });
 
-/**
- * The English text as typed, each word with its gloss (Shavian, IPA) set
- * above it; a transparent textarea over the spelling takes the typing, and a
- * word's gloss picks the word.
- */
 export default class GlossEditor extends Component<GlossEditorSignature> {
-	// trailing newline adds line
 	get trailingLine() {
 		return this.args.text.endsWith('\n');
 	}

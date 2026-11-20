@@ -52,7 +52,6 @@ const treeLimit = 5000;
 const CopyIcon = <template><IconSvg @name="copy" /></template>;
 const DownloadIcon = <template><IconSvg @name={{(downloadIcon)}} /></template>;
 
-// iOS -jsonSample launch argument
 const samples: Record<string, string> = {
 	invalid: '{\n  "name": "delphitools",\n  "tools": ["regex-tester", "text-diff",]\n}',
 	deep: Array.from({ length: 12 }, (_, level) => level).reduce(
@@ -66,7 +65,6 @@ const indentIds: IndentId[] = INDENT_OPTIONS.map((option) => option.id);
 const indentLabels = INDENT_OPTIONS.map((option) => option.label);
 const views = ['Text', 'Tree'];
 
-/** The port of JSONFormatterViewController, with the source typed in the picture. */
 export default class JsonFormatterTool extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -75,7 +73,6 @@ export default class JsonFormatterTool extends Component {
 	@tracked indent: IndentId = '2';
 	@tracked tree = false;
 	@tracked collapsed: ReadonlySet<string> = new Set();
-	// index path the picture is zoomed to
 	@tracked focus = 'root';
 	@tracked selected: string | null = null;
 	@tracked selectedLine: number | null = null;
@@ -83,8 +80,6 @@ export default class JsonFormatterTool extends Component {
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
-		// ?jsonSample=1|invalid|deep ?jsonText= ?jsonIndent=0-3 ?jsonTree=1
-		// ?jsonCollapse=<path> ?jsonTaps=root.3|root.3.1: the iOS launch arguments
 		const query = new URLSearchParams(window.location.search);
 		const sample = query.get('jsonSample');
 		this.source =
@@ -99,7 +94,6 @@ export default class JsonFormatterTool extends Component {
 		const collapse = query.get('jsonCollapse');
 		if (collapse) this.collapsed = new Set([collapse]);
 		const taps = query.get('jsonTaps')?.split('|') ?? [];
-		// after the first render, which reads the state a tap writes
 		if (taps.length)
 			requestAnimationFrame(() => {
 				for (const path of taps) {
@@ -302,7 +296,6 @@ export default class JsonFormatterTool extends Component {
 		this.#resetFocus();
 	}
 
-	// a file dropped anywhere on the tool; text drops stay with the editor
 	drop = (event: DragEvent) => {
 		const file = event.dataTransfer?.files[0];
 		if (!file) return;
@@ -350,7 +343,6 @@ export default class JsonFormatterTool extends Component {
 			this.shape?.cells.find((cell) => cell.path === path)
 				?.line ?? null;
 		if (this.tree) {
-			// opens every collapsed row above the target
 			const above = [...this.collapsed].filter((open) =>
 				path.startsWith(`${open}.`),
 			);
@@ -381,7 +373,6 @@ export default class JsonFormatterTool extends Component {
 		);
 
 	measured = (height: number) => {
-		// 2 px rule under the picture
 		if (height + 2 !== this.pictureHeight)
 			this.pictureHeight = height + 2;
 	};

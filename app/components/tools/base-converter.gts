@@ -36,7 +36,6 @@ const radixNames = radixes.map((r) => r.name);
 const wordTitles = words.map(String);
 const operationTitles = operations.map((o) => o.title);
 
-/** The port of BaseConverterViewController, with the number typed in the picture. */
 export default class BaseConverter extends Component {
 	@tracked radixIndex = 0;
 	@tracked chosenWord = 16;
@@ -48,7 +47,6 @@ export default class BaseConverter extends Component {
 	@tracked width = 0;
 	@tracked entryHeight = 0;
 
-	// ?baseValue= ?baseRadix=0-3 ?baseWord=8|16|32|64 ?baseBitwise=1 ?baseOp=0-5 ?baseB= ?baseShift=: the iOS launch arguments
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -222,8 +220,6 @@ export default class BaseConverter extends Component {
 		return value === undefined ? undefined : value.toString();
 	}
 
-	/** In one column the picture is as tall as the register needs, under the entry. */
-	// iOS collapses the register alone to 200; the entry rides on top
 	get collapsedHeight() {
 		return Math.round(this.entryHeight + 200);
 	}
@@ -237,7 +233,6 @@ export default class BaseConverter extends Component {
 			this.width,
 			460,
 		);
-		// 4: the canvas rules
 		return Math.round(
 			this.entryHeight +
 				Math.min(Math.max(register, 200), 460) +

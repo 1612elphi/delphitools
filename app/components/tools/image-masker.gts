@@ -91,7 +91,6 @@ async function decodeSvg(file: File) {
 	return decode(new Blob([text], { type: 'image/svg+xml' }));
 }
 
-// ?maskSVG: the iOS -maskSVG path, an L-shaped notch
 const notch = () =>
 	new File(
 		[
@@ -101,7 +100,6 @@ const notch = () =>
 		{ type: 'image/svg+xml' },
 	);
 
-/** The port of ImageMaskerViewController, with the web tool's 8192 px export and wheel zoom. */
 export default class ImageMasker extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -121,7 +119,6 @@ export default class ImageMasker extends Component {
 	#loading = 0;
 	#maskLoading = 0;
 
-	// ?maskShape=<id> ?maskScale=<0-3> ?maskSample ?maskSVG ?maskZoom=<factor> ?maskOffset=<x,y>: the iOS -maskShape, -maskScale, -maskSample, -maskSVG, -maskZoom, -maskOffset launch arguments, with drawn files
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -174,7 +171,6 @@ export default class ImageMasker extends Component {
 		return side(this.source?.image, this.zoom, this.scale);
 	}
 
-	/** The export's box in the cut square. */
 	@cached
 	get clip() {
 		return clipRect(this.cut, this.side);
@@ -219,7 +215,6 @@ export default class ImageMasker extends Component {
 		);
 	}
 
-	/** The framed image in a square, for the shape cells. */
 	@cached
 	get thumb() {
 		const image = this.source?.image;
@@ -242,7 +237,6 @@ export default class ImageMasker extends Component {
 	picked = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
-		// the same file twice fires change again
 		input.value = '';
 		if (file) this.load(file);
 	};
@@ -580,7 +574,6 @@ export default class ImageMasker extends Component {
 						</CanonRow>
 					{{/if}}
 				</CanonRows>
-				{{! the empty picture opens it }}
 				{{! template-lint-disable require-input-label }}
 				<input
 					type="file"

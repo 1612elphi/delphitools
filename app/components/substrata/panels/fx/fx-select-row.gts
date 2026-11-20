@@ -1,4 +1,5 @@
 import Component from '@glimmer/component';
+import CanonMenuCell from 'delphicanon/components/canon-menu-cell';
 import CanonRow from 'delphicanon/components/canon-row';
 import CanonSegmented from 'delphicanon/components/canon-segmented';
 import type { SelectParam } from 'delphitools-v2/lib/substrata/param-spec';
@@ -8,7 +9,6 @@ interface Signature {
 	Args: { ctx: FxContext; key: string; bare?: boolean };
 }
 
-// iOS FxBlock.row(.select); @bare drops the title for a row of its own
 export default class FxSelectRow extends Component<Signature> {
 	get spec() {
 		return specOf(this.args.ctx, this.args.key) as SelectParam;
@@ -16,6 +16,10 @@ export default class FxSelectRow extends Component<Signature> {
 
 	get items() {
 		return this.spec.options.map((o) => o.label);
+	}
+
+	get long() {
+		return this.spec.options.length > 4;
 	}
 
 	get selected() {
@@ -50,12 +54,21 @@ export default class FxSelectRow extends Component<Signature> {
 				data-fx-param={{@key}}
 				as |titleId|
 			>
-				<CanonSegmented
-					aria-labelledby={{titleId}}
-					@items={{this.items}}
-					@selected={{this.selected}}
-					@onChange={{this.pick}}
-				/>
+				{{#if this.long}}
+					<CanonMenuCell
+						@labelledBy={{titleId}}
+						@items={{this.items}}
+						@selected={{this.selected}}
+						@onChange={{this.pick}}
+					/>
+				{{else}}
+					<CanonSegmented
+						aria-labelledby={{titleId}}
+						@items={{this.items}}
+						@selected={{this.selected}}
+						@onChange={{this.pick}}
+					/>
+				{{/if}}
 			</CanonRow>
 		{{/if}}
 	</template>

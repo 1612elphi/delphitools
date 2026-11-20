@@ -27,6 +27,7 @@ import { downloadBlob } from 'delphitools-v2/lib/download';
 import {
 	DEFAULT_IMPOSITION_CONFIG,
 	DEFAULT_SIGNATURE_PAGES,
+	DIRECTION_AWARE_LAYOUTS,
 	DUPLEX_AWARE_LAYOUTS,
 	IMPOSITION_LAYOUTS,
 	MM_TO_POINTS,
@@ -75,9 +76,9 @@ const SCALINGS: Fit[] = ['fit', 'fill', 'actual'];
 const SCALING_LABELS = ['Fit', 'Fill', 'Actual size'];
 const FLIPS = ['long-edge', 'short-edge'] as const;
 const FLIP_LABELS = ['Long edge', 'Short edge'];
+const DIRECTION_LABELS = ['Left to right', 'Right to left'];
 const ORIENTATIONS = ['portrait', 'landscape'] as const;
 const ORIENTATION_LABELS = ['Portrait', 'Landscape'];
-// ios ImpositionLayoutID.name
 const NAMES: Record<string, string> = {
 	'saddle-stitch': '2-up Saddle Stitch',
 	'perfect-bind': '2-up Perfect Bind',
@@ -92,9 +93,7 @@ const FOLDED = new Set(['saddle-stitch', 'perfect-bind', 'step-and-repeat']);
 const FALLBACK_PAPER = PAPER_SIZES[0]!;
 const MIN_PAPER_MM = 50;
 const MAX_PAPER_MM = 1000;
-/** px, ios renderStrip */
 const STRIP_HEIGHT = 140;
-// ios: one sheet's worth
 const SHARP_LIMIT = 32;
 
 const mm = (value: number) => `${Math.round(value)} mm`;
@@ -119,7 +118,6 @@ function typing(target: EventTarget | null) {
 	);
 }
 
-/** The port of ImposerViewController, on the web tool's imposition engine and pdf-lib export. */
 export default class Imposer extends Component {
 	drop = new Drop(ACCEPT, (file) => this.load(file));
 
@@ -144,6 +142,7 @@ export default class Imposer extends Component {
 	@tracked customCols = 2;
 	@tracked signaturePages = DEFAULT_SIGNATURE_PAGES;
 	@tracked duplexFlip: 'long-edge' | 'short-edge' = 'long-edge';
+	@tracked rtl = false;
 	@tracked blankPageCount = 12;
 
 	@tracked activeSheet = 0;
@@ -155,9 +154,7 @@ export default class Imposer extends Component {
 	@tracked output: Output | null = null;
 
 	@tracked stripPages: CanonPage[] = [];
-	/** bumps per page picture */
 	@tracked version = 0;
-	/** bumps to redraw strip */
 	@tracked stripVersion = 0;
 
 	#bytes: Uint8Array | null = null;
@@ -171,7 +168,6 @@ export default class Imposer extends Component {
 	#stripTimer?: number;
 	#stripDrawn = false;
 
-	// ?imp* ios launch arguments
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -189,6 +185,7 @@ export default class Imposer extends Component {
 		if (duplex !== undefined)
 			this.duplexFlip =
 				duplex === 1 ? 'short-edge' : 'long-edge';
+		this.rtl = number('impRtl') === 1;
 		const orientation = number('impOrientation');
 		if (orientation !== undefined)
 			this.orientation =
@@ -250,6 +247,10 @@ export default class Imposer extends Component {
 		return DUPLEX_AWARE_LAYOUTS.has(this.layoutId);
 	}
 
+	get directionAware() {
+		return DIRECTION_AWARE_LAYOUTS.has(this.layoutId);
+	}
+
 	get config(): ImpositionConfig {
 		return {
 			...DEFAULT_IMPOSITION_CONFIG,
@@ -276,6 +277,7 @@ export default class Imposer extends Component {
 				this.layoutId === 'perfect-bind'
 					? this.signaturePages
 					: undefined,
+			rtl: this.rtl,
 		};
 	}
 
@@ -317,7 +319,6 @@ export default class Imposer extends Component {
 		return this.layoutId === 'perfect-bind';
 	}
 
-	// ios supportsCreep
 	get hasCreep() {
 		return (
 			this.layoutId === 'saddle-stitch' ||
@@ -336,6 +337,10 @@ export default class Imposer extends Component {
 
 	get scalingIndex() {
 		return SCALINGS.indexOf(this.scaling);
+	}
+
+	get directionIndex() {
+		return this.rtl ? 1 : 0;
 	}
 
 	get flipIndex() {
@@ -376,7 +381,6 @@ export default class Imposer extends Component {
 		this.clear();
 		const token = this.#token;
 		this.file = file;
-		// keep ?impSheet, ?impBack
 		if (!reset) [this.activeSheet, this.isFlipped] = kept;
 		void this.#read(file, token);
 	}
@@ -409,7 +413,6 @@ export default class Imposer extends Component {
 			if (token !== this.#token) return;
 			if (picture) this.#thumbs.set(i + 1, picture);
 			if (this.activePages.includes(i + 1)) this.version++;
-			// ios: redraw froze 400pp
 			if ((i + 1) % 32 === 0 || i === pdf.numPages - 1)
 				this.stripVersion++;
 		}
@@ -457,7 +460,6 @@ export default class Imposer extends Component {
 		this.#pageSizes.clear();
 	}
 
-	// ios change {}
 	#invalidate() {
 		this.#job++;
 		this.busy = false;
@@ -496,6 +498,11 @@ export default class Imposer extends Component {
 
 	setScaling = (index: number) => {
 		this.scaling = SCALINGS[index] ?? 'fit';
+		this.#invalidate();
+	};
+
+	setDirection = (index: number) => {
+		this.rtl = index === 1;
 		this.#invalidate();
 	};
 
@@ -594,7 +601,6 @@ export default class Imposer extends Component {
 	}
 
 	get paintOptions() {
-		// tracks version for repaint
 		void this.version;
 		const pictures = new Map<number, Picture>();
 		for (const page of this.activePages) {
@@ -722,11 +728,9 @@ export default class Imposer extends Component {
 		})();
 	});
 
-	// 0.12 s debounce, ios
 	strip = modifier(
 		(
 			_element: Element,
-			// unread args: no rerun
 			[result, , version]: [
 				ImpositionResult,
 				ImpositionConfig,
@@ -963,6 +967,17 @@ export default class Imposer extends Component {
 								@onChange={{this.setSignaturePages}}
 							/>
 						</CanonRow>
+					{{/if}}
+					{{#if this.directionAware}}
+						<CanonHeading
+							@text="Reading direction"
+						/>
+						<CanonSegmented
+							class="imp-direction"
+							@items={{DIRECTION_LABELS}}
+							@selected={{this.directionIndex}}
+							@onChange={{this.setDirection}}
+						/>
 					{{/if}}
 					{{#if this.duplexAware}}
 						<CanonHeading

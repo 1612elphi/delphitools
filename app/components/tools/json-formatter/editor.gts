@@ -17,11 +17,9 @@ interface EditorSignature {
 	Args: {
 		text: string;
 		fileName: string | null;
-		/** 1-based line of the parse error, if any. */
 		errorLine?: number;
 		onInput: (text: string) => void;
 		onFile: (file: File) => void;
-		/** The picture's own height in px at its current width. */
 		onHeight: (height: number) => void;
 	};
 }
@@ -38,17 +36,12 @@ interface Line {
 	lit: boolean;
 }
 
-/**
- * The source as typed, numbered and coloured by token, the parse error's
- * line tinted; a transparent textarea over it takes the typing.
- */
 export default class Editor extends Component<EditorSignature> {
 	@cached
 	get lines(): Line[] {
 		const { text, errorLine } = this.args;
 		const colours = text.length <= colourLimit;
 		return text.split('\n').map((line, index) => ({
-			// an empty line keeps its height
 			runs: line
 				? colours
 					? tokenRuns(line)
@@ -70,7 +63,6 @@ export default class Editor extends Component<EditorSignature> {
 	chooseFile = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
-		// the same file can be chosen again
 		input.value = '';
 		if (file) this.args.onFile(file);
 	};

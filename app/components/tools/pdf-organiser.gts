@@ -62,11 +62,8 @@ interface Source {
 	name: string;
 	stem: string;
 	bytes: number;
-	// pdf.js detaches its input
 	lib: PDFDocument;
-	/** pdf points, displayed */
 	sizes: Size[];
-	/** object urls, lazily drawn */
 	pictures: string[];
 }
 
@@ -74,7 +71,6 @@ interface Entry {
 	id: number;
 	source: number;
 	page: number;
-	/** degrees, atop page rotation */
 	rotation: number;
 }
 
@@ -91,7 +87,6 @@ const query = (name: string) =>
 
 const pagesLabel = (n: number) => (n === 1 ? '1 page' : `${n} pages`);
 
-/** The port of PDFOrganiserViewController, on the web tool's pdf-lib build. */
 export default class PdfOrganiser extends Component {
 	drop = new Drop(ACCEPT, (files) => this.add(files), true);
 
@@ -99,7 +94,6 @@ export default class PdfOrganiser extends Component {
 	@tracked entries: Entry[] = [];
 	@tracked reading = 0;
 	@tracked readFailure = '';
-	// orgMode 1: every page
 	@tracked every = query('orgMode') === '1';
 	@tracked rangeSpec = query('orgRanges') ?? '';
 	@tracked merging = false;
@@ -107,7 +101,6 @@ export default class PdfOrganiser extends Component {
 	@tracked merged: Merged | null = null;
 	@tracked splitting = false;
 	@tracked splitFailed = false;
-	/** entry ids, not indices */
 	@tracked picked: number[] = [];
 
 	#strip?: HTMLElement;
@@ -226,7 +219,6 @@ export default class PdfOrganiser extends Component {
 		if (!pdfs.length || this.busy) return;
 		this.readFailure = '';
 		this.reading += pdfs.length;
-		// serial: pages stay grouped
 		this.#queue = this.#queue.then(() => this.#read(pdfs, at));
 	};
 
@@ -234,7 +226,6 @@ export default class PdfOrganiser extends Component {
 
 	async #read(files: File[], at: number) {
 		let insertAt = at;
-		// sequential keeps picked order
 		for (const file of files) {
 			const source = await load(file).catch(() => null);
 			if (this.isDestroyed) return;
@@ -289,7 +280,6 @@ export default class PdfOrganiser extends Component {
 		);
 	};
 
-	// stale merge, ios job.reset
 	#change(entries: Entry[]) {
 		this.entries = entries;
 		this.picked = this.picked.filter((id) =>
@@ -409,7 +399,6 @@ export default class PdfOrganiser extends Component {
 		);
 	};
 
-	// reapply after kit rebuilds
 	markPicked = modifier((strip: HTMLElement, [indices]: [number[]]) => {
 		const picked = new Set(indices);
 		const mark = () => {
@@ -476,7 +465,6 @@ export default class PdfOrganiser extends Component {
 				)?.focus(),
 			);
 		};
-		// kit onSelect lacks event
 		const onClick = (event: MouseEvent) => {
 			this.#extend =
 				event.shiftKey ||
@@ -858,7 +846,6 @@ function release(source: Source) {
 	for (const url of source.pictures) if (url) URL.revokeObjectURL(url);
 }
 
-// ArrayBufferLike not BlobPart
 function pdfBlob(bytes: Uint8Array) {
 	return new Blob([new Uint8Array(bytes)], { type: 'application/pdf' });
 }

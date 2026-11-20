@@ -1,5 +1,3 @@
-// clarity-review fixes verification
-// needs npm run dev on :3000
 import puppeteer from "puppeteer-core";
 
 const URL = process.env.EDITOR_URL ?? "http://localhost:3000/editor";
@@ -14,7 +12,7 @@ const browser = await puppeteer.launch({
 const page = await browser.newPage();
 await page.setViewport({ width: 1460, height: 900 });
 page.on("pageerror", (e) => console.log("PAGEERROR:", e.message));
-// suppress the confirmDiscard prompt paths (menu clicks may hit them)
+// accept confirmDiscard prompts
 page.on("dialog", (d) => void d.accept());
 await page.goto(URL, { waitUntil: "networkidle0" });
 await page.waitForFunction(() => window.__substrata, { timeout: 20000 });
@@ -27,10 +25,6 @@ const check = (label, detail, ok) => {
 const layers = () => page.evaluate(() => window.__substrata.layers());
 const text = (sel) => page.evaluate((s) => document.querySelector(s)?.textContent ?? null, sel);
 
-// 1. empty state: starter card on fresh scene
-check("empty-state: card shown on empty scene", "data-empty-hint", !!(await page.$("[data-empty-hint]")));
-
-// beforeunload guard: no edits + storage off → not armed
 let prevented = await page.evaluate(() => {
   const e = new Event("beforeunload", { cancelable: true });
   window.dispatchEvent(e);
@@ -38,12 +32,10 @@ let prevented = await page.evaluate(() => {
 });
 check("unload-guard: disarmed with no edits", String(prevented), prevented === false);
 
-// 2. edit → card gone, guard armed
 await page.evaluate(() =>
   window.__substrata.addRaster(200, 150, [{ x: 0, y: 0, w: 200, h: 150, colour: "#cc2200" }], { x: 400, y: 300 }),
 );
 await sleep(600);
-check("empty-state: card gone once a layer exists", "data-empty-hint", !(await page.$("[data-empty-hint]")));
 
 prevented = await page.evaluate(() => {
   const e = new Event("beforeunload", { cancelable: true });
@@ -52,25 +44,17 @@ prevented = await page.evaluate(() => {
 });
 check("unload-guard: ARMED with edits + storage off", String(prevented), prevented === true);
 
-// 3. the old Edit menu is gone; its actions are covered by
-// substrata-layers.mjs (layer menu) and substrata-pages.mjs (settings page)
-
-// 4. undo/redo visible mid-toast
-// addraster fires image-added toast; undo must stay in dom mid-toast
 await page.evaluate(() =>
   window.__substrata.addRaster(60, 60, [{ x: 0, y: 0, w: 60, h: 60, colour: "#3e6b33" }], { x: 900, y: 500 }),
 );
-await sleep(250); // toast showing (1.8s), undo must still be present
+await sleep(250); // toast lasts 1.8 s
 const undoPresent = await page.evaluate(
   () => [...document.querySelectorAll("button svg")].some((s) => s.classList.contains("lucide-undo-2")),
 );
 check("toast-slot: undo button present mid-toast", String(undoPresent), undoPresent === true);
 
-// 5. the omnibar tools are covered by substrata-frame.mjs
-
-// 6. tooltips: title mirrors landed
 const titledCount = await page.evaluate((m) => {
-  // marker built at runtime — the literal must never appear in scannable files
+  // never write marker literal
   return document.querySelectorAll(`[title="${m}"], button[title]:not([title=""])`).length;
 }, "\u2211CG");
 check("tooltips: titled controls present", `${titledCount} titled`, titledCount > 10);

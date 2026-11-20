@@ -39,7 +39,6 @@ export const menu: CanonMenuEntry[] = [
 	{ title: 'Use', icon: UseIcon },
 ];
 
-/** The tape, newest first: a click takes the expression back; the context menu copies or uses the result. */
 const Tape: TOC<TapeSignature> = <template>
 	{{#each @entries key="id" as |entry|}}
 		<CanonContextMenu

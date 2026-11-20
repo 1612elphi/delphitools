@@ -18,13 +18,11 @@ interface Signature {
 	Args: {
 		ctx: FxContext;
 		key: string;
-		// a flat fill instead of the filter's gradient
 		fill?: string;
 		sizingTitle?: string;
 	};
 }
 
-// iOS FxColourEditor.sliderRow
 export default class FxColourSliderRow extends Component<Signature> {
 	get spec() {
 		return specOf(this.args.ctx, this.args.key) as SliderParam;

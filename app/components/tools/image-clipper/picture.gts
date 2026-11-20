@@ -14,15 +14,10 @@ import { margins } from 'delphitools-v2/components/tools/image-clipper/engine';
 
 export interface PictureSignature {
 	Args: {
-		/** Object URL of the source; none shows the slot that takes a file. */
 		url?: string;
-		/** The source's pixels, or the blank sheet's. */
 		pixels: Size;
-		/** In image pixels; null when nothing is opaque. */
 		kept: Rect | null;
-		/** A new source springs the box in from the image edge. */
 		springs: boolean;
-		/** A file is dragged over the tool. */
 		over: boolean;
 		onChoose: () => void;
 	};
@@ -42,11 +37,6 @@ function box({ x, y, width, height }: Rect) {
 	);
 }
 
-/**
- * The source fitted to the pane over checks, the trimmed bands hatched, the
- * kept box outlined and measured, each band's margin inside it. The port of
- * iOS ClipBoard.
- */
 export default class Picture extends Component<PictureSignature> {
 	@tracked area: Rect = { x: 0, y: 0, width: 0, height: 0 };
 
@@ -75,7 +65,6 @@ export default class Picture extends Component<PictureSignature> {
 		return box(this.inner ?? this.frame);
 	}
 
-	/** The frame less the kept box, as an even-odd polygon in the frame's own box. */
 	get hatchStyle() {
 		const { frame, inner } = this;
 		const style = box(frame).toString();

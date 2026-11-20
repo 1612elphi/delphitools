@@ -34,20 +34,16 @@ import Ribbons, {
 } from 'delphitools-v2/components/tools/text-diff/ribbons';
 import './text-diff/text-diff.css';
 
-// skip above cap; lcs is o(n²) in lines
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
 const CopyIcon = <template><IconSvg @name="copy" /></template>;
 const DownloadIcon = <template><IconSvg @name={{(downloadIcon)}} /></template>;
 
-// iOS -diffSample launch argument
 const sample = {
 	old: '# delphitools\nPrivacy-first tools for designers.\nNothing leaves the device.\n\nTools:\n- Colour converter\n- Regex tester\n- Paper sizes\n- Unit converter\n\nEvery tool works offline, on iPhone and iPad.\nVersion 1.0, built in Karlsruhe.',
 	new: '# delphitools\nPrivacy-first tools for designers and developers.\nNothing leaves the device.\n\nTools:\n- Colour converter\n- Regex tester\n- Text diff\n- JSON formatter\n- Paper sizes\n\nEvery tool works offline, on iPhone, iPad and iPhone Duo.\nVersion 1.1, built in Karlsruhe.',
 };
 
-/** The port of TextDiffViewController, with both texts typed in the picture. */
-// characters, both sides
 const LARGE = 20_000;
 const SETTLE_MS = 150;
 
@@ -63,7 +59,6 @@ export default class TextDiffTool extends Component {
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
-		// ?diffSample=1 ?diffOld= ?diffNew= ?diffWrap=0: the iOS launch arguments
 		const query = new URLSearchParams(window.location.search);
 		const sampled = query.has('diffSample');
 		this.oldText =
@@ -80,7 +75,6 @@ export default class TextDiffTool extends Component {
 		clearTimeout(this.#settleTimer);
 	}
 
-	// large texts debounce typing
 	#settle() {
 		clearTimeout(this.#settleTimer);
 		const run = () => (this.diffed = [this.oldText, this.newText]);
@@ -103,7 +97,6 @@ export default class TextDiffTool extends Component {
 	@cached
 	get marks() {
 		const [old, next] = this.diffed;
-		// stale diff: no marks
 		if (old !== this.oldText || next !== this.newText)
 			return { old: [], new: [] };
 		return sideMarks(this.diff, this.spans);
@@ -145,14 +138,12 @@ export default class TextDiffTool extends Component {
 			type: line.type,
 			oldNum: line.type === 'add' ? '' : String(line.oldLine),
 			newNum: line.type === 'del' ? '' : String(line.newLine),
-			// U+2212 aligns under monospaced + sign
 			marker:
 				line.type === 'add'
 					? '+'
 					: line.type === 'del'
 						? '−'
 						: ' ',
-			// an empty line still a row tall
 			pieces: line.text
 				? pieces(line.text, this.spans[index]!)
 				: [{ text: ' ', on: false }],
@@ -177,10 +168,8 @@ export default class TextDiffTool extends Component {
 		if (!this.isDestroying) this.setText(side, text);
 	}
 
-	// a file pasted or handed over loads as the original, as on the web and iOS
 	readOriginal = (file: File) => this.readFile('old', file);
 
-	// a file dropped outside both sides; text drops stay with the editors
 	drop = (event: DragEvent) => {
 		const file = event.dataTransfer?.files[0];
 		if (!file || event.defaultPrevented) return;
@@ -217,7 +206,6 @@ export default class TextDiffTool extends Component {
 		);
 
 	measured = (height: number) => {
-		// 2 px rule under the picture
 		if (height + 2 !== this.pictureHeight)
 			this.pictureHeight = height + 2;
 	};

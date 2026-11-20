@@ -60,16 +60,12 @@ const frameLabel = (n: number) => (n === 1 ? '1 frame' : `${n} frames`);
 const tc = (seconds: number) => formatTimestamp(seconds * 1000, '.');
 const whole = (value: number) => String(Math.round(value));
 
-// ios VideoToGIFViewController
 const editorHeight = 72;
-// height over width at most 1.25, at most 340 pt tall
 const tallest = 1.25;
 const tallestPreview = 340;
 const DASH = '—';
-// seconds selected when a file loads
 const firstCut = 5;
 
-/** iOS launch arguments as query flags: ?gifCut=1,3 ?gifFps=50 ?gifRun=yes. */
 function flags() {
 	if (typeof window === 'undefined') return null;
 	const query = new URLSearchParams(window.location.search);
@@ -91,13 +87,11 @@ const SetOut = <template><IconSvg @name="arrow-left-to-line" /></template>;
 const Back = <template><IconSvg @name="chevron-left" /></template>;
 const Forward = <template><IconSvg @name="chevron-right" /></template>;
 
-/** The port of VideoToGIFViewController, on the web tool's seek-and-draw encoder. */
 export default class VideoToGif extends Component {
 	intake = new VideoIntake({
 		onLoad: (file) => this.#load(file),
 		onReady: () => this.#ready(),
 		probe: true,
-		// mid-encode drop breaks seek loop
 		canLoad: () => !this.busy,
 	});
 	drop = new Drop(ACCEPT, (file) => this.intake.load(file));
@@ -190,7 +184,6 @@ export default class VideoToGif extends Component {
 		);
 	}
 
-	/** iOS: frame times as dim ticks on the band, unless over the cap. */
 	get frameMarks() {
 		if (this.unselected || this.overCap) return [];
 		return Array.from(
@@ -199,7 +192,6 @@ export default class VideoToGif extends Component {
 		);
 	}
 
-	// presets output before load
 	get widthLocked() {
 		return this.loaded && this.unselected;
 	}
@@ -328,7 +320,6 @@ export default class VideoToGif extends Component {
 		this.#invalidate();
 	};
 
-	/** iOS job.reset: a change of what to make drops the GIF and any run. */
 	#invalidate() {
 		if (this.busy) this.cancel();
 		this.failed = false;
@@ -596,7 +587,6 @@ export default class VideoToGif extends Component {
 					}}
 				>
 					{{#if this.loaded}}
-						{{! the transport is its control; user media lacks captions }}
 						{{! template-lint-disable require-media-caption }}
 						<video
 							class="vg-video"

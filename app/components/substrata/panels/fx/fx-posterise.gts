@@ -18,7 +18,6 @@ function bands(ctx: FxContext) {
 	});
 }
 
-// iOS FxTonesPosterise: the level count over the greys it leaves
 const FxPosterise: TOC<{ Args: { ctx: FxContext } }> = <template>
 	<FxStepperRow @ctx={{@ctx}} @key="levels" />
 	<div class="sub-fxp-bands" aria-hidden="true">

@@ -59,7 +59,6 @@ const tc = (seconds: number) => formatTimestamp(seconds * 1000, '.');
 const fixed = (seconds: number) => seconds.toFixed(2);
 const noFrames: string[] = [];
 
-// ios AudioTrimmerViewController
 const editorHeight = 180;
 
 const flag = (name: string) =>
@@ -74,7 +73,6 @@ const ZoomOut = <template><IconSvg @name="zoom-out" /></template>;
 const ZoomIn = <template><IconSvg @name="zoom-in" /></template>;
 const Fit = <template><IconSvg @name="maximize" /></template>;
 
-/** The port of AudioTrimmerViewController, on the web tool's decode, fades and WAV encode. */
 export default class AudioTrimmer extends Component {
 	intake = new AudioIntake({
 		onLoad: (file) => this.#load(file),
@@ -171,7 +169,6 @@ export default class AudioTrimmer extends Component {
 			: null;
 	}
 
-	// subarrays avoid copies
 	@cached
 	get viewPeaks() {
 		const buffer = this.intake.buffer;
@@ -211,7 +208,6 @@ export default class AudioTrimmer extends Component {
 		return this.view.isZoomed ? this.view.label : '';
 	}
 
-	/** The gain curve over the editor, in a 1 by 1 box. */
 	get curve() {
 		if (!this.decoded || !(this.fadeIn > 0 || this.fadeOut > 0))
 			return '';
@@ -251,11 +247,8 @@ export default class AudioTrimmer extends Component {
 
 	#decoded(buffer: AudioBuffer) {
 		this.view.reset(buffer.duration);
-		// iOS: the out point rounds down to the hundredth
 		this.select(0, Math.floor(buffer.duration * 100) / 100);
-		// iOS -trimFades yes
 		if (flag('trimFades')) this.#fades(1.5, 2.5);
-		// iOS -trimLoop yes
 		if (flag('trimLoop')) {
 			this.playback.looping = true;
 			this.select(1, 1.6);
@@ -278,7 +271,6 @@ export default class AudioTrimmer extends Component {
 	selectEnd = (seconds: number) =>
 		this.select(this.start, seconds, 'end');
 
-	/** The editor reports points inside the view; only the moved edge is new. */
 	edit = (start: number, end: number, moved: TrimEdge) => {
 		const origin = this.view.start;
 		if (moved === 'start') this.select(start + origin, this.end);
@@ -306,7 +298,6 @@ export default class AudioTrimmer extends Component {
 		this.#invalidate();
 	}
 
-	/** Pages the zoomed editor to a playhead outside it. */
 	follow = (event: Event) => {
 		const at = (event.target as HTMLMediaElement).currentTime;
 		const { start, end, span, isZoomed } = this.view;
@@ -318,7 +309,6 @@ export default class AudioTrimmer extends Component {
 	zoomOut = () => this.view.zoomOut();
 	fit = () => this.view.fit();
 
-	/** iOS job.reset: a new cut or fade drops the result. */
 	#invalidate() {
 		if (this.busy) this.#token++;
 		this.busy = false;
@@ -345,7 +335,6 @@ export default class AudioTrimmer extends Component {
 			Math.ceil(this.end * sampleRate),
 		);
 		try {
-			// copies: applyFades writes in place
 			const channels = channelsOf(buffer).map(
 				(c) => new Float32Array(c.subarray(from, to)),
 			);
@@ -679,9 +668,7 @@ export default class AudioTrimmer extends Component {
 						/>
 					{{/if}}
 				</CanonRows>
-				{{! last: kit first-child spacing }}
 				{{#if this.loaded}}
-					{{! the transport is its control; user media lacks captions }}
 					{{! template-lint-disable require-media-caption }}
 					<audio
 						class="at-audio"

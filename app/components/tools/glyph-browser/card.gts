@@ -14,14 +14,12 @@ export interface CardSignature {
 		category: string;
 		lines: { label: string; value: string }[];
 		onCopyLabel: () => void;
-		/** The card's own height in px at its current width. */
 		onHeight: (height: number) => void;
 	};
 }
 
 const shownBefore = new WeakMap<HTMLElement, number>();
 
-/** A later code point pushes in from the trailing side, an earlier one from the leading side. */
 const push = modifier((element: HTMLElement, [code]: [number]) => {
 	const before = shownBefore.get(element);
 	shownBefore.set(element, code);
@@ -47,7 +45,6 @@ const reportHeight = modifier(
 	},
 );
 
-/** The chosen glyph large in the system face, its code point, block and every form to copy (GlyphCard). */
 const Card: TOC<CardSignature> = <template>
 	<div class="gb-card">
 		<div class="gb-card-body" {{reportHeight @onHeight}}>

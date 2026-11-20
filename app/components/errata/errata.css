@@ -1,13 +1,13 @@
-/* Errata on the Substrata frame (substrata/editor/editor.css): what the
-   PDF editor has beyond it */
 .err-ed {
 	--err-rail: 148px;
 	--err-field: 320px;
 
 	container: err-ed / inline-size;
+
+	/* scrollIntoView scrolls hidden overflow */
+	overflow: clip;
 }
 
-/* title capsule: the name, the page stepper, the zoom figure */
 .err-ed .sub-ed-title > .sub-ed-title-name {
 	display: flex;
 	align-items: center;
@@ -57,7 +57,6 @@
 	display: none;
 }
 
-/* the pages: a floating panel on the leading edge */
 .err-rail {
 	position: absolute;
 	inset-block: var(--sub-pad);
@@ -218,7 +217,6 @@
 	cursor: default;
 }
 
-/* insert zone between cells; its cells show on hover */
 .err-page-gap {
 	position: relative;
 	z-index: 1;
@@ -242,7 +240,6 @@
 	outline: var(--canon-hairline) solid var(--canon-border);
 }
 
-/* settings bar: the colour cell shows its swatch before the hex */
 .err-colour-cell {
 	gap: 8px;
 }
@@ -260,32 +257,16 @@
 	font-family: var(--canon-mono-font);
 }
 
-/* the ≡ card: MenuCards under headings */
-.err-menu {
-	display: flex;
-	flex-direction: column;
-	gap: var(--canon-hairline);
+.err-menu-destructive.canon-button:not(:disabled) {
+	color: var(--canon-destructive);
 }
 
-.err-menu > .canon-heading {
-	margin: 0;
-	padding: 10px 12px 4px;
-	background: var(--canon-card);
-}
-
-.err-menu-grid {
-	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: var(--canon-hairline);
-	background: var(--canon-card);
-}
-
-/* cells outline each other; a short last row leaves card, not border */
-:is(.err-menu-grid, .err-sheet-grid) > .sub-menu-card {
+/* short rows stay card */
+.err-sheet-grid > .sub-menu-card {
 	outline: var(--canon-hairline) solid var(--canon-border);
 }
 
-/* block-size is BOX_KEY in errata-shell.gts */
+/* matches BOX_KEY, errata-shell */
 .sub-ed-column .sub-cells > .sub-cell.err-box-key {
 	flex-direction: column;
 	gap: 10px;
@@ -305,7 +286,6 @@
 	writing-mode: vertical-rl;
 }
 
-/* the toolbox drawer and the mode panels share the bar's place */
 .err-sheet,
 .err-mode {
 	position: absolute;
@@ -388,7 +368,7 @@
 .err-mode {
 	--err-cols: 3;
 
-	/* legacy panel parts (styles/_errata.scss) */
+	/* for styles/_errata.scss */
 	--err-h: 32px;
 	--err-gap: 8px;
 	--err-wide: 176px;
@@ -446,7 +426,6 @@
 	color: var(--canon-destructive);
 }
 
-/* actions the panels yield before Cancel and Apply */
 .err-mode-head .sub-modal-btn {
 	display: flex;
 	flex: none;
@@ -483,7 +462,6 @@
 	block-size: 16px;
 }
 
-/* fields: CanonRows in columns, the gaps showing the border colour */
 .err-mode-body {
 	display: grid;
 	grid-template-columns: repeat(var(--err-cols), var(--err-field));
@@ -496,7 +474,7 @@
 	overscroll-behavior: contain;
 }
 
-/* fields outline each other; an empty slot stays card */
+/* empty slots stay card */
 .err-mode-body > * {
 	outline: var(--canon-hairline) solid var(--canon-border);
 }
@@ -587,7 +565,6 @@
 	border-color: var(--canon-destructive);
 }
 
-/* a page-shaped 3 x 3 grid */
 .err-anchor-page {
 	display: grid;
 	grid-template-rows: repeat(3, minmax(0, 1fr));
@@ -616,6 +593,7 @@
 }
 
 .err-anchor-cell[data-anchor^="bottom"] {
+	grid-row: 3;
 	align-items: flex-end;
 }
 
@@ -656,7 +634,6 @@
 	outline-offset: calc(-1 * var(--canon-hairline));
 }
 
-/* content tool hud, above the hovered or selected object */
 .err-hud {
 	position: absolute;
 	z-index: 3;
@@ -705,36 +682,8 @@
 	background: color-mix(in srgb, var(--canon-muted) 70%, transparent);
 }
 
-/* the main menu card's ink; tile size from backdrop.gts */
-.err-backdrop {
-	--err-ink: #b96f08;
-
-	position: absolute;
-	inset: -160px 0 0 -240px;
-	visibility: hidden;
-	background: var(--err-ink);
-	opacity: 0.1;
-	mask-image: var(--err-tile);
-	mask-size: 240px 160px;
-	pointer-events: none;
-	animation: err-backdrop 60s linear infinite;
-}
-
-.dark .err-backdrop {
-	--err-ink: #db9334;
-}
-
-.err-backdrop.is-ready {
-	visibility: visible;
-}
-
-@keyframes err-backdrop {
-	to {
-		translate: 240px 160px;
-	}
-}
-
-.err-export-failed {
+.err-export-failed,
+.err-open-failed {
 	color: var(--canon-destructive);
 }
 
@@ -746,14 +695,40 @@
 	.err-page-gap {
 		transition: none;
 	}
-
-	.err-backdrop {
-		animation: none;
-	}
 }
 
-/* icon-only cells a panel yields stay square */
 .err-mode-head > .sub-cell.canon-button--symbol {
 	inline-size: var(--sub-cell);
 	padding: 0;
+}
+
+.err-ed .sub-empty-card {
+	inline-size: max-content;
+	max-inline-size: calc(100% - 2 * var(--sub-pad));
+}
+
+.err-ed .sub-empty-actions > .sub-cell {
+	flex: 1 0 auto;
+}
+
+@container err-ed (width < 600px) {
+	.err-ed .sub-empty-actions {
+		flex-direction: column;
+	}
+}
+
+.err-title-name {
+	field-sizing: content;
+	min-inline-size: 4ch;
+	max-inline-size: 40ch;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font-family: inherit;
+	cursor: text;
+}
+
+.err-title-name:focus-visible {
+	outline: var(--canon-hairline) solid var(--canon-primary);
+	outline-offset: -4px;
 }

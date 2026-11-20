@@ -72,7 +72,6 @@ const rangeLabels: Record<RangeField, string> = {
 	yMax: 'Y maximum',
 };
 
-/** The port of GraphCalcViewController. */
 export default class GraphCalcTool extends Component {
 	@tracked curves: GraphCurve[] = [
 		{ id: 1, text: 'x^2', relation: '=', colour: 0, visible: true },
@@ -158,8 +157,6 @@ export default class GraphCalcTool extends Component {
 		return this.curves.length > 1;
 	}
 
-	// MARK: functions
-
 	#update(id: number, changes: Partial<GraphCurve>) {
 		this.curves = this.curves.map((curve) =>
 			curve.id === id ? { ...curve, ...changes } : curve,
@@ -217,7 +214,6 @@ export default class GraphCalcTool extends Component {
 				visible: true,
 			},
 		];
-		// the new row's field exists once it has rendered
 		if (!text)
 			requestAnimationFrame(() =>
 				this.#handles.get(id)?.edit(),
@@ -226,7 +222,6 @@ export default class GraphCalcTool extends Component {
 
 	addEmpty = () => this.add();
 
-	/** An example fills the last empty function, or adds one. */
 	use = (example: string) => {
 		this.#commitText();
 		const text = typed(example);
@@ -236,8 +231,6 @@ export default class GraphCalcTool extends Component {
 		if (empty) this.#update(empty.id, { text });
 		else this.add(text);
 	};
-
-	// MARK: trace
 
 	get traceText() {
 		return this.traceDraft ?? format(this.view.trace);
@@ -312,8 +305,6 @@ export default class GraphCalcTool extends Component {
 		if (event.key === 'Enter')
 			(event.target as HTMLInputElement).blur();
 	};
-
-	// MARK: view
 
 	get ranges(): Record<RangeField, string> {
 		const p = this.view.plane;

@@ -1,5 +1,5 @@
 import Component from '@glimmer/component';
-import { tracked } from '@glimmer/tracking';
+import { cached, tracked } from '@glimmer/tracking';
 import { fn } from '@ember/helper';
 import { on } from '@ember/modifier';
 import { service } from '@ember/service';
@@ -18,6 +18,7 @@ import CanonColourStrip from 'delphicanon/components/canon-colour-strip';
 import CanonHeading from 'delphicanon/components/canon-heading';
 import CanonRow from 'delphicanon/components/canon-row';
 import CanonRows from 'delphicanon/components/canon-rows';
+import CanonSegmented from 'delphicanon/components/canon-segmented';
 import CanonSplit from 'delphicanon/components/canon-split';
 import press from 'delphicanon/modifiers/canon-press';
 import {
@@ -38,13 +39,19 @@ import {
 	readColour,
 } from 'delphitools-v2/components/tools/colour-atlas/atlas';
 import {
+	pair,
 	suggest,
+	swatch,
 	targets,
 	type Target,
 } from 'delphitools-v2/components/tools/contrast-checker/contrast';
 import Specimen, {
 	specimenHeight,
 } from 'delphitools-v2/components/tools/contrast-checker/specimen';
+import {
+	Network,
+	type Pair,
+} from 'delphitools-v2/components/tools/contrast-checker/network';
 import {
 	Lamps,
 	Scale,
@@ -53,29 +60,22 @@ import './contrast-checker/contrast-checker.css';
 
 const Flip = <template><IconSvg @name="arrow-left-right" /></template>;
 const Wand = <template><IconSvg @name="wand-sparkles" /></template>;
+const Plus = <template><IconSvg @name="plus" /></template>;
+const Cross = <template><IconSvg @name="x" /></template>;
 
-/** Changes closer together than this follow at once, as a drag; ContrastCheckerViewController's 0.12 s. */
+const modes = ['Pair', 'Network'];
+const maxColours = 10;
+
 const followMs = 120;
 
-// the channel titles beside the sliders truncate at the 340 px default
 const sidebarWidth = 400;
 
-// stacked, the band keeps the figure and its padding
 const collapsedBand = 104;
 
 const wellsStyle = htmlSafe(`--contrast-well-spring: ${springEasing(0.8)}`);
 
-const swatch = (colour: Rgb) => htmlSafe(`background: ${hex(colour)}`);
-const pair = (foreground: Rgb, background: Rgb) =>
-	htmlSafe(`color: ${hex(foreground)}; background: ${hex(background)}`);
 const closestName = (colour: Rgb) => getColourName(hex(colour));
 
-/**
- * The iOS launch arguments as query flags: ?contrastFg= ?contrastBg= (any
- * notation) ?contrastWell=1 (background) ?contrastSpace=<picker index>
- * ?contrastLater (background well at 2 s, flip at 3.5 s, first suggestion
- * at 5 s). ?color= is the web's carried colour, as the foreground.
- */
 function launchFlags(search: string) {
 	const query = new URLSearchParams(search);
 	const typed = (key: string) => {
@@ -107,17 +107,19 @@ interface Suggestion {
 	ratio: string;
 }
 
-/** The port of ContrastCheckerViewController. */
 export default class ContrastChecker extends Component {
 	@service declare colourNotation: ColourNotationService;
 
 	state: CanonColourSolidState;
 	@tracked editsBackground: boolean;
-	/** The well the solid does not edit. */
 	@tracked fixed: Rgb;
-	/** Half turns of the flip icon, one per press. */
 	@tracked flips = 0;
 	#lastPick = 0;
+	@tracked network = false;
+	@tracked list: Rgb[] = [];
+	@tracked picked = 0;
+	@tracked focus: Pair = { text: 0, ground: 1 };
+	#pairEdited?: Rgb;
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
@@ -126,7 +128,6 @@ export default class ContrastChecker extends Component {
 		this.fixed = flags.onBackground
 			? flags.foreground
 			: flags.background;
-		// sliced row, rgb blue
 		this.state = new CanonColourSolidState({
 			space: flags.space,
 			colour: flags.onBackground
@@ -154,13 +155,106 @@ export default class ContrastChecker extends Component {
 		return this.state.colour;
 	}
 
+	@cached
+	get colours(): Rgb[] {
+		return this.list.map((colour, index) =>
+			index === this.picked ? this.edited : colour,
+		);
+	}
+
 	get foreground(): Rgb {
+		if (this.network) return this.colours[this.focus.text]!;
 		return this.editsBackground ? this.fixed : this.edited;
 	}
 
 	get background(): Rgb {
+		if (this.network) return this.colours[this.focus.ground]!;
 		return this.editsBackground ? this.edited : this.fixed;
 	}
+
+	get modeIndex() {
+		return this.network ? 1 : 0;
+	}
+
+	get pickedText() {
+		return this.colourNotation.format(hex(this.edited));
+	}
+
+	get rows() {
+		return this.colours.map((colour, index) => ({
+			index,
+			hex: hex(colour),
+			swatch: swatch(colour),
+			selected: index === this.picked,
+		}));
+	}
+
+	get canAdd() {
+		return this.list.length < maxColours;
+	}
+
+	get canRemove() {
+		return this.list.length > 2;
+	}
+
+	setMode = (index: number) => {
+		const network = index === 1;
+		if (network === this.network) return;
+		if (network) {
+			this.#pairEdited = this.edited;
+			if (this.list.length === 0)
+				this.list = [this.foreground, this.background];
+			this.network = true;
+			this.state.use(this.list[this.picked]!);
+		} else {
+			this.list = this.colours;
+			this.network = false;
+			this.state.use(this.#pairEdited!);
+		}
+	};
+
+	pickColour = (index: number) => {
+		if (index === this.picked) return;
+		this.list = this.colours;
+		this.picked = index;
+		this.state.use(this.list[index]!);
+	};
+
+	addColour = () => {
+		this.list = [...this.colours, this.edited];
+		this.pickColour(this.list.length - 1);
+	};
+
+	removeColour = (index: number) => {
+		const list = this.colours.filter((_, i) => i !== index);
+		const picked = Math.min(
+			index < this.picked ? this.picked - 1 : this.picked,
+			list.length - 1,
+		);
+		this.list = list;
+		this.picked = picked;
+		this.state.use(list[picked]!);
+		const fit = (i: number) =>
+			i === index ? -1 : i > index ? i - 1 : i;
+		const text = fit(this.focus.text);
+		const ground = fit(this.focus.ground);
+		this.focus =
+			text >= 0 && ground >= 0
+				? { text, ground }
+				: { text: 0, ground: 1 };
+	};
+
+	focusPair = (text: number, ground: number) => {
+		this.focus = { text, ground };
+	};
+
+	parsePicked = (text: string) => this.#read(text, this.state.use);
+
+	typePicked = (event: Event) =>
+		this.#read(
+			(event.target as HTMLInputElement).value,
+			this.state.use,
+		);
 
 	get ratio() {
 		return contrastRatio(this.foreground, this.background);
@@ -171,7 +265,9 @@ export default class ContrastChecker extends Component {
 	}
 
 	get marks() {
-		return [this.fixed];
+		return this.network
+			? this.list.filter((_, i) => i !== this.picked)
+			: [this.fixed];
 	}
 
 	get format() {
@@ -243,7 +339,6 @@ export default class ContrastChecker extends Component {
 		});
 	}
 
-	/** The solid's pick: one after another within 120 ms is a drag and follows at once. */
 	pick = (point: SolidPoint) => {
 		const now = performance.now();
 		const eases = now - this.#lastPick > followMs;
@@ -251,7 +346,6 @@ export default class ContrastChecker extends Component {
 		this.state.setPoint(point, eases);
 	};
 
-	/** Hands the solid the other well's colour, eased; the edited colour becomes the fixed one. */
 	#trade() {
 		const other = this.fixed;
 		this.fixed = this.edited;
@@ -273,7 +367,6 @@ export default class ContrastChecker extends Component {
 		this.#trade();
 	};
 
-	/** A colour for one well, whichever the solid edits. */
 	put(background: boolean, colour: Rgb) {
 		if (background === this.editsBackground) this.state.use(colour);
 		else this.fixed = colour;
@@ -293,27 +386,24 @@ export default class ContrastChecker extends Component {
 
 	useBackground = (colour: Rgb) => this.put(true, colour);
 
-	parseForeground = (text: string) => {
+	#read(text: string, use: (colour: Rgb) => void) {
 		const colour = readColour(text);
-		if (colour) this.put(false, colour);
+		if (colour) use(colour);
 		return colour !== undefined;
-	};
+	}
 
-	parseBackground = (text: string) => {
-		const colour = readColour(text);
-		if (colour) this.put(true, colour);
-		return colour !== undefined;
-	};
+	parseForeground = (text: string) =>
+		this.#read(text, this.useForeground);
 
-	// the web fields answered every keystroke; the kit input waits 400 ms
-	typeLive = (background: boolean, event: Event) => {
-		const colour = readColour(
+	parseBackground = (text: string) =>
+		this.#read(text, this.useBackground);
+
+	typeLive = (background: boolean, event: Event) =>
+		this.#read(
 			(event.target as HTMLInputElement).value,
+			background ? this.useBackground : this.useForeground,
 		);
-		if (colour) this.put(background, colour);
-	};
 
-	// a click places the caret after focus, so select on the next frame
 	focusField = (background: boolean, event: FocusEvent) => {
 		this.edit(background);
 		const field = event.target;
@@ -343,125 +433,228 @@ export default class ContrastChecker extends Component {
 			</:banner>
 			<:sidebar>
 				<CanonRows @framed={{true}}>
-					<CanonRow
-						class="contrast-field"
-						@title="Foreground"
-						@form="stacked"
-						as |titleId|
-					>
-						<CanonColourNotationInput
-							class="contrast-input"
-							@colour={{this.foreground}}
-							@text={{this.foregroundText}}
-							@onColour={{this.useForeground}}
-							@parse={{this.parseForeground}}
-							@labelledBy={{titleId}}
-							{{on
-								"input"
-								(fn
-									this.typeLive
-									false
-								)
-							}}
-							{{on
-								"focusin"
-								(fn
-									this.focusField
-									false
-								)
-							}}
-						/>
-					</CanonRow>
-					<CanonRow
-						class="contrast-field"
-						@title="Background"
-						@form="stacked"
-						as |titleId|
-					>
-						<CanonColourNotationInput
-							class="contrast-input"
-							@colour={{this.background}}
-							@text={{this.backgroundText}}
-							@onColour={{this.useBackground}}
-							@parse={{this.parseBackground}}
-							@labelledBy={{titleId}}
-							{{on
-								"input"
-								(fn
-									this.typeLive
-									true
-								)
-							}}
-							{{on
-								"focusin"
-								(fn
-									this.focusField
-									true
-								)
-							}}
-						/>
-					</CanonRow>
+					<CanonSegmented
+						aria-label="Mode"
+						@items={{modes}}
+						@columns={{2}}
+						@selected={{this.modeIndex}}
+						@onChange={{this.setMode}}
+					/>
 				</CanonRows>
-				<CanonRows @framed={{true}}>
-					<div
-						class="contrast-wells"
-						style={{wellsStyle}}
-					>
-						{{#each this.wells as |well|}}
-							<button
-								type="button"
-								class="contrast-well
-									{{if
-										well.selected
-										'contrast-well--on'
-									}}"
-								aria-pressed={{if
-									well.selected
-									"true"
-									"false"
-								}}
-								aria-label="{{well.title}} {{well.hex}}"
-								{{press}}
+				{{#if this.network}}
+					<CanonRows @framed={{true}}>
+						<CanonRow
+							class="contrast-field"
+							@title="Colour"
+							@form="stacked"
+							as |titleId|
+						>
+							<CanonColourNotationInput
+								class="contrast-input"
+								@colour={{this.edited}}
+								@text={{this.pickedText}}
+								@onColour={{this.state.use}}
+								@parse={{this.parsePicked}}
+								@labelledBy={{titleId}}
 								{{on
-									"click"
+									"input"
+									this.typePicked
+								}}
+							/>
+						</CanonRow>
+					</CanonRows>
+				{{else}}
+					<CanonRows @framed={{true}}>
+						<CanonRow
+							class="contrast-field"
+							@title="Foreground"
+							@form="stacked"
+							as |titleId|
+						>
+							<CanonColourNotationInput
+								class="contrast-input"
+								@colour={{this.foreground}}
+								@text={{this.foregroundText}}
+								@onColour={{this.useForeground}}
+								@parse={{this.parseForeground}}
+								@labelledBy={{titleId}}
+								{{on
+									"input"
 									(fn
-										this.edit
-										well.background
+										this.typeLive
+										false
 									)
 								}}
-							>
-								<span
-									class="contrast-well-swatch"
-									style={{well.swatch}}
-								></span>
-								<span
-									class="contrast-well-text"
+								{{on
+									"focusin"
+									(fn
+										this.focusField
+										false
+									)
+								}}
+							/>
+						</CanonRow>
+						<CanonRow
+							class="contrast-field"
+							@title="Background"
+							@form="stacked"
+							as |titleId|
+						>
+							<CanonColourNotationInput
+								class="contrast-input"
+								@colour={{this.background}}
+								@text={{this.backgroundText}}
+								@onColour={{this.useBackground}}
+								@parse={{this.parseBackground}}
+								@labelledBy={{titleId}}
+								{{on
+									"input"
+									(fn
+										this.typeLive
+										true
+									)
+								}}
+								{{on
+									"focusin"
+									(fn
+										this.focusField
+										true
+									)
+								}}
+							/>
+						</CanonRow>
+					</CanonRows>
+				{{/if}}
+				<CanonRows @framed={{true}}>
+					{{#if this.network}}
+						<div class="contrast-list">
+							{{#each
+								this.rows
+								key="@index"
+								as |row|
+							}}
+								<div
+									class="contrast-list-row"
+								>
+									<button
+										type="button"
+										class="contrast-well
+											{{if
+												row.selected
+												'contrast-well--on'
+											}}"
+										aria-pressed={{if
+											row.selected
+											"true"
+											"false"
+										}}
+										aria-label={{row.hex}}
+										{{press}}
+										{{on
+											"click"
+											(fn
+												this.pickColour
+												row.index
+											)
+										}}
+									>
+										<span
+											class="contrast-well-swatch"
+											style={{row.swatch}}
+										></span>
+										<span
+											class="contrast-well-hex"
+										>{{row.hex}}</span>
+									</button>
+									<CanonButton
+										@kind="cell"
+										@icon={{Cross}}
+										@label="Remove"
+										@disabled={{unless
+											this.canRemove
+											true
+										}}
+										@onClick={{fn
+											this.removeColour
+											row.index
+										}}
+									/>
+								</div>
+							{{/each}}
+							<CanonButton
+								@text="Add"
+								@icon={{Plus}}
+								@disabled={{unless
+									this.canAdd
+									true
+								}}
+								@onClick={{this.addColour}}
+							/>
+						</div>
+					{{else}}
+						<div
+							class="contrast-wells"
+							style={{wellsStyle}}
+						>
+							{{#each
+								this.wells
+								as |well|
+							}}
+								<button
+									type="button"
+									class="contrast-well
+										{{if
+											well.selected
+											'contrast-well--on'
+										}}"
+									aria-pressed={{if
+										well.selected
+										"true"
+										"false"
+									}}
+									aria-label="{{well.title}} {{well.hex}}"
+									{{press}}
+									{{on
+										"click"
+										(fn
+											this.edit
+											well.background
+										)
+									}}
 								>
 									<span
-										class="contrast-well-title"
-									>{{well.title}}</span>
+										class="contrast-well-swatch"
+										style={{well.swatch}}
+									></span>
 									<span
-										class="contrast-well-hex"
-									>{{well.hex}}</span>
-								</span>
-							</button>
-						{{/each}}
-						<CanonButton
-							class="contrast-flip"
-							style={{this.flipTurn}}
-							@kind="cell"
-							@icon={{Flip}}
-							@label="Flip"
-							@onClick={{this.flip}}
-						/>
-						<span
-							class="contrast-wells-indicator
-								{{if
-									this.editsBackground
-									'contrast-wells-indicator--end'
-								}}"
-						></span>
-					</div>
+										class="contrast-well-text"
+									>
+										<span
+											class="contrast-well-title"
+										>{{well.title}}</span>
+										<span
+											class="contrast-well-hex"
+										>{{well.hex}}</span>
+									</span>
+								</button>
+							{{/each}}
+							<CanonButton
+								class="contrast-flip"
+								style={{this.flipTurn}}
+								@kind="cell"
+								@icon={{Flip}}
+								@label="Flip"
+								@onClick={{this.flip}}
+							/>
+							<span
+								class="contrast-wells-indicator
+									{{if
+										this.editsBackground
+										'contrast-wells-indicator--end'
+									}}"
+							></span>
+						</div>
+					{{/if}}
 					<div class="contrast-solid">
 						<CanonColourSolid
 							class="contrast-solid-picture"
@@ -488,80 +681,98 @@ export default class ContrastChecker extends Component {
 				</CanonRows>
 			</:sidebar>
 			<:main>
-				<CanonRows @framed={{true}}>
-					<CanonHeading @text="Contrast ratio" />
-					<Scale @ratio={{this.ratio}} />
-					<Lamps @ratio={{this.ratio}} />
-				</CanonRows>
-				<CanonRows @framed={{true}}>
-					<CanonHeading @text="Suggestions" />
-					{{#each this.suggestions as |row|}}
-						<button
-							type="button"
-							class="contrast-suggestion"
-							disabled={{unless
-								row.candidate
-								true
-							}}
-							aria-label="{{row.title}} {{row.target.level}}, {{row.detail}}, {{row.ratio}}"
-							{{press}}
-							{{on
-								"click"
-								(fn
-									this.apply
-									row
-								)
-							}}
-						>
-							<span
-								class="contrast-suggestion-preview"
-								style={{pair
-									row.foreground
-									row.background
+				{{#if this.network}}
+					<CanonRows @framed={{true}}>
+						<CanonHeading @text="Network" />
+						<Network
+							@colours={{this.colours}}
+							@focus={{this.focus}}
+							@onFocus={{this.focusPair}}
+						/>
+					</CanonRows>
+				{{else}}
+					<CanonRows @framed={{true}}>
+						<CanonHeading
+							@text="Contrast ratio"
+						/>
+						<Scale @ratio={{this.ratio}} />
+						<Lamps @ratio={{this.ratio}} />
+					</CanonRows>
+					<CanonRows @framed={{true}}>
+						<CanonHeading
+							@text="Suggestions"
+						/>
+						{{#each
+							this.suggestions
+							as |row|
+						}}
+							<button
+								type="button"
+								class="contrast-suggestion"
+								disabled={{unless
+									row.candidate
+									true
 								}}
-								aria-hidden="true"
-							>Aa</span>
-							<span
-								class="contrast-suggestion-cell"
+								aria-label="{{row.title}} {{row.target.level}}, {{row.detail}}, {{row.ratio}}"
+								{{press}}
+								{{on
+									"click"
+									(fn
+										this.apply
+										row
+									)
+								}}
 							>
 								<span
-									class="contrast-suggestion-text"
+									class="contrast-suggestion-preview"
+									style={{pair
+										row.foreground
+										row.background
+									}}
+									aria-hidden="true"
+								>Aa</span>
+								<span
+									class="contrast-suggestion-cell"
 								>
 									<span
-										class="contrast-suggestion-title"
-									>{{row.title}}</span>
+										class="contrast-suggestion-text"
+									>
+										<span
+											class="contrast-suggestion-title"
+										>{{row.title}}</span>
+										<span
+											class="contrast-suggestion-detail"
+										>{{row.detail}}</span>
+									</span>
 									<span
-										class="contrast-suggestion-detail"
-									>{{row.detail}}</span>
+										class="contrast-suggestion-ratio"
+									>{{row.ratio}}</span>
+									{{#if
+										row.candidate
+									}}
+										<span
+											class="contrast-suggestion-glyph"
+											aria-hidden="true"
+										><Wand
+											/></span>
+									{{/if}}
 								</span>
-								<span
-									class="contrast-suggestion-ratio"
-								>{{row.ratio}}</span>
-								{{#if
-									row.candidate
-								}}
-									<span
-										class="contrast-suggestion-glyph"
-										aria-hidden="true"
-									><Wand
-										/></span>
-								{{/if}}
-							</span>
-						</button>
-					{{/each}}
-				</CanonRows>
-				<div class="contrast-cards">
-					<CanonColourCard
-						@colour={{this.foreground}}
-						@name="Foreground"
-						@primaryFormat={{this.format}}
-					/>
-					<CanonColourCard
-						@colour={{this.background}}
-						@name="Background"
-						@primaryFormat={{this.format}}
-					/>
-				</div>
+							</button>
+						{{/each}}
+					</CanonRows>
+					<div class="contrast-cards">
+						<CanonColourCard
+							@colour={{this.foreground}}
+							@name="Foreground"
+							@primaryFormat={{this.format}}
+						/>
+						<CanonColourCard
+							@colour={{this.background}}
+							@name="Background"
+							@primaryFormat={{this.format}}
+						/>
+					</div>
+				{{/if}}
 			</:main>
 		</CanonSplit>
 	</template>

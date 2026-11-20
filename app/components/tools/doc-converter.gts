@@ -52,11 +52,9 @@ const SCRATCHPAD_KEY = 'delphitools-scratchpad';
 const PANDOC_VERSION = '3.9';
 const PANDOC_URL = `https://github.com/jgm/pandoc/tree/${PANDOC_VERSION}`;
 const dash = '—';
-// the print styles leave the page edge to the printer
 const PREVIEW_CSS = '<style>body { padding: 24px 28px; }</style>';
 const ABOUT =
 	'Conversion runs entirely in your browser — your documents are never uploaded. On first use the ~50 MB Pandoc engine is fetched from a CDN and cached for the rest of your visit. Powered by';
-/** iOS CanonCodeBlock(maxHeight: 360) */
 const CODE_HEIGHT = 360;
 
 const PasteIcon = <template><IconSvg @name="clipboard" /></template>;
@@ -85,7 +83,6 @@ function extractWarnings(res: PandocConvertResult): string[] {
 	if (!Array.isArray(res.warnings)) return [];
 	return res.warnings.map((w: unknown) => {
 		if (typeof w === 'string') return w;
-		// pandoc-wasm warnings carry the message as `pretty`
 		const { message, pretty } =
 			(w as { message?: unknown; pretty?: unknown } | null) ??
 			{};
@@ -98,10 +95,8 @@ const editable = (target: EventTarget | null) =>
 	target instanceof HTMLElement &&
 	(target.isContentEditable || target.matches('input, textarea, select'));
 
-/** The port of DocConverterViewController: Markdown and HTML convert in the browser, every other web format on Pandoc. */
 export default class DocConverterTool extends Component {
 	@tracked text = '';
-	/** a document Pandoc reads as a file (Word, ODT, EPUB), shown in place of the editor */
 	@tracked file: File | null = null;
 	@tracked fileName: string | null = null;
 	@tracked fileError: string | null = null;
@@ -125,7 +120,6 @@ export default class DocConverterTool extends Component {
 	#picker?: HTMLInputElement;
 	#run = 0;
 
-	// ?docText=a\nb ?docFrom=html ?docTo=pdf ?docRun=1: the iOS launch arguments, format ids for indexes
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -209,7 +203,6 @@ export default class DocConverterTool extends Component {
 			return this.loading
 				? 'Downloading engine…'
 				: 'Converting…';
-		// a failed engine load clears on any change
 		if (this.engineState === 'error' && this.error) return 'Retry';
 		return `Convert to ${this.toFormat.label}`;
 	}
@@ -360,7 +353,6 @@ export default class DocConverterTool extends Component {
 		this.file = null;
 		this.fileError = null;
 		this.notice = null;
-		// text is never binary
 		if (getFormat(this.from)?.kind === 'binary')
 			this.from = AUTO_DETECT;
 		this.#changed();
@@ -482,7 +474,6 @@ export default class DocConverterTool extends Component {
 		this.selectFile(file);
 	};
 
-	// text pasted outside a field is the source; files go through filePaste
 	pasteText = modifier(() => {
 		const paste = (event: ClipboardEvent) => {
 			if (
@@ -511,7 +502,6 @@ export default class DocConverterTool extends Component {
 		const toFormat = this.toFormat;
 		const fromId = this.sourceId;
 		const name = `${stem(file?.name ?? this.fileName)}.${toFormat.ext}`;
-		// the table of contents and numbering are Pandoc's
 		const local = (to: string) =>
 			!file &&
 			!this.toc &&
@@ -658,7 +648,6 @@ export default class DocConverterTool extends Component {
 				else this.error = res.stderr.trim();
 			}
 			if (!this.result) return;
-			// iOS shows word-processor output as the page it makes
 			if (
 				toFormat.kind === 'binary' ||
 				toFormat.id === 'rtf'

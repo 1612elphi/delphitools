@@ -11,7 +11,6 @@ import { downloadIcon, passAlong } from 'delphitools-v2/lib/flow-hooks';
 export interface Still {
 	id: number;
 	url: string;
-	/** The time as 00:00:01.500. */
 	label: string;
 	seconds: number;
 	fileName: string;
@@ -21,14 +20,9 @@ export interface Still {
 const Save = <template><IconSvg @name={{(downloadIcon)}} /></template>;
 const Remove = <template><IconSvg @name="x" /></template>;
 
-/**
- * The iOS FrameExtractorStills: the grabbed frames as a grid of cells, each
- * a button whose menu downloads (a workflow passes along) or removes it.
- */
 export default class Stills extends Component<{
 	Args: {
 		stills: Still[];
-		/** Width over height of the frames. */
 		aspect: number;
 		onSave: (still: Still) => void;
 		onRemove: (still: Still) => void;

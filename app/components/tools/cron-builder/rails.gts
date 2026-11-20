@@ -13,13 +13,10 @@ import { FIELD_RULES, type CronParse } from 'delphitools-v2/lib/cron';
 interface RailsSignature {
 	Args: {
 		parsed: CronParse;
-		/** Index of the open field row; its rail is lit. */
 		field: number | null;
 		next?: Date;
 		now: Date;
-		/** The next run as text. */
 		when?: string;
-		/** The schedule in words, for assistive technology. */
 		label: string;
 		firstDay: number;
 	};
@@ -54,13 +51,6 @@ function labels(kind: string, value: number): [string, string] {
 	return [String(value), String(value)];
 }
 
-/**
- * iOS CronRails: the expression as a punch card. One rail per field, every
- * value it can take as a cell, the kept values lit and the next run's in the
- * primary colour, so the next run is where the five rails line up. A bracket
- * joins the day rails when both are restricted, as cron then fires on either.
- * Above them the time to the next run.
- */
 export default class Rails extends Component<RailsSignature> {
 	get span() {
 		const { next, now } = this.args;
@@ -142,7 +132,6 @@ export default class Rails extends Component<RailsSignature> {
 		});
 	}
 
-	// cron ORs the day fields
 	get either() {
 		const { parsed } = this.args;
 		if (parsed.fieldCount !== 5) return false;

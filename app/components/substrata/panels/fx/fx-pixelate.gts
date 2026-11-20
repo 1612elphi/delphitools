@@ -7,7 +7,6 @@ import { fieldColour } from './fx-maths';
 
 const HEIGHT = 88;
 
-// iOS FxStylisePixelate: a colour field cut into blocks of the size
 export default class FxPixelate extends Component<{
 	Args: { ctx: FxContext };
 }> {
@@ -28,7 +27,6 @@ export default class FxPixelate extends Component<{
 		return () => ro.disconnect();
 	});
 
-	// top-left sample per block, as fabric's Pixelate
 	draw = modifier(
 		(
 			canvas: HTMLCanvasElement,

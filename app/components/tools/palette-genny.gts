@@ -56,7 +56,6 @@ import {
 import Reels, {
 	type ReelColumn,
 } from 'delphitools-v2/components/tools/palette-genny/reels';
-// the card markup without the component, which formats rows as hex
 import 'delphicanon/components/canon-colour-card.css';
 import './palette-genny/palette-genny.css';
 
@@ -83,7 +82,6 @@ const swatch = (hex: string): PaletteColour => ({
 const categoryTitles = CATEGORIES.map((c) => c.title);
 const infoFormats: ColourNotation[] = ['hex', 'rgb', 'hsl', 'oklch', 'lab'];
 
-/** iOS PaletteReels.timing and .passes. */
 const timing = { spin: 500, extra: 80, stagger: 60 };
 const passes = { first: 3, extra: 1 };
 
@@ -96,7 +94,6 @@ const Unlock = <template><IconSvg @name="lock-open" /></template>;
 const Trash = <template><IconSvg @name="trash-2" /></template>;
 const Pipette = <template><IconSvg @name="pipette" /></template>;
 
-/** The port of PaletteGeneratorViewController, on the web tool's strategies. */
 export default class PaletteGenny extends Component {
 	@service declare colourNotation: ColourNotationService;
 	@service('canon-toast') declare toast: CanonToastService;
@@ -104,14 +101,11 @@ export default class PaletteGenny extends Component {
 	colours: TrackedArray<PaletteColour>;
 	@tracked strategy: PaletteStrategy = 'random-cohesive';
 	@tracked widened?: number;
-	/** A column narrowing back keeps its values until the container query hides them. */
 	@tracked closing?: number;
 	#closingTimer?: number;
-	/** The latest spin of each slot; a slot spun again renders afresh. */
 	spins = new TrackedArray<Spin | undefined>();
 	#token = 0;
 
-	// hidden collection-export panel (p)
 	@tracked exportMode = false;
 	@tracked exportName = '';
 	@tracked exportCategory: PaletteCollectionCategory = 'classic';
@@ -278,7 +272,6 @@ export default class PaletteGenny extends Component {
 		return cssBlock(this.values);
 	}
 
-	// listener dies with tool
 	shortcuts = modifier((element: HTMLElement) => {
 		const onKeyDown = (event: KeyboardEvent) => {
 			const target = event.target as HTMLElement | null;
@@ -312,7 +305,6 @@ export default class PaletteGenny extends Component {
 			);
 	});
 
-	/** New colours for the unlocked slots; each spins past fillers from the strategy. */
 	regenerate = () => {
 		const lockedHexes = this.colours
 			.filter((colour) => colour.locked)
@@ -395,7 +387,6 @@ export default class PaletteGenny extends Component {
 			};
 	};
 
-	// hex reaches inline style; picked colours lock
 	edit = (index: number, event: Event) => {
 		const hex = (event.target as HTMLInputElement).value;
 		const colour = this.colours[index];
@@ -408,7 +399,6 @@ export default class PaletteGenny extends Component {
 		if (this.widened === index) {
 			this.widened = undefined;
 			this.closing = index;
-			// the .pg-col flex transition
 			this.#closingTimer = window.setTimeout(
 				() => (this.closing = undefined),
 				500,
@@ -499,7 +489,6 @@ export default class PaletteGenny extends Component {
 		return slug(this.exportName);
 	}
 
-	// trailing comma for paste
 	get exportJson() {
 		if (!this.exportName.trim()) return '';
 		return (
@@ -652,7 +641,6 @@ export default class PaletteGenny extends Component {
 						{{/if}}
 						<label class="pg-dev-field">
 							<span>Category</span>
-							{{! dev-only: native select }}
 							<select
 								id="pg-dev-category"
 								{{on

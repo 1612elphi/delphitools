@@ -18,44 +18,31 @@ import {
 export interface SheetSignature {
 	Args: {
 		buffer: AudioBuffer;
-		/** The view's waveform. */
 		peaks: WaveformPeaks | null;
 		start: number;
 		end: number;
 		playhead: number | null;
 		onSeek: (seconds: number) => void;
-		/** A new view: its first second and its length. */
 		onWindow: (start: number, span: number) => void;
-		/** +1 or -1: the arrow keys. */
 		onNudge: (direction: number) => void;
 		onFit: () => void;
 	};
 }
 
-// iOS AudioAtlasModel.settleDelay: a moving view rescans once it stops
 const settle = 200;
-// px a press may wander and still seek
 const slop = 4;
 
 interface Grab {
 	start: number;
 	span: number;
-	/** Share of the width under the pointer, or the pinch centre. */
 	share: number;
 	x: number;
-	/** Distance between two pinching pointers. */
 	apart: number;
 	moved: boolean;
 }
 
-/**
- * The iOS AudioAtlasSheet: the view's waveform over a time ruler over its
- * spectrogram, under one playhead. A press seeks; a drag pans a zoomed
- * view; a pinch or a ctrl-wheel zooms round the pointer.
- */
 export default class Sheet extends Component<SheetSignature> {
 	@tracked width = 0;
-	/** Seconds the shown spectrogram covers; it stays pinned to them while a rescan runs. */
 	@tracked covered: [number, number] | null = null;
 	@tracked rendering = false;
 
@@ -169,7 +156,6 @@ export default class Sheet extends Component<SheetSignature> {
 			render();
 			const observer = new ResizeObserver(render);
 			observer.observe(canvas);
-			// the theme flips colours on the root
 			const theme = new MutationObserver(render);
 			theme.observe(document.documentElement, {
 				attributeFilter: ['class'],
@@ -245,7 +231,6 @@ export default class Sheet extends Component<SheetSignature> {
 		};
 	}
 
-	// template-lint forbids binding pointerdown; a drag starts there
 	gestures = modifier((element: HTMLElement) => {
 		const down = (event: PointerEvent) => {
 			if (event.button !== 0 || !(this.span > 0)) return;
@@ -261,7 +246,6 @@ export default class Sheet extends Component<SheetSignature> {
 			this.#pointers.set(event.pointerId, event.clientX);
 			const width = Math.max(1, element.clientWidth);
 			if (this.#pointers.size > 1) {
-				// time under the fingers stays
 				const xs = [...this.#pointers.values()];
 				const apart = Math.abs(xs[0]! - xs[1]!);
 				if (!(grab.apart > 0) || !(apart > 0)) return;
@@ -308,7 +292,6 @@ export default class Sheet extends Component<SheetSignature> {
 			if (!(this.span > 0)) return;
 			const share = this.#shareAt(element, event.clientX);
 			if (event.ctrlKey) {
-				// a trackpad pinch arrives as a ctrl-wheel
 				event.preventDefault();
 				const next =
 					this.span *

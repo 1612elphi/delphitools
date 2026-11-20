@@ -7,15 +7,12 @@ import { dbToGain } from 'delphitools-v2/lib/normalise';
 export interface PictureSignature {
 	Args: {
 		peaks: WaveformPeaks | null;
-		/** The planned gain; none draws the source alone, without a figure. */
 		gainDb: number | null;
 		limited: boolean;
-		/** No file yet: the empty picture and the figure as hyphens. */
 		blank?: boolean;
 	};
 }
 
-// -1 dBFS as amplitude
 const ceiling = dbToGain(-1);
 
 export const gainText = (gainDb: number) =>
@@ -60,7 +57,6 @@ function paint(
 	if (!peaks || peaks.min.length === 0) return;
 	const gain = dbToGain(gainDb ?? 0);
 	const buckets = peaks.min.length;
-	// one column per css pixel
 	const merge = Math.max(1, Math.ceil(buckets / canvas.clientWidth));
 	const columns = Math.ceil(buckets / merge);
 	const step = width / columns;
@@ -100,7 +96,6 @@ function paint(
 		colour('--canon-primary'),
 		1,
 	];
-	// the smaller wave in front
 	for (const [path, fill, alpha] of gain >= 1
 		? [result, source]
 		: [source, result]) {
@@ -111,7 +106,6 @@ function paint(
 	context.globalAlpha = 1;
 }
 
-/** The iOS AudioNormaliserPicture: the waveform before and after the gain, the -1 dBFS ceiling, the gain as a figure. */
 export default class Picture extends Component<PictureSignature> {
 	get figure() {
 		const { gainDb, blank } = this.args;
@@ -140,7 +134,6 @@ export default class Picture extends Component<PictureSignature> {
 			render();
 			const size = new ResizeObserver(render);
 			size.observe(canvas);
-			// the theme flips colours on the root
 			const theme = new MutationObserver(render);
 			theme.observe(document.documentElement, {
 				attributeFilter: ['class'],

@@ -54,13 +54,11 @@ const MIME: Record<SubtitleFormat, string> = {
 const VTT_KINDS = ['', 'captions', 'subtitles', 'descriptions'];
 const KIND_LABELS = VTT_KINDS.map((kind) => kind || '—');
 const RATE_LABELS = RATES.map((rate) => rate.label);
-/** iOS CanonCanvas(.fixed(132)) */
 const BAND_HEIGHT = 132;
 
 const FileIcon = <template><IconSvg @name="captions" /></template>;
 const Save = <template><IconSvg @name={{(downloadIcon)}} /></template>;
 
-// the document paste (filePaste) would load a drop-zone paste a second time
 const keepPaste = (event: Event) => event.stopPropagation();
 
 const editable = (target: EventTarget | null) =>
@@ -70,7 +68,6 @@ const editable = (target: EventTarget | null) =>
 const label = (format: SubtitleFormat | null) =>
 	format ? FORMAT_LABELS[FORMATS.indexOf(format)] : undefined;
 
-/** The port of SubtitleConverterViewController, with the input as the main pane's editor. */
 export default class SubtitleConverterTool extends Component {
 	@tracked input = '';
 	@tracked fileName = '';
@@ -82,7 +79,6 @@ export default class SubtitleConverterTool extends Component {
 	@tracked vttKind = '';
 	@tracked vttLanguage = '';
 
-	// ?subText= ?subShift=2.5 ?subScale=0.95904 ?subRate=0,2: the iOS launch arguments, the text in place of -subSample's path
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -106,7 +102,6 @@ export default class SubtitleConverterTool extends Component {
 		return parseSubtitles(this.input);
 	}
 
-	// scale before shift
 	@cached
 	get adjusted() {
 		let cues = this.cues;
@@ -220,7 +215,6 @@ export default class SubtitleConverterTool extends Component {
 		this.shiftSeconds = seconds;
 	};
 
-	// a typed scale lets go of the rate pair
 	setScale = (factor: number) => {
 		this.scaleFactor = factor;
 		this.rateFrom = undefined;
@@ -269,7 +263,6 @@ export default class SubtitleConverterTool extends Component {
 			event.preventDefault();
 	};
 
-	// a drop anywhere loads the file; the drop zone handles its own
 	dropAnywhere = (event: DragEvent) => {
 		if (event.defaultPrevented) return;
 		const file = [...(event.dataTransfer?.files ?? [])].find((f) =>
@@ -280,7 +273,6 @@ export default class SubtitleConverterTool extends Component {
 		this.readFile(file);
 	};
 
-	// subtitle text pasted outside a field loads as the input; files go through filePaste
 	pasteText = modifier(() => {
 		const paste = (event: ClipboardEvent) => {
 			if (

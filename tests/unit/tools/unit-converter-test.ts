@@ -6,6 +6,7 @@ import {
 	format,
 	formula,
 	instrumentFor,
+	pixels,
 	pose,
 	easeOutCubic,
 	tickLabel,
@@ -26,6 +27,17 @@ const fahrenheit = unit('Temperature', '°F');
 const kelvin = unit('Temperature', 'K');
 
 module('Unit | Tool | unit-converter', function () {
+	test('pixels follow the density', function (assert) {
+		const inch = unit('Length', 'in');
+		const cm = unit('Length', 'cm');
+		assert.strictEqual(
+			format(convert(3000, pixels(300), inch)),
+			'10',
+		);
+		assert.strictEqual(format(convert(1, inch, pixels(72))), '72');
+		assert.strictEqual(format(convert(2.54, cm, pixels(96))), '96');
+	});
+
 	test('conversions, the web units kept', function (assert) {
 		assert.strictEqual(
 			format(convert(100, celsius, fahrenheit)),
@@ -168,5 +180,15 @@ module('Unit | Tool | unit-converter', function () {
 		assert.true(rising, 'never falls back, never passes 1');
 		assert.strictEqual(easeOutCubic(0), 0);
 		assert.strictEqual(easeOutCubic(1), 1);
+	});
+
+	test('time runs from nanoseconds to gregorian years', function (assert) {
+		const time = (from: string, to: string) =>
+			convert(1, unit('Time', from), unit('Time', to));
+		assert.strictEqual(time('ftn', 'd'), 14);
+		assert.strictEqual(time('wk', 'hr'), 168);
+		assert.strictEqual(time('yr', 'mo'), 12);
+		assert.strictEqual(time('yr', 'd'), 365.2425);
+		assert.strictEqual(Math.round(time('s', 'ns')), 1e9);
 	});
 });

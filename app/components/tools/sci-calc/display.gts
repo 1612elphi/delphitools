@@ -16,16 +16,13 @@ export interface Readout {
 export interface DisplaySignature {
 	Args: {
 		pieces: Piece[];
-		/** Closing brackets the evaluator will add, drawn faint. */
 		ghosts: number;
-		/** Every piece muted, for an expression already worked out. */
 		dimmed: boolean;
 		readout: Readout;
 		degrees: boolean;
 	};
 }
 
-/** Shrinks the first child's font until it fits the element, down to `minimum`. */
 const fit = modifier((element: HTMLElement, [minimum]: [number, unknown]) => {
 	const content = element.firstElementChild as HTMLElement | null;
 	const run = () => {
@@ -43,7 +40,6 @@ const fit = modifier((element: HTMLElement, [minimum]: [number, unknown]) => {
 	return () => size.disconnect();
 });
 
-/** The calculator's display: angle lamps and the expression as typed, a rule, the value in the segment font. */
 export default class Display extends Component<DisplaySignature> {
 	get ghostText() {
 		return ')'.repeat(this.args.ghosts);

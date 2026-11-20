@@ -9,7 +9,6 @@ import { IconSvg } from 'delphitools-v2/components/icon';
 export class PairRow {
 	@tracked key;
 	@tracked value;
-	/** Takes focus when it first renders: a row the reader just added. */
 	focus: boolean;
 
 	constructor(key = '', value = '', focus = false) {
@@ -22,9 +21,7 @@ export class PairRow {
 interface PairsSignature {
 	Args: {
 		rows: PairRow[];
-		/** Placeholder and accessible name of the key cells. */
 		keyName: string;
-		/** Accessible name of the list. */
 		label: string;
 		onChange: (rows: PairRow[]) => void;
 	};
@@ -39,7 +36,6 @@ const focusNew = modifier((field: HTMLInputElement, [row]: [PairRow]) => {
 	field.focus();
 });
 
-/** RequestPairList: key and value cells per row, Remove beside each, Add below. */
 export default class Pairs extends Component<PairsSignature> {
 	add = () =>
 		this.args.onChange([

@@ -58,7 +58,6 @@ interface Signature {
 	};
 }
 
-// iOS ArrangeAction labels and the web arrange panel's icons
 export const ACTIONS: Record<ArrangeAction, { title: string; icon: string }> = {
 	alignLeft: { title: 'Align left', icon: 'align-start-vertical' },
 	alignCentre: { title: 'Align centre', icon: 'align-center-vertical' },
@@ -89,9 +88,6 @@ const TURN_CELLS = (
 
 const TRANSFORM_MODES = ['Group', 'Separate'];
 
-// iOS ToolSettingsBar move cells: Fit and 100 %, then with a selection
-// Develop, Group or Ungroup, the turns and the Align menu; the web's move
-// settings (transform, snap, grid, nudge) sit in an Options panel
 export default class MoveCells extends Component<Signature> {
 	doc = new TrackedExternal(subscribe, getSnapshot);
 	ids = new TrackedExternal(subscribeSelection, getSelectedLayerIds);
@@ -106,7 +102,6 @@ export default class MoveCells extends Component<Signature> {
 		this.ts.unsubscribe();
 	}
 
-	// iOS layerState: nil while the selection has nothing to arrange
 	@cached
 	get layer() {
 		const doc = this.doc.current;
@@ -129,7 +124,6 @@ export default class MoveCells extends Component<Signature> {
 		};
 	}
 
-	// the phone's row has no room for titles: the layer cells go icon-only
 	named = (text: string) => (this.args.compact ? undefined : text);
 
 	get showView() {
@@ -156,7 +150,6 @@ export default class MoveCells extends Component<Signature> {
 		return !!l && isLit(id, l.doc, l.ids);
 	};
 
-	// the flips are toggles; the turns are actions
 	pressed = (id: ArrangeAction) =>
 		id.startsWith('flip') ? String(this.lit(id)) : undefined;
 

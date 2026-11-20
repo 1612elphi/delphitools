@@ -31,8 +31,6 @@ function chipStyle(colours: [string, string]) {
 	);
 }
 
-// iOS FxStyliseDuotone: the ramp between its two ends, the pairs, and the
-// colour wells behind Custom
 export default class FxDuotone extends Component<{
 	Args: { ctx: FxContext };
 }> {

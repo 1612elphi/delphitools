@@ -66,7 +66,6 @@ const Cross = <template><IconSvg @name="x" /></template>;
 const Fit = <template><IconSvg @name="minimize" /></template>;
 const Fill = <template><IconSvg @name="maximize" /></template>;
 
-// ios PaperUnit.decimal
 const decimal = (value: number, places = 1) =>
 	String(Math.round(value * 10 ** places) / 10 ** places);
 const millimetres = (width: number, height: number) =>
@@ -83,7 +82,6 @@ const keep = modifier(
 		store(element),
 );
 
-/** The port of ZineImposerViewController, on the web tool's pdf-lib export. */
 export default class ZineImposer extends Component {
 	@tracked foldId: ZineFoldId = 'mini-8';
 	@tracked panels = 8;
@@ -93,7 +91,6 @@ export default class ZineImposer extends Component {
 	@tracked bleed = false;
 	@tracked dpi = 300;
 	@tracked images: (ZineImage | null)[] = Array<null>(8).fill(null);
-	/** 1-based page */
 	@tracked lit?: number;
 	@tracked showsBack = false;
 	@tracked over = false;
@@ -105,10 +102,8 @@ export default class ZineImposer extends Component {
 	#one?: HTMLInputElement;
 	#picking = 0;
 	#queue: Promise<void> = Promise.resolve();
-	// bumps cancel in-flight export
 	#seq = 0;
 
-	// ?zine* ios launch arguments
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -192,7 +187,6 @@ export default class ZineImposer extends Component {
 		return paperSizeFor(this.paperSizeId) ?? FALLBACK_PAPER;
 	}
 
-	// print landscape, rotate size
 	get sheetWidthMm() {
 		return Math.max(this.paper.widthMm, this.paper.heightMm);
 	}
@@ -315,7 +309,6 @@ export default class ZineImposer extends Component {
 		].join('');
 	}
 
-	// ios job.reset; dpi exempt
 	#changed() {
 		this.#seq++;
 		this.busy = false;
@@ -379,7 +372,6 @@ export default class ZineImposer extends Component {
 		if (this.duplex) this.showsBack = !this.showsBack;
 	};
 
-	/** fills empty from start */
 	add = (files: File[], start: number, replace = false) => {
 		if (!files.length) return;
 		this.#queue = this.#queue.then(async () => {
@@ -432,7 +424,6 @@ export default class ZineImposer extends Component {
 
 	drop = (event: DragEvent) => {
 		this.over = false;
-		// strip, sheet handle own
 		if (event.defaultPrevented) return;
 		const files = [...(event.dataTransfer?.files ?? [])];
 		if (!files.length) return;
@@ -457,7 +448,6 @@ export default class ZineImposer extends Component {
 	pickedBulk = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const files = [...(input.files ?? [])];
-		// allows same-file re-pick
 		input.value = '';
 		this.add(files, 0);
 	};
@@ -556,7 +546,6 @@ export default class ZineImposer extends Component {
 				bleed: this.bleed,
 			});
 			if (seq !== this.#seq) return;
-			// pdf-lib save: ArrayBufferLike ≠ BlobPart
 			const blob = new Blob([new Uint8Array(bytes)], {
 				type: 'application/pdf',
 			});
@@ -720,7 +709,6 @@ export default class ZineImposer extends Component {
 							{{/if}}
 						</CanonRow>
 					{{/if}}
-					{{! labelled by Files cells }}
 					{{! template-lint-disable require-input-label }}
 					<input
 						class="zi-bulk"

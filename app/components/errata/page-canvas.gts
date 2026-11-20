@@ -19,6 +19,7 @@ import {
 	bounds,
 	boxAt,
 	cropFromDisplayed,
+	NOTE_PATH,
 	newId,
 	pageSize,
 	type ErrataDoc,
@@ -63,7 +64,9 @@ import {
 } from 'delphitools-v2/lib/errata/source';
 import { activeTool, toolSettings } from 'delphitools-v2/lib/errata/tool';
 import {
+	boxMode,
 	cropDraft,
+	hostFrame,
 	openNote,
 	registerCanvasActions,
 	selection,
@@ -82,23 +85,17 @@ import {
 	reportZoom,
 } from 'delphitools-v2/lib/substrata/viewport';
 
-// continuous scroll: every page sits in one scene, stacked with GAP between
-
-const NOTE_PATH = 'M1 1H19V14H8L3 19V14H1Z';
 const ZMIN = 0.1;
 const ZMAX = 16;
 const FIT_PAD = 24;
 const GAP = 24;
-// tiles kept this many viewport heights beyond the visible range
 const KEEP_MARGIN = 1.5;
-// tiles cover this much beyond the viewport so small scrolls need no render
 const TILE_MARGIN = 0.5;
 const TILE_DEBOUNCE = 80;
 const K_MIN = 0.5;
 const K_MAX = 40;
 const HIGHLIGHT = '#e6007e';
 
-// half-octave buckets keep zoom wobble from re-rendering
 function bucket(k: number): number {
 	const clamped = Math.max(K_MIN, Math.min(K_MAX, k));
 	return Math.pow(2, Math.round(Math.log2(clamped) * 2) / 2);
@@ -127,7 +124,6 @@ interface Tile {
 	k: number;
 	rect: PageCrop;
 	img: FabricObject;
-	/** page content changed; keep showing this until the replacement arrives */
 	stale?: boolean;
 }
 
@@ -195,8 +191,10 @@ function localPathD(
 	);
 }
 
-// fabric 7 defaults to a centre origin
-function placeholder(slot: Pick<Slot, 'x' | 'y' | 'width' | 'height'>) {
+function placeholder(
+	slot: Pick<Slot, 'x' | 'y' | 'width' | 'height'>,
+	fill: string,
+) {
 	return new Rect({
 		left: slot.x,
 		top: slot.y,
@@ -204,7 +202,7 @@ function placeholder(slot: Pick<Slot, 'x' | 'y' | 'width' | 'height'>) {
 		originY: 'top',
 		width: slot.width,
 		height: slot.height,
-		fill: '#fff',
+		fill,
 		selectable: false,
 		evented: false,
 		hoverCursor: 'default',
@@ -232,7 +230,6 @@ export default class PageCanvas extends Component {
 		let sceneWidth = 0;
 		let sceneHeight = 0;
 		let fitPending = true;
-		// page index this canvas last derived from the scroll position
 		let derivedIndex = -1;
 		let programmatic = false;
 		let visibleRaf = 0;
@@ -240,7 +237,6 @@ export default class PageCanvas extends Component {
 		const slotOf = (id: string) => slots.get(id);
 		const slotAt = (index: number) => slots.get(order[index] ?? '');
 
-		// page under a scene point, else the nearest by y
 		const pageAt = (p: Point): Slot | null => {
 			let best: Slot | null = null;
 			let bestDist = Infinity;
@@ -265,7 +261,6 @@ export default class PageCanvas extends Component {
 			return best;
 		};
 
-		// the frame's floating pieces, written by errata-shell; FIT_PAD without it
 		const area = wrap.closest<HTMLElement>(
 			'.sub-shell-canvas-area',
 		);
@@ -288,7 +283,27 @@ export default class PageCanvas extends Component {
 					};
 		};
 
+		const follow = () => {
+			const host = hostFrame.get();
+			if (!host) return false;
+			const first = host.pages()[0]?.getBoundingClientRect();
+			const slot = slotAt(0);
+			if (!first || !slot) return true;
+			const r = wrap.getBoundingClientRect();
+			const z = first.width / slot.width;
+			canvas.setViewportTransform([
+				z,
+				0,
+				0,
+				z,
+				first.left - r.left,
+				first.top - r.top,
+			]);
+			return true;
+		};
+
 		const clampViewport = () => {
+			if (follow()) return;
 			const vpt =
 				canvas.viewportTransform.slice() as typeof canvas.viewportTransform;
 			const z = vpt[0];
@@ -320,11 +335,10 @@ export default class PageCanvas extends Component {
 			canvas.setViewportTransform(vpt);
 		};
 
-		// the zoom the last fit chose; a frame change refits while it holds
 		let fitted = 0;
 		const fitPage = (index: number) => {
 			const slot = slotAt(index);
-			if (!slot) return;
+			if (!slot || follow()) return;
 			const { top, right, bottom, left } = insets();
 			const w = Math.max(1, canvas.getWidth() - left - right);
 			const h = Math.max(
@@ -352,6 +366,20 @@ export default class PageCanvas extends Component {
 		const scrollToPage = (index: number) => {
 			const slot = slotAt(index);
 			if (!slot) return;
+			const host = hostFrame.get();
+			if (host) {
+				const el = host.pages()[index];
+				const r = el?.getBoundingClientRect();
+				const seen =
+					host.scroller.getBoundingClientRect();
+				if (
+					r &&
+					(r.bottom < seen.top ||
+						r.top > seen.bottom)
+				)
+					el?.scrollIntoView({ block: 'start' });
+				return;
+			}
 			const vpt =
 				canvas.viewportTransform.slice() as typeof canvas.viewportTransform;
 			vpt[5] = insets().top - (slot.y - GAP / 2) * vpt[0];
@@ -360,7 +388,6 @@ export default class PageCanvas extends Component {
 			canvas.requestRenderAll();
 		};
 
-		// scene y range on screen
 		const visibleRange = () => {
 			const vpt = canvas.viewportTransform;
 			const z = vpt[0];
@@ -441,7 +468,6 @@ export default class PageCanvas extends Component {
 					dropTile(slot);
 			});
 			scheduleTiles();
-			// a programmatic scroll keeps the index it was asked for
 			if (programmatic) {
 				programmatic = false;
 				return;
@@ -452,7 +478,6 @@ export default class PageCanvas extends Component {
 			}
 		};
 
-		// re-render visible page regions at the current zoom
 		let tileTimer = 0;
 		const scheduleTiles = () => {
 			if (tileTimer) clearTimeout(tileTimer);
@@ -465,7 +490,8 @@ export default class PageCanvas extends Component {
 		const renderTiles = () => {
 			tileTimer = 0;
 			const doc = store.getSnapshot();
-			if (!doc || order.length === 0) return;
+			if (!doc || order.length === 0 || hostFrame.get())
+				return;
 			const vpt = canvas.viewportTransform;
 			const z = vpt[0];
 			const k = bucket(z * (window.devicePixelRatio || 1));
@@ -782,10 +808,26 @@ export default class PageCanvas extends Component {
 			);
 			let y = 0;
 			const seen = new Set<string>();
-			order = doc.pages.map((page) => {
+			const host = hostFrame.get();
+			const rects =
+				host
+					?.pages()
+					.map((el) =>
+						el.getBoundingClientRect(),
+					) ?? [];
+			const first = rects[0];
+			const z = first
+				? first.width / pageSize(doc.pages[0]!).width
+				: 1;
+			order = doc.pages.map((page, i) => {
 				const { width, height } = pageSize(page);
 				const key = pageKey(page);
-				const x = (sceneWidth - width) / 2;
+				let x = (sceneWidth - width) / 2;
+				const rect = rects[i];
+				if (first && rect) {
+					x = (rect.left - first.left) / z;
+					y = (rect.top - first.top) / z;
+				}
 				let slot = slots.get(page.id);
 				if (slot && slot.key !== key) {
 					if (
@@ -803,12 +845,10 @@ export default class PageCanvas extends Component {
 					}
 				}
 				if (!slot) {
-					const bg = placeholder({
-						x,
-						y,
-						width,
-						height,
-					});
+					const bg = placeholder(
+						{ x, y, width, height },
+						host ? 'transparent' : '#fff',
+					);
 					canvas.add(bg);
 					slot = {
 						id: page.id,
@@ -881,7 +921,6 @@ export default class PageCanvas extends Component {
 						t.doc === o &&
 						t.pageId === page.id
 					) {
-						// keep it pinned to a moved page
 						const base = centreProps(
 							o,
 							slot,
@@ -938,7 +977,6 @@ export default class PageCanvas extends Component {
 				canvas.remove(t.fabric);
 				tracked.delete(id);
 			}
-			// z-order: page backgrounds and tiles, then objects in doc order
 			let index = 0;
 			for (const id of order) {
 				const slot = slotOf(id)!;
@@ -965,7 +1003,6 @@ export default class PageCanvas extends Component {
 				fitPending = false;
 			} else clampViewport();
 			applyTool();
-			// doc edits never move the current page; only user scrolling does
 			programmatic = true;
 			scheduleVisible();
 			canvas.requestRenderAll();
@@ -977,8 +1014,6 @@ export default class PageCanvas extends Component {
 			return null;
 		};
 
-		// the export clips to the page. An object hanging over the edge is hidden from the
-		// main pass and drawn twice in after:render: the part on the page as is, the rest dimmed
 		const OUTSIDE_OPACITY = 0.4;
 		const overhanging = new Set<FabricObject>();
 		const placed = (f: FabricObject) => {
@@ -1040,7 +1075,6 @@ export default class PageCanvas extends Component {
 					ctx.clip(
 						evenodd ? 'evenodd' : 'nonzero',
 					);
-					// direct assignment: set() would mark the object dirty on every frame
 					f.opacity = alpha * opacity;
 					f.render(ctx);
 					f.opacity = 0;
@@ -1088,6 +1122,10 @@ export default class PageCanvas extends Component {
 		canvas.on('selection:created', onSelection);
 		canvas.on('selection:updated', onSelection);
 		canvas.on('selection:cleared', onSelection);
+		let clearedAt = 0;
+		canvas.on('selection:cleared', () => {
+			clearedAt = performance.now();
+		});
 
 		canvas.on('object:modified', (e) => {
 			if (e.target && e.target === cropRect) {
@@ -1131,7 +1169,6 @@ export default class PageCanvas extends Component {
 					patch.scaleY =
 						(d.scaleY * f.height) / t.doc.h;
 				}
-				// keeps labels crisp
 				if (
 					t.doc.kind === 'field' &&
 					Math.abs(d.scaleX - 1) +
@@ -1157,7 +1194,6 @@ export default class PageCanvas extends Component {
 				for (const [pageId, patches] of byPage)
 					patchObjects(pageId, patches);
 			};
-			// rebuild outside fabric transform
 			if (rebuilds) queueMicrotask(commit);
 			else commit();
 		});
@@ -1186,7 +1222,6 @@ export default class PageCanvas extends Component {
 			addObject(slot.id, ink);
 		});
 
-		// drag-to-draw shapes and crop, in the page under the drag start
 		let drag: { start: Point; slot: Slot } | null = null;
 		let ghost: FabricObject | null = null;
 
@@ -1201,7 +1236,6 @@ export default class PageCanvas extends Component {
 			height: Math.abs(b.y - a.y),
 		});
 
-		// scene points in, page-local object out
 		const shapeObject = (
 			slot: Slot,
 			a: Point,
@@ -1361,7 +1395,6 @@ export default class PageCanvas extends Component {
 						),
 					}
 				: null;
-			// own double-click detection: pointer events carry no click count and fabric's dblclick is unreliable here
 			if (tool === 'content') {
 				const t = opt.target;
 				const now = performance.now();
@@ -1467,7 +1500,6 @@ export default class PageCanvas extends Component {
 		});
 
 		canvas.on('mouse:up', (opt: TPointerEventInfo) => {
-			// drags move the note
 			if (
 				notePress &&
 				notePress.at.distanceFrom(
@@ -1477,7 +1509,6 @@ export default class PageCanvas extends Component {
 				openNote.set(notePress.id);
 			notePress = null;
 			if (pendingEdit) {
-				// after fabric has finished its own selection handling for this click
 				const t = pendingEdit;
 				pendingEdit = null;
 				setTimeout(() => void startTextEdit(t), 0);
@@ -1502,7 +1533,6 @@ export default class PageCanvas extends Component {
 					(pg) => pg.id === slot.id,
 				);
 				const clamped = clampRect(slot, rect);
-				// clicks keep the draft
 				if (page && cropFromDisplayed(page, clamped))
 					cropDraft.set({
 						pageId: slot.id,
@@ -1531,7 +1561,6 @@ export default class PageCanvas extends Component {
 			canvas.requestRenderAll();
 		});
 
-		// content tool: one transparent, draggable rect per line, image, path or form of the source page
 		interface ProxyInfo {
 			pageId: string;
 			ranges: { stream: string; from: number; to: number }[];
@@ -1540,7 +1569,6 @@ export default class PageCanvas extends Component {
 			view: PageContentView;
 			kind: 'Text' | 'Image' | 'Path' | 'Form';
 			detail: string;
-			/** points */
 			width: number;
 			height: number;
 			line?: TextLine;
@@ -1553,7 +1581,6 @@ export default class PageCanvas extends Component {
 		} as const;
 		const fontLabel = (run: TextRun) =>
 			`${run.font.baseFont.replace(/^[A-Z]{6}\+/, '') || run.font.subtype} ${fmtPt(run.fontSize)}`;
-		// the moved object is selected again once its page's proxies are rebuilt
 		let reselect: {
 			pageId: string;
 			left: number;
@@ -1563,7 +1590,6 @@ export default class PageCanvas extends Component {
 			string,
 			{ key: string; rects: FabricObject[] }
 		>();
-		// the page raster is white in both themes, so the outline colour is fixed
 		const ACCENT = '#1f6feb';
 
 		const dropProxies = (pageId: string) => {
@@ -1719,7 +1745,6 @@ export default class PageCanvas extends Component {
 					if (reselect?.pageId === page.id) {
 						const { left, top } = reselect;
 						reselect = null;
-						// a substituted font changes the line's ascent, so the top may move by a few points
 						const again = rects
 							.map((r) => ({
 								r,
@@ -1751,7 +1776,6 @@ export default class PageCanvas extends Component {
 				if (!wanted.has(id)) dropProxies(id);
 		};
 
-		// hud: kind, font and size of the hovered or selected proxy
 		const hud = wrap.querySelector<HTMLElement>('.err-hud')!;
 		let hudTarget: FabricObject | null = null;
 		const placeHud = () => {
@@ -1760,7 +1784,6 @@ export default class PageCanvas extends Component {
 				hud.hidden = true;
 				return;
 			}
-			// fabric 7 bounding rects are scene coordinates; the hud is positioned in canvas pixels
 			const vpt = canvas.viewportTransform;
 			const toCanvas = (p: Point) =>
 				fabricUtil.transformPoint(p, vpt);
@@ -1837,7 +1860,6 @@ export default class PageCanvas extends Component {
 		});
 		canvas.on('after:render', placeHud);
 
-		// later op indices first, so earlier ranges stay valid while the edits replay
 		const orderEdits = (edits: ContentEdit[]) =>
 			edits
 				.slice()
@@ -1865,8 +1887,6 @@ export default class PageCanvas extends Component {
 				]);
 			}
 			if (byPage.size === 0) return false;
-			// fabric fires object:modified while finalising the transform; removing the
-			// active object inside that call recurses through discardActiveObject
 			queueMicrotask(() => {
 				canvas.discardActiveObject();
 				for (const [pageId, edits] of byPage)
@@ -1890,7 +1910,6 @@ export default class PageCanvas extends Component {
 				left: d.translateX - f.width / 2,
 				top: d.translateY - f.height / 2,
 			};
-			// qrDecompose gives the centre; compare against the rect's own centre at build time
 			const dx = d.translateX - (info.left + f.width / 2);
 			const dy = d.translateY - (info.top + f.height / 2);
 			if (Math.abs(dx) < 0.05 && Math.abs(dy) < 0.05)
@@ -1907,7 +1926,6 @@ export default class PageCanvas extends Component {
 		const deleteEdits = (info: ProxyInfo): ContentEdit[] =>
 			info.ranges.map((r) => ({ kind: 'delete', ...r }));
 
-		// text editing: an IText in the page font stands in for the double-clicked line until commit
 		interface Editing {
 			proxy: FabricObject;
 			itext: IText;
@@ -1924,11 +1942,9 @@ export default class PageCanvas extends Component {
 			target: null,
 			at: 0,
 		};
-		// fabric puts the first baseline this far below the text top (lineHeight 1.16, fontSizeMult 1.13, fraction 0.222)
 		const BASELINE = 0.879;
 
 		const codesOf = (run: TextRun) => run.glyphs.map((g) => g.code);
-		// the editor holds pdf.js glyph strings; the stored text is the font's own unicode reading
 		const unicodeOf = (run: TextRun, codes: number[]) =>
 			run.font
 				.decode(
@@ -2017,7 +2033,6 @@ export default class PageCanvas extends Component {
 				fontFamily: face?.family ?? FONT,
 				fontSize: run0.fontSize,
 				fill,
-				// covers the rendered original underneath while typing
 				backgroundColor: '#fff',
 				hasControls: false,
 				lockMovementX: true,
@@ -2066,11 +2081,6 @@ export default class PageCanvas extends Component {
 			canvas.requestRenderAll();
 		};
 
-		/**
-		 * map the editor's string back to charcodes. `bad` lists characters the run's font cannot
-		 * show; `fallback` is the same text in WinAnsi for the substitute font, null when a
-		 * character is outside that too
-		 */
 		const encodeEdit = (
 			e: Editing,
 			text: string,
@@ -2114,10 +2124,6 @@ export default class PageCanvas extends Component {
 			return { codes, bad, fallback };
 		};
 
-		/**
-		 * characters the run's font has no glyph for. Ones WinAnsi covers go out in the substitute
-		 * font and the hud turns red; ones outside that too keep the editor open
-		 */
 		const refuse = (e: Editing): boolean => {
 			const { bad, fallback } = encodeEdit(e, e.itext.text);
 			if (!bad.length) {
@@ -2149,7 +2155,6 @@ export default class PageCanvas extends Component {
 			const text = e.itext.text.replace(/\r?\n/g, '');
 			const { codes, bad, fallback } = encodeEdit(e, text);
 			const substitute = bad.length > 0 && fallback !== null;
-			// leaving the editor with characters no font here can show drops the edit
 			if (!cancel && (bad.length === 0 || substitute)) {
 				const runs = e.line.runs;
 				const edits: ContentEdit[] = runs
@@ -2292,7 +2297,6 @@ export default class PageCanvas extends Component {
 			},
 			selectObject: (id) => {
 				const t = tracked.get(id);
-				// images build once their bitmap has loaded; select then
 				if (!t) {
 					pendingSelect = id;
 					return;
@@ -2402,6 +2406,8 @@ export default class PageCanvas extends Component {
 				canvas.getHeight() / 2,
 			);
 		const zoomAt = (factor: number, at = centre()) => {
+			const host = hostFrame.get();
+			if (host) return host.zoom(factor);
 			canvas.zoomToPoint(
 				at,
 				clampZoom(canvas.getZoom() * factor),
@@ -2410,7 +2416,11 @@ export default class PageCanvas extends Component {
 			reportZoom(canvas.getZoom());
 			scheduleVisible();
 		};
-		const fit = () => fitPage(getPageIndex());
+		const fit = () => {
+			const host = hostFrame.get();
+			if (host) host.fit();
+			else fitPage(getPageIndex());
+		};
 		registerViewportController({
 			zoomIn: () => zoomAt(1.2),
 			zoomOut: () => zoomAt(1 / 1.2),
@@ -2420,8 +2430,78 @@ export default class PageCanvas extends Component {
 			cycle: fit,
 		});
 
+		const panBy = (dx: number, dy: number) => {
+			const host = hostFrame.get();
+			if (host) return host.scroller.scrollBy(-dx, -dy);
+			canvas.relativePan(new Point(dx, dy));
+			clampViewport();
+			canvas.requestRenderAll();
+			scheduleVisible();
+		};
+
+		// ponytail: a finger pans only from empty space with the select tool; other tools draw, so they have no pan or pinch
+		let nav: { x: number; y: number; d: number } | null = null;
+		const fingers = (t: TouchList) => {
+			const a = t[0]!;
+			const b = t[1] ?? a;
+			return {
+				x: (a.clientX + b.clientX) / 2,
+				y: (a.clientY + b.clientY) / 2,
+				d: Math.hypot(
+					a.clientX - b.clientX,
+					a.clientY - b.clientY,
+				),
+			};
+		};
+		const onTouchStart = (e: TouchEvent) => {
+			if (e.touches.length === 1) {
+				if (
+					activeTool.get() !== 'select' ||
+					canvas.findTarget(e).target
+				)
+					return;
+				canvas.selection = false;
+			} else if (!nav) return;
+			nav = fingers(e.touches);
+		};
+		const onTouchMove = (e: TouchEvent) => {
+			if (!nav) return;
+			const now = fingers(e.touches);
+			panBy(now.x - nav.x, now.y - nav.y);
+			if (nav.d && now.d) {
+				const r = wrap.getBoundingClientRect();
+				zoomAt(
+					now.d / nav.d,
+					new Point(
+						now.x - r.left,
+						now.y - r.top,
+					),
+				);
+			}
+			nav = now;
+		};
+		const onTouchEnd = (e: TouchEvent) => {
+			if (!nav) return;
+			nav = e.touches.length ? fingers(e.touches) : null;
+			if (!nav) applyTool();
+		};
+		const touch = { capture: true, passive: true };
+		wrap.addEventListener('touchstart', onTouchStart, touch);
+		wrap.addEventListener('touchmove', onTouchMove, touch);
+		wrap.addEventListener('touchend', onTouchEnd, touch);
+		wrap.addEventListener('touchcancel', onTouchEnd, touch);
+
 		const onWheel = (e: WheelEvent) => {
 			e.preventDefault();
+			const host = hostFrame.get();
+			if (host) {
+				if (e.ctrlKey || e.metaKey)
+					host.scroller.dispatchEvent(
+						new WheelEvent('wheel', e),
+					);
+				else panBy(-e.deltaX, -e.deltaY);
+				return;
+			}
 			if (e.ctrlKey || e.metaKey) {
 				const r = wrap.getBoundingClientRect();
 				zoomAt(
@@ -2431,16 +2511,21 @@ export default class PageCanvas extends Component {
 						e.clientY - r.top,
 					),
 				);
-			} else {
-				canvas.relativePan(
-					new Point(-e.deltaX, -e.deltaY),
-				);
-				clampViewport();
-				canvas.requestRenderAll();
-				scheduleVisible();
-			}
+			} else panBy(-e.deltaX, -e.deltaY);
 		};
 		wrap.addEventListener('wheel', onWheel, { passive: false });
+
+		const onDouble = (e: MouseEvent) => {
+			if (
+				activeTool.get() !== 'select' ||
+				boxMode.get() !== null ||
+				canvas.getActiveObject() ||
+				performance.now() - clearedAt < 500
+			)
+				return;
+			hostFrame.get()?.edit(e.clientX, e.clientY);
+		};
+		wrap.addEventListener('dblclick', onDouble);
 
 		const onPageIndex = () => {
 			const index = getPageIndex();
@@ -2463,7 +2548,47 @@ export default class PageCanvas extends Component {
 				}));
 		}
 
+		let hostRaf = 0;
+		let hostAt = '';
+		const hostTick = () => {
+			hostRaf = requestAnimationFrame(hostTick);
+			if (order.length === 0) return;
+			const r = hostFrame
+				.get()
+				?.content.querySelector('.err-write-page')
+				?.getBoundingClientRect();
+			const now = r ? `${r.left},${r.top},${r.width}` : '';
+			if (now === hostAt) return;
+			hostAt = now;
+			follow();
+			scheduleVisible();
+			canvas.requestRenderAll();
+		};
+		const hostRo = new ResizeObserver(() => {
+			if (order.length) sync();
+		});
+		const onHost = () => {
+			cancelAnimationFrame(hostRaf);
+			hostRo.disconnect();
+			const host = hostFrame.get();
+			if (host) {
+				hostRo.observe(host.content);
+				hostTick();
+			}
+			if (order.length === 0) return;
+			for (const slot of slots.values()) {
+				dropTile(slot);
+				canvas.remove(slot.bg);
+			}
+			slots.clear();
+			order = [];
+			fitPending = true;
+			sync();
+		};
+		onHost();
+
 		const offs = [
+			hostFrame.subscribe(onHost),
 			store.subscribe(sync),
 			subscribePage(onPageIndex),
 			activeTool.subscribe(applyTool),
@@ -2478,8 +2603,27 @@ export default class PageCanvas extends Component {
 			if (tileTimer) clearTimeout(tileTimer);
 			for (const slot of slots.values()) slot.job?.cancel();
 			ro.disconnect();
+			cancelAnimationFrame(hostRaf);
+			hostRo.disconnect();
 			area?.removeEventListener('err-inset', onInset);
 			wrap.removeEventListener('wheel', onWheel);
+			wrap.removeEventListener(
+				'touchstart',
+				onTouchStart,
+				touch,
+			);
+			wrap.removeEventListener(
+				'touchmove',
+				onTouchMove,
+				touch,
+			);
+			wrap.removeEventListener('touchend', onTouchEnd, touch);
+			wrap.removeEventListener(
+				'touchcancel',
+				onTouchEnd,
+				touch,
+			);
+			wrap.removeEventListener('dblclick', onDouble);
 			registerCanvasActions(null);
 			registerViewportController(null);
 			selection.set([]);
@@ -2489,7 +2633,7 @@ export default class PageCanvas extends Component {
 
 	<template>
 		<div class="sub-canvas-wrap" {{this.mount}}>
-			<Backdrop />
+			<Backdrop @name="Errata" @kind="DOCUMENT EDITOR" />
 			<canvas></canvas>
 			<div class="err-hud" hidden></div>
 		</div>

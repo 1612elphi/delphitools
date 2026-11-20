@@ -11,7 +11,6 @@ interface PictureSignature {
 		text: string;
 		words: number;
 		onInput: (text: string) => void;
-		/** The picture's own height in px at its current width. */
 		onHeight: (height: number) => void;
 	};
 }
@@ -22,7 +21,6 @@ const ClearIcon = <template><IconSvg @name="trash-2" /></template>;
 
 const accept = TEXT_ACCEPT.join(',');
 
-// .wc-picture-head: 6 px over a 44 px head
 const headHeight = 50;
 
 const reportHeight = modifier(
@@ -35,10 +33,6 @@ const reportHeight = modifier(
 	},
 );
 
-/**
- * The text itself, set large, as the place to type: the word count as a
- * figure above, with Paste, Files and Clear beside it.
- */
 export default class Picture extends Component<PictureSignature> {
 	#file?: HTMLInputElement;
 
@@ -46,7 +40,6 @@ export default class Picture extends Component<PictureSignature> {
 		return this.args.words.toLocaleString();
 	}
 
-	// keeps a trailing empty line as tall as the textarea draws it
 	get mirror() {
 		return `${this.args.text} `;
 	}
@@ -79,7 +72,6 @@ export default class Picture extends Component<PictureSignature> {
 		field.value = '';
 	};
 
-	// a dropped file replaces the text; dropped text goes in at the caret
 	drop = (event: DragEvent) => {
 		const file = event.dataTransfer?.files[0];
 		if (!file) return;
@@ -145,7 +137,6 @@ export default class Picture extends Component<PictureSignature> {
 				/>
 			</div>
 			<div class="wc-picture-scroll">
-				{{! the mirror sizes the cell; the textarea lies over it in the same type }}
 				<div
 					class="wc-picture-text"
 					{{reportHeight @onHeight}}

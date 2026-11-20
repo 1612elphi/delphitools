@@ -11,7 +11,6 @@ import {
 	type Unit,
 } from 'delphitools-v2/components/tools/typo-calc/units';
 
-/** Scales drawn, top to bottom; cm is mm by ten and rem reads as em. */
 const scales: Unit[] = ['px', 'pt', 'pc', 'ag', 'cc', 'mm', 'in', 'em'];
 const rowHeight = 22;
 const labelWidth = 36;
@@ -19,7 +18,6 @@ const padding = 16;
 const top = 12;
 const settleMs = 200;
 
-/** The gauge's height, as TypoGauge.height. */
 export const gaugeHeight = rowHeight * scales.length + padding + 12;
 
 interface Pose {
@@ -40,18 +38,11 @@ function measure(text: string, font: string): number {
 	return context.measureText(text).width;
 }
 
-/**
- * The measure as a length on a typesetter's line gauge: one scale per unit
- * on a shared zero, the length shaded, a cursor across every scale at its
- * end and each scale's reading beside it. The gauge zooms in 1-2-5 steps.
- */
 export default class Gauge extends Component<GaugeSignature> {
 	@tracked width = 0;
-	/** Bumped each frame of a settle. */
 	@tracked tick = 0;
 	mono = 'monospace';
 
-	// the settle in flight, untracked so a frame does not restart it
 	#from?: Pose;
 	#to?: Pose;
 	#started = 0;
@@ -62,11 +53,8 @@ export default class Gauge extends Component<GaugeSignature> {
 		const from = this.#from;
 		const progress = Math.min(1, (now - this.#started) / settleMs);
 		if (!from || progress >= 1) return to;
-		// ease-out cubic, no overshoot
 		const eased = 1 - (1 - progress) ** 3;
-		// zoom eases in log space
 		const shownSpan = from.span * (to.span / from.span) ** eased;
-		// the cursor's place on the gauge eases, so a zoom never carries it past the target
 		const fromAt = from.px / from.span;
 		const toAt = to.px / to.span;
 		return {
@@ -92,7 +80,6 @@ export default class Gauge extends Component<GaugeSignature> {
 		if (this.#from) this.#frame = requestAnimationFrame(this.#step);
 	}
 
-	// retargets during render: the first frame of a change is drawn from the old pose, never the new one
 	get shown(): Pose {
 		void this.tick;
 		const now = performance.now();
@@ -142,7 +129,6 @@ export default class Gauge extends Component<GaugeSignature> {
 		const widest = Math.max(
 			...readings.map((text) => measure(text, readingFont)),
 		);
-		// readings share one side
 		const flips = cursor + 4 + widest + 6 > width - padding;
 		const { base, ppi } = this.args;
 
@@ -152,7 +138,6 @@ export default class Gauge extends Component<GaugeSignature> {
 			const perUnit = UNITS[unit].toPx(1, base, ppi) * scale;
 			const major = niceStep(44 / perUnit);
 			const minor = major / subdivisions(major);
-			// overflow skips ticks
 			const ticks =
 				Number.isFinite(major * perUnit) &&
 				major * perUnit > 1;
@@ -175,7 +160,6 @@ export default class Gauge extends Component<GaugeSignature> {
 					const x = zero + v * perUnit;
 					majorPath += `M${x.toFixed(2)} ${bottom - 11}v11`;
 					const text = formatValue(v);
-					// no clipped numbers
 					if (
 						x +
 							2 +

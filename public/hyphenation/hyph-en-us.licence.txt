@@ -1,0 +1,16 @@
+title: Hyphenation patterns for American English
+copyright: Copyright (C) 1990, 2004, 2005 Gerard D.C. Kuiken
+notice: This file is part of the hyph-utf8 package.
+    See http://www.hyphenation.org/tex for more information.
+language:
+    name: English, American spelling
+    tag: en-us
+version: 2005-05-30
+authors:
+  -
+    name: Gerard D.C. Kuiken
+licence:
+    text: >
+        Copying and distribution of this file, with or without modification,
+        are permitted in any medium without royalty provided the copyright
+        notice and this notice are preserved.

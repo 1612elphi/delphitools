@@ -1,5 +1,6 @@
 import { module, test } from 'qunit';
 import {
+	addQuantities,
 	convertProse,
 	formatAmount,
 	parseQuantity,
@@ -176,6 +177,45 @@ module('Unit | lib | recipe-scale audit fixes', function () {
 		assert.strictEqual(
 			convertProse('roll to 3 mm', 'imperial'),
 			'roll to ⅛ in',
+		);
+	});
+});
+
+module('Unit | lib | recipe-scale review fixes', function () {
+	test('a converted range shares one unit', function (assert) {
+		assert.strictEqual(
+			scaleIngredient('2-3 cups', 2, 'metric'),
+			'0.96–1.4 l',
+		);
+	});
+
+	test('the list splits compound quantities', function (assert) {
+		assert.strictEqual(
+			addQuantities(['1 cup + 2 Tbsp'], 2, 'written'),
+			'2¼ cups',
+		);
+		assert.strictEqual(
+			addQuantities(
+				['1 cup + 2 Tbsp', '1 cup'],
+				1,
+				'written',
+			),
+			'2⅛ cups',
+		);
+	});
+
+	test('the list keeps ranges', function (assert) {
+		assert.strictEqual(
+			addQuantities(['1-2 cloves'], 1, 'written'),
+			'1–2 cloves',
+		);
+		assert.strictEqual(
+			addQuantities(['1-2 cloves', '1 cloves'], 2, 'written'),
+			'4–6 cloves',
+		);
+		assert.strictEqual(
+			addQuantities(['100-200 g'], 1, 'imperial'),
+			'3.53–7 oz',
 		);
 	});
 });

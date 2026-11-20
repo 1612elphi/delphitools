@@ -3,7 +3,7 @@ import type { Anchor } from 'delphitools-v2/lib/pdf-stamp';
 export type Rotation = 0 | 90 | 180 | 270;
 export type { Anchor } from 'delphitools-v2/lib/pdf-stamp';
 
-/** displayed page space: points, origin top-left, centre-anchored objects */
+/** pt, top-left origin, centred */
 interface BaseObject {
 	id: string;
 	cx: number;
@@ -25,6 +25,12 @@ export interface TextObject extends BaseObject {
 	opacity?: number;
 	bold?: boolean;
 }
+
+/** fabric IText metrics in font sizes: _fontSizeMult, baseline share of a line, lineHeight */
+export const ITEXT = { mult: 1.13, baseline: 0.778, lineHeight: 1.16 };
+
+/** the comment icon, 20 by 20 */
+export const NOTE_PATH = 'M1 1H19V14H8L3 19V14H1Z';
 
 /** d is in local coords, 0..w by 0..h */
 export interface InkObject extends BaseObject {

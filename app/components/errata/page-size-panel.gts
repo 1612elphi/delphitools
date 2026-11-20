@@ -39,11 +39,9 @@ import {
 	MM_TO_POINTS,
 	PAPER_SIZES,
 } from 'delphitools-v2/lib/imposition';
-import { findPaperSize } from 'delphitools-v2/lib/paper-sizes';
+import { findPaperSize, matchPaperSize } from 'delphitools-v2/lib/paper-sizes';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 import './page-size-panel.css';
-
-// mm shown, points stored
 
 const PRESET_IDS = ['a4', 'a3', 'sra4', 'letter', 'legal', 'tabloid'];
 const PRESETS = PRESET_IDS.map((id) => {
@@ -164,21 +162,9 @@ export default class PageSizePanel extends Component<{
 		const w = parseMm(this.width);
 		const h = parseMm(this.height);
 		if (w === null || h === null) return null;
-		const [a, b] = [w, h].sort((x, y) => x - y);
-		return (
-			PRESETS.find(
-				(p) =>
-					Math.abs(
-						p.widthMm * MM_TO_POINTS - a!,
-					) < 1 &&
-					Math.abs(
-						p.heightMm * MM_TO_POINTS - b!,
-					) < 1,
-			)?.id ?? null
-		);
+		return matchPaperSize(w, h, PRESETS) ?? null;
 	}
 
-	// -1 shows no cell picked; CanonSegmented reads undefined as the first
 	get presetIndex(): number {
 		return PRESETS.findIndex((p) => p.id === this.activePreset);
 	}
@@ -212,7 +198,6 @@ export default class PageSizePanel extends Component<{
 		);
 	}
 
-	// displayed size per page
 	resizeFor(page: ErrataPage, w: number, h: number): PageResize {
 		const turns = totalRotation(page) / 90;
 		const swap = turns % 2 !== 0;

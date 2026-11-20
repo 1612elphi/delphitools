@@ -46,7 +46,6 @@ const BackspaceIcon = <template><IconSvg @name="delete" /></template>;
 
 const wpmText = (value: number) => `${Math.round(value)} WPM`;
 
-/** The port of MorseCodeViewController, with MorseTape and MorseTonePlayer. */
 export default class MorseCode extends Component {
 	@tracked input = '';
 	@tracked direction = 0;
@@ -63,7 +62,6 @@ export default class MorseCode extends Component {
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
-		// ?morseText= ?morseMode=<0-2> ?morseWpm= ?morseLoop ?morsePlay ?morseQuiet: the iOS launch arguments
 		const query = new URLSearchParams(window.location.search);
 		const mode = Number(query.get('morseMode'));
 		if (mode >= 0 && mode < directions.length)
@@ -107,7 +105,6 @@ export default class MorseCode extends Component {
 		);
 	}
 
-	// keeps keypad when emptied
 	get keying() {
 		return this.decoding || (this.direction === 0 && !this.input);
 	}
@@ -144,7 +141,6 @@ export default class MorseCode extends Component {
 		return 1.2 / this.wpm;
 	}
 
-	// seconds at the chosen speed
 	get duration() {
 		const { glyphs, total } = tapeOf(this.morse);
 		return glyphs.length ? total * this.unitSeconds : null;
@@ -177,7 +173,6 @@ export default class MorseCode extends Component {
 			this.#frame = requestAnimationFrame(() => this.#show());
 	}
 
-	// any change stops the tone, as on iOS
 	#changed() {
 		this.player.stop();
 		this.#show();
@@ -225,7 +220,6 @@ export default class MorseCode extends Component {
 		if (key === 'dah') this.player.key('-', this.wpm);
 	};
 
-	// enter presses focused button
 	keypadDown = (event: KeyboardEvent) => {
 		const key = keyOfEvent[event.key];
 		if (!key || event.metaKey || event.ctrlKey || event.altKey)
@@ -234,7 +228,6 @@ export default class MorseCode extends Component {
 		this.press(key);
 	};
 
-	// space keyup clicks button
 	keypadUp = (event: KeyboardEvent) => {
 		if (event.key === ' ') event.preventDefault();
 	};
@@ -303,7 +296,6 @@ export default class MorseCode extends Component {
 			</:main>
 			<:footer>
 				{{#if this.keying}}
-					{{! keys bubble from buttons }}
 					{{! template-lint-disable no-invalid-interactive }}
 					<div
 						class="mc-keypad"

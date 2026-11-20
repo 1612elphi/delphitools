@@ -17,7 +17,6 @@ let context: CanvasRenderingContext2D | null | undefined;
 let family: string | undefined;
 const widths = new Map<string, number>();
 
-// 17 px semibold mono, as the faces are set
 function textWidth(text: string) {
 	const known = widths.get(text);
 	if (known !== undefined) return known;
@@ -32,7 +31,6 @@ function textWidth(text: string) {
 	return width;
 }
 
-/** MorseTape.units: dot 1, dash 3, a unit between. */
 const morseUnits = (code: string) =>
 	code
 		? Array.from(code).reduce(
@@ -102,11 +100,6 @@ const FaceView: TOC<{ Args: { face: Face } }> = <template>
 	{{/if}}
 </template>;
 
-/**
- * SymbolPairStrip: each symbol of the input over what it becomes, in
- * wrapped rows; the Vigenère key letter between them. A symbol that passes
- * through unchanged is muted.
- */
 const Pairs: TOC<PairsSignature> = <template>
 	<div class="dec-layer">
 		<CanonGlyphFlow

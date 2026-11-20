@@ -124,7 +124,7 @@ const routes = [
 			allTools.find((t) => t.id === 'errata')?.description ??
 			'',
 		image: '/errata/og.png',
-		imageAlt: 'A share card for Errata, the delphitools PDF editor',
+		imageAlt: 'A share card for Errata, the delphitools document editor',
 		card: toolCard('Errata'),
 	},
 	...docsPages.map((page) => ({
@@ -136,7 +136,7 @@ const routes = [
 		description: canonKit.description,
 		image: `${page.url}/og.png`,
 		imageAlt: canonCardAlt,
-		// a pattern or screen title alone ("Tone") needs its kind on the card
+		// bare titles need kind
 		card: canonCard(
 			page.kind === 'overview'
 				? 'Canon'

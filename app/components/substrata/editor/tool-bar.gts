@@ -20,7 +20,6 @@ interface Signature {
 	Args: { tool: EditorTool; phone: boolean };
 }
 
-// menus and panels open away from the bar's edge, over the canvas
 const PLACEMENT: Record<EditorEdge, CanonPlacement> = {
 	bottom: 'top',
 	top: 'bottom',
@@ -28,11 +27,8 @@ const PLACEMENT: Record<EditorEdge, CanonPlacement> = {
 	trailing: 'left-start',
 };
 
-// a press that travels this far drags the bar instead of tapping a cell
 const DRAG_SLOP = 8;
 
-// iOS ToolSettingsBar: the tool's cells in a floating bar, 36 px cells,
-// dragged to any edge of the canvas (the phone keeps it above the row)
 export default class ToolBar extends Component<Signature> {
 	@tracked dragging: { x: number; y: number } | null = null;
 	#start: { x: number; y: number; id: number } | null = null;
@@ -65,10 +61,8 @@ export default class ToolBar extends Component<Signature> {
 	#bar: HTMLElement | null = null;
 	#wasDrag = false;
 
-	// window listeners: the pointer leaves the bar long before the drop
 	down = (e: PointerEvent) => {
 		if (this.args.phone || e.button !== 0) return;
-		// a press inside an open menu or panel is not a bar drag
 		if ((e.target as Element).closest('.canon-popover')) return;
 		this.#start = { x: e.clientX, y: e.clientY, id: e.pointerId };
 		this.#wasDrag = false;
@@ -109,7 +103,6 @@ export default class ToolBar extends Component<Signature> {
 		editorUi.setSettingsEdge(near[0]![0]);
 	};
 
-	// a drag ends without the cell under the pointer taking the click
 	swallow = (e: MouseEvent) => {
 		if (!this.#wasDrag) return;
 		e.stopPropagation();

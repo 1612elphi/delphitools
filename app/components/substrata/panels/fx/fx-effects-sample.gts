@@ -6,17 +6,14 @@ import { glowOpacity, lightness, rgbOf } from './fx-maths';
 interface Signature {
 	Args: {
 		ctx: FxContext;
-		// artboard pixels to sample pixels
 		scale: number;
 		side: number;
-		// the shadow pad holds its own offset while it drags
 		x?: number;
 		y?: number;
 	};
 	Element: HTMLDivElement;
 }
 
-// iOS FxEffectsSample: a square wearing the effect, drawn with box shadows
 export default class FxEffectsSample extends Component<Signature> {
 	get type() {
 		return this.args.ctx.fx.type;

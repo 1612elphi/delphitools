@@ -16,7 +16,6 @@ import {
 } from './help-layout';
 import './pages.css';
 
-// iOS HelpCopy, by the control's name
 const NOTES: Record<string, string> = {
 	Help: 'Hide this button in General Settings',
 	Settings: 'Project, canvas and Substrata settings',
@@ -38,7 +37,6 @@ const NOTES: Record<string, string> = {
 	Colour: 'Pick the colour for new text, shapes and strokes',
 };
 
-// iOS HelpCopy.hint and .next
 const HINT = 'Tap anywhere to close...';
 const NEXT = 'Tap for the rest...';
 const PAD = 16;
@@ -65,7 +63,6 @@ const box = (r: DOMRect, root: DOMRect): Rect => ({
 	h: r.height,
 });
 
-// the controls the notes point at, each with the side of the screen it is on
 function findTargets(root: HTMLElement): Found[] {
 	const own = root.getBoundingClientRect();
 	const found: Found[] = [];
@@ -89,7 +86,6 @@ function findTargets(root: HTMLElement): Found[] {
 			'';
 		if (/^(Hide|Show) Tools$/.test(label)) continue;
 		const title = label === 'Menu' ? 'Settings' : label;
-		// the compact column's blooming cell and the phone's tool key
 		const toolKey =
 			(cell.closest('.sub-ed-tools') &&
 				cell.hasAttribute('aria-expanded')) ||
@@ -120,8 +116,6 @@ function findTargets(root: HTMLElement): Found[] {
 	return found;
 }
 
-// iOS HelpOverlay: the editor dimmed but for its controls, each with a note
-// and an arrow; a click anywhere shows the next page or closes it
 export default class HelpOverlay extends Component<{
 	Args: { phone: boolean };
 }> {
@@ -158,7 +152,6 @@ export default class HelpOverlay extends Component<{
 		}
 	};
 
-	// finds the controls once the overlay is in, and again on a resize
 	watch = modifier((layer: HTMLElement) => {
 		const root = layer.parentElement;
 		if (!root) return;
@@ -178,7 +171,6 @@ export default class HelpOverlay extends Component<{
 		};
 	});
 
-	// measures the notes, then places this page's
 	layout = modifier(
 		(sizer: HTMLElement, [found, page]: [Found[], number]) => {
 			const layer = sizer.parentElement!;

@@ -35,9 +35,7 @@ interface PlotSignature {
 	Element: HTMLDivElement;
 }
 
-/** Target spacing of labelled lines along x and y, and the closest minor lines may get. */
 export const spacing = { x: 72, y: 48, minor: 9 };
-/** Trace grab distance either side of the line. */
 export const grab = 24;
 export const tag = { height: 22, gap: 3 };
 const labelHeight = 13;
@@ -71,7 +69,6 @@ interface Tag {
 	stroke: string;
 }
 
-/** The plane with its curves: pan, pinch and wheel zoom, a draggable trace line with a tag per curve (GraphCalcPlot). */
 export default class GraphPlot extends Component<PlotSignature> {
 	@tracked family = 'sans-serif';
 
@@ -294,7 +291,6 @@ export default class GraphPlot extends Component<PlotSignature> {
 				stroke: fill,
 				opacity: strict ? 0.75 : 1,
 				dash: strict ? '7 5' : undefined,
-				// dashes travel with the plane
 				offset: strict ? -(ox % 12) : 0,
 			};
 		});
@@ -318,7 +314,6 @@ export default class GraphPlot extends Component<PlotSignature> {
 			x: Math.min(Math.max(x - xWidth / 2, 0), w - xWidth),
 			y: h - tag.height - 8,
 		};
-		// tags away from the line
 		const leading = x > w / 2 + w * 0.2;
 		const bottom = h - tag.height / 2 - tag.height - 16;
 		const placed = this.args.curves.map((curve) => {

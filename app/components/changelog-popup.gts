@@ -42,7 +42,6 @@ function parse(line: string): Entry {
 	return { line, tool, lead, rest: line.slice(colon + 1) };
 }
 
-// a release need not fill every tab
 function filledTabs(release: Release): TabId[] {
 	return TABS.map((tab) => tab.id).filter((id) => release[id].length > 0);
 }
@@ -81,7 +80,6 @@ export default class ChangelogPopup extends Component {
 	}
 
 	open = (event: Event) => {
-		// webkit leaves a clicked button unfocused; the dialog returns focus to it
 		(event.currentTarget as HTMLElement).focus();
 		this.isOpen = true;
 	};
@@ -102,7 +100,6 @@ export default class ChangelogPopup extends Component {
 		this.tab = id;
 	};
 
-	// selection follows focus, in a ring over the enabled tabs
 	tabKey = (event: KeyboardEvent) => {
 		const list = event.currentTarget as HTMLElement;
 		const enabled = filledTabs(this.release);

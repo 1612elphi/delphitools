@@ -1,4 +1,3 @@
-// regex groups are verified
 const INCH_TO_MM = 25.4;
 
 export interface PaperSize {
@@ -636,6 +635,27 @@ const ALL_SIZES: PaperSize[] = (() => {
 
 export function findPaperSize(id: string): PaperSize | undefined {
 	return ALL_SIZES.find((s) => s.id === id);
+}
+
+// imposition pulls pdf-lib
+export const MM_TO_POINTS = 72 / INCH_TO_MM;
+
+/** Id of the size within 1 pt of the sides, either orientation. */
+export function matchPaperSize(
+	widthPt: number,
+	heightPt: number,
+	sizes: readonly Pick<
+		PaperSize,
+		'id' | 'widthMm' | 'heightMm'
+	>[] = ALL_SIZES,
+): string | undefined {
+	const w = Math.min(widthPt, heightPt);
+	const h = Math.max(widthPt, heightPt);
+	return sizes.find(
+		(p) =>
+			Math.abs(p.widthMm * MM_TO_POINTS - w) < 1 &&
+			Math.abs(p.heightMm * MM_TO_POINTS - h) < 1,
+	)?.id;
 }
 
 /** The custom side range in millimetres, as iOS. */

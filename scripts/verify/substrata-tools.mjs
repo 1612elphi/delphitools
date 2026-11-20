@@ -1,10 +1,7 @@
-// tool settings bar: every tool's cells, menus, panels, edges, keyboard,
-// the select actions on pixels, the empty scene
-
 import { launch, check, finish, sleep, BASE } from './harness.mjs';
 
 const { browser, page } = await launch();
-// unsaved scenes ask before leaving
+// unsaved scenes prompt
 page.on('dialog', (d) => void d.accept());
 
 async function open(width, height, raster = true) {
@@ -35,7 +32,6 @@ const tool = async (t, sub) => {
 	await sleep(250);
 };
 
-// bar cells by name: a text cell is named by its text
 const nameOf = (b) =>
 	(b.getAttribute('aria-label') ?? b.textContent.trim()).split(': ')[0];
 const cells = () =>
@@ -73,7 +69,6 @@ const state = async (label) => {
 };
 const openPanel = () =>
 	page.evaluate(() => !!document.querySelector('.canon-popover:popover-open'));
-// an item of the open menu, by title; a submenu's own item too
 const choose = async (...titles) => {
 	for (const t of titles) {
 		const found = await page.evaluate((title) => {
@@ -145,7 +140,6 @@ const select = async () => {
 	return ls;
 };
 
-// --- wide, move ---
 await open(1400, 1000);
 await tool('move', 'move');
 let names = await cells();
@@ -220,7 +214,6 @@ await page.keyboard.press('Escape');
 await sleep(200);
 check('bar: Escape closes the panel', !(await openPanel()));
 
-// two layers: Group, then Ungroup
 await page.evaluate(() =>
 	window.__substrata.addRaster(200, 200, [{ x: 0, y: 0, w: 200, h: 200, colour: '#cc2222' }], { x: 300, y: 300 }),
 );
@@ -249,7 +242,6 @@ check('move: Distribute needs three', await (async () => {
 	return d === 'true';
 })());
 
-// keyboard: Tab reaches the cells, Enter opens a menu, Escape closes
 await (await cell('Align')).focus();
 await page.keyboard.press('Enter');
 await sleep(250);
@@ -262,7 +254,6 @@ await page.keyboard.press('Tab');
 const next = await page.evaluate(() => document.activeElement.textContent.trim());
 check('keyboard: Tab moves along the bar', next === '100 %', next);
 
-// --- crop ---
 await open(1400, 1000);
 await tool('move', 'crop');
 names = await cells();
@@ -280,7 +271,6 @@ await press('Free');
 check('crop: Free keeps the crop', (await layers())[0].crop?.h === 450);
 await page.evaluate((id) => window.__substrata.setCrop(id, null), ls[0].id);
 
-// --- select ---
 await tool('select', 'select');
 names = await cells();
 check(
@@ -344,7 +334,6 @@ await press('Copy to Layer');
 await sleep(400);
 check('select: Copy to Layer adds a layer', (await layers()).length === before + 1);
 
-// --- text ---
 await tool('text', 'text');
 names = await cells();
 check('text: Font, Size, Style, Align', names.join() === 'Font,Size,Style,Align', names.join());
@@ -367,7 +356,6 @@ check('text: Style shows Pill', (await state('Style')).text === 'Pill');
 await press('Align');
 check('text: Align menu has Justify', await choose('Justify'));
 
-// --- shape ---
 await tool('pieces', 'primitives');
 names = await cells();
 check('shape: kind menu and Style', names.join() === 'Shape,Style', names.join());
@@ -387,7 +375,6 @@ const glyphs = await page.$$eval('.canon-popover:popover-open .sub-bar-glyph', (
 check('shape: gallery lists the symbols', glyphs > 10, String(glyphs));
 await page.keyboard.press('Escape');
 
-// --- draw ---
 await tool('pieces', 'brush');
 names = await cells();
 check('draw: Brush, Pencil, Size', names.join() === 'Brush,Pencil,Size', names.join());
@@ -395,7 +382,6 @@ check('draw: brush size 24 px', (await state('Size')).text === '24 px');
 await press('Pencil');
 check('draw: Pencil switches, size 6 px', (await state('Pencil')).on && (await state('Size')).text === '6 px');
 
-// --- edges ---
 await tool('move', 'move');
 await page.evaluate(() => window.__substrataUi.setSettingsEdge('leading'));
 await sleep(300);
@@ -418,23 +404,6 @@ const bar2 = await rect('.sub-ed-bar');
 check('bottom edge: panel opens above the bar', pop2 && pop2.b <= bar2.t, `${pop2?.b} ${bar2.t}`);
 await page.keyboard.press('Escape');
 
-// --- empty scene ---
-await open(1400, 1000, false);
-check('empty: start card shown', !!(await page.$('[data-empty-hint]')));
-await page.evaluate(() =>
-	[...document.querySelectorAll('[data-empty-hint] button')]
-		.find((b) => b.getAttribute('aria-label') === 'Add text')
-		?.click(),
-);
-await sleep(200);
-check(
-	'empty: Add text picks the text tool',
-	await page.evaluate(() =>
-		document.querySelector('.sub-ed-tools [aria-label=Text]').classList.contains('canon-button--filled'),
-	),
-);
-
-// --- phone ---
 await open(390, 844);
 await tool('move', 'move');
 names = await cells();

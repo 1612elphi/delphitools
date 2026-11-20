@@ -14,27 +14,17 @@ import { fanIn } from './fan';
 interface DeckSignature {
 	Args: {
 		palette?: CuratedPalette;
-		/** Under the name on the cover: the category and the count. */
 		detail?: string;
-		/** The cover's title when there is no palette. */
 		emptyTitle: string;
-		/** A hex in the header notation. */
 		format: (hex: string) => string;
 	};
 }
 
-/** Room kept clear inside the canvas, as iOS PaletteDeck.margin. */
 const margin = { top: 14, left: 16, bottom: 12, right: 16 };
 
 const clamp = (value: number, low: number, high: number) =>
 	Math.min(Math.max(value, low), high);
 
-/**
- * PaletteDeck: a palette as a paint fan deck held at its rivet, the cover
- * with the palette's name lying nearly flat along the top, one chip per
- * colour hanging down and out beneath it. A new palette fans the chips out
- * again. A press on a chip copies its value in the header notation.
- */
 export default class Deck extends Component<DeckSignature> {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -111,7 +101,6 @@ export default class Deck extends Component<DeckSignature> {
 			const value = this.args.format(code);
 			const name = getColourName(code);
 			return {
-				// keyed by palette, so a new palette fans out again
 				key: `${this.key}-${i}`,
 				hex: code.toUpperCase(),
 				value,

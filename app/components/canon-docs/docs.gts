@@ -43,13 +43,10 @@ const commandItems: CanonCommandItem[] = docsPages.map((page) => ({
 const paletteStyle = htmlSafe('--canon-dialog-width: 640px');
 const PreviousIcon = iconFor('arrow-left');
 const NextIcon = iconFor('arrow-right');
-// the showcase pages take the width the grid can use
 const wide = ['overview', 'patterns', 'screens', 'group'];
 
-/** A plain click navigates in the app; modified clicks keep the link's own behaviour. */
 export type DocsGo = (event: MouseEvent) => void;
 
-/** The /canon docs: one page at a time, a ⌘K palette; the app drawer holds the nav. */
 export default class CanonDocs extends Component {
 	@service declare router: RouterService;
 
@@ -91,7 +88,6 @@ export default class CanonDocs extends Component {
 		void this.router.transitionTo(link.getAttribute('href')!);
 	};
 
-	// the app sidebar's ⌘K skips a handled event
 	listen = modifier(() => {
 		const keydown = (event: KeyboardEvent) => {
 			if (event.key.toLowerCase() !== 'k') return;
@@ -104,7 +100,6 @@ export default class CanonDocs extends Component {
 		return () => document.removeEventListener('keydown', keydown);
 	});
 
-	// the page scroller starts at the top of every page
 	scrollTop = modifier((element: HTMLElement, [id]: [string]) => {
 		if (id) element.scrollTop = 0;
 	});
@@ -119,7 +114,6 @@ export default class CanonDocs extends Component {
 		{{pageTitle this.page.heading}}
 		<div class="cd-docs" {{this.listen}}>
 			{{#if this.isScreen}}
-				{{! a new screen starts live, with fresh state }}
 				{{#each (array this.page) key="id" as |page|}}
 					<ScreenPage @page={{page}} />
 				{{/each}}

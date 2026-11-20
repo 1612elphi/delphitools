@@ -99,7 +99,6 @@ export default class MagazineOverlay extends Component {
 		} catch {
 			this.engineFailed = true;
 			this.showFlatPage(start);
-			// the focused canvas is gone
 			requestAnimationFrame(() =>
 				dialog
 					.querySelector<HTMLElement>(
@@ -124,7 +123,6 @@ export default class MagazineOverlay extends Component {
 			const texture = await raster.rasterise(page, scale);
 			if (gone()) return;
 			engine.setTexture(index, texture);
-			// turn to the start page once every page it passes has art
 			if (
 				start > 0 &&
 				index === Math.min(start + 1, COUNT - 1)

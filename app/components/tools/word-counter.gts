@@ -34,7 +34,6 @@ const FewerIcon = <template><IconSvg @name="chevron-up" /></template>;
 
 const listed = { folded: 5, unfolded: 25 };
 
-/** The port of WordCounterViewController. */
 export default class WordCounter extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -44,7 +43,6 @@ export default class WordCounter extends Component {
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
-		// ?wcText= ?wcMore=1: the iOS launch arguments
 		const query = new URLSearchParams(window.location.search);
 		this.text = query.get('wcText') ?? '';
 		this.unfolded = query.get('wcMore') === '1';
@@ -84,7 +82,6 @@ export default class WordCounter extends Component {
 		];
 	}
 
-	// one extra detects more
 	get top() {
 		return topWords(
 			this.text,
@@ -114,7 +111,6 @@ export default class WordCounter extends Component {
 	copyStats = () => void this.toast.copy(statsReport(this.stats));
 
 	measured = (height: number) => {
-		// 2 px rule under the picture
 		if (height + 2 !== this.pictureHeight)
 			this.pictureHeight = height + 2;
 	};

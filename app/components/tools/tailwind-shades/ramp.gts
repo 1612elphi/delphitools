@@ -15,7 +15,6 @@ interface RampSignature {
 	Args: {
 		shades: Shade[];
 		base: Rgb;
-		/** The base's hex, for its marker. */
 		hex: string;
 	};
 }
@@ -24,11 +23,6 @@ export const rampHeight = 250;
 
 const y = (l: number) => `${(1 - Math.min(Math.max(l, 0), 1)) * 100}%`;
 
-/**
- * TailwindRamp: the scale as swatches from 50 to 950, each shade's OKLCH
- * lightness plotted over it, and the base placed on that curve at its own
- * lightness, with the level it would be.
- */
 export default class Ramp extends Component<RampSignature> {
 	get count() {
 		return this.args.shades.length;

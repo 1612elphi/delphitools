@@ -25,6 +25,7 @@ export const FX_ICONS: Record<string, string> = {
 	'edge-detect': 'scan-line',
 	noise: 'grip',
 	pixelate: 'grid-3x3',
+	dither: 'grip',
 	vignette: 'circle-dot',
 	'drop-shadow': 'square-stack',
 	'outer-glow': 'lightbulb',

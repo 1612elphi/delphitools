@@ -31,7 +31,6 @@ export function queryOrEmpty(query?: Record<string, string>) {
 	return query ?? EMPTY_QUERY;
 }
 
-// ios HomeMetrics.columns
 const COLUMN_WIDTH = 195;
 
 export function latticeColumns(width: number) {
@@ -51,7 +50,6 @@ export default class ToolGrid extends Component<ToolGridSignature> {
 
 	measure = modifier((element: HTMLElement) => {
 		let frame = 0;
-		// a new count changes the height; set it next frame, outside the observation
 		const observer = new ResizeObserver(([entry]) => {
 			const columns = latticeColumns(
 				entry?.contentRect.width ?? 0,

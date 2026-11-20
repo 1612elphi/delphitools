@@ -12,6 +12,8 @@ import CanonCanvas from 'delphicanon/components/canon-canvas';
 import CanonFromTo from 'delphicanon/components/canon-from-to';
 import CanonGrid from 'delphicanon/components/canon-grid';
 import CanonHeading from 'delphicanon/components/canon-heading';
+import CanonNumberField from 'delphicanon/components/canon-number-field';
+import CanonRow from 'delphicanon/components/canon-row';
 import CanonRows from 'delphicanon/components/canon-rows';
 import CanonSegmented from 'delphicanon/components/canon-segmented';
 import CanonSplit from 'delphicanon/components/canon-split';
@@ -31,6 +33,7 @@ import {
 	fromBase,
 	instrumentFor,
 	openingPairs,
+	pixels,
 } from 'delphitools-v2/components/tools/unit-converter/units';
 import './unit-converter/unit-converter.css';
 
@@ -51,7 +54,6 @@ interface UnitRowSignature {
 	};
 }
 
-/** Both picked rows are lit; the plate tells them apart: ink for the from unit, primary for the result. */
 const UnitRow: TOC<UnitRowSignature> = <template>
 	<button
 		type="button"
@@ -79,19 +81,16 @@ const inputMode = modifier((element: HTMLElement, [mode]: [string]) => {
 	if (input) input.inputMode = mode;
 });
 
-// a click places the caret after focus, so select on the next frame
 function selectAll(event: FocusEvent) {
 	const field = event.target;
 	if (field instanceof HTMLInputElement)
 		requestAnimationFrame(() => field.select());
 }
 
-/** A decimal comma and a minus sign read as the plain characters. */
 function clean(text: string) {
 	return text.replace(/,/g, '.').replace(/−/g, '-');
 }
 
-/** The port of UnitConverterViewController with its picture. */
 export default class UnitConverter extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -99,13 +98,14 @@ export default class UnitConverter extends Component {
 	@tracked text = '1';
 	@tracked fromIndex = 0;
 	@tracked toIndex = 1;
-	/** Row clicks fill from, then to, then from again. */
+	@tracked ppi = 300;
 	#tapsFrom = true;
 
-	// ?ucCategory= ?ucFrom=<symbol> ?ucTo=<symbol> ?ucValue=: the iOS launch arguments
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
+		const ppi = Number(query.get('ucPpi'));
+		if (ppi >= 1) this.ppi = Math.round(ppi);
 		const name = query.get('ucCategory');
 		this.choose(
 			name && categoryNames.includes(name) ? name : 'Length',
@@ -131,8 +131,17 @@ export default class UnitConverter extends Component {
 	}
 
 	get units() {
-		return categories.find((c) => c.name === this.category)!.units;
+		const { units } = categories.find(
+			(c) => c.name === this.category,
+		)!;
+		return this.hasPixels ? [...units, pixels(this.ppi)] : units;
 	}
+
+	get hasPixels() {
+		return this.category === 'Length';
+	}
+
+	setPpi = (ppi: number) => (this.ppi = ppi);
 
 	get labels() {
 		return this.units.map((u) => u.label);
@@ -161,7 +170,6 @@ export default class UnitConverter extends Component {
 	}
 
 	get inputMode() {
-		// a minus sign for temperatures
 		return this.category === 'Temperature' ? 'text' : 'decimal';
 	}
 
@@ -234,7 +242,6 @@ export default class UnitConverter extends Component {
 
 	typed = (text: string) => (this.text = clean(text));
 
-	/** Whole steps, tenths below one; temperatures stop at absolute zero, everything else at zero. */
 	nudge = (direction: -1 | 1) => {
 		const current = this.value ?? 0;
 		const step = current !== 0 && Math.abs(current) < 1 ? 0.1 : 1;
@@ -246,7 +253,6 @@ export default class UnitConverter extends Component {
 		this.text = formatDecimal(Math.max(floor, next), 4);
 	};
 
-	// a unit picked twice swaps the pair
 	pickFrom = (index: number) => {
 		if (index === this.toIndex) this.toIndex = this.fromIndex;
 		this.fromIndex = index;
@@ -319,6 +325,21 @@ export default class UnitConverter extends Component {
 							@onClick={{this.copy}}
 						/>
 					</CanonGrid>
+					{{#if this.hasPixels}}
+						<CanonRow
+							@title="Pixel Density"
+							as |titleId|
+						>
+							<CanonNumberField
+								@value={{this.ppi}}
+								@min={{1}}
+								@max={{10000}}
+								@unit="PPI"
+								@labelledBy={{titleId}}
+								@onChange={{this.setPpi}}
+							/>
+						</CanonRow>
+					{{/if}}
 				</CanonRows>
 				<CanonRows @framed={{true}}>
 					<CanonHeading @text="Category" />

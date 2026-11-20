@@ -18,22 +18,17 @@ import {
 
 export interface PictureSignature {
 	Args: {
-		/** Slot 1 and slot 2; either may be empty. */
 		sizes: (PaperSize | undefined)[];
-		/** The legend line of each slot. */
 		legend: (string | undefined)[];
-		/** Starting arrangement, as the iOS -psarrange flag. */
 		arrangement?: number;
 	};
 	Element: HTMLButtonElement;
 }
 
-// iOS: spring stiffness 180, damping 22
 const spring = htmlSafe(`--paper-spring-easing: ${springEasing(0.82)}`);
 
 const px = (value: number) => `${Math.round(value * 100) / 100}px`;
 
-// logical: RTL mirrors the picture, first sheet on the right
 function box({ x, y, width, height }: Rect, opacity?: number) {
 	const parts = [
 		`inset-inline-start: ${px(x)}`,
@@ -45,10 +40,6 @@ function box({ x, y, width, height }: Rect, opacity?: number) {
 	return htmlSafe(parts.join('; '));
 }
 
-/**
- * Two sheets drawn to one scale under a legend, the area ratio as a figure.
- * A click cycles stacked, side by side, above and below.
- */
 export default class Picture extends Component<PictureSignature> {
 	@tracked index = this.args.arrangement ?? 0;
 	@tracked area: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -133,7 +124,6 @@ export default class Picture extends Component<PictureSignature> {
 	}
 
 	measure = modifier((element: HTMLElement) => {
-		// padding is symmetric, so offsetLeft is the inline-start offset either way
 		const observer = new ResizeObserver(() => {
 			this.area = {
 				x: element.offsetLeft,

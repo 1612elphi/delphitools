@@ -62,8 +62,6 @@ const LIBRARY_COLUMNS: Record<string, GridColumn[]> = {
 
 const close = () => editorUi.close('colour');
 
-// iOS ColourTray: the phone's colour picker in the tray, the ring's types
-// laid flat; the hex keypad takes the tray while typing
 export default class ColourTray extends Component {
 	writer = new ColourWriter();
 	digits = new HexDigits();
@@ -81,7 +79,6 @@ export default class ColourTray extends Component {
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
-		// a colour well on the phone sends here (see the ring slot)
 		this.writer.begin(editorUi.ringTarget);
 		this.picked = hexOf(this.writer.current, false);
 		const doc = getSnapshot();
@@ -195,7 +192,6 @@ export default class ColourTray extends Component {
 	typed = () => {
 		const typed = this.digits.colour;
 		if (!typed) return;
-		// short hex keeps opacity
 		this.write(
 			this.digits.digits.length === 8
 				? typed
@@ -204,7 +200,6 @@ export default class ColourTray extends Component {
 		);
 	};
 
-	/** ends typing, keeping the typed colour */
 	finish = () => {
 		if (!this.typing) return;
 		this.typing = false;

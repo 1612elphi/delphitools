@@ -20,14 +20,12 @@ import './jwt-decoder/jwt-decoder.css';
 
 const dash = '—';
 
-/** The port of JWTDecoderViewController, with the token typed in the picture. */
 export default class JwtDecoderTool extends Component {
 	@tracked token = '';
 	@tracked pictureHeight?: number;
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
-		// ?jwtToken= ?jwtSample=valid|expired|early: the iOS -jwtToken, -jwtSample flags
 		const query = new URLSearchParams(window.location.search);
 		const sample = query.get('jwtSample');
 		this.token = sample
@@ -35,7 +33,6 @@ export default class JwtDecoderTool extends Component {
 			: (query.get('jwtToken') ?? '');
 	}
 
-	// a new clock reading with every edit, as iOS reads it on refresh
 	get decoding() {
 		const now = new Date();
 		return { now, result: decodeJwt(this.token, now) };
@@ -82,7 +79,6 @@ export default class JwtDecoderTool extends Component {
 		];
 	}
 
-	/** Header and payload as JSON, the signature as it was typed; a segment that failed shows why. */
 	get blocks() {
 		const decoded = this.decoded;
 		if (!decoded) return [];
@@ -111,7 +107,6 @@ export default class JwtDecoderTool extends Component {
 	};
 
 	measured = (height: number) => {
-		// 2 px rule under the picture
 		if (height + 2 !== this.pictureHeight)
 			this.pictureHeight = height + 2;
 	};

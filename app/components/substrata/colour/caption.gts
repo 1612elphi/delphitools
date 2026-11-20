@@ -4,7 +4,6 @@ import { htmlSafe } from '@ember/template';
 import { editorUi } from 'delphitools-v2/lib/substrata/editor-ui';
 import type { Swatch } from 'delphitools-v2/lib/substrata/colour-ring/geometry';
 
-/** how long the caption stays before it fades, in ms */
 const SHOWN = 1500;
 
 class CaptionState {
@@ -24,8 +23,6 @@ class CaptionState {
 
 export const caption = new CaptionState();
 
-// iOS ColourCaption: a colour's code, name and hex beside the colour key,
-// for a moment after a pick
 export default class ColourCaption extends Component<{
 	Args: { phone: boolean };
 }> {

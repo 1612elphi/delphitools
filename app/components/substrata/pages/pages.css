@@ -1,5 +1,4 @@
-/* iOS EditorDrawer: the settings page and the gallery, a framed panel
-   rising from the bottom edge beside the column */
+/* ios editordrawer */
 .sub-pg-drawer {
 	position: absolute;
 	inset-block-end: 0;
@@ -20,7 +19,7 @@
 	inset-inline: 0;
 }
 
-/* iOS settingsHeight: the drawer's place made taller */
+/* ios settingsheight */
 .sub-pg-drawer.is-settings {
 	block-size: min(440px, 100% - var(--sub-gap));
 }
@@ -44,7 +43,6 @@
 	padding-inline: var(--sub-pad);
 }
 
-/* the sections, in columns as tall as the page, scrolling sideways */
 .sub-pg-scroller {
 	--sub-pg-column: 300px;
 
@@ -77,8 +75,7 @@
 	margin-inline-start: var(--sub-pad);
 }
 
-/* hairlines between and round the rows: each row's outline, overlapping
-   its neighbour's in the 1 px between them */
+/* outlines overlap by 1px */
 .sub-pg-block > * {
 	box-sizing: border-box;
 	margin: 0 0 var(--canon-hairline);
@@ -126,7 +123,6 @@
 	background: var(--canon-border);
 }
 
-/* the actions: Gallery, Export and Save As tiles down the first column */
 .sub-pg-actions {
 	display: flex;
 	flex: none;
@@ -134,6 +130,22 @@
 	gap: 12px;
 	inline-size: var(--sub-pg-column);
 	block-size: 100%;
+}
+
+.sub-pg-tile-pair {
+	display: flex;
+	flex: 1;
+	gap: 12px;
+	min-block-size: 0;
+}
+
+.sub-pg-tile-pair > .sub-pg-tile {
+	min-inline-size: 0;
+}
+
+.sub-pg-tile-art > svg {
+	inline-size: 28px;
+	block-size: 28px;
 }
 
 .sub-pg-redo {
@@ -171,6 +183,11 @@
 .sub-pg-tile:focus-visible {
 	outline: 2px solid var(--canon-primary);
 	outline-offset: -4px;
+}
+
+.sub-pg-tile:disabled {
+	opacity: 0.4;
+	pointer-events: none;
 }
 
 .sub-pg-tile-art {
@@ -318,7 +335,6 @@
 	outline-offset: -2px;
 }
 
-/* the gallery: New, then the projects in one sideways row */
 .sub-gal-scroller {
 	display: flex;
 	flex: 1;
@@ -402,7 +418,6 @@
 	cursor: default;
 }
 
-/* forms: a popover beside the control that opened them */
 .sub-pg-pop {
 	inline-size: min(380px, calc(100vw - 2 * var(--sub-pad, 16px)));
 	max-block-size: calc(100dvh - 16px);
@@ -447,7 +462,6 @@
 	overflow: auto;
 }
 
-/* dialogs: shortcuts and about */
 .sub-pg-dialog.is-wide {
 	inline-size: min(720px, 100%);
 }
@@ -475,16 +489,31 @@
 	line-height: 1.45;
 }
 
-/* onboarding: art over centred words, Back and Next with the dots between */
 .sub-pg-onb.canon-dialog:not(.canon-sheet) {
 	inline-size: min(520px, 100%);
 	block-size: min(640px, 100%);
 }
 
+/* art needs a height */
+.sub-pg-onb.canon-sheet {
+	block-size: 640px;
+}
+
+.sub-pg-onb.is-fit.canon-dialog:not(.canon-sheet) {
+	inline-size: min(600px, 100%);
+	block-size: min(760px, 100%);
+}
+
+/* filler halves page height */
+.sub-pg-onb .canon-dialog-body::after {
+	content: none;
+}
+
 .sub-pg-onb-page {
 	display: flex;
-	flex: 1;
+	flex: 1 1 auto;
 	flex-direction: column;
+	min-block-size: 0;
 	align-items: center;
 	justify-content: center;
 	gap: var(--canon-panel-padding);
@@ -509,18 +538,10 @@
 }
 
 .sub-pg-onb-art {
-	inline-size: auto;
-	max-inline-size: 100%;
-	block-size: auto;
-	max-block-size: 240px;
-}
-
-.sub-pg-onb-art.is-small {
-	max-block-size: 140px;
-}
-
-.sub-pg-onb-art.is-medium {
-	max-block-size: 160px;
+	flex: 1 1 0;
+	inline-size: 100%;
+	min-block-size: 0;
+	object-fit: contain;
 }
 
 .sub-pg-onb-storage.canon-button {
@@ -555,7 +576,6 @@
 	background: var(--canon-foreground);
 }
 
-/* the help overlay: the editor dimmed but for its controls */
 .sub-help {
 	position: absolute;
 	inset: 0;
@@ -611,7 +631,7 @@
 	pointer-events: none;
 }
 
-/* measured unscaled: the pop starts at 0.6 */
+/* measured unscaled, pop 0.6 */
 .sub-help-sizer .sub-help-note {
 	position: absolute;
 	inline-size: max-content;
@@ -671,4 +691,46 @@
 	.sub-help-arrows path {
 		animation: none;
 	}
+}
+
+.sub-gal-tile.is-template .sub-gal-picture img {
+	object-fit: contain;
+	background: none;
+}
+
+.sub-new {
+	position: absolute;
+	inset: 0;
+	z-index: 13;
+	display: grid;
+	place-items: center;
+}
+
+.sub-new > .sub-empty-card {
+	position: relative;
+	inline-size: max-content;
+}
+
+@media (width < 600px) {
+	.sub-new .sub-empty-actions {
+		flex-direction: column;
+	}
+}
+
+.sub-new-dismiss {
+	position: absolute;
+	inset: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+}
+
+/* fit longer labels */
+.sub-new .sub-empty-actions > .sub-cell {
+	flex: 1 0 auto;
+}
+
+.sub-new .sub-cell.is-offer:not(:hover, :focus-visible) {
+	color: var(--canon-muted-foreground);
 }

@@ -15,8 +15,14 @@ import {
 } from 'delphitools-v2/components/substrata/editor/cells';
 import { getSnapshot, subscribe } from 'delphitools-v2/lib/substrata/doc-store';
 import { editorUi } from 'delphitools-v2/lib/substrata/editor-ui';
-import { newScene, openScene } from 'delphitools-v2/lib/substrata/file-ops';
-import { openModal } from 'delphitools-v2/lib/substrata/modal';
+import {
+	listTemplates,
+	startBlank,
+	openScene,
+	openTemplate,
+	templateUrl,
+	type TemplateEntry,
+} from 'delphitools-v2/lib/substrata/file-ops';
 import {
 	getPersistenceEnabled,
 	setPersistenceEnabled,
@@ -48,15 +54,12 @@ interface Tile {
 
 const DAY = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
 
-// the tile's long-press menu (iOS DocumentActions.menu)
 const MENU: CanonMenuItem[] = [
 	{ title: 'Duplicate' },
 	{ title: 'Rename' },
 	{ title: 'Delete', destructive: true },
 ];
 
-// iOS GalleryDrawer: a New tile, then every project, in one sideways row;
-// the open one is framed
 export default class Gallery extends Component<{ Args: { phone: boolean } }> {
 	doc = new TrackedExternal(subscribe, getSnapshot);
 	persist = new TrackedExternal(
@@ -67,6 +70,7 @@ export default class Gallery extends Component<{ Args: { phone: boolean } }> {
 	@tracked projects: (ProjectSummary & { src: string | null })[] = [];
 	@tracked current: string | null = null;
 	@tracked deleting: Tile | null = null;
+	@tracked templates: TemplateEntry[] = [];
 	#urls: string[] = [];
 
 	willDestroy() {
@@ -90,7 +94,6 @@ export default class Gallery extends Component<{ Args: { phone: boolean } }> {
 			src: p.id === open?.id ? this.current : p.src,
 			current: p.id === open?.id,
 		}));
-		// unsaved, the open document is the gallery's only project
 		if (open && !listed.some((t) => t.current))
 			listed.unshift({
 				id: open.id,
@@ -113,7 +116,6 @@ export default class Gallery extends Component<{ Args: { phone: boolean } }> {
 		});
 	}
 
-	// the open canvas drawn now, saved as its project's thumbnail
 	load = modifier(() => {
 		let gone = false;
 		const frame = requestAnimationFrame(() => {
@@ -149,15 +151,38 @@ export default class Gallery extends Component<{ Args: { phone: boolean } }> {
 
 	close = () => {
 		editorUi.galleryOpen = false;
+		if (!getSnapshot()) editorUi.newOpen = true;
+	};
+
+	get templateMode() {
+		return editorUi.galleryMode === 'templates';
+	}
+
+	get title() {
+		return this.templateMode ? 'Templates' : 'Projects';
+	}
+
+	loadTemplates = modifier(() => {
+		void listTemplates().then((list) => {
+			if (!this.isDestroyed) this.templates = list;
+		});
+	});
+
+	sizeOf = (t: TemplateEntry) => `${t.width} × ${t.height}`;
+
+	thumbOf = (t: TemplateEntry) => (t.thumb ? templateUrl(t.thumb) : null);
+
+	useTemplate = async (t: TemplateEntry) => {
+		if (!(await openTemplate(t))) return;
+		viewport.fit();
+		this.close();
 	};
 
 	openFile = () => void openScene();
 
-	// saved work is not lost, so iOS starts a new one without asking
 	newDocument = (event: Event) => {
 		pageState.anchor = event.currentTarget as HTMLElement;
-		if (getPersistenceEnabled()) openModal('new-scene');
-		else newScene();
+		startBlank();
 	};
 
 	open = async (tile: Tile) => {
@@ -214,11 +239,11 @@ export default class Gallery extends Component<{ Args: { phone: boolean } }> {
 		{{#if editorUi.galleryOpen}}
 			<section
 				class="sub-pg-drawer {{if @phone 'is-phone'}}"
-				aria-label="Projects"
+				aria-label={{this.title}}
 				{{this.load}}
 			>
 				<PanelHeader
-					@title="Projects"
+					@title={{this.title}}
 					@onClose={{this.close}}
 				>
 					<Cell
@@ -227,93 +252,158 @@ export default class Gallery extends Component<{ Args: { phone: boolean } }> {
 						@onClick={{this.openFile}}
 					/>
 				</PanelHeader>
-				<div class="sub-gal-scroller">
-					<button
-						type="button"
-						class="sub-gal-tile is-new"
-						{{on "click" this.newDocument}}
+				{{#if this.templateMode}}
+					<div
+						class="sub-gal-scroller"
+						{{this.loadTemplates}}
 					>
-						<span
-							class="sub-gal-picture"
-						><IconSvg @name="plus" /></span>
-						<span
-							class="sub-gal-name"
-						>New</span>
-					</button>
-					{{#each this.tiles key="id" as |tile|}}
-						<CanonContextMenu
-							class="sub-gal-menu"
-							@items={{MENU}}
-							@onSelect={{this.menuFor
-								tile
-							}}
-						>
+						{{#each this.templates as |t|}}
 							<button
 								type="button"
-								class="sub-gal-tile
-									{{if
-										tile.current
-										'is-current'
-									}}"
-								data-project={{tile.id}}
-								aria-pressed={{if
-									tile.current
-									"true"
-									"false"
-								}}
-								aria-label="{{tile.name}}, {{tile.date}}"
+								class="sub-gal-tile is-template"
+								aria-label="{{t.name}}, {{this.sizeOf
+									t
+								}}"
 								{{on
 									"click"
 									(fn
-										this.open
-										tile
+										this.useTemplate
+										t
 									)
 								}}
 							>
 								<span
 									class="sub-gal-picture"
 								>
-									{{#if
-										tile.src
+									{{#let
+										(this.thumbOf
+											t
+										)
+										as |src|
 									}}
-										<img
-											src={{tile.src}}
-											alt=""
-										/>
-									{{else}}
-										<IconSvg
-											@name="image"
-										/>
-									{{/if}}
+										{{#if
+											src
+										}}
+											<img
+												src={{src}}
+												alt=""
+											/>
+										{{else}}
+											<IconSvg
+												@name="layout-template"
+											/>
+										{{/if}}
+									{{/let}}
 								</span>
 								<span
 									class="sub-gal-name"
-								>{{tile.name}}</span>
+								>{{t.name}}</span>
 								<span
 									class="sub-gal-date"
-								>{{tile.date}}</span>
+								>{{this.sizeOf
+										t
+									}}</span>
 							</button>
-						</CanonContextMenu>
-					{{/each}}
-					{{#unless this.persist.current}}
-						<label
-							class="sub-gal-tile is-persist"
+						{{/each}}
+					</div>
+				{{else}}
+					<div class="sub-gal-scroller">
+						<button
+							type="button"
+							class="sub-gal-tile is-new"
+							{{on
+								"click"
+								this.newDocument
+							}}
 						>
 							<span
 								class="sub-gal-picture"
 							><IconSvg
-									@name="hard-drive"
+									@name="plus"
 								/></span>
 							<span
 								class="sub-gal-name"
-							>Save in this browser</span>
-							<CanonSwitch
-								@on={{false}}
-								@onChange={{this.setPersist}}
-							/>
-						</label>
-					{{/unless}}
-				</div>
+							>New</span>
+						</button>
+						{{#each
+							this.tiles key="id"
+							as |tile|
+						}}
+							<CanonContextMenu
+								class="sub-gal-menu"
+								@items={{MENU}}
+								@onSelect={{this.menuFor
+									tile
+								}}
+							>
+								<button
+									type="button"
+									class="sub-gal-tile
+										{{if
+											tile.current
+											'is-current'
+										}}"
+									data-project={{tile.id}}
+									aria-pressed={{if
+										tile.current
+										"true"
+										"false"
+									}}
+									aria-label="{{tile.name}}, {{tile.date}}"
+									{{on
+										"click"
+										(fn
+											this.open
+											tile
+										)
+									}}
+								>
+									<span
+										class="sub-gal-picture"
+									>
+										{{#if
+											tile.src
+										}}
+											<img
+												src={{tile.src}}
+												alt=""
+											/>
+										{{else}}
+											<IconSvg
+												@name="image"
+											/>
+										{{/if}}
+									</span>
+									<span
+										class="sub-gal-name"
+									>{{tile.name}}</span>
+									<span
+										class="sub-gal-date"
+									>{{tile.date}}</span>
+								</button>
+							</CanonContextMenu>
+						{{/each}}
+						{{#unless this.persist.current}}
+							<label
+								class="sub-gal-tile is-persist"
+							>
+								<span
+									class="sub-gal-picture"
+								><IconSvg
+										@name="hard-drive"
+									/></span>
+								<span
+									class="sub-gal-name"
+								>Save in this
+									browser</span>
+								<CanonSwitch
+									@on={{false}}
+									@onChange={{this.setPersist}}
+								/>
+							</label>
+						{{/unless}}
+					</div>
+				{{/if}}
 			</section>
 		{{/if}}
 		<CanonDialog

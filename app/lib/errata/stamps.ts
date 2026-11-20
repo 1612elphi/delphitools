@@ -2,6 +2,7 @@ import { StandardFontEmbedder, StandardFonts } from 'pdf-lib';
 import { parsePageRanges } from '../pdf-pages';
 import { expandNumber, placeText, type Anchor } from '../pdf-stamp';
 import {
+	ITEXT,
 	boxAt,
 	pageSize,
 	type ErrataDoc,
@@ -13,9 +14,7 @@ import { store } from './store';
 
 export type PageScope = 'all' | 'current' | 'range';
 
-// itext line 1.13em, baseline 0.778
-const LINE = 1.13;
-const BASELINE = 0.778;
+const { mult: LINE, baseline: BASELINE } = ITEXT;
 const MARGIN = 24;
 
 /** page indices the scope covers; null when the range does not parse */
@@ -26,7 +25,7 @@ export function scopePages(
 	current: number,
 ): number[] | null {
 	if (scope === 'all') return [...Array(count).keys()];
-	// the page index trails a page count that just shrank
+	// count may shrink
 	if (scope === 'current') return current < count ? [current] : [];
 	try {
 		const pages = new Set(parsePageRanges(range, count).flat());

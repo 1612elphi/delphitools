@@ -18,7 +18,6 @@ interface Signature {
 	Args: { ctx: FxContext; key: string };
 }
 
-// iOS FxBlock.row(.slider): a drag is one undo step
 export default class FxSliderRow extends Component<Signature> {
 	get spec() {
 		return specOf(this.args.ctx, this.args.key) as SliderParam;

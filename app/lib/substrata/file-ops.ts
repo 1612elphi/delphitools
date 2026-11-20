@@ -2,10 +2,12 @@ import { fileOpen, fileSave } from 'browser-fs-access';
 import {
 	createEmptyDoc,
 	DEFAULT_ARTBOARD,
+	newId,
 	type Artboard,
 	type SubstrataDoc,
 } from './doc-model';
 import { getSnapshot, setDoc } from './doc-store';
+import { leafLayers } from './layer-tree';
 import { openModal } from './modal';
 import { viewport } from './viewport';
 import { packSubstrata, unpackSubstrata } from './substrata-file';
@@ -25,6 +27,12 @@ function confirmDiscard(): boolean {
 	if (!doc || (doc.layers.length === 0 && doc.guides.length === 0))
 		return true;
 	return window.confirm('Replace this? Unsaved work is lost.');
+}
+
+// saving on: no confirm
+export function startBlank(): void {
+	if (getPersistenceEnabled() || !getSnapshot()) openModal('new-scene');
+	else newScene();
 }
 
 export function newScene(): void {
@@ -100,4 +108,66 @@ export async function saveScene(asCopy = false): Promise<void> {
 		if (!asCopy && saved) handle = saved;
 		toast('saved');
 	} catch {}
+}
+
+export function saveTemplate(): void {
+	const doc = getSnapshot();
+	if (!doc) return;
+	if (doc.layers.some((l) => leafLayers(l).some((leaf) => leaf.stratum)))
+		void saveScene(true);
+	else openModal('strata-help');
+}
+
+export interface TemplateEntry {
+	file: string;
+	name: string;
+	thumb: string | null;
+	width: number;
+	height: number;
+}
+
+const TEMPLATES = '/substrata/templates/';
+
+let templates: Promise<TemplateEntry[]> | null = null;
+
+export function listTemplates(): Promise<TemplateEntry[]> {
+	// retry failed fetches
+	templates ??= fetchTemplates().then((list) => {
+		if (!list.length) templates = null;
+		return list;
+	});
+	return templates;
+}
+
+async function fetchTemplates(): Promise<TemplateEntry[]> {
+	try {
+		const res = await fetch(`${TEMPLATES}index.json`);
+		if (!res.ok) return [];
+		return (await res.json()) as TemplateEntry[];
+	} catch {
+		return [];
+	}
+}
+
+export function templateUrl(path: string): string {
+	return TEMPLATES + path;
+}
+
+// fresh id per open
+export async function openTemplate(entry: TemplateEntry): Promise<boolean> {
+	if (!getPersistenceEnabled() && !confirmDiscard()) return false;
+	let doc: SubstrataDoc;
+	try {
+		const res = await fetch(templateUrl(entry.file));
+		if (!res.ok) throw new Error(String(res.status));
+		doc = await unpackSubstrata(await res.arrayBuffer());
+	} catch {
+		toast('open-failed');
+		return false;
+	}
+	const now = Date.now();
+	doc = { ...doc, id: newId(), createdAt: now, updatedAt: now };
+	openLoaded(doc);
+	if (getPersistenceEnabled()) void persistAll(doc);
+	return true;
 }

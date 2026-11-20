@@ -10,7 +10,6 @@ import CanonStepper from 'delphicanon/components/canon-stepper';
 const forms = ['Factored', 'Expanded'];
 const fill = htmlSafe('block-size: 100%');
 
-// (x+1)^n written out by the binomial theorem
 function expanded(n: number) {
 	const terms: string[] = [];
 	let coefficient = 1;

@@ -39,14 +39,14 @@ export interface Tool {
 	href: string;
 	beta?: boolean;
 	external?: boolean;
-	// opens the magazine at the page with this id
+	// opens magazine page
 	magazine?: boolean;
 	route?: string;
 	highlight?: boolean;
 	atlas?: boolean;
 	// kit-built; drawer marker
 	canon?: boolean;
-	// a canon tool whose picture may grow past the 1200 px column
+	// may exceed 1200 px
 	expands?: boolean;
 	accepts?: string[];
 	carryColour?: boolean;
@@ -263,7 +263,7 @@ export const toolCategories: ToolCategory[] = [
 				name: 'Substrata',
 				description:
 					'Edit, arrange and mark up images in the browser',
-				icon: 'brush',
+				icon: 'substrata',
 				href: '/editor',
 				route: 'editor',
 				accepts: ['image/*'],
@@ -275,7 +275,7 @@ export const toolCategories: ToolCategory[] = [
 				name: 'Errata',
 				description:
 					'Edit PDFs in your browser. Yeah. For real.',
-				icon: 'signature',
+				icon: 'errata',
 				href: '/errata',
 				route: 'errata',
 				accepts: ['application/pdf', 'image/*'],
@@ -376,6 +376,18 @@ export const toolCategories: ToolCategory[] = [
 				icon: 'vector-square',
 				href: '/tools/image-deskewer',
 				produces: ['image/png'],
+				accepts: ['image/*'],
+				canon: true,
+				expands: true,
+			},
+			{
+				id: 'image-ditherer',
+				name: 'Image Ditherer',
+				description:
+					'Dither images to few colours to save space',
+				icon: 'grip',
+				href: '/tools/image-ditherer',
+				produces: ['image/png', 'application/zip'],
 				accepts: ['image/*'],
 				canon: true,
 				expands: true,
@@ -1175,6 +1187,16 @@ export const toolCategories: ToolCategory[] = [
 				produces: ['text/plain'],
 				canon: true,
 			},
+			{
+				id: 'recipe-table',
+				name: 'Recipe Table',
+				description:
+					'Write a recipe as a Cooking for Engineers table',
+				icon: 'chef-hat',
+				href: '/tools/recipe-table',
+				canon: true,
+				expands: true,
+			},
 		],
 	},
 	{
@@ -1225,16 +1247,6 @@ export const toolCategories: ToolCategory[] = [
 				icon: 'banana',
 				href: '/tools/stupid-units',
 				canon: true,
-			},
-			{
-				id: 'recipe-table',
-				name: 'Recipe Table',
-				description:
-					'Write a recipe as a Cooking for Engineers table',
-				icon: 'chef-hat',
-				href: '/tools/recipe-table',
-				canon: true,
-				expands: true,
 			},
 		],
 	},
@@ -1299,7 +1311,7 @@ export const suites: Suite[] = [
 	},
 	{
 		id: 'errata',
-		tagline: 'the delphitools PDF editor',
+		tagline: 'the delphitools document editor',
 		word: 'Edit PDFs',
 		features: ['Redact', 'Forms', 'Sign', 'Impose'],
 	},

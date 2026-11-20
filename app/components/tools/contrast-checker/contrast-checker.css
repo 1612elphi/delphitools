@@ -12,11 +12,9 @@
 	white-space: nowrap;
 }
 
-/* banner */
 .contrast-specimen {
 	display: flex;
 
-	/* stacked, the band collapses from the bottom and keeps the figure */
 	align-items: flex-start;
 	box-sizing: border-box;
 	block-size: 100%;
@@ -61,7 +59,7 @@
 	line-height: 1.2;
 }
 
-/* wcag 2.2 sizes: 24 px, 18.67 px bold, 16 px */
+/* wcag 2.2 text sizes */
 .contrast-specimen--large {
 	font-size: 24px;
 }
@@ -120,7 +118,6 @@
 	}
 }
 
-/* wells */
 .contrast-wells {
 	position: relative;
 	display: grid;
@@ -201,7 +198,7 @@
 }
 
 .contrast-well-title {
-	/* shrinks to fit down to 80 %, as the iOS label's minimumScaleFactor; the title is about 6.6 em */
+	/* ios minimumScaleFactor 0.8 */
 	font-size: clamp(
 		calc(var(--canon-text-subheadline) * 0.8),
 		(100cqi - 38px) / 6.6,
@@ -239,7 +236,6 @@
 	);
 }
 
-/* solid over its strip */
 .contrast-solid {
 	display: flex;
 	flex-direction: column;
@@ -251,7 +247,6 @@
 	max-block-size: 240px;
 }
 
-/* scale */
 .contrast-scale {
 	box-sizing: border-box;
 	block-size: 56px;
@@ -301,7 +296,6 @@
 	translate: none;
 }
 
-/* lamps */
 .contrast-lamps {
 	display: grid;
 	grid-template-columns: 1fr 96px 96px;
@@ -371,7 +365,6 @@
 	color: var(--canon-foreground);
 }
 
-/* suggestions */
 .contrast-suggestion {
 	display: flex;
 	gap: var(--canon-hairline);
@@ -474,14 +467,12 @@
 	block-size: 100%;
 }
 
-/* the two colours as chips, side by side when there is room */
 .contrast-cards {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 	gap: var(--canon-panel-spacing);
 }
 
-/* drags follow at once */
 .contrast-checker--follows .contrast-specimen,
 .contrast-checker--follows .contrast-suggestion-preview,
 .contrast-checker--follows .contrast-scale .canon-bar-fill {
@@ -500,7 +491,6 @@
 	}
 }
 
-/* first and large: typing a colour is the main way in */
 .contrast-checker .contrast-input {
 	min-block-size: var(--canon-primary-height);
 }
@@ -513,4 +503,100 @@
 
 .contrast-checker .contrast-input > .canon-button {
 	inline-size: var(--canon-primary-height);
+}
+
+.contrast-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--canon-hairline);
+	background: var(--canon-border);
+}
+
+.contrast-list-row {
+	display: grid;
+	grid-template-columns: 1fr var(--contrast-flip);
+	gap: var(--canon-hairline);
+	block-size: var(--canon-row-height);
+}
+
+.contrast-net-scroll {
+	overflow-x: auto;
+}
+
+.contrast-net {
+	display: grid;
+	gap: var(--canon-hairline);
+	min-inline-size: min-content;
+	background: var(--canon-border);
+}
+
+.contrast-net-row {
+	display: contents;
+}
+
+.contrast-net-corner,
+.contrast-net-head {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-block-size: 44px;
+	background: var(--canon-card);
+}
+
+.contrast-net-chip {
+	box-sizing: border-box;
+	inline-size: 24px;
+	block-size: 24px;
+	border: var(--canon-hairline) solid var(--canon-border);
+}
+
+.contrast-net-cell {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: var(--canon-card);
+	color: var(--canon-foreground);
+	font: inherit;
+	text-align: start;
+	cursor: pointer;
+}
+
+.contrast-net-cell--same {
+	background: var(--canon-muted);
+}
+
+.contrast-net-cell--on,
+.contrast-net-cell:focus-visible {
+	outline: 2px solid var(--canon-primary);
+	outline-offset: -2px;
+}
+
+.contrast-net-sample {
+	display: flex;
+	grid-column: 1 / -1;
+	align-items: center;
+	justify-content: center;
+	block-size: 48px;
+	font-size: var(--canon-text-title3);
+	font-weight: var(--canon-weight-bold);
+}
+
+.contrast-net-ratio,
+.contrast-net-grade {
+	padding: 4px 6px;
+	font-size: var(--canon-text-caption);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.contrast-net-grade {
+	color: var(--canon-primary);
+	text-align: end;
+}
+
+.contrast-net-grade--fail {
+	color: var(--canon-destructive);
 }

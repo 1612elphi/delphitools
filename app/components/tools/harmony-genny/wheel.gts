@@ -17,16 +17,13 @@ import {
 interface WheelSignature {
 	Args: {
 		space: WheelSpace;
-		/** The base: lightness, radius cut to the gamut, hue. */
 		parts: Parts;
 		mode: number;
 		colours: Rgb[];
-		/** Hue in degrees and the base's radius, while a pointer or a key turns the table. */
 		onTurn: (hue: number, radius: number) => void;
 	};
 }
 
-/** Plane radius as a share of the ring's outer radius. */
 const planeShare = 0.86;
 const ringFrom = planeShare + 0.012;
 const notch = 15;
@@ -42,7 +39,6 @@ const point = (hue: number, distance: number) => {
 	] as const;
 };
 
-/** Ladder beads stand `spacing` apart along the base's spoke from -2 to 2 steps, moved as one to stay on the plane. */
 function ladder(base: number, rung: number) {
 	const low = base - 2 * ladderSpacing;
 	const high = base + 2 * ladderSpacing;
@@ -52,7 +48,6 @@ function ladder(base: number, rung: number) {
 	return base + rung * ladderSpacing + shift;
 }
 
-/** The disc: the plane at `lightness` inside sRGB, transparent outside it, and a hue ring round it. */
 function paintPlane(
 	canvas: HTMLCanvasElement,
 	space: WheelSpace,
@@ -65,7 +60,6 @@ function paintPlane(
 	if (!context) return;
 	const image = context.createImageData(size, size);
 	const data = image.data;
-	// one bin per pixel
 	const bins = Math.max(720, Math.ceil(Math.PI * size));
 	const most = Array.from({ length: bins }, (_, i) =>
 		maxRadius(space, l, (i * 360) / bins),
@@ -92,7 +86,6 @@ function paintPlane(
 			let alpha: number;
 			if (r <= planeShare) {
 				const radius = r / planeShare;
-				// one pixel: soft edge
 				alpha = Math.min(
 					1,
 					(most[bin]! - radius) / pixel + 0.5,
@@ -137,11 +130,6 @@ const keySteps: Record<string, number> = {
 	PageDown: -notch,
 };
 
-/**
- * HarmonyTurntable: the harmony as beads over the wheel space's plane at
- * the base's lightness, hue around and chroma out, a notched hue ring
- * outside. A drag turns the rule; a bead dragged radially changes chroma.
- */
 export default class Wheel extends Component<WheelSignature> {
 	ticks = ticks;
 
@@ -149,7 +137,6 @@ export default class Wheel extends Component<WheelSignature> {
 		return Math.round(wrapped(this.args.parts.h)) % 360;
 	}
 
-	/** Hue offset and radius of each bead, in the model's order. */
 	get slots() {
 		const { parts, mode } = this.args;
 		if (mode === monochromatic)
@@ -249,7 +236,6 @@ export default class Wheel extends Component<WheelSignature> {
 		},
 	);
 
-	/** Pointer position as hue and radius of the plane. */
 	#polar(disc: HTMLElement, event: PointerEvent) {
 		const box = disc.getBoundingClientRect();
 		const dx = (event.clientX - box.left) / (box.width / 2) - 1;

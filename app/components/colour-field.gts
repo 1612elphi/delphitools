@@ -7,7 +7,6 @@ export function normalizeHex(hex: string): string | null {
 	return /^[a-f\d]{6}$/i.test(stripped) ? `#${stripped}` : null;
 }
 
-// reject style injection
 export function cssColour(value: string): string {
 	return /^[a-zA-Z0-9#(),.%\s/-]*$/.test(value) ? value : '';
 }

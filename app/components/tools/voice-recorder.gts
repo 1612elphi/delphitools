@@ -63,11 +63,6 @@ function clock(seconds: number) {
 	return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
 }
 
-/**
- * The port of VoiceRecorderViewController: the recorder band, the takes
- * library and the transport footer, on MediaRecorder (webm/opus) with the
- * web tool's input pick. Takes stay for the visit; nothing is stored.
- */
 export default class VoiceRecorder extends Component {
 	capture = new Capture();
 	playback = new Playback();
@@ -85,9 +80,7 @@ export default class VoiceRecorder extends Component {
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
-		// pre-permission deviceIds are empty
 		void this.#refreshDevices();
-		// iOS -recstart yes, -recstop <seconds>
 		const query = new URLSearchParams(window.location.search);
 		if (query.has('recStart'))
 			void this.#record().then(() => {
@@ -104,7 +97,6 @@ export default class VoiceRecorder extends Component {
 		super.willDestroy();
 		const recorder = this.#recorder;
 		if (recorder) {
-			// discard in-flight take on detach
 			recorder.ondataavailable = null;
 			recorder.onstop = null;
 			if (recorder.state !== 'inactive') recorder.stop();
@@ -300,7 +292,6 @@ export default class VoiceRecorder extends Component {
 
 	#queued: Take | null = null;
 
-	// after playback.register on the same element: the new take's player is bound
 	playQueued = modifier((_element: HTMLAudioElement, [take]: [Take]) => {
 		if (this.#queued !== take) return;
 		this.#queued = null;
@@ -323,7 +314,6 @@ export default class VoiceRecorder extends Component {
 				null;
 		}
 		this.takes = this.takes.filter((other) => other !== take);
-		// the player lets go of it on the next render
 		setTimeout(() => URL.revokeObjectURL(take.url));
 	};
 
@@ -479,7 +469,6 @@ export default class VoiceRecorder extends Component {
 						/>
 					</CanonCanvas>
 					{{#each this.loaded key="id" as |take|}}
-						{{! the transport is its control; user media lacks captions }}
 						{{! template-lint-disable require-media-caption }}
 						<audio
 							class="vr-player"

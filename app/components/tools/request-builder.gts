@@ -25,7 +25,6 @@ import './request-builder/request-builder.css';
 
 const methods = [...METHODS];
 
-/** The port of RequestBuilderViewController; nothing is sent. */
 export default class RequestBuilderTool extends Component {
 	@tracked method = 0;
 	@tracked url = '';
@@ -35,7 +34,6 @@ export default class RequestBuilderTool extends Component {
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
-		// ?reqSample=1: the iOS -reqSample flag
 		if (
 			new URLSearchParams(window.location.search).get(
 				'reqSample',

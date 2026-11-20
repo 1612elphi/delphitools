@@ -30,8 +30,6 @@ const DIGITS = [
 
 const upper = (s: string) => s.toUpperCase();
 
-// iOS HexKeypad: a phone-style pad with A–F in two rows above it, and
-// paste, clear, delete and done; a hardware keyboard types into it too
 export default class HexKeypad extends Component<Signature> {
 	letters = LETTERS;
 	digitRows = DIGITS;

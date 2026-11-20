@@ -72,7 +72,6 @@ const sizeLabels = sizePresets.map((preset) => preset.label);
 const closestName = (colour: Rgb) => getColourName(hex(colour));
 const readNoise = (value: number) => `${Math.round(value)} %`;
 
-/** The colour solid's state; a pick writes the selected handle's colour. */
 class PickState extends CanonColourSolidState {
 	onPick?: (colour: Rgb) => void;
 
@@ -82,7 +81,6 @@ class PickState extends CanonColourSolidState {
 	}
 }
 
-/** The port of GradientGeneratorViewController. */
 export default class GradientGenny extends Component {
 	@service declare colourNotation: ColourNotationService;
 
@@ -117,7 +115,6 @@ export default class GradientGenny extends Component {
 		}
 		this.model = model;
 		const first = model.selectedColour ?? '#3B82F6';
-		// sliced row, rgb blue
 		this.state = new PickState({
 			space: 'rgb',
 			colour: rgbOf(first),
@@ -184,7 +181,6 @@ export default class GradientGenny extends Component {
 
 	get colourHeading() {
 		const { mode } = this.model;
-		// web titles for corners, iOS for the rest
 		if (mode === 'corners') return 'Corner Colours';
 		return mode === 'freeform' ? 'Points' : 'Colour Stops';
 	}
@@ -209,7 +205,6 @@ export default class GradientGenny extends Component {
 		return this.model.selectedStop?.position ?? 0;
 	}
 
-	/** The gradient's path on the solid, or the other handles' colours. */
 	get marks(): Rgb[] {
 		const { model } = this;
 		if (model.mode === 'corners')
@@ -239,12 +234,9 @@ export default class GradientGenny extends Component {
 		);
 	}
 
-	/** The picture takes the export's shape, within iOS's bounds. */
 	get pictureAspect() {
 		return clamp(this.width / this.height, 0.8, 1.6);
 	}
-
-	// selection
 
 	#sync() {
 		const colour = this.model.selectedColour;
@@ -271,8 +263,6 @@ export default class GradientGenny extends Component {
 
 	pickCorner = (index: number) => this.select(cornerKeys[index]!);
 
-	// colour field
-
 	parse = (text: string) => {
 		const colour = readColour(text);
 		if (!colour) return false;
@@ -281,18 +271,14 @@ export default class GradientGenny extends Component {
 		return true;
 	};
 
-	// the web field answered every keystroke; the kit input waits 400 ms
 	typeLive = (event: Event) =>
 		void this.parse((event.target as HTMLInputElement).value);
 
-	// a click places the caret after focus, so select on the next frame
 	selectAll = (event: FocusEvent) => {
 		const field = event.target;
 		if (field instanceof HTMLInputElement)
 			requestAnimationFrame(() => field.select());
 	};
-
-	// gradient
 
 	pickSpace = (index: number) => (this.model.space = spaces[index]!);
 
@@ -327,8 +313,6 @@ export default class GradientGenny extends Component {
 
 	blend = () => this.model.blend();
 
-	// image
-
 	pickPreset = (index: number) => {
 		const preset = sizePresets[index];
 		if (!preset) return;
@@ -359,7 +343,6 @@ export default class GradientGenny extends Component {
 		}, 'image/png');
 	};
 
-	// wide: flatter solid, as on iOS
 	measureSolid = modifier((element: HTMLElement) => {
 		const observer = new ResizeObserver(() => {
 			const width = element.clientWidth;
@@ -649,7 +632,6 @@ export default class GradientGenny extends Component {
 							@onChange={{this.setNoise}}
 						/>
 					</CanonRow>
-					{{! wording carried over from the web tool }}
 					<CanonStatus
 						@text="Adds grain texture to reduce banding. Only applies to image export, not CSS."
 						@tone="muted"

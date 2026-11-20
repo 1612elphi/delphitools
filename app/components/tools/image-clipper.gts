@@ -42,7 +42,6 @@ const NOTHING_CLIPPED = 'Nothing was clipped. Is this a transparent PNG?';
 const remover = [getToolById('background-remover')!];
 const ENCODE_FAILED = 'Failed to encode clipped image.';
 
-// iOS: UIView spring, duration 0.6 s, bounce 0.15
 const spring = htmlSafe(`--clip-spring: ${springEasing(0.85)}`);
 const springMs = 600;
 
@@ -66,7 +65,6 @@ interface Source {
 
 const full = ({ width, height }: Size): Rect => ({ x: 0, y: 0, width, height });
 
-/** The port of ImageClipperViewController, on the web tool's trim. */
 export default class ImageClipper extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 	@tracked source?: Source;
@@ -82,7 +80,6 @@ export default class ImageClipper extends Component {
 	#timers: number[] = [];
 	#frame = 0;
 
-	// ?clipSample ?clipReplay: the iOS -clipSample and -clipReplay launch arguments, with a drawn image
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -198,7 +195,6 @@ export default class ImageClipper extends Component {
 	picked = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
-		// the same file twice fires change again
 		input.value = '';
 		if (file) void this.load(file);
 	};
@@ -259,7 +255,6 @@ export default class ImageClipper extends Component {
 		this.#show(kept, pixels);
 	};
 
-	// the box starts at the image edge and springs in, as iOS does
 	#show(kept: Rect | null, pixels: Size) {
 		cancelAnimationFrame(this.#frame);
 		this.springs = false;
@@ -459,7 +454,6 @@ export default class ImageClipper extends Component {
 						</CanonRow>
 					{{/if}}
 				</CanonRows>
-				{{! the empty picture opens it }}
 				{{! template-lint-disable require-input-label }}
 				<input
 					type="file"

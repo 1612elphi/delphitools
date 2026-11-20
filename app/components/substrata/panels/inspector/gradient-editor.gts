@@ -46,8 +46,6 @@ export interface GradientEditorSignature {
 	Args: { layerId: string; grad: Gradient };
 }
 
-// the web's GradientEditor (gradient-row.gts) in canon rows; iOS edits the
-// first stop only
 export default class GradientEditor extends Component<GradientEditorSignature> {
 	@tracked selRaw = 0;
 

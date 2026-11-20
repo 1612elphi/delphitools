@@ -31,8 +31,6 @@ import {
 } from 'delphitools-v2/lib/substrata/layer-tree';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 
-// the web's handleDragEnd and iOS PanelLogic.drop: the row below names the
-// parent, else the row above; the panel is top first, doc order bottom first
 function dropTarget(
 	rows: readonly PanelRow[],
 	from: number,
@@ -62,8 +60,6 @@ function dropTarget(
 	return { id: moving.id, parent, index: count - above };
 }
 
-// pointer only: Enter renames, so dnd-kit's keyboard sensor stays out; a
-// drag starts on the row's main button only, not its lock, lamp or field
 function rowManager(): DragDropManager {
 	return new DragDropManager({
 		sensors: [
@@ -109,7 +105,6 @@ interface Entry {
 	dragging: boolean;
 }
 
-// iOS LayersPanel's list, the web's LayersBody behind it
 export default class LayersList extends Component {
 	doc = new TrackedExternal(subscribe, getSnapshot);
 	selection = new TrackedExternal(
@@ -172,7 +167,6 @@ export default class LayersList extends Component {
 		return this.selected[this.selected.length - 1] ?? null;
 	}
 
-	// the fold belongs to a row that is the whole selection
 	get foldedId() {
 		const id = layersState.folded;
 		return id &&
@@ -205,8 +199,6 @@ export default class LayersList extends Component {
 		}));
 	}
 
-	// web onRowClick: shift picks the rows from the anchor, cmd toggles one;
-	// iOS: a plain tap selects and folds the row out, a second folds it away
 	press = (id: string, event: MouseEvent) => {
 		this.focusId = id;
 		const ids = this.rows.map((r) => r.layer.id);
@@ -229,7 +221,6 @@ export default class LayersList extends Component {
 			const before = this.selected.length;
 			toggleInSelection(id);
 			const after = getSelectedLayerIds().length;
-			// picking ends when a deselection leaves one layer or none
 			if (after < before && after <= 1)
 				layersState.picking = false;
 			return;
@@ -239,8 +230,6 @@ export default class LayersList extends Component {
 		layersState.folded = opens ? id : null;
 	};
 
-	// a row in the selection acts on the whole selection, any other row
-	// becomes the selection first
 	menu = (id: string, el: HTMLElement, at?: MouseEvent) => {
 		if (!this.selected.includes(id)) setActiveLayer(id);
 		layersState.menuRow = el;

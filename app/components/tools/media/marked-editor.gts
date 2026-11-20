@@ -14,11 +14,8 @@ interface MarkedEditorSignature<L extends MarkedLine> {
 		placeholder: string;
 		label: string;
 		onInput: (text: string) => void;
-		/** One entry per line of `text`: numbered in a gutter, `lit` tints the line. */
 		lines?: L[];
-		/** The marks hold controls: after the textarea in focus order and not hidden from assistive tech. */
 		interactive?: boolean;
-		/** The keyboard may capitalise sentences. */
 		prose?: boolean;
 	};
 	Blocks: {
@@ -28,10 +25,8 @@ interface MarkedEditorSignature<L extends MarkedLine> {
 	Element: HTMLDivElement;
 }
 
-// 6px over 44px head
 const headHeight = 50;
 
-/** Reports the picture's own height in px (the head plus this element) at its current width. */
 export const reportHeight = modifier(
 	(element: HTMLElement, [report]: [(height: number) => void]) => {
 		const observer = new ResizeObserver(() =>
@@ -44,12 +39,6 @@ export const reportHeight = modifier(
 
 const number = (index: number) => index + 1;
 
-/**
- * Text marked in place under a transparent textarea set in the same type, so
- * the caret sits on the marks. The marks come from the block, or per line
- * from the `line` block beside a numbered gutter. Empty, the textarea is the
- * dashed placeholder box.
- */
 export default class MarkedEditor<
 	L extends MarkedLine = MarkedLine,
 > extends Component<MarkedEditorSignature<L>> {
@@ -62,7 +51,6 @@ export default class MarkedEditor<
 		);
 	}
 
-	// zero-width; keeps a trailing newline
 	get tail() {
 		return this.args.text?.endsWith('\n') ? '\u200b' : '';
 	}

@@ -18,16 +18,13 @@ import {
 interface PictureSignature {
 	Args: {
 		text: string;
-		/** The text the outcome was run on; marks show only while it is `text`. */
 		shownText: string;
 		outcome: RegexOutcome;
 		onInput: (text: string) => void;
-		/** The picture's own height in px at its current width. */
 		onHeight: (height: number) => void;
 	};
 }
 
-// px under the descender: rail gap, then one pitch per level
 const railGap = 3;
 const railPitch = 5;
 const railRoom = railGap + railLevels * railPitch;
@@ -41,7 +38,6 @@ function pieceStyle(piece: Piece) {
 		const c = colour(level);
 		const top = railGap + (level - 1) * railPitch;
 		const fill = `linear-gradient(${c}, ${c})`;
-		// positions count up from the bottom of the padding box
 		layers.push(
 			`${fill} 0 calc(100% - ${railRoom - top - 2}px) / 100% 2px no-repeat padding-box`,
 		);
@@ -68,7 +64,6 @@ function pieceStyle(piece: Piece) {
 const PasteIcon = <template><IconSvg @name="clipboard" /></template>;
 const ClearIcon = <template><IconSvg @name="trash-2" /></template>;
 
-// iOS MarkedTextView.reveal: first match into view, unless the reader is typing
 const revealFirst = modifier((scroller: HTMLElement, [key]: [unknown]) => {
 	void key;
 	if (scroller.contains(document.activeElement)) return;
@@ -84,11 +79,6 @@ const revealFirst = modifier((scroller: HTMLElement, [key]: [unknown]) => {
 	if (!visible) scroller.scrollTop = Math.max(0, top - 12);
 });
 
-/**
- * The test string with every match lit in place, neighbouring matches in two
- * shades, each capture group bracketed under its text in its own colour and
- * level, a zero-width match as a caret; the match count as a figure above.
- */
 export default class Picture extends Component<PictureSignature> {
 	get matched() {
 		const { outcome } = this.args;
@@ -127,7 +117,6 @@ export default class Picture extends Component<PictureSignature> {
 			: 'var(--canon-muted-foreground)';
 	}
 
-	// marks for an older text would sit on the wrong characters
 	get pieces() {
 		const { text, shownText } = this.args;
 		const matches =

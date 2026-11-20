@@ -13,7 +13,6 @@ export interface MosaicImage {
 	name: string;
 	raw: string;
 	uriBytes: number;
-	/** Small upright copy, up to 240 px on the long side. */
 	thumbnail?: HTMLCanvasElement;
 }
 
@@ -25,7 +24,6 @@ const fadeMs = 300;
 const still = () =>
 	window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/** One colour per character from the thumbnail; transparent pixels stay faint. */
 function sample(thumbnail: HTMLCanvasElement, columns: number, rows: number) {
 	const canvas = document.createElement('canvas');
 	canvas.width = columns;
@@ -37,11 +35,6 @@ function sample(thumbnail: HTMLCanvasElement, columns: number, rows: number) {
 	return context.getImageData(0, 0, columns, rows).data;
 }
 
-/**
- * The selected image's base64 as a wall of characters, each coloured by the
- * picture under it, with its data URI size as a figure. The port of iOS
- * Base64Mosaic.
- */
 export default class Base64Mosaic extends Component<MosaicSignature> {
 	#canvas?: HTMLCanvasElement;
 	#ghost?: HTMLCanvasElement;
@@ -57,7 +50,6 @@ export default class Base64Mosaic extends Component<MosaicSignature> {
 		const repaint = () => this.draw();
 		const resize = new ResizeObserver(repaint);
 		resize.observe(host);
-		// canvas colours do not follow the theme by themselves
 		const theme = new MutationObserver(repaint);
 		theme.observe(document.documentElement, {
 			attributes: true,

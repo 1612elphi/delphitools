@@ -5,7 +5,6 @@ import {
 	type Scan,
 } from 'delphitools-v2/components/tools/image-atlas/report';
 
-// iOS ImageColourScopes channel fills
 const channels = [
 	'rgb(255 71 61 / 70%)',
 	'rgb(77 235 92 / 70%)',
@@ -87,7 +86,6 @@ const paint = modifier((canvas: HTMLCanvasElement, [scan]: [Scan | null]) => {
 	return () => observer.disconnect();
 });
 
-/** The red, green and blue histograms, screened together (iOS ImageColourScopes, less the chromaticity diagram). */
 const Scopes: TOC<{ Args: { scan: Scan | null } }> = <template>
 	<canvas
 		class="ia-scopes"

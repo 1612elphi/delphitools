@@ -11,7 +11,6 @@ const LoopIcon = <template><IconSvg @name="repeat" /></template>;
 
 const off = (on: boolean | undefined) => !on;
 
-/** The iOS transport footer: any `before` cells, Loop, Play or Pause, Stop, then any extra cells. */
 const Transport: TOC<{
 	Args: { playback: Playback; ready?: boolean };
 	Blocks: { default: []; before: [] };

@@ -128,6 +128,7 @@ export function reconcile(
 			entry.layer,
 			entry.visible,
 			entry.locked,
+			entry.pinned,
 			entry.opacity,
 			byId,
 		);
@@ -154,6 +155,7 @@ function syncLayer(
 	layer: Layer,
 	visible: boolean,
 	locked: boolean,
+	pinned: boolean,
 	opacity: number,
 	byId: Map<string, FabricObject>,
 ): FabricObject | null {
@@ -195,6 +197,12 @@ function syncLayer(
 		originY: 'center',
 		selectable: !locked,
 		evented: !locked,
+		hasControls: !pinned,
+		lockMovementX: pinned,
+		lockMovementY: pinned,
+		lockScalingX: pinned,
+		lockScalingY: pinned,
+		lockRotation: pinned,
 	});
 	if (layer.kind === 'raster') {
 		syncImageFilters(obj as EffectsImage, layer.filters);
@@ -309,11 +317,10 @@ function syncRasterContent(
 	byId: Map<string, FabricObject>,
 ): FabricObject | null {
 	const src = getRaster(layer.blobHash);
-	if (!src) return null; // skip undecoded rasters
+	if (!src) return null;
 
 	let obj = byId.get(layer.id) as EffectsImage | undefined;
 	if (obj && rasterHashOf.get(obj) !== layer.blobHash) {
-		// rebuild changed raster source
 		canvas.remove(obj);
 		byId.delete(layer.id);
 		obj = undefined;
@@ -468,7 +475,7 @@ function syncFreehandContent(
 		const d = outlineToPathD(
 			strokeOutline(layer.rawPoints, layer.strokeOptions),
 		);
-		if (!d) return null; // skip degenerate strokes
+		if (!d) return null;
 		obj = new Path(d);
 		freehandBuiltFor.set(obj, {
 			pts: layer.rawPoints,
@@ -498,6 +505,7 @@ function syncTextContent(
 	if (!obj.isEditing) obj.set({ text: layer.text });
 	obj.set({
 		fontFamily: resolveFontCss(layer.fontFamily),
+		fontWeight: layer.fontWeight ?? 400,
 		fontSize: layer.fontSize,
 		fill: layer.fill,
 		stroke: layer.stroke?.colour ?? null,

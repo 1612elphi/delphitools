@@ -24,7 +24,6 @@ import { specimen } from './tailwind-cheatsheet/specimen';
 import Stage, { svg } from './tailwind-cheatsheet/stage';
 import './tailwind-cheatsheet/tailwind-cheatsheet.css';
 
-// omni.ts imports the lookup from this module
 export {
 	CHEATSHEET,
 	TOTAL_CLASSES,
@@ -51,7 +50,6 @@ function thumb(item: CheatSheetItem, category: string) {
 	return picture;
 }
 
-/** The port of TailwindCheatsheetViewController. */
 export default class TailwindCheatsheetTool extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -60,7 +58,6 @@ export default class TailwindCheatsheetTool extends Component {
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
-		// ?twSearch= ?twSelect=: the iOS -twSearch, -twSelect flags
 		const query = new URLSearchParams(window.location.search);
 		const search = query.get('twSearch');
 		if (search !== null) this.find(search);
@@ -93,7 +90,6 @@ export default class TailwindCheatsheetTool extends Component {
 		return `No classes found matching “${this.search}”`;
 	}
 
-	/** A search lights its first match, so the stage follows it. */
 	find = (text: string) => {
 		this.search = text;
 		const first = filterCheatsheet(text)[0]?.items[0];
@@ -120,7 +116,6 @@ export default class TailwindCheatsheetTool extends Component {
 		heading.querySelector('button')?.focus({ preventScroll: true });
 	};
 
-	// a click places the caret after focus, so select on the next frame
 	selectAll = (event: FocusEvent) => {
 		const field = event.target;
 		if (field instanceof HTMLInputElement)

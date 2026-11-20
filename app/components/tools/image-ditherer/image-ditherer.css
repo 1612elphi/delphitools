@@ -1,0 +1,110 @@
+/* no smoothing when scaled */
+.image-ditherer .dith-picture {
+	display: block;
+	inline-size: 100%;
+	block-size: 100%;
+	object-fit: contain;
+	image-rendering: pixelated;
+}
+
+/* names shrink, cells stay */
+.image-ditherer .dith-source {
+	flex-wrap: nowrap;
+}
+
+.image-ditherer .dith-source > .canon-row-label,
+.image-ditherer .dith-source .canon-row-text {
+	min-inline-size: 0;
+}
+
+.image-ditherer .dith-source > .canon-row-control {
+	flex: none;
+}
+
+.image-ditherer .dith-source .canon-row-title {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.image-ditherer .dith-failed {
+	display: grid;
+	block-size: 100%;
+	place-items: center;
+	color: var(--canon-muted-foreground);
+}
+
+/* short rows end hairlines */
+.image-ditherer .dith-algorithms {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+	gap: var(--canon-hairline);
+	padding-block-end: var(--canon-hairline);
+	background: var(--canon-card);
+}
+
+.image-ditherer .dith-tile {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	align-items: center;
+	margin: 0;
+	padding: 8px 4px;
+	border: 0;
+	background: var(--canon-card);
+	box-shadow: 0 0 0 var(--canon-hairline) var(--canon-border);
+	color: var(--canon-foreground);
+	font: inherit;
+	font-size: var(--canon-text-caption);
+	line-height: 1.2;
+	text-align: center;
+	cursor: pointer;
+}
+
+.image-ditherer .dith-tile img {
+	inline-size: 100%;
+	max-inline-size: 96px;
+	block-size: auto;
+	aspect-ratio: 1;
+	image-rendering: pixelated;
+}
+
+.image-ditherer .dith-tile[aria-pressed="true"] {
+	background: var(--canon-primary);
+	color: var(--canon-primary-foreground);
+}
+
+.image-ditherer .dith-tile:focus-visible {
+	outline: 2px solid var(--canon-primary);
+	outline-offset: -4px;
+}
+
+/* hidden for fast runs */
+.image-ditherer .dith-busy {
+	position: absolute;
+	inset-block-end: 12px;
+	inset-inline-end: 12px;
+	padding: 12px;
+	background: var(--canon-card);
+	color: var(--canon-primary);
+	opacity: 0;
+	animation: dith-busy-shown 0s 400ms forwards;
+}
+
+@keyframes dith-busy-shown {
+	to {
+		opacity: 1;
+	}
+}
+
+/* sliders share one start */
+.image-ditherer .dith-levels > .canon-row-label,
+.image-ditherer .dith-scale > .canon-row-label {
+	flex: 0 0 34%;
+}
+
+.image-ditherer .dith-levels > .canon-row-control,
+.image-ditherer .dith-scale > .canon-row-control {
+	flex: 1 1 0;
+	min-inline-size: 0;
+}

@@ -25,7 +25,6 @@ import './nato-phonetic/nato-phonetic.css';
 const directions = ['Auto', 'Spell', 'Read'];
 const alphabetLabels = ALPHABETS.map((a) => a.label);
 
-/** The port of NATOPhoneticViewController, with SignalHoist and NATOChart. */
 export default class NatoPhonetic extends Component {
 	@tracked input = '';
 	@tracked alphabetIndex = 0;
@@ -33,7 +32,6 @@ export default class NatoPhonetic extends Component {
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
-		// ?natoText= ?natoAlphabet=<0-2> ?natoMode=<0-2>: the iOS launch arguments
 		const query = new URLSearchParams(window.location.search);
 		const alphabet = Number(query.get('natoAlphabet'));
 		if (alphabet >= 0 && alphabet < ALPHABETS.length)

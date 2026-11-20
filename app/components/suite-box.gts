@@ -5,7 +5,6 @@ import { patternStyle } from 'delphitools-v2/lib/icon-pattern';
 import type { Suite } from 'delphitools-v2/lib/tools';
 import './suite-box.css';
 
-// two copies of the run; the track loops at -50%
 const RUN = [0, 1, 2, 3, 4, 5];
 const COPIES = [0, 1];
 

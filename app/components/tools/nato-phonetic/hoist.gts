@@ -8,24 +8,20 @@ import type { SpelledChar } from 'delphitools-v2/lib/spelling-alphabets';
 interface HoistSignature {
 	Args: {
 		spelled: SpelledChar[];
-		/** What the flags say, for assistive technology. */
 		label: string;
 	};
 }
 
-/** The banner's height and the band it collapses to, in px. */
 export const bandHeight = 164;
 export const collapsedHeight = 100;
 
 const flag = { width: 44, height: 33 };
-// halyard to flag top
 const drop = 7;
 const metrics = { height: drop + flag.height + 22, rowGap: 14, gap: 8 };
 
 let context: CanvasRenderingContext2D | null | undefined;
 let family: string | undefined;
 
-// the word's width in the label type: 13 px semibold canon font
 function wordWidth(word: string) {
 	context ??= document.createElement('canvas').getContext('2d');
 	if (!context) return word.length * 7;
@@ -51,7 +47,6 @@ const equals = (a: SpelledChar, b: SpelledChar) =>
 
 const isSpace = (glyph: SpelledChar) => /\s/.test(glyph.char);
 
-// ß uppercases to SS: it keeps its own box
 function art(glyph: SpelledChar) {
 	const upper = glyph.char.toUpperCase();
 	const letter = upper.length === 1 ? upper : glyph.char;
@@ -60,11 +55,6 @@ function art(glyph: SpelledChar) {
 
 const reachStyle = htmlSafe(`--np-reach: ${metrics.gap / 2}px`);
 
-/**
- * The spelling as a hoist of signal flags on a halyard, each spelling word
- * under its flag, a dashed tackline between words; a character with no flag
- * gets a plain box.
- */
 const Hoist: TOC<HoistSignature> = <template>
 	<div class="np-hoist" style={{reachStyle}}>
 		<CanonGlyphFlow

@@ -16,7 +16,6 @@ const TOOL_ROWS: Row[] = EDITOR_TOOLS.flatMap((tool) =>
 	})),
 );
 
-// web shortcuts-modal GROUPS; mirrors editor-shortcuts.ts
 const GROUPS: { title: string; rows: Row[] }[] = [
 	{ title: 'Tools', rows: TOOL_ROWS },
 	{

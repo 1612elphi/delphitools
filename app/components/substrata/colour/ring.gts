@@ -4,8 +4,6 @@ import RingView from 'delphitools-v2/components/substrata/colour/ring-view';
 import ColourCaption from 'delphitools-v2/components/substrata/colour/caption';
 import { editorUi } from 'delphitools-v2/lib/substrata/editor-ui';
 
-// the colour ring on the iPad layout; the phone has no ring, so a colour
-// well's openRingFor there opens the colour tray (editor rail) instead
 export default class ColourRing extends Component<{
 	Args: { phone: boolean };
 }> {

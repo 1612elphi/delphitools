@@ -66,7 +66,6 @@ const BLANK_OPEN = toolsForFile(sample('.wav')).filter(
 	(tool) => tool.id !== 'audio-atlas' && !tool.route,
 );
 
-// ios AudioAtlasViewController: 120+24+160
 const sheetHeight = 304;
 
 const flag = (name: string) =>
@@ -78,7 +77,6 @@ const ZoomOut = <template><IconSvg @name="zoom-out" /></template>;
 const ZoomIn = <template><IconSvg @name="zoom-in" /></template>;
 const Fit = <template><IconSvg @name="maximize" /></template>;
 
-/** iOS playRange: Loop plays the view, else the whole file. */
 class ViewPlayback extends Playback {
 	#view: ViewWindow;
 
@@ -102,7 +100,6 @@ class ViewPlayback extends Playback {
 	}
 }
 
-/** The port of AudioAtlasViewController, on the web tool's decode, loudness and spectrogram. */
 export default class AudioAtlas extends Component {
 	view = new ViewWindow();
 	playback = new ViewPlayback(this.view);
@@ -194,7 +191,6 @@ export default class AudioAtlas extends Component {
 		return [...all, this.loudness];
 	}
 
-	/** iOS AudioAtlasTagRow, less the artwork: MediaInfo's title, performer and album. */
 	get tags() {
 		const general = this.tracks.find(
 			(t) => t['@type'] === 'General',
@@ -253,13 +249,11 @@ export default class AudioAtlas extends Component {
 	#decoded(buffer: AudioBuffer) {
 		this.view.reset(buffer.duration);
 		void this.#measure(buffer);
-		// iOS -atlasZoom yes
 		if (flag('atlasZoom'))
 			this.moveWindow(
 				buffer.duration * 0.3,
 				buffer.duration * 0.2,
 			);
-		// iOS -atlasLoop yes
 		if (flag('atlasLoop')) {
 			this.playback.toggleLoop();
 			this.playback.play();
@@ -268,7 +262,6 @@ export default class AudioAtlas extends Component {
 
 	async #measure(buffer: AudioBuffer) {
 		const token = this.#token;
-		// the gated loudness scan is slow; the page shows first
 		await new Promise((resolve) => setTimeout(resolve, 0));
 		if (this.isDestroyed || token !== this.#token) return;
 		this.lufs = integratedLufs(
@@ -282,7 +275,6 @@ export default class AudioAtlas extends Component {
 		this.playback.follow();
 	}
 
-	/** iOS AudioAtlasModel.moveWindow: the length kept inside the file. */
 	moveWindow = (start: number, span: number) => {
 		const length = Math.min(
 			Math.max(span, ViewWindow.MIN_SPAN_S),
@@ -309,7 +301,6 @@ export default class AudioAtlas extends Component {
 
 	seek = (seconds: number) => this.playback.scrub(seconds);
 
-	/** iOS nudge: a twentieth of the view, paging the view to follow. */
 	nudge = (direction: number) => {
 		if (!this.decoded) return;
 		const { start, end, span } = this.view;
@@ -415,7 +406,6 @@ export default class AudioAtlas extends Component {
 			</:sidebar>
 			<:main>
 				{{#if this.loaded}}
-					{{! the transport is its control; user media lacks captions }}
 					{{! template-lint-disable require-media-caption }}
 					<audio
 						class="aa-audio"

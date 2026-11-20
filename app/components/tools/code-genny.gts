@@ -54,7 +54,6 @@ import { pixelSize } from 'delphitools-v2/components/tools/qr-genny/code-sheet';
 import { downloadBlob } from 'delphitools-v2/lib/download';
 import './code-genny/code-genny.css';
 
-// the named raw export is the raw symbology; the default export's raw is ToRaw
 interface Bwip {
 	raw(options: object): Raw[];
 }
@@ -97,10 +96,6 @@ class BatchItem {
 	}
 }
 
-/**
- * The port of BarcodeGeneratorViewController on qr-genny's CodeSheetPicture,
- * with the web's eight symbologies (bwip-js) and its batch mode.
- */
 export default class CodeGenny extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -124,7 +119,6 @@ export default class CodeGenny extends Component {
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
-		// ?codeKind=<index> ?codeText= ?codeTransparent ?codePadding= ?codeFormat=1 ?codeFocus: the iOS launch arguments
 		const query = new URLSearchParams(window.location.search);
 		const kind = TYPE_LIST[Number(query.get('codeKind'))];
 		if (query.has('codeKind') && kind) {
@@ -308,7 +302,6 @@ export default class CodeGenny extends Component {
 		return this.batchItems.length === 0 || this.batchGenerating;
 	}
 
-	// a click places the caret after focus, so select on the next frame
 	selectAll = (event: FocusEvent) => {
 		const field = event.target;
 		if (field instanceof HTMLInputElement)
@@ -405,8 +398,6 @@ export default class CodeGenny extends Component {
 		}
 	}
 
-	// batch
-
 	addBatchItem = () => {
 		this.batchItems = [...this.batchItems, new BatchItem('')];
 	};
@@ -432,7 +423,6 @@ export default class CodeGenny extends Component {
 	uploadBatchList = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
-		// the same file can be chosen again
 		input.value = '';
 		if (!file) return;
 		const reader = new FileReader();

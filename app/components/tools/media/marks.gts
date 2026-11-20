@@ -6,11 +6,6 @@ import './marks.css';
 const at = (seconds: number, duration: number) =>
 	htmlSafe(`inset-inline-start: ${share(seconds, duration) * 100}%`);
 
-/**
- * The iOS AVEditFilmstrip marks, laid over a Strips in the same box: `lit`
- * times as flagged full-height ticks, `dim` times as short ticks along the
- * bottom edge. Draws nothing without a duration.
- */
 const Marks: TOC<{
 	Args: { lit?: number[]; dim?: number[]; duration: number };
 	Element: HTMLDivElement;

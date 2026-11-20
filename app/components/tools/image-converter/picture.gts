@@ -20,22 +20,16 @@ import { formatBytes } from 'delphitools-v2/lib/image-compress';
 
 export interface PictureSignature {
 	Args: {
-		/** Object URL of the shown source; none shows the slot that takes files. */
 		source?: string;
-		/** The written file; a format the browser cannot show falls back to the source, dimmed. */
 		result?: string;
 		sourceSize?: Size;
 		outputSize?: Size;
 		bytes?: number;
 		working: boolean;
 		failed: boolean;
-		/** Alpha, Lossy, 256 Colours. */
 		lamps: boolean[];
-		/** A file is dragged over the tool. */
 		over: boolean;
-		/** Every loaded file, for the film strip; empty hides it. */
 		thumbs: Thumb[];
-		/** Bumped when a file joins a loaded batch; each bump plays the arrival. */
 		arrival: number;
 		onChoose: () => void;
 		onPick: (index: number) => void;
@@ -49,9 +43,7 @@ export interface Thumb {
 }
 
 const lampNames = ['Alpha', 'Lossy', '256 Colours'];
-// the empty slot's shape
 const placeholder: Size = { width: 3, height: 2 };
-// iOS: UIView spring, 0.55 s, damping 0.82
 const springMs = 550;
 const spring = htmlSafe(`--conv-spring: ${springEasing(0.82)}`);
 
@@ -66,7 +58,6 @@ function box({ x, y, width, height }: Rect) {
 const same = (a?: Size, b?: Size) =>
 	a?.width === b?.width && a?.height === b?.height;
 
-/** A new size springs the frames for a moment; a pane resize follows at once. */
 const springs = modifier((element: HTMLElement, [key]: [string]) => {
 	const last = element.dataset['key'];
 	element.dataset['key'] = key;
@@ -84,7 +75,6 @@ const arriveMs = 450;
 const arrives = modifier((element: HTMLElement, [count]: [number]) => {
 	if (!count || reducedMotion()) return;
 	element.classList.remove('conv-picture--arrives');
-	// restarts the animation when files arrive back to back
 	void element.offsetWidth;
 	element.classList.add('conv-picture--arrives');
 	const timer = window.setTimeout(
@@ -94,7 +84,6 @@ const arrives = modifier((element: HTMLElement, [count]: [number]) => {
 	return () => window.clearTimeout(timer);
 });
 
-// scrolls the strip itself; scrollIntoView would also move the page
 const showsCurrent = modifier((strip: HTMLElement, [index]: [number]) => {
 	const thumb = strip.children[index] as HTMLElement | undefined;
 	if (!thumb) return;
@@ -105,12 +94,6 @@ const showsCurrent = modifier((strip: HTMLElement, [index]: [number]) => {
 		strip.scrollLeft = end - strip.clientWidth;
 });
 
-/**
- * The file as it will be written, to scale against a dashed outline of the
- * source when resized, over checks; dimension lines for its pixels, lamps
- * for what the format keeps, its size in bytes as a figure. The port of iOS
- * ConversionPicture.
- */
 export default class Picture extends Component<PictureSignature> {
 	@tracked area: Rect = { x: 0, y: 0, width: 0, height: 0 };
 	@tracked broken?: string;

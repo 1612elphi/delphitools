@@ -1,7 +1,8 @@
 /** onboarding bypasses persistence opt-in */
 
 import { getSnapshot } from './doc-store';
-import { closeModal, openModal } from './modal';
+import { editorUi } from './editor-ui';
+import { closeModal } from './modal';
 
 const SEEN_KEY = 'substrata:onboarding-seen';
 
@@ -21,10 +22,10 @@ function markOnboardingSeen(): void {
 	}
 }
 
-/** open new-scene for blanks */
+/** a blank start gets the New card */
 export function finishOnboarding(): void {
 	markOnboardingSeen();
 	const doc = getSnapshot();
 	closeModal();
-	if (!doc || doc.layers.length === 0) openModal('new-scene');
+	if (!doc || doc.layers.length === 0) editorUi.newOpen = true;
 }

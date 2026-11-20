@@ -11,7 +11,6 @@ interface Signature {
 	Args: { target: RenameTarget; onDone: () => void };
 }
 
-// iOS RenameSheet: the name in a text cell, selected
 export default class RenameForm extends Component<Signature> {
 	draft = this.args.target.name;
 

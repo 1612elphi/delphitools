@@ -19,6 +19,7 @@ import {
 import {
 	findLayer,
 	isGroup,
+	leafLayers,
 	selectableLeafIds,
 	siblingListOf,
 } from 'delphitools-v2/lib/substrata/layer-tree';
@@ -41,6 +42,11 @@ import {
 	importImageFile,
 } from 'delphitools-v2/lib/substrata/import-raster';
 import { setSelection } from 'delphitools-v2/lib/substrata/selection';
+import {
+	isFrame,
+	pickFrameImage,
+	setStratum,
+} from 'delphitools-v2/lib/substrata/strata';
 import {
 	getGuides,
 	subscribeGuides,
@@ -66,10 +72,6 @@ const focusFirst = modifier((el: HTMLElement) => {
 	el.querySelector<HTMLElement>('button:enabled')?.focus();
 });
 
-// iOS LayerMenu: lamps for Visible and Lock, then opacity and blend, then
-// More Options with the rest. Opens beside the layers panel from a row, or
-// at the pointer from a right click on the canvas; a right click on empty
-// canvas gets the web's canvas menu in the same card
 export default class LayerMenu extends Component {
 	menu = new TrackedExternal(subscribeLayerMenu, getLayerMenu);
 	doc = new TrackedExternal(subscribe, getSnapshot);
@@ -149,6 +151,10 @@ export default class LayerMenu extends Component {
 		return this.layer?.ids.length === 1;
 	}
 
+	get frame() {
+		return this.single && isFrame(this.layer?.primary ?? null);
+	}
+
 	close = () => {
 		const row = layersState.menuRow;
 		layersState.menuRow = null;
@@ -166,7 +172,6 @@ export default class LayerMenu extends Component {
 		this.moreFor = this.state;
 	};
 
-	// every layer follows the primary's new state
 	flipVisible = () => {
 		const d = this.layer;
 		if (!d) return;
@@ -198,6 +203,13 @@ export default class LayerMenu extends Component {
 	rasterize = this.act((d) => {
 		for (const id of d.rasterIds) void rasterizeLayer(id);
 	});
+	get pinned() {
+		const p = this.layer?.primary;
+		return !!p && leafLayers(p).every((l) => l.stratum);
+	}
+
+	flipStratum = this.act((d) => setStratum(d.ids, !this.pinned));
+	replaceImage = this.act((d) => pickFrameImage(d.primary.id));
 	remove = this.act((d) => deleteLayers(d.ids));
 	restack = (dir: ReorderDirection) =>
 		this.act((d) => reorderLayers(d.ids, dir))();
@@ -391,6 +403,30 @@ export default class LayerMenu extends Component {
 										this.restack
 										"back"
 									}}
+								/>
+							</div>
+							<div class="sub-lm-box">
+								{{#if
+									this.frame
+								}}
+									<MenuRow
+										@title="Replace Image…"
+										@icon="image-plus"
+										@onClick={{this.replaceImage}}
+									/>
+								{{/if}}
+								<MenuRow
+									@title={{if
+										this.pinned
+										"Unlock Stratum"
+										"Make Stratum"
+									}}
+									@icon={{if
+										this.pinned
+										"pin-off"
+										"pin"
+									}}
+									@onClick={{this.flipStratum}}
 								/>
 							</div>
 							<div class="sub-lm-box">

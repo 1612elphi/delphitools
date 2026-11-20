@@ -46,7 +46,6 @@ const BLANK_INFO = blankSections(['General', 'Video', 'Audio']);
 const BLANK_OPEN = toolsForFile(sample('video/mp4')).filter(
 	(tool) => tool.id !== 'video-atlas' && !tool.route,
 );
-// iOS: height over width at most 1.25, at most 340 pt tall
 const tallest = 1.25;
 const tallestPreview = 340;
 
@@ -58,7 +57,6 @@ const Full = <template><IconSvg @name="maximize" /></template>;
 const pipSupported = () =>
 	typeof document !== 'undefined' && document.pictureInPictureEnabled;
 
-/** The port of VideoAtlasViewController, on the web tool's MediaInfo report. */
 export default class VideoAtlas extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -151,7 +149,6 @@ export default class VideoAtlas extends Component {
 
 	keepVideo = modifier((video: HTMLVideoElement) => {
 		this.#video = video;
-		// full screen has no transport: the browser's controls stand in
 		const controls = () =>
 			(video.controls = document.fullscreenElement === video);
 		video.addEventListener('fullscreenchange', controls);
@@ -295,7 +292,6 @@ export default class VideoAtlas extends Component {
 					}}
 				>
 					{{#if this.loaded}}
-						{{! the transport is its control; user media lacks captions }}
 						{{! template-lint-disable require-media-caption }}
 						<video
 							class="va-video"

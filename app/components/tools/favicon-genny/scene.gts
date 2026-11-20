@@ -3,20 +3,13 @@ import { IconSvg } from 'delphitools-v2/components/icon';
 
 interface FaviconSceneSignature {
 	Args: {
-		/** 32 px icon, shown at 16. */
 		tab?: string;
-		/** 180 px icon. */
 		touch?: string;
-		/** 192 px icon. */
 		app?: string;
 		name?: string;
 	};
 }
 
-/**
- * The icons where they will be seen: a browser tab with the 32 px icon at
- * 16 px, a home screen icon and an app icon. The port of iOS FaviconScene.
- */
 const FaviconScene: TOC<FaviconSceneSignature> = <template>
 	<div class="favicon-scene" aria-hidden="true">
 		<div class="favicon-scene-group">

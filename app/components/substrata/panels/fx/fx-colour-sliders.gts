@@ -19,7 +19,6 @@ function others(ctx: FxContext) {
 		.map((p) => p.key);
 }
 
-// iOS FxColourEditor for the tone and colour amounts
 const FxColourSliders: TOC<{ Args: { ctx: FxContext } }> = <template>
 	{{#each (sliders @ctx) as |p|}}
 		<FxColourSliderRow

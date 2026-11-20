@@ -21,7 +21,6 @@ const ticks = Array.from({ length: 8 }, (_, tick) => {
 	return `M${at(inner)}L${at(20)}`;
 }).join('');
 
-/** The angle as a dial (iOS GradientAngleDial): a click or a drag points the needle, snapping to multiples of 45°. */
 export default class AngleDial extends Component<Signature> {
 	get needleStyle() {
 		return htmlSafe(`rotate: ${this.args.value}deg`);

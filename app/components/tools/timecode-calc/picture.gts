@@ -8,7 +8,6 @@ interface PictureSignature {
 const size = 30;
 const halo = 'var(--canon-card)';
 
-/** The sum as it is written out: A, then the sign and B, a rule, and the result under it, all in the segment font. */
 const Picture: TOC<PictureSignature> = <template>
 	<div class="tcc-picture">
 		<div class="tcc-sum">

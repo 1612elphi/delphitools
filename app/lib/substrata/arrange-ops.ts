@@ -5,8 +5,7 @@ import { findLayer, leafLayers, leafRenderList } from './layer-tree';
 import { getSelectedLayerIds } from './selection';
 import { layerDims } from './shape-geometry';
 
-// iOS ArrangeAction, on the web's ArrangeBody logic: each acts on the
-// visible, unlocked leaves of the selection, one undo step
+// ios arrangeaction: unlocked leaves
 export type ArrangeAction =
 	| 'alignLeft'
 	| 'alignCentre'
@@ -68,7 +67,13 @@ export function arrangeLeaves(
 		if (!layer) continue;
 		for (const leaf of leafLayers(layer)) {
 			const e = effective.get(leaf.id);
-			if (e && e.visible && !e.locked && !out.includes(leaf))
+			if (
+				e &&
+				e.visible &&
+				!e.locked &&
+				!e.pinned &&
+				!out.includes(leaf)
+			)
 				out.push(leaf);
 		}
 	}
@@ -86,7 +91,7 @@ export function canArrange(
 	return DISTRIBUTES.includes(action) ? sized >= 3 : sized > 0;
 }
 
-// iOS isLit: a flip shows on while every target is flipped that way
+// ios islit semantics
 export function isLit(
 	action: ArrangeAction,
 	doc: SubstrataDoc,

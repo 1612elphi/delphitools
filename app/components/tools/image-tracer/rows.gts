@@ -8,7 +8,6 @@ import { IconSvg } from 'delphitools-v2/components/icon';
 
 const Info = <template><IconSvg @name="info" /></template>;
 
-/** The web tool's option hint on an info cell, as qr-genny's Error Correction. */
 export const Tip: TOC<{ Args: { label: string; text: string } }> = <template>
 	<CanonTooltip @text={{@text}} as |tip|>
 		<CanonButton
@@ -31,7 +30,6 @@ export interface SliderSpec {
 	readout: (value: number) => string;
 }
 
-/** A flush row: the title, its hint, and a slider. */
 export const SliderRow: TOC<{
 	Args: {
 		spec: SliderSpec;
@@ -58,7 +56,6 @@ export const SliderRow: TOC<{
 	</CanonRow>
 </template>;
 
-/** A title row with its hint, over a control on its own line. */
 export const TitleRow: TOC<{
 	Args: { title: string; tip: string };
 	Element: HTMLDivElement;

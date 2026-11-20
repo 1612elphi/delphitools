@@ -10,7 +10,6 @@ import {
 	type Rgb,
 } from 'delphicanon/lib/colour';
 
-// the picked colour's neighbours, 30° apart round the OKLCH hue circle
 const neighbours = (colour: Rgb): Rgb[] => {
 	const [l, c, h] = oklch(colour);
 	return [-60, -30, 0, 30, 60].map((turn) => fromOklch(l, c, h + turn));

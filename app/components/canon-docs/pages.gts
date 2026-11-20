@@ -44,7 +44,6 @@ const LIBRARY_LINE = "import { hex } from 'delphicanon/lib/colour';";
 const SERVICE_LINE =
 	"export { default } from 'delphicanon/services/canon-toast';";
 const VIEWS = ['Live', 'Source'];
-// widths a screen and a layout pattern are laid out at before a thumbnail scales them
 const SCREEN_WIDTH = 1200;
 const LAYOUT_WIDTH = 900;
 
@@ -74,7 +73,6 @@ const componentsOf = (slug: string) =>
 	);
 const brandOf = (port: string) => brands[port];
 
-/** Which platforms have a component: brand marks, lit where it exists. */
 const Ports: TOC<{ Args: { name: string; labels?: boolean } }> = <template>
 	<span class="cd-ports {{if @labels 'cd-ports--labels'}}">
 		{{#each (portList @name) as |entry|}}
@@ -115,7 +113,6 @@ const screenOf = (name: string) => screenParts[name];
 const cardOf = (name: string) => isCard.get(name) === true;
 const eq = (a: unknown, b: unknown) => a === b;
 
-// lays the content out at a 16:10 width and scales it to the thumbnail's width
 const fit = modifier((thumb: HTMLElement, [width]: [number]) => {
 	const inner = thumb.firstElementChild as HTMLElement;
 	inner.style.inlineSize = `${width}px`;
@@ -133,7 +130,6 @@ const Thumb: TOC<{ Args: { part: Part; width: number } }> = <template>
 	</div>
 </template>;
 
-/** A pattern or screen in a frame, headed by a link to its page. */
 const Card: TOC<{ Args: { page: DocsPage; go: DocsGo } }> = <template>
 	<CanonRows @framed={{true}} class="cd-card" data-card={{@page.name}}>
 		<a class="cd-card-head" href={{@page.url}} {{on "click" @go}}>
@@ -302,7 +298,6 @@ const ComponentPage: TOC<{ Args: { page: DocsPage } }> = <template>
 	</CanonRows>
 </template>;
 
-/** A component group: every component in it, live, in a masonry grid. */
 const GroupPage: TOC<{ Args: { page: DocsPage; go: DocsGo } }> = <template>
 	<header class="cd-head">
 		<h1 class="cd-title">{{@page.heading}}</h1>
@@ -393,7 +388,6 @@ const PatternPage: TOC<{ Args: { page: DocsPage } }> = <template>
 	{{/let}}
 </template>;
 
-/** A screen at the sheet's full size, or its source. */
 export class ScreenPage extends Component<{ Args: { page: DocsPage } }> {
 	@tracked view = 0;
 
@@ -439,7 +433,6 @@ export class ScreenPage extends Component<{ Args: { page: DocsPage } }> {
 	</template>
 }
 
-/** The pane's content for one docs page; screens render apart, at full size. */
 const DocsBody: TOC<{ Args: { page: DocsPage; go: DocsGo } }> = <template>
 	{{#if (eq @page.kind "overview")}}
 		<Home @go={{@go}} />

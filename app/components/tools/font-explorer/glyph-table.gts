@@ -19,19 +19,13 @@ const overscan = 400;
 interface GlyphTableSignature {
 	Args: {
 		open: boolean;
-		/** Covered code points, sorted. */
 		codes: number[];
-		/** CSS font-family of the loaded face. */
 		family: string;
 		onCopy: (char: string) => void;
 		onClose: () => void;
 	};
 }
 
-/**
- * Every code point the font covers in a top-layer dialog, a section per
- * block; only the rows near the scroll position are in the DOM.
- */
 export default class GlyphTable extends Component<GlyphTableSignature> {
 	@tracked width = 0;
 	@tracked viewHeight = 0;

@@ -14,27 +14,20 @@ const Archive = <template><IconSvg @name="archive" /></template>;
 
 const isSet = (value: unknown) => value !== undefined;
 
-// chrome drops some of a burst of anchor downloads
 const GAP_MS = 150;
 
 export interface DownloadAllSignature {
 	Args: {
-		/** The files, built when a button is pressed. */
 		files: () => NamedBlob[] | Promise<NamedBlob[]>;
-		/** The archive's file name, with `.zip`. */
 		zipName: string;
-		/** As CanonButton's kind for Download all; default primary. */
 		kind?: 'primary' | 'secondary';
 		disabled?: boolean;
-		/** 0 to 1 while the caller builds the files; shows Job's busy rows below the buttons. */
 		progress?: number;
-		/** Shows Cancel while `progress` is set. */
 		onCancel?: () => void;
 	};
 	Element: HTMLDivElement;
 }
 
-/** Download all, each file on its own, and a smaller Zip beside it. */
 export default class DownloadAll extends Component<DownloadAllSignature> {
 	@tracked busy = false;
 

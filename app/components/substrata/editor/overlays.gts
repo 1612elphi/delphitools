@@ -8,7 +8,6 @@ import LayerMenu from 'delphitools-v2/components/substrata/panels/layers/layer-m
 
 import type { TOC } from '@ember/component/template-only';
 
-// each surface owns its own open state in editor-ui
 const Overlays: TOC<{ Args: { phone: boolean } }> = <template>
 	<ColourRing @phone={{@phone}} />
 	<SettingsPage @phone={{@phone}} />

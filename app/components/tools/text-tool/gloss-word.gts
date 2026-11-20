@@ -35,7 +35,6 @@ const reveal = modifier((block: HTMLElement) => {
 	block.scrollIntoView({ block: 'nearest' });
 });
 
-/** The picked word of a gloss editor, a cell per letter to fix it. */
 const GlossWord: TOC<GlossWordSignature> = <template>
 	<CanonRows class="gl-word-block" @framed={{true}} {{reveal}}>
 		<CanonHeading @text="Word" />

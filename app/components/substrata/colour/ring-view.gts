@@ -92,14 +92,12 @@ const QUARTER = RING.quarter;
 const TYPE_SPAN = (QUARTER[1] - QUARTER[0]) / RING_TYPES.length;
 const typeStart = (index: number) => QUARTER[0] + index * TYPE_SPAN;
 const SLIDER_ARC = RING.sliderArc;
-/** the slider ring's mode switch and tracks, from the swatches' inner edge */
 const LANES = {
 	mode: [RING.swatchesInner + 4, RING.swatchesInner + 44] as Range,
 	inner: RING.swatchesInner + 64,
 	step: 64,
 	depth: 52,
 };
-// iOS EditorLayout: the key's box and the gap round floating pieces
 const BOX = 48;
 const GAP = 8;
 const POSITION_KEY = 'ringPosition';
@@ -118,13 +116,11 @@ interface Hover {
 	point: Point;
 }
 
-/** the band's keyboard cursor: a set's column and row, or a row's place */
 interface Cursor {
 	column: number;
 	row: number;
 }
 
-// UIColor(hue:saturation: 0.85, brightness: 0.95) round the icon
 const HUE_ICON = Array.from({ length: 36 }, (_, i) => {
 	const [r, g, b] = fromHsb((i / 36) * 360, 0.85, 0.95);
 	return hexOf({ r, g, b, alpha: 1 });
@@ -138,10 +134,6 @@ const clamp = (v: number, lo: number, hi: number) =>
 const degrees = (points: number, radius: number) =>
 	((points / Math.max(1, radius)) * 180) / Math.PI;
 
-// iOS ColourRingView: a disc of swatches round the colour key, the ring
-// types inside it, and the eyedropper, star, hex entry and hue wheel on
-// round buttons beside the well. It covers the editor while open; a click
-// past it, or on the hub, closes it.
 export default class RingView extends Component {
 	@tracked shown = false;
 	@tracked leaving = false;
@@ -248,8 +240,6 @@ export default class RingView extends Component {
 		return RING.swatchesInner + (set ? set.deepest * set.depth : 0);
 	}
 
-	// open and close follow editorUi.ringOpen, set by the colour key, a
-	// colour well, Esc or the ring itself
 	watch = modifier((_el: HTMLElement, [open]: [boolean]) => {
 		if (open === this.#wasOpen) return;
 		this.#wasOpen = open;
@@ -285,7 +275,6 @@ export default class RingView extends Component {
 			this.#paint?.forgetWidths();
 			this.draw();
 		});
-		// Esc closes the ring from the colour key too
 		const escape = (e: KeyboardEvent) => {
 			if (
 				e.key === 'Escape' &&
@@ -431,7 +420,6 @@ export default class RingView extends Component {
 		this.draw();
 	}
 
-	/** makes `hex` the current colour, keeping the current opacity */
 	pick(hex: string) {
 		const colour = this.writer.atCurrentOpacity(hex);
 		if (!colour) return;
@@ -463,7 +451,6 @@ export default class RingView extends Component {
 		this.draw();
 	};
 
-	/** a swatch's place on the disc; `turn` counts the set's laps round the loop */
 	cellOf(
 		set: SwatchSet,
 		column: SwatchColumn,
@@ -523,7 +510,6 @@ export default class RingView extends Component {
 		);
 	}
 
-	/** the channel whose track is at `radius`; the first channel runs outermost */
 	trackAt(radius: number): number | null {
 		const along = radius - LANES.inner;
 		const lane = Math.floor(along / LANES.step);
@@ -797,7 +783,6 @@ export default class RingView extends Component {
 		}
 	}
 
-	/** lets go of a dragged type arc, which swings onto its type */
 	settleArc() {
 		if (this.#drag?.kind !== 'types' || this.#heldArc === null)
 			return;
@@ -808,7 +793,6 @@ export default class RingView extends Component {
 		this.runClock();
 	}
 
-	/** sets one track from `values`, the channels when the drag began, so a hue survives a grey on the way */
 	slide(track: number, values: number[], angle: number, final: boolean) {
 		const value = clamp(
 			(angle - SLIDER_ARC[0]) /
@@ -892,7 +876,6 @@ export default class RingView extends Component {
 	typed = () => {
 		const typed = this.digits.colour;
 		if (!typed) return;
-		// three or six digits keep the current opacity
 		const colour =
 			this.digits.digits.length === 8
 				? typed
@@ -910,7 +893,6 @@ export default class RingView extends Component {
 	wheeled = (colour: RingColour, final: boolean) =>
 		this.write(colour, final);
 
-	/** ends typing or the hue wheel, as closing the ring does */
 	finish = () => {
 		if (this.wheelOpen) {
 			this.wheelOpen = false;
@@ -972,14 +954,12 @@ export default class RingView extends Component {
 		return htmlSafe(`left: ${x}px; top: ${y}px`);
 	}
 
-	/** coasts the disc on at the speed of the drag's last moments */
 	fling() {
 		this.#spin = reducedMotion() ? 0 : flingSpeed(this.#trail);
 		this.#trail = [];
 		if (this.#spin) this.runClock();
 	}
 
-	/** sends the swatches back into the hub, the picked one last, then closes */
 	leave() {
 		if (reducedMotion()) return this.closeAfterPick();
 		this.#hover = null;
@@ -1046,7 +1026,6 @@ export default class RingView extends Component {
 		else this.#lastTick = null;
 	};
 
-	/** where the selected type's arc starts now: on its type, or partway over while it swivels */
 	selectionAngle(previous?: number): number {
 		if (this.#heldArc !== null) return this.#heldArc;
 		const destination = typeStart(previous ?? this.typeIndex);
@@ -1120,7 +1099,6 @@ export default class RingView extends Component {
 		this.drawFocus(p);
 	}
 
-	/** draws `body` faded and pulled towards the hub by how far `cell` has to fly */
 	flying(
 		p: RingPaint,
 		cell: Cell,
@@ -1201,7 +1179,6 @@ export default class RingView extends Component {
 								set.chips &&
 								swatch.code
 							) {
-								// a fan-deck chip: the colour, then a tab carrying its code
 								p.swatch(
 									colours.fill,
 									colours.ink,
@@ -1262,7 +1239,6 @@ export default class RingView extends Component {
 		}
 	}
 
-	/** FREETONE's credit just past the set's first columns, turning with the disc as print on a fan deck does */
 	drawCredit(p: RingPaint, set: SwatchSet) {
 		const head = set.columns[0];
 		if (!head) return;
@@ -1410,7 +1386,6 @@ export default class RingView extends Component {
 		}
 	}
 
-	/** a slider track: each step through its channel, its name past the far end, its figure past the near end, and the knob */
 	drawTrack(
 		p: RingPaint,
 		inner: number,
@@ -1483,7 +1458,6 @@ export default class RingView extends Component {
 		ctx.fill();
 		RING_TYPES.forEach((ring, index) => {
 			const middle = typeStart(index) + TYPE_SPAN / 2;
-			// a label reads light while the arc is under it
 			const covered =
 				Math.abs(middle - (arc + TYPE_SPAN / 2)) <
 				TYPE_SPAN / 2;
@@ -1539,7 +1513,6 @@ export default class RingView extends Component {
 		ctx.restore();
 	}
 
-	/** a small hue ring, the hue wheel button's icon */
 	drawHueIcon(ctx: CanvasRenderingContext2D, c: Point) {
 		const steps = 36;
 		ctx.save();
@@ -1561,7 +1534,6 @@ export default class RingView extends Component {
 		ctx.restore();
 	}
 
-	/** the current colour over checks in the hub, in a card-coloured rim */
 	drawWell(p: RingPaint) {
 		const { ctx, theme, geometry } = p;
 		const { x, y } = geometry.hub;
@@ -1671,7 +1643,6 @@ export default class RingView extends Component {
 		ctx.stroke();
 	}
 
-	/** the keyboard focus, drawn on the piece it names */
 	drawFocus(p: RingPaint) {
 		const key = this.focusKey;
 		if (!key) return;
@@ -1732,7 +1703,6 @@ export default class RingView extends Component {
 		ctx.restore();
 	}
 
-	/** the bounding box of a ring sector, for the keyboard's stand-in elements */
 	frame(inner: number, outer: number, start: number, end: number) {
 		const corners = [
 			[inner, start],
@@ -1815,7 +1785,6 @@ export default class RingView extends Component {
 
 	channelName = (track: number) => CHANNEL_NAMES[this.sliderMode][track];
 
-	/** the channels for the stand-in sliders, tracked through the store */
 	get shownChannels() {
 		void this.store.current;
 		void this.writer.targetColour;
@@ -1865,7 +1834,6 @@ export default class RingView extends Component {
 		);
 	};
 
-	/** arrows move the cursor between swatches, turning the disc to keep it in view; Enter picks */
 	bandKey = (e: KeyboardEvent) => {
 		const moves: Record<string, [number, number]> = {
 			ArrowRight: [1, 0],

@@ -25,21 +25,15 @@ import {
 export interface PictureSignature {
 	Args: {
 		spec: MatteSpec;
-		/** Object URL of the photo; none shows the slot that takes a file. */
 		photo?: string;
-		/** The photo's pixels, upright. */
 		pixels?: Size;
-		/** Shows the padding guides. */
 		guides: boolean;
 		busy: boolean;
-		/** Opens the file picker from the empty photo slot. */
 		onChoose: () => void;
-		/** A file is dragged over the tool. */
 		over: boolean;
 	};
 }
 
-// the empty slot's shape
 const placeholder = { width: 3, height: 2 };
 
 const px = (value: number) => `${Math.round(value * 100) / 100}px`;
@@ -56,11 +50,6 @@ function box({ x, y, width, height }: Rect, ...more: string[]) {
 	);
 }
 
-/**
- * The matte as the export writes it, fitted to the pane under dimension
- * lines for its width and height, with hairline guides at the padding while
- * it changes.
- */
 export default class Picture extends Component<PictureSignature> {
 	@tracked area: Rect = { x: 0, y: 0, width: 0, height: 0 };
 	@tracked still = false;
@@ -156,7 +145,6 @@ export default class Picture extends Component<PictureSignature> {
 
 	measure = modifier((element: HTMLElement) => {
 		const observer = new ResizeObserver(() => {
-			// layout changes jump; setting changes animate
 			this.still = true;
 			cancelAnimationFrame(this.#settle);
 			this.#settle = requestAnimationFrame(() => {

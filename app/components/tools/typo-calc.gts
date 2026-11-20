@@ -31,18 +31,15 @@ import './typo-calc/typo-calc.css';
 
 const baseRange = { min: 1, max: 200 };
 const ppiRange = { min: 1, max: 2400 };
-/** Common resolutions: print at 72 pt per inch, CSS, and two print scans. */
 const ppiPresets = [72, 96, 150, 300];
 const canvasHeight = gaugeHeight + 4;
 
-/** The port of TypoCalcViewController. */
 export default class TypoCalcTool extends Component {
 	@tracked inputValue = '16';
 	@tracked inputUnit: Unit = 'px';
 	@tracked basePx = 16;
 	@tracked ppi = CSS_PPI;
 
-	// ?typoValue=<number> ?typoUnit=<px|pt|pc|ag|cc|in|mm|cm|em|rem> ?typoBase=<px> ?typoPPI=<ppi>: the iOS launch flags
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -88,7 +85,6 @@ export default class TypoCalcTool extends Component {
 			return {
 				unit,
 				name: info.name,
-				// stock text says 96
 				detail:
 					unit === 'px' && this.ppi !== CSS_PPI
 						? `${this.ppiText} ppi`
@@ -126,7 +122,6 @@ export default class TypoCalcTool extends Component {
 		this.inputValue = text;
 	}
 
-	// the web field answered every keystroke; iOS waits 400 ms
 	type = (text: string) => (this.inputValue = text);
 
 	nudge = (direction: -1 | 1) =>
@@ -136,17 +131,14 @@ export default class TypoCalcTool extends Component {
 			),
 		);
 
-	// a click places the caret after focus, so select on the next frame
 	selectAll = (event: FocusEvent) => {
 		const field = event.target;
 		if (field instanceof HTMLInputElement)
 			requestAnimationFrame(() => field.select());
 	};
 
-	// as the web picker: the typed number is read in the new unit
 	pickUnit = (index: number) => (this.inputUnit = UNIT_ORDER[index]!);
 
-	// as the web table: the value converts into the row's unit
 	convert = (unit: Unit) => {
 		if (unit === this.inputUnit) return;
 		this.setValue(formatValue(this.valueIn(unit)));

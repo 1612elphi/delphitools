@@ -8,12 +8,9 @@ import './pager.css';
 
 export interface PagerSignature {
 	Args: {
-		/** From 0. */
 		page: number;
-		/** 0 before a file: a dash, both steps off. */
 		count: number;
 		onStep: (delta: number) => void;
-		/** Button names; pages by default. */
 		previous?: string;
 		next?: string;
 	};
@@ -28,7 +25,6 @@ const reading = (page: number, count: number) =>
 const atFirst = (page: number) => page <= 0;
 const atLast = (page: number, count: number) => page >= count - 1;
 
-/** Previous, `n / N`, next, as one flush bar. The port of iOS PDFPager. */
 const Pager: TOC<PagerSignature> = <template>
 	<CanonRows @framed={{true}} ...attributes>
 		<CanonGrid class="media-pager">

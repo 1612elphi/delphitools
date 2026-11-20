@@ -16,14 +16,10 @@ import {
 	type PasswordSpec,
 } from 'delphitools-v2/lib/password';
 
-/** Strength bands in bits, and where the scale ends. */
 const BANDS = [40, 60, 95];
 const SCALE_END = 128;
-/** Scramble on a new value: ms before the first character settles, then between characters, or between words. */
 const SETTLE = { first: 160, step: 20, wordStep: 100 };
-// the ios display link runs at 20 to 30 fps
 const FRAME_MS = 33;
-// 3 x 3 pip grid, by face
 const PIPS = [
 	[4],
 	[0, 8],
@@ -47,7 +43,6 @@ export const tint = (char: string) =>
 		letter: 'var(--canon-foreground)',
 	})[charKind(char)];
 
-/** A passphrase's separators are not symbols the user chose. */
 export const phraseTint = (char: string) =>
 	/\p{L}/u.test(char)
 		? 'var(--canon-foreground)'
@@ -73,21 +68,12 @@ interface PictureSignature {
 		phrase: boolean;
 		spec: PasswordSpec;
 		phraseSpec: PassphraseSpec;
-		/** EFF word to its roll code. */
 		rolls?: Map<string, string>;
 		bits: number;
-		/** A change scrambles the value before it settles. */
 		scrambleKey: number;
 	};
 }
 
-/**
- * PasswordPicture: the chosen password large, its characters coloured by
- * class, over the four character sets with the ones it uses lit, classes
- * that are off faded and the ambiguous ones struck out. A passphrase is its
- * words, each over the five dice that pick it from the EFF list. Under both,
- * the entropy as a figure against the strength bands.
- */
 export default class Picture extends Component<PictureSignature> {
 	@tracked frame = 0;
 	#settle: number[] = [];
@@ -210,7 +196,6 @@ export default class Picture extends Component<PictureSignature> {
 	}
 
 	scramble = modifier((_element: Element, [key]: [number]) => {
-		// the first render draws at once
 		const first = this.#key === undefined;
 		if (key === this.#key) return;
 		this.#key = key;

@@ -49,7 +49,6 @@ const SIZES = [
 ];
 const CUSTOM = SIZES.length - 1;
 const sizeLabels = SIZES.map((size) => size.label);
-// 1 = per-px, 8 = chunky
 const DETAILS = [1, 2, 4, 8];
 const detailLabels = DETAILS.map((px) => `${px} px`);
 const FORMATS = ['PNG', 'SVG'];
@@ -63,7 +62,6 @@ const BLANK_AUDIO = [
 	{ label: 'Peak', value: '—', level: 0 },
 ];
 
-// iOS AVInfoProbe.levelFloor
 const levelFloor = -60;
 
 const Trash = <template><IconSvg @name="trash-2" /></template>;
@@ -76,7 +74,6 @@ const pick = (value: string | null, count: number, fallback: number) => {
 		: fallback;
 };
 
-/** The port of WaveformGeneratorViewController, on the web tool's decode and export. */
 export default class WaveformGenny extends Component {
 	intake = new AudioIntake();
 	drop = new Drop(ACCEPT, (file) => this.intake.load(file));
@@ -91,7 +88,6 @@ export default class WaveformGenny extends Component {
 
 	#canvas?: HTMLCanvasElement;
 
-	// ?wgSize ?wgDetail ?wgFormat=<index>: the iOS -wgSize, -wgDetail, -wgFormat arguments
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -224,7 +220,6 @@ export default class WaveformGenny extends Component {
 		return `${this.intake.baseName || 'waveform'}.${extension}`;
 	}
 
-	// autotracked: redraws on a new size, detail, colour or file
 	paint = modifier((canvas: HTMLCanvasElement) => {
 		this.#canvas = canvas;
 		const { width, height, peaks } = this;
@@ -236,7 +231,6 @@ export default class WaveformGenny extends Component {
 		context.fillRect(0, 0, width, height);
 		context.fillStyle = this.waveHex;
 		if (!peaks) {
-			// 1px vanishes when scaled
 			const line = Math.max(1, Math.round(height / 100));
 			context.fillRect(0, (height - line) / 2, width, line);
 			return;

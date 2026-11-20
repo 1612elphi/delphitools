@@ -21,37 +21,24 @@ export interface Outline {
 
 export interface PictureSignature {
 	Args: {
-		/** Object URL of the source; none shows the slot that takes a file. */
 		url?: string;
-		/** The source's pixels, or the blank sheet's. */
 		pixels: Size;
-		/** In image pixels. */
 		crop: Rect;
-		/** The crop's width over height. */
 		aspect: number;
-		/** The view's magnification, 1 fits the image to the pane. */
 		zoom: number;
 		label: string;
-		/** The platform's other ratios round the same centre. */
 		others: Outline[];
-		/** A ratio change springs the outlines. */
 		springs: boolean;
 		busy: boolean;
-		/** A file is dragged over the tool. */
 		over: boolean;
 		onChoose: () => void;
-		/** Moves the crop by a delta in image pixels. */
 		onMove: (delta: Point) => void;
-		/** The corner handle's new crop size, a share of the largest, and centre. */
 		onResize: (fraction: number, centre: Point) => void;
-		/** A ctrl-wheel or trackpad pinch. */
 		onZoom: (zoom: number) => void;
 	};
 }
 
-// a drag grabs this far outside the frame, as iOS has it
 const reach = 8;
-// the corner handle's reach, as favicon-genny's
 const handleReach = 22;
 export const maxZoom = 8;
 // ponytail: Iosevka 11 px is 0.5 em a glyph at 13 px line height; measure if the font changes
@@ -82,25 +69,14 @@ const grown = ({ x, y, width, height }: Rect, dx: number, dy: number) => ({
 	height: height + dy * 2,
 });
 
-/**
- * The source fitted to the pane, dimmed outside the crop, with thirds in the
- * crop, the ratio on its corner, the platform's other ratios as dashed
- * outlines and a drag hint in the widest dimmed strip. The port of iOS
- * SocialCropBoard.
- */
 export default class Picture extends Component<PictureSignature> {
 	@tracked area: Size = { width: 0, height: 0 };
 	@tracked hintSize: Size = { width: 0, height: 0 };
 	@tracked dragging = false;
-	/** The image point at the pane's centre when zoomed; none is the image's centre. */
 	@tracked focus?: Point;
 	#last?: Point;
 	#resizing = false;
 
-	/**
-	 * The image's box in the area: fitted, times the zoom, round the focus,
-	 * kept over the pane and pushed so the crop stays in view.
-	 */
 	get frame(): Rect {
 		const { pixels, crop } = this.args;
 		const { width, height } = this.area;
@@ -155,7 +131,6 @@ export default class Picture extends Component<PictureSignature> {
 		};
 	}
 
-	/** The image point under an area point. */
 	pixelAt({ x, y }: Point): Point {
 		const { frame } = this;
 		const scale = this.scale || 1;
@@ -185,7 +160,6 @@ export default class Picture extends Component<PictureSignature> {
 		return this.frame.width / Math.max(this.args.pixels.width, 1);
 	}
 
-	/** An image rect in the frame's own box. */
 	shown({ x, y, width, height }: Rect): Rect {
 		const { scale } = this;
 		return {
@@ -254,14 +228,12 @@ export default class Picture extends Component<PictureSignature> {
 		);
 	}
 
-	/** The widest dimmed strip that holds the hint, else the crop's bottom edge. */
 	get hint(): Rect {
 		const { frame } = this;
 		const crop = this.shownCrop;
 		const size = this.hintSize;
 		const right = crop.x + crop.width;
 		const bottom = crop.y + crop.height;
-		// zoomed in, only the part of the frame in the pane
 		const left = Math.max(0, -frame.x);
 		const top = Math.max(0, -frame.y);
 		const end = Math.min(frame.width, this.area.width - frame.x);
@@ -302,7 +274,6 @@ export default class Picture extends Component<PictureSignature> {
 		return htmlSafe(`left: ${px(x)}; top: ${px(y)}`);
 	}
 
-	/** Each outline with its label in the first free inside corner, or no label. */
 	get outlines() {
 		const taken = [
 			this.tag,
@@ -437,7 +408,6 @@ export default class Picture extends Component<PictureSignature> {
 		this.dragging = false;
 	};
 
-	/** Ctrl or Cmd wheel, and a trackpad pinch, zoom round the pointer. */
 	wheel = modifier((element: HTMLElement) => {
 		const zoom = (event: WheelEvent) => {
 			if (!(event.ctrlKey || event.metaKey) || !this.args.url)
@@ -480,7 +450,6 @@ export default class Picture extends Component<PictureSignature> {
 		const arrow = arrows[event.key];
 		if (!arrow) return;
 		event.preventDefault();
-		// a hundredth of the image a press, a tenth with Shift
 		const share = event.shiftKey ? 0.1 : 0.01;
 		const { pixels } = this.args;
 		this.args.onMove({

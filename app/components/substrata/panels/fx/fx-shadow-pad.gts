@@ -23,7 +23,6 @@ const LIMIT = 500;
 
 const limit = (v: number) => Math.min(LIMIT, Math.max(-LIMIT, Math.round(v)));
 
-// iOS FxEffectsPad: drag the shadow itself; the scale fits the offset
 export default class FxShadowPad extends Component<{
 	Args: { ctx: FxContext };
 }> {

@@ -57,7 +57,6 @@ const toBlob = (canvas: HTMLCanvasElement) =>
 const fitStyle = (width: number, height: number) =>
 	htmlSafe(`--artwork-aspect: ${width} / ${height}`);
 
-// ?artSample ?artOpacity=<1-20> ?artScale=<1-4>: the iOS -artSample, -artOpacity, -artScale arguments; ?artIntelligent: web only
 function launchFlags() {
 	const query = new URLSearchParams(window.location.search);
 	const clamp = (
@@ -79,7 +78,6 @@ function launchFlags() {
 	};
 }
 
-/** The port of ArtworkEnhancerViewController, on the web tool's noise. */
 export default class ArtworkEnhancer extends Component {
 	@tracked fileName = '';
 	@tracked imageWidth = 0;
@@ -87,7 +85,6 @@ export default class ArtworkEnhancer extends Component {
 	@tracked opacity: number;
 	@tracked noiseScale: number;
 	@tracked intelligent: boolean;
-	/** Where the detail is centred, in source pixels; none is the default spot. */
 	@tracked centre: { x: number; y: number } | null = null;
 	@tracked picture?: Pair;
 	@tracked grain?: Pair;
@@ -155,7 +152,6 @@ export default class ArtworkEnhancer extends Component {
 	}
 
 	get loupe() {
-		// a quarter across: clear of the compare grip at the centre
 		const start = {
 			x: this.imageWidth / 4,
 			y: this.imageHeight / 2,
@@ -220,7 +216,6 @@ export default class ArtworkEnhancer extends Component {
 	picked = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
-		// allow same-file selection
 		input.value = '';
 		if (file) this.readFile(file);
 	};
@@ -353,7 +348,6 @@ export default class ArtworkEnhancer extends Component {
 		await this.paintGrain();
 	};
 
-	/** The detail under the loupe, before and after, magnified. */
 	paintGrain = async () => {
 		const image = this.#image;
 		if (!image) return;
@@ -499,7 +493,6 @@ export default class ArtworkEnhancer extends Component {
 										@beforeTitle="Original"
 										@afterTitle="Result"
 									/>
-									{{! a drag starts on pointerdown }}
 									{{! template-lint-disable no-pointer-down-event-binding }}
 									<div
 										class="artwork-loupe"
@@ -696,7 +689,6 @@ export default class ArtworkEnhancer extends Component {
 						@row={{true}}
 					/>
 				</CanonRows>
-				{{! the empty picture opens it }}
 				{{! template-lint-disable require-input-label }}
 				<input
 					type="file"

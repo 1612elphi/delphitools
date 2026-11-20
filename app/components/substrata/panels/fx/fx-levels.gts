@@ -29,8 +29,6 @@ const KEYS: LevelKey[] = [
 	'outWhite',
 ];
 
-// iOS FxTonesLevels: input black, gamma and white over the histogram,
-// output black and white under the ramp
 export default class FxLevels extends Component<{ Args: { ctx: FxContext } }> {
 	#start?: Levels;
 

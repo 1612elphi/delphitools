@@ -8,19 +8,15 @@ import CanonFigure from 'delphicanon/components/canon-figure';
 import { IconSvg } from 'delphitools-v2/components/icon';
 
 export interface Swatch {
-	/** Stable per extraction run and position, so a new run enters again. */
 	key: string;
 	hex: string;
 	name: string;
-	/** The colour in the header notation. */
 	value: string;
 	share: number;
 	percent: string;
 	figure: string;
 	fill: SafeString;
-	/** Band segment: its width by share, its colour and ink. */
 	segment: SafeString;
-	/** Row entry stagger. */
 	delay: SafeString;
 }
 
@@ -28,7 +24,6 @@ interface Signature {
 	Args: { swatches: Swatch[]; onCopy: (value: string) => void };
 }
 
-/** The palette as segments sized by share of the image; a tap copies the colour. The port of PaletteShareBand. */
 export const ShareBand: TOC<Signature> = <template>
 	<div class="pe-band">
 		{{#each @swatches key="@index" as |swatch|}}
@@ -45,7 +40,6 @@ export const ShareBand: TOC<Signature> = <template>
 	</div>
 </template>;
 
-/** One row per colour: swatch, name, value, share and its bar; a tap copies the value. The port of PaletteShareRow. */
 export const ShareRows: TOC<Signature> = <template>
 	{{#each @swatches key="key" as |swatch|}}
 		<div class="pe-row" style={{swatch.delay}}>
@@ -94,7 +88,6 @@ export const ShareRows: TOC<Signature> = <template>
 	{{/each}}
 </template>;
 
-/** The palette along the bottom of the picture; each swatch copies its colour. */
 export const ShareStrip: TOC<Signature> = <template>
 	<div class="pe-strip">
 		{{#each @swatches key="@index" as |swatch|}}

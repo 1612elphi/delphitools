@@ -6,7 +6,6 @@ import { LinkTo } from '@ember/routing';
 import { service } from '@ember/service';
 import type RouterService from '@ember/routing/router-service';
 import { htmlSafe } from '@ember/template';
-import type { TOC } from '@ember/component/template-only';
 import { modifier } from 'ember-modifier';
 import CanonButton from 'delphicanon/components/canon-button';
 import CanonGrid from 'delphicanon/components/canon-grid';
@@ -40,7 +39,11 @@ import {
 	type EditorEdge,
 } from 'delphitools-v2/lib/substrata/editor-ui';
 import { EXPORT_FORMATS } from 'delphitools-v2/lib/substrata/export-core';
-import { openScene, saveScene } from 'delphitools-v2/lib/substrata/file-ops';
+import {
+	openScene,
+	saveScene,
+	saveTemplate,
+} from 'delphitools-v2/lib/substrata/file-ops';
 import {
 	getGuides,
 	subscribeGuides,
@@ -62,10 +65,8 @@ import type ColourNotationService from 'delphitools-v2/services/colour-notation'
 import type ThemeService from 'delphitools-v2/services/theme';
 import ThumbnailArt from './thumbnail-art';
 import { pageState, type Hand } from './page-state';
-import './pages.css';
+import { ActionTile, flow, Rule } from './drawer-parts';
 
-const COLUMN = 300;
-const COLUMN_GAP = 1;
 const BUG_MAILTO = 'mailto:tools@rmv.fyi?subject=substrata%20bug%20report';
 const REPO_URL = 'https://github.com/1612elphi/delphitools';
 const GUIDE_DEFAULTS: GuidesPref = {
@@ -74,7 +75,6 @@ const GUIDE_DEFAULTS: GuidesPref = {
 	grid: false,
 	snap: true,
 };
-// physical sides; the frame's leading edge is the right one while mirrored
 const EDGES = ['top', 'bottom', 'left', 'right'] as const;
 const NOTATIONS = COLOUR_NOTATIONS.map((n) => n.label);
 const DATE = new Intl.DateTimeFormat(undefined, {
@@ -92,46 +92,6 @@ function countLayers(layers: Layer[]): number {
 	);
 }
 
-// iOS SettingsFlow: a block's rows run down a column and on into the next;
-// each block is as many columns wide as its rows need at this height
-function flowColumns(block: HTMLElement): number {
-	const room = block.clientHeight;
-	let columns = 1;
-	let used = 0;
-	for (const row of block.children) {
-		const tall = (row as HTMLElement).offsetHeight;
-		if (used > 0 && used + 1 + tall > room) {
-			columns += 1;
-			used = tall;
-		} else used += (used ? 1 : 0) + tall;
-	}
-	return columns;
-}
-
-// the rule before a section, its symbol at the top
-const Rule: TOC<{ Args: { icon: string } }> = <template>
-	<div class="sub-pg-rule" aria-hidden="true">
-		<IconSvg @name={{@icon}} />
-		<span class="sub-pg-rule-line"></span>
-	</div>
-</template>;
-
-// iOS ActionTile: a framed cell, its picture above its title
-const ActionTile: TOC<{
-	Args: { title: string; onClick: () => void };
-	Blocks: { default: [] };
-}> = <template>
-	<button type="button" class="sub-pg-tile" {{on "click" @onClick}}>
-		<span
-			class="sub-pg-tile-art"
-			aria-hidden="true"
-		>{{yield}}</span>
-		<span class="sub-pg-tile-title">{{@title}}</span>
-	</button>
-</template>;
-
-// iOS SettingsPage: the ≡ cell's bottom drawer, the document's actions,
-// then sections of rows in columns that scroll sideways
 export default class SettingsPage extends Component<{
 	Args: { phone: boolean };
 }> {
@@ -212,7 +172,6 @@ export default class SettingsPage extends Component<{
 		return pageState.hand === 'left' ? 0 : 1;
 	}
 
-	// the frame stores leading and trailing in its own direction
 	get edgeIndex() {
 		const edge = editorUi.settingsEdge;
 		if (edge === 'top' || edge === 'bottom')
@@ -244,8 +203,6 @@ export default class SettingsPage extends Component<{
 		editorUi.pageOpen = false;
 	};
 
-	// the frame's mirrored layout and help cell (editor.css data-hand,
-	// data-help); the page is always mounted, so it keeps them set
 	applyLayout = modifier(
 		(el: HTMLElement, [hand, help]: [Hand, boolean]) => {
 			const root = el.closest<HTMLElement>('.sub-ed');
@@ -255,70 +212,24 @@ export default class SettingsPage extends Component<{
 				root.dataset['hand'] !== hand;
 			root.dataset['hand'] = hand;
 			root.dataset['help'] = help ? 'on' : 'off';
-			// the editor moves the artboard's inset on the attribute first
 			if (flips) requestAnimationFrame(() => viewport.fit());
 		},
 	);
 
-	// lays each block out in columns, again when the drawer changes size
-	flow = modifier((scroller: HTMLElement) => {
-		const lay = () => {
-			const width = Math.min(
-				COLUMN,
-				scroller.clientWidth - 32,
-			);
-			scroller.style.setProperty(
-				'--sub-pg-column',
-				`${width}px`,
-			);
-			for (const block of scroller.querySelectorAll<HTMLElement>(
-				'.sub-pg-block',
-			)) {
-				block.style.inlineSize = `${width}px`;
-				const n = flowColumns(block);
-				block.style.inlineSize = `${n * width + (n - 1) * COLUMN_GAP}px`;
-			}
-			this.compact = !!scroller
-				.closest('.sub-ed')
-				?.classList.contains('is-compact');
-		};
-		// the columns only scroll sideways, so a vertical wheel does that
-		const wheel = (e: WheelEvent) => {
-			if (
-				e.ctrlKey ||
-				Math.abs(e.deltaX) >= Math.abs(e.deltaY)
-			)
-				return;
-			e.preventDefault();
-			scroller.scrollLeft +=
-				e.deltaMode === WheelEvent.DOM_DELTA_LINE
-					? e.deltaY * 16
-					: e.deltaY;
-		};
-		scroller.addEventListener('wheel', wheel, { passive: false });
-		const ro = new ResizeObserver(lay);
-		ro.observe(scroller);
-		const mo = new MutationObserver(lay);
-		mo.observe(scroller, { childList: true, subtree: true });
-		return () => {
-			scroller.removeEventListener('wheel', wheel);
-			ro.disconnect();
-			mo.disconnect();
-		};
-	});
+	noteCompact = (scroller: HTMLElement) => {
+		this.compact = !!scroller
+			.closest('.sub-ed')
+			?.classList.contains('is-compact');
+	};
 
 	leave = () => void this.router.transitionTo('index');
 
-	openGallery = () => {
-		editorUi.pageOpen = false;
-		editorUi.galleryOpen = true;
-	};
+	openGallery = () => editorUi.openGallery('projects');
 
 	openExport = () => {
 		editorUi.exportOpen = true;
 	};
 
-	saveCopy = () => void saveScene(true);
 	save = () => void saveScene();
 	open = () => void openScene();
 	doRedo = () => redo();
@@ -443,7 +354,10 @@ export default class SettingsPage extends Component<{
 						@onClick={{this.leave}}
 					/>
 				</PanelHeader>
-				<div class="sub-pg-scroller" {{this.flow}}>
+				<div
+					class="sub-pg-scroller"
+					{{flow this.noteCompact}}
+				>
 					<div
 						class="sub-pg-actions"
 						data-section="actions"
@@ -489,14 +403,24 @@ export default class SettingsPage extends Component<{
 								{{/each}}
 							</span>
 						</ActionTile>
-						<ActionTile
-							@title="Save As"
-							@onClick={{this.saveCopy}}
-						>
-							<ThumbnailArt
-								@kind="pages"
-							/>
-						</ActionTile>
+						<div class="sub-pg-tile-pair">
+							<ActionTile
+								@title="Save"
+								@onClick={{this.save}}
+							>
+								<ThumbnailArt
+									@kind="pages"
+								/>
+							</ActionTile>
+							<ActionTile
+								@title="Save Template"
+								@onClick={{saveTemplate}}
+							>
+								<IconSvg
+									@name="layout-template"
+								/>
+							</ActionTile>
+						</div>
 					</div>
 
 					<Rule @icon="file" />
@@ -948,7 +872,6 @@ export default class SettingsPage extends Component<{
 const APPEARANCES = ['Light', 'Dark'];
 const HANDS = ['Left', 'Right'];
 const SIDES = ['Top', 'Bottom', 'Left', 'Right'];
-// iOS ExportReels' three reels of format names, still
 const REELS = [0, 1, 2].flatMap((reel) =>
 	[0, 1, 2].map(
 		(row) =>

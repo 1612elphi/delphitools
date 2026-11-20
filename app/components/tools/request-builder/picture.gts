@@ -16,7 +16,6 @@ interface Run {
 	tone?: 'method' | 'name' | 'muted';
 }
 
-/** The request line as method, target and version; a header as name and value. */
 function runs(line: WireLine): Run[] {
 	if (line.part === 'start') {
 		const space = line.text.indexOf(' ');
@@ -57,12 +56,6 @@ function runs(line: WireLine): Run[] {
 
 const endings = { '\r\n': '␍␊', '\n': '␊', '': '' };
 
-/**
- * RequestWire: the size of the message as a figure beside the version and
- * the host; the request line, headers and body as bars sized by their bytes;
- * then the message as it goes on the wire, a byte offset and a part stripe
- * on every line, line endings shown, twelve lines at most.
- */
 export default class Picture extends Component<{ Args: { message: string } }> {
 	get wire() {
 		return wireLines(this.args.message);
@@ -98,7 +91,6 @@ export default class Picture extends Component<{ Args: { message: string } }> {
 
 	get listing() {
 		const { lines } = this.wire;
-		// a single hidden line shows itself instead of the count
 		const shown =
 			lines.length > MAX_LINES + 1
 				? lines.slice(0, MAX_LINES)

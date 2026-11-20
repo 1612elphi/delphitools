@@ -217,6 +217,39 @@ module('Unit | Lib | imposition', function () {
 				}
 	});
 
+	test('right to left mirrors each sheet', function (assert) {
+		const across = (layoutId: string, rtl: boolean) => {
+			const sheet = getLayoutById(layoutId)!.calculate(8, {
+				...DEFAULT_IMPOSITION_CONFIG,
+				layoutId,
+				customGrid: [1, 2],
+				rtl,
+			}).sheets[0]!;
+			const byX = (side: typeof sheet.front) =>
+				[...side]
+					.sort((a, b) => a.x - b.x)
+					.map((p) => p.pageNumber);
+			return [byX(sheet.front), byX(sheet.back)];
+		};
+		// landscape tumbles the backs
+		assert.deepEqual(across('saddle-stitch', false), [
+			[8, 1],
+			[7, 2],
+		]);
+		assert.deepEqual(across('saddle-stitch', true), [
+			[1, 8],
+			[2, 7],
+		]);
+		assert.deepEqual(across('custom-nup', true), [
+			[2, 1],
+			[4, 3],
+		]);
+		assert.deepEqual(
+			across('step-and-repeat', true),
+			across('step-and-repeat', false),
+		);
+	});
+
 	test('long edge on a landscape sheet turns top over bottom', function (assert) {
 		const landscape = {
 			...DEFAULT_IMPOSITION_CONFIG,

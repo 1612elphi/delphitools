@@ -1,18 +1,16 @@
 import type { TOC } from '@ember/component/template-only';
 import { modifier } from 'ember-modifier';
+import './backdrop.css';
 
-// one tile, two lockups half a tile apart: a diamond lattice;
-// mask-size and the scroll distance in errata.css match
 const W = 240;
 const H = 160;
 const FONT = '"Open Sans Condensed"';
 const NAME = `700 32px ${FONT}`;
 const KIND = `600 11px ${FONT}`;
 
-let tile: Promise<string> | undefined;
+const tiles = new Map<string, Promise<string>>();
 
-// a CSS mask image cannot use the page's web fonts, so draw it here
-async function drawTile(): Promise<string> {
+async function drawTile(name: string, kind: string): Promise<string> {
 	await Promise.all([
 		document.fonts.load(NAME),
 		document.fonts.load(KIND),
@@ -30,28 +28,44 @@ async function drawTile(): Promise<string> {
 	] as const) {
 		ctx.font = NAME;
 		ctx.letterSpacing = '0px';
-		ctx.fillText('Errata', x, y + 4);
+		ctx.fillText(name, x, y + 4);
 		ctx.font = KIND;
 		ctx.letterSpacing = '2px';
-		ctx.fillText('PDF EDITOR', x + 1, y + 20);
+		ctx.fillText(kind, x + 1, y + 20);
 	}
 	return canvas.toDataURL();
 }
 
-const paint = modifier((element: HTMLElement) => {
-	let live = true;
-	void (tile ??= drawTile()).then((url) => {
-		if (!live) return;
-		element.style.setProperty('--err-tile', `url(${url})`);
-		element.classList.add('is-ready');
-	});
-	return () => {
-		live = false;
-	};
-});
+const paint = modifier(
+	(element: HTMLElement, [name, kind]: [string, string]) => {
+		let live = true;
+		const key = `${name}\n${kind}`;
+		let tile = tiles.get(key);
+		if (!tile) {
+			tile = drawTile(name, kind);
+			tiles.set(key, tile);
+		}
+		void tile.then((url) => {
+			if (!live) return;
+			element.style.setProperty('--err-tile', `url(${url})`);
+			element.classList.add('is-ready');
+		});
+		return () => {
+			live = false;
+		};
+	},
+);
 
-const Backdrop: TOC<object> = <template>
-	<div class="err-backdrop" aria-hidden="true" {{paint}}></div>
+const Backdrop: TOC<{
+	Element: HTMLDivElement;
+	Args: { name: string; kind: string };
+}> = <template>
+	<div
+		class="err-backdrop"
+		aria-hidden="true"
+		...attributes
+		{{paint @name @kind}}
+	></div>
 </template>;
 
 export default Backdrop;

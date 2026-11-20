@@ -20,7 +20,6 @@ interface Signature {
 	};
 }
 
-// one stack's blocks; a drag reorders within the stack only
 export default class FxZone extends Component<Signature> {
 	manager = createDndManager();
 
@@ -44,7 +43,6 @@ export default class FxZone extends Component<Signature> {
 
 	dropped = (event: DragEndEvent) => {
 		if (event.canceled) return;
-		// optimistic sorting has already moved the source under the pointer
 		const { source } = event.operation;
 		if (!isSortable(source)) return;
 		const from = source.initialIndex;

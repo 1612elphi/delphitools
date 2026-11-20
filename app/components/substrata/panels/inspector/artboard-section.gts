@@ -1,4 +1,6 @@
 import Component from '@glimmer/component';
+import { cached } from '@glimmer/tracking';
+import { fn } from '@ember/helper';
 import CanonButton from 'delphicanon/components/canon-button';
 import CanonHeading from 'delphicanon/components/canon-heading';
 import CanonRow from 'delphicanon/components/canon-row';
@@ -15,6 +17,10 @@ import {
 	getPersistenceEnabled,
 	subscribePersistence,
 } from 'delphitools-v2/lib/substrata/persistence-pref';
+import {
+	recolourStrata,
+	templateColours,
+} from 'delphitools-v2/lib/substrata/strata';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 import ColourWell from './colour-well';
 import Fresh, { both } from './fresh';
@@ -25,6 +31,7 @@ const setHeight = (height: number) => setArtboard({ height });
 const setTransparent = (on: boolean) =>
 	setArtboard({ background: on ? null : '#ffffff' });
 const openCanvasSize = () => openModal('canvas-size');
+const colourTitle = (index: number) => `Colour ${index + 1}`;
 
 const setBackground = (background: string, transient: boolean) => {
 	const apply = (doc: SubstrataDoc): SubstrataDoc => ({
@@ -36,7 +43,6 @@ const setBackground = (background: string, transient: boolean) => {
 	else update(apply);
 };
 
-// iOS artboardRows, then the web's canvas readout and its Canvas size modal
 export default class ArtboardSection extends Component<{
 	Args: { doc: SubstrataDoc };
 }> {
@@ -69,6 +75,16 @@ export default class ArtboardSection extends Component<{
 	get stored() {
 		return this.persist.current ? 'Local' : 'Off';
 	}
+
+	@cached
+	get palette(): string[] {
+		return templateColours(this.args.doc);
+	}
+
+	recolour = (index: number, hex: string, transient: boolean) => {
+		const from = this.palette[index];
+		if (from) recolourStrata(from, hex, transient);
+	};
 
 	<template>
 		<CanonHeading @text="Artboard" />
@@ -130,5 +146,23 @@ export default class ArtboardSection extends Component<{
 			@icon={{component IconSvg name="scaling"}}
 			@onClick={{openCanvasSize}}
 		/>
+		{{#if this.palette.length}}
+			<CanonHeading @text="Template" />
+			{{#each this.palette key="@index" as |hex index|}}
+				<CanonRow
+					@title={{colourTitle index}}
+					@form="stacked"
+				>
+					<ColourWell
+						@hex={{hex}}
+						@onApply={{fn
+							this.recolour
+							index
+						}}
+						@label={{colourTitle index}}
+					/>
+				</CanonRow>
+			{{/each}}
+		{{/if}}
 	</template>
 }

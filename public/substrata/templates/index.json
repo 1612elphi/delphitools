@@ -1,0 +1,177 @@
+[
+	{
+		"file": "antialiasing-12.substrata",
+		"name": "Paradox",
+		"thumb": "antialiasing-12.webp",
+		"width": 1600,
+		"height": 2000
+	},
+	{
+		"file": "circles-story.substrata",
+		"name": "Circles",
+		"thumb": "circles-story.webp",
+		"width": 1080,
+		"height": 1920
+	},
+	{
+		"file": "circles.substrata",
+		"name": "Circles",
+		"thumb": "circles.webp",
+		"width": 1600,
+		"height": 2000
+	},
+	{
+		"file": "city-in-your-hand.substrata",
+		"name": "City Pass",
+		"thumb": "city-in-your-hand.webp",
+		"width": 1600,
+		"height": 2000
+	},
+	{
+		"file": "hamm-banner.substrata",
+		"name": "Hamm",
+		"thumb": "hamm-banner.webp",
+		"width": 1500,
+		"height": 500
+	},
+	{
+		"file": "hamm-story.substrata",
+		"name": "Hamm",
+		"thumb": "hamm-story.webp",
+		"width": 1080,
+		"height": 1920
+	},
+	{
+		"file": "hamm.substrata",
+		"name": "Hamm",
+		"thumb": "hamm.webp",
+		"width": 1600,
+		"height": 2000
+	},
+	{
+		"file": "hard-mix.substrata",
+		"name": "Hard Mix",
+		"thumb": "hard-mix.webp",
+		"width": 1600,
+		"height": 2000
+	},
+	{
+		"file": "in-your-pocket.substrata",
+		"name": "In Your Pocket",
+		"thumb": "in-your-pocket.webp",
+		"width": 1600,
+		"height": 2000
+	},
+	{
+		"file": "materials-banner.substrata",
+		"name": "Materials",
+		"thumb": "materials-banner.webp",
+		"width": 1500,
+		"height": 500
+	},
+	{
+		"file": "materials.substrata",
+		"name": "Materials",
+		"thumb": "materials.webp",
+		"width": 1600,
+		"height": 2000
+	},
+	{
+		"file": "minidisc.substrata",
+		"name": "MiniDisc",
+		"thumb": "minidisc.webp",
+		"width": 1600,
+		"height": 2000
+	},
+	{
+		"file": "neil.substrata",
+		"name": "Live in Concert",
+		"thumb": "neil.webp",
+		"width": 1600,
+		"height": 2000
+	},
+	{
+		"file": "no-thoughts.substrata",
+		"name": "No Thoughts",
+		"thumb": "no-thoughts.webp",
+		"width": 1600,
+		"height": 2000
+	},
+	{
+		"file": "propaganda.substrata",
+		"name": "Propaganda",
+		"thumb": "propaganda.webp",
+		"width": 1600,
+		"height": 2000
+	},
+	{
+		"file": "protect-the-loop.substrata",
+		"name": "Protect the Loop",
+		"thumb": "protect-the-loop.webp",
+		"width": 1600,
+		"height": 2000
+	},
+	{
+		"file": "richard-d-james-story.substrata",
+		"name": "Album",
+		"thumb": "richard-d-james-story.webp",
+		"width": 1080,
+		"height": 1920
+	},
+	{
+		"file": "richard-d-james.substrata",
+		"name": "Album",
+		"thumb": "richard-d-james.webp",
+		"width": 1600,
+		"height": 2000
+	},
+	{
+		"file": "ring-the-council-banner.substrata",
+		"name": "Ring the Council",
+		"thumb": "ring-the-council-banner.webp",
+		"width": 1500,
+		"height": 500
+	},
+	{
+		"file": "ring-the-council-story.substrata",
+		"name": "Ring the Council",
+		"thumb": "ring-the-council-story.webp",
+		"width": 1080,
+		"height": 1920
+	},
+	{
+		"file": "ring-the-council.substrata",
+		"name": "Ring the Council",
+		"thumb": "ring-the-council.webp",
+		"width": 1600,
+		"height": 2000
+	},
+	{
+		"file": "side-eye-story.substrata",
+		"name": "Side Eye",
+		"thumb": "side-eye-story.webp",
+		"width": 1080,
+		"height": 1920
+	},
+	{
+		"file": "side-eye.substrata",
+		"name": "Side Eye",
+		"thumb": "side-eye.webp",
+		"width": 1600,
+		"height": 2000
+	},
+	{
+		"file": "tis-100-banner.substrata",
+		"name": "TIS-100",
+		"thumb": "tis-100-banner.webp",
+		"width": 1500,
+		"height": 500
+	},
+	{
+		"file": "tis-100.substrata",
+		"name": "TIS-100",
+		"thumb": "tis-100.webp",
+		"width": 1600,
+		"height": 2000
+	}
+]

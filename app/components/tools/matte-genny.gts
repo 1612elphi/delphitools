@@ -55,7 +55,6 @@ import './matte-genny/matte-genny.css';
 
 const loadFailed = 'Image could not be read. Try another file?';
 
-// iOS: spring over 0.5 s, damping 0.82
 const spring = htmlSafe(`--matte-spring: ${springEasing(0.82)}`);
 
 const styleNames = ['Blur', 'Solid', 'Gradient'];
@@ -86,7 +85,6 @@ interface Source {
 	stem: string;
 }
 
-// ?matteStyle=<0 blur, 1 solid, 2 gradient> ?matteRatio=16:9 ?matteWidth=<px> ?mattePadding=<px> ?matteColour=%231e6626: the iOS -mattestyle, -matteratio, -mattewidth, -mattepadding, -mattecolour flags; ?matteAngle=<degrees> is web only
 function launchFlags() {
 	const query = new URLSearchParams(window.location.search);
 	const flag = (name: string) => {
@@ -110,7 +108,6 @@ function launchFlags() {
 	};
 }
 
-/** The port of MatteGeneratorViewController. */
 export default class MatteGenny extends Component {
 	@tracked style: MatteStyle;
 	@tracked colour: Rgb;
@@ -120,7 +117,6 @@ export default class MatteGenny extends Component {
 	@tracked widthValue: number;
 	@tracked padding: number;
 	@tracked dominant: Bytes = defaultDominant;
-	/** The gradient's own colours once edited; until then it follows the photo. */
 	@tracked customStops?: Bytes[];
 	@tracked angle: number;
 	@tracked source?: Source;
@@ -155,7 +151,6 @@ export default class MatteGenny extends Component {
 		this.angle = flags.angle;
 		this.#worker.onmessage = (event: MessageEvent<MatteReply>) =>
 			this.#reply(event.data);
-		// a worker that fails to start or throws leaves nothing busy
 		this.#worker.onerror = () => {
 			this.#exporting = 0;
 			this.exporting = false;
@@ -281,7 +276,6 @@ export default class MatteGenny extends Component {
 	picked = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
-		// the same file twice fires change again
 		input.value = '';
 		if (file) this.load(file);
 	};
@@ -377,7 +371,6 @@ export default class MatteGenny extends Component {
 		this.isCustom = index === ratios.length;
 		if (this.isCustom) return;
 		const [short, long] = ratios[index]!;
-		// keeps the current orientation
 		[this.ratioW, this.ratioH] =
 			this.ratioW > this.ratioH
 				? [long, short]
@@ -655,7 +648,6 @@ export default class MatteGenny extends Component {
 						/>
 					</CanonRows>
 				{{/if}}
-				{{! the empty photo slot opens it }}
 				{{! template-lint-disable require-input-label }}
 				<input
 					type="file"

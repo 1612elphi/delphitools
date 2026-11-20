@@ -130,7 +130,6 @@ export default class Omnibox extends Component<OmniboxSignature> {
 				swatches: (answer.swatches ?? []).map(
 					(hex) => ({
 						hex,
-						// trusted generated hex
 						style: htmlSafe(
 							`background:${hex}`,
 						),
@@ -164,7 +163,6 @@ export default class Omnibox extends Component<OmniboxSignature> {
 	get showMatches() {
 		if (this.file) return true;
 		if (!this.raw.trim()) return false;
-		// a shavian or cipher answer must not hide a name match
 		return !this.reading || this.matches.length > 0;
 	}
 

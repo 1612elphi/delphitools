@@ -60,7 +60,6 @@ const editable = (target: EventTarget | null) =>
 	target instanceof HTMLElement &&
 	(target.isContentEditable || target.matches('input, textarea, select'));
 
-/** The port of ColourAtlasViewController. */
 export default class ColourAtlas extends Component {
 	@service declare colourNotation: ColourNotationService;
 
@@ -71,7 +70,6 @@ export default class ColourAtlas extends Component {
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const flags = launchFlags(window.location.search);
-		// sliced row, rgb blue
 		this.state = new CanonColourSolidState({
 			space: flags.space ?? 'rgb',
 			colour: flags.colour ?? startColour,
@@ -154,15 +152,12 @@ export default class ColourAtlas extends Component {
 
 	pickHarmony = (index: number) => (this.harmonyIndex = index);
 
-	/** The notation input's own read, after a pause and on Return. */
 	parse = (text: string) => {
 		const colour = readColour(text);
 		if (colour) this.state.use(colour);
 		return colour !== undefined;
 	};
 
-	// the web field answered every keystroke; the kit input waits 400 ms
-	// a click places the caret after focus, so select on the next frame
 	selectAll = (event: FocusEvent) => {
 		const field = event.target;
 		if (field instanceof HTMLInputElement)
@@ -190,7 +185,6 @@ export default class ColourAtlas extends Component {
 		return () => document.removeEventListener('paste', paste);
 	});
 
-	// replaceState on every drag frame trips the browsers' navigation throttles
 	syncUrl = modifier((_element: Element, [code]: [string]) => {
 		if (!this.#urlArmed) {
 			this.#urlArmed = true;

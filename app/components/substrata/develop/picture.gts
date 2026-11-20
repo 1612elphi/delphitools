@@ -8,18 +8,14 @@ import { countOf, develop, evict, proxyOf, type Histogram } from './render';
 interface PictureSignature {
 	Args: {
 		layer: RasterLayer;
-		/** changes when a look's colour table arrives */
 		lutEpoch: number;
 		onCount: (histogram: Histogram) => void;
 	};
 }
 
-// a proxy grows in these steps, so a collapsing band does not re-filter
 const STEP = 512;
-// iOS DevelopPicture press.minimumPressDuration
 const HOLD_MS = 120;
 
-/** the developed layer, fitted; a press shows it before any filter */
 export default class DevelopPicture extends Component<PictureSignature> {
 	@tracked box = { width: 0, height: 0 };
 	@tracked holding = false;

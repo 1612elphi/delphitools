@@ -69,7 +69,6 @@ import {
 } from 'delphitools-v2/components/tools/image-stitcher/export';
 import './image-stitcher/image-stitcher.css';
 
-// iOS: usingSpringWithDamping 0.82 over 0.5 s
 const spring = htmlSafe(`--stitch-spring: ${springEasing(0.82)}`);
 const springMs = 450;
 const stripStyle = htmlSafe(`block-size: ${pageStripHeight}px`);
@@ -87,7 +86,6 @@ const SortUp = <template><IconSvg @name="arrow-down" /></template>;
 const SortDown = <template><IconSvg @name="arrow-up" /></template>;
 const Pin = <template><IconSvg @name="pin" /></template>;
 
-// the document paste (filePaste) would load a drop-zone paste a second time
 const keepPaste = (event: Event) => event.stopPropagation();
 
 const pixels = (width: number, height: number) =>
@@ -104,7 +102,6 @@ function loadImage(file: File): Promise<Src> {
 			reject(new Error('undecodable image'));
 		};
 		el.onload = () =>
-			// a sizeless svg has no tile
 			el.naturalWidth && el.naturalHeight
 				? resolve({
 						id: `s${nextId++}`,
@@ -122,7 +119,6 @@ function loadImage(file: File): Promise<Src> {
 	});
 }
 
-// ?stitchSample: drawn images in place of the iOS -stitchSamples folder
 function drawnSamples(): Promise<File[]> {
 	const specs: [string, number, number, string][] = [
 		['coast', 1600, 1200, '#2b5fc0'],
@@ -177,7 +173,6 @@ const sides: Record<string, Side> = {
 	bottom: 'bottom',
 };
 
-/** The port of ImageStitcherViewController, with the web tool's formats. */
 export default class ImageStitcher extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 	@tracked batch = false;
@@ -186,7 +181,6 @@ export default class ImageStitcher extends Component {
 	@tracked baseId: string | null = null;
 	@tracked selected: string | null = null;
 	@tracked batchIds: string[] = [];
-	/** Set by image-splitter tiles; none lays the batch out near square. */
 	@tracked batchColumns: number | null = null;
 	@tracked format: ExportFormat = 'png';
 	@tracked loads = 0;
@@ -201,10 +195,8 @@ export default class ImageStitcher extends Component {
 	#input?: HTMLInputElement;
 	#pending: Target = { kind: 'first' };
 	#timer?: number;
-	// keeps added images in the order they came
 	#adding: Promise<unknown> = Promise.resolve();
 
-	// ?stitchSample ?stitchMode=batch ?stitchScript=<op>;<op>: the iOS -stitchSamples, -stitchMode, -stitchScript
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -349,7 +341,6 @@ export default class ImageStitcher extends Component {
 		if (!first) return [];
 		const size = { width: first.w, height: first.h };
 		return srcs.map((src) => {
-			// the cover crop, centred, as the stitch draws it
 			const scale = Math.max(
 				first.w / src.w,
 				first.h / src.h,
@@ -403,7 +394,6 @@ export default class ImageStitcher extends Component {
 		return name || 'image';
 	}
 
-	// layout edits spring; resizes do not
 	#spring() {
 		if (reducedMotion()) return;
 		this.springs = true;
@@ -426,7 +416,6 @@ export default class ImageStitcher extends Component {
 	picked = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const files = [...(input.files ?? [])];
-		// the same file twice fires change again
 		input.value = '';
 		void this.add(files, this.#pending);
 	};
@@ -474,7 +463,6 @@ export default class ImageStitcher extends Component {
 		if (!firstAdded) return;
 		const leaves = added.map((s) => leaf(s.id));
 		const { root } = this;
-		// image-splitter tiles into an empty picture go back on their grid
 		if (
 			target.kind === 'first' &&
 			added.length > 1 &&
@@ -517,7 +505,6 @@ export default class ImageStitcher extends Component {
 				leaves,
 			);
 		}
-		// the target left the tree meanwhile
 		if (
 			target.kind !== 'batch' &&
 			this.root &&
@@ -527,7 +514,6 @@ export default class ImageStitcher extends Component {
 		this.#spring();
 	}
 
-	// a batch made only of image-splitter tiles takes their grid and order
 	#arrange(ids: string[]) {
 		const grid = splitterGrid(
 			ids.map((id) => this.byId.get(id)?.name ?? ''),
@@ -551,7 +537,6 @@ export default class ImageStitcher extends Component {
 		this.selected = key === this.selected ? null : key;
 	};
 
-	// Escape lets go of the lit tile, as the web tool did
 	escape = modifier((element: HTMLElement) => {
 		const onKeyDown = (event: KeyboardEvent) => {
 			if (event.key === 'Escape') this.selected = null;
@@ -708,7 +693,6 @@ export default class ImageStitcher extends Component {
 				new ClipboardItem({ 'image/png': blob }),
 			]);
 		} catch {
-			// a denied clipboard leaves no toast
 			return;
 		}
 		this.toast.show();
@@ -724,7 +708,6 @@ export default class ImageStitcher extends Component {
 
 	async #script(files: File[], script: string) {
 		await this.add(files, { kind: 'batch', at: 0 });
-		// the pool loads unplaced
 		const pool = [...this.srcs];
 		this.batchIds = [];
 		const list = (text: string) =>
@@ -827,7 +810,6 @@ export default class ImageStitcher extends Component {
 					break;
 			}
 		}
-		// pool sources no op placed
 		const used = new Set([
 			...this.batchIds,
 			...(this.root ? leafSrcIds(this.root) : []),
@@ -1062,7 +1044,6 @@ export default class ImageStitcher extends Component {
 						</CanonRow>
 					{{/if}}
 				</CanonRows>
-				{{! the picture's plus buttons open it }}
 				{{! template-lint-disable require-input-label }}
 				<input
 					type="file"

@@ -46,19 +46,15 @@ import './popover.css';
 
 interface Signature {
 	Args: {
-		/** catalogue, WxH or extraId */
 		value?: string;
-		/** title of extra choice */
 		extra?: string;
 		extraId?: string;
-		/** millimetres, default 10–5000 */
 		min?: number;
 		max?: number;
 		placeholder?: string;
 		label?: string;
 		labelledBy?: string;
 		disabled?: boolean;
-		/** default bottom-start */
 		placement?: CanonPlacement;
 		onPick: (id: string) => void;
 	};
@@ -74,12 +70,6 @@ const picksBySeries = allSeries.map(({ id, name }) => ({
 	picks: allPicks.filter((pick) => pick.series === id),
 }));
 
-/**
- * The iOS paper size sheet as a popover on a menu-cell trigger: find a
- * size by name or dimensions, take the caller's extra choice, pick the
- * typed size as a custom one, or pick from every series. Escape or a
- * click outside closes it; a pick closes it too.
- */
 export default class PaperPopover extends Component<Signature> {
 	id = `${guidFor(this)}-paper`;
 	valueId = `${guidFor(this)}-paper-value`;
@@ -203,12 +193,10 @@ export default class PaperPopover extends Component<Signature> {
 	enter = (event: KeyboardEvent) => {
 		if (event.key !== 'Enter' || event.isComposing) return;
 		if (!this.custom || this.customOutside) return;
-		// enter would press trigger
 		event.preventDefault();
 		this.pickCustom();
 	};
 
-	/** custom size shows picked */
 	#seed() {
 		const { selected } = this;
 		this.find(

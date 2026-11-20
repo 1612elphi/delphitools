@@ -32,10 +32,6 @@ import './tailwind-shades/tailwind-shades.css';
 const startColour = parseHex('3B82F6')!;
 const modeTitles = GENERATION_MODES.map((mode) => mode.title);
 
-/**
- * The iOS launch arguments as query flags: ?tailwindColour=<any notation>
- * ?tailwindMode=<index>, plus the carried ?color=<hex>.
- */
 function launchFlags(search: string) {
 	const query = new URLSearchParams(search);
 	const typed = query.get('tailwindColour');
@@ -52,7 +48,6 @@ function launchFlags(search: string) {
 	};
 }
 
-/** The port of TailwindShadesViewController. */
 export default class TailwindShades extends Component {
 	@service declare colourNotation: ColourNotationService;
 
@@ -121,18 +116,15 @@ export default class TailwindShades extends Component {
 		return colour !== undefined;
 	};
 
-	// the web field answered every keystroke; the kit input waits 400 ms
 	typeLive = (event: Event) =>
 		void this.parse((event.target as HTMLInputElement).value);
 
-	// a click places the caret after focus, so select on the next frame
 	selectAll = (event: FocusEvent) => {
 		const field = event.target;
 		if (field instanceof HTMLInputElement)
 			requestAnimationFrame(() => field.select());
 	};
 
-	// css custom property
 	setName = (event: Event) => {
 		const field = event.target as HTMLInputElement;
 		const cleaned = cleanName(field.value);

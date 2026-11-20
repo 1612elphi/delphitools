@@ -7,7 +7,6 @@ import CanonButton from 'delphicanon/components/canon-button';
 import { IconSvg } from 'delphitools-v2/components/icon';
 import type SidebarService from 'delphitools-v2/services/sidebar';
 
-// iOS Resources/backdrops.json, in its order
 const TAPES = [
 	'benedict',
 	'tilcayo',
@@ -60,14 +59,12 @@ const TAPES = [
 	'pride-transmasc',
 ];
 
-// any tape but the one at `not`
 const pick = (not = -1) => {
 	const count = not < 0 ? TAPES.length : TAPES.length - 1;
 	const index = Math.floor(Math.random() * count);
 	return not >= 0 && index >= not ? index + 1 : index;
 };
 
-// one tape for the band and the phone bar's shuffle cell
 class Tape {
 	@tracked index = pick();
 
@@ -88,12 +85,10 @@ const ShuffleButton = <template>
 	/>
 </template> satisfies TOC<{ Args: { class: string } }>;
 
-// on phones the bar carries it, clear of the notation picker
 export const TapeShuffle = <template>
 	<ShuffleButton @class="dt-bar-shuffle" />
 </template>;
 
-// the iOS backdrop strip, shown in the closed band
 export default class BandTape extends Component {
 	@service declare sidebar: SidebarService;
 
@@ -105,7 +100,6 @@ export default class BandTape extends Component {
 		return `/backdrops/${TAPES[this.index]}.webp`;
 	}
 
-	// flags tile at full width, so cover never crops the outer stripes
 	get isFlag() {
 		return TAPES[this.index]?.startsWith('pride-') ?? false;
 	}

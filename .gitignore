@@ -62,3 +62,6 @@ CLAUDE.md
 # assets/og tracked, scripts/og.mjs 
 /assets/heroes/
 /assets/art/
+
+# affinity design files, local only
+/*.af

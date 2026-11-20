@@ -10,19 +10,15 @@ import type {
 import { IconSvg } from 'delphitools-v2/components/icon';
 
 export interface ReelColumn {
-	/** Slot and spin: a spun column renders afresh, so its reel and landing run. */
 	key: string;
 	index: number;
 	number: string;
 	hex: string;
-	/** The colour in the header notation. */
 	value: string;
 	name: string;
 	locked: boolean;
 	wide: boolean;
-	/** Background and ink. */
 	style: SafeString;
-	/** The strip of colours that runs past before landing. */
 	reel?: { panels: SafeString[] };
 	info?: {
 		lines: { label: string; value: string }[];
@@ -49,13 +45,6 @@ interface ReelsSignature {
 	};
 }
 
-/**
- * PaletteReels: the palette as tall columns meeting at hairlines, each with
- * its number, value, name and lock lamp. Regenerate spins the unlocked
- * columns left to right like reels. A tap widens a column to show its
- * values and contrast; a tap on its name or value edits the colour; a
- * secondary click opens its menu.
- */
 const Reels: TOC<ReelsSignature> = <template>
 	<div class="pg-reels {{if @widened 'pg-reels--widened'}}">
 		{{#each @columns key="key" as |column|}}

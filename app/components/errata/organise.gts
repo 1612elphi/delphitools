@@ -20,7 +20,6 @@ import { closeMode, onMode } from 'delphitools-v2/lib/errata/ui';
 import { TrackedExternal } from 'delphitools-v2/lib/tracked-external';
 import './organise.css';
 
-// 2x the 140px frame
 const THUMB_PX = 280;
 
 export default class Organise extends Component {
@@ -67,7 +66,6 @@ export default class Organise extends Component {
 		this.doc.unsubscribe();
 		this.#off();
 		this.#seen.disconnect();
-		// canvas opens first selection
 		const first = this.pages.findIndex((p) =>
 			this.selected.has(p.id),
 		);
@@ -242,7 +240,6 @@ export default class Organise extends Component {
 		this.dropAt = null;
 	};
 
-	// padding is canvas inset
 	inset = modifier((grid: HTMLElement) => {
 		const area = grid
 			.closest('.sub-ed')

@@ -35,14 +35,9 @@ const Copy = <template><IconSvg @name="copy" /></template>;
 
 const kindTitles = IDENTIFIER_KINDS.map((kind) => kind.label);
 const defaultCount = 10;
-// stagger the first screenful only
 const fadeRows = 24;
 const fadeStep = 0.018;
 
-/**
- * The iOS launch arguments as query flags: ?uuidKind=uuid4|uuid7|nanoid
- * ?uuidCount=<n> ?uuidSelect=<row> ?uuidUpper=1 ?uuidStrip=1
- */
 function launchFlags(search: string) {
 	const query = new URLSearchParams(search);
 	const kind = IDENTIFIER_KINDS.find(
@@ -60,7 +55,6 @@ function launchFlags(search: string) {
 	};
 }
 
-/** The port of UUIDGeneratorViewController. */
 export default class UuidGenny extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -69,7 +63,6 @@ export default class UuidGenny extends Component {
 	@tracked uppercase: boolean;
 	@tracked stripHyphens: boolean;
 	@tracked ids: string[];
-	/** The identifier the banner draws; a click on a row moves it. */
 	@tracked selected: number;
 	@tracked fades = false;
 	@tracked scrambleKey = 0;
@@ -97,7 +90,6 @@ export default class UuidGenny extends Component {
 		return IDENTIFIER_KINDS[this.kindIndex]!.label;
 	}
 
-	// toggles never regenerate ids
 	get rows() {
 		const options = {
 			uppercase: this.uppercase,
@@ -140,7 +132,6 @@ export default class UuidGenny extends Component {
 	setCount = (value: number) => {
 		this.count = clampCount(value);
 		this.fades = false;
-		// resize keeps existing ids
 		this.ids =
 			this.ids.length >= this.count
 				? this.ids.slice(0, this.count)

@@ -13,12 +13,10 @@ interface DevelopSignature {
 	Args: { phone: boolean };
 }
 
-/** Develop for the active layer while `editorUi.developOpen` */
 export default class Develop extends Component<DevelopSignature> {
 	active = new TrackedExternal(subscribeSelection, getActiveLayerId);
 	doc = new TrackedExternal(subscribe, getSnapshot);
 
-	// an image layer only, as iOS canDevelop
 	get layerId() {
 		const id = this.active.current;
 		const doc = this.doc.current;

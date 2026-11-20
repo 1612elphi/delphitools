@@ -27,20 +27,16 @@ import {
 
 interface PictureSignature {
 	Args: {
-		/** What the editor holds. */
 		text: string;
 		cipher: CipherId;
 		encode: boolean;
 		params: ManualParams;
-		/** The text the cipher read; empty draws the empty picture. */
 		source: string;
 		output: string;
 		name: string;
 		detail: string;
-		/** 0 to 1; the auto-decode hero's ranking. */
 		score?: number;
 		onInput: (text: string) => void;
-		/** The picture's own height in px: head, text and drawing. */
 		onHeight: (height: number) => void;
 		onFocus: (focused: boolean) => void;
 	};
@@ -49,7 +45,6 @@ interface PictureSignature {
 const PasteIcon = <template><IconSvg @name="clipboard" /></template>;
 const ClearIcon = <template><IconSvg @name="trash-2" /></template>;
 
-// .dec-head and .dec-stage
 export const headHeight = 44;
 export const stageHeight = 148;
 
@@ -63,12 +58,6 @@ const reportHeight = modifier(
 	},
 );
 
-/**
- * CipherPicture around the typed text: the cipher's name and the hero's
- * score over the text, each symbol toned as the cipher reads it, and under
- * it the input laid against its output as symbol pairs, regrouped bits or
- * the rail fence.
- */
 export default class Picture extends Component<PictureSignature> {
 	get kind() {
 		return pictureOf(this.args.cipher);
@@ -183,7 +172,6 @@ export default class Picture extends Component<PictureSignature> {
 					class="dec-text"
 					{{reportHeight @onHeight}}
 				>
-					{{! tail keeps trailing newline }}
 					<div
 						class="dec-marks"
 						aria-hidden="true"

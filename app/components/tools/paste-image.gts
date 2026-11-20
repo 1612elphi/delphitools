@@ -50,7 +50,6 @@ interface Pasted {
 
 const none: Size = { width: 0, height: 0 };
 
-/** The port of PasteImageViewController, on the web tool's paste and export. */
 export default class PasteImage extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 	@tracked pasted?: Pasted;
@@ -60,7 +59,6 @@ export default class PasteImage extends Component {
 	drop = new Drop('image/*', (file) => void this.load(file));
 	#loading = 0;
 
-	// ?pasteSample ?pasteCrop=x,y,w,h: the iOS -pasteSample, -pasteCrop launch arguments
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -157,7 +155,6 @@ export default class PasteImage extends Component {
 		this.crop = whole(pixels);
 	};
 
-	// reading the clipboard asks for permission; a refusal or no image does nothing, as iOS
 	paste = async () => {
 		try {
 			for (const item of await navigator.clipboard.read()) {
@@ -238,7 +235,6 @@ export default class PasteImage extends Component {
 			this.toast.show();
 		});
 
-	// the whole image saves as pasted, a crop as PNG (iOS and the web tool)
 	save = () => {
 		const { pasted } = this;
 		if (!pasted || this.exporting) return;

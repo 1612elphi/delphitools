@@ -15,7 +15,6 @@ let context: CanvasRenderingContext2D | null | undefined;
 let family: string | undefined;
 const widths = new Map<string, number>();
 
-// 17 px semibold mono, as the faces are set
 function textWidth(text: string) {
 	const known = widths.get(text);
 	if (known !== undefined) return known;
@@ -40,11 +39,6 @@ const kind = (pair: Pair): GlyphKind => (pair.newline ? 'newline' : 'glyph');
 const equals = (a: Pair, b: Pair) =>
 	a.top === b.top && a.bottom === b.bottom && a.newline === b.newline;
 
-/**
- * SymbolPairStrip for URL escapes: each symbol of the input over what it
- * becomes, in wrapped rows. A symbol that passes through unchanged is
- * muted.
- */
 const Pairs: TOC<PairsSignature> = <template>
 	<div class="enc-pairs">
 		<CanonGlyphFlow

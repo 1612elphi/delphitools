@@ -45,11 +45,9 @@ const accept = 'image/*';
 const unreadable = "That file can't be read as an image";
 const crossed = "Don't let the streams cross!";
 const resultAspect = 4 / 3;
-// iOS: spring damping 0.82 over 0.55 s
 const spring = htmlSafe(`--deskew-spring: ${springEasing(0.82)}`);
 const custom = ASPECTS.length;
 const aspectNames = [...ASPECTS.map(({ label }) => label), 'Custom'];
-// iOS ImageDeskewerViewModel.previewEdge; the web tool's 720 while dragging
 const previewEdge = { resting: 1024, dragging: 720 };
 
 const Trash = <template><IconSvg @name="trash-2" /></template>;
@@ -66,7 +64,6 @@ interface Source {
 const nextFrame = () =>
 	new Promise((resolve) => requestAnimationFrame(resolve));
 
-/** The port of ImageDeskewerViewController, on the web tool's warp. */
 export default class ImageDeskewer extends Component {
 	@tracked source?: Source;
 	@tracked quad: Quad = insetQuad(1, 1);
@@ -85,7 +82,6 @@ export default class ImageDeskewer extends Component {
 	#loading = 0;
 	#frame = 0;
 
-	// ?deskewSample ?deskewAspect=<index> ?deskewRatio=<w>:<h> ?deskewCorners=x,y;x,y;x,y;x,y (unit) ?deskewGrab=<corner>: the iOS launch arguments
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -180,7 +176,6 @@ export default class ImageDeskewer extends Component {
 	picked = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
-		// the same file twice fires change again
 		input.value = '';
 		if (file) void this.load(file);
 	};
@@ -273,7 +268,6 @@ export default class ImageDeskewer extends Component {
 		this.#frame = requestAnimationFrame(() => this.#draw());
 	}
 
-	// keeps the last good preview
 	#draw() {
 		const { source, quad } = this;
 		if (!source || !this.valid) return;
@@ -294,7 +288,6 @@ export default class ImageDeskewer extends Component {
 		if (this.exportDisabled || !source) return;
 		this.exporting = true;
 		try {
-			// the loader paints before the warp blocks
 			await nextFrame();
 			const { width, height } = this.output;
 			const canvas = document.createElement('canvas');
@@ -480,7 +473,6 @@ export default class ImageDeskewer extends Component {
 						</CanonRow>
 					{{/if}}
 				</CanonRows>
-				{{! the empty board and the open button use it }}
 				{{! template-lint-disable require-input-label }}
 				<input
 					type="file"

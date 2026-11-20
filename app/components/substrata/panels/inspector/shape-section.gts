@@ -38,7 +38,6 @@ const INNER_PRESETS = [30, 50, 70].map((v) => ({
 	label: `${v}%`,
 }));
 
-// the colour to one 0.18 lighter or darker in OKLCH, left to right
 function solidToGradient(hex: string): Gradient {
 	const lch = hexToOklch(hex) ?? { L: 0.5, C: 0, h: 0 };
 	const far = oklchToHex({
@@ -55,7 +54,6 @@ function solidToGradient(hex: string): Gradient {
 	};
 }
 
-// iOS shapeRows and strokeRows, with the web's gradient editor and presets
 export default class ShapeSection extends Component<{
 	Args: { layer: ShapeLayer };
 }> {
@@ -96,7 +94,6 @@ export default class ShapeSection extends Component<{
 		return p.shape === 'star' ? p : null;
 	}
 
-	// corners cap at half the short side; presets are fractions of it
 	get cornerMax(): number {
 		const p = this.rect;
 		return p ? Math.floor(Math.min(p.width, p.height) / 2) : 0;
@@ -178,7 +175,6 @@ export default class ShapeSection extends Component<{
 			);
 	};
 
-	// a dash scales with the width, as iOS
 	setStrokeWidth = (width: number) => {
 		const stroke = this.stroke;
 		if (!stroke) return;

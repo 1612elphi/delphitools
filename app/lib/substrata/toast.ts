@@ -8,7 +8,8 @@ export type ToastId =
 	| 'paste-empty'
 	| 'exported'
 	| 'wand-needs-layer'
-	| 'open-failed';
+	| 'open-failed'
+	| 'asset-failed';
 
 export interface ToastState {
 	id: ToastId;

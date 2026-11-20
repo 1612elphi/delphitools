@@ -3,7 +3,6 @@ import CanonMenuCell from 'delphicanon/components/canon-menu-cell';
 import { paperSizeGroups } from 'delphitools-v2/lib/paper-sizes';
 import './paper-menu.css';
 
-// common repeats sizes from the series groups
 const SIZES = paperSizeGroups
 	.filter((group) => group.id !== 'common')
 	.flatMap((group) => group.sizes);
@@ -13,7 +12,6 @@ const TITLES = SIZES.map(
 		`${size.label} (${Math.round(size.widthMm)} × ${Math.round(size.heightMm)})`,
 );
 
-/** CanonMenuCell over the paper list; an unknown id shows the placeholder */
 export default class PaperMenu extends Component<{
 	Element: HTMLDivElement;
 	Args: {

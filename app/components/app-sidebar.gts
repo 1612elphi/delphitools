@@ -31,8 +31,8 @@ import {
 
 const PAGES = [
 	{ name: 'Home', icon: 'home', href: '/' },
-	{ name: 'Substrata', icon: 'brush', href: '/editor' },
-	{ name: 'Errata', icon: 'signature', href: '/errata' },
+	{ name: 'Substrata', icon: 'substrata', href: '/editor' },
+	{ name: 'Errata', icon: 'errata', href: '/errata' },
 	{ name: 'Workflows', icon: 'workflow', href: '/workflows' },
 	{ name: 'Experiments', icon: 'flask-conical', href: '/experiments' },
 ];
@@ -40,7 +40,6 @@ const PAGES = [
 const SIDEBAR_CATEGORIES: ToolCategory[] = toolCategories.map((cat) => ({
 	...cat,
 	tools: cat.tools
-		// a routed tool with its own page row is listed once
 		.filter((t) => !PAGES.some((page) => page.href === t.href))
 		.sort(
 			(a, b) =>
@@ -55,10 +54,8 @@ interface NavRowSignature {
 		icon?: string;
 		href: string;
 		external?: boolean;
-		/** Opens the magazine at this page id instead of following the link. */
 		magazine?: string;
 		description?: string;
-		/** Overrides the URL match, for a row that stands for many pages. */
 		current?: boolean;
 	};
 	Element: HTMLElement;
@@ -79,7 +76,6 @@ class NavRow extends Component<NavRowSignature> {
 		return this.selected ? this.args.description : undefined;
 	}
 
-	// canon rows are plain links
 	go = (event: MouseEvent) => {
 		if (this.args.magazine) {
 			if (!isPlainClick(event)) return;
@@ -137,7 +133,6 @@ export default class AppSidebar extends Component {
 	@tracked aboutOpen = false;
 
 	openAbout = (event: MouseEvent) => {
-		// webkit leaves a clicked button unfocused; the dialog returns focus to it
 		(event.currentTarget as HTMLElement).focus();
 		this.aboutOpen = true;
 	};
@@ -152,7 +147,6 @@ export default class AppSidebar extends Component {
 	pages = PAGES;
 	opensSection = opensSection;
 
-	/** On the /canon docs the drawer lists the docs pages instead of the tools. */
 	get inDocs() {
 		const route = this.router.currentRouteName ?? '';
 		return route === 'canon' || route.startsWith('canon.');
@@ -179,11 +173,9 @@ export default class AppSidebar extends Component {
 		);
 	}
 
-	// while searching, rows match by URL; otherwise a section row stands for its pages
 	isCurrent = (id: string) =>
 		this.docsSearch.trim() ? undefined : id === this.docsPage;
 
-	// keeps the current docs row in the drawer's view
 	reveal = modifier((nav: HTMLElement, [id]: [string | undefined]) => {
 		if (!id) return;
 		const scroller = nav.querySelector<HTMLElement>(
@@ -237,7 +229,6 @@ export default class AppSidebar extends Component {
 		else this.toolSearch = '';
 	};
 
-	// the home omnibox claims the key first and prevents default
 	searchKey = modifier((input: HTMLInputElement) => {
 		const keydown = (event: KeyboardEvent) => {
 			if (
@@ -248,7 +239,6 @@ export default class AppSidebar extends Component {
 				return;
 			event.preventDefault();
 			this.sidebar.setOpen(true);
-			// the drawer leaves inert on the next render
 			requestAnimationFrame(() => {
 				input.focus();
 				input.select();

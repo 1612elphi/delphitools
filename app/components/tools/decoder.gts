@@ -37,7 +37,6 @@ import { caption } from 'delphitools-v2/components/tools/decoder/scene';
 import Result from 'delphitools-v2/components/tools/text-tool/result';
 import './decoder/decoder.css';
 
-// omni reads these
 export {
 	classifyAndDecode,
 	englishLikeness,
@@ -48,9 +47,7 @@ const directions = ['Decode', 'Encode'];
 const cipherIds = CIPHER_OPTIONS.map((option) => option.value);
 const cipherLabels = CIPHER_OPTIONS.map((option) => option.label);
 const coprimes = AFFINE_COPRIMES.map(String);
-// head plus 88px row
 const collapsedHeight = headHeight + 88 + 4;
-// head, box, drawing, rules
 const emptyHeight = headHeight + 88 + stageHeight + 4;
 
 const reference = [
@@ -128,7 +125,6 @@ const clampInt = (value: string | null, min: number, max: number) => {
 		: undefined;
 };
 
-/** The port of CipherDecoderViewController. */
 export default class Decoder extends Component {
 	@service('canon-toast') declare toast: CanonToastService;
 
@@ -145,8 +141,6 @@ export default class Decoder extends Component {
 	@tracked pictureHeight = emptyHeight;
 	@tracked typing = false;
 
-	// ?cipherText= ?cipherSample=0-5 ?cipherManual=1 ?cipherId= ?cipherEncode=1
-	// ?cipherShift= ?cipherKey= ?cipherRails= ?cipherReference=1: the iOS launch arguments
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
 		const query = new URLSearchParams(window.location.search);
@@ -193,7 +187,6 @@ export default class Decoder extends Component {
 		return reference;
 	}
 
-	// typing never collapses band
 	get collapsesTo() {
 		return this.typing ? Number.MAX_SAFE_INTEGER : collapsedHeight;
 	}
@@ -220,7 +213,6 @@ export default class Decoder extends Component {
 		return this.input.trim();
 	}
 
-	// the affine and rail sweeps: once per input
 	@cached
 	get candidates() {
 		return this.manual ? [] : classifyAndDecode(this.input);
@@ -297,7 +289,6 @@ export default class Decoder extends Component {
 	setTyping = (typing: boolean) => (this.typing = typing);
 
 	measured = (height: number) => {
-		// canvas subtracts both rules
 		if (height + 4 !== this.pictureHeight)
 			this.pictureHeight = height + 4;
 	};

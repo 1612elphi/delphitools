@@ -9,7 +9,6 @@ import type { MaskShape } from 'delphitools-v2/lib/mask-shapes';
 import type { Layer } from 'delphitools-v2/lib/substrata/doc-model';
 import { setMask } from 'delphitools-v2/lib/substrata/layer-ops';
 
-// web only: the inspector's mask picker; iOS has no layer masks yet
 export default class MaskSection extends Component<{
 	Args: { layer: Layer };
 }> {

@@ -85,7 +85,6 @@ export default class CommentPopover extends Component {
 	place = modifier((el: HTMLElement, [id]: [string]) => {
 		const anchor = el.previousElementSibling as HTMLElement;
 		let frame = 0;
-		// tracks canvas pan, zoom
 		const follow = () => {
 			const r = objectRect(id);
 			if (r) {
@@ -116,14 +115,12 @@ export default class CommentPopover extends Component {
 		};
 	});
 
-	// unbound: keeps typed text
 	fill = modifier(
 		(el: HTMLTextAreaElement, [id, text]: [string, string]) => {
 			this.#text = el;
 			if (el.dataset.note === id) return;
 			el.dataset.note = id;
 			el.value = text;
-			// after canvas steals focus
 			if (text === '') setTimeout(() => el.focus());
 		},
 	);

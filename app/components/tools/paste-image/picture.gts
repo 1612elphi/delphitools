@@ -7,22 +7,16 @@ import { reach, type Rect, type Size } from 'delphitools-v2/lib/crop-rect';
 
 export interface PictureSignature {
 	Args: {
-		/** Object URL of the pasted image; none shows the slot. */
 		url?: string;
 		pixels: Size;
-		/** In image pixels. */
 		crop: Rect;
-		/** A file is dragged over the tool. */
 		over: boolean;
 		onFile: (file: File) => void;
-		/** Every drag step and key, in image pixels. */
 		onCrop: (crop: Rect) => void;
-		/** A drag or key ended. */
 		onSettle: () => void;
 	};
 }
 
-// iOS PasteImagePicture: room under the image for the size figure
 const caption = 30;
 
 function figureStyle(frame: Rect, area: Size) {
@@ -33,10 +27,6 @@ function figureStyle(frame: Rect, area: Size) {
 	return htmlSafe(`top: ${Math.round(centre * 100) / 100}px`);
 }
 
-/**
- * The pasted image under the crop, with thirds inside and the crop's size
- * under the image. The port of iOS PasteImagePicture on PDFCropCanvas.
- */
 export default class Picture extends Component<PictureSignature> {
 	get sizeText() {
 		const { width, height } = this.args.crop;

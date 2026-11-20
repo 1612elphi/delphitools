@@ -12,7 +12,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const { allTools } = await import('../app/lib/tools.ts');
 const { FX_ICONS, FX_ICON_FALLBACK } =
 	await import('../app/lib/substrata/fx-icons.ts');
-// read, not imported: tool.ts imports app modules node cannot resolve
+// read: imports break node
 const errataIcons = [
 	...readFileSync(join(root, 'app/lib/errata/tool.ts'), 'utf8').matchAll(
 		/icon: '([a-z0-9-]+)'/g,
@@ -41,19 +41,19 @@ const EXTRA = [
 	'carrot',
 	'list-checks',
 	'settings-2',
-	// names built at runtime outside templates
+	// runtime names outside templates
 	'alert-circle',
 	'arrow-right-left',
 	'axis-3d',
 	'circle-check-big',
 	'map-pin',
 	'triangle-alert',
-	// canon-docs tiles pass these through variables
+	// canon-docs passes via variables
 	'panel-bottom',
 	'panel-left',
 	'panel-right',
 	'panel-top',
-	// drawn into the colour ring's canvas by name
+	// colour ring canvas names
 	'clock',
 	'droplet',
 	'hash',
@@ -97,13 +97,24 @@ for (const file of walk(join(root, 'app')).filter((f) => f.endsWith('.gts'))) {
 	}
 }
 
-const isIcon = (n) =>
-	existsSync(join(root, 'node_modules/lucide-static/icons', `${n}.svg`));
+// lucide stand-ins until drawn
+const STAND_IN = { substrata: 'brush', errata: 'signature' };
+const lucideFile = (n) => STAND_IN[n] ?? n;
+const lucide = (n) =>
+	existsSync(
+		join(
+			root,
+			'node_modules/lucide-static/icons',
+			`${lucideFile(n)}.svg`,
+		),
+	);
+const drawn = (n) => existsSync(join(root, 'app/icons', `${n}.svg`));
+const isIcon = (n) => drawn(n) || lucide(n);
 
 const names = [
 	...new Set([
 		...allTools.map((t) => t.icon),
-		// @name also names non-icon components (app-sidebar's wordmark)
+		// @name not always icon
 		...[...fromTemplates].filter(isIcon),
 		...[...candidates].filter(isIcon),
 		...EXTRA,
@@ -114,7 +125,13 @@ const names = [
 
 const missing = names.filter((n) => !isIcon(n));
 if (missing.length) {
-	throw new Error(`not in lucide-static: ${missing.join(', ')}`);
+	throw new Error(
+		`not in app/icons or lucide-static: ${missing.join(', ')}`,
+	);
+}
+const undrawn = names.filter((n) => !drawn(n));
+if (undrawn.length) {
+	console.warn(`UNDRAWN (lucide fallback): ${undrawn.join(', ')}`);
 }
 
 const ident = (n) =>
@@ -126,7 +143,7 @@ const ident = (n) =>
 
 const key = (n) => (/^[a-z][a-z\d]*$/.test(n) ? n : `'${n}'`);
 
-const out = `${names.map((n) => `import ${ident(n)} from 'lucide-static/icons/${n}.svg?raw';`).join('\n')}
+const out = `${names.map((n) => `import ${ident(n)} from '${drawn(n) ? `../icons/${n}` : `lucide-static/icons/${lucideFile(n)}`}.svg?raw';`).join('\n')}
 
 export const icons: Record<string, string> = {
 ${names.map((n) => `\t${key(n)}: ${ident(n)},`).join('\n')}

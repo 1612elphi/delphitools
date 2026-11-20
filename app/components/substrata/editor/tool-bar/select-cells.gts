@@ -56,14 +56,12 @@ interface Signature {
 	};
 }
 
-// iOS SelectShape onto the web's select subtools
 const SHAPES = [
 	{ sub: 'select', title: 'Rectangle', icon: 'square-dashed' },
 	{ sub: 'lasso', title: 'Freehand', icon: 'lasso' },
 	{ sub: 'wand', title: 'Automatic', icon: 'wand-sparkles' },
 ];
 
-// iOS shares one cell: plus while adding, minus and latched while removing
 const MODES = {
 	add: { title: 'Add', icon: 'square-plus' },
 	remove: { title: 'Remove', icon: 'square-minus' },
@@ -78,8 +76,6 @@ const REFINES = [
 const WAND_MODES = ['Contiguous', 'Global'];
 const REFINE_RADII = [2, 8, 32];
 
-// iOS select cells: the shapes, Add or Remove, then what to do with the
-// selection; the web's lasso and wand settings sit in an Options panel
 export default class SelectCells extends Component<Signature> {
 	sel = new TrackedExternal(subscribePixelSelection, getPixelSelection);
 	doc = new TrackedExternal(subscribe, getSnapshot);
@@ -125,7 +121,6 @@ export default class SelectCells extends Component<Signature> {
 		return !this.hasSelection;
 	}
 
-	// iOS selectionSource: an unlocked raster under a selection
 	get cannotTake() {
 		void this.doc.current;
 		void this.active.current;

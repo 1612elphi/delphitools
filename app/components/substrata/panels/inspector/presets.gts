@@ -13,13 +13,11 @@ export interface PresetsSignature {
 		options: Preset[];
 		value: number;
 		onPick: (value: number) => void;
-		/** Distance that still counts as the preset; default 0.5. */
 		eps?: number;
 	};
 	Element: HTMLDivElement;
 }
 
-// the web inspector's preset strip under a field; the field keeps any value
 export default class Presets extends Component<PresetsSignature> {
 	get cells() {
 		const eps = this.args.eps ?? 0.5;

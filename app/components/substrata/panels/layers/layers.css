@@ -1,4 +1,4 @@
-/* iOS LayersPanel: rows under hairlines */
+/* ios layerspanel */
 .sub-layers {
 	display: flex;
 	flex-direction: column;
@@ -176,7 +176,7 @@
 	background: var(--canon-primary);
 }
 
-/* iOS LayerFold: opacity and blend under the tapped row */
+/* ios layerfold */
 .sub-layer-controls {
 	display: flex;
 	flex-direction: column;
@@ -195,7 +195,7 @@
 	}
 }
 
-/* iOS FloatingCard.setGroups: framed boxes, the canvas between them */
+/* ios floatingcard.setgroups */
 .sub-card:has(> .sub-lm) {
 	padding: 0;
 	background: transparent;
@@ -218,7 +218,6 @@
 	box-shadow: var(--sub-shadow);
 }
 
-/* the lamp keys sit in a bed, apart from the boxes below */
 .sub-lm-lamps {
 	flex-direction: row;
 	gap: 6px;
@@ -257,7 +256,7 @@
 	background: var(--canon-primary);
 }
 
-/* iOS MenuRow */
+/* ios menurow */
 .sub-menu-row {
 	display: flex;
 	gap: 12px;
@@ -322,4 +321,11 @@
 	.sub-layer-fold {
 		animation: none;
 	}
+}
+
+.sub-layer-kind svg {
+	inline-size: 1em;
+	block-size: 1em;
+	margin-inline-end: 4px;
+	vertical-align: -0.125em;
 }

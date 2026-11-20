@@ -36,8 +36,6 @@ const MARKERS = [
 	},
 ];
 
-// the web's freehand markup in the iOS bar: brush and pencil cells, then
-// the size; the colour is the colour key's
 export default class DrawCells extends Component<Signature> {
 	ts = new TrackedExternal(subscribeToolSettings, getToolSettings);
 	sub = new TrackedExternal(subscribeTool, () => getActiveSubs().pieces);

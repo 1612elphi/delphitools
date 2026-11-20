@@ -39,7 +39,6 @@ function toolIcon(name: string): ComponentLike {
 	return icon;
 }
 
-// the open menu starts on the current pick, as a native select does
 function focusCurrent(event: ToggleEvent) {
 	if (event.newState !== 'open') return;
 	(event.target as HTMLElement)

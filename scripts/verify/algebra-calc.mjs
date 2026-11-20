@@ -1,5 +1,3 @@
-// the canon algebra-calc: live expression, operations, solutions, picture, keypad, examples, copy
-
 import { BASE, launch, visit, check, finish, sleep } from './harness.mjs';
 
 const { browser, page } = await launch();
@@ -41,7 +39,7 @@ const clickText = (scope, text) =>
 		scope,
 		text,
 	);
-// each part is typed, then ArrowRight leaves a power or fraction
+// ArrowRight exits power/fraction
 const retype = async (...parts) => {
 	await page.evaluate(() => document.activeElement?.blur());
 	await page.focus(field);
@@ -148,9 +146,14 @@ s = await state();
 check('Use as input puts the result in the field', s.field === '3 * x ^ 2' && s.lines[0]?.includes('6 * x'), `${s.field} ${s.lines}`);
 
 await clickText('.algebra-calc [aria-label="Operation"]', 'Factor');
-await sleep(50);
+await retype('x^3', '-1');
 s = await state();
-check('factor says it is not supported, as the web did', s.status === 'This operation is not supported at this time', s.status);
+check('factor factors, as iOS does', s.lines[0]?.replaceAll(' ', '').includes('(-1+x)*(1+x+x^2)') && !s.status, `${s.lines} ${s.status}`);
+
+await clickText('.algebra-calc [aria-label="Operation"]', '∫');
+await retype('x^2');
+s = await state();
+check('∫ integrates with a constant', s.lines[0]?.replaceAll(' ', '').includes('(1/3)*x^3+C') && !s.status, `${s.lines} ${s.status}`);
 
 await clickText('.algebra-calc [aria-label="Operation"]', 'Expand');
 await page.evaluate(() =>

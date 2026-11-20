@@ -19,9 +19,7 @@ import {
 
 export interface DossierSignature {
 	Args: {
-		/** Blocks in the original; null before a file. */
 		found: Set<Block> | null;
-		/** Blocks after stripping; null when stripping failed or is to come. */
 		left: Set<Block> | null;
 		location: GpsFix | null;
 	};
@@ -32,11 +30,6 @@ const meridians = [-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150].map(
 );
 const parallels = [-30, 0, 30, 60].map((lat) => north - lat);
 
-/**
- * The iOS MetadataDossier: a world map with the photo's location, struck
- * when stripping removes it, beside lamps for each metadata block, lit
- * where found, struck and ticked where removed.
- */
 export default class Dossier extends Component<DossierSignature> {
 	@tracked land = '';
 
@@ -75,7 +68,6 @@ export default class Dossier extends Component<DossierSignature> {
 		);
 	}
 
-	// the caption sits in the corner away from the pin
 	get captionClass() {
 		const { point } = this;
 		if (!point) return 'ms-caption--centre';

@@ -10,7 +10,6 @@ interface Signature {
 		open: boolean;
 		phone: boolean;
 		label: string;
-		// read when the form opens: the control it points at
 		anchor: () => HTMLElement | null;
 		placement?: CanonPlacement;
 		onClose: () => void;
@@ -18,8 +17,6 @@ interface Signature {
 	Blocks: { default: [] };
 }
 
-// iOS FormSheet: a short form in a popover pointing at the control that
-// opened it; a sheet from the bottom on the phone
 export default class FormPopover extends Component<Signature> {
 	place = modifier((panel: HTMLElement) => {
 		const anchor = this.args.anchor();
@@ -37,7 +34,6 @@ export default class FormPopover extends Component<Signature> {
 			panel;
 		first.focus({ preventScroll: true });
 		if (first instanceof HTMLInputElement) first.select();
-		// a press on the anchor goes to the anchor, which toggles the form
 		const down = (e: PointerEvent) => {
 			const target = e.target as Node;
 			if (panel.contains(target) || anchor?.contains(target))
@@ -45,7 +41,11 @@ export default class FormPopover extends Component<Signature> {
 			this.args.onClose();
 		};
 		const key = (e: KeyboardEvent) => {
-			if (e.key !== 'Escape') return;
+			if (
+				e.key !== 'Escape' ||
+				panel.querySelector(':popover-open')
+			)
+				return;
 			e.stopPropagation();
 			this.args.onClose();
 		};

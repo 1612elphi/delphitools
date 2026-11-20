@@ -49,14 +49,12 @@ const Copy = <template><IconSvg @name="copy" /></template>;
 const startColour = parseHex('3B82F6')!;
 const modeTitles = modes.map((mode) => mode.title);
 
-/** The port of HarmonyGeneratorViewController. */
 export default class HarmonyGenny extends Component {
 	@service declare colourNotation: ColourNotationService;
 	@service('canon-toast') declare toast: CanonToastService;
 
 	@tracked space: WheelSpace;
 	@tracked mode: number;
-	/** Lightness and radius (0...1 of the space's scale) and hue as asked for; the base is this with the radius cut to the gamut. */
 	@tracked asked: Parts;
 
 	constructor(owner: Owner, args: object) {
@@ -146,7 +144,6 @@ export default class HarmonyGenny extends Component {
 		return `:root {\n${lines.join('\n')}\n}`;
 	}
 
-	/** `colour` in the wheel's space; a grey keeps the hue it had. */
 	take(colour: Rgb) {
 		const parts = partsOf(this.space, colour);
 		this.asked =
@@ -161,11 +158,9 @@ export default class HarmonyGenny extends Component {
 		return colour !== undefined;
 	};
 
-	// the web field answered every keystroke; the kit input waits 400 ms
 	typeLive = (event: Event) =>
 		void this.parse((event.target as HTMLInputElement).value);
 
-	// a click places the caret after focus, so select on the next frame
 	selectAll = (event: FocusEvent) => {
 		const field = event.target;
 		if (field instanceof HTMLInputElement)

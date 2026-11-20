@@ -5,7 +5,6 @@ import AtlasOpenIn from 'delphitools-v2/components/atlas-open-in';
 import type { Tool } from 'delphitools-v2/lib/tools';
 import './open-in.css';
 
-/** An atlas's Open in section: the tools that take the file, or a fixed list, as a grid of kit cells. */
 const OpenIn: TOC<{
 	Args: {
 		file?: File | null;

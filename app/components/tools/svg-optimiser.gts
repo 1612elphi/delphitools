@@ -22,7 +22,6 @@ import filePaste, { matchesAccept } from 'delphitools-v2/modifiers/file-paste';
 import type { Config } from 'svgo/browser';
 import './svg-optimiser/svg-optimiser.css';
 
-/* ~200 kb deferred; same reason bg-removal defers transformers.js */
 async function loadOptimize() {
 	const { optimize } = await import('svgo/browser');
 	return optimize;
@@ -39,7 +38,6 @@ const SVGO_CONFIG: Config = {
 	],
 };
 
-/* root only; svgo/svgo#2217 strips nested too */
 export function stripRootDimensions(svg: string): string {
 	const doc = new DOMParser().parseFromString(svg, 'image/svg+xml');
 	const root = doc.documentElement;
@@ -54,7 +52,6 @@ const stripped = (result: { data: string }) => ({
 	data: stripRootDimensions(result.data),
 });
 
-/** image tracer writes here before navigate */
 const HANDOFF_KEY = 'svg-optimiser-input';
 const HANDOFF_NAME = 'traced.svg';
 
@@ -72,7 +69,6 @@ export function formatBytes(bytes: number): string {
 	return `${(bytes / 1024).toFixed(1)} KB`;
 }
 
-/** byte counts, utf-8 */
 export function statsFor(original: string, optimised: string): OptimiseStats {
 	const before = new Blob([original]).size;
 	const after = new Blob([optimised]).size;
@@ -81,7 +77,6 @@ export function statsFor(original: string, optimised: string): OptimiseStats {
 		original: before,
 		optimised: after,
 		saved,
-		// zero-byte input → NaN% guard
 		percent: before ? Math.round((saved / before) * 100) : 0,
 	};
 }
@@ -107,14 +102,12 @@ export async function optimiseSvg(
 const Save = <template><IconSvg @name={{(downloadIcon)}} /></template>;
 const FileIcon = <template><IconSvg @name="file-code" /></template>;
 
-// the document paste (filePaste) would load a drop-zone paste a second time
 const keepPaste = (event: Event) => event.stopPropagation();
 
 const editable = (target: EventTarget | null) =>
 	target instanceof HTMLElement &&
 	(target.isContentEditable || target.matches('input, textarea, select'));
 
-/** The port of SVGOptimiserViewController, on the web tool's svgo. */
 export default class SvgOptimiserTool extends Component {
 	@tracked input = '';
 	@tracked output = '';
@@ -124,7 +117,6 @@ export default class SvgOptimiserTool extends Component {
 	@tracked aspect = 4 / 3;
 	@tracked fileName = '';
 
-	/** stale async runs must not clobber newer */
 	#runId = 0;
 
 	constructor(owner: Owner, args: object) {
@@ -138,7 +130,6 @@ export default class SvgOptimiserTool extends Component {
 			void this.optimise(incoming);
 			return;
 		}
-		// ?svgoText=<svg>: the iOS -svgoTextFile flag, with the text itself
 		const text = new URLSearchParams(window.location.search).get(
 			'svgoText',
 		);
@@ -175,7 +166,6 @@ export default class SvgOptimiserTool extends Component {
 		return passAlong('Download');
 	}
 
-	/** blob URL + img: no scripts, no cross-origin from main */
 	#setPreview(svg: string) {
 		if (this.previewUrl) URL.revokeObjectURL(this.previewUrl);
 		this.previewUrl = svg
@@ -246,7 +236,6 @@ export default class SvgOptimiserTool extends Component {
 			event.preventDefault();
 	};
 
-	// a drop anywhere loads the file; the drop zone handles its own
 	dropAnywhere = (event: DragEvent) => {
 		if (event.defaultPrevented) return;
 		const file = [...(event.dataTransfer?.files ?? [])].find((f) =>
@@ -257,7 +246,6 @@ export default class SvgOptimiserTool extends Component {
 		this.readFile(file);
 	};
 
-	// svg code pasted outside a field loads as the input; files go through filePaste
 	pasteCode = modifier(() => {
 		const paste = (event: ClipboardEvent) => {
 			if (
@@ -276,7 +264,6 @@ export default class SvgOptimiserTool extends Component {
 		return () => document.removeEventListener('paste', paste);
 	});
 
-	// the preview takes the drawing's shape, 3:4 to 2:1
 	measure = (event: Event) => {
 		const image = event.target as HTMLImageElement;
 		if (!image.naturalWidth || !image.naturalHeight) return;

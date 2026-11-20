@@ -19,8 +19,6 @@ interface Field {
 	onCommit: (value: number) => void;
 }
 
-// iOS transformRows plus the web's uniform Scale; W and H are the natural
-// size times the scale, and a zero-length side has no field
 export default class TransformSection extends Component<{
 	Args: { layer: Layer };
 }> {

@@ -47,11 +47,6 @@ const dash = '—';
 
 type DictStatus = 'loading-core' | 'loading-full' | 'core-only' | 'ready';
 
-/**
- * The port of IPATranscriberViewController and its view model, with the
- * Shavian transliterator's gloss editor: the IPA over each typed word, a word
- * picked to fix its symbols.
- */
 export default class IpaTranscriber extends Component {
 	@tracked input = defaultText;
 	@tracked tokens: IpaToken[] = [];
@@ -63,7 +58,6 @@ export default class IpaTranscriber extends Component {
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
-		// ipaWord is 1-based
 		const query = new URLSearchParams(window.location.search);
 		const text = query.get('ipaText');
 		if (text !== null) this.input = text;
@@ -210,7 +204,6 @@ export default class IpaTranscriber extends Component {
 	setInput = (text: string) => {
 		this.input = text;
 		this.selected = null;
-		// core tier not loaded
 		if (!this.loading) this.#transcribe();
 	};
 
@@ -223,7 +216,6 @@ export default class IpaTranscriber extends Component {
 	};
 
 	measured = (height: number) => {
-		// 2px rule below picture
 		if (height + 2 !== this.pictureHeight)
 			this.pictureHeight = height + 2;
 	};

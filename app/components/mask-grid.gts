@@ -15,7 +15,6 @@ const GRID_STYLE = htmlSafe(
 	`grid-template-columns: repeat(${MASK_COLUMNS}, var(--mask-cell, 4rem))`,
 );
 
-// capture breaks cell clicks
 const dragScroll = modifier((el: HTMLElement) => {
 	let last: { x: number; y: number; t: number } | null = null;
 	let vx = 0;
@@ -58,7 +57,6 @@ const dragScroll = modifier((el: HTMLElement) => {
 		if (!last) return;
 		last = null;
 		el.classList.remove('is-dragging');
-		// click fires first
 		setTimeout(() => (moved = false), 0);
 		frame = requestAnimationFrame(glide(performance.now()));
 	};
@@ -76,7 +74,6 @@ const dragScroll = modifier((el: HTMLElement) => {
 		window.addEventListener('pointermove', move);
 		window.addEventListener('pointerup', up);
 	};
-	// drag must not click
 	const click = (event: MouseEvent) => {
 		if (!moved) return;
 		event.stopPropagation();

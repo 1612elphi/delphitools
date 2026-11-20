@@ -12,18 +12,11 @@ const filled = (palette?: Rgb[]) => (palette?.length ?? 0) > 0;
 
 const boxStyle = (aspect: number) => htmlSafe(`--trace-aspect: ${aspect}`);
 
-/**
- * The source and its trace under a compare divider, the trace's palette in a
- * strip below. The port of iOS ImageTracerPicture.
- */
 const TracerPicture: TOC<{
-	/** Floats over the picture: the Retrace button. */
 	Blocks: { default: [] };
 	Args: {
-		/** The source on the checks; none shows the slot that takes a file. */
 		before?: string;
 		after?: string;
-		/** Width over height of the source. */
 		aspect: number;
 		palette?: Rgb[];
 		tracing: boolean;

@@ -110,6 +110,19 @@ export const modal = channel<ModalId | null>(null);
 
 export const toolbox = channel(false);
 
+export interface HostFrame {
+	scroller: HTMLElement;
+	content: HTMLElement;
+	pages: () => HTMLElement[];
+	zoom: (factor: number) => void;
+	fit: () => void;
+	/** leaves the marks and puts the caret at a client point */
+	edit: (x: number, y: number) => void;
+}
+
+/** the view whose pages the canvas follows, marks drawn over it */
+export const hostFrame = channel<HostFrame | null>(null);
+
 let imagePicker: (() => void) | null = null;
 
 /** the shell owns the hidden file input; tools ask for it here */
@@ -153,7 +166,8 @@ export type BoxMode =
 	| 'redact'
 	| 'page-size'
 	| 'rotate'
-	| 'insert';
+	| 'insert'
+	| 'as-pdf';
 
 export interface ModeHooks {
 	enter?: () => void;

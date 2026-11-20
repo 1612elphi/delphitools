@@ -34,7 +34,6 @@ import './media/media.css';
 
 const ACCEPT = '.pdf,application/pdf';
 const modes = ['Recompress', 'Keep'];
-// iOS loss notes, per mode
 const losses = ['Lossy images', 'Lossless'];
 const sizeLabels = MAX_SIZES.map((s) => s.label);
 const whole = (value: number) => String(Math.round(value));
@@ -48,7 +47,6 @@ interface Compressed {
 	imagesTouched: number;
 }
 
-/** The port of PDFCompressorViewController, on the web tool's MuPDF worker. */
 export default class PdfCompressor extends Component {
 	drop = new Drop(ACCEPT, (file) => this.load(file));
 
@@ -67,11 +65,8 @@ export default class PdfCompressor extends Component {
 	#bytes: ArrayBuffer | null = null;
 	#pdf?: PDFDocumentProxy;
 	#result?: PDFDocumentProxy;
-	// a new file
 	#token = 0;
-	// a new file or setting
 	#seq = 0;
-	// a new comparison
 	#shown = 0;
 
 	willDestroy() {
@@ -145,7 +140,6 @@ export default class PdfCompressor extends Component {
 		try {
 			pdf = await open(bytes);
 		} catch {
-			// unreadable here; MuPDF may still compress it
 			return;
 		}
 		if (token !== this.#token) return void pdf.destroy();
@@ -206,7 +200,6 @@ export default class PdfCompressor extends Component {
 		this.#invalidate();
 	};
 
-	// a setting change drops the result
 	#invalidate() {
 		this.#seq++;
 		this.compressing = false;
@@ -229,7 +222,6 @@ export default class PdfCompressor extends Component {
 		this.compressing = true;
 		this.failed = false;
 		try {
-			// the worker detaches its buffer
 			const result = await compressPdf(bytes.slice(0), {
 				recompressImages: this.recompressImages,
 				quality: this.quality,

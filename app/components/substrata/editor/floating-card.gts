@@ -10,9 +10,7 @@ const GAP = 8;
 
 interface Signature {
 	Args: {
-		// the control that opened the card; the card sits level with it
 		anchor: HTMLElement;
-		// a pointer's place, for a card opened from the canvas
 		at?: { x: number; y: number };
 		width?: number;
 		label: string;
@@ -21,12 +19,9 @@ interface Signature {
 	Blocks: { default: [] };
 }
 
-// iOS FloatingCard: rows floating beside the panel that opened them, over a
-// scrim; a click outside or Esc closes it
 export default class FloatingCard extends Component<Signature> {
 	@tracked place = { x: 0, y: 0, width: 300, onRight: false };
 
-	// the card leaves the rail so its scrim covers the whole editor
 	get host(): HTMLElement {
 		return (
 			this.args.anchor.closest<HTMLElement>('.sub-ed') ??
@@ -87,7 +82,6 @@ export default class FloatingCard extends Component<Signature> {
 			this.args.onClose();
 		};
 		window.addEventListener('keydown', onKey, true);
-		// iOS refit: a card that grows keeps its top while it still fits
 		const refit = new ResizeObserver(() => {
 			const limit =
 				root.clientHeight - GAP - card.offsetHeight;
@@ -127,7 +121,6 @@ export default class FloatingCard extends Component<Signature> {
 	</template>
 }
 
-// iOS MenuCard: an icon over its name, a cell of a floating card's grid
 export const MenuCard: TOC<{
 	Args: {
 		title: string;

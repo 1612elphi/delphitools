@@ -42,7 +42,6 @@ interface Signature {
 	Args: { axis: 'row' | 'column'; placement: CanonPlacement };
 }
 
-// iOS ToolSettings.fontSizes
 const SIZES = [24, 32, 48, 64, 96, 128, 192, 256];
 const SIZE_TITLES = SIZES.map(String);
 
@@ -55,9 +54,6 @@ const ALIGNS: { id: TextAlign; title: string; icon: string }[] = [
 	{ id: 'justify', title: 'Justify', icon: 'align-justify' },
 ];
 
-// iOS text cells: a font menu and a size; the web's style presets and
-// alignment follow as menu cells. Each change also reaches the selected
-// text layer, as the web's text settings did
 export default class TextCells extends Component<Signature> {
 	ts = new TrackedExternal(subscribeToolSettings, getToolSettings);
 	fonts = new TrackedExternal(subscribeFonts, getUploadedFonts);

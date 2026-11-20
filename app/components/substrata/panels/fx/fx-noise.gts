@@ -5,7 +5,6 @@ import FxSliderRow from './fx-slider-row';
 import { numberOf, stringOf, type FxContext } from './fx-context';
 import { grain } from './fx-maths';
 
-// one grain per px
 const SIDE = 52;
 
 const paint = modifier(
@@ -26,7 +25,6 @@ function isColour(ctx: FxContext) {
 	return stringOf(ctx, 'mode') === 'colour';
 }
 
-// iOS FxStyliseNoise: a swatch of the grain beside its mode
 const FxNoise: TOC<{ Args: { ctx: FxContext } }> = <template>
 	<div class="sub-fxp-noise">
 		<canvas

@@ -40,7 +40,6 @@ const FORMATS: { id: CompressFormat; label: string }[] = [
 
 const whole = (value: number) => String(Math.round(value));
 
-// the document paste (filePaste) would load a drop-zone paste a second time
 const keepPaste = (event: Event) => event.stopPropagation();
 
 const Trash = <template><IconSvg @name="trash-2" /></template>;
@@ -52,7 +51,6 @@ interface Source {
 	bitmap?: ImageBitmap;
 }
 
-// ?compressSample ?compressFormat=<JPEG|WebP|PNG|AVIF|JXL> ?compressQuality=<1-100> ?compressEffort=<1-6>
 function launchFlags() {
 	const query = new URLSearchParams(window.location.search);
 	const label = query.get('compressFormat')?.toLowerCase();
@@ -89,7 +87,6 @@ function pixelsOf(bitmap: ImageBitmap, background: string | null) {
 	return context.getImageData(0, 0, canvas.width, canvas.height);
 }
 
-/** The port of ImageCompressorViewController, on the web tool's codecs. */
 export default class ImageCompressor extends Component {
 	@tracked source?: Source;
 	@tracked format: CompressFormat;
@@ -164,7 +161,6 @@ export default class ImageCompressor extends Component {
 			event.preventDefault();
 	};
 
-	// a drop on the picture or the settings replaces the image; the drop zone handles its own
 	dropAnywhere = (event: DragEvent) => {
 		if (event.defaultPrevented) return;
 		const file = [...(event.dataTransfer?.files ?? [])].find((f) =>
@@ -230,7 +226,6 @@ export default class ImageCompressor extends Component {
 			downloadBlob(this.result.blob, this.downloadName);
 	};
 
-	// live on every change; one encode in flight, the newest settings run next
 	#compress() {
 		if (!this.source?.bitmap) return;
 		this.failed = false;
@@ -250,7 +245,6 @@ export default class ImageCompressor extends Component {
 			let blob: Blob | undefined;
 			try {
 				blob = await compressImageData(
-					// mozjpeg drops alpha
 					pixelsOf(
 						source.bitmap,
 						format === 'mozjpeg'
