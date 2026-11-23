@@ -21,6 +21,7 @@ import { downloadBlob } from 'delphitools-v2/lib/download';
 import { downloadIcon, passAlong } from 'delphitools-v2/lib/flow-hooks';
 import {
 	compressImageData,
+	stopCompression,
 	formatBytes,
 	COMPRESS_EXTENSIONS,
 	QUALITY_FORMATS,
@@ -87,6 +88,8 @@ function pixelsOf(bitmap: ImageBitmap, background: string | null) {
 	return context.getImageData(0, 0, canvas.width, canvas.height);
 }
 
+const STALE_MS = 300;
+
 export default class ImageCompressor extends Component {
 	@tracked source?: Source;
 	@tracked format: CompressFormat;
@@ -98,6 +101,7 @@ export default class ImageCompressor extends Component {
 	@tracked busy = false;
 
 	#queued = false;
+	#started = 0;
 
 	constructor(owner: Owner, args: object) {
 		super(owner, args);
@@ -231,6 +235,9 @@ export default class ImageCompressor extends Component {
 		this.failed = false;
 		if (this.busy) {
 			this.#queued = true;
+			// ponytail: fixed 300 ms; a short encode finishes sooner than a new worker starts
+			if (performance.now() - this.#started > STALE_MS)
+				stopCompression(new Error('superseded'));
 			return;
 		}
 		void this.#drain();
@@ -243,6 +250,7 @@ export default class ImageCompressor extends Component {
 			const { source, format } = this;
 			if (!source?.bitmap) break;
 			let blob: Blob | undefined;
+			this.#started = performance.now();
 			try {
 				blob = await compressImageData(
 					pixelsOf(
@@ -258,6 +266,7 @@ export default class ImageCompressor extends Component {
 					},
 				);
 			} catch (error) {
+				if (this.#queued) continue;
 				console.error(
 					`Failed to compress ${source.file.name}:`,
 					error,

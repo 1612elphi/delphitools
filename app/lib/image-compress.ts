@@ -64,21 +64,25 @@ function getWorker(): Worker {
 				p.resolve(new Blob([bytes], { type: mime }));
 			else p.reject(new Error(error ?? 'Compression failed'));
 		};
-		worker.onerror = (event) => {
-			// worker errors reject pending
-			for (const p of pending.values())
-				p.reject(
-					new Error(
-						event.message ||
-							'Compression worker error',
-					),
-				);
-			pending.clear();
-			worker?.terminate();
-			worker = null;
-		};
+		worker.onerror = (event) =>
+			stopCompression(
+				new Error(
+					event.message ||
+						'Compression worker error',
+				),
+			);
 	}
 	return worker;
+}
+
+/** Ends the worker and rejects every pending encode with `reason`; the next encode starts a new worker. */
+export function stopCompression(reason: unknown): void {
+	const error =
+		reason instanceof Error ? reason : new Error(String(reason));
+	for (const p of pending.values()) p.reject(error);
+	pending.clear();
+	worker?.terminate();
+	worker = null;
 }
 
 export function compressImageData(
