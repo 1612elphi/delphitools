@@ -8,6 +8,20 @@ export interface Release {
 
 export const RELEASES: Release[] = [
 	{
+		version: '2.4.1',
+		since: '2.4.0',
+		features: [
+			'Rhyme Finder: Experiment. Find english rhymes by their sound.',
+			'Shavian Transliterator: Now also works in reverse, including the UDE keyboard layout',
+			'Document Converter: Allow for rich text input. Thanks, @sushovande on GitHub!',
+		],
+		fixes: [
+			'Shavian Transliterator: The cursor is no longer offset.',
+			'Image Compressor: Changing settings mid-compression no longer stalls. Thanks @siennathesane on GitHub!',
+		],
+		technical: [],
+	},
+	{
 		version: '2.4.0',
 		since: '2.3.0',
 		features: [
