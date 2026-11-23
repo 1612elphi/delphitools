@@ -183,6 +183,24 @@ function arpabetToPhonemes(arpabets: string[]): Phoneme[] {
 	});
 }
 
+/** The Shavian spelling `tokenise` gives a dictionary word; undefined when a sound has no letter. */
+export function spellingOf(
+	word: string,
+	arpabets: string[],
+): string | undefined {
+	const shorthand = SHORTHANDS.get(word);
+	if (shorthand) return shorthand.shavian;
+	let spelling = '';
+	for (const code of mergeArpabetSequences(
+		applyArpabetOverrides(word, arpabets),
+	)) {
+		const letter = arpabetToShavian(code);
+		if (!letter) return undefined;
+		spelling += letter;
+	}
+	return spelling;
+}
+
 // namer dots manual only
 function transliterateWord(word: string): GlossWord {
 	const shorthand = SHORTHANDS.get(word.toLowerCase());

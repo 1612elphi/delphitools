@@ -75,3 +75,124 @@
 	color: var(--canon-primary);
 	font-weight: var(--canon-weight-bold);
 }
+
+.sh-reverse {
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+	inline-size: min(100%, 736px);
+	block-size: 100%;
+	margin-inline: auto;
+	padding: 6px var(--canon-panel-padding) var(--canon-panel-padding);
+}
+
+.sh-reverse-heading {
+	display: flex;
+	flex: none;
+	align-items: center;
+	block-size: 44px;
+}
+
+.sh-reverse-field {
+	flex: 1 1 96px;
+	min-block-size: 96px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--canon-foreground);
+	caret-color: var(--canon-foreground);
+	font-family: var(--gl-font);
+	font-size: 24px;
+	line-height: 1.5;
+	resize: none;
+	outline: none;
+}
+
+.sh-reverse-field::placeholder {
+	color: var(--canon-muted-foreground);
+	font-family: var(--canon-font);
+	font-size: var(--canon-text-subheadline);
+}
+
+/* 1px gaps show the border colour */
+.sh-keypad {
+	display: grid;
+	flex: none;
+	gap: 1px;
+	border: var(--canon-frame) solid var(--canon-border);
+	background: var(--canon-border);
+}
+
+.sh-keypad-row {
+	display: grid;
+	grid-template-columns: repeat(10, minmax(0, 1fr));
+	gap: 1px;
+}
+
+.sh-keypad-row--held {
+	grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.sh-keypad-row--end {
+	grid-template-columns: 2fr 5fr 2fr;
+}
+
+.sh-key {
+	min-block-size: var(--canon-control-height);
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: var(--canon-card);
+	color: var(--canon-foreground);
+	font-family: var(--gl-font);
+	font-size: 22px;
+	line-height: 1;
+	cursor: pointer;
+	touch-action: manipulation;
+	user-select: none;
+	-webkit-tap-highlight-color: transparent;
+	appearance: none;
+}
+
+.sh-key--word {
+	font-family: var(--canon-font);
+	font-size: var(--canon-text-footnote);
+}
+
+.sh-keypad-row--held .sh-key {
+	background: var(--canon-accent-bg);
+}
+
+.sh-key:focus-visible {
+	outline: 2px solid var(--canon-primary);
+	outline-offset: -2px;
+}
+
+@media (hover: hover) {
+	.sh-key:hover {
+		background: var(--canon-muted);
+	}
+}
+
+.sh-pick {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-decoration: underline dotted var(--canon-primary);
+	text-underline-offset: 4px;
+	cursor: pointer;
+}
+
+.sh-pick:focus-visible {
+	outline: 2px solid var(--canon-primary);
+}
+
+.sh-result--latin .tt-result-text {
+	font-family: var(--canon-font);
+	font-size: 22px;
+}
