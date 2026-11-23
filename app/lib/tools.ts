@@ -1248,6 +1248,14 @@ export const toolCategories: ToolCategory[] = [
 				href: '/tools/stupid-units',
 				canon: true,
 			},
+			{
+				id: 'rhyme-finder',
+				name: 'Rhyme Finder',
+				description: 'Find English words that rhyme',
+				icon: 'ear',
+				href: '/tools/rhyme-finder',
+				canon: true,
+			},
 		],
 	},
 ];

@@ -1,0 +1,70 @@
+.rhyme-finder-phones {
+	padding: 0 var(--canon-panel-padding);
+	color: var(--canon-muted-foreground);
+	font-family: var(--canon-mono-font);
+	font-size: var(--canon-text-caption);
+}
+
+/* 1px gaps show the border colour, as canon-rows does */
+.rhyme-finder-words {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+	gap: 1px;
+}
+
+.rhyme-finder-rhyme,
+.rhyme-finder-more {
+	min-block-size: var(--canon-row-height);
+	margin: 0;
+	padding: 0 var(--canon-panel-padding);
+	overflow: hidden;
+	border: 0;
+	border-radius: 0;
+	background: var(--canon-card);
+	color: var(--canon-foreground);
+	font-family: var(--canon-font);
+	font-size: var(--canon-text-body);
+	text-align: start;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.rhyme-finder-rhyme {
+	cursor: pointer;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+	appearance: none;
+}
+
+.rhyme-finder-more {
+	display: flex;
+	align-items: center;
+	color: var(--canon-muted-foreground);
+}
+
+.rhyme-finder-rhyme:focus-visible {
+	outline: 2px solid var(--canon-primary);
+	outline-offset: -2px;
+}
+
+@media (hover: hover) {
+	.rhyme-finder-rhyme:hover {
+		background: var(--canon-accent-bg);
+	}
+}
+
+.rhyme-finder-phones,
+.rhyme-finder-loading {
+	display: flex;
+	align-items: center;
+	min-block-size: var(--canon-row-height);
+	background: var(--canon-card);
+}
+
+.rhyme-finder-loading {
+	justify-content: center;
+}
+
+.rhyme-finder .rhyme-finder-word {
+	inline-size: 100%;
+}
