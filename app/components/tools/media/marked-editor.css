@@ -44,6 +44,10 @@
 	caret-color: var(--canon-foreground);
 	font: inherit;
 	line-height: inherit;
+
+	/* ua resets both */
+	letter-spacing: inherit;
+	word-spacing: inherit;
 	resize: none;
 	outline: none;
 }
