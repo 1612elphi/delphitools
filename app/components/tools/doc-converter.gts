@@ -45,6 +45,7 @@ import {
 	injectPrintStyles,
 	printHtmlInIframe,
 } from 'delphitools-v2/lib/pandoc/print-pdf';
+import { pastedHtml } from 'delphitools-v2/lib/pasted-html';
 import filePaste from 'delphitools-v2/modifiers/file-paste';
 import './doc-converter/doc-converter.css';
 
@@ -386,7 +387,30 @@ export default class DocConverterTool extends Component {
 		});
 	};
 
+	#loadHtml(html: string | undefined) {
+		const rich = html ? pastedHtml(html) : null;
+		if (!rich) return false;
+		this.#loadText(rich, null);
+		this.from = 'html';
+		return true;
+	}
+
 	paste = async () => {
+		// read() carries text/html, readText() does not
+		const html = await navigator.clipboard
+			.read()
+			.then((items) =>
+				items
+					.find((item) =>
+						item.types.includes(
+							'text/html',
+						),
+					)
+					?.getType('text/html'),
+			)
+			.then((blob) => blob?.text())
+			.catch(() => undefined);
+		if (this.isDestroying || this.#loadHtml(html)) return;
 		const text = await navigator.clipboard
 			.readText()
 			.catch(() => '');
@@ -476,11 +500,24 @@ export default class DocConverterTool extends Component {
 
 	pasteText = modifier(() => {
 		const paste = (event: ClipboardEvent) => {
+			if (event.clipboardData?.files.length) return;
+			// an empty document field takes rich text too
+			const field =
+				event.target instanceof HTMLTextAreaElement &&
+				event.target.classList.contains('dc-editor') &&
+				!event.target.value;
+			if (editable(event.target) && !field) return;
 			if (
-				editable(event.target) ||
-				event.clipboardData?.files.length
-			)
+				this.#loadHtml(
+					event.clipboardData?.getData(
+						'text/html',
+					),
+				)
+			) {
+				event.preventDefault();
 				return;
+			}
+			if (field) return;
 			const text =
 				event.clipboardData?.getData('text/plain') ??
 				'';
