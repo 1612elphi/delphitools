@@ -24,6 +24,7 @@ const PAGES: Record<string, { title: string; icon: string }> = {
 	index: { title: 'Home', icon: 'home' },
 	workflows: { title: 'Workflows', icon: 'workflow' },
 	experiments: { title: 'Experiments', icon: 'flask-conical' },
+	elsewhere: { title: 'Elsewhere', icon: 'globe' },
 };
 
 export default class ApplicationTemplate extends Component {

@@ -146,19 +146,15 @@
 	}
 }
 
-.dt-hero-magazine {
+.dt-hero-flip-content a.dt-hero-elsewhere {
 	display: inline-block;
 	padding: 8px 12px;
 	border: var(--canon-frame) solid var(--canon-foreground);
-	background: none;
 	color: var(--canon-foreground);
-	cursor: pointer;
-	font: inherit;
-	pointer-events: auto;
-	text-align: start;
+	text-decoration: none;
 }
 
-.dt-hero-magazine .dt-icon {
+.dt-hero-elsewhere .dt-icon {
 	display: inline-block;
 	width: 1.1em;
 	height: 1.1em;
@@ -166,13 +162,13 @@
 	vertical-align: -0.2em;
 }
 
-.dt-hero-magazine:focus-visible {
+.dt-hero-elsewhere:focus-visible {
 	outline: 2px solid var(--canon-primary);
 	outline-offset: 2px;
 }
 
 @media (hover: hover) {
-	.dt-hero-magazine:hover {
+	.dt-hero-elsewhere:hover {
 		background: var(--canon-accent-bg);
 	}
 }
@@ -183,31 +179,4 @@
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
-}
-
-.dt-hero-flip-content a.dt-hero-video {
-	display: inline-flex;
-	align-items: center;
-	align-self: stretch;
-	padding: 8px 12px;
-	border: var(--canon-frame) solid var(--canon-foreground);
-	color: var(--canon-foreground);
-	gap: 6px;
-	text-decoration: none;
-}
-
-.dt-hero-video .dt-icon {
-	width: 1.1em;
-	height: 1.1em;
-}
-
-.dt-hero-video:focus-visible {
-	outline: 2px solid var(--canon-primary);
-	outline-offset: 2px;
-}
-
-@media (hover: hover) {
-	.dt-hero-video:hover {
-		background: var(--canon-accent-bg);
-	}
 }

@@ -1,13 +1,11 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
-import { service } from '@ember/service';
 import { LinkTo } from '@ember/routing';
 import { htmlSafe } from '@ember/template';
 import { BUILT_WITH } from 'delphitools-v2/components/about-delphitools';
 import Icon from 'delphitools-v2/components/icon';
 import { isHalloween } from 'delphitools-v2/lib/hero-art';
-import type MagazineService from 'delphitools-v2/services/magazine';
 import './hero-copy.css';
 
 const EMBER_ICON = htmlSafe(
@@ -52,12 +50,8 @@ const STACK = [
 ];
 
 export default class HeroCopy extends Component {
-	@service declare magazine: MagazineService;
-
 	@tracked flipped = false;
 	halloween = isHalloween();
-
-	openMagazine = () => this.magazine.open();
 
 	toggle = () => {
 		this.flipped = !this.flipped;
@@ -99,26 +93,15 @@ export default class HeroCopy extends Component {
 							{{/if}}
 						</p>
 						<p class="dt-hero-ctas">
-							<button
-								type="button"
-								class="dt-hero-magazine"
-								{{on
-									"click"
-									this.openMagazine
-								}}
-							>Now available on
-								iPhone, iPad and
-								your terminal!<Icon
-									@name="book-open"
-								/></button>
-							<a
-								href="https://youtu.be/f_gtN14gWBs"
-								class="dt-hero-video"
-								target="_blank"
-								rel="noopener noreferrer"
-							>Launch Video<Icon
-									@name="play"
-								/></a>
+							<LinkTo
+								@route="elsewhere"
+								class="dt-hero-elsewhere"
+							>also available on other
+								platforms -
+								android beta out
+								now!<Icon
+									@name="globe"
+								/></LinkTo>
 						</p>
 						{{#if this.halloween}}
 							<p>

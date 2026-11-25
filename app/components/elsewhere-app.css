@@ -1,0 +1,264 @@
+.dt-else {
+	position: relative;
+	display: grid;
+	align-items: center;
+	padding: 20px;
+	color: var(--canon-foreground);
+	font-family: var(--canon-font);
+	gap: 4px 16px;
+	grid-template:
+		"icon name action" auto
+		"icon desc action" auto
+		"icon chips action" auto / auto 1fr auto;
+	isolation: isolate;
+	text-decoration: none;
+}
+
+@media (hover: hover) {
+	a.dt-else:hover {
+		background: var(--canon-accent-bg);
+	}
+}
+
+.dt-else:focus-visible {
+	outline: 2px solid var(--canon-primary);
+	outline-offset: -2px;
+}
+
+/* the suite-box pattern, feathered in from the right */
+.dt-else-pattern {
+	position: absolute;
+	z-index: -1;
+	background: var(--canon-primary);
+	inset: 0;
+	mask-composite: intersect;
+	mask-image:
+		linear-gradient(to right, transparent 40%, black),
+		var(--suite-pattern);
+	mask-repeat: no-repeat, repeat;
+	mask-size:
+		100% 100%,
+		56px 48px;
+	opacity: 0.3;
+	pointer-events: none;
+}
+
+.dt-else-icon {
+	display: grid;
+	width: 72px;
+	height: 72px;
+	color: var(--canon-primary);
+	place-items: center;
+}
+
+.dt-else-badge {
+	display: grid;
+	gap: 6px;
+	grid-area: icon;
+	justify-items: center;
+}
+
+.dt-else-version {
+	color: var(--canon-muted-foreground);
+	font-family: var(--canon-mono-font);
+	font-size: var(--canon-text-caption);
+}
+
+.dt-else-icon .dt-icon {
+	width: 48px;
+	height: 48px;
+}
+
+.dt-else-name {
+	color: var(--canon-primary);
+	font-size: var(--canon-text-title2);
+	font-weight: var(--canon-weight-bold);
+	grid-area: name;
+	line-height: 1.1;
+}
+
+.dt-else-desc {
+	max-width: 40ch;
+	font-size: var(--canon-text-subheadline);
+	grid-area: desc;
+	line-height: 1.3;
+	opacity: 0.75;
+}
+
+.dt-else-platforms {
+	margin-top: 4px;
+	color: var(--canon-muted-foreground);
+	font-size: var(--canon-text-caption);
+	font-weight: var(--canon-weight-medium);
+	grid-area: chips;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.dt-else-action {
+	display: inline-flex;
+	align-items: center;
+	padding: 8px 12px;
+	background: var(--canon-primary);
+	color: var(--canon-card);
+	font-size: var(--canon-text-caption);
+	font-weight: var(--canon-weight-semibold);
+	gap: 6px;
+	grid-area: action;
+	letter-spacing: 0.025em;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+.dt-else-action .dt-icon {
+	width: 14px;
+	height: 14px;
+}
+
+.dt-else-action.is-soon {
+	border: var(--canon-hairline) solid currentcolor;
+	background: none;
+	color: var(--canon-muted-foreground);
+}
+
+.dt-else.is-soon .dt-else-name,
+.dt-else.is-soon .dt-else-icon {
+	color: var(--canon-muted-foreground);
+}
+
+.dt-else.is-soon .dt-else-pattern {
+	opacity: 0.12;
+}
+
+@media (width <= 520px) {
+	.dt-else {
+		grid-template:
+			"icon name" auto
+			"icon desc" auto
+			"icon chips" auto
+			"action action" auto / auto 1fr;
+	}
+
+	.dt-else-action {
+		justify-content: center;
+		margin-top: 8px;
+	}
+}
+
+.dt-else-group {
+	max-width: 56rem;
+	margin: 0 auto 32px;
+	font-family: var(--canon-font);
+}
+
+.dt-else-heading {
+	margin: 0 0 8px;
+	color: var(--canon-muted-foreground);
+	font-size: var(--canon-text-caption);
+	font-weight: var(--canon-weight-medium);
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.dt-else-list {
+	display: grid;
+	border-bottom: var(--canon-hairline) solid var(--canon-border);
+	grid-template-columns: minmax(0, 1fr);
+}
+
+.dt-else {
+	border-top: var(--canon-hairline) solid var(--canon-border);
+}
+
+@container (min-width: 700px) {
+	.dt-else-list {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.dt-else:nth-child(even) {
+		border-left: var(--canon-hairline) solid var(--canon-border);
+	}
+
+	.dt-else:only-child {
+		grid-column: 1 / -1;
+	}
+}
+
+.dt-else-kits {
+	display: block;
+}
+
+.dt-else-kits ul {
+	display: flex;
+	flex-wrap: wrap;
+	padding: 0;
+	margin: 0;
+	color: var(--canon-foreground);
+	font-family: var(--canon-mono-font);
+	font-size: var(--canon-text-subheadline);
+	gap: 4px 16px;
+	list-style: none;
+}
+
+.dt-else-head {
+	display: grid;
+	overflow: hidden;
+	max-width: 56rem;
+	margin: 0 auto;
+	color: var(--canon-primary);
+	font-family: var(--canon-font);
+	font-weight: var(--canon-weight-bold);
+	gap: 4px;
+	padding-block: 24px;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+/* end padding equals the gap, so -50% is exactly one copy */
+.dt-else-track {
+	display: inline-flex;
+	align-items: center;
+	padding-inline-end: 0.5em;
+	animation: dt-suite-marquee 60s linear infinite;
+	gap: 0.5em;
+	white-space: nowrap;
+}
+
+.dt-else-track > * {
+	flex: none;
+}
+
+.dt-else-track .dt-icon {
+	width: 0.5em;
+	height: 0.5em;
+	opacity: 0.6;
+}
+
+.dt-else-marquee {
+	font-size: clamp(40px, 9vw, 88px);
+	letter-spacing: -0.025em;
+	line-height: 1;
+}
+
+.dt-else-marquee.is-small {
+	font-size: clamp(14px, 2.5vw, 20px);
+	font-weight: var(--canon-weight-medium);
+	letter-spacing: 0.025em;
+	opacity: 0.75;
+}
+
+.dt-else-marquee.is-small .dt-else-track {
+	animation-direction: reverse;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dt-else-track {
+		animation: none;
+	}
+}
+
+.dt-else-warning-art {
+	display: block;
+	inline-size: 100%;
+	block-size: auto;
+}

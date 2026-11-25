@@ -15,6 +15,7 @@ Router.map(function () {
 	this.route('workflows');
 	this.route('workflow', { path: '/w/:steps' });
 	this.route('experiments');
+	this.route('elsewhere');
 	this.route('canon', function () {
 		this.route('installation');
 		this.route('components', function () {

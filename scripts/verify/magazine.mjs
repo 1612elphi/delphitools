@@ -96,13 +96,13 @@ async function clickLink(page, index, href) {
 		requests.filter((url) => LAZY.test(url)).join(', '),
 	);
 
-	// hero line
-	await page.click('.dt-hero-magazine');
+	// cover link
+	await visit(page, '/?magazine');
 	await page.waitForSelector(`${DIALOG}[open]`);
 	await ready(page);
 	await sleep(600);
 	check(
-		'the hero line opens the magazine',
+		'the magazine link opens the magazine',
 		await isOpen(page),
 	);
 	check(
@@ -241,10 +241,7 @@ async function clickLink(page, index, href) {
 
 	await page.keyboard.press('Escape');
 	await closed(page);
-	const back = await page.evaluate(() =>
-		document.activeElement?.classList.contains('dt-hero-magazine'),
-	);
-	check('Escape closes it and focus returns to the hero line', back);
+	check('Escape closes it', !(await isOpen(page)));
 
 	// home Elsewhere cell
 	await page.$eval('a.dt-cell[data-magazine="cli"]', (el) =>
@@ -398,8 +395,7 @@ async function clickLink(page, index, href) {
 			return /webgl/.test(type) ? null : original.call(this, type, ...rest);
 		};
 	});
-	await visit(page, '/');
-	await page.click('.dt-hero-magazine');
+	await visit(page, '/?magazine');
 	await page.waitForSelector(`${DIALOG}.is-flat[open]`, { timeout: 5000 });
 	const shown = () =>
 		page.$$eval(`${DIALOG} .dt-mag-page:not([hidden])`, (els) =>
@@ -431,11 +427,7 @@ async function clickLink(page, index, href) {
 	const { browser, page } = await launch({
 		viewport: { width: 390, height: 844, isMobile: true, hasTouch: true },
 	});
-	await visit(page, '/');
-	await page.$eval('.dt-hero-magazine', (el) =>
-		el.scrollIntoView({ block: 'center' }),
-	);
-	await page.click('.dt-hero-magazine');
+	await visit(page, '/?magazine');
 	await ready(page);
 	await sleep(600);
 	check(

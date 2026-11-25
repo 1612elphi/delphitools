@@ -1233,6 +1233,14 @@ export const toolCategories: ToolCategory[] = [
 				route: 'canon',
 				magazine: true,
 			},
+			{
+				id: 'all-apps',
+				name: 'All apps',
+				description: 'Every delphitools app',
+				icon: 'globe',
+				href: '/elsewhere',
+				route: 'elsewhere',
+			},
 		],
 	},
 	{
@@ -1270,6 +1278,146 @@ export const experimentsCategory = toolCategories.find(
 export const homeCategories = toolCategories.filter(
 	(category) => category !== experimentsCategory,
 );
+
+const elsewhereCategory = toolCategories.find(
+	(category) => category.id === 'elsewhere',
+)!;
+
+export interface ElsewhereApp {
+	tool: Tool;
+	// app icon under /elsewhere/
+	image?: string;
+	// released version, set by hand
+	version?: string;
+	platforms: string;
+	// button label; none means unreleased
+	action?: string;
+	// warns before the link opens
+	beta?: boolean;
+}
+
+const elsewhereTool = (id: string) =>
+	elsewhereCategory.tools.find((tool) => tool.id === id)!;
+
+export interface ElsewhereGroup {
+	name?: string;
+	apps: ElsewhereApp[];
+	// shared libraries, listed in the last cell
+	kits?: string[];
+}
+
+export const elsewhereGroups: ElsewhereGroup[] = [
+	{
+		apps: [
+			{
+				tool: elsewhereTool('ios-app'),
+				version: '2.1',
+				image: 'ios',
+				platforms: 'iPhone & iPad. Swift, UIKit',
+				action: 'App Store',
+			},
+			{
+				tool: {
+					id: 'android-app',
+					name: 'delphitools for Android',
+					description:
+						'Built with native technologies for Android, begrudgingly.',
+					icon: 'smartphone',
+					href: 'https://github.com/1612elphi/delphitools-android/releases',
+					external: true,
+				},
+				image: 'android',
+				action: 'Test build',
+				beta: true,
+				platforms: 'Kotlin & Jetpack. Coming this Xmas. Beta APK available',
+			},
+		],
+	},
+	{
+		apps: [
+			{
+				tool: {
+					id: 'substrata-ios',
+					name: 'Substrata for iOS',
+					description:
+						'The delphitools image editor, for iPhone and iPad.',
+					icon: 'substrata',
+					href: 'https://apps.apple.com/us/app/substrata-image-editor/id6822955808',
+					external: true,
+				},
+				image: 'substrata',
+				version: '1.0',
+				platforms: 'iPhone & iPad. Swift, UIKit, SubstrataKit',
+				action: 'App Store',
+			},
+		],
+	},
+	{
+		apps: [
+			{
+				tool: {
+					...elsewhereTool('cli'),
+					name: 'delphitools CLI 1.0',
+				},
+				version: '0.2.0',
+				platforms: 'Rust',
+				action: 'GitHub',
+			},
+			{
+				tool: elsewhereTool(CANON_KIT_ID),
+				version: '0.1.0',
+				platforms: 'Ember, Vue, Svelte, React. UIKit, AppKit. Jetpack Compose',
+				action: 'Docs',
+			},
+		],
+	},
+	{
+		name: 'Coming soon',
+		kits: [
+			'DelphiCore',
+			'DelphiCanon',
+			'DelphiMacros',
+			'SubstrataKit',
+			'TaxiwayCore',
+		],
+		apps: [
+			{
+				tool: {
+					id: 'mac-app',
+					name: 'delphitools for Mac',
+					description:
+						'All the tools, as well as some Mac exclusive goodies like Text Expansion, a Spotlight Replacement and Screenshotting.',
+					icon: 'panel-top',
+					href: '',
+				},
+				image: 'mac',
+				platforms: 'Macintosh. Swift, AppKit',
+			},
+			{
+				tool: {
+					id: 'cli-2',
+					name: 'delphitools CLI 2.0',
+					description:
+						'The same tools, in the command line, with a beautiful and performant new look.',
+					icon: 'square-terminal',
+					href: '',
+				},
+				platforms: 'Go',
+			},
+			{
+				tool: {
+					id: 'errata-ios',
+					name: 'Errata for iOS',
+					description:
+						'The delphitools document editor, for iPhone and iPad.',
+					icon: 'errata',
+					href: '',
+				},
+				platforms: 'iPhone & iPad. Swift, UIKit',
+			},
+		],
+	},
+];
 
 export const allTools = toolCategories.flatMap((category) => category.tools);
 
